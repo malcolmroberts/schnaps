@@ -80,7 +80,7 @@ void InitField(Field* f) {
   f->tnow = 0;
 
   for(int ie = 0; ie < f->macromesh.nbelems; ie++) {
-    
+
     double physnode[20][3];
     for(int inoloc = 0; inoloc < 20; inoloc++) {
       int ino = f->macromesh.elem2node[20 * ie + inoloc];
@@ -88,10 +88,25 @@ void InitField(Field* f) {
       physnode[inoloc][1] = f->macromesh.node[3 * ino + 1];
       physnode[inoloc][2] = f->macromesh.node[3 * ino + 2];
     }
-    
+
     for(int ipg = 0; ipg < NPG(f->interp_param + 1); ipg++) {
       double xpg[3];
       double xref[3], omega;
+#ifdef _DISCONTINUOUS_CONDITION
+      double xref_in[3];
+      ref_pg_vol(f->interp_param + 1, ipg, xref, &omega, xref_in);
+      double dtau[3][3];
+      Ref2Phy(physnode,
+	      xref_in,
+	      0, -1, // dphiref, ifa
+              xpg, dtau,
+	      NULL, NULL, NULL); // codtau, dphi, vnds
+      { // Check the reverse transform at all the GLOPS
+ 	double xref2[3];
+	Phy2Ref(physnode, xpg, xref2);
+	//assert(Dist(xref, xref2) < 1e-8);
+      }
+#else
       ref_pg_vol(f->interp_param + 1, ipg, xref, &omega, NULL);
       double dtau[3][3];
       Ref2Phy(physnode,
@@ -104,6 +119,7 @@ void InitField(Field* f) {
 	Phy2Ref(physnode, xpg, xref2);
 	assert(Dist(xref, xref2) < 1e-8);
       }
+#endif
 
       double w[f->model.m];
       f->model.InitData(xpg, w);
@@ -566,9 +582,9 @@ void* DGSubCellInterface(void* mc) {
 		  int iR[3] = {iL[0], iL[1], iL[2]};
 		  iR[dim0] = 0;
 
-		  int ipgL = offsetL 
+		  int ipgL = offsetL
 		    + iL[0] + (deg[0] + 1) * (iL[1] + (deg[1] + 1) * iL[2]);
-		  int ipgR = offsetR 
+		  int ipgR = offsetR
 		    + iR[0] + (deg[0] + 1) * (iR[1] + (deg[1] + 1) * iR[2]);
 		  //printf("ipgL=%d ipgR=%d\n", ipgL, ipgR);
 
@@ -1547,7 +1563,7 @@ void* DGVolume(void* mc) {
 		  int p[3] = {p0, p1, p2};
 		  int ipgL = offsetL + p[0] + npg[0] * (p[1] + npg[1] * p[2]);
 		  for(int iv = 0; iv < m; iv++) {
-		    ///int imemL = f->varindex(f_interp_param, ie, ipgL, iv);
+		    //int imemL = f->varindex(f_interp_param, ie, ipgL, iv);
 		    wL[iv] = f->wn[imems[m * (ipgL - offsetL) + iv]];
 
 		    //wL[iv] = f->wn[imemL];
@@ -1558,7 +1574,7 @@ void* DGVolume(void* mc) {
 		    q[dim0] = (p[dim0] + iq) % npg[dim0];
 		    double dphiref[3] = {0, 0, 0};
 		    // compute grad phi_q at glop p
-		    dphiref[dim0] = dlag(deg[dim0], q[dim0], p[dim0]) 
+		    dphiref[dim0] = dlag(deg[dim0], q[dim0], p[dim0])
 		      * nraf[dim0];
 
 		    double xrefL[3] = {xref0[ipgL - offsetL],
@@ -1680,7 +1696,7 @@ void DGVolumeSlow(Field* f) {
   }
 }
 
-void dtField_pthread(Field *f) 
+void dtField_pthread(Field *f)
 {
   MacroCell mcell[f->macromesh.nbelems];
   MacroFace mface[f->macromesh.nbfaces];
@@ -2007,6 +2023,7 @@ void dtFieldSlow(Field* f) {
 void RK2(Field* f, double tmax) {
 
   double vmax = 1; // to be changed for another model !!!!!!!!!
+  //double vmax = 6; // MHD
   double cfl = 0.05;
 
   double dt = cfl * f->hmin / vmax;
