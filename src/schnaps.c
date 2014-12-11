@@ -20,10 +20,10 @@ int main(int argc, char *argv[]){
 
     Field f;
     f.model.m = 1; // only one conservative variable
-    f.model.NumFlux = TransportNumFlux2d;
-    f.model.BoundaryFlux = TransportBoundaryFlux2d;
-    f.model.InitData = TransportInitData2d;
-    f.model.ImposedData = TransportImposedData2d;
+    f.model.NumFlux = TransNumFlux2d;
+    f.model.BoundaryFlux = TransBoundaryFlux2d;
+    f.model.InitData = TransInitData2d;
+    f.model.ImposedData = TransImposedData2d;
     f.varindex = GenericVarindex;
 
     f.interp.interp_param[0] = 1;  // _M
@@ -113,7 +113,7 @@ int main(int argc, char *argv[]){
     // apply the DG scheme
     // time integration by RK2 scheme
     // up to final time = 1.
-    RK2(&f,0.3);
+    RK2(&f,1.0);
 
     // save the results and the error
     PlotField(0,(1==0),&f,"dgvisu.msh");
@@ -124,5 +124,4 @@ int main(int argc, char *argv[]){
     printf("Bad argument !\n");
     assert(1==2);
   }
-
 };

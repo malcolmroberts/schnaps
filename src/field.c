@@ -265,12 +265,9 @@ void DisplayField(Field* f) {
 // typplot: index of the plotted variable
 // int compare == true -> compare with the exact value
 void PlotField(int typplot, int compare, Field* f, char* filename) {
-  const int hexa64ref[3 * 64] = {
-    0, 0, 3,
-    3, 0, 3,
-    3, 3, 3,
-    0, 3, 3,
-    0, 0, 0, 3, 0, 0, 3, 3, 0, 0, 3, 0,
+
+  double hexa64ref[3 * 64] = { 
+    0, 0, 3, 3, 0, 3, 3, 3, 3, 0, 3, 3, 0, 0, 0, 3, 0, 0, 3, 3, 0, 0, 3, 0,
     1, 0, 3, 2, 0, 3, 0, 1, 3, 0, 2, 3, 0, 0, 2, 0, 0, 1, 3, 1, 3, 3, 2, 3,
     3, 0, 2, 3, 0, 1, 2, 3, 3, 1, 3, 3, 3, 3, 2, 3, 3, 1, 0, 3, 2, 0, 3, 1,
     1, 0, 0, 2, 0, 0, 0, 1, 0, 0, 2, 0, 3, 1, 0, 3, 2, 0, 2, 3, 0, 1, 3, 0,
@@ -278,83 +275,66 @@ void PlotField(int typplot, int compare, Field* f, char* filename) {
     0, 1, 2, 0, 1, 1, 0, 2, 1, 0, 2, 2, 3, 1, 2, 3, 2, 2, 3, 2, 1, 3, 1, 1,
     2, 3, 2, 1, 3, 2, 1, 3, 1, 2, 3, 1, 1, 1, 0, 2, 1, 0, 2, 2, 0, 1, 2, 0,
     1, 1, 2, 2, 1, 2, 2, 2, 2, 1, 2, 2, 1, 1, 1, 2, 1, 1, 2, 2, 1, 1, 2, 1};
+  for(int i = 0; i < 3 * 64; ++i)
+    hexa64ref[i] /= 3.0;
 
-  int* elem2nodes = f->macromesh.elem2node;
-  double* node = f->macromesh.node;
+  int *elem2nodes = f->macromesh.elem2node;
+  double *node = f->macromesh.node;
 
   FILE * gmshfile;
-  gmshfile = fopen( filename, "w" );
+  gmshfile = fopen(filename, "w" );
 
-  // data plots
   //int param[8] = {f->model.m, _DEGX, _DEGY, _DEGZ, _RAFX, _RAFY, _RAFZ, 0};
   int nraf[3] = {f->interp_param[4], f->interp_param[5], f->interp_param[6]};
-  // refinement size in each direction
-  double hh[3] = {1./nraf[0], 1./nraf[1], 1./nraf[2]};
+  // Refinement size in each direction
+  double hh[3] = {1.0 / nraf[0], 
+		  1.0 / nraf[1], 
+		  1.0 / nraf[2]};
 
-  int npgv = NPG(f->interp_param + 1);
-  int nnodes = 20;
-
-  double physnode[nnodes][3];
-  double Xr[3];
-  double Xphy[3];
-
-  // header
+  // Header
   fprintf(gmshfile, "$MeshFormat\n2.2 0 %d\n", (int) sizeof(double));
-  //int one = 1;
-  //fwrite((char*) &one, sizeof(int), 1, gmshfile);
-  fprintf(gmshfile, "$EndMeshFormat\n$Nodes\n%d\n",
-	  f->macromesh.nbelems * nraf[0] * nraf[1] * nraf[2] * 64);
 
   int nb_plotnodes = f->macromesh.nbelems * nraf[0] * nraf[1] * nraf[2] * 64;
-  double* value = malloc(nb_plotnodes * sizeof(double));
+  fprintf(gmshfile, "$EndMeshFormat\n$Nodes\n%d\n", nb_plotnodes);
+
+  double *value = malloc(nb_plotnodes * sizeof(double));
   assert(value);
   int nodecount = 0;
-  // nodes
+
+  // Nodes
+  int npgv = NPG(f->interp_param + 1);
   for(int i = 0; i < f->macromesh.nbelems; i++) {
-    // get the nodes of element L
+    // Get the nodes of element L
+    int nnodes = 20;
+    double physnode[nnodes][3];
     for(int ino = 0; ino < nnodes; ino++) {
-      int numnoe = elem2nodes[nnodes*i+ino];
+      int numnoe = elem2nodes[nnodes * i + ino];
       for(int ii = 0; ii < 3; ii++) {
         physnode[ino][ii] = node[3 * numnoe + ii];
       }
     }
-    // loop on the macro elem subcells
+
+    // Loop on the macro elem subcells
     int icL[3];
-    // loop on the subcells
+    // Loop on the subcells
     for(icL[0] = 0; icL[0] < nraf[0]; icL[0]++) {
       for(icL[1] = 0; icL[1] < nraf[1]; icL[1]++) {
 	for(icL[2] = 0; icL[2] < nraf[2]; icL[2]++) {
-	  // get the left subcell id
-	  // first glop index in the subcell
-	  //int offsetL = (deg[0] + 1)*(deg[1] + 1)*(deg[2] + 1)*ncL;
 
 	  for(int ino = 0; ino < 64; ino++) {
-	    Xr[0] = (double) (hexa64ref[3 * ino + 0]) / 3;
-	    Xr[1] = (double) (hexa64ref[3 * ino + 1]) / 3;
-	    Xr[2] = (double) (hexa64ref[3 * ino + 2]) / 3;
-
-	    Xr[0] = icL[0] * hh[0]+ Xr[0] * hh[0];
-	    Xr[1] = icL[1] * hh[1]+ Xr[1] * hh[1];
-	    Xr[2] = icL[2] * hh[2]+ Xr[2] * hh[2];
-
+	    double Xr[3] = { hh[0] * (icL[0] + hexa64ref[3 * ino + 0]),
+			     hh[1] * (icL[1] + hexa64ref[3 * ino + 1]),
+			     hh[2] * (icL[2] + hexa64ref[3 * ino + 2]) };
+	    
 	    for(int ii = 0; ii < 3; ii++) {
-	      assert(Xr[ii] < 1 + 1e-10 && Xr[ii] > -1e-10);
+	      assert(Xr[ii] < 1 +  1e-10);
+	      assert(Xr[ii] > -1e-10);
 	    }
 
-	    Ref2Phy(physnode,
-		    Xr,
-		    NULL,
-		    -1,
-		    Xphy,
-		    NULL,
-		    NULL,
-		    NULL,
-		    NULL);
+	    double Xphy[3];
+	    Ref2Phy(physnode, Xr, NULL, -1, Xphy, NULL,  NULL, NULL, NULL);
 
-	    double Xplot[3];
-	    Xplot[0] = Xphy[0];
-	    Xplot[1] = Xphy[1];
-	    Xplot[2] = Xphy[2];
+	    double Xplot[3] = {Xphy[0], Xphy[1], Xphy[2]};
 
 	    value[nodecount] = 0;
 	    double testpsi = 0;
@@ -367,8 +347,7 @@ void PlotField(int typplot, int compare, Field* f, char* filename) {
 	    }
 	    assert(fabs(testpsi-1) < 1e-10);
 
-	    // compare with an
-	    // exact solution
+	    // Compare with an exact solution
 	    if (compare) {
 	      double wex[f->model.m];
 	      f->model.ImposedData(Xphy, f->tnow, wex);
@@ -390,12 +369,11 @@ void PlotField(int typplot, int compare, Field* f, char* filename) {
 
   fprintf(gmshfile, "$EndNodes\n");
 
-  // elements
+  // Elements
   fprintf(gmshfile, "$Elements\n");
   fprintf(gmshfile, "%d\n", f->macromesh.nbelems * nraf[0] * nraf[1] * nraf[2]);
 
   int elm_type = 92;
-  //int num_elm_follow=f->macromesh.nbelems;
   int num_tags = 0;
 
   // fwrite((char*) &elm_type, sizeof(int), 1, gmshfile);
@@ -403,19 +381,17 @@ void PlotField(int typplot, int compare, Field* f, char* filename) {
   // fwrite((char*) &num_tags, sizeof(int), 1, gmshfile);
 
   for(int i = 0; i < f->macromesh.nbelems; i++) {
-    // loop on the macro elem subcells
+    // Loop on the subcells
     int icL[3];
-    // loop on the subcells
     for(icL[0] = 0; icL[0] < nraf[0]; icL[0]++) {
       for(icL[1] = 0; icL[1] < nraf[1]; icL[1]++) {
 	for(icL[2] = 0; icL[2] < nraf[2]; icL[2]++) {
-	  // get the subcell id
-	  int ncL = icL[0]+nraf[0]*(icL[1]+nraf[1]*icL[2]);
-	  // first glop index in the subcell
-	  //int offsetL = (deg[0] + 1)*(deg[1] + 1)*(deg[2] + 1)*ncL;
+	  // Get the subcell id
+	  int ncL = icL[0] + nraf[0] * (icL[1] + nraf[1] * icL[2]);
 
-	  // global subcell id
+	  // Global subcell id
 	  int numelem = ncL + i * nraf[0] * nraf[1] * nraf[2] + 1;
+
 	  //fwrite((char*) &numelem, sizeof(int), 1, gmshfile);
 	  fprintf(gmshfile, "%d ", numelem);
 	  fprintf(gmshfile, "%d ", elm_type);
@@ -789,12 +765,12 @@ void* DGMacroCellInterface2(void* mc) {
   for(int ip = 0; ip < 8; ip++)
     iparam[ip] = f->interp_param[ip];
 
-  // assembly of the surface terms loop on the macrocells faces
+  // Assembly of the surface terms loop on the macrocells faces
   for (int ifa = mface->first; ifa < mface->last_p1; ifa++) {
     int ieL = msh->face2elem[4 * ifa + 0];
     int locfaL = msh->face2elem[4 * ifa + 1];
 
-    // get the physical nodes of element ieL
+    // Get the physical nodes of element ieL
     double physnode[20][3];
     for(int inoloc = 0; inoloc < 20; inoloc++) {
       int ino = msh->elem2node[20 * ieL + inoloc];
@@ -1624,13 +1600,11 @@ void* DGVolume(void* mc) {
   return NULL;
 }
 
-// compute the Discontinuous Galerkin volume terms
-// slow version
+// Compute the Discontinuous Galerkin volume terms: slow version
 void DGVolumeSlow(Field* f) {
+  // Assembly of the volume terms
 
-  // assembly of the volume terms
-  // loop on the elements
-  //#pragma omp parallel for
+  // Loop on the elements
   for (int ie = 0; ie < f->macromesh.nbelems; ie++) {
     // get the physical nodes of element ie
     double physnode[20][3];
@@ -1796,6 +1770,8 @@ void dtField(Field* f) {
     mface[ifa].last_p1 = ifa + 1;
   }
   bool facealgo = true;
+  facealgo = false; // FIXME: temp
+
   if(facealgo) {
     for(int iw = 0; iw < f->wsize; iw++)
       f->dtwn[iw] = 0;
@@ -1826,14 +1802,13 @@ void dtField(Field* f) {
 // Apply the Discontinuous Galerkin approximation for computing the
 // time derivative of the field
 void dtFieldSlow(Field* f) {
-
-  // interpolation params
-  // warning: this is ugly, but the last
-  // parameter is used for computing the volume
-  // GLOP index from the face GLOP index...
-  // ugly too: the first parameter is not used by all
+  // Interpolation params
+  // Warning: this is ugly, but the last parameter is used for
+  // computing the volume GLOP index from the face GLOP index...
+  // Ugly too: the first parameter is not used by all
   // utilities. we have sometimes to jump over : pass param + 1
   // instead of param...
+
   //int param[8] = {f->model.m, _DEGX, _DEGY, _DEGZ, _RAFX, _RAFY, _RAFZ, 0};
 
   // init to zero the time derivative
@@ -1951,34 +1926,33 @@ void dtFieldSlow(Field* f) {
     }
   }
 
-  // assembly of the volume terms
-  // loop on the elements
-  //#pragma omp parallel for
+  // Assembly of the volume terms loop on the elements
   for (int ie = 0; ie < f->macromesh.nbelems; ie++) {
     // get the physical nodes of element ie
     double physnode[20][3];
     for(int inoloc = 0; inoloc < 20; inoloc++) {
-      int ino = f->macromesh.elem2node[20*ie+inoloc];
+      int ino = f->macromesh.elem2node[20 * ie + inoloc];
       physnode[inoloc][0] = f->macromesh.node[3 * ino + 0];
       physnode[inoloc][1] = f->macromesh.node[3 * ino + 1];
       physnode[inoloc][2] = f->macromesh.node[3 * ino + 2];
     }
 
-    // mass matrix
+    // Mass matrix
     double masspg[NPG(f->interp_param + 1)];
-    // loop on the glops (for numerical integration)
+    // Loop on the glops (for numerical integration)
     for(int ipg = 0; ipg < NPG(f->interp_param + 1); ipg++) {
       double xpgref[3], wpg;
-      // get the coordinates of the Gauss point
+      // Get the coordinates of the Gauss point
       ref_pg_vol(f->interp_param + 1, ipg, xpgref, &wpg, NULL);
 
-      // get the value of w at the gauss point
+      // Get the value of w at the gauss point
       double w[f->model.m];
       for(int iv = 0; iv < f->model.m; iv++) {
 	int imem = f->varindex(f->interp_param, ie, ipg, iv);
 	w[iv] = f->wn[imem];
       }
-      // loop on the basis functions
+
+      // Loop on the basis functions
       for(int ib = 0; ib < NPG(f->interp_param + 1); ib++) {
 	// gradient of psi_ib at gauss point ipg
 	double dpsiref[3], dpsi[3];
@@ -1995,7 +1969,7 @@ void dtFieldSlow(Field* f) {
 	    = dtau[0][0] * codtau[0][0]
 	    + dtau[0][1] * codtau[0][1]
 	    + dtau[0][2] * codtau[0][2];
-	  masspg[ipg] = wpg*det;
+	  masspg[ipg] = wpg * det;
 	}
 	// int_L F(w, w, grad phi_ib )
 	double flux[f->model.m];
@@ -2003,7 +1977,7 @@ void dtFieldSlow(Field* f) {
 
 	for(int iv = 0; iv < f->model.m; iv++) {
 	  int imem = f->varindex(f->interp_param, ie, ib, iv);
-	  f->dtwn[imem]+=flux[iv]*wpg;
+	  f->dtwn[imem] += flux[iv] * wpg;
 	}
       }
     }
@@ -2012,16 +1986,15 @@ void dtFieldSlow(Field* f) {
       // apply the inverse of the diagonal mass matrix
       for(int iv = 0; iv < f->model.m; iv++) {
 	int imem = f->varindex(f->interp_param, ie, ipg, iv);
-	(f->dtwn[imem])/=masspg[ipg];
+	(f->dtwn[imem]) /= masspg[ipg];
       }
     }
 
   }
 };
 
-// time integration by a second order Runge-Kutta algorithm
+// Time integration by a second order Runge-Kutta algorithm
 void RK2(Field* f, double tmax) {
-
   double vmax = 1; // to be changed for another model !!!!!!!!!
   //double vmax = 6; // MHD
   double cfl = 0.05;
@@ -2072,8 +2045,8 @@ void RK2(Field* f, double tmax) {
   printf("t=%f iter=%d/%d dt=%f\n", f->tnow, iter, itermax, dt);
 }
 
-// time integration by a second order Runge-Kutta algorithm
-//  with memory copy instead of pointers exchange
+// Time integration by a second order Runge-Kutta algorithm with
+// memory copy instead of pointers exchange
 void RK2Copy(Field* f, double tmax) {
   double vmax = 1; // to be changed for another model !!!!!!!!!
   double cfl = 0.05;
