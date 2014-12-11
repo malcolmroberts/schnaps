@@ -115,6 +115,7 @@ int main(int argc, char *argv[]){
     // up to final time = 1.
     RK2(&f,1.0);
 
+    Gnuplot(&f,"data1D.dat");
     // save the results and the error
     PlotField(0,(1==0),&f,"dgvisu.msh");
 

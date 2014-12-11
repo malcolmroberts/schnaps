@@ -172,6 +172,11 @@ void PlotField(int typplot,int compare,Field* f,char* filename);
 //! \param[in] f the field.
 void DisplayField(Field* f);
 
+//! \brief Save 1D results in a text file
+//! \param[in] f the field.
+//! \param[in] filename the path to the gmsh visualization file.
+void Gnuplot(Field* f,char* filename);
+
 //!  \brief compute the normalized L2 distance with the imposed data
 //! \param[in] f the field.
 //! \returns the error.

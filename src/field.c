@@ -92,7 +92,7 @@ void InitField(Field* f) {
     for(int ipg = 0; ipg < NPG(f->interp_param + 1); ipg++) {
       double xpg[3];
       double xref[3], omega;
-#ifdef _DISCONTINUOUS_CONDITION
+#ifndef _DISCONTINUOUS_CONDITION
       double xref_in[3];
       ref_pg_vol(f->interp_param + 1, ipg, xref, &omega, xref_in);
       double dtau[3][3];
@@ -261,12 +261,59 @@ void DisplayField(Field* f) {
   }
 };
 
+// Save the results in a text file
+// in order plot it with Gnuplot
+void Gnuplot(Field* f, char* filename) {
+
+    FILE * gmshfile;
+    gmshfile = fopen(filename, "w" );
+
+    printf("Save for Gnuplot...\n");
+    for(int ie = 0; ie < f->macromesh.nbelems; ie++) {
+
+        double physnode[20][3];
+        for(int inoloc = 0; inoloc < 20; inoloc++) {
+            int ino = f->macromesh.elem2node[20 * ie + inoloc];
+            physnode[inoloc][0] = f->macromesh.node[3 * ino + 0];
+            physnode[inoloc][1] = f->macromesh.node[3 * ino + 1];
+            physnode[inoloc][2] = f->macromesh.node[3 * ino + 2];
+        }
+
+        for(int ipg = 0; ipg < NPG(f->interp_param + 1); ipg++) {
+
+            double xref[3], xphy[3], wpg;
+            double dtau[3][3];
+            ref_pg_vol(f->interp_param + 1, ipg, xref, &wpg, NULL);
+
+            Ref2Phy(physnode,
+                    xref,
+                    0, -1, // dphiref, ifa
+                    xphy, dtau,
+                    NULL, NULL, NULL); // codtau, dphi, vnds
+
+            if(xphy[1] > -1.00001 && xphy[1] < 1.00001){
+
+                fprintf(gmshfile, "%f ",xphy[0]);
+
+                for(int iv = 0; iv < f->model.m; iv++) {
+                    int imem = f->varindex(f->interp_param, ie, ipg, iv);
+                    fprintf(gmshfile, "%f ",f->wn[imem]);
+                }
+                fprintf(gmshfile, "\n");
+
+            }
+        }
+    }
+    fclose(gmshfile);
+};
+
+
 // Save the results in the gmsh format
 // typplot: index of the plotted variable
 // int compare == true -> compare with the exact value
 void PlotField(int typplot, int compare, Field* f, char* filename) {
 
-  double hexa64ref[3 * 64] = { 
+  double hexa64ref[3 * 64] = {
     0, 0, 3, 3, 0, 3, 3, 3, 3, 0, 3, 3, 0, 0, 0, 3, 0, 0, 3, 3, 0, 0, 3, 0,
     1, 0, 3, 2, 0, 3, 0, 1, 3, 0, 2, 3, 0, 0, 2, 0, 0, 1, 3, 1, 3, 3, 2, 3,
     3, 0, 2, 3, 0, 1, 2, 3, 3, 1, 3, 3, 3, 3, 2, 3, 3, 1, 0, 3, 2, 0, 3, 1,
@@ -287,8 +334,8 @@ void PlotField(int typplot, int compare, Field* f, char* filename) {
   //int param[8] = {f->model.m, _DEGX, _DEGY, _DEGZ, _RAFX, _RAFY, _RAFZ, 0};
   int nraf[3] = {f->interp_param[4], f->interp_param[5], f->interp_param[6]};
   // Refinement size in each direction
-  double hh[3] = {1.0 / nraf[0], 
-		  1.0 / nraf[1], 
+  double hh[3] = {1.0 / nraf[0],
+		  1.0 / nraf[1],
 		  1.0 / nraf[2]};
 
   // Header
@@ -325,7 +372,7 @@ void PlotField(int typplot, int compare, Field* f, char* filename) {
 	    double Xr[3] = { hh[0] * (icL[0] + hexa64ref[3 * ino + 0]),
 			     hh[1] * (icL[1] + hexa64ref[3 * ino + 1]),
 			     hh[2] * (icL[2] + hexa64ref[3 * ino + 2]) };
-	    
+
 	    for(int ii = 0; ii < 3; ii++) {
 	      assert(Xr[ii] < 1 +  1e-10);
 	      assert(Xr[ii] > -1e-10);
@@ -1995,8 +2042,8 @@ void dtFieldSlow(Field* f) {
 
 // Time integration by a second order Runge-Kutta algorithm
 void RK2(Field* f, double tmax) {
-  double vmax = 1; // to be changed for another model !!!!!!!!!
-  //double vmax = 6; // MHD
+  //double vmax = 1; // to be changed for another model !!!!!!!!!
+  double vmax = 6; // MHD
   double cfl = 0.05;
 
   double dt = cfl * f->hmin / vmax;
