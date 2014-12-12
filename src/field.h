@@ -174,8 +174,10 @@ void DisplayField(Field* f);
 
 //! \brief Save 1D results in a text file
 //! \param[in] f the field.
+//! \param[in] dir fixed direction to plot
+//! \param[in] fixval fixed value to plot
 //! \param[in] filename the path to the gmsh visualization file.
-void Gnuplot(Field* f,char* filename);
+void Gnuplot(Field* f,int dir, double fixval,char* filename);
 
 //!  \brief compute the normalized L2 distance with the imposed data
 //! \param[in] f the field.
