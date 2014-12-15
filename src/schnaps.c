@@ -1,3 +1,4 @@
+/* -*- eval: (folding-mode); -*- */
 #include "schnaps.h"
 #include <stdio.h>
 #include <assert.h>
@@ -80,11 +81,11 @@ int main(int argc, char *argv[]){
 
 
     f.interp.interp_param[0]=9;  // _M
-    f.interp.interp_param[1]=2;  // x direction degree
-    f.interp.interp_param[2]=2;  // y direction degree
+    f.interp.interp_param[1]=1;  // x direction degree
+    f.interp.interp_param[2]=1;  // y direction degree
     f.interp.interp_param[3]=0;  // z direction degree
     f.interp.interp_param[4]=2;  // x direction refinement
-    f.interp.interp_param[5]=200;  // y direction refinement
+    f.interp.interp_param[5]=1000;  // y direction refinement
     f.interp.interp_param[6]=1;  // z direction refinement
 
 
@@ -115,7 +116,7 @@ int main(int argc, char *argv[]){
     // up to final time = 1.
     RK2(&f,1.0);
 
-    Gnuplot(&f,1,4.0,"data1D.dat");
+    Gnuplot(&f,1,0.0,"data1D.dat");
     // save the results and the error
     PlotField(0,(1==0),&f, "Rho", "dgvisu.msh");
 
