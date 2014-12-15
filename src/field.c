@@ -12,6 +12,7 @@
 #include <pthread.h>
 #endif
 
+// {{{ GenericVarindex
 // param[0] = M
 // param[1] = deg x
 // param[2] = deg y
@@ -24,7 +25,9 @@ int GenericVarindex(int* param, int elem, int ipg, int iv) {
     * param[4] * param[5] * param[6];
   return iv + param[0] * (ipg + npg * elem);
 }
+// }}}
 
+// {{{ CopyFieldtoCPU
 void CopyFieldtoCPU(Field* f) {
 #ifdef _WITH_OPENCL
   cl_int status;
@@ -57,7 +60,9 @@ void CopyFieldtoCPU(Field* f) {
   status = clFinish(f->cli.commandqueue);
 #endif
 }
+// }}}
 
+// {{{ InitField
 void InitField(Field* f) {
   //int param[8]={f->model.m,_DEGX,_DEGY,_DEGZ,_RAFX,_RAFY,_RAFZ,0};
   f->is2d = false;
@@ -234,7 +239,9 @@ void InitField(Field* f) {
   assert(status == CL_SUCCESS);
 #endif
 };
+// }}}
 
+// {{{ DisplayField
 // Display the field on screen
 void DisplayField(Field* f) {
   printf("Display field...\n");
@@ -260,7 +267,9 @@ void DisplayField(Field* f) {
     }
   }
 };
+// }}}
 
+// {{{ Gnuplot
 // Save the results in a text file
 // in order plot it with Gnuplot
 void Gnuplot(Field* f,int dir, double fixval, char* filename) {
@@ -306,12 +315,15 @@ void Gnuplot(Field* f,int dir, double fixval, char* filename) {
   }
   fclose(gmshfile);
 };
+// }}}
 
-
+// {{{ PlotField
 // Save the results in the gmsh format
 // typplot: index of the plotted variable
 // int compare == true -> compare with the exact value
-void PlotField(int typplot, int compare, Field* f, char* filename) {
+// If fieldname is NULL, then the fieldname is typpplot.
+void PlotField(int typplot, int compare, Field* f, char *fieldname,
+	       char *filename) {
 
   double hexa64ref[3 * 64] = {
     0, 0, 3, 3, 0, 3, 3, 3, 3, 0, 3, 3, 0, 0, 0, 3, 0, 0, 3, 3, 0, 0, 3, 0,
@@ -334,9 +346,7 @@ void PlotField(int typplot, int compare, Field* f, char* filename) {
   //int param[8] = {f->model.m, _DEGX, _DEGY, _DEGZ, _RAFX, _RAFY, _RAFZ, 0};
   int nraf[3] = {f->interp_param[4], f->interp_param[5], f->interp_param[6]};
   // Refinement size in each direction
-  double hh[3] = {1.0 / nraf[0],
-		  1.0 / nraf[1],
-		  1.0 / nraf[2]};
+  double hh[3] = {1.0 / nraf[0], 1.0 / nraf[1], 1.0 / nraf[2]};
 
   // Header
   fprintf(gmshfile, "$MeshFormat\n2.2 0 %d\n", (int) sizeof(double));
@@ -418,7 +428,8 @@ void PlotField(int typplot, int compare, Field* f, char* filename) {
 
   // Elements
   fprintf(gmshfile, "$Elements\n");
-  fprintf(gmshfile, "%d\n", f->macromesh.nbelems * nraf[0] * nraf[1] * nraf[2]);
+  fprintf(gmshfile, "%d\n", 
+	  f->macromesh.nbelems * nraf[0] * nraf[1] * nraf[2]);
 
   int elm_type = 92;
   int num_tags = 0;
@@ -457,10 +468,13 @@ void PlotField(int typplot, int compare, Field* f, char* filename) {
 
   fprintf(gmshfile, "$EndElements\n");
 
-  // now display data
+  // Now display data
   fprintf(gmshfile, "$NodeData\n");
   fprintf(gmshfile, "1\n");
-  fprintf(gmshfile, "\"Field %d\"\n", typplot);
+  if(fieldname == NULL)
+    fprintf(gmshfile, "\"Field %d\"\n", typplot);
+  else 
+    fprintf(gmshfile, "\"Field: %s\"\n", fieldname);
 
   double t = 0;
   fprintf(gmshfile, "1\n%f\n3\n0\n1\n", t);
@@ -535,7 +549,9 @@ void PlotField(int typplot, int compare, Field* f, char* filename) {
   fclose(gmshfile);
   free(value);
 }
+// }}}
 
+// {{{ DGSubCellInterface
 // Compute inter-subcell fluxes
 void* DGSubCellInterface(void* mc) {
   MacroCell* mcell = (MacroCell*) mc;
@@ -676,7 +692,9 @@ void* DGSubCellInterface(void* mc) {
   } // macro elem loop
   return NULL;
 }
+// }}}
 
+// {{{ DGMacroCellInterface
 // compute the Discontinuous Galerkin inter-macrocells boundary terms
 void* DGMacroCellInterface(void* mc) {
   MacroCell* mcell = (MacroCell*) mc;
@@ -799,7 +817,9 @@ void* DGMacroCellInterface(void* mc) {
   }
   return NULL;
 }
+// }}}
 
+// {{{ DGMacroCellInterface 2
 // Compute the Discontinuous Galerkin inter-macrocells boundary terms.
 // Second implementation with a loop on the faces.
 void* DGMacroCellInterface2(void* mc) {
@@ -937,7 +957,9 @@ void* DGMacroCellInterface2(void* mc) {
   }
   return NULL;
 }
+// }}}
 
+// {{{ DGMacroCellInterface_CL
 void* DGMacroCellInterface_CL(void* mf) {
   MacroFace* mface = (MacroFace*) mf;
   Field* f = mface->field;
@@ -1126,7 +1148,9 @@ void* DGMacroCellInterface_CL(void* mf) {
 
   return NULL;
 }
+// }}}
 
+// {{{ DGMass
 // apply division by the mass matrix
 void* DGMass(void* mc) {
   MacroCell* mcell = (MacroCell*) mc;
@@ -1165,7 +1189,9 @@ void* DGMass(void* mc) {
   }
   return NULL;
 }
+// }}}
 
+// {{{ DGMass_CL
 // apply division by the mass matrix OpenCL version
 void* DGMass_CL(void* mc) {
   MacroCell* mcell = (MacroCell*) mc;
@@ -1333,7 +1359,9 @@ void* DGMass_CL(void* mc) {
 
   return NULL;
 }
+// }}}
 
+// {{{ DGVolume_CL
 // apply division by the mass matrix OpenCL version
 void* DGVolume_CL(void* mc) {
   MacroCell *mcell = (MacroCell*) mc;
@@ -1501,7 +1529,9 @@ void* DGVolume_CL(void* mc) {
 
   return NULL;
 }
+// }}}
 
+// {{{ DGVolume
 // compute the Discontinuous Galerkin volume terms
 // fast version
 void* DGVolume(void* mc) {
@@ -1646,7 +1676,9 @@ void* DGVolume(void* mc) {
   }
   return NULL;
 }
+// }}}
 
+// {{{ DGVolumeSlow
 // Compute the Discontinuous Galerkin volume terms: slow version
 void DGVolumeSlow(Field* f) {
   // Assembly of the volume terms
@@ -1716,7 +1748,9 @@ void DGVolumeSlow(Field* f) {
 
   }
 }
+// }}}
 
+// {{{ dtField_pthread
 void dtField_pthread(Field *f)
 {
   MacroCell mcell[f->macromesh.nbelems];
@@ -1802,7 +1836,9 @@ void dtField_pthread(Field *f)
   }
 #endif
 }
+// }}}
 
+// {{{  dtField
 // Apply the Discontinuous Galerkin approximation for computing the
 // time derivative of the field
 void dtField(Field* f) {
@@ -1845,7 +1881,9 @@ void dtField(Field* f) {
   }
 #endif
 }
+// }}}
 
+// {{{ dtFieldSlow
 // Apply the Discontinuous Galerkin approximation for computing the
 // time derivative of the field
 void dtFieldSlow(Field* f) {
@@ -2039,7 +2077,9 @@ void dtFieldSlow(Field* f) {
 
   }
 };
+// }}}
 
+// {{{ RK2
 // Time integration by a second order Runge-Kutta algorithm
 void RK2(Field* f, double tmax) {
   //double vmax = 1; // to be changed for another model !!!!!!!!!
@@ -2091,7 +2131,9 @@ void RK2(Field* f, double tmax) {
   }
   printf("t=%f iter=%d/%d dt=%f\n", f->tnow, iter, itermax, dt);
 }
+// }}}
 
+// {{{ RK2Copy
 // Time integration by a second order Runge-Kutta algorithm with
 // memory copy instead of pointers exchange
 void RK2Copy(Field* f, double tmax) {
@@ -2133,7 +2175,9 @@ void RK2Copy(Field* f, double tmax) {
 
   }
 }
+// }}}
 
+// {{{ L2error
 // compute the normalized L2 distance with the imposed data
 double L2error(Field* f) {
   //int param[8] = {f->model.m, _DEGX, _DEGY, _DEGZ, _RAFX, _RAFY, _RAFZ, 0};
@@ -2180,3 +2224,4 @@ double L2error(Field* f) {
   }
   return sqrt(error) / sqrt(moy);
 }
+// }}}

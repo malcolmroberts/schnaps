@@ -19,7 +19,7 @@ const double transport_v2d[] = {ONE_OVER_SQRT_2,
 				ONE_OVER_SQRT_2,
 				0};
 
-// Transport {{{
+// {{{ Transport
 void TransNumFlux(double wL[], double wR[], double* vnorm, double* flux) {
   double vn
     = transport_v[0] * vnorm[0]
@@ -129,8 +129,8 @@ void VecTransImposedData2d(double x[3], double t, double* w) {
 };
 // }}}
 
-// TestTransport {{{
-void TestTransBoundaryFlux(double x[3], double t,
+// {{{ TestTransport
+void TestTransBoundaryFlux(double x[3], double t, 
 			       double wL[], double* vnorm,
 			       double* flux) {
   double wR[1];
@@ -174,8 +174,8 @@ void TestTransImposedData2d(double x[3], double t, double w[]) {
 };
 // }}}
 
-// MHD {{{
-// conservative {{{
+// {{{ MHD
+// {{{   conservative
 void conservatives(double* y, double* w){
   double gam = _GAM;
 
@@ -192,7 +192,7 @@ void conservatives(double* y, double* w){
 }
 // }}}
 
-// fluxnum {{{
+// {{{   fluxnum
 void fluxnum(double* W,double* vn, double* flux){
 
   double gam = _GAM;
@@ -221,7 +221,7 @@ void fluxnum(double* W,double* vn, double* flux){
 }
 // }}}
 
-// MHDNumFlux {{{
+// {{{   MHDNumFlux
 void MHDNumFlux(double wL[],double wR[],double* vnorm,double* flux){
   double fluxL[9];
   double fluxR[9];
@@ -234,7 +234,7 @@ void MHDNumFlux(double wL[],double wR[],double* vnorm,double* flux){
 };
 // }}}
 
-// MHDBoundaryFlux {{{
+// {{{   MHDBoundaryFlux
 void MHDBoundaryFlux(double x[3],double t,double wL[],double* vnorm,
 		     double* flux){
   double wR[9];
@@ -256,7 +256,7 @@ void MHDBoundaryFlux(double x[3],double t,double wL[],double* vnorm,
 };
 // }}}
 
-// MHDInitData {{{
+// {{{   MHDInitData
 void MHDInitData(double x[3],double w[]){
 
   double t=0;
@@ -265,7 +265,7 @@ void MHDInitData(double x[3],double w[]){
 };
 // }}}
 
-// MHDImposedData {{{
+// {{{   MHDImposedData
 void MHDImposedData(double x[3],double t,double w[]){
   double yL[9], yR[9];
   double wL[9], wR[9];
@@ -306,18 +306,19 @@ void MHDImposedData(double x[3],double t,double w[]){
 
 // }}}
 
-// Vlasov 2D {{{
+// {{{ Vlasov 2D
 // Vlasov 2D transport equation functions
 
 // Set the parameters for the Vlasov equation that are stored in the
 // global space of model.h
-void set_vlasov_params(int mx0, int my0, int mz0, double vmax0)
+void set_vlasov_params(Model *mod) 
 {
-  mx = mx0;
-  my = my0;
-  mz = mz0;
-  m = mx * my * mz;
-  vmax = vmax0;
+  m = mod->m;
+  mx = mod->mx;
+  my = mod->my;
+  mz = mod->mz;
+  assert(m == mx * my * mz);
+  vmax = mod->vmax;
 }
 
 void vlaTransInitData2d(double x[3], double w[])

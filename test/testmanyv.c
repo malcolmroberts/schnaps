@@ -20,7 +20,6 @@ int TestmEq2(void) {
   f.model.mx = 3;
   f.model.my = 3;
   f.model.mz = 1;
-  assert(f.model.m == f.model.mx * f.model.my * f.model.mz);
   f.model.vmax = 1.0;
   f.model.NumFlux = vlaTransNumFlux2d;
   f.model.BoundaryFlux = vlaTransBoundaryFlux2d;
@@ -29,7 +28,7 @@ int TestmEq2(void) {
   f.varindex = GenericVarindex;
 
   // Set the global parameters for the Vlasov equation
-  set_vlasov_params(f.model.mx, f.model.my, f.model.mz, f.model.vmax); 
+  set_vlasov_params(&(f.model)); 
     
   f.interp.interp_param[0] = f.model.m; // _M
   f.interp.interp_param[1] = 2; // x direction degree
@@ -63,10 +62,17 @@ int TestmEq2(void) {
   RK2(&f, tmax);
  
   // Save the results and the error
-
-  int mplot = f.model.m / 2; // m / 2 gives (vx, vy) = (0, 0) 
+  int mxplot = f.model.mx / 2;
+  int myplot = f.model.my / 2;
+  int mplot = mxplot * f.model.my + myplot; 
   printf("mplot: %d\n", mplot);
-  PlotField(mplot, false, &f, "dgvisu.msh");
+  double vx = f.model.vmax * (mxplot - (f.model.mx / 2));
+  double vy = f.model.vmax * (myplot - (f.model.my / 2));
+  char fieldname[100];
+  sprintf(fieldname, "output field has v = (%f,%f)", vx, vy);
+  printf("%s\n", fieldname);
+  PlotField(mplot, false, &f, fieldname, "dgvisu.msh");
+
   /* PlotField(mplot, true, &f, "dgerror.msh"); */
 
   /* double dd = L2error(&f); */

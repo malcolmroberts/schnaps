@@ -61,8 +61,8 @@ int main(int argc, char *argv[]){
     RK2(&f, 1.0);
 
     // Save the results and the error
-    PlotField(0, false, &f, "dgvisu.msh");
-    PlotField(0, true, &f, "dgerror.msh");
+    PlotField(0, false, &f, "V", "dgvisu.msh");
+    PlotField(0, true, &f, "Err", "dgerror.msh");
 
     double dd = L2error(&f);
 
@@ -108,7 +108,7 @@ int main(int argc, char *argv[]){
 
     printf("cfl param =%f\n",f.hmin);
 
-    PlotField(0,(1==0),&f,"dginit.msh");
+    PlotField(0,(1==0),&f, "Rho", "dginit.msh");
 
     // apply the DG scheme
     // time integration by RK2 scheme
@@ -117,7 +117,7 @@ int main(int argc, char *argv[]){
 
     Gnuplot(&f,1,4.0,"data1D.dat");
     // save the results and the error
-    PlotField(0,(1==0),&f,"dgvisu.msh");
+    PlotField(0,(1==0),&f, "Rho", "dgvisu.msh");
 
     return 0;
   }

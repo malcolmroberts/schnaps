@@ -1,6 +1,7 @@
 #ifndef _MODEL_H
 #define _MODEL_H
 
+// {{{ Struct Model
 //! \brief a unified framework for all physical models
 typedef struct Model {
   //! Number of conservative variables
@@ -39,8 +40,9 @@ typedef struct Model {
   void (*ImposedData)(double x[3], double t, double w[]);
 
 } Model;
+// }}}
 
-// Transport {{{
+// {{{ Transport
 //! \brief The particular flux for the transport model
 //! \param[in] wL, wR : left and right states
 //! \param[in] vn : normal vector
@@ -100,7 +102,7 @@ void TransImposedData2d(double* x, double t, double* w);
 void VecTransImposedData2d(double* x, double t, double* w);
 // }}}
 
-// TestTransport {{{
+// {{{ TestTransport
 //! \brief The particular flux for testing the transport model
 //! \param[in] x : space position
 //! \param[in] t : time
@@ -143,7 +145,7 @@ void TestTransImposedData(double* x, double t, double* w);
 void TestTransImposedData2d(double* x, double t, double* w);
 // }}}
 
-// MHD {{{
+// {{{ MHD
 
 //! \brief computes the conservatives states from the primitives
 //! \param[in] y : primitives states
@@ -177,7 +179,7 @@ void MHDInitData(double* x,double* w);
 void MHDImposedData(double* x,double t,double* w);
 // }}}
 
-// Vlasov 2D {{{
+// {{{ Vlasov 2D
 //! Parameters used for computing the velocity for the Vlasov equation.
 static int m;
 static int mx;
@@ -185,7 +187,7 @@ static int my;
 static int mz;
 static double vmax;
 
-void set_vlasov_params(int mx0, int my0, int mz0, double vmax0);
+void set_vlasov_params(Model *mod);
 void vlaTransInitData2d(double x[3], double w[]);
 void vlaTransNumFlux2d(double wL[], double wR[], double* vnorm, double* flux);
 void vlaTransBoundaryFlux2d(double x[3], double t,
