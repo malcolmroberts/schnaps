@@ -262,9 +262,16 @@ void ReadFile(char filename[],char** s){
 //! to be shared with opencl
 //! such code is enclosed between #pragma start_opencl and 
 //! #pragma end_opencl
-void GetOpenCLCode(void){
+void GetOpenCLCode(char *model){
 
   int status;
+  char getModel[50];
+  strcpy(getModel, "sh get_model.sh ");
+  strcat(getModel, model);
+
+  printf("ligne de commande : %s\n",getModel);
+
+  status = system(getModel);
 
   status=system("sh get_opencl_code.sh");
   assert(!status);

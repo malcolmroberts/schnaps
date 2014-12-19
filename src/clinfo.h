@@ -7,6 +7,7 @@
 #include <CL/cl.h>
 #endif
 
+#include <string.h>
 #include <stdio.h>
 
 //! \brief Data structure for managing the OpenCL
@@ -58,7 +59,7 @@ void BuildKernels(CLInfo* cli, char* program);
 //! #pragma end_opencl
 //! get also field.cl
 //! the result is put into schnaps.cl
-void GetOpenCLCode(void);
+void GetOpenCLCode(char *model);
 
 //! \brief allocates and fills a string with a file content
 void ReadFile(char filename[], char** s);

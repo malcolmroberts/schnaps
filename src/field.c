@@ -214,7 +214,8 @@ void InitField(Field* f) {
 
   // Program compilation
   char* s;
-  GetOpenCLCode();
+#define _MODEL ("TRANSPORT")
+  GetOpenCLCode(_MODEL);
   ReadFile("schnaps.cl", &s);
   BuildKernels(&(f->cli), s);
 

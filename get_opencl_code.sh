@@ -20,6 +20,8 @@ sed -i '/end_opencl/d' schnaps.cl
 
 echo "\n/*-----------------------------src from .cl files----------------------------*/\n" >> schnaps.cl
 
+
 cat src/field.cl >> schnaps.cl
-#rm schnaps_temp.cl
+#cat field_temp.cl >> schnaps.cl
+rm schnaps_temp.cl
 return 0

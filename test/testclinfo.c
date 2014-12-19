@@ -29,7 +29,7 @@ int TestCLInfo(void){
 
   BuildKernels(&cli,prog);
 
-  GetOpenCLCode();
+  GetOpenCLCode("NULL");
 
   char* s;
   ReadFile("schnaps.cl", &s);

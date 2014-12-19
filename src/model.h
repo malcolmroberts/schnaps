@@ -158,3 +158,40 @@ void vlaTransBoundaryFlux2d(double x[3], double t,
 			    double* flux);
 void vlaTransImposedData2d(double x[3], double t, double* w);
 #endif
+
+
+// Format pour un model TRANSPORT
+#pragma start_TRANSPORT
+
+#pragma start_opencl
+//! \brief The particular flux for the transport model
+//! \param[in] wL, wR : left and right states
+//! \param[in] vn : normal vector
+//! \param[out] flux : the flux
+void TRANSPORTNumFlux(double wL[], double wR[], double vn[3], double* flux);
+#pragma end_opencl
+
+#pragma start_opencl
+//! \brief The particular flux for testing the transport model
+//! \param[in] x : space position
+//! \param[in] t : time
+//! \param[in] wL : left state
+//! \param[in] vn : normal vector
+//! \param[out] flux : the flux
+void TRANSPORTBoundaryFlux(double* x, double t, double* wL, double* vn,
+			   double* flux);
+#pragma end_opencl
+
+//! \brief The particular init data for the transport model
+//! \param[in] x : space position
+//! \param[out] w : init state at point x
+void TRANSPORTInitData(double* x, double* w);
+
+#pragma start_opencl
+//! \brief The particular imposed data for the transport model
+//! \param[in] x, t : space and time position
+//! \param[out] w : imposed state at point x and time t
+void TRANSPORTImposedData(double* x, double t, double* w);
+#pragma end_opencl
+
+#pragma end_TRANSPORT
