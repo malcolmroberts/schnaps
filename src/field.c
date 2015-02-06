@@ -1287,7 +1287,7 @@ void RK2(Field* f,double tmax){
     vmax=f->model.vmax;
   }
   else {
-    vmax=1; // to be changed for anotehr model...
+    vmax=1; // to be changed for another model...
   }
   double cfl=0.05;
 
