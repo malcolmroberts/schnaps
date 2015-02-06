@@ -7,15 +7,20 @@
 
 void CollisionNumFlux(double wL[],double wR[],double* vnorm,double* flux){
   
-  double vn =
-    1 * vnorm[0] +
-    0 * vnorm[1] +
-    0 * vnorm[2];
+  //for(int i=0;i<_MV;i++){
+  for(int i=0;i<1;i++){
+    int j=i%_DEG_V; // local connectivity put in function
+    int nel=i/_DEG_V; // element num (TODO : function)
 
-   double vnp = vn>0 ? vn : 0;
-   double vnm = vn-vnp;
+    /* double vn = nel*_DV + */
+    /*   _DV* gauss_lob_point[j+gauss_lob_offset[_DEG_V]]; */
+    double vn = 1*vnorm[0];
+    
+    double vnp = vn>0 ? vn : 0;
+    double vnm = vn-vnp;
 
-   flux[0] = vnp * wL[0] + vnm * wR[0];
+    flux[i] = vnp * wL[i] + vnm * wR[i];
+  }
 
 };
 
