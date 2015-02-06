@@ -36,6 +36,7 @@ src/geometry.c
 src/interpolation.c
 src/macromesh.c
 src/model.c
+src/collision.c
 )
 
 #schnaps library
@@ -152,3 +153,12 @@ add_executable(
 )
 target_link_libraries(testmeq2 _schnaps m pthread)
 add_test(testmeq2 testmeq2)
+
+add_test(testcollision testcollision)
+add_executable(
+  testcollision
+  test/test.h
+  test/testcollision.c
+)
+target_link_libraries(testcollision _schnaps m pthread)
+add_test(testcollision testcollision)
