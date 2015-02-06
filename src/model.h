@@ -5,6 +5,8 @@
 typedef struct Model{
   //! number of conservative variables
   int m;
+  //! a majorant of the maximal wave speed
+  double vmax;
   //! \brief a pointer to the numflux function
   //! \param[in] wL,wR : left and right states
   //! \param[in] vn : normal vector

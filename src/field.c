@@ -1282,7 +1282,13 @@ void dtFieldSlow(Field* f){
 // time integration by a second order Runge-Kutta algorithm 
 void RK2(Field* f,double tmax){
 
-  double vmax=1; // to be changed for another model !!!!!!!!!
+  double vmax;
+  if (f->model.vmax != 0) {
+    vmax=f->model.vmax;
+  }
+  else {
+    vmax=1; // to be changed for anotehr model...
+  }
   double cfl=0.05;
 
   double dt = cfl * f->hmin / vmax;
