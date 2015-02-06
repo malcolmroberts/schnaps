@@ -26,7 +26,7 @@ int TestCollision(void) {
 
   int vec=1;
   
-  f.model.m=1; // num of conservative variables
+  f.model.m=_MV; // num of conservative variables
   f.model.NumFlux=CollisionNumFlux;
   f.model.BoundaryFlux=CollisionBoundaryFlux;
   f.model.InitData=CollisionInitData;
@@ -34,7 +34,7 @@ int TestCollision(void) {
   f.varindex=GenericVarindex;
     
     
-  f.interp.interp_param[0]=1;  // _M
+  f.interp.interp_param[0]=_MV;  // _M
   f.interp.interp_param[1]=2;  // x direction degree
   f.interp.interp_param[2]=1;  // y direction degree
   f.interp.interp_param[3]=0;  // z direction degree

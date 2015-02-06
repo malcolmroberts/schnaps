@@ -1,7 +1,7 @@
 #ifndef _COLLISION_H
 #define _COLLISION_H
 
-#define _NB_ELEM_V 1
+#define _NB_ELEM_V 2
 #define _DEG_V 1
 
 #define _MV (_NB_ELEM_V *  _DEG_V + 1)

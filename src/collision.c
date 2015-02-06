@@ -2,19 +2,18 @@
 #include <math.h>
 #include <stdio.h>
 #include <assert.h>
+#include "interpolation.h"
 
 
 
 void CollisionNumFlux(double wL[],double wR[],double* vnorm,double* flux){
   
-  //for(int i=0;i<_MV;i++){
-  for(int i=0;i<1;i++){
+  for(int i=0;i<_MV;i++){
     int j=i%_DEG_V; // local connectivity put in function
     int nel=i/_DEG_V; // element num (TODO : function)
 
-    /* double vn = nel*_DV + */
-    /*   _DV* gauss_lob_point[j+gauss_lob_offset[_DEG_V]]; */
-    double vn = 1*vnorm[0];
+    double vn = (nel*_DV +
+		 _DV* glop(_DEG_V,j))*vnorm[0];
     
     double vnp = vn>0 ? vn : 0;
     double vnm = vn-vnp;
@@ -27,7 +26,7 @@ void CollisionNumFlux(double wL[],double wR[],double* vnorm,double* flux){
 
 void CollisionBoundaryFlux(double x[3],double t,double wL[],double* vnorm,
 			   double* flux){
-  double wR[1];
+  double wR[_MV];
   CollisionImposedData(x,t,wR);
   CollisionNumFlux(wL,wR,vnorm,flux);
 };
@@ -44,14 +43,15 @@ void CollisionInitData(double x[3],double w[]){
 
 void CollisionImposedData(double x[3],double t,double w[]){
 
-  double vx =
-    1 * x[0] +
-    0 * x[1] +
-    0 * x[2];
+  for(int i=0;i<_MV;i++){
+    int j=i%_DEG_V; // local connectivity put in function
+    int nel=i/_DEG_V; // element num (TODO : function)
 
-  double xx = vx - t;
+    double vi = (nel*_DV +
+		 _DV* glop(_DEG_V,j));
+    w[i]=cos(x[0]-vi*t);
+  }
 
-  w[0]=cos(xx);
 };
 
 

@@ -61,6 +61,11 @@ double wglop(int deg,int i){
   return gauss_lob_weight[gauss_lob_offset[deg]+i];
 }
 
+double glop(int deg,int i){
+  return gauss_lob_point[i+gauss_lob_offset[deg]];
+}
+
+
 //! derivatives of the Lagrange functions
 //! at the Gauss Lobatto points up to
 //! degree 4
