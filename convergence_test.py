@@ -51,7 +51,7 @@ while(nraf <= nrafmax):
         print "nraf: " + str(nraf)
 
         dt = 0.01
-        cfl = 0.25
+        cfl = 1.0
 
         cmd = []
         cmd.append("./" +  progname)

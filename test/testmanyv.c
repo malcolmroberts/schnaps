@@ -169,7 +169,7 @@ int main(int argc, char *argv[]) {
   } else { 
     printf("Using C:\n");
     clock_gettime(CLOCK_MONOTONIC, &tstart);
-    RK2(&f, tmax);
+    RK4(&f, tmax);
     clock_gettime(CLOCK_MONOTONIC, &tend);
   }
   executiontime = seconds(tend, tstart);
