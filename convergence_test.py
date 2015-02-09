@@ -41,6 +41,8 @@ def lineafter(searchstring, output):
             return dataline
     return ""
     
+dtlast = 0.1
+
 nraf = 1
 while(nraf <= nrafmax):
 
@@ -50,7 +52,7 @@ while(nraf <= nrafmax):
         print "deg: " + str(deg)
         print "nraf: " + str(nraf)
 
-        dt = 0.01
+        dt = dtlast
         cfl = 1.0
 
         cmd = []
@@ -62,19 +64,21 @@ while(nraf <= nrafmax):
         cmd.append("-g0")
         cmd.append("-X30")
         cmd.append("-Y30")
-        cmd.append("-c" + str(cfl))
+        #cmd.append("-c" + str(cfl))
+        cmd.append("-s" + str(dt))
 
         L2error = []
         DOF = 0
         dx = 0
 
-        maxtests = 10
+        maxtests = 100
         i = 0
         while(i < maxtests):
             #print command0 + str(cfl) + command1
             #print "\tdt: " + str(dt)
                         
-            cmd[len(cmd) - 1] = "-c" + str(cfl)
+            #cmd[len(cmd) - 1] = "-c" + str(cfl)
+            cmd[len(cmd) - 1] = "-s" + str(dt)
 
             print "\t" + str(cmd)
             p = Popen(cmd, stdout = PIPE, stderr = PIPE)
@@ -88,6 +92,15 @@ while(nraf <= nrafmax):
                 dx = lineafter("deltax", out)
                 print "\t\tdx: " + str(dx)
                 print "\t\terror: " + str(L2error[len(L2error) - 1])
+                
+                last = len(L2error) - 1
+                if(last > 0):
+                    err0 = np.abs(float(L2error[last]))
+                    err1 = np.abs(float(L2error[last - 1]))
+                    d = np.abs(err0 - err1) / (err0 + err1)
+                    if(d < 1e-2):
+                        break;
+
             else: 
                 print "cout:"
                 print out
@@ -95,19 +108,13 @@ while(nraf <= nrafmax):
                 print err
 
             cfl *= 0.5
-            if(len(L2error) > 1):
-                err0 = np.abs(float(L2error[i]))
-                err1 = np.abs(float(L2error[i-1]))
-                d = np.abs(err0 - err1) / (err0 + err1)
-                if(d < 1e-2):
-                    break;
-
             dt *= 0.5
             i += 1
 
         error = L2error[len(L2error) - 1]
 
         if(float(error) < 1.0):
+            dtlast = 2.0 * dt
             print "append error: " + str(error)
             f = open(filename, 'a') # now we append
             datawriter = csv.writer(f, delimiter = '\t')
