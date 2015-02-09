@@ -16,7 +16,7 @@ real[] deg = a[0];
 real[] nraf = a[1];
 real[] dof = a[2];
 real[] error = a[3];
-string xvals =  getstring("DOF, nraf, or dx");
+string xvals =  getstring("DOF, nraf, ndx, or dx");
 real dx[];
 if(a.length > 4) {
   dx = a[4];
@@ -61,12 +61,14 @@ for(int d = 0; d < dimlist.length; ++d) {
   real[] dnraf = {};
   real[] ddof = {};
   real[] ddx = {};
+  real[] dndx = {};
   for(int i = 0; i < deg.length; ++i) {
     if(deg[i] == dim) {
       derror.push(error[i]);
       dnraf.push(nraf[i]);
       ddof.push(dof[i]);
       ddx.push(dx[i]);
+      dndx.push(1.0 / nraf[i]);
     }
   }
   //write(derror);
@@ -75,6 +77,7 @@ for(int d = 0; d < dimlist.length; ++d) {
   if(xvals == "DOF") x = ddof;
   if(xvals == "nraf") x = dnraf;
   if(xvals == "dx") x = ddx;
+  if(xvals == "ndx") x = dndx;
   
   int last = derror.length-1;
   if(last >= 1) {
@@ -96,6 +99,8 @@ if(xvals == "DOF")
 if(xvals == "nraf")
     xaxis("nraf", BottomTop, LeftTicks);
 if(xvals == "dx")
+    xaxis("$dx$", BottomTop, LeftTicks);
+if(xvals == "ndx")
     xaxis("$dx$", BottomTop, LeftTicks);
 yaxis("L2 error", LeftRight, RightTicks);
 
