@@ -607,7 +607,7 @@ void Plotfield(int typplot, int compare, field* f, char *fieldname,
 }
 
 // Compute inter-subcell fluxes
-void* DGSubCellInterface(void* mc, field *f) {
+void* DGSubCellInterface(void* mc, field *f, double *w, double *dtw) {
   MacroCell* mcell = (MacroCell*) mc;
 
   // Loop on the elements
@@ -713,8 +713,8 @@ void* DGSubCellInterface(void* mc, field *f) {
 		  for(int iv = 0; iv < m; iv++) {
 		    int imemL = f->varindex(f->interp_param, ie, ipgL, iv);
 		    int imemR = f->varindex(f->interp_param, ie, ipgR, iv);
-		    wL[iv] = f->wn[imemL];
-		    wR[iv] = f->wn[imemR];
+		    wL[iv] = w[imemL];
+		    wR[iv] = w[imemR];
 		  }
 		  f->model.NumFlux(wL, wR, vnds, flux);
 
@@ -731,8 +731,8 @@ void* DGSubCellInterface(void* mc, field *f) {
 		  for(int iv = 0; iv < m; iv++) {
 		    int imemL = f->varindex(f->interp_param, ie, ipgL, iv);
 		    int imemR = f->varindex(f->interp_param, ie, ipgR, iv);
-		    f->dtwn[imemL] -= flux[iv] * wpg;
-		    f->dtwn[imemR] += flux[iv] * wpg;
+		    dtw[imemL] -= flux[iv] * wpg;
+		    dtw[imemR] += flux[iv] * wpg;
 		  }
 
 		}  // face yhat loop
@@ -748,7 +748,7 @@ void* DGSubCellInterface(void* mc, field *f) {
 }
 
 // compute the Discontinuous Galerkin inter-macrocells boundary terms
-void *DGMacroCellInterfaceSlow(void *mc, field *f) {
+void *DGMacroCellInterfaceSlow(void *mc, field *f, double *w, double *dtw) {
   MacroCell *mcell = (MacroCell*) mc;
 
   // Local copy of the interpretation parameters
@@ -872,7 +872,7 @@ void *DGMacroCellInterfaceSlow(void *mc, field *f) {
 
 // Compute the Discontinuous Galerkin inter-macrocells boundary terms.
 // Second implementation with a loop on the faces.
-void* DGMacroCellInterface(void* mc, field *f) {
+void* DGMacroCellInterface(void* mc, field *f, double *w, double *dtw) {
   MacroFace *mface = (MacroFace*) mc;
   MacroMesh *msh = &(f->macromesh);
   const unsigned int m = f->model.m;
@@ -968,9 +968,9 @@ void* DGMacroCellInterface(void* mc, field *f) {
 	double wR[m];
         for(int iv = 0; iv < m; iv++) {
 	  int imemL = f->varindex(iparam, ieL, ipgL, iv);
-	  wL[iv] = f->wn[imemL];
+	  wL[iv] = w[imemL];
           int imemR = f->varindex(iparam, ieR, ipgR, iv);
-          wR[iv] = f->wn[imemR];
+          wR[iv] = w[imemR];
         }
 
         // int_dL F(wL, wR, grad phi_ib)
@@ -982,14 +982,14 @@ void* DGMacroCellInterface(void* mc, field *f) {
 	  // The basis functions is also the gauss point index
 	  int imemL = f->varindex(iparam, ieL, ipgL, iv);
           int imemR = f->varindex(iparam, ieR, ipgR, iv);
-	  f->dtwn[imemL] -= flux[iv] * wpg;
-          f->dtwn[imemR] += flux[iv] * wpg;
+	  dtw[imemL] -= flux[iv] * wpg;
+          dtw[imemR] += flux[iv] * wpg;
 	}
 
       } else { // The point is on the boundary.
 	for(int iv = 0; iv < m; iv++) {
 	  int imemL = f->varindex(iparam, ieL, ipgL, iv);
-	  wL[iv] = f->wn[imemL];
+	  wL[iv] = w[imemL];
 	}
 
         f->model.BoundaryFlux(xpg, f->tnow, wL, vnds, flux);
@@ -997,7 +997,7 @@ void* DGMacroCellInterface(void* mc, field *f) {
 	for(int iv = 0; iv < m; iv++) {
 	  // The basis functions is also the gauss point index
 	  int imemL = f->varindex(iparam, ieL, ipgL, iv);
-	  f->dtwn[imemL] -= flux[iv] * wpg;
+	  dtw[imemL] -= flux[iv] * wpg;
 	}
       }
 
@@ -1179,7 +1179,7 @@ void *DGMacroCellInterface_CL(void *mf, field *f) {
 }
 
 // Apply division by the mass matrix
-void* DGMass(void* mc, field *f) {
+void* DGMass(void* mc, field *f, double *w, double *dtw) {
   MacroCell* mcell = (MacroCell*) mc;
 
   // loop on the elements
@@ -1204,7 +1204,7 @@ void* DGMass(void* mc, field *f) {
       double det = dot_product(dtau[0], codtau[0]);
       for(int iv = 0; iv < f->model.m; iv++) {
 	int imem = f->varindex(f->interp_param, ie, ipg, iv);
-	f->dtwn[imem] /= (wpg * det);
+	dtw[imem] /= (wpg * det);
         //printf("det2=%f wpg=%f imem = %d\n", det, wpg, imem);
 
       }
@@ -1381,7 +1381,7 @@ void *DGVolume_CL(void *mc, field *f) {
 }
 
 // Compute the Discontinuous Galerkin volume terms, fast version
-void* DGVolume(void* mc, field *f) {
+void* DGVolume(void* mc, field *f, double *w, double *dtw) {
   MacroCell* mcell = (MacroCell*) mc;
 
   // loop on the elements
@@ -1463,9 +1463,7 @@ void* DGVolume(void* mc, field *f) {
 		  int ipgL = offsetL + p[0] + npg[0] * (p[1] + npg[1] * p[2]);
 		  for(int iv = 0; iv < m; iv++) {
 		    ///int imemL = f->varindex(f_interp_param, ie, ipgL, iv);
-		    wL[iv] = f->wn[imems[m * (ipgL - offsetL) + iv]];
-
-		    //wL[iv] = f->wn[imemL];
+		    wL[iv] = w[imems[m * (ipgL - offsetL) + iv]];
 		  }
 		  int q[3] = {p[0], p[1], p[2]};
 		  // loop on the direction dim0 on the "cross"
@@ -1501,7 +1499,7 @@ void* DGVolume(void* mc, field *f) {
 		    for(int iv = 0; iv < m; iv++) {
 		      int imemR = f->varindex(f_interp_param, ie, ipgR, iv);
 		      assert(imemR == imems[m * (ipgR - offsetL) + iv]);
-		      f->dtwn[imems[m*(ipgR-offsetL)+iv]]+=flux[iv]*wpgL;
+		      dtw[imems[m*(ipgR-offsetL)+iv]]+=flux[iv]*wpgL;
 		    }
 		  } // iq
 		} // p2
@@ -1598,7 +1596,7 @@ void dtfield_pthread(field *f)
     for(int iw = 0; iw < f->wsize; iw++)
       f->dtwn[iw] = 0;
     for(int ifa = 0; ifa < f->macromesh.nbfaces; ifa++)
-      DGMacroCellInterface((void*) (f->mface + ifa), f);
+      DGMacroCellInterface((void*) (f->mface + ifa), f, f->wn, f->dtwn);
   }
 
 #ifdef _WITH_PTHREAD
@@ -1662,30 +1660,31 @@ void dtfield_pthread(field *f)
 
 // Apply the Discontinuous Galerkin approximation for computing the
 // time derivative of the field
-void dtfield(field* f) {
+void dtfield(field *f, double *w, double *dtw) {
 #ifdef _WITH_PTHREAD
-  dtfield_pthread(f);
+  dtfield_pthread(f, w, dtw);
 #else
 
-  bool facealgo = true;
-  //facealgo = false; // FIXME: temp
-
+#ifdef _OPENMP
+#pragma omp parallel
+#endif
   for(int iw = 0; iw < f->wsize; iw++)
-    f->dtwn[iw] = 0;
+    dtw[iw] = 0;
 
+  bool facealgo = true;
   if(facealgo)
     for(int ifa = 0; ifa < f->macromesh.nbfaces; ifa++)
-      DGMacroCellInterface((void*) (f->mface + ifa), f);
+      DGMacroCellInterface((void*) (f->mface + ifa), f, w, dtw);
 
 #ifdef _OPENMP
 #pragma omp parallel for schedule(dynamic, 1)
 #endif
   for(int ie = 0; ie < f->macromesh.nbelems; ++ie) {
     MacroCell *mcelli = f->mcell + ie;
-    if(!facealgo) DGMacroCellInterfaceSlow(mcelli, f);
-    DGSubCellInterface(mcelli, f);
-    DGVolume(mcelli, f);
-    DGMass(mcelli, f);
+    if(!facealgo) DGMacroCellInterfaceSlow(mcelli, f, w, dtw);
+    DGSubCellInterface(mcelli, f, w, dtw);
+    DGVolume(mcelli, f, w, dtw);
+    DGMass(mcelli, f, w, dtw);
   }
 #endif
 }
@@ -1936,14 +1935,14 @@ void swap_pdoubles(double **a, double **b)
 }
 
 // An out-of-place RK step
-void RK_out(double *fwnp1, double *fwn, double *fdtwn, const double dt, 
+void RK_out(double *dest, double *fwn, double *fdtwn, const double dt, 
 	    const int sizew)
 {
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
   for(int iw = 0; iw < sizew; iw++) {
-    fwnp1[iw] = fwn[iw] + dt * fdtwn[iw];
+    dest[iw] = fwn[iw] + dt * fdtwn[iw];
   }
 }
 
@@ -1959,11 +1958,9 @@ void RK_in(double *fwnp1, double *fdtwn, const double dt, const int sizew)
 }
 
 // Time integration by a second order Runge-Kutta algorithm
-void RK2(field* f, double tmax) {
-  
+void RK2(field *f, double tmax) {
   f->itermax = tmax / f->dt;
   int freq = (1 >= f->itermax / 10)? 1 : f->itermax / 10;
-  //int param[8] = {f->model.m, _DEGX, _DEGY, _DEGZ, _RAFX, _RAFY, _RAFZ, 0};
   int sizew = f->macromesh.nbelems * f->model.m * NPG(f->interp_param + 1);
   int iter = 0;
 
@@ -1971,19 +1968,75 @@ void RK2(field* f, double tmax) {
     if (iter % freq == 0)
       printf("t=%f iter=%d/%d dt=%f\n", f->tnow, iter, f->itermax, f->dt);
 
-    dtfield(f);
+    dtfield(f, f->wn, f->dtwn);
     RK_out(f->wnp1, f->wn, f->dtwn, 0.5 * f->dt, sizew);
-    swap_pdoubles(&f->wnp1, &f->wn);
 
     f->tnow += 0.5 * f->dt;
-    dtfield(f);
-    RK_in(f->wnp1, f->dtwn, f->dt, sizew);
-    swap_pdoubles(&f->wnp1, &f->wn);
+
+    dtfield(f, f->wnp1, f->dtwn);
+    RK_in(f->wn, f->dtwn, f->dt, sizew);
 
     f->tnow += 0.5 * f->dt;
     iter++;
   }
   printf("t=%f iter=%d/%d dt=%f\n", f->tnow, iter, f->itermax, f->dt);
+}
+
+// Time integration by a second order Runge-Kutta algorithm
+void RK4(field *f, double tmax) {
+  f->itermax = tmax / f->dt;
+  int freq = (1 >= f->itermax / 10)? 1 : f->itermax / 10;
+  int sizew = f->macromesh.nbelems * f->model.m * NPG(f->interp_param + 1);
+  int iter = 0;
+
+  // Allocate memory for RK time-stepping
+  double *l1, *l2, *l3, *l4;
+  l1 = calloc(sizew, sizeof(double));
+  l2 = calloc(sizew, sizeof(double));
+  l3 = calloc(sizew, sizeof(double));
+  l4 = calloc(sizew, sizeof(double));
+
+  while(f->tnow < tmax) {
+
+    // l_1 = w_n + 0.5dt * S(w_n) 
+    dtfield(f, f->wn, f->dtwn);
+    RK_out(l1, f->wn, f->dtwn, 0.5 * f->dt, sizew);
+
+    // l_2 = w_n + 0.5dt * S(l_1) 
+    dtfield(f, l1, f->dtwn);
+    RK_out(l2, f->wn, f->dtwn, 0.5 * f->dt, sizew);
+
+    // l_3 = w_n + dt * S(l_2) 
+    dtfield(f, l2, f->dtwn);
+    RK_out(l3, f->wn, f->dtwn, f->dt, sizew);
+
+    // Compute S(l_3)
+    dtfield(f, l3, f->dtwn);
+
+    double *w = f->wn;
+    double *dtw = f->dtwn;
+    double dt = f->dt;
+    double *wp = f->wnp1;
+    // FIXME: this should clearly go into a separate function
+    const double a[] = {1.0 / 3.0, 2.0 / 3.0, 1.0 / 3.0, dt / 6.0};
+    const double b = -1.0 / 3.0;
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+    for(int i = 0; i < sizew; ++i) {
+      w[i] = 
+	b * w[i] +
+	a[0] * l1[i] +
+	a[1] * l2[i] +
+	a[2] * l3[i] +
+	a[3] * dtw[i];
+    }
+    
+    f->tnow += f->dt; // FIXME: this should be updated stage-by-stage
+    iter++;
+  }
+  printf("t=%f iter=%d/%d dt=%f\n", f->tnow, iter, f->itermax, f->dt);
+  // FIXME: free l1, l2, l3, l4
 }
 
 // Set kernel arguments for first stage of RK2
@@ -2155,7 +2208,7 @@ void RK2Copy(field* f, double tmax) {
   while(f->tnow < tmax) {
     printf("t=%f iter=%d dt=%f\n", f->tnow, iter, f->dt);
     // predictor
-    dtfield(f);
+    dtfield(f, f->wn, f->dtwn);
     for(int iw = 0; iw < sizew; iw++) {
       f->wnp1[iw] = f->wn[iw]+ 0.5 * f->dt * f->dtwn[iw];
     }
@@ -2167,7 +2220,7 @@ void RK2Copy(field* f, double tmax) {
     }
     // corrector
     f->tnow += 0.5 * f->dt;
-    dtfield(f);
+    dtfield(f, f->wn, f->dtwn);
     for(int iw = 0; iw < sizew; iw++) {
       f->wnp1[iw] += f->dt * f->dtwn[iw];
     }
