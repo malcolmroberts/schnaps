@@ -52,7 +52,7 @@ while(deg <= degmax):
     if(deg == 2):
         nrafmax = 16
     if(deg == 3):
-        nrafmax = 32
+        nrafmax = 64
     if(deg == 4):
         nrafmax = 8
 
@@ -60,7 +60,7 @@ while(deg <= degmax):
     
     nraf = 4
     dof = 4 * (deg + 1)^2 * nraf^2 * nvx * nvy
-    while(dof < 1e7):
+    while(nraf <= nrafmax):
         dof = 4 * (deg + 1) * (deg + 1) * nraf * nraf * nvx * nvy
 
 
