@@ -6,7 +6,7 @@
 
 
 
-void CollisionNumFlux(double wL[],double wR[],double* vnorm,double* flux){
+void Collision_Lagrangian_NumFlux(double wL[],double wR[],double* vnorm,double* flux){
   
   for(int i=0;i<_MV;i++){
     int j=i%_DEG_V; // local connectivity put in function
@@ -24,11 +24,11 @@ void CollisionNumFlux(double wL[],double wR[],double* vnorm,double* flux){
 };
 
 
-void CollisionBoundaryFlux(double x[3],double t,double wL[],double* vnorm,
+void Collision_Lagrangian_BoundaryFlux(double x[3],double t,double wL[],double* vnorm,
 			   double* flux){
   double wR[_MV];
   CollisionImposedData(x,t,wR);
-  CollisionNumFlux(wL,wR,vnorm,flux);
+  Collision_Lagrangian_NumFlux(wL,wR,vnorm,flux);
 };
 
 

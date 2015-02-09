@@ -17,7 +17,7 @@
 //! \param[in] wL,wR : left and right states
 //! \param[in] vn : normal vector
 //! \param[out] flux : the flux
-void CollisionNumFlux(double wL[],double wR[],double vn[3],double* flux);
+void Collision_Lagrangian_NumFlux(double wL[],double wR[],double vn[3],double* flux);
 
 //! \brief particular boundary flux for the collision model
 //! \param[in] x : space position
@@ -25,7 +25,7 @@ void CollisionNumFlux(double wL[],double wR[],double vn[3],double* flux);
 //! \param[in] wL : left state
 //! \param[in] vn : normal vector
 //! \param[out] flux : the flux
-void CollisionBoundaryFlux(double* x,double t,double* wL,double* vn,
+void Collision_Lagrangian_BoundaryFlux(double* x,double t,double* wL,double* vn,
 			   double* flux);
 
 //! \brief particular init data for the collision model
