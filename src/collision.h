@@ -49,4 +49,13 @@ double Collision_ImposedKinetic_Data(double* x,double t,double v);
 
 double L2_Kinetic_error(Field* f);
 
+//! \brief compute square of velocity L2 error
+//! \param[in] x,t : space and time position
+//! \param[in] w : values of f at glops
+double L2VelError(double* x,double t,double *w);
+
+//! \brief compute compute the source term of the collision
+//! model: electric force + true collisions
+void CollisionSource(double* force, double* w, double* source);
+
 #endif

@@ -23,9 +23,31 @@ void Collision_Lagrangian_NumFlux(double wL[],double wR[],double* vnorm,double* 
   
 };
 
+//! \brief compute square of velocity L2 error
+//! \param[in] w : values of f at glops
+double L2VelError(double* x,double t,double *w){
+
+
+  double wex[_MV];
+  double err2=0;
+  CollisionImposedData(x, t,wex);
+  // loop on the finite emlements
+  for(int iel=0;iel<_NB_ELEM_V;iel++){
+    // loop on the local glops
+    for(int iloc=0;iloc<_DEG_V+1;iloc++){
+      double omega=wglop(_DEG_V,iloc);
+      double vi=iel*_DV+_DV*glop(_DEG_V,iloc);
+      int ipg=iloc+iel*_DEG_V;
+      err2+=omega*_DV*(w[ipg]-wex[ipg])*(w[ipg]-wex[ipg]);
+    }
+  }
+  return err2;
+};
+
+
 
 void Collision_Lagrangian_BoundaryFlux(double x[3],double t,double wL[],double* vnorm,
-			   double* flux){
+				       double* flux){
   double wR[_MV];
   CollisionImposedData(x,t,wR);
   Collision_Lagrangian_NumFlux(wL,wR,vnorm,flux);
@@ -68,17 +90,9 @@ double L2_Kinetic_error(Field* f){
   double moy=0; // mean value
   double moy_space=0;
 
-  for(int i=0;i<_MV;i++){
-    int j=i%_DEG_V; // local connectivity put in function
-    int nel=i/_DEG_V; // element num (TODO : function)
 
-    double vn = (nel*_DV +
-		 _DV* glop(_DEG_V,j));
-    
-    double weight = wglop(_DEG_V,j);
-
-    for (int ie=0;ie<f->macromesh.nbelems;ie++){
-      // get the physical nodes of element ie
+  for (int ie=0;ie<f->macromesh.nbelems;ie++){
+    // get the physical nodes of element ie
     double physnode[20][3];
     for(int inoloc=0;inoloc<20;inoloc++){
       int ino=f->macromesh.elem2node[20*ie+inoloc];
@@ -103,28 +117,57 @@ double L2_Kinetic_error(Field* f){
 	+ dtau[0][1] * codtau[0][1]
 	+ dtau[0][2] * codtau[0][2]; 
       double w[f->model.m];
-      double wex=0;
       for(int iv=0;iv<f->model.m;iv++){
 	int imem=f->varindex(f->interp_param,ie,ipg,iv);
 	w[iv]=f->wn[imem];
       }
       // get the exact value
-      wex=Collision_ImposedKinetic_Data(xphy,f->tnow,vn);
-      for(int iv=0;iv<f->model.m;iv++){
-        error_space+=pow(w[iv]-wex,2)*wpg*det;
-        moy_space+=pow(w[iv],2)*wpg*det;
+      error+=L2VelError(xphy,f->tnow,w)*wpg*det;
+    }
+  }
+  //moy=moy+weight*moy_space;
+
+  return sqrt(error);
+  //return sqrt(error)/sqrt(moy);
+}
+
+//! \brief compute compute the source term of the collision
+//! model: electric force + true collisions
+void CollisionSource(double* force,double* w, double* source){
+
+  double E=force[0]; // electric field
+  double Md[_MV];
+  for(int iv=0;iv<_MV;iv++){
+    Md[iv]=0;
+    source[iv]=0;
+  }
+  // loop on the finite emlements
+  for(int iel=0;iel<_NB_ELEM_V;iel++){
+    // loop on the local glops
+    for(int kloc=0;kloc<_DEG_V+1;kloc++){
+      double omega=wglop(_DEG_V,kloc);
+      int kpg=kloc+iel*_DEG_V;
+      Md[kpg]+=omega*_DV;
+      for(int iloc=0;iloc<_DEG_V+1;iloc++){
+	int ipg=iloc+iel*_DEG_V;
+	source[ipg]-=omega*w[kpg]*dlag(_DEG_V,iloc,kloc);
       }
     }
   }
-    error=error+weight*error_space;
-    moy=moy+weight*moy_space;
 
-    error_space=0;
-    moy_space=0;
-    
+  // upwinding
+  if (E>0){
+    source[_MV-1]+=E*w[_MV-1];
   }
-  return sqrt(error)/sqrt(moy);
-}
+  else {
+    source[0]+=-E*w[0];
+  }
 
+  for(int iv=0;iv<_MV;iv++){
+    source[iv]/=Md[iv];
+  }
+  
+
+};
 
 

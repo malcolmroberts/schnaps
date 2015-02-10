@@ -1289,7 +1289,7 @@ void RK2(Field* f,double tmax){
   else {
     vmax=1; // to be changed for another model...
   }
-  double cfl=0.05;
+  double cfl=0.5;
 
   double dt = cfl * f->hmin / vmax;
   int itermax=tmax/dt;
