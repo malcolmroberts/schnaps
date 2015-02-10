@@ -139,7 +139,7 @@ void CollisionSource(double* force,double* w, double* source){
       Md[kpg]+=omega*_DV;
       for(int iloc=0;iloc<_DEG_V+1;iloc++){
 	int ipg=iloc+iel*_DEG_V;
-	source[ipg]-=omega*w[kpg]*dlag(_DEG_V,iloc,kloc);
+	source[ipg]-=E*omega*w[kpg]*dlag(_DEG_V,iloc,kloc);
       }
     }
   }
