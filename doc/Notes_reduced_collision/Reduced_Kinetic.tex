@@ -1,0 +1,841 @@
+\documentclass[a4paper,french,english,10pt]{article}
+\usepackage{a4wide}
+\usepackage[T1]{fontenc}
+\usepackage[latin9]{inputenc}
+%\usepackage{geometry}
+%\geometry{verbose,a4paper,tmargin=3cm,bmargin=3cm,lmargin=3cm,rmargin=3cm,headheight=3cm,headsep=3cm}
+\usepackage{babel}
+%\usepackage{xcolor}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{graphics}
+\usepackage{epsfig}
+%\usepackage{esint}
+\usepackage{color}
+\usepackage{amsfonts}
+\usepackage{amssymb,latexsym}
+\usepackage{amscd}
+\usepackage{multirow}
+\usepackage{amsthm}
+\usepackage{graphicx}
+\usepackage{amssymb}
+\usepackage{bm}
+\usepackage{cancel}
+\usepackage[dvipsnames,svgnames,x11names,hyperref]{xcolor}
+\usepackage{multirow}
+\usepackage{lineno}
+\usepackage{setspace}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{stmaryrd}
+
+\usepackage[pdftex,bookmarks=true,bookmarksopen=true,colorlinks=true,linkbordercolor=white, citecolor=blue, linkcolor=red]{hyperref}
+
+\usepackage{comment} 
+
+\definecolor{darkgreen}{rgb}{0.2,0.55,0}
+\newcommand{\dr}{\partial_r}
+\newcommand{\ds}{\displaystyle}
+\newcommand{\dx}{\partial_x}
+\newcommand{\dy}{\partial_y}
+\newcommand{\dz}{\partial_z}
+\newcommand{\ex}{\bm{e}_x}
+\newcommand{\ey}{\bm{e}_y}
+\newcommand{\ez}{\bm{e}_z}
+\newcommand{\dt}{\partial_t}
+\newcommand{\f}{f(\x,\vv,t)}
+\newcommand{\fdk}{f(\x_{\perp},z,v_z,t)}
+\newcommand{\g}{g(\x,\vv,t)}
+\newcommand{\G}{\mathbf{g}}
+\newcommand{\U}{\bm{u}}
+\newcommand{\V}{\bm{V}}
+\newcommand{\vW}{\bm{W}}
+\newcommand{\vB}{\bm{B}}
+\newcommand{\vJ}{\bm{J}}
+\newcommand{\vE}{\bm{E}}
+\newcommand{\bphi}{\mathbf{\varphi}}
+
+\newcommand{\intrrr}{\int_{\mathbb{R}^3}}
+\newcommand{\intr}{\int_{\mathbb{R}}}
+\newcommand{\intx}{\int_{D_{\bm{x}}}}
+\newcommand{\vv}{\bm{v}}
+\newcommand{\x}{\bm{x}}
+\newcommand{\vdelta}{\bm{k}}
+\newcommand\eps{\varepsilon}
+\newcommand{\rot}{\nabla \times}
+\newcommand{\diver}{\operatorname{div}}
+\newcommand{\intv}{\int_{D_{\bm{v}}}}
+
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{algo}[theorem]{Algorithm}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{assump}{Assumptions}[section]
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{cri}[theorem]{Criterion}
+\newtheorem{On}[theorem]{Ongoing works}
+\newenvironment{pr oof}[1][D\'emonstration]{\begin{trivlist}
+\item[\hskip \labelsep {\bfseries #1}]}{\end{trivlist}}
+\newenvironment{example}[1][Exemple]{\begin{trivlist}
+\item[\hskip \labelsep {\bfseries #1}]}{\end{trivlist}}
+
+\renewcommand{\thefootnote}{\fnsymbol{footnote}}
+\begin{document}
+
+\title{Reduced models for Vlasov Poisson using velocity basis and numerical methods}
+
+
+\author{Philippe Helluy  \footnotemark[2], Laurent Navoret  \footnotemark[2], Emmanuel Franck\footnotemark[1]}
+ \footnotetext[1]{Inria Nancy Grand est.}
+\footnotetext[2]{University de Strasbourg}
+
+\maketitle
+\tableofcontents
+
+\section{Vlasov Poisson system: definition and properties}
+The definition the distribution function $\f$ with $\x\in\mathbb{R}^d$ the spatial variables and $\vv\in\mathbb{R}^d$ the velocity variables. The Vlasov poisson system is given by
+\begin{equation}\label{VP}
+\left\{\begin{array}{l}
+\ds\dt \f+\vv\cdot\nabla_{\x}\f+\vE\cdot\nabla_{\vv}\f=Q(f,f)\\
+\\
+\ds \vE=\gamma\nabla\phi\mbox{, }\triangle \phi=a \rho
+\end{array}\right.
+\end{equation}
+with $Q(f,f)$ a collisional operator, $a$ a constant, $\phi$ a potential. When $\gamma=1$ (repulsive forces) we obtain the equation for plasma and when $\gamma=-1$ (attractive forces) the equation for self-graviting case. This equation satisfy a conservation for the total energy in the collisionless case.
+\begin{lemma}
+The equations (\ref{VP}) without collisions satisfy
+$$
+\frac{d}{dt}\left(\frac12\intx \f\mid \vv\mid^2 d\x d\vv+\frac{\gamma}2\intx \mid\nabla \phi\mid^2 d\x\right)=0
+$$
+\end{lemma} 
+\begin{proof}
+We multiply the kinetic equation by $\frac{\mid \vv\mid^2}{2}$ and we integrate in velocity and in space
+we obtain
+\begin{align*}
+&\ds\dt \intx\intrrr \left(\frac{\mid \vv\mid^2}{2} f\right)+\intx\intrrr \left(\frac{\mid \vv\mid^2}{2}\vv\cdot\nabla_{\x} f\right)+\intx\intrrr\left(\vE\cdot\nabla_{\vv} f\right)=0\\
+&\ds\dt \intx\intrrr \left(\frac{\mid \vv\mid^2}{2}\f\right)+\intrrr\intx \nabla_{\x}\cdot\left(\frac{\mid \vv\mid^2}{2} f\right)+\intx\intrrr\left(\vE\cdot\nabla_{\vv}\f\right)=0\\
+\end{align*}
+Using the free divergence theorem we obtain
+\begin{align*}
+&\ds\dt \intx\intrrr \left(\frac{\mid \vv\mid^2}{2}\f\right)+\intx\intrrr\left(\frac{\mid \vv\mid^2}{2}\vE\cdot\nabla_{\vv}\f\right)=0\\
+\end{align*}
+Integrating by part in the velocity space we obtain
+\begin{align*}
+&\ds\dt \intx\intrrr \left(\frac{\mid \vv\mid^2}{2}\f\right)-\intx\intrrr\left(f \vE\cdot\nabla_{\vv} (\frac{\mid \vv\mid^2}{2})\right)=0\\
+&\ds\dt \intx\intrrr \left(\frac{\mid \vv\mid^2}{2}\f\right)-\intx\intrrr\left(f \vE\cdot\vv\right)=0\\
+&\ds\dt \intx\intrrr \left(\frac{\mid \vv\mid^2}{2}\f\right)-\intx\vE\cdot\left(\intrrr\vv f \right)=0\\
+\end{align*}
+Now we integrate in the velocity space the Vlasov equation (\ref{VP}) and we define $\rho=\intrrr f$ and $\vJ=\int \vv f$. In this case we obtain $\dt \rho+\nabla\cdot \vJ=0$.
+Consequently we obtain that
+\begin{align*}
+&\ds\dt \intx\intrrr \left(\frac{\mid \vv\mid^2}{2}\f\right)-\gamma\intx\nabla_{\x}\phi \cdot\vJ=0\\
+&\ds\dt \intx\intrrr \left(\frac{\mid \vv\mid^2}{2}\f\right)+\gamma\intx\phi \nabla_{\x}\cdot\vJ=0\\
+&\ds\dt \intx\intrrr \left(\frac{\mid \vv\mid^2}{2}\f\right)-\gamma\intx\phi \dt \rho=0\\
+\end{align*}
+Using the Poisson equation we obtain 
+\begin{align*}
+&\ds\dt \intx\intrrr \left(\frac{\mid \vv\mid^2}{2}\f\right)-\gamma\intx\phi \dt \triangle \phi=0\\
+&\ds\dt \intx\intrrr \left(\frac{\mid \vv\mid^2}{2}\f\right)+\gamma\dt \intx \nabla_{\x} \phi \cdot\nabla_{\x} \dt \phi =0\\
+&\ds\dt \intx\intrrr \left(\frac{\mid \vv\mid^2}{2}\f\right)+\gamma\frac12 \dt \intx \mid\nabla_{\x} \phi \mid^2 =0\\
+\end{align*}
+\end{proof}
+
+\begin{lemma}
+We assume that the distribution fonction $\f$ for the (\ref{VP}) system is given by a Maxwellian. In this case we can approximate the system (\ref{VP}) by the following fluid system
+\begin{equation}\label{euler}
+\left\{\begin{array}{l}
+\ds\dt \rho+\diver(\rho \U)=0\\
+\ds\dt \rho \U+\diver(\rho \U\otimes\U)+\nabla p=-\rho \nabla \phi \\
+\ds\dt \rho e+\diver(\rho \U e)+\diver (p\U)=-\rho (\nabla \phi\cdot \U)\end{array}\right.
+\end{equation}  
+\end{lemma} 
+\begin{proof}
+To derivate the fluid model, we take the moments of the kinetic equation. For this we introduce the function $g(\vv)$. The method consist to multiply the kinetic equation by $g(\vv)$, integrate on the velocity space for $g(\vv)=1,\quad m\vv, \quad m \mathbf{v}^2$. 
+To obtains these equations we use $g(\mathbf{v})=1$. We obtain
+\begin{equation}\label{continuity1}
+\ds\intrrr \dt f d\vv +\intrrr \vv\cdot\nabla_{\x} f d\vv+\vE\cdot\nabla_{\vv} f d\vv=\intrrr Q(f) d\vv 
+\end{equation}
+and we define 
+$$
+n=\intrrr f d\vv,\quad \U =\frac{1}{n}\intrrr f d\vv
+$$
+By definition since $\vv$ does not depend of $\x$ and since we integrate on the velocity space we can write
+$$
+\intrrr \vv \cdot\nabla_{\x} f d\vv=\intrrr \nabla_{\x} \cdot(\vv f)d\vv=\nabla_{\x}\cdot\intrrr \vv f d\vv
+$$
+Consequently we obtain
+$$
+\dt n +\nabla\cdot(n\U)+ \intrrr \vE\cdot\nabla_{\vv} f d\vv=\intrrr Q(f) d\vv 
+$$
+Using the properties of the collision operator we remark that the integral on the velocity space of $Q(f)$ is equal to zero. Now we remark that
+$$
+\vE\cdot\nabla_{\vv} \f=\nabla_{\vv}\cdot (\vE f )
+$$
+Using the flux-divergence theorem we obtain that
+$$
+\intrrr \nabla_{\vv}\cdot\left(\vE \f\right)=0
+$$
+since the distribution is support compact function in the velocity space. At the end we have obtain
+$\dt n +\nabla\cdot(n \U)=0$. Multiplying the equations by $m$ we obtain 
+$$
+\boxed{
+\dt \rho +\nabla\cdot(\rho \U)=0
+}
+$$
+with $\rho=m n $. Now we consider the momentum equation
+To obtains these equations we use $g(\mathbf{w})=m \vv$. We obtain
+\begin{align*}
+&\ds\intrrr m \vv \dt f d\vv +\intrrr m \vv \nabla_{\x}\cdot(\vv f)d\vv+ \intrrr  m \vv\nabla_{\vv}\cdot (\vE f) d\vv\\
+&=\intrrr m \vv Q(f) d\vv 
+\end{align*}
+and we define $\vdelta = \vv-\U$ and 
+$$
+p=\intrrr m \frac13|\vdelta|^2 f d\vv=n T,\quad \Pi=\intrrr m (\vdelta\otimes\vdelta- \frac13|\vdelta|^2 I_d) f d\vv
+$$
+The coefficient $p$ is  the isotropic pressure, $\Pi$ the stress tensor. It is simple to obtain that  $\intrrr m \vv \dt f d\vv =\dt (\rho \U)$.
+Now we consider the second term
+\begin{align*}
+\intrrr m \vv \nabla_{\x}\cdot(\vv f)d\vv &= \intrrr \nabla_{\x}\cdot(m \vv \otimes \vv f)d\vv \\
+&= \nabla_{\x}\cdot \intrrr (m_\vv \otimes \vv f)d\vv \\
+&= \nabla_{\x}\cdot \intrrr\left(  m \U \otimes \U f+ m (\U \otimes \vdelta + \vdelta \otimes \U) f+ m \vdelta \otimes \vdelta f \right)d\vv
+\end{align*}
+By definition of $\vdelta $ we obtain that $\intrrr \vdelta f d\vv=0$ (because $\U$ doest not depend of $\vv$), therefore 
+\begin{align*}
+\intrrr m \vv \nabla_{\x}\cdot(\vv f)d\vv &= \nabla_{\x}\cdot \intrrr\left(  m \U \otimes \U f+ m \vdelta \otimes \vdelta f \right)d\vv\\
+&=\nabla_{\x} \cdot\left(  \rho \U \otimes \U \right)+ \nabla_{\x}\cdot\left(\intrrr m \vdelta \otimes \vdelta f d\vv\right)\\
+&=\nabla_{\x} \cdot\left(  \rho \U \otimes \U \right)+\nabla_{\x} p +\nabla_{\x}\cdot \Pi
+\end{align*}
+By definition of the stress tensor and the isotropic pressure. After this we study the term linked to the field $\vE$.
+\begin{align*}
+ \intrrr  m \vv\nabla_{\vv}\cdot\left(\vE f\right) d\vv&= - \intrrr  m \nabla_{\vv} (\vv) \cdot \vE f d\vv\\
+ &= -\intrrr m(\left(\vE\right) f) d\vv\\
+ &= - \rho \vE
+ \end{align*}
+ To obtain the previous result we use an integration by part and $\nabla_{\vv}\vv=1 I_d$.
+ $$
+ \boxed{
+\dt (\rho\U) +\nabla_{\x} \cdot\left(  \rho \U \otimes \U \right)+\nabla_{\x} p +\nabla_{\x}\cdot \Pi= \rho (\vE)
+}
+$$
+Now we consider the energy equations. To obtains this we use $g(\mathbf{v})=m \frac{|\vv|^2}{2} $. We obtain
+\begin{align*}
+&\ds\intrrr m \frac{|\vv|^2}{2} \dt f d\vv +\intrrr m \frac{|\vv|^2}{2}  \nabla_{\x}\cdot(\vv f)d\vv
++ \int  m\frac{|\vv|^2}{2} \nabla_{\vv}\cdot(\vE f) d\vv
+\end{align*}
+We consider the first term
+ \begin{align*}
+\ds\intrrr m \frac{|\vv|^2}{2} \dt f d\vv =&\dt \intrrr m \frac{|\vv|^2}{2}  f d\vv\\
+=& \dt \left(\intrrr m \frac{|\vv-\U+\U|^2}{2}  f d\vv\right) \\
+=&\dt \left(\intrrr (m \frac{|\vdelta |^2}{2}  f+ m \vdelta\U  f+m \frac{|\U |^2}{2}  f)d\vv\right)\\
+=& \dt \left(\intrrr m \frac{|\vdelta |^2}{2}  f d\vv \right) +\dt\left(\U \intrrr m \vdelta f d\vv\right)+\dt\left(\intrrr m \frac{|\U |^2}{2}  f d\vv\right) \\
+=& \dt \frac32 \left(\intrrr m \frac{|\vdelta |^2}{3}  f d\vv \right) +\dt\left(\frac{|\U |^2}{2}\intrrr m  f d\vv \right)\\
+=& \dt \left(\frac32 p+ \frac12\rho|\U|^2\right)=\dt (\rho \epsilon)
+\end{align*}
+we obtain this because $\U$ doest not depend of $\vv$ and $\intrrr \vdelta f d\vv=0$. now we define the heat flux $\mathbf{q}$
+$$
+\mathbf{q}=\intrrr m \vdelta \frac{|\vdelta |^2}{2} f d\vv
+$$
+We consider the second term
+ \begin{align*}
+\ds \intrrr m \frac{|\vv|^2}{2}  \nabla_{\x}\cdot(\vv f)d\vv =&\nabla_{\x}\cdot\left( \intrrr m \frac{|\vv|^2}{2}  \vv f \right)\\
+=& \nabla_{\x}\cdot\left( \intrrr m\frac{|\vv|^2}{2}  \vdelta f \right)+\nabla_{\x}\cdot\left( \intrrr m\frac{|\vv|^2}{2}  \U f \right)\\
+=& \nabla_{\x}\cdot\left( \intrrr m\frac{|\vv|^2}{2}  \vdelta f \right)+\nabla_{\x}\cdot\left( \U \intrrr m \frac{|\vv|^2}{2} f \right)\\
+=& \nabla_{\x}\cdot\left( \intrrr m\frac{|\vv|^2}{2}  \vdelta f \right)+\nabla_{\x}\cdot\left( \rho \U \epsilon\right)\\
+\end{align*}
+For obtain the last result we have use the previous computations. Now we consider $\nabla_{\x}\cdot\left( \intrrr m\frac{|\vv|^2}{2}  \vdelta f \right)$. We have
+ \begin{align*}
+\ds \nabla_{\x}\cdot\left( \intrrr m\frac{|\vv|^2}{2}  \vdelta f \right)=&\nabla_{\x}\cdot\left( \intrrr m\frac{|\vdelta|^2}{2}  \vdelta f + \intrrr m (\vdelta\U) \vdelta f + \intrrr m \frac{|\U|^2}{2}  \vdelta f \right)\\
+=&\nabla_{\x}\cdot\left( \intrrr m \frac{|\vdelta|^2}{2}  \vdelta f + \intv m (\vdelta\U) \vdelta f + \frac{|\U|^2}{2}\intrrr m  \vdelta f \right)\\
+=& \nabla_{\x}\cdot (\mathbf{q})+ \nabla_{\x}\cdot\left( \intrrr m (\vdelta\U) \vdelta f \right)\\
+=&  \nabla_{\x}\cdot (\mathbf{q})+ \nabla_{\x}\cdot\left( \Pi\cdot\vv \right) + \nabla_{\x}\cdot\left(p \U \right)
+\end{align*}
+therefore
+$$
+\ds \intrrr m \frac{|\vv|^2}{2}  \nabla_{\x}\cdot(\vv f )d\vv=\nabla_{\x}\cdot\left( \rho \vv \epsilon \right)+\nabla_{\x}\cdot\left( \Pi\cdot\vv \right) + \nabla_{\x}\cdot\left(p \vv \right)
+$$
+We continuous by study the term linked to the magnetic field and electrical field. we obtain
+ \begin{align*}
+\ds \intrrr  m\frac{|\vv|^2}{2} \nabla_{\vv}\cdot(\vE f) d\vv=&-\intrrr \vE \f \cdot  \nabla_{\vv}(\frac{|\vv|^2}{2} )d\vv\\
+=& -\intrrr \left(\vE\right) f\cdot  \vv  d\vv\\
+= & - \rho \vE\cdot \U 
+\end{align*}
+the last result comes from that $(\mathbf{a}\times\mathbf{b})\cdot \mathbf{a}=(\mathbf{a}\times\mathbf{a})\cdot \mathbf{b}=0$.
+ We obtain at the end
+$$
+\boxed{
+\dt (\rho\epsilon)+\nabla_{\x}\cdot\left( \rho\U\epsilon\right)+ \nabla_{\x}\cdot\left( \Pi\cdot\vv \right) + \nabla_{\x}\cdot\left(p\U\right)+
+\nabla_{\x}\cdot (\mathbf{q})=\rho \vE\cdot \U 
+}
+$$
+Now we study the term $\nabla \cdot\Pi$ and $\nabla \cdot \mathbf{q}$.  The stress tensor $\Pi$ is given by
+$$
+\Pi=\intrrr m (\vdelta\otimes\vdelta- \frac13|\vdelta|^2 I_d) f d\vv
+$$
+Since the distribution function is a Maxwellian we obtain
+$$
+\Pi=\frac{m n}{(2/\pi T/m)^{\frac32}}\intrrr (\vdelta\otimes\vdelta- \frac13|\vdelta|^2 I_d)  e^{-\frac{|\vdelta|^2}{v_{T}^2}}d\vv
+$$
+with $v_{T}=\sqrt{\frac{T}{m}}$ the thermal velocity. Consequently defining $\mathbf{w}=\frac{\vdelta}{v_{T}}$ we obtain
+$$
+\Pi=\frac{m n}{(2/\pi)^{\frac32}}\frac{T}{m}\intv (\mathbf{w}\otimes\mathbf{w}- \frac13|\mathbf{w}^2| I_d)  e^{-|\mathbf{w}^2| }d\vv
+$$
+Now we remark that for $i\ne j$
+$$
+\intrrr w_jw_i  e^{-|\mathbf{w}^2| }d\vv=\Pi_{i\ne j }\intrrr (e^{-|w_j^2| } w_j) w_i  e^{-|w_i^2| }d\vv=\Pi_{i\ne j }\intrrr (e^{-|w_j^2| } w_j) w_i  e^{-|w_i^2| }d\mathbf{w}=0
+$$
+Th last result is obtain because when we integrate with $d w_i$ the function $\Pi_{i\ne j } (e^{-|w_j^2| } w_j) w_i  e^{-|w_i^2| }$ is odd. Using this and the definition of the stress tensor  we obtain that the stress tensor is equal to zero. Using the same definition for $\mathbf{w}$ we obtain
+$$
+\mathbf{q}=\frac{m n}{(2/\pi)^{\frac32}}\frac{T}{m}\intrrr \mathbf{w} \frac{|\mathbf{w} |^2}{2} f d\mathbf{w}
+$$
+Using that
+$$
+\intrrr w_i\mid \mathbf{w}\mid^2  e^{-|\mathbf{w}^2| }d\mathbf{w}=\Pi_{i\ne j }\intrrr (e^{-|w_j^2| } w_j) (\sum_{j\ne i}w_j^2+w_i^2) w_i  e^{-|w_i^2| }d\mathbf{w}=0
+$$
+we obtain that $\mathbf{q}=0$.Th last result is obtain because when we integrate with $d w_i$ the function $\Pi_{i\ne j } (e^{-|w_j^2| } w_j) (\sum_{j\ne i}w_j^2+w_i^2) w_i  e^{-|w_i^2| }$ is odd.
+To finish we use the definition of $\mathbf{E}$ to obtain the Euler-Poisson equations.
+\end{proof}
+
+
+\section{Reduced models for collisional Vlasov-Poisson model}
+In this section we propose to derivate some reduced model using velocity basis expansion to discretize the velocity space. 
+\subsection{Construction of the reduced models without collision}
+In the general case $\vv\in\mathbb{R}^3$, but we consider that $\vv\in B(0,v_{max})$. For now we consider periodic condition for electric field and the following boundary conditions for $f$
+$$
+\left\{
+\begin{array}{l}
+\mid\mathbf{E}\mid >0\Longrightarrow f(\x,\vv_{max},t)=0\\
+\mid\mathbf{E}\mid <0\Longrightarrow f(\x,\vv_{max},t)=0\end{array}
+\right.
+$$
+We begin by treat the collision less case. This is the equation (\ref{VP}) with $Q(f)$ equal to zero.
+The idea is expend the solution of the kinetic equations on a velocity space. For now we write the proposal for general basis function. These basis contains $P$ elements. Consequently 
+$$
+\f=\sum_{j=1}^P f_j(\x,t)\bphi_j(\vv)
+$$ 
+with $\vv_i$ the node chosen as support of basis function. We note $f(\x,\vv_i,t)=f_i(\x,t)$. Now we multiply the equation by the basis function and integrate on the velocity space we obtain
+\begin{align*}
+&\ds\dt\intv \f\bphi_i+\intv \nabla_{\x}\cdot\left(\vv\f \right)\bphi_i+\vE\cdot\intv\nabla_{\vv}\f\bphi_i\\
+&+E^{+}f(\x,-\vv_{max},t)\bphi_i(-\vv_{max})+E^{-}f(\x,\vv_{max},t)\bphi_i(\vv_{max})
+\end{align*}
+with $E^{+}=\operatorname{max}(0,\parallel\vE\parallel)$ and $E^{-}=\operatorname{min}(0,\parallel\vE\parallel)$. The previous system is equivalent to 
+\begin{align*}
+&\ds\dt\intv \f\bphi_i+\nabla_{\x}\cdot\left(\intv \vv\bphi_i \f \right)+\vE\cdot\intv\nabla_{\vv}\f\bphi_i\\
+&+E^{+}f(\x,-\vv_{max},t)\bphi_i(-\vv_{max})+E^{-}f(\x,\vv_{max},t)\bphi_i(\vv_{max})\\
+&\\
+&=\ds\sum_j \left(\intv \bphi_i\bphi_j\right)\dt f_j+\sum_j\left(\intv \bphi_i\bphi_j\vv \right)\cdot\nabla_{\x} f_j+\sum_j\left(\intv\nabla_{\vv}(\bphi_j)\bphi_i\right)\cdot\vE f_j\\
+&+E^{+}f_j\bphi_j(-\vv_{max}) \bphi_i(-\vv_{max})+E^{-}f_j\bphi_j(\vv_{max})\bphi_i(\vv_{max})
+\end{align*}
+Using the previous computation we obtain the following hyperbolic system with source term
+$$
+M\dt \mathbf{f}+\sum_{l=1}^dA_l\partial_{x^l} \mathbf{f}+B(\vE)\mathbf{f}=0
+$$
+with 
+$$
+M=\left(\intv \bphi_i\bphi_j\right),\quad A_l =\left(\intv \bphi_i\bphi_j v_l\right)
+$$
+and
+$$
+B(\vE)=\left(\intv\nabla_{\vv}(\bphi_j)\bphi_i\right)\cdot\vE+E^{+}\bphi_j(-\vv_{max}) \bphi_i(-\vv_{max})+E^{-}\bphi_j(\vv_{max})\bphi_i(\vv_{max})
+$$
+\subsection{Construction of the reduced models with collision}
+In this case, we propose to define a new model with a generic collision operator. For this we use the Vlasov poisson equation 
+\begin{equation}\label{VP2}
+\left\{\begin{array}{l}
+\ds\dt \f+\vv\cdot\nabla_{\x}\f+\vE\cdot\nabla_{\vv}\f=Q(f)\\
+\\
+\ds \vE=\gamma\nabla\phi\mbox{, }\triangle \phi=a \rho
+\end{array}\right.
+\end{equation}
+We define en entropic variable $g=\partial_fS(f)$ with $S(f)$ the entropy associated with the Vlasov-Poisson equation. For example we can use the physical entropy $S(f)=f \ln f-f$. The first step is to approximate the collisional operator. This approximation is given by
+$$
+Q(f)=\lambda (\Pi g -g)
+$$
+with $\Pi$ the projection on the sub vectorial space $V_0$. We obtain the following equation
+\begin{equation}\label{VPnc}
+\ds\dt \f+\vv\cdot\nabla_{\x}\f+\vE\cdot\nabla_{\vv}\f=\lambda (\Pi g -g)
+\end{equation}
+The classical theory show that the physical collision operator dissipate the entropy. Consequently we propose to verify that this collision operator satisfy the same property.
+\begin{lemma}
+The model  dissipate the entropy. We have 
+$$
+\dt\intrrr \intx S(f)\leq 0
+$$
+\end{lemma}
+\begin{proof}
+Multiplying the equation by $g=\partial_f S(f)$ we obtain a equation on the entropy
+$$
+\ds\dt S(f)+\vv\cdot\nabla_{\x}S(f)+\vE\cdot\nabla_{\vv}S(f)=\lambda g(\Pi g -g)
+$$
+Now we integrate on the full, we obtain
+$$
+\ds \dt \intrrr\intx  S(f)+\intrrr\intx \nabla_{x}\cdot (\vv S(f))+\intrrr\intx \nabla_{\vv}(\vE S(f))=\lambda \intx\intrrr g(\Pi g -g)
+$$
+In the third term we use a Fubini theorem. After this we use the flux divergence theorem the boundary condition in space and the fact that the distribution is compact in the velocity space. Consequently the second and third terms are equation to zero.
+The term $\Pi g-g\in V_0^{\perp}$ by definition of the projector. Since the integral is the scalar product and since $\Pi g\in V_0$ then $\intv \Pi g (\Pi g-g)=0$.
+Now we use that $\intv \Pi g (\Pi g-g)=0$ and the fact that the $\f$ is a compact support function. We obtain that 
+$$
+\ds \dt \intx\intrrr S(f)=-\lambda \intx \intrrr (\Pi g -g)^2\leq 0
+$$
+\end{proof}
+Now we propose to discretize of of this two systems 
+\begin{equation}\label{system1}
+\ds\dt \f+\vv\cdot\nabla_{\x}\f+\vE\cdot\nabla_{\vv}\f=\lambda (\Pi \g -\g)
+\end{equation} 
+or 
+\begin{equation}\label{system2}
+\ds\dt \g+\vv\cdot\nabla_{\x}\g+\vE\cdot\nabla_{\vv}\g=\lambda \frac{1}{\partial_{gg} S^{*}(g)}(\Pi \g -\g)
+\end{equation} 
+To obtain the second system we use the Legendre transform $S^{*}(g)=\operatorname{max}_f gf-S(f)$ Using this we obtain that $f=\partial_g S^{*}g$. Plugging this in (\ref{system1}) we obtain
+\begin{align*}
+&\ds\dt \partial_g S^{*}g+\vv\cdot\nabla_{\x}\partial_g S^{*}g+\vE\cdot\nabla_{\vv}\partial_g S^{*}g=\lambda (\Pi g -g)\\
+=&\ds (\partial_{gg} S^{*}g)\dt \g+(\partial_{gg} S^{*}g)\vv\cdot\nabla_{\x}\g+(\partial_{gg} S^{*}g)\vE\cdot\nabla_{\vv}\g=\lambda (\Pi g -g)\\
+=&\ds\dt \g+\vv\cdot\nabla_{\x}\g+\vE\cdot\nabla_{\vv}\g=\lambda \frac{1}{\partial_{gg} S^{*}(g)}(\Pi g -g)\\
+\end{align*}
+\end{itemize}
+We consider obtain a basis with $P$ basis functions ($P$ the number of degree of freedom which depend of $N$ ne number of element and $q$ the degrees of polynomial). Secondly we assume that
+$$
+\g=\sum_{j=1}^P g_j(\x,t)\bphi_j(\vv)
+$$ 
+with $\vv_i$ the node chosen as support of basis function. In this case $\bphi_i(\vv_j)=\delta_{ij}$ and $g(\x,\vv_i,t)=g_i(\x,t)$. Now we multiply the equation by the basis function and integrate on the velocity space we obtain
+\begin{align*}
+&\ds\dt\intv \g\bphi_i+\intv \nabla_{\x}\cdot\left(\vv\g \right)\bphi_i+\vE\cdot\intv\nabla_{\vv}\g\bphi_i\\
+&+E^{+}g(\x,-\vv_{max},t)\bphi_i(-\vv_{max})+E^{-}g(\x,\vv_{max},t)\bphi_i(\vv_{max})=\intv  \frac{\lambda}{\partial_{gg} S^{*}(g)}(\Pi g-g)\bphi_i
+\end{align*}
+with $E^{+}=\operatorname{max}(0,\mid\vE\mid)$ and $E^{-}=\operatorname{min}(0,\mid\vE\mid)$. The previous system is equivalent to 
+\begin{align*}
+&\ds\dt\intv \f\bphi_i+\nabla_{\x}\cdot\left(\intv \vv\bphi_i \f \right)+\vE\cdot\intv\nabla_{\vv}\f\bphi_i\\
+&+E^{+}f(\x,-\vv_{max},t)\bphi_i(-\vv_{max})+E^{-}f(\x,\vv_{max},t)\bphi_i(\vv_{max})=\intv \frac{\lambda}{\partial_{gg} S^{*}(g)} (\Pi g-g)\bphi_i\\
+&\\
+&=\ds\sum_j \left(\intv \bphi_i\bphi_j\right)\dt f_j+\sum_j\left(\intv \bphi_i\bphi_j\vv \right)\cdot\nabla_{\x} f_j+\sum_j\left(\intv\nabla_{\vv}(\bphi_j)\bphi_i\right)\cdot\vE f_j\\
+&+E^{+}f_j\bphi_j(-\vv_{max}) \bphi_i(-\vv_{max})+E^{-}f_j\bphi_j(\vv_{max})\bphi_i(\vv_{max})=\intv \frac{\lambda}{\partial_{gg} S^{*}(g)} (\Pi g-g)\bphi_i
+\end{align*}
+Now we consider the source term. Expanding the source term we obtain
+$$
+\intv \frac{\lambda}{\partial_{gg} S^{*}(g)} \left(\Pi (\sum_j g_j \bphi_j)-\sum_j g_j\bphi_j\right)\bphi_i
+$$
+Since $\Pi g= \sum_{k=1}^M (g,\Psi_k)_{L^2}\Psi_k$ we obtain
+$$
+\intv \frac{\lambda}{\partial_{gg} S^{*}(g)} \left(\sum_k (\sum_j g_j \bphi_j, \Psi_k)_{L^2}\Psi_k- g_j\bphi_j\right)\bphi_i
+$$
+Since $g_j$ is a spatial function we obtain
+\begin{align*}
+&\sum_j g_j \intv \frac{\lambda}{\partial_{gg} S^{*}(g)} \left(\sum_k (\bphi_j, \Psi_k)_{L^2}\Psi_k-\sum_j\bphi_j\right)\bphi_i\\
+&= \sum_j g_j \left(\sum_k (\bphi_j, \Psi_k)_{L^2}\intv \frac{\lambda}{\partial_{gg} S^{*}(g)} \Psi_k\bphi_i -\intv \frac{\lambda}{\partial_{gg} S^{*}(g)}\bphi_j\bphi_i\right)
+\end{align*}
+Using the previous computation we obtain the following hyperbolic system with source term
+\begin{equation}\label{hypsys}
+\ds M\dt \mathbf{g}+\sum_{l=1}^dA_l\partial_{x^l} \mathbf{g}+B(\vE)\mathbf{g}=\lambda \left(R_{\Pi}(\mathbf{g})-R_{Id}\right)\mathbf{g}
+\end{equation}
+with 
+$$
+M=\left(\intv \bphi_i\bphi_j\right),\quad A_l= \left(\intv \bphi_i\bphi_j v_l\right),
+$$
+$$
+B(\vE)=\left(\intv\nabla_{\vv}(\bphi_j)\bphi_i\right)\cdot\vE+E^{+}\bphi_j(-\vv_{max}) \bphi_i(-\vv_{max})+E^{-}\bphi_j(\vv_{max})\bphi_i(\vv_{max})
+$$
+and
+$$
+R_{\Pi}(\mathbf{g})=\sum_k \left(\intv \bphi_j \Psi_k\right)\left(\intv \frac{1}{\partial_{gg} S^{*}(g)} \Psi_k\bphi_i\right)\mbox{ and  }R_{Id}=\intv \frac{1}{\partial_{gg} S^{*}(g)}\bphi_j\bphi_i
+$$
+\begin{lemma}
+The system (\ref{hypsys}) satisfy the following properties
+\begin{itemize}
+\item The matrices $M$ and $A$ are symmetric and $M$ is positive definite.
+\item The system is hyperbolic. 
+\item The Discrete collisional operator is not singular.
+\item The kernel of the discrete collisional operator is $V_0$.
+\end{itemize}
+\end{lemma}
+\begin{proof}
+~\\
+\textbf{First property}:\\
+Using the definition of the Lagrange polynomials, we obtain that the matrix $M$ is symmetric positive definite and the matrix $A$ is symmetric.  The best choice is to use as quadrature points the points use to define the Lagrange Polynomials.\\
+~\\
+\textbf{Second property}:\\
+This property is verify using the properties of the polynomial Lagrange approximations. The exact form of the different matrices depend of integration point. The best idea is to use the point which describe each polynomial basis as quadrature point (Gauss-Lobato points).\\
+~\\
+\textbf{Third property}:\\
+ Firstly since $S^{*}$ is strictly convexe the operator $\partial_{gg} S^{*}(g)>0$ consequently the matrix is not singular.\\
+ ~\\
+ \textbf{Fourth property}:\\
+ The linear system $ \left(R_{\Pi}(\mathbf{g})-R_{Id}\right)\mathbf{g}=0$ is equivalent to $\intv \frac{1}{\partial_{gg} S^{*}(g)}(\Pi g-g)\bphi_i=0$ for $i\in\left\{1..P\right\}$ and $g=\sum_j^P g_j\bphi_j $. Since $\frac{1}{\partial_{gg} S^{*}(g)}>0$ and $\bphi_i$ gives a basis of $V_h$ $\intv \frac{1}{\partial_{gg} S^{*}(g)}(\Pi g-g)\bphi_i$ for $i\in\left\{1..P\right\}$ is equivalent to $\Pi g-g=0$ for $g\in V_h$. By definition of the projector we have $\operatorname{Ker}(\Pi-Id)=\operatorname{Im} \Pi=V_0$. Since the kernel of the operator is not null, this is the same for the matrix  $\left(R_{\Pi}(\mathbf{g})-R_{Id}\right)$ which is not invertible.\\
+ ~\\
+ 
+ 
+
+ \subsection{The degrees of freedom associated with the method}
+  This method  have some degree of freedom. In the future it is necessary to verify what i the good choices for these difference degree of freedom. Now we propose to gives some remarks about these degree of freedom.\\\\
+\begin{itemize}
+\item \textbf{Variables chosen for the system discretize}: variables $\f$  or variables $\g$ .
+\item \textbf{Entropy chosen}: The entropy defined the equilibrium distribution and consequently  the fluid models and the pressure law. We need that the entropy is smooth strictly convex. For exemple
+\begin{table}[ht]
+\begin{tabular}{| c | c | c |c| }
+\hline
+Closure & $S(f)$ & $S^{*}(g)$ & positivity \\
+\hline
+Linear & $\ds \frac12 f^2$ & $\ds \frac12 g^2$ & no\\
+Physical & $\ds f \ln f- f$ & $\ds e^g$  & yes\\
+Nonlinear & $\ds\frac12f^2-\delta \ln f$ & $\ds\frac{g}{2}\left(\frac{g}{2}+\sqrt{(\frac{g}{2})^2+\delta}\right)-\frac12\delta +\delta \ln\left(\frac{g}{2}+\sqrt{(\frac{g}{2})^2+\delta}\right)$ & yes\\
+\hline
+\end{tabular}
+\caption{Test case with constant density. Err correspond to the $L1$ error and $q$ the order of convergence.}
+\end{table}
+\item \textbf{Projection vectorial subspace chosen}: The idea is that the subspace $V_0$ contains functions with small oscillations. Therefore the collision operator project the distribution in small oscillations functions. The classical choice is $V_0=\operatorname{Span}(1,\vv,\frac{\mid\vv\mid^2}{2})$. This choice allows to conserve the first moments (Indeed $\intv Q(f)\bphi_0=0$ with $\bphi_0\in V_0$ since $Q(f)\in V_0^{\perp}$). If we use the physical entropy with this subspace the distribution function is the Maxwellian when $v_{max}$ tends to the infinity.
+\item \textbf{Choice of $v_{max}$}: The choice of this maximum can be have a impact on the pressure law. For example if we take the physical entropy and a subspace $V_0$ which contains the classical moment, normally in the full velocity space we obtain the perfect gas law. This is not the case we cut the velocity space, but if the maximum velocity is very large we obtain a pressure law very close to the perfect gas law.
+\item \textbf{Choice of velocity basis function}: Using this formalism we can use two method to discretize the velocity space and find the basis
+\begin{itemize}
+\item \textbf{Spectral method}: If we use the spectral method the basis function is given by Legendre function or Fourier expansion. Using this method we obtain a good convergence in the velocity direction. However the spectral method use very smooth and high order functions. These basis generate lot of oscillations (Gibbs phenomena) and negative part in the solution for linear entropy.  To reduce these oscillations, we can use filtering method \cite{filtering} (for example: the $FP_n$ spherical harmonics models in radiative transfer \cite{momentradiatif}).
+\item \textbf{Finite element method}: the other solution is to use a classical Lagrange basis function to discretize the velocity space. Using this method with an order not to large (order 2 for example) we can limite the oscillations using more element in the velocity space. Another advantage with the interpolation operator we will adapte easily the discretization in the velocity space. In this paper we propose to use this basis.
+\end{itemize}
+
+
+ \subsubsection{Lagrangian Polynomial finite element in 1D}
+In this part we gives some details about the reduced model 
+$$
+\ds M\dt \mathbf{g}+\sum_{l=1}^dA_l\partial_{x^l} \mathbf{g}+B(\vE)\mathbf{g}=\lambda \left(R_{\Pi}(\mathbf{g})-R_{Id}\right)\mathbf{g}
+$$
+if we use Lagrangian polynomial finite element method for the velocity space. For this  Firstly we define  $N$ elements $(Q_k)_{k=1..N}$ and consequently $N-1$ internal nodes called $v_i$. Each interval contains $q+1$ points which allows to construct and define the polynomial in the element. Secondly we define $V=\operatorname{Span}(a_{l=0,..,q})$. We assume that in each cell we have a the polynomial reconstruction with an order $q$. Consequently we $q+1$ polynomial $a_{l}^k$ in each cell $k$. Using this local polynomial we construct  the full polynomial function $\bphi_i$ with $i$ the global index of the function given by $i=k * q + l $. At the end we obtain $P$ basis function with $P= N  * q +1$. Using Gauss-Lobato point and Lagrange polynomials defined by these points, we obtain matrix we good properties. For example we observe the integration of  two basis functions $\bphi_i$ and $\bphi_j$ with $i=k_1 * q + l_1$ and $j=k_2 * q + l_2$.
+$$
+M_{ij}=\int_{\Omega}\bphi_i \bphi_j dv=\int_{\Omega}\bphi_{k_1}^{l_1} \bphi_{k_2}^{l_2} dv=\int_{\Omega_{k_1}}\bphi_{k_1}^{l_1} \bphi_{k_2}^{l_2} dv+\int_{\Omega_{k_2}}\bphi_{k_1}^{l_1} \bphi_{k_2}^{l_2} dv
+$$
+$$
+M_{ij}=\int_{\Omega_{k_1}}\bphi_{k_1}^{l_1} \bphi_{k_2}^{l_2} dv+\int_{\Omega_{k_2}}\bphi_{k_1}^{l_1} \bphi_{k_2}^{l_2} dv= \sum_l^q w_l^{k_1} \bphi_{k_1}^{l_1}(v_l^{k_1}) \bphi_{k_2}(v_l^{k_1})^{l_2}+\sum_l^q w_l^{k_2} \bphi_{k_1}^{l_1}(v_l^{k_2}) \bphi_{k_2}(v_l^{k_2})^{l_2}
+$$
+with $v_l^{k}$ the $l$ me Gauss Lobatto point for the cell $k$ and $w_l^k$ the weight associated. A property of the Gauss Lobatto points and the Lagrangian polynomial associated, the polynomial is equal to one for the Gauss-Lobatto point associated and 0 for the other points. Consequently 
+\begin{align*}
+M_{ii} &=w_{l_1}^{k_1},\mbox{ if } v_i \neq v_{l_1}^{k_1}\\
+M_{ii} &=w_{l_1}^{k_1}+w_{l_2}^{k_2},\mbox{ if } v_i = v_{l_1}^{k_1}=  v_{l_2}^{k_2}\\
+M_{ij} & = 0,\mbox{ if } i \neq j
+\end{align*}
+Consequently the Mass matrix is diagonal. using the same argument we obtain that $A$ is diagonal too, with
+\begin{align*}
+A_{ii} &=w_{l_1}^{k_1} v_{l_1}^{k_1},\mbox{ if } v_i \neq v_{l_1}^{k_1}\\
+A_{ii} &=w_{l_1}^{k_1}v_{l_1}^{k_1}+w_{l_2}^{k_2}v_{l_2}^{k_2},\mbox{ if } v_i = v_{l_1}^{k_1}=  v_{l_2}^{k_2}\\
+A_{ij} & = 0,\mbox{ if } i \neq j
+\end{align*}
+
+ \subsection{Legendre spectral basis}
+ 
+ 
+
+
+\section{Numerical methods for the reduced models}
+\subsection{Time schemes for the reduced models}
+In this section we propose different time schemes able to treat the collisional limit without additional cost. These scheme are called AP schemes.  These scheme are very close to the method use for the BGK kinetic model.
+\subsubsection{Implicit first order time scheme}
+To derivate this scheme we consider the kinetic equation before the reduction (before the velocity discretization on a basis) for the entropy variable $\g$. The model is 
+\begin{equation}\label{hypsys2}
+\ds\dt g+\vv\cdot\nabla_{\x}g+\vE\cdot\nabla_{\vv}g=\frac{\lambda}{\eps}  h(g)(\Pi g -g)
+\end{equation}
+with $h(g)=\frac{1}{\partial_{gg}S^{*}(g)}$.
+The first point is to use a first order time scheme where the hyperbolic part and the source term depending of the field $\vE$ and implicit for the collisional source term. We propose this to avoid a very restrictive CFL when the collisional source term is stiff.
+We obtain
+$$
+ g^{n+1}= g^n-\Delta t  \vv\cdot\nabla_{\x} g^n-\Delta t \vE\cdot\nabla_{\vv}g^n+\frac{\lambda \Delta t}{\eps} h(g^{n})\left(\Pi -I_d\right)(g^{n+1})
+$$
+However the collisional source term is not invertible consequently we need to modify the method. Firstly we define $\alpha_{\eps}=\frac{\eps}{\eps+\lambda h(g^n)\Delta t}$. Using this parameter we can rewrite the implicit scheme on this form
+$$
+g^{n+1}=\alpha_{\eps}\left(g^n\Delta t  \vv\cdot\nabla_{\x} g^n-\Delta t \vE\cdot\nabla_{\vv}g^n\right)+(1-\alpha_{\eps})\Pi(g^{n+1})
+$$
+The problem is to compute or approximate the quantity $\Pi g^{n+1}$. The main difference between $\Pi(g^{n+1})$ and $\Pi(g^{n})$ to the spatial and velocity fluxes consequently we propose the following algorithm 
+\begin{itemize}
+\item \textbf{First step}: $g^{*}=\left(g^n-\Delta t  \vv\cdot\nabla_{\x} g^n-\Delta t \vE\cdot\nabla_{\vv}g^n\right)$
+\item \textbf{Second step} $\Pi^{*}=\Pi(g^*)$
+\item \textbf{Third step} $g^{n+1}=\alpha_{\eps}g^{*}+(1-\alpha_{\eps})\Pi^{*}$
+\end{itemize}
+Now we write the same algorithm for the model after velocity discretization. We obtain
+\begin{algo}
+The  Implicit AP time scheme for the reduced Vlasov-Poisson models  is given by
+\begin{itemize}
+\item \textbf{First step}: We compute $g^n=\sum_i^p g_i^n \bphi_i(\vv)$ with $\G^n=(g_1^n,....,g_P^n)$
+\item \textbf{Second step}: We solve $\triangle \phi=a \rho^n= a\intv \partial_g S^{*}(g^n)$
+\item \textbf{Third step}: $ \G^{*}=\left(M-\Delta t  \sum_l^d A_l\partial_{x^l} -\Delta t B(\phi)\right)\G^n$
+\item \textbf{Fourth step} $M\G^{n+1}=M_{\alpha_{\eps}}(g^n)\G^{*}+\Pi_{\alpha_{\eps}} \G^*$
+\end{itemize}
+with 
+$$
+M=\left(\intv \bphi_i\bphi_j\right),\quad M_{\alpha_{\eps}}=\left(\intv \alpha_{\eps}\bphi_i\bphi_j\right),\quad A_l= \left(\intv \bphi_i\bphi_j v_l\right),
+$$
+$$
+B(\vE)=\left(\intv\nabla_{\vv}(\bphi_j)\bphi_i\right)\cdot\vE+E^{+}\bphi_j(-\vv_{max}) \bphi_i(-\vv_{max})+E^{-}\bphi_j(\vv_{max})\bphi_i(\vv_{max}),
+$$
+$$
+\Pi_{\alpha_{\eps}}=\sum_k \left(\intv \bphi_j \Psi_k\right)\left(\intv(1-\alpha_{\eps})\Psi_k\bphi_i\right)\mbox{ and }\alpha_{\eps}=\frac{\eps \partial_{gg}S^{*}(g^n)}{\eps\partial_{gg}S^{*}(g^n)+\lambda\Delta t}
+$$
+\end{algo}
+
+\subsubsection{Splitting first order time scheme}
+To derivate this scheme we introduce the following splitting of the system (\ref{hypsys2})
+\begin{itemize}
+\item $\ds\dt g= \frac{\lambda}{\eps}h(g)(\Pi g -g)$
+\item $\ds\dt g+\vv\cdot\nabla_{\x}g+\vE\cdot\nabla_{\vv}g=0$
+\end{itemize}
+Using a first order scheme using a implicit scheme for the collisions we obtain
+\begin{itemize}
+\item $\ds\frac{g^{*}-g^n}{\Delta t}= \frac{\lambda}{\eps}h(g^n)(\Pi(g^*) -g^*)$
+\item $\ds\frac{g^{n+1}-g^*}{\Delta t}+\vv\cdot\nabla_{\x}g^*+\vE\cdot\nabla_{\vv}g^*=0$
+\end{itemize}
+We propose to take $\Pi (g^*)=\Pi(g^n)$ consequently we obtain
+\begin{itemize}
+\item $\ds g^{*}= \alpha_{\eps}(g^n)g^n+(1-\alpha_{\eps}(g^n))\Pi(g^n)$
+\item $\ds\frac{g^{n+1}-g^*}{\Delta t}+\vv\cdot\nabla_{\x}g^*+\vE\cdot\nabla_{\vv}g^*=0$
+\end{itemize}
+Now we write the same algorithm for the model after velocity discretization. We obtain
+\begin{algo}
+The Splitting first order AP time scheme for the reduced Vlasov-Poisson models  is given by
+\begin{itemize}
+\item \textbf{First step}: We compute $g^n=\sum_i^p g_i^n \bphi_i(\vv)$ with $\G^n=(g_1^n,....,g_P^n)$
+\item \textbf{Second step}: We solve $\triangle \phi=a \rho^n= a\intv \partial_g S^{*}(g^n)$
+\item \textbf{Third step}: $ M\G^{*}=M_{\alpha_{\eps}}\G^n+\Pi_{\alpha_{\eps}} \G^n$
+\item \textbf{Fourth step} $M\G^{n+1}=\left(M-\Delta t  \sum_l^d A_l\partial_{x^l} -\Delta t B(\phi)\right)\G^*$
+\end{itemize} 
+with 
+$$
+M=\left(\intv \bphi_i\bphi_j\right),\quad M_{\alpha_{\eps}}=\left(\intv \alpha_{\eps}\bphi_i\bphi_j\right),\quad A_l= \left(\intv \bphi_i\bphi_j v_l\right),
+$$
+$$
+B(\vE)=\left(\intv\nabla_{\vv}(\bphi_j)\bphi_i\right)\cdot\vE+E^{+}\bphi_j(-\vv_{max}) \bphi_i(-\vv_{max})+E^{-}\bphi_j(\vv_{max})\bphi_i(\vv_{max}),
+$$
+$$
+\Pi_{\alpha_{\eps}}=\sum_k \left(\intv \bphi_j \Psi_k\right)\left(\intv\Psi_k(1-\alpha_{\eps})\bphi_i\right)\mbox{ and }\alpha_{\eps}=\frac{\eps \partial_{gg}S^{*}(g^n)}{\eps\partial_{gg}S^{*}(g^n)+\lambda\Delta t}
+$$
+\end{algo}
+
+Therefore the two scheme gives e very close algorithm. The difference comes from to the order of the collisional and spatial step.
+Just a remark the coefficient $\alpha_{eps}$ come from to the solving of the collisional step.
+We solve $\dt g=\frac{\lambda}{\eps} h(g)(\Pi(g)-g)$ at the discrete level in time and we obtain $\alpha_{\eps}$. But we can construct another coefficient using the exponential integrator.
+We propose to exprime the solution of the equation of $\dt g=\frac{\lambda}{\eps} h(g(t_0)) (\Pi(g)-g)$  which $t_0$ a given time. We obtain
+$$
+\ds g(t0+\Delta t)=e^{-\ds \frac{h(g(t_0))\lambda}{\eps}\Delta t}g(t_0)+\int_0^{\Delta t}e^{-\ds \frac{h(g(t_0))\lambda}{\eps}(\Delta t-\tau)}\Pi(g(t_0+\tau))d\tau
+$$
+To obtain a first order discretization we take $\Pi(g(\tau))=\Pi(g(t_0))$. Taking $t_0=t^n$ we obtain
+$$
+\ds g^{n+1}=e^{\ds -\frac{\lambda}{\partial_{gg}S^*(g^n)\eps}\Delta t}+\left(1-e^{\ds -\frac{\lambda}{\partial_{gg}S^*(g^n)\eps}\Delta t}\right)\Pi(g^n)
+$$
+Consequently we can use  the new coefficient $\alpha_{\eps}=e^{\ds -\frac{\lambda}{\partial_{gg}S^*(g^n)\eps}\Delta t}$. We remark that the classical coefficient $\frac{\partial_{gg}S^{*}(g^n)\eps}{\partial_{gg}S^{*}(g^n)\eps+\lambda\Delta t}$ is a first order approximation to the exponential.
+
+\section{Drift kinetic equation: definition and properties}
+The definition the distribution function $\f$ with $\x\in\mathbb{R}^d$ the spatial variables and $\vv\in\mathbb{R}^d$ the velocity variables. The Vlasov poisson system is given by
+\begin{equation}\label{DK}
+\left\{\begin{array}{l}
+\ds\dt \fdk+\mathbf{U}_{\perp}\cdot\nabla_{\x^{\perp}}\fdk+v_{z}\dz \fdk-\dz \phi  \partial_{v_z} \fdk=0\\
+~\\
+\ds\mathbf{U}_{\perp}=\frac{\vE^{\perp}}{B}=\frac{1}{B}(\dy \phi, -\dx \phi, 0)\\
+~\\
+\ds\nabla_{\perp}\cdot\left(\frac{\rho_{0}}{B}\nabla_{\perp}\phi \right)+\frac{\rho_0}{T_0^e}(\phi -\overline{\phi})=\rho-\rho_0
+\end{array}\right.
+\end{equation}
+The average is given by $\overline{\phi}=\frac{1}{L_z}\int_0^{L_z}\phi dz$. $\rho_0$ is the density associated with the equilibrium distribution $f_{eq}$. $\rho_0$ and $T_0^e$ depend only of $\mathbf{x}_{\perp}$
+\subsection{Derivation of the model }
+The 2 species Vlasov - Maxwell equation is given by
+\begin{equation}\label{vlasovbi}
+\left\{\begin{array}{l}
+\ds\dt f_i +\vv\cdot\nabla_{\x}(f_i)+ \frac{q_i}{m_i}\left(\vE+\vv\times\vB\right)\cdot\nabla_{\vv} f_i=0 \\
+\\
+\ds\dt f_e +\vv\cdot\nabla_{\x}(f_e)+ \frac{q_e}{m_e}\left(\vE+\vv\times\vB\right)\cdot\nabla_{\vv} f_e=0 \\
+\\
+\ds \frac{1}{c^2}\dt \vE-\nabla \times \vB= -\mu_0\vJ\\
+\\
+\ds\dt \vB=-\nabla \times \vE\\
+\\
+\ds\nabla \cdot\vB=0\\
+\ds\nabla \cdot \vE =\frac{\sigma}{\varepsilon_0}=\frac{q_i \intv f_i d\vv+q_e \intv f_e d\vv}{\varepsilon_0}
+\end{array}\right.
+\end{equation}
+with $\sigma=\sum_s \sigma_s=\sum_s q_s n_s=\sum_s q_s \intv f_s d\vv$.
+\begin{assump}
+In the following we assume that 
+\begin{itemize}
+\item $\vE=-\nabla \phi$
+\item $\vB = B\ez$
+\item Quasi neutrality : $n_i = n_e$
+\end{itemize}
+\end{assump}
+Using the two first assumptions we obtain
+\begin{equation}\label{vlasovbi2}
+\left\{\begin{array}{l}
+\ds\dt f_i +\vv\cdot\nabla_{\x}(f_i)+ \frac{q_i}{m_i}\left(\vE+\vv\times\vB\right)\cdot\nabla_{\vv} f_i=0 \\
+\\
+\ds\dt f_e +\vv\cdot\nabla_{\x}(f_e)+ \frac{q_e}{m_e}\left(\vE+\vv\times\vB\right)\cdot\nabla_{\vv} f_e=0 \\
+\\
+\ds\nabla \cdot \vE =\frac{\sigma}{\varepsilon_0}=\frac{q_i \intv f_i d\vv+q_e \intv f_e d\vv}{\varepsilon_0}
+\end{array}\right.
+\end{equation}
+Using the definition of the electric field we obtain
+\begin{equation}\label{vlasovbi3}
+\left\{\begin{array}{l}
+\ds\dt f_i +\vv\cdot\nabla_{\x}(f_i)+ \frac{q_i}{m_i}\left(\vE+\vv\times\vB\right)\cdot\nabla_{\vv} f_i=0 \\
+\\
+\ds\dt f_e +\vv\cdot\nabla_{\x}(f_e)+ \frac{q_e}{m_e}\left(\vE+\vv\times\vB\right)\cdot\nabla_{\vv} f_e=0 \\
+\\
+\ds\Delta \phi=\frac{1}{\varepsilon_0}\left(q_i \intv f_i d\vv+q_e \intv f_e d\vv\right)=\frac{e}{\varepsilon_0}(n_i-n_e)
+\end{array}\right.
+\end{equation}
+Now we consider the limit $\frac{m_e}{m_i}\Rightarrow 0$. In this limit we can consider that the parallel motion of the electrons is fast enough for the electrons to have reached a Boltzmann equilibrium (adiabatic electrons). Consequently we can treat with a fluid model for the parallel electron dynamics which can describe by $\nabla_{\parallel} \phi -\nabla_{\parallel} p_e$ in the isothermal limit. Consequently we obtain 
+$\nabla_{\parallel} n_e=(\frac{e n_e}{T_e})\nabla_{\parallel}\phi $ which gives $n_e = n_0 \exp^{\frac{e\phi}{T_e}}$. Since we have this equation on $n_e$ it is not necessary to solve the Vlasov equation on the electron we obtain
+\begin{equation}\label{vlasovbis3}
+\left\{\begin{array}{l}
+\ds\dt f_i +\vv\cdot\nabla_{\x}(f_i)+ \frac{q_i}{m_i}\left(\vE+\vv\times\vB\right)\cdot\nabla_{\vv} f_i=0 \\
+\\
+\ds\Delta \phi=\frac{1}{\varepsilon_0}\left(q_i \intv f_i d\vv+q_e \intv f_e d\vv\right)=\frac{e}{\varepsilon_0}(n_i-n_e)
+\end{array}\right.
+\end{equation}
+with $n_e-n_0=\frac{n_0}{T_e}(\phi-\overline{\phi})$. Now we propose to write the quasi neutrality equation. At the first gyrokinetic order we have`
+$$
+n_i=\int J(f+g)(\mathbf{x},\mathbf{v}) d\mathbf{v}
+$$
+with $J$ the gyro-average, $f$ the gyro-center distribution and $g$ the first order perturbation. The perturbation is given by $\partial_{\mu} F_M(\phi-J(\phi))$ and $F_M=\frac{n_0}{\sqrt{2\pi T}}\exp{-m \mu/ 2T}$ the equilibrium distribution for ion. Using the previous definitions we obtain
+$$
+n_i=\overline{n}_i+\frac{n_0}{T}(\phi-\tilde{\phi})
+$$
+with $\overline{n}_i=\int J(f)d\mathbf{v}$ and $\tilde{\phi}=\int_0^{\infty} J^2(\phi)\exp^{-\mu} d \mu$. Using $\rho_i^2=\frac{T_i}{B^2}$ and an approximation of  the operator $\phi-\tilde{\phi}$ which use the pad\'e approximation of the Fourier space we obtain
+$$
+n_i=\overline{n}_i+\nabla_{\perp}\cdot\left(\frac{n_i}{B^2}\nabla_{\perp}\phi\right)
+$$
+To finish we couple the last equation with the equation on $n_e$ and $\Delta \phi=\frac{e}{\varepsilon_0}(n_i-n_e)$, we linearize around $n_0$  and multiply by $m_i$ to obtain
+~\\
+\begin{equation}\label{vlasovbi4}
+\left\{\begin{array}{l}
+\ds\dt f+\vv\cdot\nabla_{\x}(f)+ \frac{q}{m}\left(\vE+\vv\times\vB\right)\cdot\nabla_{\vv} f=0 \\
+\\
+\ds\nabla_{\perp}\left(\frac{\rho_{0}}{B^2}\nabla_{\perp}\phi \right)+\frac{\rho_0}{T_e}(\phi -\overline{\phi})=\rho-\rho_0
+\end{array}\right.
+\end{equation}
+Now we use the fact that $\vB= B\ez $ consequently $\mathbf{v}_{\perp}=\frac{\vE^{\perp}}{B}=\frac{1}{B}(\dy \phi, -\dx \phi, 0)$ (classical motion of particle).
+Secondly we study the Lorentz force and we use previous decomposition assuming that the kinetic perpendicular velocity is homogeneous to the average perpendicular velocity $\U_{\perp}$
+\begin{align*}
+\vE+\vv\times\vB &= \vE+\vv_{\perp}\times\vB+ v_z\ez \times\vB \\
+& = \vE_{\perp}+E_{\parallel}\ez+\U_{\perp}\times \vB\\
+& = \vE_{\perp}+E_{\parallel}\ez+\frac{1}{B^2}(\vE\times \vB)\times \vB
+\end{align*}
+Using that $(\vE\times \vB)\times \vB=-(E_x\ex +E_y \ey )B^2 $ gives that $\vE+\vv\times\vB=E_{\parallel}\ez$. Plugging the previous equation in the kinetic equation (\ref{vlasovbi4}) and using $\vv=\U_{\perp}+v_z$ we obtain the result.
+\subsection{Properties : conservation energy }
+
+\begin{lemma}
+The equations (\ref{vlasovbi}) without collisions satisfy
+$$
+\frac{d}{dt}\left(\frac12\intx\intr \fdk\mid v_{z}\mid^2 d\x d v_z+\frac12\intx \phi(\rho - \rho_0) d\x\right)=0
+$$
+\end{lemma} 
+\begin{proof}
+We multiply the kinetic equation by $\frac{\mid \vv\mid^2}{2}$ and we integrate in velocity and in space
+we obtain
+\begin{align*}
+&\ds\dt \intx\intrrr \left(\frac{\mid v_z\mid^2}{2} f\right)+\intx\intr \left(\frac{\mid v_z \mid^2}{2}\mathbf{U}_{\perp}\cdot\nabla_{\x_{\perp}} f\right)+\intx\intr \left(\frac{\mid v_z \mid^2}{2}v_z\partial_z f\right)-\intx\intr\frac{\mid v_z \mid^2}{2}\left(\dz \phi\partial_{v_z} f\right)=0\\
+&\ds\dt \intx\intrrr \left(\frac{\mid v_z\mid^2}{2} f\right)+\intx\intr \left(\frac{\mid v_z \mid^2}{2}\mathbf{U}_{\perp}\cdot\nabla_{\x_{\perp}} f\right)+\intx\intr \partial_z\left(\frac{\mid v_z \mid^2}{2}v_z f\right)-\intx\intr\frac{\mid v_z \mid^2}{2}\left(\dz \phi\partial_{v_z} f\right)=0\\
+\end{align*}
+Since $\nabla \cdot( \mathbf{U}_{\perp})=0$ we obtain
+$$
+\ds\dt \intx\intrrr \left(\frac{\mid v_z\mid^2}{2} f\right)+\intr\intx \nabla_{\perp} \cdot \left(\frac{\mid v_z \mid^2}{2}\mathbf{U}_{\perp} f\right)+\intx\intr \partial_z\left(\frac{\mid v_z \mid^2}{2}v_z f\right)-\intx\intr\frac{\mid v_z \mid^2}{2}\left(\dz \phi\partial_{v_z} f\right)=0
+$$
+Using the free divergence theorem we obtain
+\begin{align*}
+\ds\dt \intx\intrrr \left(\frac{\mid v_z\mid^2}{2} f\right)-\intx\intr\frac{\mid v_z \mid^2}{2}\left(\partial_{z} \phi\partial_{v_z} f\right)=0
+\end{align*}
+Integrating by part in the velocity space we obtain
+\begin{align*}
+&\ds\dt \intx\intrrr \left(\frac{\mid v_z\mid^2}{2} f\right)+\intx\intr\partial_{v_z}\left(\frac{\mid v_z \mid^2}{2}\right)\dz \phi f=0\\
+&\ds\dt \intx\intrrr \left(\frac{\mid v_z\mid^2}{2} f\right)+\intx\intr v_z\dz \phi f=0\\
+&\ds\dt \intx\intrrr \left(\frac{\mid v_z\mid^2}{2} f\right)+\intx\dz \phi\left(\intr v_z f\right)=0\\
+&\ds\dt \intx\intrrr \left(\frac{\mid v_z\mid^2}{2} f\right)-\intx \phi \dz \left(\intr v_z f\right)=0\\
+\end{align*}
+Integrating the drift-kinetic equation on the velocity space in the $z$ direction we obtain
+\begin{align*}
+&\ds\dt \intx\intrrr \left(\frac{\mid v_z\mid^2}{2} f\right)+\intx \phi \dt \rho + \intx \phi\intr \mathbf{U}_{\perp}\cdot \nabla_{x_{\perp}} f=0\\
+\end{align*}
+in the last term we exchange the integral and using the definition of $\matbf{U}_{\perp}$ we show that this last term is equal to zero. We obtain
+\begin{align*}
+&\ds\dt \intx\intrrr \left(\frac{\mid v_z\mid^2}{2} f\right)+\intx \phi \dt \rho =0\\
+\end{align*}
+We subtract the same energy estimate for the equilibrium distribution we obtain
+\begin{align*}
+&\ds\dt \intx\intrrr \left(\frac{\mid v_z\mid^2}{2} (f-f_eq)\right)+\intx \phi \dt (\rho-\rho_0) =0\\
+&\ds\dt \intx\intrrr \left(\frac{\mid v_z\mid^2}{2} (f-f_eq)\right)+\frac12\dt \intx \phi (\rho-\rho_0) = \frac12\intx (\rho-\rho_0)\dt \phi-\frac12\intx \dt(\rho-\rho_0) \phi \\
+\end{align*}
+Now we observe that
+$$
+\frac12\intx (\rho-\rho_0)\dt \phi=\intx \phi \dt \left(\nabla_{\perp}\cdot(\frac{\rho_0}{B}\nabla_{\perp}\phi)\right)+\intx \frac{\rho_0}{T_0^e}\phi \dt(\phi-\overline{\phi}) 
+$$
+and
+$$
+\frac12\intx \dt (\rho-\rho_0) \phi=\intx \dt\phi \left(\nabla_{\perp}\cdot(\frac{\rho_0}{B}\nabla_{\perp}\phi)\right)+\intx \frac{\rho_0}{T_0^e}\dt \phi (\phi-\overline{\phi}) 
+$$
+Using integration by part we obtain easily 
+$$
+\ds\dt \intx\intrrr \left(\frac{\mid v_z\mid^2}{2} (f-f_{eq})\right)+\frac12\dt \intx \phi (\rho-\rho_0) = \frac12\intx \frac{\rho_0}{T_0^e}(\phi \dt \overline{\phi}- \dt \phi \overline{\phi})
+$$
+to conclude we use that $\rho_0$ and $T_0^e$ depend only of $\mathbf{x}_{\perp}$
+\begin{align*}
+\frac12\intx \frac{\rho_0}{T_0^e}(\phi \dt \overline{\phi}- \phi \dt \overline{\phi})&=\frac12\int_{L_{\perp}} \frac{\rho_0}{T_0^e}(\int_{L_z}\phi \dt \overline{\phi}- \int_{L_z}\dt \phi  \overline{\phi})\\
+&=\frac12\int_{L_{\perp}} \frac{\rho_0}{T_0^e}( \dt \overline{\phi} \int_{L_z}\phi - \overline{\phi}\int_{L_z}\dt \phi  )\\
+&=\frac12\int_{L_{\perp}} \frac{\rho_0}{T_0^e}( \dt \overline{\phi} L_z \overline{\phi} - \overline{\phi}L_z\dt \overline{\phi}  )=0\\
+\end{align*}
+\end{proof}
+
+
+\subsection{Collision operator and hydrodynamics limit }
+We define en entropic variable $g=\partial_fS(f)$ with $S(f)$ the entropy associated with the Drift kinetic equation. For example we can use the physical entropy $S(f)=f \ln f-f$. The first step is to approximate the collisional operator. This approximation is given by
+$$
+Q(f)=\lambda (\Pi g -g)
+$$
+with $\Pi$ the projection on the sub vectorial space $V_0$. We obtain the following equation
+\begin{equation}\label{DK}
+\left\{\begin{array}{l}
+\ds\dt \fdk+\mathbf{U}_{\perp}\cdot\nabla_{\x^{\perp}}\fdk+v_{z}\dz \f-\dz \phi  \partial_{v_z} \fdk=\lambda (\Pi g -g)\\
+~\\
+\ds\mathbf{U}_{\perp}=\frac{\vE^{\perp}}{B}=\frac{1}{B}(\dy \phi, -\dx \phi, 0)\\
+~\\
+\ds\nabla_{\perp}\cdot\left(\frac{\rho_{0}}{B}\nabla_{\perp}\phi \right)+\frac{\rho_0}{T_0^e}(\phi -\overline{\phi})=\rho-\rho_0
+\end{array}\right.
+\end{equation}
+The classical theory show that the physical collision operator dissipate the entropy. Consequently we propose to verify that this collision operator satisfy the same property.
+\begin{lemma}
+The model  dissipate the entropy. We have 
+$$
+\dt\intrrr \intx S(f)\leq 0
+$$
+\end{lemma}
+\begin{proof}
+Multiplying the equation by $g=\partial_f S(f)$ we obtain a equation on the entropy
+$$
+\ds\dt S(f)+\mathbf{U}_{\perp}\cdot\nabla_{\x_{\perp}} S(f)+v_{z}\dz S(f)-\dz \phi \partial_{v_z} S(f)=\lambda g (\Pi g -g)
+$$
+Now we integrate on the velocity space, we obtain
+$$
+\ds \dt \intrrr\intx  S(f)+\intrrr \intx \nabla_{\x_{perp}}(\mathbf{U}_{\perp} S(f))+\intrrr\intx  \dz(v_z S(f))-\intx \intrrr \partial_{v_z}(\dz \phi S(f))=\lambda \intx\intrrr g(\Pi g -g)
+$$
+In the third term we use a Fubini theorem. After this we use the flux divergence theorem the boundary condition in space and the fact that the distribution is compact in the velocity space. Consequently the second, third and fourth terms are equations to zero.
+The term $\Pi g-g\in V_0^{\perp}$ by definition of the projector. Since the integral is the scalar product and since $\Pi g\in V_0$ then $\intv \Pi g (\Pi g-g)=0$.
+Now we use that $\intv \Pi g (\Pi g-g)=0$ and the fact that the $\fdk$ is a compact support function. We obtain that 
+$$
+\ds \dt \intx \intrrr S(f)=-\lambda \intx\intrrr (\Pi g -g)^2\leq 0
+$$
+\end{proof}
+
+
+\begin{thebibliography}{99}
+
+\bibitem{Quasineu} N. Crouseilles, A. Ratnani, E. Sonnendrücker, \emph{An Isogeometric Analysis approach for the study of the gyrokinetic quasi-neutrality equation} JCP 231 (2012) 373-393
+
+\bibitem{adapmoment} G. W. Alldredge, C. Hauck, D. P. O'Leary, A. M. Tits \emph{Adaptive change of basis in entropy based moment closures for linear kinetic equations}, preprint
+
+
+\bibitem{momentradiatif} C. K Garret, C. Hauck \emph{A  comparaison of moment closures for linear kinetic transport equations: the line source benchmark}, preprint
+
+\bibitem{harmonicsscheme}  D. Radice, E. Abdikamalov, L. Rezzolla, C. D. Ott \emph{A new spherical harmonics scheme for multi-dimensional radiation transport I: Static Matter configurations}, preprint
+
+ \bibitem{reducedvlasov1} Helluy P., Pham N., Crestetto A., \emph{Space-only hyperbolic approximation of the Vlasov equation}, 2012  
+ 
+  \bibitem{reducedvlasov2} Helluy P., Pham N., Lavoret L., \emph{Hyperbolic approximation of the Fourier transformed Vlasov equation}, 2013  
+  
+   \bibitem{reducedvlasov3} Helluy P., Pham N., Crestetto A., Navoret L \emph{Reduced Vlasov Maxwell simulations}, 2013  
+ 
+\bibitem{filtering}  A. J. Jerri \emph{The Gibbs Phenomena in Fourier Analysis, Splines and Wcelet approximations}, Mathematics and its applications
+
+
+\end{thebibliography}
+\end{document}
