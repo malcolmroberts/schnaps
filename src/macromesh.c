@@ -680,9 +680,9 @@ bool Detect1DMacroMesh(MacroMesh* m){
     assert(d<1e-6);
 
 
-    return m->is1d;
 
   };
+  return m->is1d;
 
 }
 

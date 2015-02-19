@@ -1,5 +1,189 @@
 #include <stdio.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <assert.h>
 #include "skyline.h"
+
+
+void InitSkyline(Skyline* sky, int n){
+
+  sky->is_alloc=false;
+  sky->is_sym=false;
+  sky->is_lu=false;
+
+  sky->neq=n;
+
+  sky->nmem=0;
+
+  sky->vkgs=NULL;
+
+  sky->vkgd=malloc(n*sizeof(double));
+  assert(sky->vkgd);
+  for(int i=0;i<n;i++) sky->vkgd[i]=0;
+
+  sky->vkgi=NULL;
+
+  sky->prof=malloc(n*sizeof(int));
+  assert(sky->prof);
+  for(int i=0;i<n;i++) sky->prof[i]=0;
+
+  sky->kld=malloc((n+1)*sizeof(int));
+  assert(sky->kld);
+  for(int i=0;i<n+1;i++) sky->kld[i]=0;
+
+}
+
+
+void SwitchOn(Skyline* sky,int i,int j){
+
+  // update the profile
+  sky->prof[j]= j-i > sky->prof[j] ? j-i : sky->prof[j] ;
+  sky->prof[i]= i-j > sky->prof[i] ? i-j : sky->prof[i] ;
+
+} 
+
+void AllocateSkyline(Skyline* sky){
+
+  assert(! sky->is_alloc);
+
+  sky->kld[0]=0;
+  for(int i=0;i<sky->neq;i++){
+    sky->kld[i+1]=sky->kld[i]+sky->prof[i];
+  }
+  sky->nmem=sky->kld[sky->neq];
+
+  sky->vkgs=malloc(sky->nmem * sizeof(double));
+  assert(sky->vkgs);
+
+  if (! sky->is_sym){
+    sky->vkgi=malloc(sky->nmem * sizeof(double));
+    assert(sky->vkgi);
+  }
+
+  sky->is_alloc=true;
+
+  // fill with zeros
+  for(int k=0;k<sky->nmem;k++){
+    sky->vkgs[k]=0;
+     if (! sky->is_sym) sky->vkgi[k]=0;
+  }
+  
+
+}
+
+void SetSkyline(Skyline* sky,int i,int j,double val){
+
+  assert(sky->is_alloc);
+
+
+  if (i==j){
+    sky->vkgd[i]+=val;
+  }
+  else if (j>i){
+    int k=sky->kld[j+1]-j+i;
+    sky->vkgs[k]+=val;
+  }
+  else {
+    assert(! sky->is_sym);
+    int k=sky->kld[i+1]-i+j;
+    sky->vkgi[k]+=val;
+    printf("i=%d j=%d k=%d nmem=%d\n",i,j,k,sky->nmem);
+    printf("i=%d j=%d k=%d v=%f\n",i,j,k,sky->vkgi[k]);
+  }
+
+
+} 
+
+double GetSkyline(Skyline* sky,int i,int j){
+
+  if (sky->is_sym && i>j){
+    int temp=i;
+    i=j;
+    j=temp;
+  }
+
+  if (j-i > sky->prof[j] || i-j > sky->prof[i]){
+    return 0;
+  }
+  else if (i==j){
+    return sky->vkgd[i];
+  }
+  else if ( j>i){
+    int k=sky->kld[j+1]-j+i;
+    return sky->vkgs[k];
+  }
+  else {
+    int k=sky->kld[i+1]-i+j;
+    return sky->vkgi[k];
+  }
+
+
+}
+
+void DisplaySkyline(Skyline* sky){
+
+  int n=sky->neq;
+
+
+  printf("profil=");
+  for(int i=0;i<n;i++){
+    printf("%d ",sky->prof[i]);
+  }
+  printf("\n");
+
+  printf("kld=");
+  for(int i=0;i<n+1;i++){
+    printf("%d ",sky->kld[i]);
+  }
+  printf("\n");
+
+  printf("vkgd=");
+  for(int i=0;i<n;i++){
+    printf("%f ",sky->vkgd[i]);
+  }
+  printf("\n");
+
+  printf("vkgs=");
+  for(int i=0;i<sky->nmem;i++){
+    printf("%f ",sky->vkgs[i]);
+  }
+  printf("\n");
+
+  printf("vkgi=");
+  for(int i=0;i<sky->nmem;i++){
+    printf("%f ",sky->vkgi[i]);
+  }
+  printf("\n");
+
+  for(int i=0;i<n;i++){
+    for(int j=0;j<n;j++){
+      printf("%f ",GetSkyline(sky,i,j));
+    }
+    printf("\n");
+  }
+
+    
+}
+
+
+
+
+
+
+
+void FreeSkyline(Skyline* sky){
+
+  assert(sky->is_alloc);
+
+  free(sky->vkgs);
+  free(sky->vkgd);
+  free(sky->vkgi);
+  free(sky->prof);
+  free(sky->kld);
+
+  InitSkyline(sky,sky->neq);
+
+}
 
 
 

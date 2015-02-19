@@ -4,6 +4,7 @@
 #include "macromesh.h"
 #include "interpolation.h"
 #include "model.h"
+#include "skyline.h"
 
 //! \brief Data structure for managing a  discrete vector field
 //! solution of a DG approximation 

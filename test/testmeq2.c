@@ -96,7 +96,7 @@ int TestmEq2(void) {
   double dd=L2error(&f);
 
   printf("erreur L2=%f\n",dd);
-  test= test && (dd<1e-7);
+  test= test && (dd<1e-5);
   return test;
 
 };
