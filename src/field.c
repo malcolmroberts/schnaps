@@ -33,6 +33,7 @@ void InitField(Field* f){
   double physnode[20][3];
 
   f->is2d = false;
+  f->is1d = false;
 
   // a copy for avoiding too much "->"
   for(int ip=0;ip<8;ip++){
@@ -1129,6 +1130,7 @@ void dtFieldSlow(Field* f){
     // or four faces for 2d computations
     int nbfa=6;
     if (f->is2d) nbfa=4;
+    assert(1==2);
     for(int ifa=0;ifa<nbfa;ifa++){
       // get the right elem or the boundary id
       int ieR=f->macromesh.elem2elem[6*ie+ifa];
@@ -1430,3 +1432,14 @@ double L2error(Field* f){
   }
   return sqrt(error)/sqrt(moy);
 }
+
+//!  \brief solve 1D poisson equation in x direction
+//! \param[in] f the field.
+void SolvePoisson1D(Field* f){
+
+
+
+
+}
+
+

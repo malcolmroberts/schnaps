@@ -27,12 +27,19 @@ typedef struct Field{
   //! activate or not 2D computations
   bool is2d;
 
+  //! activate or not 1D computations
+  bool is1d;
+
   //! fields at time steps n 
   double* wn;
   //! fields at time steps n+1   
   double* wnp1;
   //! time derivative of the field
   double* dtwn;
+
+  //! electric field and charge
+  double* elec;
+  double* rho;
 
   //! \brief memory arrangement of field components
   //! \param[in] param interpolation parameters
@@ -131,6 +138,12 @@ void DisplayField(Field* f);
 //! \param[in] f the field.
 //! \returns the error. 
 double L2error(Field* f);
+
+//!  \brief solve 1D poisson equation in x direction
+//! \param[in] f the field.
+void SolvePoisson1D(Field* f);
+
+
 
 
 #endif

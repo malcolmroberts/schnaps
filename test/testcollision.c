@@ -36,11 +36,11 @@ int TestCollision(void) {
     
     
   f.interp.interp_param[0]=_MV;  // _M
-  f.interp.interp_param[1]=2;  // x direction degree
+  f.interp.interp_param[1]=3;  // x direction degree
   f.interp.interp_param[2]=0;  // y direction degree
   f.interp.interp_param[3]=0;  // z direction degree
-  f.interp.interp_param[4]=8;  // x direction refinement
-  f.interp.interp_param[5]=8;  // y direction refinement
+  f.interp.interp_param[4]=128;  // x direction refinement
+  f.interp.interp_param[5]=1;  // y direction refinement
   f.interp.interp_param[6]=1;  // z direction refinement
   // read the gmsh file
   ReadMacroMesh(&(f.macromesh),"test/testcube.msh");
@@ -56,6 +56,7 @@ int TestCollision(void) {
   // prepare the initial fields
   InitField(&f);
   f.macromesh.is1d=true;
+  f.is1d=true;
 
   // prudence...
   CheckMacroMesh(&(f.macromesh),f.interp.interp_param+1);
