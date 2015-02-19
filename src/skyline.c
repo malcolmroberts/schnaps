@@ -5,6 +5,11 @@
 #include "skyline.h"
 
 
+int sol_(double *vkgs, double *vkgd, double *
+	vkgi, double *vfg, int *kld, double *vu, int neq, 
+	 int ifac, int isol, int nsym, double *
+	 energ, int *ier);
+
 void InitSkyline(Skyline* sky, int n){
 
   sky->is_alloc=false;
@@ -167,6 +172,42 @@ void DisplaySkyline(Skyline* sky){
 
 
 
+void FactoLU(Skyline* sky){
+
+  double* vfg=NULL;
+  double* vu=NULL;
+  double energ;
+  int ier;
+  int ifac=1;
+  int isol=0;
+  int nsym=1;
+
+  sol_(sky->vkgs,sky->vkgd, sky->vkgi,
+       vfg, sky->kld, vu, sky->neq, 
+        ifac, isol, nsym,
+       &energ, &ier);
+
+  sky->is_lu=true;
+
+}
+
+void SolveSkyline(Skyline* sky,double* vfg,double* vu){
+  assert(sky->is_lu);
+
+  double energ;
+  int ier;
+  int ifac=0;
+  int isol=1;
+  int nsym=1;
+
+  sol_(sky->vkgs,sky->vkgd, sky->vkgi,
+       vfg, sky->kld, vu, sky->neq, 
+        ifac, isol, nsym,
+       &energ, &ier);
+
+
+
+}
 
 
 
@@ -207,8 +248,8 @@ void FreeSkyline(Skyline* sky){
 static int c__1 = 1;
 
 /* Subroutine */ int sol_(double *vkgs, double *vkgd, double *
-	vkgi, double *vfg, int *kld, double *vu, int *neq, 
-	int *mp, int *ifac, int *isol, int *nsym, double *
+	vkgi, double *vfg, int *kld, double *vu, int neq, 
+	 int ifac, int isol, int nsym, double *
 	energ, int *ier)
 {
     /* Initialized data */
@@ -268,6 +309,9 @@ static int c__1 = 1;
     --vkgd;
     --vkgs;
 
+
+#define _Z 1
+
     /* Function Body */
 /* =========================== debut du code executable ================== */
 
@@ -279,8 +323,8 @@ static int c__1 = 1;
     }
     *energ = vzero;
     *ier = 0;
-    if (*isol == 1) {
-	i__1 = *neq;
+    if (isol == 1) {
+	i__1 = neq;
 	for (i__ = 1; i__ <= i__1; ++i__) {
 	    vu[i__] = vfg[i__];
 	}
@@ -289,12 +333,12 @@ static int c__1 = 1;
 /* -------  pour chaque colonne ik a modifier */
 
     jhk = 1;
-    i__1 = *neq;
+    i__1 = neq;
     for (ik = 2; ik <= i__1; ++ik) {
 
 /* -------  pointeur du haut de la colonne suivante ik+1 */
 
-	jhk1 = kld[ik + 1];
+	jhk1 = kld[ik + 1]+_Z;
 
 /* -------  hauteur de la colonne ik (hors termes superieur et diagonal) */
 
@@ -312,10 +356,10 @@ static int c__1 = 1;
 	if (lhk1 < 0) {
 	    goto L100;
 	}
-	if (*ifac != 1) {
+	if (ifac != 1) {
 	    goto L90;
 	}
-	if (*nsym == 1) {
+	if (nsym == 1) {
 	    vkgi[jhk] /= vkgd[imin1];
 	}
 	if (lhk1 == 0) {
@@ -325,13 +369,13 @@ static int c__1 = 1;
 /* -------  modifier les termes non diagonaux de la colonne ik */
 
 	jck = jhk + 1;
-	jhj = kld[imin];
+	jhj = kld[imin]+_Z;
 
 /* -------  pour chaque terme place en jck, correspondant a la colonne ij */
 
 	i__2 = imax;
 	for (ij = imin; ij <= i__2; ++ij) {
-	    jhj1 = kld[ij + 1];
+	    jhj1 = kld[ij + 1]+_Z;
 
 /* -------  nombre de termes modificatifs du terme place en jck */
 
@@ -339,7 +383,7 @@ static int c__1 = 1;
 	    i__3 = jck - jhk, i__4 = jhj1 - jhj;
 	    //ic = min(i__3,i__4);
 	    ic = i__3 < i__4 ? i__3 : i__4;
-	    if (ic <= 0 && *nsym == 0) {
+	    if (ic <= 0 && nsym == 0) {
 		goto L20;
 	    }
 	    c1 = vzero;
@@ -348,7 +392,7 @@ static int c__1 = 1;
 	    }
 	    j1 = jhj1 - ic;
 	    j2 = jck - ic;
-	    if (*nsym == 1) {
+	    if (nsym == 1) {
 		goto L15;
 	    }
 	    vkgs[jck] -= scal_(&vkgs[j1], &vkgs[j2], &ic);
@@ -372,7 +416,7 @@ L40:
 	i__2 = imax;
 	for (ij = imin1; ij <= i__2; ++ij) {
 	    c1 = vkgs[jck];
-	    if (*nsym == 1) {
+	    if (nsym == 1) {
 		goto L50;
 	    }
 	    c2 = c1 / vkgd[ij];
@@ -393,28 +437,28 @@ L60:
 /* -------  resolution du systeme triangulaire inferieur */
 
 L90:
-	if (*isol != 1) {
+	if (isol != 1) {
 	    goto L100;
 	}
-	if (*nsym != 1) {
+	if (nsym != 1) {
 	    vu[ik] = vfg[ik] - scal_(&vkgs[jhk], &vu[imin1], &lhk);
 	}
-	if (*nsym == 1) {
+	if (nsym == 1) {
 	    vu[ik] = vfg[ik] - scal_(&vkgi[jhk], &vu[imin1], &lhk);
 	}
 L100:
 	jhk = jhk1;
     }
-    if (*isol != 1) {
+    if (isol != 1) {
 	goto L9999;
     }
 
 /* -------  resolution du systeme diagonal : */
 
-    if (*nsym == 1) {
+    if (nsym == 1) {
 	goto L120;
     }
-    i__1 = *neq;
+    i__1 = neq;
     for (ik = 1; ik <= i__1; ++ik) {
 	c1 = vkgd[ik];
 	if (c1 == vzero) {
@@ -429,18 +473,18 @@ L100:
 /* -------  resolution du systeme triangulaire superieur */
 
 L120:
-    ik = *neq + 1;
-    jhk1 = kld[ik];
+    ik = neq + 1;
+    jhk1 = kld[ik]+_Z;
 L130:
     --ik;
-    if (*nsym == 1) {
+    if (nsym == 1) {
 	vu[ik] /= vkgd[ik];
     }
     if (ik == 1) {
 	goto L9999;
     }
     c1 = vu[ik];
-    jhk = kld[ik];
+    jhk = kld[ik]+_Z;
     jbk = jhk1 - 1;
     if (jhk > jbk) {
 	goto L150;
@@ -459,14 +503,12 @@ L150:
 /* -------  erreurs */
 
 L800:
-    if (*mp != 0) {
 	/* io___22.ciunit = *mp; */
       printf("%s\n",fmt_8000);
 	/* s_wsfe(&io___22); */
 	/* do_fio(&c__1, (char *)&ik, (ftnlen)sizeof(int)); */
 	/* e_wsfe(); */
 	
-    }
     *ier = 1;
     goto L9999;
 
