@@ -36,8 +36,8 @@ int TestCollision(void) {
     
     
   f.interp.interp_param[0]=_MV;  // _M
-  f.interp.interp_param[1]=1;  // x direction degree
-  f.interp.interp_param[2]=1;  // y direction degree
+  f.interp.interp_param[1]=2;  // x direction degree
+  f.interp.interp_param[2]=0;  // y direction degree
   f.interp.interp_param[3]=0;  // z direction degree
   f.interp.interp_param[4]=8;  // x direction refinement
   f.interp.interp_param[5]=8;  // y direction refinement
@@ -45,8 +45,8 @@ int TestCollision(void) {
   // read the gmsh file
   ReadMacroMesh(&(f.macromesh),"test/testcube.msh");
   // try to detect a 2d mesh
-  bool is2d=Detect2DMacroMesh(&(f.macromesh));
-  assert(is2d);
+  bool is1d=Detect1DMacroMesh(&(f.macromesh));
+  assert(is1d);
 
   // mesh preparation
   BuildConnectivity(&(f.macromesh));
@@ -55,7 +55,7 @@ int TestCollision(void) {
  
   // prepare the initial fields
   InitField(&f);
-  f.is2d=true;
+  f.macromesh.is1d=true;
 
   // prudence...
   CheckMacroMesh(&(f.macromesh),f.interp.interp_param+1);

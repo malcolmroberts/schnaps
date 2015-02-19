@@ -630,7 +630,9 @@ void* DGMacroCellInterface(void* mc){
     // or four faces for 2d computations
     int nbfa=6;
     if (f->is2d) nbfa=4;
-    for(int ifa=0;ifa<nbfa;ifa++){
+    if (f->macromesh.is1d) nbfa=2;
+    for(int nifa=0;nifa<nbfa;nifa++){
+      int ifa= f->macromesh.is1d ?  2*nifa+1 : nifa;
       // get the right elem or the boundary id
       int ieR=f->macromesh.elem2elem[6*ie+ifa];
       double physnodeR[20][3];
