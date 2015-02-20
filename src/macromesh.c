@@ -12,6 +12,7 @@
 void ReadMacroMesh(MacroMesh* m,char* filename){
 
   m->is2d=false;
+  m->is1d=false;
 
   FILE* f=NULL;
 

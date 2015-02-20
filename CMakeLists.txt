@@ -37,7 +37,7 @@ src/interpolation.c
 src/macromesh.c
 src/model.c
 src/collision.c
-src/skyline.c
+#src/skyline.c
 )
 
 #schnaps library
@@ -155,14 +155,14 @@ add_executable(
 target_link_libraries(testmeq2 _schnaps m pthread)
 add_test(testmeq2 testmeq2)
 
-add_test(testskyline testskyline)
-add_executable(
-  testskyline
-  test/test.h
-  test/testskyline.c
-)
-target_link_libraries(testskyline _schnaps m pthread)
-add_test(testskyline testskyline)
+# add_test(testskyline testskyline)
+# add_executable(
+#   testskyline
+#   test/test.h
+#   test/testskyline.c
+# )
+# target_link_libraries(testskyline _schnaps m pthread)
+# add_test(testskyline testskyline)
  
 add_test(testcollision testcollision)
 add_executable(

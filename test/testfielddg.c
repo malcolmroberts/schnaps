@@ -46,6 +46,7 @@ int TestFieldDG(void){
   //AffineMapMacroMesh(&(f.macromesh));
   PrintMacroMesh(&(f.macromesh));
 
+  //assert(! f.macromesh.is1d);
 
   InitField(&f);
   CheckMacroMesh(&(f.macromesh),f.interp.interp_param+1);

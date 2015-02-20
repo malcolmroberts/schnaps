@@ -32,8 +32,8 @@ void InitField(Field* f){
   double xref[3],omega;
   double physnode[20][3];
 
-  f->is2d = false;
-  f->is1d = false;
+  f->is2d = f->macromesh.is2d;
+  f->is1d = f->macromesh.is1d;
 
   // a copy for avoiding too much "->"
   for(int ip=0;ip<8;ip++){
@@ -631,9 +631,10 @@ void* DGMacroCellInterface(void* mc){
     // or four faces for 2d computations
     int nbfa=6;
     if (f->is2d) nbfa=4;
-    if (f->macromesh.is1d) nbfa=2;
+    if (f->is1d) nbfa=2;
     for(int nifa=0;nifa<nbfa;nifa++){
-      int ifa= f->macromesh.is1d ?  2*nifa+1 : nifa;
+      //assert(nbfa !=2);
+      int ifa= f->is1d ?  2*nifa+1 : nifa;
       // get the right elem or the boundary id
       int ieR=f->macromesh.elem2elem[6*ie+ifa];
       double physnodeR[20][3];
