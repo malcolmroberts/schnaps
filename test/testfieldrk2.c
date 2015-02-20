@@ -29,6 +29,8 @@ int TestFieldRK2(void){
   f.model.ImposedData=TestTransportImposedData;
   f.varindex=GenericVarindex;
 
+  f.model.vmax=1;
+
 
   f.interp.interp_param[0]=1;  // _M
   f.interp.interp_param[1]=3;  // x direction degree

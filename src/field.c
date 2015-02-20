@@ -128,7 +128,7 @@ void InitField(Field* f){
       }
     }    
     f->hmin = f->hmin < vol/surf ? f->hmin : vol/surf;
-
+    //printf("surf=%f\n",surf);
   }
 
   // now take into account the polynomial degree and the refinement

@@ -34,6 +34,8 @@ int TestmEq2(void) {
     f.model.ImposedData=VecTransImposedData2d;
     f.varindex=GenericVarindex;
     
+    f.model.vmax=1;
+
     
     f.interp.interp_param[0]=2;  // _M
     f.interp.interp_param[1]=2;  // x direction degree
