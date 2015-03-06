@@ -37,6 +37,7 @@ src/interpolation.c
 src/macromesh.c
 src/model.c
 src/collision.c
+src/gyro.c
 src/skyline.c
 )
 
@@ -172,3 +173,12 @@ add_executable(
 )
 target_link_libraries(testcollision _schnaps m pthread)
 add_test(testcollision testcollision)
+
+add_test(testgyro testgyro)
+add_executable(
+  testgyro
+  test/test.h
+  test/testgyro.c
+)
+target_link_libraries(testgyro _schnaps m pthread)
+add_test(testgyro testgyro)
