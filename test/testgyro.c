@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include "test.h"
-#include "collision.h"
+//#include "collision.h"
 #include "gyro.h"
 
 
@@ -78,7 +78,7 @@ int TestGyro(void) {
   PlotField(0,(1==1),&f,"dgerror.msh");
 
   double dd=L2error(&f);
-  double dd_Kinetic=L2_Kinetic_error(&f);
+  double dd_Kinetic=GyroL2_Kinetic_error(&f);
   
   printf("erreur kinetic L2=%lf\n",dd_Kinetic);
   printf("erreur L2=%lf\n",dd);

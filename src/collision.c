@@ -4,6 +4,8 @@
 #include <assert.h>
 #include "interpolation.h"
 #include "geometry.h"
+#include "skyline.h"
+
 
 
 void Collision_Lagrangian_NumFlux(double wL[],double wR[],double* vnorm,double* flux){
@@ -20,6 +22,8 @@ void Collision_Lagrangian_NumFlux(double wL[],double wR[],double* vnorm,double* 
 
     flux[i] = vnp * wL[i] + vnm * wR[i];
   }
+  // do not change the potential !
+  flux[_MV]=0;
   
 };
 
@@ -28,7 +32,7 @@ void Collision_Lagrangian_NumFlux(double wL[],double wR[],double* vnorm,double* 
 double L2VelError(double* x,double t,double *w){
 
 
-  double wex[_MV];
+  double wex[_MV+1];
   double err2=0;
   CollisionImposedData(x, t,wex);
   // loop on the finite emlements
@@ -48,7 +52,7 @@ double L2VelError(double* x,double t,double *w){
 
 void Collision_Lagrangian_BoundaryFlux(double x[3],double t,double wL[],double* vnorm,
 				       double* flux){
-  double wR[_MV];
+  double wR[_MV+1];
   CollisionImposedData(x,t,wR);
   Collision_Lagrangian_NumFlux(wL,wR,vnorm,flux);
 };
@@ -73,6 +77,8 @@ void CollisionImposedData(double x[3],double t,double w[]){
 		 _DV* glop(_DEG_V,j));
     w[i]=cos(x[0]-vi*t);
   }
+  // exact value of the potential
+  w[_MV]=0;
 
 };
 
@@ -141,6 +147,8 @@ void CollisionSource(double* force,double* w, double* source){
     Md[iv]=0;
     source[iv]=0;
   }
+  // no source on the potential for the moment
+  source[_MV]=0;
   // loop on the finite emlements
   for(int iel=0;iel<_NB_ELEM_V;iel++){
     // loop on the local glops
@@ -171,3 +179,102 @@ void CollisionSource(double* force,double* w, double* source){
 };
 
 
+void SolvePoisson(Field *f){
+
+  // for the moment, works only for the 1d case
+  assert(f->is1d);
+
+  // assembly of the rigidity matrix
+
+  Skyline sky;
+
+  // number of equation of the Poisson solver
+  // = number of nodes in the mesh
+  int degx=f->interp.interp_param[1];
+  int nelx=f->interp.interp_param[4];
+  double xmin=0;
+  double xmax=1;  // TO DO: compute the maximal x coordinate
+  int neq=degx*nelx+1;
+  
+  
+
+  InitSkyline(&sky,neq);
+
+  // compute the profile of the matrix
+  for(int ie=0;ie<nelx;ie++){
+    for(int iloc=0;iloc<degx+1;iloc++){
+      for(int jloc=0;jloc<degx+1;jloc++){
+	int ino=iloc + ie * degx;
+	int jno=jloc + ie * degx;
+	SwitchOn(&sky,ino,jno);
+      }
+    }
+  }
+
+  AllocateSkyline(&sky);
+
+  // local matrix (assuming identical finite elements)
+  double aloc[degx+1][degx+1];
+  for(int iloc=0;iloc<degx+1;iloc++){
+    for(int jloc=0;jloc<degx+1;jloc++){
+      aloc[iloc][jloc]=0;
+    }
+  }
+  for(int ipg=0;ipg<degx+1;ipg++){
+    double omega=wglop(degx,ipg);
+    for(int iloc=0;iloc<degx+1;iloc++){
+      for(int jloc=0;jloc<degx+1;jloc++){
+	double dxi=dlag(degx,iloc,ipg);
+	double dxj=dlag(degx,jloc,ipg);
+	aloc[iloc][jloc]+=dxi*dxj*omega/nelx;
+      }
+    }
+  }
+
+  // assembly of the matrix
+  for(int ie=0;ie<nelx;ie++){
+    for(int iloc=0;iloc<degx+1;iloc++){
+      for(int jloc=0;jloc<degx+1;jloc++){
+	int ino=iloc + ie * degx;
+	int jno=jloc + ie * degx;
+	double val = aloc[iloc][jloc];
+	SetSkyline(&sky,ino,jno,val);
+      }
+    }
+  }
+
+  // source assembly 
+  double source[neq];
+  for(int i=0;i<neq;i++){
+    source[i]=0;
+  }
+  double cst=1e0; // constant source TO DO: replace by the charge
+  for(int ie=0;ie<nelx;ie++){
+    for(int ipg=0;ipg<degx+1;ipg++){
+      double omega=wglop(degx,ipg);
+      for(int iloc=0;iloc<degx+1;iloc++){
+	int ino=iloc + ie * degx;
+	source[ino]+= cst*omega;
+      }
+    }
+  }
+
+
+
+  // dirichlet boundary condition at the first and last location
+  SetSkyline(&sky,0,0,1e20);
+  SetSkyline(&sky,neq-1,neq-1,1e20);
+
+  //DisplaySkyline(&sky);
+
+  FactoLU(&sky);
+
+  double sol[neq];
+  SolveSkyline(&sky,source,sol);
+
+  for(int i=0;i<neq;i++){
+    printf("sol %d = %f\n",i,sol[i]);
+  }
+
+  assert(1==2);
+}
