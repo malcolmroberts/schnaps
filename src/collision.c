@@ -196,7 +196,9 @@ void SolvePoisson(Field *f){
   double xmax=1;  // TO DO: compute the maximal x coordinate
   int neq=degx*nelx+1;
   
-  
+  // number of conservatives variables
+  // = number of velocity glops + 1 (potential)
+  int m=f->model.m;
 
   InitSkyline(&sky,neq);
 
@@ -226,7 +228,7 @@ void SolvePoisson(Field *f){
       for(int jloc=0;jloc<degx+1;jloc++){
 	double dxi=dlag(degx,iloc,ipg);
 	double dxj=dlag(degx,jloc,ipg);
-	aloc[iloc][jloc]+=dxi*dxj*omega/nelx;
+	aloc[iloc][jloc]+=dxi*dxj*omega*nelx;
       }
     }
   }
@@ -254,7 +256,7 @@ void SolvePoisson(Field *f){
       double omega=wglop(degx,ipg);
       for(int iloc=0;iloc<degx+1;iloc++){
 	int ino=iloc + ie * degx;
-	source[ino]+= cst*omega;
+	source[ino]+= cst*omega/nelx;
       }
     }
   }
@@ -276,5 +278,16 @@ void SolvePoisson(Field *f){
     printf("sol %d = %f\n",i,sol[i]);
   }
 
-  assert(1==2);
+  // now put the solution at the right place
+  for(int ie=0;ie<nelx;ie++){
+     for(int ipg=0;ipg<degx+1;ipg++){
+       // position in the continuous vector
+       int ino=ipg + ie * degx;
+       // position in the DG vector
+       int imem=f->varindex(f->interp_param,0,ipg+ie*(degx+1),m-1);
+       f->wn[imem]=sol[ino];
+     }
+  }
+	
+  FreeSkyline(&sky);
 }

@@ -8,6 +8,7 @@ project(schnaps)
 #set(CMAKE_C_FLAGS "-optRevert -optTauSelectFile=select.tau -std=c99 -fopenmp -Ofast")
 #set(CMAKE_C_COMPILER "/opt/local/bin/gcc-mp-4.8")
 
+#set(CMAKE_C_FLAGS "-std=c99 -D_REENTRANT -g")
 set(CMAKE_C_FLAGS "-std=c99 -D_REENTRANT -O3")
 find_package(OpenMP)
 if (OPENMP_FOUND)

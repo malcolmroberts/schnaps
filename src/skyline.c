@@ -222,12 +222,15 @@ void FreeSkyline(Skyline* sky){
   assert(sky->is_alloc);
 
   free(sky->vkgs);
+  //printf("vkgd=%p\n",sky->vkgd);
   free(sky->vkgd);
+  //assert(1==2);
   if (! sky->is_sym)  free(sky->vkgi);
   free(sky->prof);
   free(sky->kld);
 
-  InitSkyline(sky,sky->neq);
+  sky->is_alloc=false;
+  //InitSkyline(sky,sky->neq);
 
 }
 

@@ -36,7 +36,7 @@ int TestCollision(void) {
     
     
   f.interp.interp_param[0]=_MV+1;  // _M
-  f.interp.interp_param[1]=1;  // x direction degree
+  f.interp.interp_param[1]=3;  // x direction degree
   f.interp.interp_param[2]=0;  // y direction degree
   f.interp.interp_param[3]=0;  // z direction degree
   f.interp.interp_param[4]=10;  // x direction refinement
