@@ -33,7 +33,6 @@ int TestfieldRK2_2D(void) {
  
   Initfield(&f);
   f.macromesh.is2d = true;
-  // require a 2d computation
 
   CheckMacroMesh(&(f.macromesh), f.interp.interp_param + 1);
 

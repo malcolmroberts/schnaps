@@ -8,9 +8,10 @@
 #include "interpolation.h"
 #include <math.h>
 
-void ReadMacroMesh(MacroMesh *m, char *filename)
-{
+void ReadMacroMesh(MacroMesh* m,char* filename){
+
   m->is2d = false;
+  m->is1d = false;
 
   FILE *f = NULL;
   char *line = NULL;
