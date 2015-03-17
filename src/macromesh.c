@@ -475,7 +475,11 @@ void CheckMacroMesh(MacroMesh* m,int* param){
 	  //printf("xpg_in=%f %f %f\n",xpg_in[0],xpg_in[1],xpg_in[2]);
 	  Phy2Ref(physnodeR,xpg_in,xref);
           int ifaR=0;
+#ifdef _PERIOD
           while (m->elem2elem[6*ieR+ifaR] != ie || ifaR==ifa) ifaR++;
+#else
+          while (m->elem2elem[6*ieR+ifaR] != ie) ifaR++;
+#endif
           assert(ifaR<6);
 	  //printf("ieR=%d ifaR=%d xref=%f %f %f\n",ieR,
 	  //	 ifaR,xref[0],xref[1],xref[2]);
