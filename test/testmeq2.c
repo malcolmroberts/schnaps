@@ -4,6 +4,7 @@
 #include "test.h"
 
 int TestmEq2(void) {
+
   bool test = true;
   field f;
   int vec = 2;
