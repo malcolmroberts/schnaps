@@ -42,5 +42,6 @@ int TestSkyline(void);
 
 int TestCollision(void);
 
+int TestGyro(void);
 
 #endif

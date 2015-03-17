@@ -58,6 +58,7 @@ list(APPEND
   src/macromesh.h
   src/h20phi.h
   src/skyline.c
+  src/gyro.c
   )
 
 if (OPENCL_FOUND)
@@ -215,6 +216,16 @@ add_executable(
 )
 target_link_libraries(testcollision ${LIBS})
 add_test(testcollision testcollision)
+
+add_test(testgyro testgyro)
+add_executable(
+  testgyro
+  test/test.h
+  test/testgyro.c
+)
+target_link_libraries(testgyro ${LIBS})
+add_test(testgyro testgyro)
+
 
 ##########  OpenCL unit tests  ##########
 if(OPENCL_FOUND)
