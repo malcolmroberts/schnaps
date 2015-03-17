@@ -9,7 +9,7 @@ int TestCollision(void) {
   field f;
   int vec = 1;
   
-  f.model.m=_MV; // num of conservative variables
+  f.model.m=_MV+1; // num of conservative variables
   f.model.vmax = _VMAX; // maximal wave speed 
 
   f.model.cfl = 0.5; // maximal wave speed 
@@ -21,11 +21,11 @@ int TestCollision(void) {
     
   f.vmax = 1;
     
-  f.interp.interp_param[0]=_MV;  // _M
-  f.interp.interp_param[1]=3;  // x direction degree
+  f.interp.interp_param[0]=_MV+1;  // _M
+  f.interp.interp_param[1]=1;  // x direction degree
   f.interp.interp_param[2]=0;  // y direction degree
   f.interp.interp_param[3]=0;  // z direction degree
-  f.interp.interp_param[4]=8;  // x direction refinement
+  f.interp.interp_param[4]=10;  // x direction refinement
   f.interp.interp_param[5]=1;  // y direction refinement
   f.interp.interp_param[6]=1;  // z direction refinement
 
@@ -72,6 +72,8 @@ int TestCollision(void) {
   test= test && (dd<2e-4);
 
 
+  SolvePoisson(&f);
+
   return test;
 }
 
@@ -83,5 +85,8 @@ int main(void) {
 
   return !resu;
 } 
+
+
+
 
 
