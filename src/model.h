@@ -18,6 +18,12 @@ typedef struct Model {
 
   //! \brief A pointer to the numflux function
   //! \param[in] wL, wR : left and right states
+
+  //! a majorant of the maximal wave speed
+  double vmax;
+  //! \brief a pointer to the numflux function
+  //! \param[in] wL,wR : left and right states
+
   //! \param[in] vn : normal vector
   //! \param[out] flux : the flux
   void (*NumFlux)(double wL[], double wR[], double vn[3], double flux[]);

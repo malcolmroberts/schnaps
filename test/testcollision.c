@@ -9,21 +9,24 @@ int TestCollision(void) {
   field f;
   int vec = 1;
   
-  f.model.m = _MV; // num of conservative variables
-  f.model.cfl = 0.05;
-  f.model.NumFlux = CollisionNumFlux;
-  f.model.BoundaryFlux = CollisionBoundaryFlux;
-  f.model.InitData = CollisionInitData;
-  f.model.ImposedData = CollisionImposedData;
-  f.varindex = GenericVarindex;
-  
-  f.interp.interp_param[0] = _MV;  // _M
-  f.interp.interp_param[1] = 2;  // x direction degree
-  f.interp.interp_param[2] = 1;  // y direction degree
-  f.interp.interp_param[3] = 0;  // z direction degree
-  f.interp.interp_param[4] = 8;  // x direction refinement
-  f.interp.interp_param[5] = 1;  // y direction refinement
-  f.interp.interp_param[6]=  1;  // z direction refinement
+  f.model.m=_MV; // num of conservative variables
+  f.model.vmax = _VMAX; // maximal wave speed 
+  f.model.cfl = 0.05; // maximal wave speed 
+  f.model.NumFlux=CollisionNumFlux;
+  f.model.BoundaryFlux=CollisionBoundaryFlux;
+  f.model.InitData=CollisionInitData;
+  f.model.ImposedData=CollisionImposedData;
+  f.varindex=GenericVarindex;
+    
+    
+  f.interp.interp_param[0]=_MV;  // _M
+  f.interp.interp_param[1]=2;  // x direction degree
+  f.interp.interp_param[2]=1;  // y direction degree
+  f.interp.interp_param[3]=0;  // z direction degree
+  f.interp.interp_param[4]=8;  // x direction refinement
+  f.interp.interp_param[5]=1;  // y direction refinement
+  f.interp.interp_param[6]=1;  // z direction refinement
+
   // read the gmsh file
   ReadMacroMesh(&(f.macromesh), "test/testcube.msh");
   // try to detect a 2d mesh
