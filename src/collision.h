@@ -1,7 +1,7 @@
 #ifndef _COLLISION_H
 #define _COLLISION_H
 
-#define _NB_ELEM_V 2
+#define _NB_ELEM_V 4
 #define _DEG_V 1
 
 #define _MV (_NB_ELEM_V *  _DEG_V + 1)
@@ -10,7 +10,7 @@
 
 
 #include "model.h"
-
+#include "field.h"
 // collision models
 
 //! \brief particular flux for the collision model
@@ -42,5 +42,11 @@ void CollisionImposedData(double* x,double t,double* w);
 //! \param[in] x,t : space and time position
 //! \param[out] w : imposed state at point x and time t
 
+double Collision_ImposedKinetic_Data(double* x,double t,double v);
+//! \brief particular imposed data for the  collision model
+//! \param[in] x,v,t : space, velocity and time position
+//! \param[out] f : imposed state at point x, the velocity v and time t
+
+double L2_Kinetic_error(field* f);
 
 #endif

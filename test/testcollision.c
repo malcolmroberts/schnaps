@@ -24,7 +24,7 @@ int TestCollision(void) {
   f.interp.interp_param[1]=2;  // x direction degree
   f.interp.interp_param[2]=1;  // y direction degree
   f.interp.interp_param[3]=0;  // z direction degree
-  f.interp.interp_param[4]=8;  // x direction refinement
+  f.interp.interp_param[4]=12;  // x direction refinement
   f.interp.interp_param[5]=1;  // y direction refinement
   f.interp.interp_param[6]=1;  // z direction refinement
 
@@ -62,10 +62,14 @@ int TestCollision(void) {
   Plotfield(0, false, &f, "dgvisu.msh", "dgvisu.msh");
   Plotfield(0, true, &f, "dgerror.msh", "dgerror.msh");
 
-  double dd = L2error(&f);
+  double dd=L2error(&f);
+  double dd_Kinetic=L2_Kinetic_error(&f);
+  
+  printf("erreur kinetic L2=%lf\n",dd_Kinetic);
+  printf("erreur L2=%lf\n",dd);
+  test= test && (dd<2e-4);
 
-  printf("L2 error: %lf\n", dd);
-  test = test && (dd < 2e-4);
+
   return test;
 }
 
