@@ -50,9 +50,6 @@ typedef struct field {
   
   int itermax;
 
-  //! Activate or not 2D computations
-  bool is2d;
-
   //! Size of the field buffers
   int wsize;
   //! fields at time steps n

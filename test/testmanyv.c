@@ -154,6 +154,7 @@ int main(int argc, char *argv[]) {
   Initfield(&f);
   if(dt != 0.0)
     f.dt = dt;
+  f.macromesh.is2d = true;
 
   // Prudence...
   CheckMacroMesh(&(f.macromesh), f.interp.interp_param + 1);

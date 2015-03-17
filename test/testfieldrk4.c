@@ -86,6 +86,7 @@ int TestfieldRK4(void){
 
   //AffineMapMacroMesh(&(f.macromesh));
   Initfield(&f);
+  f.macromesh.is2d = true;
 
   CheckMacroMesh(&(f.macromesh), f.interp.interp_param + 1);
  

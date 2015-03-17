@@ -31,8 +31,8 @@ int TestfieldRK2_2D(void) {
   //AffineMapMacroMesh(&(f.macromesh));
  
   Initfield(&f);
+  f.macromesh.is2d = true;
   // require a 2d computation
-  f.is2d=true;
 
   CheckMacroMesh(&(f.macromesh), f.interp.interp_param + 1);
 

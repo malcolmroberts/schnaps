@@ -35,7 +35,7 @@ int TestKernel(void){
   //AffineMapMacroMesh(&(f.macromesh));
  
   Initfield(&f);
-  f.is2d=true;
+  f.macromesh.is2d=true;
 
   printf("&f=%p\n",&f);
 

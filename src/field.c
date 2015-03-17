@@ -35,7 +35,7 @@ int GenericVarindex(int *param, int elem, int ipg, int iv) {
 
 void Initfield(field* f) {
   //int param[8]={f->model.m,_DEGX,_DEGY,_DEGZ,_RAFX,_RAFY,_RAFZ,0};
-  f->is2d = false;
+  f->macromesh.is2d = false;
   
   f->vmax = 1.0; // FIXME: make this variable
 
@@ -710,8 +710,10 @@ void DGMacroCellInterfaceSlow(void *mc, field *f, double *w, double *dtw) {
     // loop on the 6 faces
     // or four faces for 2d computations
     int nbfa = 6;
-    if (f->is2d) nbfa = 4;
-    for(int ifa = 0; ifa < nbfa; ifa++) {
+    if (f->macromesh.is2d) nbfa = 4;
+    if (f->macromesh.is1d) nbfa = 2;
+    for(int nifa = 0; nifa < nbfa; nifa++) {
+      int ifa= f->macromesh.is1d ?  2*nifa+1 : nifa;
       // get the right elem or the boundary id
       int ieR = f->macromesh.elem2elem[6*ie+ifa];
       double physnodeR[20][3];
@@ -1324,7 +1326,7 @@ void dtfieldSlow(field* f)
     // loop on the 6 faces
     // or four faces for 2d computations
     int nbfa = 6;
-    if (f->is2d) nbfa = 4;
+    if (f->macromesh.is2d) nbfa = 4;
     for(int ifa = 0; ifa < nbfa; ifa++) {
       // get the right elem or the boundary id
       int ieR = f->macromesh.elem2elem[6*ie+ifa];

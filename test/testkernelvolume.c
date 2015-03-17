@@ -37,7 +37,6 @@ int TestKernelVolume(void){
   //AffineMapMacroMesh(&(f.macromesh));
  
   Initfield(&f);
-  f.is2d=true;
 
   /* // set dtwn to 1 for testing */
   
