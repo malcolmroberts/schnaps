@@ -77,6 +77,8 @@ int TestfieldRK2_CL(void){
   f.interp.interp_param[6] = 3; // z direction refinement
 #endif
 
+  f.vmax = 1.0;
+
   //AffineMapMacroMesh(&(f.macromesh));
   Initfield(&f);
   f.macromesh.is2d = true;

@@ -28,6 +28,8 @@ int TestmEq2(void) {
   f.interp.interp_param[5] = 4; // y direction refinement
   f.interp.interp_param[6] = 1; // z direction refinement
 
+  f.vmax = 1;
+
   // Read the gmsh file
   ReadMacroMesh(&(f.macromesh), "test/testcube.msh");
   // Try to detect a 2d mesh

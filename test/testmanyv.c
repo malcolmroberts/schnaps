@@ -25,8 +25,7 @@ int main(int argc, char *argv[]) {
   int cemracs = 0;
   bool writemsh = false;
   double vmax = 1.0;
-  int mx = 5;
-  int my = 5;
+  int mx = 5;  int my = 5;
   bool usegpu = false;
   double dt = 0.0;
   for (;;) {
@@ -93,6 +92,8 @@ int main(int argc, char *argv[]) {
   f.model.vlasov_my = my;
   f.model.vlasov_vmax = vmax;
   f.model.m = f.model.vlasov_mx * f.model.vlasov_my * f.model.vlasov_mz;
+
+  f.vmax = vmax;
 
   char buf[1000];
   sprintf(buf, "-D _M=%d", f.model.m);

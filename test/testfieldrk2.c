@@ -24,6 +24,7 @@ int TestfieldRK2(void){
   Detect2DMacroMesh(&(f.macromesh));
   BuildConnectivity(&(f.macromesh));
 
+  f.vmax = 1;
 #if 1
   // 2D version
   f.model.cfl = 0.05;

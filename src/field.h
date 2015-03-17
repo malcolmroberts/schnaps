@@ -59,7 +59,10 @@ typedef struct field {
   //! vmax
   double vmax;
 
-  //! \brief Memory arrangement of field components
+  //! electric field and charge
+  double *elec;
+  double *rho;
+
   //! \param[in] param interpolation parameters
   //! \param[in] elem macro element index
   //! \param[in] ipg glop index
@@ -204,7 +207,12 @@ void Displayfield(field *f);
 
 //! \brief compute the normalized L2 distance with the imposed data
 //! \param[in] f the field.
+
 //! \returns the error.
 double L2error(field *f);
+
+//!  \brief solve 1D poisson equation in x direction
+//! \param[in] f the field.
+void SolvePoisson1D(field* f);
 
 #endif

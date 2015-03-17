@@ -14,6 +14,7 @@ int TestfieldRK2_2D(void) {
   f.model.InitData = TransInitData2d;
   f.model.ImposedData = TransImposedData2d;
   f.varindex = GenericVarindex;
+  f.vmax = 1;
 
   f.interp.interp_param[0] = 1; // _M
   f.interp.interp_param[1] = 2; // x direction degree

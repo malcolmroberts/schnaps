@@ -12,20 +12,21 @@ int TestCollision(void) {
   f.model.m=_MV; // num of conservative variables
   f.model.vmax = _VMAX; // maximal wave speed 
 
-  f.model.cfl = 0.05; // maximal wave speed 
+  f.model.cfl = 0.5; // maximal wave speed 
   f.model.NumFlux=Collision_Lagrangian_NumFlux;
   f.model.BoundaryFlux=Collision_Lagrangian_BoundaryFlux;
   f.model.InitData=CollisionInitData;
   f.model.ImposedData=CollisionImposedData;
   f.varindex=GenericVarindex;
     
+  f.vmax = 1;
     
   f.interp.interp_param[0]=_MV;  // _M
-  f.interp.interp_param[1]=2;  // x direction degree
+  f.interp.interp_param[1]=3;  // x direction degree
   f.interp.interp_param[2]=0;  // y direction degree
   f.interp.interp_param[3]=0;  // z direction degree
-  f.interp.interp_param[4]=8;  // x direction refinement
-  f.interp.interp_param[5]=8;  // y direction refinement
+  f.interp.interp_param[4]=16;  // x direction refinement
+  f.interp.interp_param[5]=1;  // y direction refinement
   f.interp.interp_param[6]=1;  // z direction refinement
 
   // read the gmsh file
@@ -39,10 +40,10 @@ int TestCollision(void) {
 
   //AffineMapMacroMesh(&(f.macromesh));
  
+
   Initfield(&f);
   f.macromesh.is2d = true;
   f.macromesh.is1d = true;
-
 
   // prudence...
   CheckMacroMesh(&(f.macromesh), f.interp.interp_param + 1);

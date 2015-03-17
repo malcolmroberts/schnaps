@@ -35,10 +35,10 @@ int GenericVarindex(int *param, int elem, int ipg, int iv) {
 
 void Initfield(field* f) {
   //int param[8]={f->model.m,_DEGX,_DEGY,_DEGZ,_RAFX,_RAFY,_RAFZ,0};
-  f->macromesh.is2d = false;
-  
-  f->vmax = 1.0; // FIXME: make this variable
 
+  f->macromesh.is2d = false;
+  f->macromesh.is1d = false;
+  
   // a copy for avoiding too much "->"
   for(int ip = 0; ip < 8; ip++)
     f->interp_param[ip] = f->interp.interp_param[ip];
@@ -148,6 +148,8 @@ void Initfield(field* f) {
   f->dt = f->model.cfl * f->hmin / f->vmax;
 
   printf("hmin=%f\n", f->hmin);
+  printf("vmax=%f\n", f->vmax);
+  printf("dt=%f\n", f->dt);
 
   // Allocate and set MacroFaces
   f->mface = calloc(f->macromesh.nbfaces, sizeof(MacroFace*));
@@ -1325,9 +1327,12 @@ void dtfieldSlow(field* f)
 
     // loop on the 6 faces
     // or four faces for 2d computations
+
     int nbfa = 6;
     if (f->macromesh.is2d) nbfa = 4;
+    // assert(1==2); //FIXME: why is this here?
     for(int ifa = 0; ifa < nbfa; ifa++) {
+
       // get the right elem or the boundary id
       int ieR = f->macromesh.elem2elem[6*ie+ifa];
       double physnodeR[20][3];
@@ -1642,3 +1647,11 @@ double L2error(field *f) {
   }
   return sqrt(error) / (sqrt(mean)  + 1e-16);
 }
+
+//!  \brief solve 1D poisson equation in x direction
+//! \param[in] f the field.
+void SolvePoisson1D(field* f){
+
+}
+
+
