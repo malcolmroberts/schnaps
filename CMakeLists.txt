@@ -1,4 +1,3 @@
-
 set(CMAKE_LEGACY_CYGWIN_WIN32 0) # Remove when CMake >= 2.8.4 is required
 cmake_minimum_required(VERSION 2.8)
 
@@ -53,6 +52,9 @@ list(APPEND
   src/interpolation.c
   src/interpolation.h
   src/macromesh.c
+  src/macromesh.h
+  src/collision.c
+  src/collision.h
   src/macromesh.h
   src/h20phi.h
   )
@@ -194,6 +196,15 @@ add_executable(
   )
 target_link_libraries(testmeq2 ${LIBS})
 add_test(testmeq2 testmeq2)
+
+add_test(testcollision testcollision)
+add_executable(
+  testcollision
+  test/test.h
+  test/testcollision.c
+)
+target_link_libraries(testcollision ${LIBS})
+add_test(testcollision testcollision)
 
 ##########  OpenCL unit tests  ##########
 if(OPENCL_FOUND)
