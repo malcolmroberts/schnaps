@@ -40,10 +40,10 @@ typedef struct Skyline{
 
 //! \brief init the skyline structure with an empty matrix
 //! \param[inout] sky the skyline object
-//! \param{in} n number of equations
+//! \param[in] n number of equations
 void InitSkyline(Skyline* sky,int n);
 
-//! \brief free the allocated array
+//! \brief free the allocated arrays
 //! \param[inout] sky the skyline object
 void FreeSkyline(Skyline* sky);
 
@@ -60,11 +60,10 @@ void SwitchOn(Skyline* sky,int i,int j);
 void AllocateSkyline(Skyline* sky);
 
 //! \brief set elem (i,j) to value val
-//! \brief indicates that elem (i,j) is nonzero
 //! \param[inout] sky the skyline object
 //! \param[in] i row index
 //! \param[in] j column index
-//! \param[in] val column index
+//! \param[in] val value
 void SetSkyline(Skyline* sky,int i,int j,double val); 
 
 //! \brief get elem (i,j)

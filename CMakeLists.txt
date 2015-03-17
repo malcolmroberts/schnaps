@@ -57,7 +57,7 @@ list(APPEND
   src/collision.h
   src/macromesh.h
   src/h20phi.h
-  #src/skyline.c
+  src/skyline.c
   )
 
 if (OPENCL_FOUND)
@@ -198,14 +198,14 @@ add_executable(
 target_link_libraries(testmeq2 ${LIBS})
 add_test(testmeq2 testmeq2)
 
-# add_test(testskyline testskyline)
-# add_executable(
-#   testskyline
-#   test/test.h
-#   test/testskyline.c
-# )
-# target_link_libraries(testskyline _schnaps m pthread)
-# add_test(testskyline testskyline)
+add_test(testskyline testskyline)
+add_executable(
+  testskyline
+  test/test.h
+  test/testskyline.c
+  )
+target_link_libraries(testskyline _schnaps m pthread)
+add_test(testskyline testskyline)
  
 add_test(testcollision testcollision)
 add_executable(

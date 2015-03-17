@@ -64,6 +64,9 @@ void AllocateSkyline(Skyline* sky){
     sky->vkgi=malloc(sky->nmem * sizeof(double));
     assert(sky->vkgi);
   }
+  else{
+    sky->vkgi=sky->vkgs;
+  }
 
   sky->is_alloc=true;
 
@@ -89,11 +92,11 @@ void SetSkyline(Skyline* sky,int i,int j,double val){
     sky->vkgs[k]+=val;
   }
   else {
-    assert(! sky->is_sym);
+    assert(!(sky->is_sym));
     int k=sky->kld[i+1]-i+j;
     sky->vkgi[k]+=val;
-    printf("i=%d j=%d k=%d nmem=%d\n",i,j,k,sky->nmem);
-    printf("i=%d j=%d k=%d v=%f\n",i,j,k,sky->vkgi[k]);
+    //printf("i=%d j=%d k=%d nmem=%d\n",i,j,k,sky->nmem);
+    //printf("i=%d j=%d k=%d v=%f\n",i,j,k,sky->vkgi[k]);
   }
 
 
@@ -181,6 +184,7 @@ void FactoLU(Skyline* sky){
   int ifac=1;
   int isol=0;
   int nsym=1;
+  if (sky->is_sym) nsym=0;
 
   sol_(sky->vkgs,sky->vkgd, sky->vkgi,
        vfg, sky->kld, vu, sky->neq, 
@@ -199,6 +203,7 @@ void SolveSkyline(Skyline* sky,double* vfg,double* vu){
   int ifac=0;
   int isol=1;
   int nsym=1;
+  if (sky->is_sym) nsym=0;
 
   sol_(sky->vkgs,sky->vkgd, sky->vkgi,
        vfg, sky->kld, vu, sky->neq, 
@@ -218,7 +223,7 @@ void FreeSkyline(Skyline* sky){
 
   free(sky->vkgs);
   free(sky->vkgd);
-  free(sky->vkgi);
+  if (! sky->is_sym)  free(sky->vkgi);
   free(sky->prof);
   free(sky->kld);
 
