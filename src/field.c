@@ -660,6 +660,12 @@ void* DGMacroCellInterface(void* mc){
 	// opposite element in xref_in
   	ref_pg_face(iparam+1,ifa,ipgf,xpgref,&wpg,xpgref_in);
 
+#ifdef _PERIOD
+	assert(f->is1d); // TODO: generalize to 2d
+	if (xpgref_in[0] > _PERIOD) xpgref_in[0] -= _PERIOD;
+	if (xpgref_in[0] < 0) xpgref_in[0] += _PERIOD;
+#endif
+
   	// recover the volume gauss point from
   	// the face index
   	int ipg=iparam[7];
@@ -699,7 +705,12 @@ void* DGMacroCellInterface(void* mc){
 		  xpgR,NULL,  
 		  NULL,NULL,NULL); // codtau,dphi,vnds
 
-	  assert(Dist(xpgR,xpg)<1e-10);
+#ifdef _PERIOD
+	   assert(fabs(Dist(xpg,xpgR)-_PERIOD)<1e-11);
+#else
+          assert(Dist(xpg,xpgR)<1e-11);
+#endif
+	  //assert(Dist(xpgR,xpg)<1e-10);
   	  for(int iv=0;iv<f->model.m;iv++){
   	    int imem=f->varindex(iparam,ieR,ipgR,iv);
   	    wR[iv]=f->wn[imem];

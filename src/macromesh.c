@@ -261,6 +261,14 @@ void BuildConnectivity(MacroMesh* m){
   /*   } */
   /* } */
 
+#ifdef _PERIOD
+  assert(m->is1d); // TODO : generalize to 2D
+  assert(m->nbelems==1); 
+  // faces 1 and 3 point to the same unique macrocell
+  m->elem2elem[1+6*0]=0;
+  m->elem2elem[3+6*0]=0;
+#endif
+
   
 }
 
@@ -427,6 +435,11 @@ void CheckMacroMesh(MacroMesh* m,int* param){
   	// get the coordinates of the Gauss point
   	ref_pg_face(param,ifa,ipgf,xpgref,&wpg,xpgref_in);
 	//printf("xref_in=%f %f %f\n",xpgref_in[0],xpgref_in[1],xpgref_in[2]);
+#ifdef _PERIOD
+	assert(m->is1d); // TODO: generalize to 2d
+	if (xpgref_in[0] > _PERIOD) xpgref_in[0] -= _PERIOD;
+	if (xpgref_in[0] < 0) xpgref_in[0] += _PERIOD;
+#endif
 
   	// recover the volume gauss point from
   	// the face index
@@ -462,7 +475,7 @@ void CheckMacroMesh(MacroMesh* m,int* param){
 	  //printf("xpg_in=%f %f %f\n",xpg_in[0],xpg_in[1],xpg_in[2]);
 	  Phy2Ref(physnodeR,xpg_in,xref);
           int ifaR=0;
-          while (m->elem2elem[6*ieR+ifaR] != ie) ifaR++;
+          while (m->elem2elem[6*ieR+ifaR] != ie || ifaR==ifa) ifaR++;
           assert(ifaR<6);
 	  //printf("ieR=%d ifaR=%d xref=%f %f %f\n",ieR,
 	  //	 ifaR,xref[0],xref[1],xref[2]);
@@ -476,9 +489,13 @@ void CheckMacroMesh(MacroMesh* m,int* param){
 		  NULL,ifaR, // dphiref,ifa
 		  xpgR,dtauR,  
 		  codtauR,NULL,vndsR); // codtau,dphi,vnds
-	  // printf("x1=%f %f %f x2=%f %f %f\n",xpg[0],xpg[1],xpg[2],
-	  //xpgR[0],xpgR[1],xpgR[2]);
+	  //  printf("x1=%f %f %f x2=%f %f %f vn=%f %f \n",xpg[0],xpg[1],xpg[2],
+	  //	  xpgR[0],xpgR[1],xpgR[2],vnds[0],vndsR[0]);
+#ifdef _PERIOD
+	   assert(fabs(Dist(xpg,xpgR)-_PERIOD)<1e-11);
+#else
           assert(Dist(xpg,xpgR)<1e-11);
+#endif
           assert(fabs(vnds[0]+vndsR[0])<1e-11);
           assert(fabs(vnds[1]+vndsR[1])<1e-11);
           assert(fabs(vnds[1]+vndsR[1])<1e-11);

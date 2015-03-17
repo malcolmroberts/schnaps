@@ -417,6 +417,7 @@ void ref_pg_face(int* param,int ifa,int ipg,
 		 h[1]*(ncy+gauss_lob_point[offset[1]]+small);
     if (iy==deg[1]) xpgin[axis_permut[ifa][1]] =
 		      h[1]*(ncy+gauss_lob_point[offset[1]]-small);
+    
 
   }
 
