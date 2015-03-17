@@ -82,3 +82,5 @@ testmacrocellinterface
 *.log
 *.msh
 testfieldrk2_cl
+
+doc/Notes_reduced_collision/Reduced_Kinetic.toc

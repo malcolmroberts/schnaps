@@ -1,0 +1,392 @@
+#LyX 2.0 created this file. For more info see http://www.lyx.org/
+\lyxformat 413
+\begin_document
+\begin_header
+\textclass article
+\use_default_options true
+\begin_modules
+theorems-ams
+eqs-within-sections
+figs-within-sections
+\end_modules
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman default
+\font_sans default
+\font_typewriter default
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100
+\font_tt_scale 100
+
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\spacing single
+\use_hyperref false
+\papersize default
+\use_geometry true
+\use_amsmath 1
+\use_esint 1
+\use_mhchem 1
+\use_mathdots 1
+\cite_engine basic
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\use_refstyle 1
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\leftmargin 2cm
+\topmargin 2cm
+\rightmargin 2cm
+\bottommargin 2cm
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Title
+Gyrokinetic model of Vlasov equation
+\end_layout
+
+\begin_layout Section
+Plasma mathematical model
+\end_layout
+
+\begin_layout Standard
+We consider the gyrokinetic model of Vlasov equation
+\begin_inset Formula 
+\begin{equation}
+\partial_{t}f+\nabla_{\perp}\cdot(E^{\perp}f)+v\partial_{z}f-\partial_{z}\phi\partial_{v}f=0\label{eq:kin}
+\end{equation}
+
+\end_inset
+
+ with 
+\begin_inset Formula $3$
+\end_inset
+
+ dimensions in position 
+\begin_inset Formula $X=(x,y,z)$
+\end_inset
+
+ and 
+\begin_inset Formula $v=v_{z}$
+\end_inset
+
+.
+ We have 
+\begin_inset Formula $E^{\perp}=(E_{y},-E_{x},0)^{T}=(\partial_{y}\phi,-\partial_{x}\phi,0)$
+\end_inset
+
+ and 
+\begin_inset Formula $\nabla_{\perp}f=(\partial_{x}f,\partial_{y}f,0)^{T}$
+\end_inset
+
+ so we can write the equation (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:kin"
+
+\end_inset
+
+) as following
+\begin_inset Formula 
+\[
+\partial_{t}f+\partial_{x}(E_{y}f)-\partial_{y}(E_{x}f)+v\partial_{z}f-\partial_{z}\phi\partial_{v}f=0
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+\partial_{t}f+f\partial_{x}E_{y}+E_{y}\partial_{x}f-f\partial_{y}E_{x}-E_{x}\partial_{y}f+v\partial_{z}f-\partial_{z}\phi\partial_{v}f=0
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+\partial_{t}f+f(\partial_{x}E_{y}-\partial_{y}E_{x})+E_{y}\partial_{x}f-E_{x}\partial_{y}f+v\partial_{z}f-\partial_{z}\phi\partial_{v}f=0.
+\]
+
+\end_inset
+
+Because of 
+\begin_inset Formula $\partial_{x}E_{y}-\partial_{y}E_{x}=\partial_{x}\partial_{y}\phi-\partial_{y}\partial_{x}\phi=0$
+\end_inset
+
+, finally we obtain 
+\begin_inset Formula 
+\begin{equation}
+\partial_{t}f+E_{y}\partial_{x}f-E_{x}\partial_{y}f+v\partial_{z}f-\partial_{z}\phi\partial_{v}f=0.\label{eq:reducedvlasov}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+The finite element method
+\end_layout
+
+\begin_layout Standard
+We assume that the distribution function is approximated by expansion on
+ the interpolation basis 
+\begin_inset Formula $\text{(}\varphi_{j})_{j=1,\ldots,P}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+f(X,v,t)=\sum_{j=1}^{P}w_{j}(X,t)\varphi_{j}(v),\label{eq:gauss}
+\end{equation}
+
+\end_inset
+
+Because of the interpolation property of the basis
+\begin_inset Formula $\{\varphi_{j}\}_{j=1\cdots P}$
+\end_inset
+
+
+\begin_inset Formula 
+\[
+\varphi_{i}(N_{j})=\delta_{ij},
+\]
+
+\end_inset
+
+we have
+\begin_inset Formula 
+\[
+f(X,N_{i},t)=\sum_{j=1}^{P}w_{j}(X,t)\varphi_{j}(N_{i})=w_{i}(X,t).
+\]
+
+\end_inset
+
+Therefore, we can approximate the initial condition in the following way
+\begin_inset Formula 
+\[
+w_{j}(X,0)=f(X,N_{j},0)=f_{0}(X,N_{j}).
+\]
+
+\end_inset
+
+We now describe the weak formulation from which we construct the reduced
+ model.
+ In principle, in velocity we should assume that 
+\begin_inset Formula $v=v_{z}\in]-\infty,+\infty[$
+\end_inset
+
+ and that the distribution function vanishes at 
+\begin_inset Formula $v=\pm\infty$
+\end_inset
+
+.
+ But for practical reasons, we have to bound the velocity space.
+ We suppose that 
+\begin_inset Formula $v=v_{z}\in]-V,V[$
+\end_inset
+
+.
+ The Vlasov equation is a transport equation, we have thus also to apply
+ boundary conditions at 
+\begin_inset Formula $v=-V$
+\end_inset
+
+ or 
+\begin_inset Formula $v=V$
+\end_inset
+
+ depending on the sign of 
+\begin_inset Formula $E_{z}$
+\end_inset
+
+
+\begin_inset Formula 
+\begin{eqnarray}
+E_{z}(X,t)>0\Rightarrow f(X,-V,t) & = & 0.\label{eq:upw1}\\
+E_{z}(X,t)<0\Rightarrow f(X,V,t) & = & 0.\label{eq:upw2}
+\end{eqnarray}
+
+\end_inset
+
+Let 
+\begin_inset Formula $f$
+\end_inset
+
+ be a solution of the Vlasov equation (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:reducedvlasov"
+
+\end_inset
+
+) with the boundary condition defined by (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:upw1"
+
+\end_inset
+
+), (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:upw2"
+
+\end_inset
+
+).
+ We recall that 
+\begin_inset Formula 
+\[
+E_{z}^{+}=\max(0,E_{z}),\quad E_{z}^{-}=\min(0,E_{z}).
+\]
+
+\end_inset
+
+Then, for all basis function 
+\begin_inset Formula $\varphi_{i}$
+\end_inset
+
+, we have
+\begin_inset Formula 
+\[
+\partial_{t}\int_{\Omega_{v}}f\varphi_{i}+E_{y}\partial_{x}\int_{\Omega_{v}}f\varphi_{i}-E_{x}\partial_{y}\int_{v}f\varphi_{i}+\partial_{z}\int_{\Omega_{v}}vf\varphi_{i}-\partial_{z}\phi\int_{\Omega_{v}}\partial_{v}f\varphi_{i}+\frac{E_{z}^{+}}{2}f(\cdot,-V,\cdot)\varphi_{i}(-V)-\frac{E_{z}^{-}}{2}f(\cdot,V,\cdot)\varphi_{i}(V)=0
+\]
+
+\end_inset
+
+Using the formula (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:gauss"
+
+\end_inset
+
+), so
+\begin_inset Formula 
+\[
+\begin{array}{cccc}
+\sum_{j=1}^{P}(\partial_{t}w_{j}\int_{\Omega_{v}}\varphi_{i}\varphi_{j}+E_{y}\partial_{x}w_{j}\int_{\Omega_{v}}\varphi_{i}\varphi_{j}-E_{x}\partial_{y}w_{j}\int_{\Omega_{v}}\varphi_{i}\varphi_{j}+\partial_{z}w_{j}\int_{\Omega_{v}}v\varphi_{i}\varphi_{j}-\partial_{z}\phi w_{j}\int_{\Omega_{v}}\varphi_{i}\varphi_{j}' & +\\
+\frac{E_{z}^{+}}{2}w_{j}\varphi_{j}(-V)\varphi_{i}(-V)-\frac{E_{z}^{-}}{2}w_{j}\varphi_{j}(V)\varphi_{i}(V)) & = & 0.
+\end{array}
+\]
+
+\end_inset
+
+We can thus introduce the following matrices of dimension 
+\begin_inset Formula $P\times P$
+\end_inset
+
+
+\begin_inset Formula 
+\[
+M=(\int_{v}\varphi_{i}\varphi_{j}),\quad A=(\int_{v}v\varphi_{i}\varphi_{j}).
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+B(E_{z})=\frac{E_{z}^{+}}{2E_{z}}\varphi_{j}(-V)\varphi_{i}(-V)-\frac{E_{z}^{-}}{2E_{z}}\varphi_{j}(V)\varphi_{i}(V)+\int_{v}\varphi_{i}\varphi_{j}'.
+\]
+
+\end_inset
+
+We obtain the following equation
+\begin_inset Formula 
+\begin{equation}
+M\partial_{t}w+E_{y}M\partial_{x}w-E_{x}M\partial_{y}w+A\partial_{z}w+B(E_{z})w=0.\label{eq:reducedsys}
+\end{equation}
+
+\end_inset
+
+Avec 
+\begin_inset Formula $(E_{x},E_{y},E_{z})^{T}=\nabla\phi=(\partial_{x}\phi,\partial_{y}\phi,\partial_{z}\phi)^{T}$
+\end_inset
+
+ and sastify the Poisson equation
+\begin_inset Formula 
+\[
+\Delta_{xy}\phi(x,y,z)+\lambda\phi(x,y,z)=\int_{v_{z}}f.
+\]
+
+\end_inset
+
+Consider the equation (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:reducedsys"
+
+\end_inset
+
+), we have solved the following equation in 
+\begin_inset Formula $1$
+\end_inset
+
+ dimensionnal
+\begin_inset Formula 
+\[
+M\partial_{t}w+A\partial_{z}w+E_{z}B(E_{z})w=0,
+\]
+
+\end_inset
+
+(the same equation and the same matrices.) So we have to solve (numerically)
+ the part
+\begin_inset Formula 
+\[
+M\partial_{t}w+E_{y}M\partial_{x}w-E_{x}M\partial_{y}w=0
+\]
+
+\end_inset
+
+or the following differential equation (since 
+\begin_inset Formula $M$
+\end_inset
+
+ is symmetric possitive defined) 
+\begin_inset Formula 
+\[
+\partial_{t}w+E_{y}\partial_{x}w-E_{x}\partial_{y}w=0
+\]
+
+\end_inset
+
+
+\end_layout
+
+\end_body
+\end_document
