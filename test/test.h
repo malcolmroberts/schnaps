@@ -38,4 +38,9 @@ int TestKernelInterface(void);
 
 int TestFieldRK2_CL(void);
 
+int TestSkyline(void);
+
+int TestCollision(void);
+
+
 #endif

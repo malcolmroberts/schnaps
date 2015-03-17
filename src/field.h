@@ -4,6 +4,7 @@
 #include "macromesh.h"
 #include "interpolation.h"
 #include "model.h"
+#include "skyline.h"
 
 //FIXME: move to field_cl
 #ifdef _WITH_OPENCL

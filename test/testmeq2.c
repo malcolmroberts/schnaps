@@ -64,7 +64,7 @@ int TestmEq2(void) {
   Plotfield(0, true, &f, "error", "dgerror.msh");
 
   double dd = L2error(&f);
-  double tolerance = 1e-4;
+  double tolerance = 1e-5;
   test = test && (dd < tolerance);
   printf("L2 error: %f\n", dd);
 
