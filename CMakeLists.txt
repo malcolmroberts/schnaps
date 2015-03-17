@@ -8,7 +8,6 @@ project(schnaps)
 #set(CMAKE_C_COMPILER "/opt/local/bin/gcc-mp-4.8")
 SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
-
 #set(CMAKE_C_FLAGS "-std=c99 -D_REENTRANT -O3 -g -D_POSIX_C_SOURCE=200112L")
 set(CMAKE_C_FLAGS "-std=gnu99 -D_REENTRANT -O3 -g")
 #set(CMAKE_C_FLAGS "-std=c99 -D_REENTRANT -O3 -g")
