@@ -12,7 +12,7 @@ int TestCollision(void) {
   f.model.m=_MV+1; // num of conservative variables
   f.model.vmax = _VMAX; // maximal wave speed 
 
-  f.model.cfl = 0.5; // maximal wave speed 
+  f.model.cfl = 0.1; // maximal wave speed 
   f.model.NumFlux=Collision_Lagrangian_NumFlux;
   f.model.BoundaryFlux=Collision_Lagrangian_BoundaryFlux;
   f.model.InitData=CollisionInitData;
