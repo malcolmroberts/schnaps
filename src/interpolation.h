@@ -126,6 +126,12 @@ void grad_psi_pg(int* param,int ib,int ipg,double* dpsiref);
 void psi_ref_subcell(int* param, int* is,int ib, double* xref, double* psi, double* dpsiref);
 
 
+//! \brief return the 1d ith GLOP position for degree deg
+//! \param[in] deg degree
+//! \param[in] i GLOP 1D index
+//! \returns the position in [0,1]
+double glop(int deg,int i);
+
 //! \brief return the 1d ith GLOP weight for degree deg
 //! \param[in] deg degree
 //! \param[in] i GLOP 1D index

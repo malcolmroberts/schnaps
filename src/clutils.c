@@ -3,6 +3,7 @@
 */
 
 #include "clutils.h"
+#include <stdio.h>
 
 const char* clErrorString(const cl_int err)
 {
@@ -200,9 +201,9 @@ const char* clErrorString(const cl_int err)
   return errString;
 }
 
-char* print_build_debug(cl_program* program, cl_device_id *device) 
+char *print_build_debug(cl_program *program, cl_device_id *device) 
 {
-  size_t log_size=100000;
+  size_t log_size = 100000;
   /* clGetProgramBuildInfo(program,  */
   /* 			*device, */
   /* 			CL_PROGRAM_BUILD_LOG,  */
@@ -217,5 +218,6 @@ char* print_build_debug(cl_program* program, cl_device_id *device)
 			log_size, 
 			log, 
 			NULL);
+  printf("%s", log);
   return log;
 }

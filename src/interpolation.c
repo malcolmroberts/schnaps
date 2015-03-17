@@ -50,8 +50,19 @@ __constant double gauss_lob_weight[] = {
 //! data for a given degree in the previous arrays
 __constant int gauss_lob_offset[] = {0, 1, 3, 6, 10};
 
-__constant double gauss_lob_dpsi[] = {
-  0.0,
+double glop(int deg,int i){
+  return gauss_lob_point[i+gauss_lob_offset[deg]];
+}
+
+
+//! derivatives of the Lagrange functions
+//! at the Gauss Lobatto points up to
+//! degree 4
+//! derivatives for the first function
+//! derivatives for the second function
+//! etc. for each degree from 0 to 4
+const double gauss_lob_dpsi[] = {
+  0.00000000000000000000000000000000000000000000000000000000000,
   -1.,
   -1.,
   1.,
