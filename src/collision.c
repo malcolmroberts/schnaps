@@ -75,7 +75,8 @@ void CollisionImposedData(double x[3],double t,double w[]){
 
     double vi = (nel*_DV +
 		 _DV* glop(_DEG_V,j));
-    w[i]=cos(x[0]-vi*t);
+#define M_PI 3.14159265358979323846
+    w[i]=cos(2*M_PI*(x[0]-vi*t));
   }
   // exact value of the potential
   w[_MV]=0;

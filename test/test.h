@@ -33,4 +33,6 @@ int TestCollision(void);
 
 int TestGyro(void);
 
+int TestPeriodic(void);
+
 #endif

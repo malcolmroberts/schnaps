@@ -183,3 +183,12 @@ add_executable(
 )
 target_link_libraries(testgyro _schnaps m pthread)
 add_test(testgyro testgyro)
+
+add_test(testperiodic testperiodic)
+add_executable(
+  testperiodic
+  test/test.h
+  test/testperiodic.c
+)
+target_link_libraries(testperiodic _schnaps m pthread)
+add_test(testperiodic testperiodic)

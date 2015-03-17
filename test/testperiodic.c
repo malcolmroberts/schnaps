@@ -9,16 +9,16 @@ int main(void) {
   
   // unit tests
     
-  int resu=TestCollision();
+  int resu=TestPeriodic();
 	 
-  if (resu) printf("collision test OK !\n");
-  else printf("collision test failed !\n");
+  if (resu) printf("periodic test OK !\n");
+  else printf("periodic test failed !\n");
 
   return !resu;
 } 
 
 
-int TestCollision(void) {
+int TestPeriodic(void) {
 
   bool test=true;
 
