@@ -64,6 +64,6 @@ doxygen doxyschnaps
 //! brief global variable for activating periodic 
 //! computations and defining the length of the 
 //! periodic domain
-//#define _PERIOD 1
+#define _PERIOD 1
 
 #endif

@@ -618,6 +618,7 @@ void* DGMacroCellInterface(void* mc){
   // assembly of the surface terms
   // loop on the elements
   for (int ie=mcell->first_cell;ie<mcell->last_cell_p1;ie++){
+    //printf("ie=%d\n",ie);
     // get the physical nodes of element ie
     double physnode[20][3];
     for(int inoloc=0;inoloc<20;inoloc++){
@@ -662,8 +663,16 @@ void* DGMacroCellInterface(void* mc){
 
 #ifdef _PERIOD
 	assert(f->is1d); // TODO: generalize to 2d
-	if (xpgref_in[0] > _PERIOD) xpgref_in[0] -= _PERIOD;
-	if (xpgref_in[0] < 0) xpgref_in[0] += _PERIOD;
+	if (xpgref_in[0] > _PERIOD) {
+	  //printf("à droite ifa= %d x=%f ipgf=%d ieL=%d ieR=%d\n",
+	  //	 ifa,xpgref_in[0],ipgf,ie,ieR);
+	  xpgref_in[0] -= _PERIOD;
+	}
+	else if (xpgref_in[0] < 0) { 
+	  //printf("à gauche ifa= %d  x=%f ieL=%d ieR=%d \n",
+	  //ifa,xpgref_in[0],ie,ieR);
+	  xpgref_in[0] += _PERIOD;
+	}
 #endif
 
   	// recover the volume gauss point from
@@ -697,6 +706,7 @@ void* DGMacroCellInterface(void* mc){
   	  double xref[3];
 	  Phy2Ref(physnodeR,xpg_in,xref);
   	  int ipgR=ref_ipg(iparam+1,xref);
+	  //printf("ipgL=%d ipgR=%d vn=%f\n",ipg,ipgR,vnds[0]);
 	  double xpgR[3],xrefR[3],wpgR;
 	  ref_pg_vol(iparam+1, ipgR, xrefR, &wpgR,NULL);
 	  Ref2Phy(physnodeR,
@@ -1320,6 +1330,7 @@ void RK2(Field* f,double tmax){
       printf("t=%f iter=%d/%d dt=%f\n",f->tnow,iter,itermax,dt);
     // predictor
     dtField(f);
+    //assert(1==2);
 
 #ifdef _OPENMP
 #pragma omp parallel for
