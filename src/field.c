@@ -765,20 +765,28 @@ void* DGMass(void* mc){
     }
     for(int ipg=0;ipg<NPG(f->interp_param+1);ipg++){
 
-      double dtau[3][3],codtau[3][3],xpgref[3],wpg;
+      double dtau[3][3],codtau[3][3],xpgref[3],xphy[3],wpg;
       ref_pg_vol(f->interp_param+1,ipg,xpgref,&wpg,NULL);
       Ref2Phy(physnode, // phys. nodes
 	      xpgref,  // xref
 	      NULL,-1, // dpsiref,ifa
-	      NULL,dtau,  // xphy,dtau
+	      xphy,dtau,  // xphy,dtau
 	      codtau,NULL,NULL); // codtau,dpsi,vnds
       double det
 	= dtau[0][0]*codtau[0][0]
 	+ dtau[0][1]*codtau[0][1]
 	+ dtau[0][2]*codtau[0][2];
+      // source term
+      double wL[f->model.m],source[f->model.m];
+      for(int iv=0;iv<f->model.m;iv++){
+	int imem=f->varindex(f->interp_param,ie,ipg,iv);
+	wL[iv]=f->wn[imem];
+      }
+      f->model.Source(xphy,f->tnow,wL,source);
       for(int iv=0;iv<f->model.m;iv++){
 	int imem=f->varindex(f->interp_param,ie,ipg,iv);
 	f->dtwn[imem]/=(wpg*det);
+	f->dtwn[imem]+=source[iv];
       }
     }
   }
@@ -874,7 +882,7 @@ void* DGVolume(void* mc){
 		  int ipgL=offsetL+p[0]+npg[0]*(p[1]+npg[1]*p[2]);
 		  for(int iv=0; iv < m; iv++){
 		    ///int imemL=f->varindex(f_interp_param,ie,ipgL,iv);
-		    wL[iv] = f->wn[imems[m*(ipgL-offsetL)+iv]]; /// big bug !!!!
+		    wL[iv] = f->wn[imems[m*(ipgL-offsetL)+iv]]; 
 
 		    //wL[iv] = f->wn[imemL];
 		  }

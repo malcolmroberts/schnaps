@@ -16,6 +16,7 @@ int TestfieldSource(void){
   f.model.BoundaryFlux = TestTransBoundaryFlux;
   f.model.InitData = TestTransInitData;
   f.model.ImposedData = TestTransImposedData;
+  f.model.Source = TransportSource;
   f.varindex = GenericVarindex;
 
   f.interp.interp_param[0] = 1; // _M

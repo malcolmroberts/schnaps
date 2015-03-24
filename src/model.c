@@ -154,6 +154,11 @@ void VecTransImposedData2d(double x[3],double t,double* w){
   w[1]=xx*xx;
 };
 
+void TestTransportSource(double x[3],double t,double w[],
+		      double* source){
+  source[0]=0;
+};
+
 void TestTransportBoundaryFlux(double x[3],double t,double wL[],double* vnorm,
 			   double* flux){
   double wR[1];
