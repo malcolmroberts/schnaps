@@ -782,7 +782,14 @@ void* DGMass(void* mc){
 	int imem=f->varindex(f->interp_param,ie,ipg,iv);
 	wL[iv]=f->wn[imem];
       }
-      f->model.Source(xphy,f->tnow,wL,source);
+      if (f->model.Source !=0) {
+	f->model.Source(xphy,f->tnow,wL,source);
+      }
+      else {
+	for(int iv=0;iv<f->model.m;iv++){
+	  source[iv]=0;
+	}
+      }
       for(int iv=0;iv<f->model.m;iv++){
 	int imem=f->varindex(f->interp_param,ie,ipg,iv);
 	f->dtwn[imem]/=(wpg*det);

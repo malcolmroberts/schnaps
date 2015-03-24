@@ -33,6 +33,7 @@ int TestGyro(void) {
   f.model.BoundaryFlux=Gyro_Lagrangian_BoundaryFlux;
   f.model.InitData=GyroInitData;
   f.model.ImposedData=GyroImposedData;
+  f.model.Source = NULL;
   f.varindex=GenericVarindex;
     
     

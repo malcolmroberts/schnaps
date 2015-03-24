@@ -32,6 +32,7 @@ int TestCollision(void) {
   f.model.BoundaryFlux=Collision_Lagrangian_BoundaryFlux;
   f.model.InitData=CollisionInitData;
   f.model.ImposedData=CollisionImposedData;
+  f.model.Source = NULL;
   f.varindex=GenericVarindex;
     
     

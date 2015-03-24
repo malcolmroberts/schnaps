@@ -102,6 +102,15 @@ add_executable(
 target_link_libraries(testfielddg _schnaps m pthread)
 add_test(testfielddg testfielddg)
 
+add_test(testfieldsource testfieldsource)
+add_executable(
+  testfieldsource
+  test/test.h
+  test/testfieldsource.c
+)
+target_link_libraries(testfieldsource _schnaps m pthread)
+add_test(testfieldsource testfieldsource)
+ 
 add_test(testfieldrk2 testfieldrk2)
 add_executable(
   testfieldrk2

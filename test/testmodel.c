@@ -32,6 +32,8 @@ int TestModel(void){
   tr.BoundaryFlux=TestTransportBoundaryFlux;
   tr.InitData=TestTransportInitData;
   tr.ImposedData=TestTransportImposedData;
+  tr.Source = NULL;
+
 
   double wL[tr.m];
   double wR[tr.m];

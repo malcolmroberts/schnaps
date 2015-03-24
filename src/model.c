@@ -154,7 +154,7 @@ void VecTransImposedData2d(double x[3],double t,double* w){
   w[1]=xx*xx;
 };
 
-void TestTransportSource(double x[3],double t,double w[],
+void TransportSource(double x[3],double t,double w[],
 		      double* source){
   source[0]=0;
 };
@@ -211,3 +211,55 @@ void TestTransportImposedData2d(double x[3],double t,double w[]){
 
   w[0]=xx*xx;
 };
+
+
+// source term test
+
+void TestSourceBoundaryFlux(double* x,double t,double* wL,double* vn,
+			    double* flux){
+
+
+  double wR[1];
+  TestSourceImposedData(x,t,wR);
+  TransportNumFlux(wL,wR,vn,flux);
+
+}
+
+void TestSourceInitData(double* x,double* w){
+
+  double t=0;
+  TestSourceImposedData(x,t,w);
+}
+
+void TestSourceImposedData(double* x,double t,double* w){
+
+  double vx =
+    transport_v[0] * x[0] +
+    transport_v[1] * x[1] +
+    transport_v[2] * x[2];
+
+  double xx = vx ;
+
+  w[0]=xx*xx;
+
+
+
+}
+
+void TestSourceSource(double* x,double t,double* w,
+		      double* source){
+
+  double vx =
+    transport_v[0] * x[0] +
+    transport_v[1] * x[1] +
+    transport_v[2] * x[2];
+
+  double v2=    transport_v[0] * transport_v[0] +
+    transport_v[1] * transport_v[1] +
+    transport_v[2] * transport_v[2];
+
+
+  source[0]=2*vx*v2;
+
+}
+

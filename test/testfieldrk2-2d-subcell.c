@@ -27,6 +27,7 @@ int TestFieldRK2_2D_SubCell(void) {
   f.model.BoundaryFlux=TransportBoundaryFlux2d;
   f.model.InitData=TransportInitData2d;
   f.model.ImposedData=TransportImposedData2d;
+  f.model.Source = NULL;
   f.varindex=GenericVarindex;
 
   f.model.vmax=1;

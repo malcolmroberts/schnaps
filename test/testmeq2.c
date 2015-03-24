@@ -25,6 +25,9 @@ int TestmEq2(void) {
   Field f;
 
   int vec=2;
+
+  f.model.Source = NULL;
+
   
   if (vec==2) {
     f.model.m=2; // num of conservative variables
