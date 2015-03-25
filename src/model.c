@@ -8,8 +8,7 @@
 
 const double transport_v[] = {
   ONE_OVER_SQRT_3,
-  1,
-  //ONE_OVER_SQRT_3,
+  ONE_OVER_SQRT_3,
   ONE_OVER_SQRT_3};
 
 //const double transport_v[] = {1,0,0};
