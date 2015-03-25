@@ -8,7 +8,8 @@
 
 const double transport_v[] = {
   ONE_OVER_SQRT_3,
-  ONE_OVER_SQRT_3,
+  1,
+  //ONE_OVER_SQRT_3,
   ONE_OVER_SQRT_3};
 
 //const double transport_v[] = {1,0,0};
@@ -240,7 +241,7 @@ void TestSourceImposedData(double* x,double t,double* w){
 
   double xx = vx ;
 
-  w[0]=xx*xx;
+  w[0]=xx*xx*xx;
 
 
 
@@ -259,7 +260,7 @@ void TestSourceSource(double* x,double t,double* w,
     transport_v[2] * transport_v[2];
 
 
-  source[0]=2*vx*v2;
+  source[0]=3*vx*vx*v2;
 
 }
 
