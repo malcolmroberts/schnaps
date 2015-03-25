@@ -1,14 +1,14 @@
 #ifndef _COLLISION_H
 #define _COLLISION_H
 
-#define _NB_ELEM_V 4
-#define _DEG_V 1
+#define _NB_ELEM_V 10
+#define _DEG_V 3
 
 //! \brief number of conservative variables
 //! values of  the distribution function at the velocity glops
 //! and value of the potential 
 #define _MV (_NB_ELEM_V *  _DEG_V + 1 )
-#define _VMAX 6
+#define _VMAX 6.
 #define _DV (2*_VMAX / _NB_ELEM_V)
 
 
@@ -63,7 +63,7 @@ double L2VelError(double* x,double t,double *w);
 //! \param[in] w the distribution function
 //! \param[in] f the force 
 //! \param[out] source the source
-void CollisionSource(double* force, double* w, double* source);
+void CollisionSource(double* x,double t, double* w, double* source);
 
 //! \brief solve the Poisson equation
 //! \param[inout] f a field the charge is used as the source to the poisson equation

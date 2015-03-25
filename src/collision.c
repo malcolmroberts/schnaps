@@ -21,18 +21,23 @@ void Collision_Lagrangian_NumFlux(double wL[],double wR[],double* vnorm,double* 
     double vnm = vn-vnp;
 
     flux[i] = vnp * wL[i] + vnm * wR[i];
+    flux[i]=0;
   }
   // do not change the potential !
+  // and the electric field
   flux[_MV]=0;
+  flux[_MV+1]=0;
   
 };
 
 //! \brief compute square of velocity L2 error
 //! \param[in] w : values of f at glops
 double L2VelError(double* x,double t,double *w){
+  
+  FILE * ver;
+  ver = fopen( "vel_error.dat", "w" );
 
-
-  double wex[_MV+1];
+  double wex[_MV+2];
   double err2=0;
   CollisionImposedData(x, t,wex);
   // loop on the finite emlements
@@ -40,11 +45,13 @@ double L2VelError(double* x,double t,double *w){
     // loop on the local glops
     for(int iloc=0;iloc<_DEG_V+1;iloc++){
       double omega=wglop(_DEG_V,iloc);
-      double vi=iel*_DV+_DV*glop(_DEG_V,iloc);
+      double vi=-_VMAX+iel*_DV+_DV*glop(_DEG_V,iloc);
       int ipg=iloc+iel*_DEG_V;
       err2+=omega*_DV*(w[ipg]-wex[ipg])*(w[ipg]-wex[ipg]);
+      fprintf(ver,"%f %f %f\n",vi,w[ipg],wex[ipg]);
     }
   }
+  fclose(ver);
   return err2;
 };
 
@@ -52,7 +59,7 @@ double L2VelError(double* x,double t,double *w){
 
 void Collision_Lagrangian_BoundaryFlux(double x[3],double t,double wL[],double* vnorm,
 				       double* flux){
-  double wR[_MV+1];
+  double wR[_MV+2];
   CollisionImposedData(x,t,wR);
   Collision_Lagrangian_NumFlux(wL,wR,vnorm,flux);
 };
@@ -73,20 +80,23 @@ void CollisionImposedData(double x[3],double t,double w[]){
     int j=i%_DEG_V; // local connectivity put in function
     int nel=i/_DEG_V; // element num (TODO : function)
 
-    double vi = (nel*_DV +
+    double vi = (-_VMAX+nel*_DV +
 		 _DV* glop(_DEG_V,j));
 #define M_PI 3.14159265358979323846
-    w[i]=cos(2*M_PI*(x[0]-vi*t));
+    //w[i]=cos(2*M_PI*(x[0]-vi*t+vi-t));
+    w[i]=exp(-(vi-t)*(vi-t));
   }
   // exact value of the potential
+  // and electric field
   w[_MV]=0;
+  w[_MV+1]=1;
 
 };
 
 
 double Collision_ImposedKinetic_Data(double x[3],double t,double v){
   double f;
-  f=cos(x[0]-v*t);
+  f=exp(-(v-t)*(v-t));
   return f;
 };
 
@@ -140,12 +150,14 @@ double L2_Kinetic_error(Field* f){
 
 //! \brief compute compute the source term of the collision
 //! model: electric force + true collisions
-void CollisionSource(double* force,double* w, double* source){
+void CollisionSource(double* x,double t,double* w, double* source){
 
-  double E=force[0]; // electric field
+  double E=w[_MV+1]; // electric field
   double Md[_MV];
   for(int iv=0;iv<_MV;iv++){
     Md[iv]=0;
+  }
+  for(int iv=0;iv<_MV+2;iv++){
     source[iv]=0;
   }
   // no source on the potential for the moment
@@ -159,17 +171,17 @@ void CollisionSource(double* force,double* w, double* source){
       Md[kpg]+=omega*_DV;
       for(int iloc=0;iloc<_DEG_V+1;iloc++){
 	int ipg=iloc+iel*_DEG_V;
-	source[ipg]-=E*omega*w[kpg]*dlag(_DEG_V,iloc,kloc);
+	source[ipg]+=E*omega*w[kpg]*dlag(_DEG_V,iloc,kloc);
       }
     }
   }
 
   // upwinding
   if (E>0){
-    source[_MV-1]+=E*w[_MV-1];
+    source[_MV-1]-=E*w[_MV-1];
   }
   else {
-    source[0]+=-E*w[0];
+    source[0]-=-E*w[0];
   }
 
   for(int iv=0;iv<_MV;iv++){
