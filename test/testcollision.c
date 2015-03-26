@@ -27,7 +27,7 @@ int TestCollision(void) {
   int vec=1;
   
   f.model.m=_MV+2; // num of conservative variables
-  f.model.vmax = _VMAX; // maximal wave speed 
+  f.model.vmax = _VMAX; // maximal wave speed
   f.model.NumFlux=Collision_Lagrangian_NumFlux;
   f.model.BoundaryFlux=Collision_Lagrangian_BoundaryFlux;
   f.model.InitData=CollisionInitData;
@@ -41,7 +41,7 @@ int TestCollision(void) {
   f.interp.interp_param[1]=3;  // x direction degree
   f.interp.interp_param[2]=0;  // y direction degree
   f.interp.interp_param[3]=0;  // z direction degree
-  f.interp.interp_param[4]=10;  // x direction refinement
+  f.interp.interp_param[4]=8;  // x direction refinement
   f.interp.interp_param[5]=1;  // y direction refinement
   f.interp.interp_param[6]=1;  // z direction refinement
   // read the gmsh file
@@ -78,11 +78,11 @@ int TestCollision(void) {
   PlotField(0,(1==0),&f,"dgvisu.msh");
   PlotField(0,(1==1),&f,"dgerror.msh");
 
-  //double dd=L2error(&f);
+  double dd=L2error(&f);
   double dd_Kinetic=L2_Kinetic_error(&f);
   
   printf("erreur kinetic L2=%lf\n",dd_Kinetic);
-  //printf("erreur L2=%lf\n",dd);
+  printf("erreur L2=%lf\n",dd);
   test= test && (dd_Kinetic<6e-4);
 
 
