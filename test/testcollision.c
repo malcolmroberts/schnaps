@@ -72,17 +72,21 @@ int TestCollision(void) {
   // apply the DG scheme
   // time integration by RK2 scheme 
   // up to final time = 1.
-  RK2(&f,2.);
+  RK2(&f,0.2);
  
   // save the results and the error
-  PlotField(0,(1==0),&f,"dgvisu.msh");
-  PlotField(0,(1==1),&f,"dgerror.msh");
+  int iel=2*_NB_ELEM_V/3;
+  int iloc=_DEG_V/2;
+  printf("Trace vi=%f\n",-_VMAX+iel*_DV+_DV*glop(_DEG_V,iloc));
+  PlotField(iloc+iel*_DEG_V,(1==0),&f,"dgvisu.msh");
+  //PlotField(_MV/2,(1==1),&f,"dgerror.msh");
+  
 
   double dd=L2error(&f);
   double dd_Kinetic=L2_Kinetic_error(&f);
   
   printf("erreur kinetic L2=%lf\n",dd_Kinetic);
-  printf("erreur L2=%lf\n",dd);
+  //printf("erreur L2=%lf\n",dd);
   test= test && (dd_Kinetic<6e-4);
 
 

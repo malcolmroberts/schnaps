@@ -1,4 +1,4 @@
-#include "solverPoisson.h"
+#include "solverpoisson.h"
 #include "geometry.h"
 
 

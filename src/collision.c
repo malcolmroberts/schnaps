@@ -21,6 +21,7 @@ void Collision_Lagrangian_NumFlux(double wL[],double wR[],double* vnorm,double* 
     double vnm = vn-vnp;
 
     flux[i] = vnp * wL[i] + vnm * wR[i];
+    //flux[i]=0;
   }
   // do not change the potential !
   // and the electric field
@@ -82,7 +83,7 @@ void CollisionImposedData(double x[3],double t,double w[]){
     double vi = (-_VMAX+nel*_DV +
 		 _DV* glop(_DEG_V,j));
 
-    w[i]=exp(-(vi-t)*(vi-t) -(x[0]-vi*t)*(x[0]-vi*t));
+    w[i]=Collision_ImposedKinetic_Data(x,t,vi);
   }
   // exact value of the potential
   // and electric field
@@ -94,7 +95,8 @@ void CollisionImposedData(double x[3],double t,double w[]){
 
 double Collision_ImposedKinetic_Data(double x[3],double t,double v){
   double f;
-  f=exp(-(v-t)*(v-t) -(x[0]-v*t)*(x[0]-v*t));
+  double pi=4*atan(1.);
+  f=exp(-(v-t)*(v-t))*cos(2*pi*(x[0]-v*t));
   return f;
 };
 
@@ -152,8 +154,10 @@ void CollisionSource(double* x,double t,double* w, double* source){
 
   double E=w[_MV+1]; // electric field
   double Md[_MV];
+  double db[_MV];
   for(int iv=0;iv<_MV;iv++){
     Md[iv]=0;
+    db[iv]=0;
   }
   for(int iv=0;iv<_MV+2;iv++){
     source[iv]=0;
@@ -170,6 +174,7 @@ void CollisionSource(double* x,double t,double* w, double* source){
       for(int iloc=0;iloc<_DEG_V+1;iloc++){
 	int ipg=iloc+iel*_DEG_V;
 	source[ipg]+=E*omega*w[kpg]*dlag(_DEG_V,iloc,kloc);
+	if (iloc==kloc) db[ipg]+=E*omega*dlag(_DEG_V,iloc,kloc);
       }
     }
   }
@@ -177,14 +182,19 @@ void CollisionSource(double* x,double t,double* w, double* source){
   // upwinding
   if (E>0){
     source[_MV-1]-=E*w[_MV-1];
+    db[_MV-1]-=E;
   }
   else {
     source[0]-=-E*w[0];
+    db[0]-=-E;
   }
 
   for(int iv=0;iv<_MV;iv++){
     source[iv]/=Md[iv];
+    //printf("%f ",db[iv]);
   }
+  //printf("\n");
+  //assert(1==2);
   
 
 };
