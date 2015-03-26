@@ -41,7 +41,7 @@ int TestCollision(void) {
   f.interp.interp_param[1]=3;  // x direction degree
   f.interp.interp_param[2]=0;  // y direction degree
   f.interp.interp_param[3]=0;  // z direction degree
-  f.interp.interp_param[4]=8;  // x direction refinement
+  f.interp.interp_param[4]=64;  // x direction refinement
   f.interp.interp_param[5]=1;  // y direction refinement
   f.interp.interp_param[6]=1;  // z direction refinement
   // read the gmsh file
@@ -72,14 +72,14 @@ int TestCollision(void) {
   // apply the DG scheme
   // time integration by RK2 scheme 
   // up to final time = 1.
-  RK2(&f,0.2);
+  RK2(&f,0.03);
  
   // save the results and the error
   int iel=2*_NB_ELEM_V/3;
   int iloc=_DEG_V/2;
   printf("Trace vi=%f\n",-_VMAX+iel*_DV+_DV*glop(_DEG_V,iloc));
   PlotField(iloc+iel*_DEG_V,(1==0),&f,"dgvisu.msh");
-  //PlotField(_MV/2,(1==1),&f,"dgerror.msh");
+  //PlotField(iloc+iel*_DEG_V,(1==0),(1==1),&f,"dgerror.msh");
   
 
   double dd=L2error(&f);

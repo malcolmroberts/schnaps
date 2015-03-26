@@ -48,7 +48,7 @@ double L2VelError(double* x,double t,double *w){
       double vi=-_VMAX+iel*_DV+_DV*glop(_DEG_V,iloc);
       int ipg=iloc+iel*_DEG_V;
       err2+=omega*_DV*(w[ipg]-wex[ipg])*(w[ipg]-wex[ipg]);
-      fprintf(ver,"%f %f %f\n",vi,w[ipg],wex[ipg]);
+      fprintf(ver,"%f %f %f % f\n",vi,w[ipg],wex[ipg],w[ipg]-wex[ipg]);
     }
   }
   fclose(ver);
@@ -96,7 +96,7 @@ void CollisionImposedData(double x[3],double t,double w[]){
 double Collision_ImposedKinetic_Data(double x[3],double t,double v){
   double f;
   double pi=4*atan(1.);
-  f=exp(-(v-t)*(v-t))*cos(2*pi*(x[0]-v*t));
+  f=exp(-(v-t)*(v-t))*exp(-36*((x[0]-v*t)-0.5)*((x[0]-v*t)-0.5));
   return f;
 };
 

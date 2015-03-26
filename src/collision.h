@@ -1,8 +1,8 @@
 #ifndef _COLLISION_H
 #define _COLLISION_H
 
-#define _NB_ELEM_V 8
-#define _DEG_V 2
+#define _NB_ELEM_V 64
+#define _DEG_V 3
 
 //! \brief number of conservative variables
 //! values of  the distribution function at the velocity glops
