@@ -11,7 +11,7 @@
 
 void Collision_Lagrangian_NumFlux(double wL[],double wR[],double* vnorm,double* flux){
   
-  for(int i=0;i<_MV;i++){
+  for(int i=0;i<_INDEX_MAX_KIN+1;i++){
     int j=i%_DEG_V; // local connectivity put in function
     int nel=i/_DEG_V; // element num (TODO : function)
 
@@ -25,12 +25,12 @@ void Collision_Lagrangian_NumFlux(double wL[],double wR[],double* vnorm,double* 
   }
   // do not change the potential !
   // and the electric field
-  flux[_MV]=0;  // flux for phi
-  flux[_MV+1]=0; // flux for E
-  flux[_MV+2]=0; // flux for rho
-  flux[_MV+3]=0; // flux for u
-  flux[_MV+4]=0; // flux for p
-  flux[_MV+5]=0; // flux for e ou T
+  flux[_INDEX_PHI]=0;  // flux for phi
+  flux[_INDEX_EX]=0; // flux for E
+  flux[_INDEX_RHO]=0; // flux for rho
+  flux[_INDEX_VELOCITY]=0; // flux for u
+  flux[_INDEX_PRESSURE]=0; // flux for p
+  flux[_INDEX_TEMP]=0; // flux for e ou T
 
 };
 
@@ -57,7 +57,7 @@ void CollisionInitData(double x[3],double w[]){
 
 void CollisionImposedData(double x[3],double t,double w[]){
 
-  for(int i=0;i<_MV;i++){
+  for(int i=0;i<_INDEX_MAX_KIN+1;i++){
     int j=i%_DEG_V; // local connectivity put in function
     int nel=i/_DEG_V; // element num (TODO : function)
 
@@ -68,12 +68,12 @@ void CollisionImposedData(double x[3],double t,double w[]){
   }
   // exact value of the potential
   // and electric field
-  w[_MV]=x[0]*(1-x[0]);
-  w[_MV+1]=1;
-  w[_MV+2]=0; //rho init
-  w[_MV+3]=0; // u init
-  w[_MV+4]=0; // p init
-  w[_MV+5]=0; // e ou T init
+  w[_INDEX_PHI]=x[0]*(1-x[0]);
+  w[_INDEX_EX]=1;
+  w[_INDEX_RHO]=0; //rho init
+  w[_INDEX_VELOCITY]=0; // u init
+  w[_INDEX_PRESSURE]=0; // p init
+  w[_INDEX_TEMP]=0; // e ou T init
 
 };
 
@@ -84,10 +84,10 @@ void CollisionImposedData(double x[3],double t,double w[]){
 //! model: electric force + true collisions
 void CollisionSource(double* x,double t,double* w, double* source){
 
-  double E=w[_MV+1]; // electric field
-  double Md[_MV];
-  double db[_MV];
-  for(int iv=0;iv<_MV;iv++){
+  double E=w[_INDEX_EX]; // electric field
+  double Md[_INDEX_MAX_KIN+1];
+  double db[_INDEX_MAX_KIN+1];
+  for(int iv=0;iv<_INDEX_MAX_KIN+1;iv++){
     Md[iv]=0;
     db[iv]=0;
   }
@@ -95,7 +95,12 @@ void CollisionSource(double* x,double t,double* w, double* source){
     source[iv]=0;
   }
   // no source on the potential for the moment
-  source[_MV]=0;
+  source[_INDEX_PHI]=0;
+  source[_INDEX_EX]=0;
+  source[_INDEX_RHO]=0; //rho init
+  source[_INDEX_VELOCITY]=0; // u init
+  source[_INDEX_PRESSURE]=0; // p init
+  source[_INDEX_TEMP]=0; 
   // loop on the finite emlements
   for(int iel=0;iel<_NB_ELEM_V;iel++){
     // loop on the local glops
@@ -113,15 +118,15 @@ void CollisionSource(double* x,double t,double* w, double* source){
 
   // upwinding
   if (E>0){
-    source[_MV-1]-=E*w[_MV-1];
-    db[_MV-1]-=E;
+    source[_INDEX_MAX_KIN]-=E*w[_INDEX_MAX_KIN];
+    db[_INDEX_MAX_KIN]-=E;
   }
   else {
     source[0]-=-E*w[0];
     db[0]-=-E;
   }
 
-  for(int iv=0;iv<_MV;iv++){
+  for(int iv=0;iv<_INDEX_MAX_KIN+1;iv++){
     source[iv]/=Md[iv];
     //printf("%f ",db[iv]);
   }

@@ -16,7 +16,6 @@ void SolvePoisson(Field *f){
   // = number of nodes in the mesh
   int degx=f->interp.interp_param[1];
   int nelx=f->interp.interp_param[4];
-  printf("degx=%d nelx=%d _MV=%d\n",degx,nelx,_MV);
   double xmin=0;
   double xmax=1;  // TO DO: compute the maximal x coordinate
   int neq=degx*nelx+1;
@@ -80,7 +79,6 @@ void SolvePoisson(Field *f){
 
   FactoLU(&sky);
 
-
   // charge computation
   Computation_charge_density(f);
 
@@ -94,15 +92,12 @@ void SolvePoisson(Field *f){
     for(int iloc=0;iloc<degx+1;iloc++){
       double omega=wglop(degx,iloc);
       int ino=iloc + ie * degx;  
-      int imem=f->varindex(f->interp_param,0,iloc+ie*(degx+1),_MV+2);
+      int imem=f->varindex(f->interp_param,0,iloc+ie*(degx+1),_INDEX_RHO);
       double charge=f->wn[imem];
       printf("charge=%f\n",charge);
       source[ino]+= charge*omega/nelx;
     }
   }
-
-
-  // assert(1==2);
 
   double sol[neq];
   SolveSkyline(&sky,source,sol);
@@ -117,7 +112,7 @@ void SolvePoisson(Field *f){
        // position in the continuous vector
        int ino=ipg + ie * degx;
        // position in the DG vector
-       int imem=f->varindex(f->interp_param,0,ipg+ie*(degx+1),_MV);
+       int imem=f->varindex(f->interp_param,0,ipg+ie*(degx+1),_INDEX_PHI);
        f->wn[imem]=sol[ino];
      }
   }

@@ -15,7 +15,7 @@ double L2VelError(double* x,double t,double *w){
   FILE * ver;
   ver = fopen( "vel_error.dat", "w" );
 
-  double wex[_MV+6];
+  double wex[_INDEX_MAX];
   double err2=0;
   CollisionImposedData(x, t,wex);
   // loop on the finite emlements
@@ -205,7 +205,7 @@ void Compute_electric_field(Field* f){
 		  for(int iq = 0; iq < npg[dim0]; iq++){
 		    q[dim0]=(p[dim0]+iq)%npg[dim0];
 		    int ipgR=offsetL+q[0]+npg[0]*(q[1]+npg[1]*q[2]);
-		    double phiq=wn[imems[m*(ipgR-offsetL)+_MV]];
+		    double phiq=wn[imems[m*(ipgR-offsetL)+_INDEX_PHI]];
 		    double dphiref[3]={0,0,0};
 		    // compute grad phi_q at glop p
 		    dphiref[dim0]=dlag(deg[dim0],q[dim0],p[dim0])*nraf[dim0];
@@ -233,7 +233,7 @@ void Compute_electric_field(Field* f){
 
 		    gradx[0]+=phiq*dphiL[0];
 		  } // iq
-		  wn[imems[m*(ipgL-offsetL)+_MV+1+dim0]]=gradx[0];
+		  wn[imems[m*(ipgL-offsetL)+_INDEX_EX+dim0]]=gradx[0];
 		  //printf("grad=%f\n",gradx[0]);
 		} // p2
 	      } // p1

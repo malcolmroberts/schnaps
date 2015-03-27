@@ -117,7 +117,7 @@ int TestPoisson(void) {
 
 void TestPoissonImposedData(double x[3],double t,double w[]){
 
-  for(int i=0;i<_MV;i++){
+  for(int i=0;i<_INDEX_MAX_KIN+1;i++){
     int j=i%_DEG_V; // local connectivity put in function
     int nel=i/_DEG_V; // element num (TODO : function)
 
@@ -128,12 +128,12 @@ void TestPoissonImposedData(double x[3],double t,double w[]){
   }
   // exact value of the potential
   // and electric field
-  w[_MV]=x[0]*(1.-x[0]);
-  w[_MV+1]=1-2*x[0];
-  w[_MV+2]=2; //rho init
-  w[_MV+3]=0; // u init
-  w[_MV+4]=0; // p init
-  w[_MV+5]=0; // e ou T init
+  w[_INDEX_PHI]=x[0]*(1-x[0]);
+  w[_INDEX_EX]=1.-2.*x[0];
+  w[_INDEX_RHO]=2.; //rho init
+  w[_INDEX_VELOCITY]=0; // u init
+  w[_INDEX_PRESSURE]=0; // p init
+  w[_INDEX_TEMP]=0; // e ou T init
 
 };
 
