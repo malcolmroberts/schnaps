@@ -29,6 +29,8 @@ int TestmEq2(void);
 
 int TestSkyline(void);
 
+int TestPoisson(void);
+
 int TestCollision(void);
 
 int TestGyro(void);

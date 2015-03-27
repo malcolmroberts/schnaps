@@ -32,6 +32,9 @@ src/h20phi.h
 src/interpolation.h
 src/macromesh.h
 src/model.h
+src/collision.h
+src/gyro.h
+src/skyline.h
 src/solverpoisson.h
 src/quantities_collision.h
 src/field.c
@@ -179,6 +182,16 @@ add_executable(
 target_link_libraries(testskyline _schnaps m pthread)
 add_test(testskyline testskyline)
  
+add_test(testpoisson testpoisson)
+add_executable(
+  testpoisson
+  test/test.h
+  test/testpoisson.c
+)
+target_link_libraries(testpoisson _schnaps m pthread)
+add_test(testpoisson testpoisson)
+
+
 add_test(testcollision testcollision)
 add_executable(
   testcollision

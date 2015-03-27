@@ -77,7 +77,7 @@ int TestCollision(void) {
   RK2(&f,0.03);
  
   // save the results and the error
-  int iel=2*_NB_ELEM_V/3;
+  int iel=_NB_ELEM_V/2;
   int iloc=_DEG_V/2;
   printf("Trace vi=%f\n",-_VMAX+iel*_DV+_DV*glop(_DEG_V,iloc));
   PlotField(iloc+iel*_DEG_V,(1==0),&f,"dgvisu.msh");
