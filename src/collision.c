@@ -68,7 +68,7 @@ void CollisionImposedData(double x[3],double t,double w[]){
   }
   // exact value of the potential
   // and electric field
-  w[_MV]=x[0]*x[0];
+  w[_MV]=x[0]*(1-x[0]);
   w[_MV+1]=1;
   w[_MV+2]=0; //rho init
   w[_MV+3]=0; // u init
