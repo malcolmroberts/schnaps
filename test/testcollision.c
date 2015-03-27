@@ -41,7 +41,7 @@ int TestCollision(void) {
   f.interp.interp_param[1]=3;  // x direction degree
   f.interp.interp_param[2]=0;  // y direction degree
   f.interp.interp_param[3]=0;  // z direction degree
-  f.interp.interp_param[4]=64;  // x direction refinement
+  f.interp.interp_param[4]=32;  // x direction refinement
   f.interp.interp_param[5]=1;  // y direction refinement
   f.interp.interp_param[6]=1;  // z direction refinement
   // read the gmsh file
@@ -79,7 +79,7 @@ int TestCollision(void) {
   int iloc=_DEG_V/2;
   printf("Trace vi=%f\n",-_VMAX+iel*_DV+_DV*glop(_DEG_V,iloc));
   PlotField(iloc+iel*_DEG_V,(1==0),&f,"dgvisu.msh");
-  //PlotField(iloc+iel*_DEG_V,(1==0),(1==1),&f,"dgerror.msh");
+  PlotField(iloc+iel*_DEG_V,(1==1),&f,"dgerror.msh");
   
 
   double dd=L2error(&f);

@@ -21,7 +21,6 @@ void Collision_Lagrangian_NumFlux(double wL[],double wR[],double* vnorm,double* 
     double vnm = vn-vnp;
 
     flux[i] = vnp * wL[i] + vnm * wR[i];
-    //flux[i]=0;
   }
   // do not change the potential !
   // and the electric field
@@ -96,7 +95,7 @@ void CollisionImposedData(double x[3],double t,double w[]){
 double Collision_ImposedKinetic_Data(double x[3],double t,double v){
   double f;
   double pi=4*atan(1.);
-  f=exp(-(v-t)*(v-t))*exp(-36*((x[0]-v*t)-0.5)*((x[0]-v*t)-0.5));
+  f=exp(-(v-t)*(v-t))*exp(-36*((x[0]-v*t+0.5*t*t)-0.5)*((x[0]-v*t+0.5*t*t)-0.5));
   return f;
 };
 
