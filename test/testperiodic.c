@@ -3,7 +3,7 @@
 #include <assert.h>
 #include "test.h"
 #include "collision.h"
-
+#include "quantities_collision.h"
 
 int main(void) {
   

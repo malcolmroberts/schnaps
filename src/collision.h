@@ -41,22 +41,7 @@ void CollisionInitData(double* x,double* w);
 //! \param[out] w : imposed state at point x and time t
 void CollisionImposedData(double* x,double t,double* w);
 
-//! \brief particular imposed data for the  collision model
-//! \param[in] x,t : space and time position
-//! \param[out] w : imposed state at point x and time t
-double Collision_ImposedKinetic_Data(double* x,double t,double v);
 
-
-//! \brief compute l2 error between imposed and actual solution of the collsion model
-//! \param[in] f : a field
-//! \return the error
-double L2_Kinetic_error(Field* f);
-
-//! \brief compute square of velocity L2 error
-//! \param[in] x,t : space and time position
-//! \param[in] w : values of f at glops
-//! \return the velocity error
-double L2VelError(double* x,double t,double *w);
 
 //! \brief compute compute the source term of the collision
 //! model: electric force + true collisions

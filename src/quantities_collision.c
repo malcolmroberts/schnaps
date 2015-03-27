@@ -5,29 +5,7 @@
 #include "interpolation.h"
 #include "geometry.h"
 #include "skyline.h"
-
-
-
-void Collision_Lagrangian_NumFlux(double wL[],double wR[],double* vnorm,double* flux){
-  
-  for(int i=0;i<_MV;i++){
-    int j=i%_DEG_V; // local connectivity put in function
-    int nel=i/_DEG_V; // element num (TODO : function)
-
-    double vn = (-_VMAX+nel*_DV +
-		 _DV* glop(_DEG_V,j))*vnorm[0];
-    
-    double vnp = vn>0 ? vn : 0;
-    double vnm = vn-vnp;
-
-    flux[i] = vnp * wL[i] + vnm * wR[i];
-  }
-  // do not change the potential !
-  // and the electric field
-  flux[_MV]=0;
-  flux[_MV+1]=0;
-  
-};
+#include "quantities_collision.h"
 
 //! \brief compute square of velocity L2 error
 //! \param[in] w : values of f at glops
@@ -36,7 +14,7 @@ double L2VelError(double* x,double t,double *w){
   FILE * ver;
   ver = fopen( "vel_error.dat", "w" );
 
-  double wex[_MV+2];
+  double wex[_MV+6];
   double err2=0;
   CollisionImposedData(x, t,wex);
   // loop on the finite emlements
@@ -52,43 +30,6 @@ double L2VelError(double* x,double t,double *w){
   }
   fclose(ver);
   return err2;
-};
-
-
-
-void Collision_Lagrangian_BoundaryFlux(double x[3],double t,double wL[],double* vnorm,
-				       double* flux){
-  double wR[_MV+2];
-  CollisionImposedData(x,t,wR);
-  Collision_Lagrangian_NumFlux(wL,wR,vnorm,flux);
-};
-
-
-void CollisionInitData(double x[3],double w[]){
-
-  double t=0;
-  CollisionImposedData(x,t,w);
-
-};
-
-
-
-void CollisionImposedData(double x[3],double t,double w[]){
-
-  for(int i=0;i<_MV;i++){
-    int j=i%_DEG_V; // local connectivity put in function
-    int nel=i/_DEG_V; // element num (TODO : function)
-
-    double vi = (-_VMAX+nel*_DV +
-		 _DV* glop(_DEG_V,j));
-
-    w[i]=Collision_ImposedKinetic_Data(x,t,vi);
-  }
-  // exact value of the potential
-  // and electric field
-  w[_MV]=0;
-  w[_MV+1]=1;
-
 };
 
 
@@ -141,61 +82,69 @@ double L2_Kinetic_error(Field* f){
       error+=L2VelError(xphy,f->tnow,w)*wpg*det;
     }
   }
-  //moy=moy+weight*moy_space;
 
   return sqrt(error);
   //return sqrt(error)/sqrt(moy);
 }
 
-//! \brief compute compute the source term of the collision
-//! model: electric force + true collisions
-void CollisionSource(double* x,double t,double* w, double* source){
 
-  double E=w[_MV+1]; // electric field
-  double Md[_MV];
-  double db[_MV];
-  for(int iv=0;iv<_MV;iv++){
-    Md[iv]=0;
-    db[iv]=0;
-  }
-  for(int iv=0;iv<_MV+2;iv++){
-    source[iv]=0;
-  }
-  // no source on the potential for the moment
-  source[_MV]=0;
-  // loop on the finite emlements
+void Computation_charge_density(double* x,double t,double *w){
+  
+  w[_MV+2]=0.;
+  
   for(int iel=0;iel<_NB_ELEM_V;iel++){
     // loop on the local glops
-    for(int kloc=0;kloc<_DEG_V+1;kloc++){
-      double omega=wglop(_DEG_V,kloc);
-      int kpg=kloc+iel*_DEG_V;
-      Md[kpg]+=omega*_DV;
-      for(int iloc=0;iloc<_DEG_V+1;iloc++){
-	int ipg=iloc+iel*_DEG_V;
-	source[ipg]+=E*omega*w[kpg]*dlag(_DEG_V,iloc,kloc);
-	if (iloc==kloc) db[ipg]+=E*omega*dlag(_DEG_V,iloc,kloc);
+    for(int iloc=0;iloc<_DEG_V+1;iloc++){
+      double omega=wglop(_DEG_V,iloc);
+      double vi=-_VMAX+iel*_DV+_DV*glop(_DEG_V,iloc);
+      int ipg=iloc+iel*_DEG_V;
+      w[_MV+2]+=omega*_DV*w[ipg];
+    }
+  }
+  
+
+
+void Compute_electric_field(Field* f){
+
+
+  for (int ie=0;ie<f->macromesh.nbelems;ie++){
+    // get the physical nodes of element ie
+    double physnode[20][3];
+    for(int inoloc=0;inoloc<20;inoloc++){
+      int ino=f->macromesh.elem2node[20*ie+inoloc];
+      physnode[inoloc][0]=f->macromesh.node[3*ino+0];
+      physnode[inoloc][1]=f->macromesh.node[3*ino+1];
+      physnode[inoloc][2]=f->macromesh.node[3*ino+2];
+    }
+
+    // loop on the glops (for numerical integration)
+    for(int ipg=0;ipg<NPG(f->interp_param+1);ipg++){
+      double xpgref[3],xphy[3],wpg;
+      double dtau[3][3],codtau[3][3];//,xpg[3];
+      // get the coordinates of the Gauss point
+      ref_pg_vol(f->interp_param+1,ipg,xpgref,&wpg,NULL);
+      Ref2Phy(physnode, // phys. nodes
+	      xpgref,  // xref
+	      NULL,-1, // dpsiref,ifa
+	      xphy,dtau,  // xphy,dtau
+	      codtau,NULL,NULL); // codtau,dpsi,vnds
+      double det
+	= dtau[0][0] * codtau[0][0]
+	+ dtau[0][1] * codtau[0][1]
+	+ dtau[0][2] * codtau[0][2]; 
+      double w[f->model.m];
+      for(int iv=0;iv<f->model.m;iv++){
+	int imem=f->varindex(f->interp_param,ie,ipg,iv);
+	w[iv]=f->wn[imem];
       }
+      // get the exact value
+      error+=L2VelError(xphy,f->tnow,w)*wpg*det;
     }
   }
 
-  // upwinding
-  if (E>0){
-    source[_MV-1]-=E*w[_MV-1];
-    db[_MV-1]-=E;
-  }
-  else {
-    source[0]-=-E*w[0];
-    db[0]-=-E;
-  }
+  return sqrt(error);
+  //return sqrt(error)/sqrt(moy);
+}
 
-  for(int iv=0;iv<_MV;iv++){
-    source[iv]/=Md[iv];
-    //printf("%f ",db[iv]);
-  }
-  //printf("\n");
-  //assert(1==2);
   
-
-};
-
-
+}

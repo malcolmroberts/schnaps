@@ -33,6 +33,7 @@ src/interpolation.h
 src/macromesh.h
 src/model.h
 src/solverpoisson.h
+src/quantities_collision.h
 src/field.c
 src/geometry.c
 src/interpolation.c
@@ -42,6 +43,7 @@ src/collision.c
 src/gyro.c
 src/skyline.c
 src/solverpoisson.c
+src/quantities_collision.c
 )
 
 #schnaps library
