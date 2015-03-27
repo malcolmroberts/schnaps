@@ -7,19 +7,39 @@
 #include "geometry.h"
 
 
-void Gyro_Lagrangian_NumFlux(double wL[],double wR[],double* vnorm,double* flux){
+/* void Gyro_Lagrangian_NumFlux(double wL[],double wR[],double* vnorm,double* flux){ */
   
+/*   for(int i=0;i<_MV;i++){ */
+/*     int j=i%_DEG_V; // local connectivity put in function */
+/*     int nel=i/_DEG_V; // element num (TODO : function) */
+
+/*     double vn = (nel*_DV + */
+/* 		 _DV* glop(_DEG_V,j))*vnorm[0]; */
+    
+/*     double vnp = vn>0 ? vn : 0; */
+/*     double vnm = vn-vnp; */
+
+/*     flux[i] = vnp * wL[i] + vnm * wR[i]; */
+/*   } */
+  
+/* }; */
+
+//flux num gyro
+void Gyro_Lagrangian_NumFlux(double wL[],double wR[],double* vnorm,double* flux){
+  double eps =0; //if not equal 0 => decentered flux
+  double E_x =1; //firstly consider the electric field is const
+  double E_y =0;
   for(int i=0;i<_MV;i++){
     int j=i%_DEG_V; // local connectivity put in function
-    int nel=i/_DEG_V; // element num (TODO : function)
-
-    double vn = (nel*_DV +
-		 _DV* glop(_DEG_V,j))*vnorm[0];
-    
-    double vnp = vn>0 ? vn : 0;
-    double vnm = vn-vnp;
-
-    flux[i] = vnp * wL[i] + vnm * wR[i];
+    int nel=i/_DEG_V; // element num (TODO : function)  
+    double wm = (wL[i]+wR[i])/2;
+    double flux1 = -E_y*wm;
+    double flux2 = E_x*wm;
+    double v = nel*_DV +
+      _DV* glop(_DEG_V,j); // gauss_lob_point[j]
+    double flux3 = -v*wm;
+  
+    flux[i] = vnorm[0]*flux1+vnorm[1]*flux2+vnorm[3]*flux3-eps*(wR[i]-wL[i])/2;
   }
   
 };
