@@ -89,17 +89,25 @@ double L2_Kinetic_error(Field* f){
 }
 
 
-void Computation_charge_density(double* x,double t,double *w){
+
+
+void Computation_charge_density(Field *f){
   
-  w[_MV+2]=0.;
+  for(int ie=0;ie<f->macromesh.nbelems;ie++){
+    for(int ipg=0;ipg<NPG(f->interp_param+1);ipg++){
+      int imemc=f->varindex(f->interp_param,ie,ipg,_MV+2);
+      f->wn[imemc]=0;
   
-  for(int iel=0;iel<_NB_ELEM_V;iel++){
-    // loop on the local glops
-    for(int iloc=0;iloc<_DEG_V+1;iloc++){
-      double omega=wglop(_DEG_V,iloc);
-      double vi=-_VMAX+iel*_DV+_DV*glop(_DEG_V,iloc);
-      int ipg=iloc+iel*_DEG_V;
-      w[_MV+2]+=omega*_DV*w[ipg];
+      for(int ielv=0;ielv<_NB_ELEM_V;ielv++){
+	// loop on the local glops
+	for(int iloc=0;iloc<_DEG_V+1;iloc++){
+	  double omega=wglop(_DEG_V,iloc);
+	  double vi=-_VMAX+ielv*_DV+_DV*glop(_DEG_V,iloc);
+	  int ipgv=iloc+ielv*_DEG_V;
+	  int imem=f->varindex(f->interp_param,ie,ipg,ipgv);
+	  f->wn[imemc]+=omega*_DV*f->wn[imem];
+	}
+      }
     }
   }
   

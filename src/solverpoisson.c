@@ -1,5 +1,6 @@
 #include "solverpoisson.h"
 #include "geometry.h"
+#include "quantities_collision.h"
 
 
 void SolvePoisson(Field *f){
@@ -68,31 +69,38 @@ void SolvePoisson(Field *f){
     }
   }
 
-  // source assembly 
-  double source[neq];
-  for(int i=0;i<neq;i++){
-    source[i]=0;
-  }
-  double cst=1e0; // constant source TO DO: replace by the charge
-  for(int ie=0;ie<nelx;ie++){
-    for(int ipg=0;ipg<degx+1;ipg++){
-      double omega=wglop(degx,ipg);
-      for(int iloc=0;iloc<degx+1;iloc++){
-	int ino=iloc + ie * degx;
-	source[ino]+= cst*omega/nelx;
-      }
-    }
-  }
-
-
 
   // dirichlet boundary condition at the first and last location
   SetSkyline(&sky,0,0,1e20);
   SetSkyline(&sky,neq-1,neq-1,1e20);
 
+
   //DisplaySkyline(&sky);
 
   FactoLU(&sky);
+
+
+  // charge computation
+  Computation_charge_density(f);
+
+    // source assembly 
+  double source[neq];
+  for(int i=0;i<neq;i++){
+    source[i]=0;
+  }
+
+  for(int ie=0;ie<nelx;ie++){
+    for(int iloc=0;iloc<degx+1;iloc++){
+      double omega=wglop(degx,iloc);
+      int ino=iloc + ie * degx;  
+      int imem=f->varindex(f->interp_param,0,iloc+ie*(degx+1),_MV);
+      double charge=f->wn[imem];
+      source[ino]+= charge*omega/nelx;
+    }
+  }
+
+
+  
 
   double sol[neq];
   SolveSkyline(&sky,source,sol);
@@ -107,7 +115,7 @@ void SolvePoisson(Field *f){
        // position in the continuous vector
        int ino=ipg + ie * degx;
        // position in the DG vector
-       int imem=f->varindex(f->interp_param,0,ipg+ie*(degx+1),m-1);
+       int imem=f->varindex(f->interp_param,0,ipg+ie*(degx+1),_MV);
        f->wn[imem]=sol[ino];
      }
   }

@@ -27,7 +27,7 @@ double L2VelError(double* x,double t,double *w);
 //! \param[in] x,t : space and time position
 //! \param[inout] w : values of f at glops
 //! \return in w[_MV+2] the charge density at x and t 
-void Computation_charge_density(double* x,double t,double *w);
+void Computation_charge_density(Field* f);
 
 
 
