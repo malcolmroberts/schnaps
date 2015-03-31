@@ -117,6 +117,11 @@ void* DGMass(void* mcell);
 //! \param[inout] f a field
 //! \param[in] tmax physical duration of the simulation
 void RK2(Field* f,double tmax);
+//! \brief time integration by a second order Runge-Kutta algorithm 
+//! \param[inout] f a field
+//! \param[in] tmax physical duration of the simulation
+//! \param[in] if compute_charge = 0 we do not compute the charge
+void RK2_Poisson(Field* f,double tmax,double cfl,int compute_charge,int type_bc, double bc_l, double bc_r);
 //!  \brief time integration by a second order Runge-Kutta algorithm.
 //! slow version
 //! \param[inout] f a field

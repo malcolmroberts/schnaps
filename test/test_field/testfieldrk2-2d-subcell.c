@@ -1,4 +1,4 @@
-#include "test.h"
+#include "../test.h"
 #include "schnaps.h"
 #include<stdio.h>
 #include <assert.h>
@@ -7,17 +7,17 @@ int main(void) {
   
   // unit tests
     
-  int resu=TestFieldRK2_2D();
+  int resu=TestFieldRK2_2D_SubCell();
 	 
-  if (resu) printf("Field RK2 2D test OK !\n");
-  else printf("Field RK2 2D test failed !\n");
+  if (resu) printf("Field RK2 2D Subcell test OK !\n");
+  else printf("Field RK2 2D Subcell test failed !\n");
 
   return !resu;
 } 
 
 
 
-int TestFieldRK2_2D(void) {
+int TestFieldRK2_2D_SubCell(void) {
 
   bool test=true;
 
@@ -32,16 +32,17 @@ int TestFieldRK2_2D(void) {
 
   f.model.vmax=1;
 
+
   f.interp.interp_param[0]=1;  // _M
   f.interp.interp_param[1]=2;  // x direction degree
   f.interp.interp_param[2]=2;  // y direction degree
   f.interp.interp_param[3]=0;  // z direction degree
-  f.interp.interp_param[4]=1;  // x direction refinement
-  f.interp.interp_param[5]=1;  // y direction refinement
+  f.interp.interp_param[4]=4;  // x direction refinement
+  f.interp.interp_param[5]=4;  // y direction refinement
   f.interp.interp_param[6]=1;  // z direction refinement
 
 
-  ReadMacroMesh(&(f.macromesh),"test/testdisque2d.msh");
+  ReadMacroMesh(&(f.macromesh),"test/testmacromesh.msh");
   bool is2d=Detect2DMacroMesh(&(f.macromesh));
   assert(is2d);
   BuildConnectivity(&(f.macromesh));
@@ -49,15 +50,14 @@ int TestFieldRK2_2D(void) {
   //AffineMapMacroMesh(&(f.macromesh));
  
   InitField(&f);
-  // require a 2d computation
-  assert(f.is2d);
-  //f.is2d=true;
+  f.is2d=true;
 
 
   CheckMacroMesh(&(f.macromesh),f.interp.interp_param+1);
 
   printf("cfl param =%f\n",f.hmin);
 
+  assert(f.is2d);
 
   RK2(&f,0.2);
  
@@ -68,7 +68,7 @@ int TestFieldRK2_2D(void) {
 
   printf("erreur L2=%f\n",dd);
 
-  test = test && (dd<0.01);
+  test = test && (dd<0.006);
 
   return test;
 

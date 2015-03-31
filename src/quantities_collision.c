@@ -233,7 +233,7 @@ void Compute_electric_field(Field* f){
 
 		    gradx[0]+=phiq*dphiL[0];
 		  } // iq
-		  wn[imems[m*(ipgL-offsetL)+_INDEX_EX+dim0]]=gradx[0];
+		  wn[imems[m*(ipgL-offsetL)+_INDEX_EX+dim0]]=gradx[0];		  
 		  //printf("grad=%f\n",gradx[0]);
 		} // p2
 	      } // p1

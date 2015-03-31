@@ -1,7 +1,7 @@
 #ifndef _COLLISION_H
 #define _COLLISION_H
 
-#define _NB_ELEM_V 32
+#define _NB_ELEM_V 16
 #define _DEG_V 3
 
 //! \brief number of conservative variables
@@ -20,6 +20,9 @@
 
 #define _VMAX 6.
 #define _DV (2*_VMAX / _NB_ELEM_V)
+#define _Dirichlet_Poisson_BC (1)
+#define _Periodic_Poisson_BC (2)
+
 
 
 #include "model.h"
@@ -60,8 +63,5 @@ void CollisionImposedData(double* x,double t,double* w);
 //! \param[out] source the source
 void CollisionSource(double* x,double t, double* w, double* source);
 
-//! \brief solve the Poisson equation
-//! \param[inout] f a field the charge is used as the source to the poisson equation
-void SolvePoisson(Field *f);
 
 #endif

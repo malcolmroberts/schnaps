@@ -1,21 +1,22 @@
 #include "schnaps.h"
 #include <stdio.h>
 #include <assert.h>
-#include "test.h"
+#include "../test.h"
 #include "collision.h"
 #include "quantities_collision.h"
 #include "solverpoisson.h"
 
 
-void TestPoissonImposedData(double x[3],double t,double w[]);
-void TestPoissonInitData(double x[3],double w[]);
+void Test_TransportVP_ImposedData(double x[3],double t,double w[]);
+void Test_TransportVP_InitData(double x[3],double w[]);
+double TransportVP_ImposedKinetic_Data(double x[3],double t,double v);
 
 
 int main(void) {
   
   // unit tests
     
-  int resu=TestPoisson();
+  int resu=Test_TransportVP();
 	 
   if (resu) printf("poisson test OK !\n");
   else printf("poisson test failed !\n");
@@ -24,7 +25,7 @@ int main(void) {
 } 
 
 
-int TestPoisson(void) {
+int Test_TransportVP(void) {
 
   bool test=true;
 
@@ -36,8 +37,8 @@ int TestPoisson(void) {
   f.model.vmax = _VMAX; // maximal wave speed
   f.model.NumFlux=Collision_Lagrangian_NumFlux;
   f.model.BoundaryFlux=Collision_Lagrangian_BoundaryFlux;
-  f.model.InitData=TestPoissonInitData;
-  f.model.ImposedData=TestPoissonImposedData;
+  f.model.InitData=Test_TransportVP_InitData;
+  f.model.ImposedData=Test_TransportVP_ImposedData;
   //f.model.Source = NULL;
   f.model.Source = CollisionSource;
   f.varindex=GenericVarindex;
@@ -50,7 +51,7 @@ int TestPoisson(void) {
   f.interp.interp_param[4]=32;  // x direction refinement
   f.interp.interp_param[5]=1;  // y direction refinement
   f.interp.interp_param[6]=1;  // z direction refinement
-  // read the gmsh file
+ // read the gmsh file
   ReadMacroMesh(&(f.macromesh),"test/testcube.msh");
   // try to detect a 2d mesh
   bool is1d=Detect1DMacroMesh(&(f.macromesh));
@@ -71,51 +72,26 @@ int TestPoisson(void) {
 
   printf("cfl param =%f\n",f.hmin);
 
-  // time derivative
-  //dtField(&f);
-  //DisplayField(&f);
-  //assert(1==2);
-  // apply the DG scheme
-  // time integration by RK2 scheme 
-  // up to final time = 1.
- 
-  /*Compute_electric_field(&f);
+  RK2_Poisson(&f,0.03,0.05,0,1,0.0,1.0);
 
-  // check the gradient on every glop
-  for(int ie=0;ie<f.macromesh.nbelems;ie++){
-    printf("elem %d\n",ie);
-    for(int ipg=0;ipg<NPG(f.interp_param+1);ipg++){
-      double xref[3],wpg;
-      ref_pg_vol(f.interp_param+1,ipg,xref,&wpg,NULL);
-      printf("Gauss point %d %f %f %f \n",ipg,xref[0],xref[1],xref[2]);
-      int imem=f.varindex(f.interp_param,ie,ipg,_MV+1);
-      printf("gradphi exact=%f gradphinum=%f\n",1-2*xref[0],f.wn[imem]);
-      test=test && (fabs(f.wn[imem]-(1-2*xref[0]))<1e-10);
-    }
-    }*/
+   // save the results and the error
+  int iel=_NB_ELEM_V/2;
+  int iloc=_DEG_V/2;
+  printf("Trace vi=%f\n",-_VMAX+iel*_DV+_DV*glop(_DEG_V,iloc));
+  PlotField(iloc+iel*_DEG_V,(1==0),&f,"dgvisu.msh");
+  PlotField(iloc+iel*_DEG_V,(1==1),&f,"dgerror.msh");
+  
 
-
-  SolvePoisson(&f);
-
-  // check the gradient given by the poisson solver
-  for(int ie=0;ie<f.macromesh.nbelems;ie++){
-    printf("elem %d\n",ie);
-    for(int ipg=0;ipg<NPG(f.interp_param+1);ipg++){
-      double xref[3],wpg;
-      ref_pg_vol(f.interp_param+1,ipg,xref,&wpg,NULL);
-      printf("Gauss point %d %f %f %f \n",ipg,xref[0],xref[1],xref[2]);
-      int imem=f.varindex(f.interp_param,ie,ipg,_MV+1);
-      printf("gradphi exact=%f gradphinum=%f rap=%f\n",
-	     1-2*xref[0],f.wn[imem],(1-2*xref[0])/f.wn[imem]);
-      test=test && (fabs(f.wn[imem]-(1-2*xref[0]))<1e-10);
-    }
-  }
+  double dd_Kinetic=L2_Kinetic_error(&f);
+  
+  printf("erreur kinetic L2=%lf\n",dd_Kinetic);
+  test= test && (dd_Kinetic<1e-2);
 
   return test;
 
 };
 
-void TestPoissonImposedData(double x[3],double t,double w[]){
+void Test_TransportVP_ImposedData(double x[3],double t,double w[]){
 
   for(int i=0;i<_INDEX_MAX_KIN+1;i++){
     int j=i%_DEG_V; // local connectivity put in function
@@ -124,26 +100,32 @@ void TestPoissonImposedData(double x[3],double t,double w[]){
     double vi = (-_VMAX+nel*_DV +
 		 _DV* glop(_DEG_V,j));
 
-    w[i]=1./_VMAX;
+    w[i]=TransportVP_ImposedKinetic_Data(x,t,vi);
+
   }
   // exact value of the potential
   // and electric field
-  w[_INDEX_PHI]=x[0]*(1-x[0]);
-  w[_INDEX_EX]=1.-2.*x[0];
-  w[_INDEX_RHO]=2.; //rho init
+  w[_INDEX_PHI]=x[0];
+  w[_INDEX_EX]=1;
+  w[_INDEX_RHO]=0.; //rho init
   w[_INDEX_VELOCITY]=0; // u init
   w[_INDEX_PRESSURE]=0; // p init
   w[_INDEX_TEMP]=0; // e ou T init
 
 };
 
-void TestPoissonInitData(double x[3],double w[]){
+void Test_TransportVP_InitData(double x[3],double w[]){
 
   double t=0;
-  TestPoissonImposedData(x,t,w);
+  Test_TransportVP_ImposedData(x,t,w);
 
 };
 
-
-
-
+double TransportVP_ImposedKinetic_Data(double x[3],double t,double v){
+  double f;
+  double pi=4*atan(1.);
+  double xnew=0, vnew=0;
+ 
+  f=exp(-(v-t)*(v-t))*exp(-36*((x[0]-v*t+0.5*t*t)-0.5)*((x[0]-v*t+0.5*t*t)-0.5));
+  return f;
+};

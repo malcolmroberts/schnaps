@@ -7,6 +7,8 @@
 #include "global.h"
 #include <math.h>
 #include <pthread.h>
+#include "quantities_collision.h"
+#include "solverpoisson.h"
 
 // param[0] = M
 // param[1] = deg x
@@ -1423,6 +1425,71 @@ void RK2Copy(Field* f,double tmax){
   }
 }
 
+
+void RK2_Poisson(Field* f,double tmax,double cfl, int compute_charge,int type_bc, double bc_l, double bc_r){
+
+  double vmax;
+  if (f->model.vmax != 0) {
+    vmax=f->model.vmax;
+  }
+  else {
+    vmax=1; // to be changed for another model...
+  }
+
+  double dt = cfl * f->hmin / vmax;
+  int itermax=tmax/dt;
+  int freq=(1 >= itermax/10)? 1 : itermax/10;
+  //int param[8]={f->model.m,_DEGX,_DEGY,_DEGZ,_RAFX,_RAFY,_RAFZ,0};
+  int sizew=f->macromesh.nbelems * f->model.m * NPG(f->interp_param+1);
+
+  int iter=0;
+
+  while(f->tnow<tmax){
+    if (iter%freq==0)
+      printf("t=%f iter=%d/%d dt=%f\n",f->tnow,iter,itermax,dt);
+    // compute charge
+    if(compute_charge == 1){
+      Computation_charge_density(f);
+    }
+    // Solving poisson
+    SolvePoisson(f,type_bc,bc_l,bc_r);    
+    // predictor
+    dtField(f);
+    //assert(1==2);
+
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+    for(int iw=0;iw<sizew;iw++){
+      f->wnp1[iw]=f->wn[iw]+ dt/2 * f->dtwn[iw]; 
+    }
+    //exchange the field pointers 
+    double *temp;
+    temp=f->wnp1;
+    f->wnp1=f->wn;
+    f->wn=temp;
+
+    // corrector
+    f->tnow+=dt/2;
+    dtField(f);
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+    for(int iw=0;iw<sizew;iw++){
+      f->wnp1[iw]+=dt*f->dtwn[iw];
+    }
+    f->tnow+=dt/2;
+    iter++;
+    //exchange the field pointers 
+    temp=f->wnp1;
+    f->wnp1=f->wn;
+    f->wn=temp;
+
+  }
+  printf("t=%f iter=%d/%d dt=%f\n",f->tnow,iter,itermax,dt);
+
+}
+
 // compute the normalized L2 distance with the imposed data
 double L2error(Field* f){
 
@@ -1471,13 +1538,6 @@ double L2error(Field* f){
   return sqrt(error)/sqrt(moy);
 }
 
-//!  \brief solve 1D poisson equation in x direction
-//! \param[in] f the field.
-void SolvePoisson1D(Field* f){
 
-
-
-
-}
 
 

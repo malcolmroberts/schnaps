@@ -3,7 +3,7 @@
 #include "quantities_collision.h"
 
 
-void SolvePoisson(Field *f){
+void SolvePoisson(Field *f,int type_bc, double bc_l, double bc_r){
 
   // for the moment, works only for the 1d case
   assert(f->is1d);
@@ -71,16 +71,14 @@ void SolvePoisson(Field *f){
 
 
   // dirichlet boundary condition at the first and last location
-  SetSkyline(&sky,0,0,1e20);
-  SetSkyline(&sky,neq-1,neq-1,1e20);
-
+  if(type_bc == _Dirichlet_Poisson_BC){
+    SetSkyline(&sky,0,0,1e20);
+    SetSkyline(&sky,neq-1,neq-1,1e20);
+  }
 
   //DisplaySkyline(&sky);
 
   FactoLU(&sky);
-
-  // charge computation
-  Computation_charge_density(f);
 
     // source assembly 
   double source[neq];
@@ -93,18 +91,20 @@ void SolvePoisson(Field *f){
       double omega=wglop(degx,iloc);
       int ino=iloc + ie * degx;  
       int imem=f->varindex(f->interp_param,0,iloc+ie*(degx+1),_INDEX_RHO);
-      double charge=f->wn[imem];
-      printf("charge=%f\n",charge);
+      double charge=f->wn[imem];     
       source[ino]+= charge*omega/nelx;
     }
   }
 
+  // Apply dirichlet Boundary condition
+  if(type_bc == _Dirichlet_Poisson_BC){
+    source[0]=1e20*bc_l;
+    source[neq-1]=1e20*bc_r;
+  }
+  
   double sol[neq];
   SolveSkyline(&sky,source,sol);
 
-  for(int i=0;i<neq;i++){
-    printf("sol %d = %f\n",i,sol[i]);
-  }
 
   // now put the solution at the right place
   for(int ie=0;ie<nelx;ie++){
@@ -121,4 +121,5 @@ void SolvePoisson(Field *f){
 
 
   Compute_electric_field(f);
+
 }

@@ -10,6 +10,6 @@
 #include "skyline.h"
 
 
-void SolvePoisson(Field *f);
+void SolvePoisson(Field *f,int type_bc, double bc_l, double bc_r);
 
 #endif

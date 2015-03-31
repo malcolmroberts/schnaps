@@ -1,4 +1,4 @@
-#include "test.h"
+#include "../test.h"
 #include "schnaps.h"
 #include<stdio.h>
 #include <assert.h>
