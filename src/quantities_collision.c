@@ -13,7 +13,6 @@
 double L2VelError(double* x,double t,double *w){
   
   FILE * ver;
-  ver = fopen( "vel_error.dat", "w" );
 
   double wex[_INDEX_MAX];
   double err2=0;
@@ -26,10 +25,8 @@ double L2VelError(double* x,double t,double *w){
       double vi=-_VMAX+iel*_DV+_DV*glop(_DEG_V,iloc);
       int ipg=iloc+iel*_DEG_V;
       err2+=omega*_DV*(w[ipg]-wex[ipg])*(w[ipg]-wex[ipg]);
-      fprintf(ver,"%f %f %f % f\n",vi,w[ipg],wex[ipg],w[ipg]-wex[ipg]);
     }
   }
-  fclose(ver);
   return err2;
 };
 
@@ -253,3 +250,29 @@ void Compute_electric_field(Field* f){
   
 
 }
+
+
+
+
+double Velocity_distribution_plot(double* x,double t,double *w){
+  
+  FILE * ver;
+  ver = fopen( "vel_error.dat", "w" );
+
+  double wex[_INDEX_MAX];
+  double err2=0;
+  CollisionImposedData(x, t,wex);
+  // loop on the finite emlements
+  for(int iel=0;iel<_NB_ELEM_V;iel++){
+    // loop on the local glops
+    for(int iloc=0;iloc<_DEG_V+1;iloc++){
+      double omega=wglop(_DEG_V,iloc);
+      double vi=-_VMAX+iel*_DV+_DV*glop(_DEG_V,iloc);
+      int ipg=iloc+iel*_DEG_V;
+      err2+=omega*_DV*(w[ipg]-wex[ipg])*(w[ipg]-wex[ipg]);
+      fprintf(ver,"%f %f %f % f\n",vi,w[ipg],wex[ipg],w[ipg]-wex[ipg]);
+    }
+  }
+  fclose(ver);
+  return err2;
+};

@@ -73,7 +73,7 @@ int TestPeriodic(void) {
   // apply the DG scheme
   // time integration by RK2 scheme 
   // up to final time = 1.
-  RK2(&f,0.5,0.5);
+  RK2(&f,0.5,0.1);
  
   // save the results and the error
   PlotField(0,(1==0),&f,"dgvisu.msh");
