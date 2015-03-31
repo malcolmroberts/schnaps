@@ -37,6 +37,8 @@ int TestCollision(void) {
   //f.model.Source = NULL;
   f.model.Source = CollisionSource;
   f.varindex=GenericVarindex;
+  f.update_before_rk=NULL;
+  f.update_after_rk=NULL; 
     
     
   f.interp.interp_param[0]=f.model.m;  // _M
@@ -74,7 +76,7 @@ int TestCollision(void) {
   // apply the DG scheme
   // time integration by RK2 scheme 
   // up to final time = 1.
-  RK2(&f,0.03);
+  RK2(&f,0.03,0.5);
  
   // save the results and the error
   int iel=_NB_ELEM_V/2;

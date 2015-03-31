@@ -28,8 +28,9 @@ int TestFieldRK2(void){
   f.model.InitData=TestTransportInitData;
   f.model.ImposedData=TestTransportImposedData;
   f.model.Source = NULL;
-  f.update=NULL;
   f.varindex=GenericVarindex;
+  f.update_before_rk=NULL;
+  f.update_after_rk=NULL; 
 
   f.model.vmax=1;
 
@@ -56,7 +57,7 @@ int TestFieldRK2(void){
   printf("cfl param =%f\n",f.hmin);
 
 
-  RK2(&f,.1);
+  RK2(&f,.1,0.1);
  
   PlotField(0,(1==0),&f,"dgvisu.msh");
   PlotField(0,(1==1),&f,"dgerror.msh");

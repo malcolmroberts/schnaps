@@ -13,7 +13,9 @@ int main(void) {
   f.model.InitData=TransportInitData2d;
   f.model.ImposedData=TransportImposedData2d;
   f.varindex=GenericVarindex;
-
+  f.update_before_rk=NULL;
+  f.update_after_rk=NULL; 
+  f.model.Source = NULL;
 
   f.interp.interp_param[0]=1;  // _M
   f.interp.interp_param[1]=3;  // x direction degree
@@ -49,7 +51,7 @@ int main(void) {
   // apply the DG scheme
   // time integration by RK2 scheme 
   // up to final time = 1.
-  RK2(&f,1.0);
+  RK2(&f,1.0,0.5);
  
   // save the results and the error
   PlotField(0,(1==0),&f,"dgvisu.msh");

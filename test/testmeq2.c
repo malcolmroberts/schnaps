@@ -36,6 +36,9 @@ int TestmEq2(void) {
     f.model.InitData=VecTransInitData2d;
     f.model.ImposedData=VecTransImposedData2d;
     f.varindex=GenericVarindex;
+    f.update_before_rk=NULL;
+    f.update_after_rk=NULL;
+    f.model.Source = NULL;
     
     f.model.vmax=1;
 
@@ -92,7 +95,7 @@ int TestmEq2(void) {
   // apply the DG scheme
   // time integration by RK2 scheme 
   // up to final time = 1.
-  RK2(&f,0.1);
+  RK2(&f,0.1,0.5);
  
   // save the results and the error
   PlotField(0,(1==0),&f,"dgvisu.msh");

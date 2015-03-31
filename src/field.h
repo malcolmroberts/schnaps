@@ -47,7 +47,15 @@ typedef struct Field{
   //! \param[in] elem macro element index
   //! \param[in] ipg glop index
   //! \param[in] iv field component index
-  void (*update)(void* f);
+  void (*update_before_rk)(void* f);
+
+  //! \brief generic update function called 
+  //! \brief called at each runge-kutta sustep
+  //! \param[inout] f a field (to be converted from void*)
+  //! \param[in] elem macro element index
+  //! \param[in] ipg glop index
+  //! \param[in] iv field component index
+  void (*update_after_rk)(void* f);
   
 
   //! \brief memory arrangement of field components
@@ -124,12 +132,8 @@ void* DGMass(void* mcell);
 //! \brief time integration by a second order Runge-Kutta algorithm 
 //! \param[inout] f a field
 //! \param[in] tmax physical duration of the simulation
-void RK2(Field* f,double tmax);
-//! \brief time integration by a second order Runge-Kutta algorithm 
-//! \param[inout] f a field
-//! \param[in] tmax physical duration of the simulation
 //! \param[in] if compute_charge = 0 we do not compute the charge
-void RK2_Poisson(Field* f,double tmax,double cfl,int compute_charge,int type_bc, double bc_l, double bc_r);
+void RK2(Field* f,double tmax,double cfl);
 //!  \brief time integration by a second order Runge-Kutta algorithm.
 //! slow version
 //! \param[inout] f a field

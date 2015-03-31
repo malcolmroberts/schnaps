@@ -41,6 +41,8 @@ int TestPoisson(void) {
   //f.model.Source = NULL;
   f.model.Source = CollisionSource;
   f.varindex=GenericVarindex;
+  f.update_before_rk=NULL;
+  f.update_after_rk=NULL; 
     
     
   f.interp.interp_param[0]=f.model.m;  // _M

@@ -18,6 +18,8 @@ int TestFieldSource(void){
   f.model.ImposedData = TestSourceImposedData;
   f.model.Source = TestSourceSource;
   f.varindex = GenericVarindex;
+  f.update_before_rk=NULL;
+  f.update_after_rk=NULL; 
 
   f.interp.interp_param[0] = 1; // _M
   f.interp.interp_param[1] = 3; // x direction degree

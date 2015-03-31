@@ -29,6 +29,8 @@ int TestFieldRK2_2D_SubCell(void) {
   f.model.ImposedData=TransportImposedData2d;
   f.model.Source = NULL;
   f.varindex=GenericVarindex;
+  f.update_before_rk=NULL;
+  f.update_after_rk=NULL; 
 
   f.model.vmax=1;
 
@@ -59,7 +61,7 @@ int TestFieldRK2_2D_SubCell(void) {
 
   assert(f.is2d);
 
-  RK2(&f,0.2);
+  RK2(&f,0.2,0.5);
  
   PlotField(0,(1==0),&f,"dgvisu.msh");
   PlotField(0,(1==1),&f,"dgerror.msh");

@@ -43,8 +43,8 @@ int Test_TransportVP(void) {
   //f.model.Source = NULL;
   f.model.Source = CollisionSource;
   f.varindex=GenericVarindex;
-  f.update=UpdateVlasovPoisson;
-    
+  f.update_before_rk=UpdateVlasovPoisson;
+  f.update_after_rk=NULL; 
     
   f.interp.interp_param[0]=f.model.m;  // _M
   f.interp.interp_param[1]=3;  // x direction degree
@@ -74,7 +74,7 @@ int Test_TransportVP(void) {
 
   printf("cfl param =%f\n",f.hmin);
 
-  RK2_Poisson(&f,0.03,0.05,0,1,0.0,1.0);
+  RK2(&f,0.03,0.05);
 
    // save the results and the error
   int iel=_NB_ELEM_V/2;
@@ -134,7 +134,17 @@ double TransportVP_ImposedKinetic_Data(double x[3],double t,double v){
 
 
 void UpdateVlasovPoisson(void* vf){
-
+  int type_bc;
+  double bc_l, bc_r;
+  
   Field* f=vf;
+  type_bc=1;
+  bc_l=0;
+  bc_r=1;
 
+  // Computation_charge_density(f);
+
+  // Solving poisson
+  SolvePoisson(f,type_bc,bc_l,bc_r);    
+  
 }
