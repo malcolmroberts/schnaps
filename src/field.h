@@ -25,6 +25,9 @@ typedef struct Field{
   //! dt has to be smaller than hmin / vmax
   double dt;
 
+  //! index of the runge-kutta substep
+  int rk_substep;
+
   //! activate or not 2D computations
   bool is2d;
 
@@ -38,9 +41,14 @@ typedef struct Field{
   //! time derivative of the field
   double* dtwn;
 
-  //! electric field and charge ????????????????????????
-  double* elec;
-  double* rho;
+  //! \brief generic update function called 
+  //! \brief called at each runge-kutta sustep
+  //! \param[inout] f a field (to be converted from void*)
+  //! \param[in] elem macro element index
+  //! \param[in] ipg glop index
+  //! \param[in] iv field component index
+  void (*update)(void* f);
+  
 
   //! \brief memory arrangement of field components
   //! \param[in] param interpolation parameters
@@ -145,9 +153,9 @@ void DisplayField(Field* f);
 //! \returns the error. 
 double L2error(Field* f);
 
-//!  \brief solve 1D poisson equation in x direction
-//! \param[in] f the field.
-void SolvePoisson1D(Field* f);
+/* //!  \brief solve 1D poisson equation in x direction */
+/* //! \param[in] f the field. */
+/* void SolvePoisson1D(Field* f); */
 
 
 

@@ -1448,6 +1448,11 @@ void RK2_Poisson(Field* f,double tmax,double cfl, int compute_charge,int type_bc
     if (iter%freq==0)
       printf("t=%f iter=%d/%d dt=%f\n",f->tnow,iter,itermax,dt);
     // compute charge
+
+    if (f->update != NULL){
+      f->update(f);
+    }
+
     if(compute_charge == 1){
       Computation_charge_density(f);
     }

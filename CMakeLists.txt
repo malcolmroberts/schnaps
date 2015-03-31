@@ -195,7 +195,7 @@ add_test(testskyline testskyline)
 add_executable(
   testskyline
   test/test.h
-  test/test_VP/testskyline.c
+  test/test_vp/testskyline.c
   )
 target_link_libraries(testskyline _schnaps m pthread)
 add_test(testskyline testskyline)
@@ -204,7 +204,7 @@ add_test(testpoisson testpoisson)
 add_executable(
   testpoisson
   test/test.h
-  test/test_VP/testpoisson.c
+  test/test_vp/testpoisson.c
 )
 target_link_libraries(testpoisson _schnaps m pthread)
 add_test(testpoisson testpoisson)

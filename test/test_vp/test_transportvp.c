@@ -11,6 +11,7 @@ void Test_TransportVP_ImposedData(double x[3],double t,double w[]);
 void Test_TransportVP_InitData(double x[3],double w[]);
 double TransportVP_ImposedKinetic_Data(double x[3],double t,double v);
 
+void UpdateVlasovPoisson(void* field);
 
 int main(void) {
   
@@ -42,6 +43,7 @@ int Test_TransportVP(void) {
   //f.model.Source = NULL;
   f.model.Source = CollisionSource;
   f.varindex=GenericVarindex;
+  f.update=UpdateVlasovPoisson;
     
     
   f.interp.interp_param[0]=f.model.m;  // _M
@@ -129,3 +131,10 @@ double TransportVP_ImposedKinetic_Data(double x[3],double t,double v){
   f=exp(-(v-t)*(v-t))*exp(-36*((x[0]-v*t+0.5*t*t)-0.5)*((x[0]-v*t+0.5*t*t)-0.5));
   return f;
 };
+
+
+void UpdateVlasovPoisson(void* vf){
+
+  Field* f=vf;
+
+}
