@@ -3,13 +3,13 @@
 #include <assert.h>
 #include "../test.h"
 #include "collision.h"
-#include "quantities_collision.h"
+#include "quantities_vp.h"
 #include "solverpoisson.h"
 
 
-void TestPoissonImposedData(double x[3],double t,double w[]);
-void TestPoissonInitData(double x[3],double w[]);
-
+void TestPoisson_ImposedData(double x[3],double t,double w[]);
+void TestPoisson_InitData(double x[3],double w[]);
+void TestPoisson_BoundaryFlux(double x[3],double t,double wL[],double* vnorm, double* flux);
 
 int main(void) {
   
@@ -34,12 +34,15 @@ int TestPoisson(void) {
   
   f.model.m=_MV+6; // num of conservative variables f(vi) for each vi, phi, E, rho, u, p, e (ou T)
   f.model.vmax = _VMAX; // maximal wave speed
-  f.model.NumFlux=Collision_Lagrangian_NumFlux;
-  f.model.BoundaryFlux=Collision_Lagrangian_BoundaryFlux;
-  f.model.InitData=TestPoissonInitData;
-  f.model.ImposedData=TestPoissonImposedData;
-  //f.model.Source = NULL;
-  f.model.Source = CollisionSource;
+  f.model.NumFlux=VlasovP_Lagrangian_NumFlux;
+  f.model.Source = VlasovP_Lagrangian_Source;
+   //f.model.Source = NULL;
+  
+  f.model.BoundaryFlux=TestPoisson_BoundaryFlux;
+  f.model.InitData=TestPoisson_InitData;
+  f.model.ImposedData=TestPoisson_ImposedData;
+ 
+  
   f.varindex=GenericVarindex;
   f.update_before_rk=NULL;
   f.update_after_rk=NULL; 
@@ -67,7 +70,8 @@ int TestPoisson(void) {
   InitField(&f);
   f.macromesh.is1d=true;
   f.is1d=true;
-
+  f.nb_diags=0;
+  
   // prudence...
   CheckMacroMesh(&(f.macromesh),f.interp.interp_param+1);
 
@@ -118,7 +122,7 @@ int TestPoisson(void) {
 
 };
 
-void TestPoissonImposedData(double x[3],double t,double w[]){
+void TestPoisson_ImposedData(double x[3],double t,double w[]){
 
   for(int i=0;i<_INDEX_MAX_KIN+1;i++){
     int j=i%_DEG_V; // local connectivity put in function
@@ -140,13 +144,19 @@ void TestPoissonImposedData(double x[3],double t,double w[]){
 
 };
 
-void TestPoissonInitData(double x[3],double w[]){
+void TestPoisson_InitData(double x[3],double w[]){
 
   double t=0;
-  TestPoissonImposedData(x,t,w);
+  TestPoisson_ImposedData(x,t,w);
 
 };
 
 
+void TestPoisson_BoundaryFlux(double x[3],double t,double wL[],double* vnorm,
+				       double* flux){
+  double wR[_MV+6];
+  TestPoisson_ImposedData(x,t,wR);
+  VlasovP_Lagrangian_NumFlux(wL,wR,vnorm,flux);
+};
 
 

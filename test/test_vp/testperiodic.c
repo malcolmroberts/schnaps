@@ -70,6 +70,7 @@ int TestPeriodic(void) {
   InitField(&f);
   f.macromesh.is1d=true;
   f.is1d=true;
+  f.nb_diags=0;
 
   // prudence...
   CheckMacroMesh(&(f.macromesh),f.interp.interp_param+1);

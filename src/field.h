@@ -5,6 +5,7 @@
 #include "interpolation.h"
 #include "model.h"
 #include "skyline.h"
+#include <stdio.h>
 
 //! \brief Data structure for managing a  discrete vector field
 //! solution of a DG approximation 
@@ -19,14 +20,25 @@ typedef struct Field{
   int interp_param[8];
   //! current time
   double tnow;
+  //! time max
+  double tmaximum;
   //! cfl parameter min_i (vol_i / surf_i)
   double hmin;
   //! time step
   //! dt has to be smaller than hmin / vmax
   double dt;
-
+  //! Current time iter
+  int iter_time;
+  //! final time iter
+  int itermax;
+  //! nb of diagnostics
+  int nb_diags;
+  //! table for diagnostics
+  double * Diagnostics;
   //! index of the runge-kutta substep
   int rk_substep;
+  //! max substep of the rk method
+  int rk_max;
 
   //! activate or not 2D computations
   bool is2d;

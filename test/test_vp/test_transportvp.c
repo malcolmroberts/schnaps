@@ -1,17 +1,21 @@
 #include "schnaps.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <assert.h>
 #include "../test.h"
 #include "collision.h"
-#include "quantities_collision.h"
+#include "quantities_vp.h"
+#include "diagnostics_vp.h"
 #include "solverpoisson.h"
 
 
 void Test_TransportVP_ImposedData(double x[3],double t,double w[]);
 void Test_TransportVP_InitData(double x[3],double w[]);
 double TransportVP_ImposedKinetic_Data(double x[3],double t,double v);
+void Test_TransportVP_BoundaryFlux(double x[3],double t,double wL[],double* vnorm, double* flux);
 
 void UpdateVlasovPoisson(void* field);
+void PlotVlasovPoisson(void* vf);
 
 int main(void) {
   
@@ -36,15 +40,17 @@ int Test_TransportVP(void) {
   
   f.model.m=_MV+6; // num of conservative variables f(vi) for each vi, phi, E, rho, u, p, e (ou T)
   f.model.vmax = _VMAX; // maximal wave speed
-  f.model.NumFlux=Collision_Lagrangian_NumFlux;
-  f.model.BoundaryFlux=Collision_Lagrangian_BoundaryFlux;
+  f.model.NumFlux=VlasovP_Lagrangian_NumFlux;
+  f.model.Source = VlasovP_Lagrangian_Source;
+  //f.model.Source = NULL;
+ 
   f.model.InitData=Test_TransportVP_InitData;
   f.model.ImposedData=Test_TransportVP_ImposedData;
-  //f.model.Source = NULL;
-  f.model.Source = CollisionSource;
+  f.model.BoundaryFlux=Test_TransportVP_BoundaryFlux;
+
   f.varindex=GenericVarindex;
   f.update_before_rk=UpdateVlasovPoisson;
-  f.update_after_rk=NULL; 
+  f.update_after_rk=PlotVlasovPoisson;
     
   f.interp.interp_param[0]=f.model.m;  // _M
   f.interp.interp_param[1]=3;  // x direction degree
@@ -68,6 +74,7 @@ int Test_TransportVP(void) {
   InitField(&f);
   f.macromesh.is1d=true;
   f.is1d=true;
+  f.nb_diags=3;
 
   // prudence...
   CheckMacroMesh(&(f.macromesh),f.interp.interp_param+1);
@@ -82,7 +89,7 @@ int Test_TransportVP(void) {
   printf("Trace vi=%f\n",-_VMAX+iel*_DV+_DV*glop(_DEG_V,iloc));
   PlotField(iloc+iel*_DEG_V,(1==0),&f,"dgvisu.msh");
   PlotField(iloc+iel*_DEG_V,(1==1),&f,"dgerror.msh");
-  
+  Plot_Energies(&f);
 
   double dd_Kinetic=L2_Kinetic_error(&f);
   
@@ -132,19 +139,38 @@ double TransportVP_ImposedKinetic_Data(double x[3],double t,double v){
   return f;
 };
 
+void Test_TransportVP_BoundaryFlux(double x[3],double t,double wL[],double* vnorm,
+				       double* flux){
+  double wR[_MV+6];
+  Test_TransportVP_ImposedData(x,t,wR);
+  VlasovP_Lagrangian_NumFlux(wL,wR,vnorm,flux);
+};
+
 
 void UpdateVlasovPoisson(void* vf){
   int type_bc;
   double bc_l, bc_r;
-  
+  int itermax;
   Field* f=vf;
   type_bc=1;
   bc_l=0;
   bc_r=1;
-
+    
   // Computation_charge_density(f);
-
+  
   // Solving poisson
   SolvePoisson(f,type_bc,bc_l,bc_r);    
   
+}
+
+
+void PlotVlasovPoisson(void* vf){
+  double k_energy=0,e_energy=0,t_energy=0;
+  
+  Field* f=vf;
+  
+  if(f->rk_substep == f->rk_max){
+    Energies(f,k_energy,e_energy,t_energy);
+  }
+  vf=f;
 }

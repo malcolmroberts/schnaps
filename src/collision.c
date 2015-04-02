@@ -5,11 +5,11 @@
 #include "interpolation.h"
 #include "geometry.h"
 #include "skyline.h"
-#include "quantities_collision.h"
+#include "quantities_vp.h"
 
 
 
-void Collision_Lagrangian_NumFlux(double wL[],double wR[],double* vnorm,double* flux){
+void VlasovP_Lagrangian_NumFlux(double wL[],double wR[],double* vnorm,double* flux){
   
   for(int i=0;i<_INDEX_MAX_KIN+1;i++){
     int j=i%_DEG_V; // local connectivity put in function
@@ -35,54 +35,9 @@ void Collision_Lagrangian_NumFlux(double wL[],double wR[],double* vnorm,double* 
 };
 
 
-
-
-
-void Collision_Lagrangian_BoundaryFlux(double x[3],double t,double wL[],double* vnorm,
-				       double* flux){
-  double wR[_MV+6];
-  CollisionImposedData(x,t,wR);
-  Collision_Lagrangian_NumFlux(wL,wR,vnorm,flux);
-};
-
-
-void CollisionInitData(double x[3],double w[]){
-
-  double t=0;
-  CollisionImposedData(x,t,w);
-
-};
-
-
-
-void CollisionImposedData(double x[3],double t,double w[]){
-
-  for(int i=0;i<_INDEX_MAX_KIN+1;i++){
-    int j=i%_DEG_V; // local connectivity put in function
-    int nel=i/_DEG_V; // element num (TODO : function)
-
-    double vi = (-_VMAX+nel*_DV +
-		 _DV* glop(_DEG_V,j));
-
-    w[i]=Collision_ImposedKinetic_Data(x,t,vi);
-  }
-  // exact value of the potential
-  // and electric field
-  w[_INDEX_PHI]=x[0]*(1-x[0]);
-  w[_INDEX_EX]=1;
-  w[_INDEX_RHO]=0; //rho init
-  w[_INDEX_VELOCITY]=0; // u init
-  w[_INDEX_PRESSURE]=0; // p init
-  w[_INDEX_TEMP]=0; // e ou T init
-
-};
-
-
-
-
 //! \brief compute compute the source term of the collision
 //! model: electric force + true collisions
-void CollisionSource(double* x,double t,double* w, double* source){
+void VlasovP_Lagrangian_Source(double* x,double t,double* w, double* source){
 
   double E=w[_INDEX_EX]; // electric field
   double Md[_INDEX_MAX_KIN+1];

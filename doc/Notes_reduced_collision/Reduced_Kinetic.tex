@@ -102,22 +102,22 @@ The definition the distribution function $\f$ with $\x\in\mathbb{R}^d$ the spati
 \left\{\begin{array}{l}
 \ds\dt \f+\vv\cdot\nabla_{\x}\f+\vE\cdot\nabla_{\vv}\f=Q(f,f)\\
 \\
-\ds \vE=\gamma\nabla\phi\mbox{, }\triangle \phi=a \rho
+\ds \vE=-\nabla\phi\mbox{, }-\triangle \phi=\rho-\rho_0
 \end{array}\right.
 \end{equation}
-with $Q(f,f)$ a collisional operator, $a$ a constant, $\phi$ a potential. When $\gamma=1$ (repulsive forces) we obtain the equation for plasma and when $\gamma=-1$ (attractive forces) the equation for self-graviting case. This equation satisfy a conservation for the total energy in the collisionless case.
+with $Q(f,f)$ a collisional operator, $\phi$ the electrical potential. This equation satisfy a conservation for the total energy in the collisionless case.
 \begin{lemma}
 The equations (\ref{VP}) without collisions satisfy
 $$
-\frac{d}{dt}\left(\frac12\intx \f\mid \vv\mid^2 d\x d\vv+\frac{\gamma}2\intx \mid\nabla \phi\mid^2 d\x\right)=0
+\frac{d}{dt}\left(\frac12\intx \f\mid \vv\mid^2 d\x d\vv+\frac{1}2\intx \mid\nabla \phi\mid^2 d\x\right)=0
 $$
 \end{lemma} 
 \begin{proof}
 We multiply the kinetic equation by $\frac{\mid \vv\mid^2}{2}$ and we integrate in velocity and in space
 we obtain
 \begin{align*}
-&\ds\dt \intx\intrrr \left(\frac{\mid \vv\mid^2}{2} f\right)+\intx\intrrr \left(\frac{\mid \vv\mid^2}{2}\vv\cdot\nabla_{\x} f\right)+\intx\intrrr\left(\vE\cdot\nabla_{\vv} f\right)=0\\
-&\ds\dt \intx\intrrr \left(\frac{\mid \vv\mid^2}{2}\f\right)+\intrrr\intx \nabla_{\x}\cdot\left(\frac{\mid \vv\mid^2}{2} f\right)+\intx\intrrr\left(\vE\cdot\nabla_{\vv}\f\right)=0\\
+&\ds\dt \intx\intrrr \left(\frac{\mid \vv\mid^2}{2} f\right)+\intx\intrrr \left(\frac{\mid \vv\mid^2}{2}\vv\cdot\nabla_{\x} f\right)+\intx\intrrr\left(\frac{\mid \vv\mid^2}{2}\vE\cdot\nabla_{\vv} f\right)=0\\
+&\ds\dt \intx\intrrr \left(\frac{\mid \vv\mid^2}{2}\f\right)+\intrrr\intx \nabla_{\x}\cdot\left(\frac{\mid \vv\mid^2}{2} f\right)+\intx\intrrr\left(\frac{\mid \vv\mid^2}{2}\vE\cdot\nabla_{\vv}\f\right)=0\\
 \end{align*}
 Using the free divergence theorem we obtain
 \begin{align*}
@@ -132,15 +132,15 @@ Integrating by part in the velocity space we obtain
 Now we integrate in the velocity space the Vlasov equation (\ref{VP}) and we define $\rho=\intrrr f$ and $\vJ=\int \vv f$. In this case we obtain $\dt \rho+\nabla\cdot \vJ=0$.
 Consequently we obtain that
 \begin{align*}
-&\ds\dt \intx\intrrr \left(\frac{\mid \vv\mid^2}{2}\f\right)-\gamma\intx\nabla_{\x}\phi \cdot\vJ=0\\
-&\ds\dt \intx\intrrr \left(\frac{\mid \vv\mid^2}{2}\f\right)+\gamma\intx\phi \nabla_{\x}\cdot\vJ=0\\
-&\ds\dt \intx\intrrr \left(\frac{\mid \vv\mid^2}{2}\f\right)-\gamma\intx\phi \dt \rho=0\\
+&\ds\dt \intx\intrrr \left(\frac{\mid \vv\mid^2}{2}\f\right)+\intx\nabla_{\x}\phi \cdot\vJ=0\\
+&\ds\dt \intx\intrrr \left(\frac{\mid \vv\mid^2}{2}\f\right)-\intx\phi \nabla_{\x}\cdot\vJ=0\\
+&\ds\dt \intx\intrrr \left(\frac{\mid \vv\mid^2}{2}\f\right)+\intx\phi \dt \rho=0\\
 \end{align*}
 Using the Poisson equation we obtain 
 \begin{align*}
-&\ds\dt \intx\intrrr \left(\frac{\mid \vv\mid^2}{2}\f\right)-\gamma\intx\phi \dt \triangle \phi=0\\
-&\ds\dt \intx\intrrr \left(\frac{\mid \vv\mid^2}{2}\f\right)+\gamma\dt \intx \nabla_{\x} \phi \cdot\nabla_{\x} \dt \phi =0\\
-&\ds\dt \intx\intrrr \left(\frac{\mid \vv\mid^2}{2}\f\right)+\gamma\frac12 \dt \intx \mid\nabla_{\x} \phi \mid^2 =0\\
+&\ds\dt \intx\intrrr \left(\frac{\mid \vv\mid^2}{2}\f\right)-\intx\phi \dt \triangle \phi=0\\
+&\ds\dt \intx\intrrr \left(\frac{\mid \vv\mid^2}{2}\f\right)+\dt \intx \nabla_{\x} \phi \cdot\nabla_{\x} \dt \phi =0\\
+&\ds\dt \intx\intrrr \left(\frac{\mid \vv\mid^2}{2}\f\right)+\frac12 \dt \intx \mid\nabla_{\x} \phi \mid^2 =0\\
 \end{align*}
 \end{proof}
 
@@ -347,7 +347,7 @@ In this case, we propose to define a new model with a generic collision operator
 \left\{\begin{array}{l}
 \ds\dt \f+\vv\cdot\nabla_{\x}\f+\vE\cdot\nabla_{\vv}\f=Q(f)\\
 \\
-\ds \vE=\gamma\nabla\phi\mbox{, }\triangle \phi=a \rho
+\ds \vE=-\nabla\phi\mbox{, }-\triangle \phi= \rho-\rho_0
 \end{array}\right.
 \end{equation}
 We define en entropic variable $g=\partial_fS(f)$ with $S(f)$ the entropy associated with the Vlasov-Poisson equation. For example we can use the physical entropy $S(f)=f \ln f-f$. The first step is to approximate the collisional operator. This approximation is given by

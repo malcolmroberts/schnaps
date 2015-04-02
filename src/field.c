@@ -7,7 +7,7 @@
 #include "global.h"
 #include <math.h>
 #include <pthread.h>
-#include "quantities_collision.h"
+#include "quantities_vp.h"
 #include "solverpoisson.h"
 
 // param[0] = M
@@ -50,9 +50,16 @@ void InitField(Field* f){
   f->wnp1=malloc(nmem * sizeof(double));
   assert(f->wnp1);	       
   f->dtwn=malloc(nmem * sizeof(double));
-  assert(f->dtwn);	       
+  assert(f->dtwn);
+  f->Diagnostics=NULL;
 
   f->tnow=0;
+  f->itermax=0;
+  f->iter_time=0;
+  f->tmaximum=0;
+  f->rk_substep=0;
+  f->rk_max=0;
+  f->nb_diags=0;
 
   for(int ie=0;ie<f->macromesh.nbelems;ie++){
     for(int inoloc=0;inoloc<20;inoloc++){
@@ -1370,6 +1377,7 @@ void RK2Copy(Field* f,double tmax){
 void RK2(Field* f,double tmax,double cfl){
 
   double vmax;
+  int size_diags;
   if (f->model.vmax != 0) {
     vmax=f->model.vmax;
   }
@@ -1377,17 +1385,27 @@ void RK2(Field* f,double tmax,double cfl){
     vmax=1; // to be changed for another model...
   }
 
-  double dt = cfl * f->hmin / vmax;
-  int itermax=tmax/dt;
-  int freq=(1 >= itermax/10)? 1 : itermax/10;
+  f->dt = cfl * f->hmin / vmax;
+
+  f->rk_max=2;
+  f->tmaximum=tmax;
+  f->itermax=tmax/f->dt;
+  size_diags=f->nb_diags * f->itermax;
+  
+  if(f->nb_diags != 0){
+    f->Diagnostics=malloc(size_diags* sizeof(double));
+   }
+
+  
+  int freq=(1 >= f->itermax/10)? 1 : f->itermax/10;
   //int param[8]={f->model.m,_DEGX,_DEGY,_DEGZ,_RAFX,_RAFY,_RAFZ,0};
   int sizew=f->macromesh.nbelems * f->model.m * NPG(f->interp_param+1);
 
-  int iter=0;
+  f->iter_time=0;
 
-  while(f->tnow<tmax){
-    if (iter%freq==0)
-      printf("t=%f iter=%d/%d dt=%f\n",f->tnow,iter,itermax,dt);
+  while(f->tnow<f->tmaximum){
+    if (f->iter_time%freq==0)
+      printf("t=%f iter=%d/%d dt=%f\n",f->tnow,f->iter_time,f->itermax,f->dt);
     // compute charge
 
     // update before predictor
@@ -1398,20 +1416,20 @@ void RK2(Field* f,double tmax,double cfl){
     // predictor
     dtField(f);
     //assert(1==2);
-
+   
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
     for(int iw=0;iw<sizew;iw++){
-      f->wnp1[iw]=f->wn[iw]+ dt/2 * f->dtwn[iw]; 
+      f->wnp1[iw]=f->wn[iw]+ f->dt/2 * f->dtwn[iw]; 
     }
 
     // update after predictor
     if(f->update_after_rk !=NULL){
       f->update_after_rk(f);
-     }   
+     }
 
-    
+
     //exchange the field pointers 
     double *temp;
     temp=f->wnp1;
@@ -1419,12 +1437,12 @@ void RK2(Field* f,double tmax,double cfl){
     f->wn=temp;
 
     // update before corrector
-    f->tnow+=dt/2;
+    f->tnow+=f->dt/2;
     f->rk_substep =2;
     if(f->update_before_rk !=NULL){
       f->update_before_rk(f);
      }  
-    
+       
     // corrector
     dtField(f);
     
@@ -1432,24 +1450,23 @@ void RK2(Field* f,double tmax,double cfl){
 #pragma omp parallel for
 #endif
     for(int iw=0;iw<sizew;iw++){
-      f->wnp1[iw]+=dt*f->dtwn[iw];
+      f->wnp1[iw]+=f->dt*f->dtwn[iw];
     }
 
     // update after corrector
     if(f->update_after_rk !=NULL){
       f->update_after_rk(f);
-     }   
-    
-    f->tnow+=dt/2;  
-    iter++;
+     }
+  
+    f->tnow+=f->dt/2;
+    f->iter_time++;
     //exchange the field pointers 
     temp=f->wnp1;
     f->wnp1=f->wn;
     f->wn=temp;
 
-  }
-  printf("t=%f iter=%d/%d dt=%f\n",f->tnow,iter,itermax,dt);
-
+  }  
+  printf("t=%f iter=%d/%d dt=%f\n",f->tnow,f->iter_time,f->itermax,f->dt);
 }
 
 // compute the normalized L2 distance with the imposed data

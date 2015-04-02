@@ -36,7 +36,8 @@ src/collision.h
 src/gyro.h
 src/skyline.h
 src/solverpoisson.h
-src/quantities_collision.h
+src/quantities_vp.h
+src/diagnostics_vp.h
 src/field.c
 src/geometry.c
 src/interpolation.c
@@ -46,7 +47,8 @@ src/collision.c
 src/gyro.c
 src/skyline.c
 src/solverpoisson.c
-src/quantities_collision.c
+src/quantities_vp.c
+src/diagnostics_vp.c
 )
 
 #schnaps library
@@ -186,7 +188,7 @@ add_test(testperiodic testperiodic)
 add_executable(
   testperiodic
   test/test.h
-  test/testperiodic.c
+  test/test_vp/testperiodic.c
 )
 target_link_libraries(testperiodic _schnaps m pthread)
 add_test(testperiodic testperiodic)
@@ -218,12 +220,3 @@ add_executable(
 target_link_libraries(test_transportvp _schnaps m pthread)
 add_test(test_transportvp test_transportvp)
 
-
-add_test(testcollision testcollision)
-add_executable(
-  testcollision
-  test/test.h
-  test/test_vp/testcollision.c
-)
-target_link_libraries(testcollision _schnaps m pthread)
-add_test(testcollision testcollision)

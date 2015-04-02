@@ -1,6 +1,6 @@
 #include "solverpoisson.h"
 #include "geometry.h"
-#include "quantities_collision.h"
+#include "quantities_vp.h"
 
 
 void SolvePoisson(Field *f,int type_bc, double bc_l, double bc_r){

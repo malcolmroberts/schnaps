@@ -33,27 +33,7 @@
 //! \param[in] wL,wR : left and right states
 //! \param[in] vn : normal vector
 //! \param[out] flux : the flux
-void Collision_Lagrangian_NumFlux(double wL[],double wR[],double vn[3],double* flux);
-
-//! \brief particular boundary flux for the collision model
-//! \param[in] x : space position
-//! \param[in] t : time
-//! \param[in] wL : left state
-//! \param[in] vn : normal vector
-//! \param[out] flux : the flux
-void Collision_Lagrangian_BoundaryFlux(double* x,double t,double* wL,double* vn,
-			   double* flux);
-
-//! \brief particular init data for the collision model
-//! \param[in] x : space position
-//! \param[out] w : init state at point x
-void CollisionInitData(double* x,double* w);
-
-//! \brief particular imposed data for the  collision model
-//! \param[in] x,t : space and time position
-//! \param[out] w : imposed state at point x and time t
-void CollisionImposedData(double* x,double t,double* w);
-
+void VlasovP_Lagrangian_NumFlux(double wL[],double wR[],double vn[3],double* flux);
 
 
 //! \brief compute compute the source term of the collision
@@ -61,7 +41,7 @@ void CollisionImposedData(double* x,double t,double* w);
 //! \param[in] w the distribution function
 //! \param[in] f the force 
 //! \param[out] source the source
-void CollisionSource(double* x,double t, double* w, double* source);
+void VlasovP_Lagrangian_Source(double* x,double t, double* w, double* source);
 
 
 #endif
