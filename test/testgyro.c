@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include "test.h"
-#include "collision.h"
+//#include "collision.h"
 #include "gyro.h"
 
 
@@ -27,7 +27,7 @@ int TestGyro(void) {
 
   int vec=1;
   
-  f.model.m=_MV; // num of conservative variables
+  f.model.m=_MV+3; // num of conservative variables
   f.model.vmax = _VMAX; // maximal wave speed 
   f.model.NumFlux=Gyro_Lagrangian_NumFlux;
   f.model.BoundaryFlux=Gyro_Lagrangian_BoundaryFlux;
@@ -36,7 +36,7 @@ int TestGyro(void) {
   f.varindex=GenericVarindex;
     
     
-  f.interp.interp_param[0]=_MV;  // _M
+  f.interp.interp_param[0]= f.model.m;//_MV;  // _M
   f.interp.interp_param[1]=2;  // x direction degree
   f.interp.interp_param[2]=2;  // y direction degree
   f.interp.interp_param[3]=2;  // z direction degree
@@ -44,8 +44,8 @@ int TestGyro(void) {
   f.interp.interp_param[5]=4;  // y direction refinement
   f.interp.interp_param[6]=4;  // z direction refinement
   // read the gmsh file
-  ReadMacroMesh(&(f.macromesh),"test/testcube.msh");
-  // ReadMacroMesh(&(f.macromesh),"geo/cube.msh");
+  //ReadMacroMesh(&(f.macromesh),"test/testcube.msh");
+  ReadMacroMesh(&(f.macromesh),"geo/cube.msh");
   // try to detect a 2d mesh
   //bool is1d=Detect1DMacroMesh(&(f.macromesh));
   //assert(is1d);
@@ -57,8 +57,8 @@ int TestGyro(void) {
  
   // prepare the initial fields
   InitField(&f);
-  f.macromesh.is1d=true;
-  f.is1d=true;
+  //f.macromesh.is1d=true;
+  //f.is1d=true;
 
   // prudence...
   CheckMacroMesh(&(f.macromesh),f.interp.interp_param+1);
@@ -72,16 +72,16 @@ int TestGyro(void) {
   // apply the DG scheme
   // time integration by RK2 scheme 
   // up to final time = 1.
-  RK2(&f,1.);
+  RK2(&f,0.2);
  
   // save the results and the error
   PlotField(0,(1==0),&f,"dgvisu.msh");
   PlotField(0,(1==1),&f,"dgerror.msh");
 
   double dd=L2error(&f);
-  double dd_Kinetic=L2_Kinetic_error(&f);
+  //double dd_Kinetic=L2_Kinetic_error(&f);
   
-  printf("erreur kinetic L2=%lf\n",dd_Kinetic);
+  //printf("erreur kinetic L2=%lf\n",dd_Kinetic);
   printf("erreur L2=%lf\n",dd);
   test= test && (dd<3e-4);
 

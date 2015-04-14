@@ -1,4 +1,4 @@
-#include "collision.h"
+//#include "collision.h"
 #include "gyro.h"
 #include <math.h>
 #include <stdio.h>
@@ -27,20 +27,27 @@
 //flux num gyro
 void Gyro_Lagrangian_NumFlux(double wL[],double wR[],double* vnorm,double* flux){
   double eps =0; //if not equal 0 => decentered flux
-  double E_x =1; //firstly consider the electric field is const
-  double E_y =0;
-  for(int i=0;i<_MV;i++){
+  /* double E_x =0; //firstly consider the electric field is const */
+  /* double E_y =1; */
+  double E_x =wL[_INDEX_EX];
+  double E_y =wL[_INDEX_EY];
+  /* printf("Ey = %f \n",E_y); */
+  /* assert(1==2); */
+  for(int i=0;i<_INDEX_MAX_KIN+1;i++){
     int j=i%_DEG_V; // local connectivity put in function
     int nel=i/_DEG_V; // element num (TODO : function)  
     double wm = (wL[i]+wR[i])/2;
-    double flux1 = -E_y*wm;
-    double flux2 = E_x*wm;
-    double v = nel*_DV +
+    double flux1 = E_y*wm;
+    double flux2 = -E_x*wm;
+    double v =-_VMAX+ nel*_DV +
       _DV* glop(_DEG_V,j); // gauss_lob_point[j]
-    double flux3 = -v*wm;
+    double flux3 =v*wm;
   
-    flux[i] = vnorm[0]*flux1+vnorm[1]*flux2+vnorm[3]*flux3-eps*(wR[i]-wL[i])/2;
+    flux[i] = vnorm[0]*flux1+vnorm[1]*flux2+vnorm[2]*flux3-eps*(wR[i]-wL[i])/2;
   }
+  flux[_INDEX_PHI] =0;
+  flux[_INDEX_EX]=0;
+  flux[_INDEX_EY]=0;
   
 };
 
@@ -69,7 +76,7 @@ double GyroL2VelError(double* x,double t,double *w){
 
 void Gyro_Lagrangian_BoundaryFlux(double x[3],double t,double wL[],double* vnorm,
 				       double* flux){
-  double wR[_MV];
+  double wR[_MV+3];
   GyroImposedData(x,t,wR);
   Gyro_Lagrangian_NumFlux(wL,wR,vnorm,flux);
 };
@@ -86,14 +93,33 @@ void GyroInitData(double x[3],double w[]){
 
 void GyroImposedData(double x[3],double t,double w[]){
 
-  for(int i=0;i<_MV;i++){
+  for(int i=0;i<_INDEX_MAX_KIN+1;i++){
     int j=i%_DEG_V; // local connectivity put in function
     int nel=i/_DEG_V; // element num (TODO : function)
 
-    double vi = (nel*_DV +
+    double vi = (-_VMAX+nel*_DV +
 		 _DV* glop(_DEG_V,j));
-    w[i]=cos(x[0]-vi*t);
+    //w[i]=cos(x[0]-vi*t);
+    double pi=4*atan(1.);
+    double xi = x[0]-t;
+    //pour transport 1d
+    // w[i] = cos(2*pi*xi);//*exp(-0.5*pow(xi-0.5,2));
+    //w[i] = cos(2*pi*xi)*exp(-1/(1-pow(2*xi-1,2)));
+    //w[i] = exp(-4*pow(xi-0.5,2));
+    double yi = x[1]+t;
+    //pour transport 2D
+    //w[i] = exp(-4*pow(yi-0.5,2))*exp(-4*pow(xi-0.5,2));
+    //w[i] = cos(2*pi*yi);//*exp(-1/(1-pow(2*xi-1,2)));
+    //w[i] = cos(2*pi*xi)*cos(2*pi*yi);//*exp(-0.5*pow(xi-0.5,2));
+        //pour transport 3D
+     double zi=x[2]-vi*t;
+     w[i] = exp(-4*pow(yi-0.5,2))*exp(-4*pow(xi-0.5,2))*exp(-4*pow(zi-0.5,2));
   }
+  // exact value of the potential
+  // and electric field
+  w[_INDEX_PHI]=0;
+  w[_INDEX_EX]=1;//1;
+  w[_INDEX_EY]=1;//1;
 
 };
 

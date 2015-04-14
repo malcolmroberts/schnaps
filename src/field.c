@@ -31,10 +31,10 @@ void InitField(Field* f){
   double xpg[3];
   double xref[3],omega;
   double physnode[20][3];
-
   f->is2d = f->macromesh.is2d;
   f->is1d = f->macromesh.is1d;
-
+  /* printf("allocate %d doubles\n",f->model.m); */
+  /* assert(1==2); */
   // a copy for avoiding too much "->"
   for(int ip=0;ip<8;ip++){
     f->interp_param[ip]=f->interp.interp_param[ip];

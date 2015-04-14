@@ -5,6 +5,10 @@
 #define _DEG_V 1
 
 #define _MV (_NB_ELEM_V *  _DEG_V + 1)
+#define _INDEX_MAX_KIN (_MV-1)
+#define _INDEX_PHI (_MV)
+#define _INDEX_EX (_MV+1)
+#define _INDEX_EY (_MV+2)
 #define _VMAX 6
 #define _DV (2*_VMAX / _NB_ELEM_V)
 
