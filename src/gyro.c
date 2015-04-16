@@ -48,6 +48,7 @@ void Gyro_Lagrangian_NumFlux(double wL[],double wR[],double* vnorm,double* flux)
   flux[_INDEX_PHI] =0;
   flux[_INDEX_EX]=0;
   flux[_INDEX_EY]=0;
+  flux[_INDEX_EZ]=0;
   
 };
 
@@ -76,7 +77,7 @@ double GyroL2VelError(double* x,double t,double *w){
 
 void Gyro_Lagrangian_BoundaryFlux(double x[3],double t,double wL[],double* vnorm,
 				       double* flux){
-  double wR[_MV+3];
+  double wR[_INDEX_MAX];
   GyroImposedData(x,t,wR);
   Gyro_Lagrangian_NumFlux(wL,wR,vnorm,flux);
 };
@@ -112,14 +113,16 @@ void GyroImposedData(double x[3],double t,double w[]){
     //w[i] = cos(2*pi*yi);//*exp(-1/(1-pow(2*xi-1,2)));
     //w[i] = cos(2*pi*xi)*cos(2*pi*yi);//*exp(-0.5*pow(xi-0.5,2));
         //pour transport 3D
-     double zi=x[2]-vi*t;
-     w[i] = exp(-4*pow(yi-0.5,2))*exp(-4*pow(xi-0.5,2))*exp(-4*pow(zi-0.5,2));
+    //double zi=x[2]-vi*t;
+     double zi=x[2]-t;
+     w[i] = exp(-4*pow(zi-0.5,2));//exp(-4*pow(yi-0.5,2))*exp(-4*pow(xi-0.5,2))*exp(-4*pow(zi-0.5,2));
   }
   // exact value of the potential
   // and electric field
   w[_INDEX_PHI]=0;
-  w[_INDEX_EX]=1;//1;
-  w[_INDEX_EY]=1;//1;
+  w[_INDEX_EX]=0;//1;
+  w[_INDEX_EY]=0;//1;
+  w[_INDEX_EZ]=1;
 
 };
 
@@ -180,15 +183,15 @@ double GyroL2_Kinetic_error(Field* f){
 
 //! \brief compute compute the source term of the collision
 //! model: electric force + true collisions
-void GyroSource(double* force,double* w, double* source){
+void GyroSource(double* w, double* source){
 
-  double E=force[0]; // electric field
+  double Ez=w[_INDEX_EZ]; // electric field
   double Md[_MV];
-  for(int iv=0;iv<_MV;iv++){
+  for(int iv=0;iv<_INDEX_MAX_KIN+1;iv++){
     Md[iv]=0;
     source[iv]=0;
   }
-  // loop on the finite emlements
+  // loop on the finite elements
   for(int iel=0;iel<_NB_ELEM_V;iel++){
     // loop on the local glops
     for(int kloc=0;kloc<_DEG_V+1;kloc++){
@@ -197,23 +200,28 @@ void GyroSource(double* force,double* w, double* source){
       Md[kpg]+=omega*_DV;
       for(int iloc=0;iloc<_DEG_V+1;iloc++){
 	int ipg=iloc+iel*_DEG_V;
-	source[ipg]-=E*omega*w[kpg]*dlag(_DEG_V,iloc,kloc);
+	source[ipg]-=omega*w[kpg]*dlag(_DEG_V,iloc,kloc);
       }
     }
   }
 
-  // upwinding
-  if (E>0){
-    source[_MV-1]+=E*w[_MV-1];
+  // upwinding !beta =1 (or 1/2?)
+  if (Ez>0){
+    source[_MV-1]+=Ez*w[_MV-1]; 
+    //source[0]+=Ez*w[0];
   }
   else {
-    source[0]+=-E*w[0];
+    source[0]+=-Ez*w[0];
+    //source[_INDEX_MAX_KIN]+=-Ez*w[_INDEX_MAX_KIN];
   }
 
-  for(int iv=0;iv<_MV;iv++){
+  for(int iv=0;iv<_INDEX_MAX_KIN+1;iv++){
     source[iv]/=Md[iv];
   }
-  
+  source[_INDEX_PHI]=0;
+  source[_INDEX_EX]=0;
+  source[_INDEX_EY]=0;
+  source[_INDEX_EZ]=0;
 
 };
 

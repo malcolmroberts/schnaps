@@ -9,6 +9,8 @@
 #define _INDEX_PHI (_MV)
 #define _INDEX_EX (_MV+1)
 #define _INDEX_EY (_MV+2)
+#define _INDEX_EZ (_MV+3)
+#define _INDEX_MAX (_MV+4)
 #define _VMAX 6
 #define _DV (2*_VMAX / _NB_ELEM_V)
 
@@ -60,6 +62,6 @@ double GyroL2VelError(double* x,double t,double *w);
 
 //! \brief compute compute the source term of the collision
 //! model: electric force + true collisions
-void GyroSource(double* force, double* w, double* source);
+void GyroSource(double* w, double* source);
 
 #endif

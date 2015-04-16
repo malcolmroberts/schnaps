@@ -27,12 +27,15 @@ int TestGyro(void) {
 
   int vec=1;
   
-  f.model.m=_MV+3; // num of conservative variables
+  f.model.m=_INDEX_MAX; // num of conservative variables
   f.model.vmax = _VMAX; // maximal wave speed 
-  f.model.NumFlux=Gyro_Lagrangian_NumFlux;
+  //f.model.NumFlux=Gyro_Lagrangian_NumFlux;
+  f.model.NumFlux=NULL;
   f.model.BoundaryFlux=Gyro_Lagrangian_BoundaryFlux;
   f.model.InitData=GyroInitData;
   f.model.ImposedData=GyroImposedData;
+  f.model.Source = NULL;
+  //f.model.Source = GyroSource;
   f.varindex=GenericVarindex;
     
     
@@ -72,7 +75,7 @@ int TestGyro(void) {
   // apply the DG scheme
   // time integration by RK2 scheme 
   // up to final time = 1.
-  RK2(&f,0.2);
+  RK2(&f,0.001);
  
   // save the results and the error
   PlotField(0,(1==0),&f,"dgvisu.msh");
