@@ -2,7 +2,7 @@
 #include <math.h>
 #include <assert.h>
 
-#include "test.h"
+#include "../test.h"
 #include "schnaps.h"
 
 int main(void) {
@@ -116,10 +116,12 @@ int TestSkyline(void){
 
   // deallocate memory
   FreeSkyline(&sky);
+  
 
   test= (verr<1e-10);
   //assert(1==2);
 
+  InitSkyline(&sky,_NN);
   // now test a symmetric matrix
   A[0][0] = 0.3e1;
   A[0][1] = -0.1e1;

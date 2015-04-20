@@ -31,7 +31,8 @@ void Gyro_Lagrangian_NumFlux(double wL[],double wR[],double* vnorm,double* flux)
   /* double E_y =1; */
   double E_x =wL[_INDEX_EX];
   double E_y =wL[_INDEX_EY];
-  /* printf("Ey = %f \n",E_y); */
+  //double dv=_DV;
+  //printf("test dv = %f \n",dv); 
   /* assert(1==2); */
   for(int i=0;i<_INDEX_MAX_KIN+1;i++){
     int j=i%_DEG_V; // local connectivity put in function
@@ -41,7 +42,7 @@ void Gyro_Lagrangian_NumFlux(double wL[],double wR[],double* vnorm,double* flux)
     double flux2 = -E_x*wm;
     double v =-_VMAX+ nel*_DV +
       _DV* glop(_DEG_V,j); // gauss_lob_point[j]
-    double flux3 =v*wm;
+    double flux3 =0;//v*wm;
   
     flux[i] = vnorm[0]*flux1+vnorm[1]*flux2+vnorm[2]*flux3-eps*(wR[i]-wL[i])/2;
   }
@@ -57,7 +58,7 @@ void Gyro_Lagrangian_NumFlux(double wL[],double wR[],double* vnorm,double* flux)
 double GyroL2VelError(double* x,double t,double *w){
 
 
-  double wex[_MV];
+  double wex[_INDEX_MAX];
   double err2=0;
   GyroImposedData(x, t,wex);
   // loop on the finite emlements
@@ -65,7 +66,7 @@ double GyroL2VelError(double* x,double t,double *w){
     // loop on the local glops
     for(int iloc=0;iloc<_DEG_V+1;iloc++){
       double omega=wglop(_DEG_V,iloc);
-      double vi=iel*_DV+_DV*glop(_DEG_V,iloc);
+      double vi=-_VMAX+iel*_DV+_DV*glop(_DEG_V,iloc);
       int ipg=iloc+iel*_DEG_V;
       err2+=omega*_DV*(w[ipg]-wex[ipg])*(w[ipg]-wex[ipg]);
     }
@@ -113,9 +114,11 @@ void GyroImposedData(double x[3],double t,double w[]){
     //w[i] = cos(2*pi*yi);//*exp(-1/(1-pow(2*xi-1,2)));
     //w[i] = cos(2*pi*xi)*cos(2*pi*yi);//*exp(-0.5*pow(xi-0.5,2));
         //pour transport 3D
-    //double zi=x[2]-vi*t;
-     double zi=x[2]-t;
-     w[i] = exp(-4*pow(zi-0.5,2));//exp(-4*pow(yi-0.5,2))*exp(-4*pow(xi-0.5,2))*exp(-4*pow(zi-0.5,2));
+    double zi=x[2]-vi*t;
+    //double zi=x[2]-t;
+     //w[i] = exp(-4*pow(zi-0.5,2));//exp(-4*pow(yi-0.5,2))*exp(-4*pow(xi-0.5,2))*exp(-4*pow(zi-0.5,2));
+
+    w[i] = exp(-4*pow(zi-0.5,2))*Gyro_ImposedKinetic_Data(x,t,vi);
   }
   // exact value of the potential
   // and electric field
@@ -129,7 +132,8 @@ void GyroImposedData(double x[3],double t,double w[]){
 
 double Gyro_ImposedKinetic_Data(double x[3],double t,double v){
   double f;
-  f=cos(x[0]-v*t);
+  f=exp(-pow((v-1.*t),2)/16.); //velocity transport, Ez=1
+  //f=exp(-4*pow(xi-0.5,2))*exp(-pow((v-2.*t),2));
   return f;
 };
 
@@ -183,7 +187,7 @@ double GyroL2_Kinetic_error(Field* f){
 
 //! \brief compute compute the source term of the collision
 //! model: electric force + true collisions
-void GyroSource(double* w, double* source){
+void GyroSource(double* x, double t, double* w, double* source){
 
   double Ez=w[_INDEX_EZ]; // electric field
   double Md[_MV];
@@ -200,18 +204,18 @@ void GyroSource(double* w, double* source){
       Md[kpg]+=omega*_DV;
       for(int iloc=0;iloc<_DEG_V+1;iloc++){
 	int ipg=iloc+iel*_DEG_V;
-	source[ipg]-=omega*w[kpg]*dlag(_DEG_V,iloc,kloc);
+	source[ipg]+=Ez*omega*w[kpg]*dlag(_DEG_V,iloc,kloc);
       }
     }
   }
 
   // upwinding !beta =1 (or 1/2?)
   if (Ez>0){
-    source[_MV-1]+=Ez*w[_MV-1]; 
+    source[_MV-1]+=-Ez*w[_MV-1]; 
     //source[0]+=Ez*w[0];
   }
   else {
-    source[0]+=-Ez*w[0];
+    source[0]+=Ez*w[0];
     //source[_INDEX_MAX_KIN]+=-Ez*w[_INDEX_MAX_KIN];
   }
 
@@ -226,3 +230,52 @@ void GyroSource(double* w, double* source){
 };
 
 
+
+
+
+
+/* double Velocity_distribution_plot(double* x,double t,double *w){ */
+  
+/*   FILE * ver; */
+/*   ver = fopen( "vel_error.dat", "w" ); */
+
+/*   double wex[_INDEX_MAX]; */
+/*   double err2=0; */
+/*   GyroImposedData(x, t,wex); */
+/*   // loop on the finite emlements */
+/*   for(int iel=0;iel<_NB_ELEM_V;iel++){ */
+/*     // loop on the local glops */
+/*     for(int iloc=0;iloc<_DEG_V+1;iloc++){ */
+/*       double omega=wglop(_DEG_V,iloc); */
+/*       double vi=-_VMAX+iel*_DV+_DV*glop(_DEG_V,iloc); */
+/*       int ipg=iloc+iel*_DEG_V; */
+/*       err2+=omega*_DV*(w[ipg]-wex[ipg])*(w[ipg]-wex[ipg]); */
+/*       fprintf(ver,"%f %f %f % f\n",vi,w[ipg],wex[ipg],w[ipg]-wex[ipg]); */
+/*     } */
+/*   } */
+/*   fclose(ver); */
+/*   return err2; */
+/* }; */
+
+double Velocity_distribution_plot(double *w){
+  
+  FILE * ver;
+  ver = fopen( "vel_error.dat", "w" );
+
+  // loop on the finite emlements
+  for(int iel=0;iel<_NB_ELEM_V;iel++){
+    // loop on the local glops
+    for(int iloc=0;iloc<_DEG_V+1;iloc++){
+      double omega=wglop(_DEG_V,iloc);
+      double dv=_DV;
+      double vi=-_VMAX+iel*dv+dv*glop(_DEG_V,iloc);
+      int ipg=iloc+iel*_DEG_V;
+      //err2+=omega*_DV*(w[ipg]-wex[ipg])*(w[ipg]-wex[ipg]);
+      fprintf(ver,"%f %f\n",vi,w[ipg]);
+      //printf("dv is  %f \n", dv);
+      //printf("vi est %d %d %d %f\n", iel,iloc,ipg, vi);
+    }
+  }
+  fclose(ver);
+  return 1;
+};

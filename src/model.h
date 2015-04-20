@@ -21,6 +21,13 @@ typedef struct Model{
   //! \param[out] flux : the flux
   void (*BoundaryFlux)(double x[3],double t,double wL[],double vn[3],double flux[]);
 
+  //! \brief a pointer to the source function
+  //! \param[in] x : space position
+  //! \param[in] t : time
+  //! \param[in] w :  state
+  //! \param[out] source : the source
+  void (*Source)(double x[3],double t,double w[],double source[]);
+
   //! \brief a pointer to the init data function
   // !\param[in] x : space position
   //! \param[out] w : init state at point x
@@ -39,12 +46,15 @@ typedef struct Model{
 //! \param[in] vn : normal vector
 //! \param[out] flux : the flux
 void TransportNumFlux(double wL[],double wR[],double vn[3],double* flux);
+
+
 //! \brief particular flux for the 2d transport model
 //! \param[in] wL,wR : left and right states
 //! \param[in] vn : normal vector
 //! \param[out] flux : the flux
 void TransportNumFlux2d(double wL[],double wR[],double vn[3],double* flux);
 void VecTransNumFlux2d(double wL[],double wR[],double vn[3],double* flux);
+
 //! \brief particular boundary flux for the transport model
 //! \param[in] x : space position
 //! \param[in] t : time
@@ -117,7 +127,32 @@ void TestTransportImposedData2d(double* x,double t,double* w);
 
 
 
+//  functions for testing the source term implementation
 
+//! \brief particular boundary flux for the transport model
+//! \param[in] x : space position
+//! \param[in] t : time
+//! \param[in] wL : left state
+//! \param[in] vn : normal vector
+//! \param[out] flux : the flux
+void TestSourceBoundaryFlux(double* x,double t,double* wL,double* vn,
+			   double* flux);
+//! \brief particular init data for the transport model
+//! \param[in] x : space position
+//! \param[out] w : init state at point x
+void TestSourceInitData(double* x,double* w);
 
+//! \brief particular imposed data for the transport model
+//! \param[in] x,t : space and time position
+//! \param[out] w : imposed state at point x and time t
+void TestSourceImposedData(double* x,double t,double* w);
+
+//! \brief particular source for the transport model
+//! \param[in] x : space position
+//! \param[in] t : time
+//! \param[in] w : a state
+//! \param[out] source : the source
+void TestSourceSource(double* x,double t,double* w,
+			   double* source);
 
 #endif

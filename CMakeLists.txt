@@ -8,6 +8,7 @@ project(schnaps)
 #set(CMAKE_C_FLAGS "-optRevert -optTauSelectFile=select.tau -std=c99 -fopenmp -Ofast")
 #set(CMAKE_C_COMPILER "/opt/local/bin/gcc-mp-4.8")
 
+#set(CMAKE_C_FLAGS "-std=c99 -D_REENTRANT -g")
 set(CMAKE_C_FLAGS "-std=c99 -D_REENTRANT -O3")
 find_package(OpenMP)
 if (OPENMP_FOUND)
@@ -31,6 +32,11 @@ src/h20phi.h
 src/interpolation.h
 src/macromesh.h
 src/model.h
+src/collision.h
+src/gyro.h
+src/skyline.h
+src/solverpoisson.h
+src/quantities_collision.h
 src/field.c
 src/geometry.c
 src/interpolation.c
@@ -39,6 +45,8 @@ src/model.c
 src/collision.c
 src/gyro.c
 src/skyline.c
+src/solverpoisson.c
+src/quantities_collision.c
 )
 
 #schnaps library
@@ -55,7 +63,7 @@ target_link_libraries(schnaps _schnaps m pthread)
 add_executable(
   testmacromesh
   test/test.h
-  test/testmacromesh.c
+  test/test_mesh/testmacromesh.c
 )
 target_link_libraries(testmacromesh _schnaps m pthread)
 add_test(testmacromesh testmacromesh)
@@ -63,7 +71,7 @@ add_test(testmacromesh testmacromesh)
 add_executable(
   testgeometry
   test/test.h
-  test/testgeometry.c
+  test/test_mesh/testgeometry.c
 )
 target_link_libraries(testgeometry _schnaps m pthread)
 add_test(testgeometry testgeometry)
@@ -87,7 +95,7 @@ add_test(testfield testfield)
 add_executable(
   testfield
   test/test.h
-  test/testfield.c
+  test/test_field/testfield.c
 )
 target_link_libraries(testfield _schnaps m pthread)
 add_test(testfield testfield)
@@ -96,16 +104,25 @@ add_test(testfielddg testfielddg)
 add_executable(
   testfielddg
   test/test.h
-  test/testfielddg.c
+  test/test_field/testfielddg.c
 )
 target_link_libraries(testfielddg _schnaps m pthread)
 add_test(testfielddg testfielddg)
 
+add_test(testfieldsource testfieldsource)
+add_executable(
+  testfieldsource
+  test/test.h
+  test/test_field/testfieldsource.c
+)
+target_link_libraries(testfieldsource _schnaps m pthread)
+add_test(testfieldsource testfieldsource)
+ 
 add_test(testfieldrk2 testfieldrk2)
 add_executable(
   testfieldrk2
   test/test.h
-  test/testfieldrk2.c
+  test/test_field/testfieldrk2.c
 )
 target_link_libraries(testfieldrk2 _schnaps m pthread)
 add_test(testfieldrk2 testfieldrk2)
@@ -114,7 +131,7 @@ add_test(test2dmeshdetection test2dmeshdetection)
 add_executable(
   test2dmeshdetection
   test/test.h
-  test/test2dmeshdetection.c
+  test/test_mesh/test2dmeshdetection.c
 )
 target_link_libraries(test2dmeshdetection _schnaps m pthread)
 add_test(test2dmeshdetection test2dmeshdetection)
@@ -123,7 +140,7 @@ add_test(testfieldrk2-2d testfieldrk2-2d)
 add_executable(
   testfieldrk2-2d
   test/test.h
-  test/testfieldrk2-2d.c
+  test/test_field/testfieldrk2-2d.c
 )
 target_link_libraries(testfieldrk2-2d _schnaps m pthread)
 add_test(testfieldrk2-2d testfieldrk2-2d)
@@ -133,7 +150,7 @@ add_test(testsubcelldgvol testsubcelldgvol)
 add_executable(
   testsubcelldgvol
   test/test.h
-  test/testsubcelldgvol.c
+  test/test_mesh/testsubcelldgvol.c
 )
 target_link_libraries(testsubcelldgvol _schnaps m pthread)
 add_test(testsubcelldgvol testsubcelldgvol)
@@ -142,7 +159,7 @@ add_test(testfieldrk2-2d-subcell testfieldrk2-2d-subcell)
 add_executable(
   testfieldrk2-2d-subcell
   test/test.h
-  test/testfieldrk2-2d-subcell.c
+  test/test_field/testfieldrk2-2d-subcell.c
 )
 target_link_libraries(testfieldrk2-2d-subcell _schnaps m pthread)
 add_test(testfieldrk2-2d-subcell testfieldrk2-2d-subcell)
@@ -156,24 +173,6 @@ add_executable(
 target_link_libraries(testmeq2 _schnaps m pthread)
 add_test(testmeq2 testmeq2)
 
-add_test(testskyline testskyline)
-add_executable(
-  testskyline
-  test/test.h
-  test/testskyline.c
-  )
-target_link_libraries(testskyline _schnaps m pthread)
-add_test(testskyline testskyline)
- 
-add_test(testcollision testcollision)
-add_executable(
-  testcollision
-  test/test.h
-  test/testcollision.c
-)
-target_link_libraries(testcollision _schnaps m pthread)
-add_test(testcollision testcollision)
-
 add_test(testgyro testgyro)
 add_executable(
   testgyro
@@ -182,3 +181,49 @@ add_executable(
 )
 target_link_libraries(testgyro _schnaps m pthread)
 add_test(testgyro testgyro)
+
+add_test(testperiodic testperiodic)
+add_executable(
+  testperiodic
+  test/test.h
+  test/testperiodic.c
+)
+target_link_libraries(testperiodic _schnaps m pthread)
+add_test(testperiodic testperiodic)
+
+add_test(testskyline testskyline)
+add_executable(
+  testskyline
+  test/test.h
+  test/test_vp/testskyline.c
+  )
+target_link_libraries(testskyline _schnaps m pthread)
+add_test(testskyline testskyline)
+ 
+add_test(testpoisson testpoisson)
+add_executable(
+  testpoisson
+  test/test.h
+  test/test_vp/testpoisson.c
+)
+target_link_libraries(testpoisson _schnaps m pthread)
+add_test(testpoisson testpoisson)
+
+add_test(test_transportvp test_transportvp)
+add_executable(
+  test_transportvp
+  test/test.h
+  test/test_vp/test_transportvp.c
+)
+target_link_libraries(test_transportvp _schnaps m pthread)
+add_test(test_transportvp test_transportvp)
+
+
+add_test(testcollision testcollision)
+add_executable(
+  testcollision
+  test/test.h
+  test/test_vp/testcollision.c
+)
+target_link_libraries(testcollision _schnaps m pthread)
+add_test(testcollision testcollision)

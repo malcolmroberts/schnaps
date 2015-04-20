@@ -25,6 +25,9 @@ typedef struct Field{
   //! dt has to be smaller than hmin / vmax
   double dt;
 
+  //! index of the runge-kutta substep
+  int rk_substep;
+
   //! activate or not 2D computations
   bool is2d;
 
@@ -38,9 +41,22 @@ typedef struct Field{
   //! time derivative of the field
   double* dtwn;
 
-  //! electric field and charge
-  double* elec;
-  double* rho;
+  //! \brief generic update function called 
+  //! \brief called at each runge-kutta sustep
+  //! \param[inout] f a field (to be converted from void*)
+  //! \param[in] elem macro element index
+  //! \param[in] ipg glop index
+  //! \param[in] iv field component index
+  void (*update_before_rk)(void* f);
+
+  //! \brief generic update function called 
+  //! \brief called at each runge-kutta sustep
+  //! \param[inout] f a field (to be converted from void*)
+  //! \param[in] elem macro element index
+  //! \param[in] ipg glop index
+  //! \param[in] iv field component index
+  void (*update_after_rk)(void* f);
+  
 
   //! \brief memory arrangement of field components
   //! \param[in] param interpolation parameters
@@ -116,7 +132,8 @@ void* DGMass(void* mcell);
 //! \brief time integration by a second order Runge-Kutta algorithm 
 //! \param[inout] f a field
 //! \param[in] tmax physical duration of the simulation
-void RK2(Field* f,double tmax);
+//! \param[in] if compute_charge = 0 we do not compute the charge
+void RK2(Field* f,double tmax,double cfl);
 //!  \brief time integration by a second order Runge-Kutta algorithm.
 //! slow version
 //! \param[inout] f a field
@@ -140,9 +157,9 @@ void DisplayField(Field* f);
 //! \returns the error. 
 double L2error(Field* f);
 
-//!  \brief solve 1D poisson equation in x direction
-//! \param[in] f the field.
-void SolvePoisson1D(Field* f);
+/* //!  \brief solve 1D poisson equation in x direction */
+/* //! \param[in] f the field. */
+/* void SolvePoisson1D(Field* f); */
 
 
 

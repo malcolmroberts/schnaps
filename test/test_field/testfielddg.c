@@ -1,4 +1,4 @@
-#include "test.h"
+#include "../test.h"
 #include "schnaps.h"
 #include<stdio.h>
 #include <assert.h>
@@ -28,7 +28,10 @@ int TestFieldDG(void){
   f.model.BoundaryFlux=TestTransportBoundaryFlux;
   f.model.InitData=TestTransportInitData;
   f.model.ImposedData=TestTransportImposedData;
+  f.model.Source = NULL;
   f.varindex=GenericVarindex;
+  f.update_before_rk=NULL;
+  f.update_after_rk=NULL; 
 
   f.interp.interp_param[0]=1;  // _M
   f.interp.interp_param[1]=2;  // x direction degree

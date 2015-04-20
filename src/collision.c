@@ -4,15 +4,18 @@
 #include <assert.h>
 #include "interpolation.h"
 #include "geometry.h"
+#include "skyline.h"
+#include "quantities_collision.h"
+
 
 
 void Collision_Lagrangian_NumFlux(double wL[],double wR[],double* vnorm,double* flux){
   
-  for(int i=0;i<_MV;i++){
+  for(int i=0;i<_INDEX_MAX_KIN+1;i++){
     int j=i%_DEG_V; // local connectivity put in function
     int nel=i/_DEG_V; // element num (TODO : function)
 
-    double vn = (nel*_DV +
+    double vn = (-_VMAX+nel*_DV +
 		 _DV* glop(_DEG_V,j))*vnorm[0];
     
     double vnp = vn>0 ? vn : 0;
@@ -20,35 +23,24 @@ void Collision_Lagrangian_NumFlux(double wL[],double wR[],double* vnorm,double* 
 
     flux[i] = vnp * wL[i] + vnm * wR[i];
   }
-  
+  // do not change the potential !
+  // and the electric field
+  flux[_INDEX_PHI]=0;  // flux for phi
+  flux[_INDEX_EX]=0; // flux for E
+  flux[_INDEX_RHO]=0; // flux for rho
+  flux[_INDEX_VELOCITY]=0; // flux for u
+  flux[_INDEX_PRESSURE]=0; // flux for p
+  flux[_INDEX_TEMP]=0; // flux for e ou T
+
 };
 
-//! \brief compute square of velocity L2 error
-//! \param[in] w : values of f at glops
-double L2VelError(double* x,double t,double *w){
 
-
-  double wex[_MV];
-  double err2=0;
-  CollisionImposedData(x, t,wex);
-  // loop on the finite emlements
-  for(int iel=0;iel<_NB_ELEM_V;iel++){
-    // loop on the local glops
-    for(int iloc=0;iloc<_DEG_V+1;iloc++){
-      double omega=wglop(_DEG_V,iloc);
-      double vi=iel*_DV+_DV*glop(_DEG_V,iloc);
-      int ipg=iloc+iel*_DEG_V;
-      err2+=omega*_DV*(w[ipg]-wex[ipg])*(w[ipg]-wex[ipg]);
-    }
-  }
-  return err2;
-};
 
 
 
 void Collision_Lagrangian_BoundaryFlux(double x[3],double t,double wL[],double* vnorm,
 				       double* flux){
-  double wR[_MV];
+  double wR[_MV+6];
   CollisionImposedData(x,t,wR);
   Collision_Lagrangian_NumFlux(wL,wR,vnorm,flux);
 };
@@ -65,82 +57,50 @@ void CollisionInitData(double x[3],double w[]){
 
 void CollisionImposedData(double x[3],double t,double w[]){
 
-  for(int i=0;i<_MV;i++){
+  for(int i=0;i<_INDEX_MAX_KIN+1;i++){
     int j=i%_DEG_V; // local connectivity put in function
     int nel=i/_DEG_V; // element num (TODO : function)
 
-    double vi = (nel*_DV +
+    double vi = (-_VMAX+nel*_DV +
 		 _DV* glop(_DEG_V,j));
-    w[i]=cos(x[0]-vi*t);
+
+    w[i]=Collision_ImposedKinetic_Data(x,t,vi);
   }
+  // exact value of the potential
+  // and electric field
+  w[_INDEX_PHI]=x[0]*(1-x[0]);
+  w[_INDEX_EX]=1;
+  w[_INDEX_RHO]=0; //rho init
+  w[_INDEX_VELOCITY]=0; // u init
+  w[_INDEX_PRESSURE]=0; // p init
+  w[_INDEX_TEMP]=0; // e ou T init
 
 };
 
 
-double Collision_ImposedKinetic_Data(double x[3],double t,double v){
-  double f;
-  f=cos(x[0]-v*t);
-  return f;
-};
 
-double L2_Kinetic_error(Field* f){
-
-  double error=0;
-  double error_space=0;
-  double moy=0; // mean value
-  double moy_space=0;
-
-
-  for (int ie=0;ie<f->macromesh.nbelems;ie++){
-    // get the physical nodes of element ie
-    double physnode[20][3];
-    for(int inoloc=0;inoloc<20;inoloc++){
-      int ino=f->macromesh.elem2node[20*ie+inoloc];
-      physnode[inoloc][0]=f->macromesh.node[3*ino+0];
-      physnode[inoloc][1]=f->macromesh.node[3*ino+1];
-      physnode[inoloc][2]=f->macromesh.node[3*ino+2];
-    }
-
-    // loop on the glops (for numerical integration)
-    for(int ipg=0;ipg<NPG(f->interp_param+1);ipg++){
-      double xpgref[3],xphy[3],wpg;
-      double dtau[3][3],codtau[3][3];//,xpg[3];
-      // get the coordinates of the Gauss point
-      ref_pg_vol(f->interp_param+1,ipg,xpgref,&wpg,NULL);
-      Ref2Phy(physnode, // phys. nodes
-	      xpgref,  // xref
-	      NULL,-1, // dpsiref,ifa
-	      xphy,dtau,  // xphy,dtau
-	      codtau,NULL,NULL); // codtau,dpsi,vnds
-      double det
-	= dtau[0][0] * codtau[0][0]
-	+ dtau[0][1] * codtau[0][1]
-	+ dtau[0][2] * codtau[0][2]; 
-      double w[f->model.m];
-      for(int iv=0;iv<f->model.m;iv++){
-	int imem=f->varindex(f->interp_param,ie,ipg,iv);
-	w[iv]=f->wn[imem];
-      }
-      // get the exact value
-      error+=L2VelError(xphy,f->tnow,w)*wpg*det;
-    }
-  }
-  //moy=moy+weight*moy_space;
-
-  return sqrt(error);
-  //return sqrt(error)/sqrt(moy);
-}
 
 //! \brief compute compute the source term of the collision
 //! model: electric force + true collisions
-void CollisionSource(double* force,double* w, double* source){
+void CollisionSource(double* x,double t,double* w, double* source){
 
-  double E=force[0]; // electric field
-  double Md[_MV];
-  for(int iv=0;iv<_MV;iv++){
+  double E=w[_INDEX_EX]; // electric field
+  double Md[_INDEX_MAX_KIN+1];
+  double db[_INDEX_MAX_KIN+1];
+  for(int iv=0;iv<_INDEX_MAX_KIN+1;iv++){
     Md[iv]=0;
+    db[iv]=0;
+  }
+  for(int iv=0;iv<_MV+2;iv++){
     source[iv]=0;
   }
+  // no source on the potential for the moment
+  source[_INDEX_PHI]=0;
+  source[_INDEX_EX]=0;
+  source[_INDEX_RHO]=0; //rho init
+  source[_INDEX_VELOCITY]=0; // u init
+  source[_INDEX_PRESSURE]=0; // p init
+  source[_INDEX_TEMP]=0; 
   // loop on the finite emlements
   for(int iel=0;iel<_NB_ELEM_V;iel++){
     // loop on the local glops
@@ -150,22 +110,28 @@ void CollisionSource(double* force,double* w, double* source){
       Md[kpg]+=omega*_DV;
       for(int iloc=0;iloc<_DEG_V+1;iloc++){
 	int ipg=iloc+iel*_DEG_V;
-	source[ipg]-=E*omega*w[kpg]*dlag(_DEG_V,iloc,kloc);
+	source[ipg]+=E*omega*w[kpg]*dlag(_DEG_V,iloc,kloc);
+	if (iloc==kloc) db[ipg]+=E*omega*dlag(_DEG_V,iloc,kloc);
       }
     }
   }
 
   // upwinding
   if (E>0){
-    source[_MV-1]+=E*w[_MV-1];
+    source[_INDEX_MAX_KIN]-=E*w[_INDEX_MAX_KIN];
+    db[_INDEX_MAX_KIN]-=E;
   }
   else {
-    source[0]+=-E*w[0];
+    source[0]-=-E*w[0];
+    db[0]-=-E;
   }
 
-  for(int iv=0;iv<_MV;iv++){
+  for(int iv=0;iv<_INDEX_MAX_KIN+1;iv++){
     source[iv]/=Md[iv];
+    //printf("%f ",db[iv]);
   }
+  //printf("\n");
+  //assert(1==2);
   
 
 };

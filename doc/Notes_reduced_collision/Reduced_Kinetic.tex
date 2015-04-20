@@ -395,7 +395,6 @@ To obtain the second system we use the Legendre transform $S^{*}(g)=\operatornam
 =&\ds (\partial_{gg} S^{*}g)\dt \g+(\partial_{gg} S^{*}g)\vv\cdot\nabla_{\x}\g+(\partial_{gg} S^{*}g)\vE\cdot\nabla_{\vv}\g=\lambda (\Pi g -g)\\
 =&\ds\dt \g+\vv\cdot\nabla_{\x}\g+\vE\cdot\nabla_{\vv}\g=\lambda \frac{1}{\partial_{gg} S^{*}(g)}(\Pi g -g)\\
 \end{align*}
-\end{itemize}
 We consider obtain a basis with $P$ basis functions ($P$ the number of degree of freedom which depend of $N$ ne number of element and $q$ the degrees of polynomial). Secondly we assume that
 $$
 \g=\sum_{j=1}^P g_j(\x,t)\bphi_j(\vv)
@@ -464,7 +463,7 @@ This property is verify using the properties of the polynomial Lagrange approxim
  \textbf{Fourth property}:\\
  The linear system $ \left(R_{\Pi}(\mathbf{g})-R_{Id}\right)\mathbf{g}=0$ is equivalent to $\intv \frac{1}{\partial_{gg} S^{*}(g)}(\Pi g-g)\bphi_i=0$ for $i\in\left\{1..P\right\}$ and $g=\sum_j^P g_j\bphi_j $. Since $\frac{1}{\partial_{gg} S^{*}(g)}>0$ and $\bphi_i$ gives a basis of $V_h$ $\intv \frac{1}{\partial_{gg} S^{*}(g)}(\Pi g-g)\bphi_i$ for $i\in\left\{1..P\right\}$ is equivalent to $\Pi g-g=0$ for $g\in V_h$. By definition of the projector we have $\operatorname{Ker}(\Pi-Id)=\operatorname{Im} \Pi=V_0$. Since the kernel of the operator is not null, this is the same for the matrix  $\left(R_{\Pi}(\mathbf{g})-R_{Id}\right)$ which is not invertible.\\
  ~\\
- 
+ \end{proof}
  
 
  \subsection{The degrees of freedom associated with the method}
@@ -491,7 +490,7 @@ Nonlinear & $\ds\frac12f^2-\delta \ln f$ & $\ds\frac{g}{2}\left(\frac{g}{2}+\sqr
 \item \textbf{Spectral method}: If we use the spectral method the basis function is given by Legendre function or Fourier expansion. Using this method we obtain a good convergence in the velocity direction. However the spectral method use very smooth and high order functions. These basis generate lot of oscillations (Gibbs phenomena) and negative part in the solution for linear entropy.  To reduce these oscillations, we can use filtering method \cite{filtering} (for example: the $FP_n$ spherical harmonics models in radiative transfer \cite{momentradiatif}).
 \item \textbf{Finite element method}: the other solution is to use a classical Lagrange basis function to discretize the velocity space. Using this method with an order not to large (order 2 for example) we can limite the oscillations using more element in the velocity space. Another advantage with the interpolation operator we will adapte easily the discretization in the velocity space. In this paper we propose to use this basis.
 \end{itemize}
-
+\end{itemize}
 
  \subsubsection{Lagrangian Polynomial finite element in 1D}
 In this part we gives some details about the reduced model 
@@ -617,6 +616,118 @@ $$
 \ds g^{n+1}=e^{\ds -\frac{\lambda}{\partial_{gg}S^*(g^n)\eps}\Delta t}+\left(1-e^{\ds -\frac{\lambda}{\partial_{gg}S^*(g^n)\eps}\Delta t}\right)\Pi(g^n)
 $$
 Consequently we can use  the new coefficient $\alpha_{\eps}=e^{\ds -\frac{\lambda}{\partial_{gg}S^*(g^n)\eps}\Delta t}$. We remark that the classical coefficient $\frac{\partial_{gg}S^{*}(g^n)\eps}{\partial_{gg}S^{*}(g^n)\eps+\lambda\Delta t}$ is a first order approximation to the exponential.
+\subsection{Pseudo - second order AP time scheme}
+Actually the splitting scheme proposed is a first order scheme. indeed for the hyperbolic part we use a classical first order explicit scheme and the two parts (collision and hyperbolic terms) are splitted by a first order splitting.
+To obtain a second order scheme we propose to use a second order Strang splitting and a second order RK scheme for the hyperbolic part.  The last problem is the discretization of the collision. We propose a second order scheme for this part. We have
+$$
+\dt g(f)+\frac{\lambda}{\eps}h(g(t)) g(t) = \frac{\lambda}{\eps}h(g(t)) \Pi g(t)
+$$
+To apply the exponential integrator we need to separate between a simple linear part and a linear part (nonlinear part in the classical ) that we don't want invert.  We obtain 
+$$
+\dt g(f)+A g(t)= b(g(t))
+$$
+with $A=\frac{\lambda}{\eps}h(g(t_0))$ and $b(g)= \frac{\lambda}{\eps}h(g(t)) (\Pi g(t) -g(t)) +\frac{\lambda}{\eps}h(g(t_0)) g(t)$. Using tha variation of the constant we obtain
+$$
+g^{n+1}=e^{\Delta t A}g^n+\int_0^{\Delta t} e^{\Delta t-\tau}b(g(t_n+\tau)) d\tau
+$$
+We obtain the following first order approximation $g^{n+1}=e^{\Delta t A}g^n+\Delta t \phi_1(-\Delta t A)b(g^n)$ with $$
+\phi_1(\Delta t A)=\frac{1}{\Delta t}\int_0^{\Delta t} e^{\Delta t -\tau}Ad\tau .
+$$ 
+Using  the approximation $\phi_1^{a}(z)=\frac{e^z-1}{z}$ we obtain the previous first order scheme. Now we propose to replace the first order writing by a second order RK scheme we obtain
+\begin{align*}
+&g^{*}=e^{-\frac{\Delta t}{2} A}g^n+\frac{\Delta t}{2}\phi_1\left(-\frac{\Delta t}{2} A\right)b(g^n)\\
+& g^{n+1}=e^{-\Delta t A}g^n+\Delta t \phi_1\left(-\Delta t A\right)b(g^*)
+\end{align*}
+with $\phi_1(z)=\frac{e^z-1}{z}$. It is necessary to gives the reference. Now we use that $b(g^n)=\frac{\lambda}{\eps}h(g^n)$ Using this and the definition of $\phi_1$ we obtain that the first step is given by $g^{*}=\alpha_{\eps}(2)g^n+(1-\alpha_{\eps}(2))\Pi g^n$ with $\alpha_{eps}(n)=\exp^{-\frac{\Delta t}{n}\frac{\lambda}{\eps}h(g^n)}$.  Apply the same computation we obtain that the second step is given by  $g^{n+1}=\alpha_{\eps}(1)g^n+\frac{h(g^*)}{h(g^n)}(1-\alpha_{\eps}(1))(\Pi g^* -g^*)+(1-\alpha_{\eps}(1))g^n$.\\\\
+At the end the algorithm
+
+
+\begin{algo}
+The Splitting second order AP time scheme for the reduced Vlasov-Poisson models  is given by
+\begin{itemize}
+\item \textbf{First step}: We compute $g^n=\sum_i^p g_i^n \bphi_i(\vv)$ with $\G^n=(g_1^n,....,g_P^n)$
+\item \textbf{Second step}: We solve $\triangle \phi=a \rho^n= a\intv \partial_g S^{*}(g^n)$
+\item \textbf{SSP1-RK1}: $ M\G^{1}=M_{\alpha_{\eps}(2)}\G^n+\Pi_{\alpha_{\eps}(2)} \G^n$
+\item \textbf{SSP1-RK2}: $ M\G^{2}=M\G^n+R_{\alpha_{\eps}(1)}\G^1$
+\item \textbf{SSP2-RK1}: $M\G^{3}=\left(M-\frac{\Delta t}{2}  \sum_l^d A_l\partial_{x^l} -\Delta t B(\phi)\right)\G^2$
+\item \textbf{SSP2-RK2}: $M\G^{4}=M\G^2-\Delta t  \left(\sum_l^d A_l\partial_{x^l} -\Delta t B(\phi)\right)\G^3$
+\item \textbf{SSP3-RK1}: $ M\G^{5}=M_{\alpha_{\eps}(2)}\G^4+\Pi_{\alpha_{\eps}(2)} \G^4$
+\item \textbf{SSP3-RK2}: $ M\G^{6}=M\G^4+R_{\alpha_{\eps}(1)}\G^5$
+\end{itemize} 
+with 
+$$
+M=\left(\intv \bphi_i\bphi_j\right),\quad M_{\alpha_{\eps}(n)}=\left(\intv \alpha_{\eps}(n)\bphi_i\bphi_j\right),\quad A_l= \left(\intv \bphi_i\bphi_j v_l\right),
+$$
+$$
+B(\vE)=\left(\intv\nabla_{\vv}(\bphi_j)\bphi_i\right)\cdot\vE+E^{+}\bphi_j(-\vv_{max}) \bphi_i(-\vv_{max})+E^{-}\bphi_j(\vv_{max})\bphi_i(\vv_{max}),
+$$
+$$
+\Pi_{\alpha_{\eps}(n)}=\sum_k \left(\intv \bphi_j \Psi_k\right)\left(\intv\Psi_k(1-\alpha_{\eps}(n))\bphi_i\right)
+$$
+and
+$$
+R_{\alpha_{\eps}(n)}(g^*,g^n)=\sum_k \left(\intv \bphi_j \Psi_k\right)\left(\intv\Psi_kC(g^*,g^n)(1-\alpha_{\eps}(n))\bphi_i\right)-\left(\intv C(g^*,g^n)(1-\alpha_{\eps}(n))\bphi_i\bphi_j\right)
+$$
+with $\alpha_{\eps}(n)=e^{\ds -\frac{\lambda}{\partial_{gg}S^*(g^n)\eps}\frac{\Delta t}{2n}}$ and $C(g^*,g^n)=\frac{\partial_{gg}S^*(g^*)}{\partial_{gg}S^*(g^n)}$.
+\end{algo}
+\subsection{Test case}
+\subsubsection{Test case 1: Laudau damping}
+This is a classical test case for a non collision equation. The initial distribution function and electric field are given by 
+$$
+\left\{ \begin{array}{l}
+f(t=0,x,v)=(1+\eps \cos(k x))\frac{1}{\sqrt{2\pi}}e^{-\frac{v^2}{2}}\\
+E(t=0,x)=\frac{\eps}{k}\sin(k x)
+\end{array}\right.
+$$
+with $L=\frac{2\pi}{k}$.
+\subsubsection{Test case 2: two streaming instability}
+This is a classical test case for a non collision equation. The initial distribution function is given by
+$$
+\left\{ \begin{array}{l}
+f(t=0,x,v)=(1+\eps \cos(k x))\frac{1}{2\sqrt{2\pi}}\left(e^{-\frac{(v-v_0)^2}{2}}+e^{-\frac{(v+v_0)^2}{2}}\right)\\
+\end{array}\right.
+$$
+with $v_0>0$.
+This two test allows to validate the code for linear entropy (previous paper) and for the nonlinear entropy. 
+\subsubsection{Test case 3: Riemann problem in the collision and non collision case}
+This test case is explained in \cite{shinfil}. This is a classical Riemann problem which admet discontinuity solution in the collisional limit. The initial data is given by
+$$
+\left\{ \begin{array}{l}
+(\rho_L, u_L, p_L)=(1, M\sqrt{2},1),\quad x\leq 0\\
+(\rho_R, u_R, p_R)=(1, 0,1.05),\quad x > 0
+\end{array}\right.
+$$
+with $M=2.5$.
+\subsubsection{Test case 4: Hydrostatic steady state}
+The hydrostatic steady state is a steady solution of the Euler equation with gravity potential (collisional limit of the Vlasov poisson equation). The Euler equation are given by
+$$
+\left\{\begin{array}{l}
+\dt \rho + \dx(\rho u)=0\\
+\dt (\rho u)+ \dx(\rho u^2)+ \dx p=\rho \dx \phi\\
+\dt (\rho e )+ \dx(\rho u e)+\dx(pu) =\rho u \dx \phi
+\end{array}\right.
+$$
+To obtain the steady equation we neglect the time derivative consequently we obtain a subset of solution given by $\dx(\rho u)=0$ and $\dx p=\rho\dx \phi$. an example of steady state is given by $u=0$, $\rho=1$ and $p=\phi+C$. Consequently the distribution (in the collisional limit) is given by
+$$
+f(t,x,v)=\frac{1}{2\pi (\phi +C)^{\frac12}}\exp^{\frac{-\mid v\mid^2}{2(\phi+c)}}
+$$
+It is not clear if this solution is a stationary solution of the Vlasov equation.
+\subsubsection{Expansion plasma in a rarefied regime}
+This test case is described in \cite{VPBgk_adap}. We consider a domain $[0\times 1]$, the left part in a that we can describe with a kinetic approximation (low collisional and lot a of basis function) and the write with hydrodynamic approximation (lot of collision and few basis function). The velocity domain is $[-8,8]$. The initial value is given by
+ $$
+\left\{ \begin{array}{l}
+(\rho_L, u_L, T_L)=(1, 1, 1),\quad x\leq 0\\
+(\rho_R, u_R, T_R)=(0.1, 0, 0.5),\quad x > 0
+\end{array}\right.
+$$
+Consequently the left version this is the boundary condition. The poisson problem mi given by
+ $$
+\left\{ \begin{array}{l}
+\Delta \phi =\rho -\rho_R,\mbox{ on } ]0,1[\\
+\phi(0)=0.1,\mbox{ }\phi(1)=0
+\end{array}\right.
+$$
+The collisional  coefficient is given by $\eps=\frac{0.001}{\rho}$. An idea is to compare a full hydrodynamique flow (use some number of basis functions ) and a kinetic-fluid flow (more basis functions in the kinetic part).
 
 \section{Drift kinetic equation: definition and properties}
 The definition the distribution function $\f$ with $\x\in\mathbb{R}^d$ the spatial variables and $\vv\in\mathbb{R}^d$ the velocity variables. The Vlasov poisson system is given by
@@ -747,7 +858,7 @@ Integrating the drift-kinetic equation on the velocity space in the $z$ directio
 \begin{align*}
 &\ds\dt \intx\intrrr \left(\frac{\mid v_z\mid^2}{2} f\right)+\intx \phi \dt \rho + \intx \phi\intr \mathbf{U}_{\perp}\cdot \nabla_{x_{\perp}} f=0\\
 \end{align*}
-in the last term we exchange the integral and using the definition of $\matbf{U}_{\perp}$ we show that this last term is equal to zero. We obtain
+in the last term we exchange the integral and using the definition of $\mathbf{U}_{\perp}$ we show that this last term is equal to zero. We obtain
 \begin{align*}
 &\ds\dt \intx\intrrr \left(\frac{\mid v_z\mid^2}{2} f\right)+\intx \phi \dt \rho =0\\
 \end{align*}
@@ -833,8 +944,13 @@ $$
   \bibitem{reducedvlasov2} Helluy P., Pham N., Lavoret L., \emph{Hyperbolic approximation of the Fourier transformed Vlasov equation}, 2013  
   
    \bibitem{reducedvlasov3} Helluy P., Pham N., Crestetto A., Navoret L \emph{Reduced Vlasov Maxwell simulations}, 2013  
+   
+   
+  \bibitem{shinfil} F. Filbet, S. Jin, \emph{AN ASYMPTOTIC PRESERVING SCHEME FOR THE ES-BGK MODEL OF THE BOLTZMANN EQUATION}, ....
+  
+  \bibitem{VPBgk_adap} G. Dimarco, L. Mieussens, V. Rispoli \emph{An asymptotic preserving automatic domain decomposition method for the Vlasov?Poisson?BGK system with applications to plasmas}, JCP 274 (2014), 122-139
  
-\bibitem{filtering}  A. J. Jerri \emph{The Gibbs Phenomena in Fourier Analysis, Splines and Wcelet approximations}, Mathematics and its applications
+\bibitem{filtering}  A. J. Jerri \emph{The Gibbs Phenomena in Fourier Analysis, Splines and Wavelet approximations}, Mathematics and its applications
 
 
 \end{thebibliography}

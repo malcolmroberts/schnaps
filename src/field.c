@@ -7,6 +7,8 @@
 #include "global.h"
 #include <math.h>
 #include <pthread.h>
+#include "quantities_collision.h"
+#include "solverpoisson.h"
 
 // param[0] = M
 // param[1] = deg x
@@ -618,6 +620,7 @@ void* DGMacroCellInterface(void* mc){
   // assembly of the surface terms
   // loop on the elements
   for (int ie=mcell->first_cell;ie<mcell->last_cell_p1;ie++){
+    //printf("ie=%d\n",ie);
     // get the physical nodes of element ie
     double physnode[20][3];
     for(int inoloc=0;inoloc<20;inoloc++){
@@ -660,6 +663,20 @@ void* DGMacroCellInterface(void* mc){
 	// opposite element in xref_in
   	ref_pg_face(iparam+1,ifa,ipgf,xpgref,&wpg,xpgref_in);
 
+#ifdef _PERIOD
+	assert(f->is1d); // TODO: generalize to 2d
+	if (xpgref_in[0] > _PERIOD) {
+	  //printf("à droite ifa= %d x=%f ipgf=%d ieL=%d ieR=%d\n",
+	  //	 ifa,xpgref_in[0],ipgf,ie,ieR);
+	  xpgref_in[0] -= _PERIOD;
+	}
+	else if (xpgref_in[0] < 0) { 
+	  //printf("à gauche ifa= %d  x=%f ieL=%d ieR=%d \n",
+	  //ifa,xpgref_in[0],ie,ieR);
+	  xpgref_in[0] += _PERIOD;
+	}
+#endif
+
   	// recover the volume gauss point from
   	// the face index
   	int ipg=iparam[7];
@@ -691,6 +708,7 @@ void* DGMacroCellInterface(void* mc){
   	  double xref[3];
 	  Phy2Ref(physnodeR,xpg_in,xref);
   	  int ipgR=ref_ipg(iparam+1,xref);
+	  //printf("ipgL=%d ipgR=%d vn=%f\n",ipg,ipgR,vnds[0]);
 	  double xpgR[3],xrefR[3],wpgR;
 	  ref_pg_vol(iparam+1, ipgR, xrefR, &wpgR,NULL);
 	  Ref2Phy(physnodeR,
@@ -699,7 +717,12 @@ void* DGMacroCellInterface(void* mc){
 		  xpgR,NULL,  
 		  NULL,NULL,NULL); // codtau,dphi,vnds
 
-	  assert(Dist(xpgR,xpg)<1e-10);
+#ifdef _PERIOD
+	   assert(fabs(Dist(xpg,xpgR)-_PERIOD)<1e-11);
+#else
+          assert(Dist(xpg,xpgR)<1e-11);
+#endif
+	  //assert(Dist(xpgR,xpg)<1e-10);
   	  for(int iv=0;iv<f->model.m;iv++){
   	    int imem=f->varindex(iparam,ieR,ipgR,iv);
   	    wR[iv]=f->wn[imem];
@@ -744,20 +767,35 @@ void* DGMass(void* mc){
     }
     for(int ipg=0;ipg<NPG(f->interp_param+1);ipg++){
 
-      double dtau[3][3],codtau[3][3],xpgref[3],wpg;
+      double dtau[3][3],codtau[3][3],xpgref[3],xphy[3],wpg;
       ref_pg_vol(f->interp_param+1,ipg,xpgref,&wpg,NULL);
       Ref2Phy(physnode, // phys. nodes
 	      xpgref,  // xref
 	      NULL,-1, // dpsiref,ifa
-	      NULL,dtau,  // xphy,dtau
+	      xphy,dtau,  // xphy,dtau
 	      codtau,NULL,NULL); // codtau,dpsi,vnds
       double det
 	= dtau[0][0]*codtau[0][0]
 	+ dtau[0][1]*codtau[0][1]
 	+ dtau[0][2]*codtau[0][2];
+      // source term
+      double wL[f->model.m],source[f->model.m];
+      for(int iv=0;iv<f->model.m;iv++){
+	int imem=f->varindex(f->interp_param,ie,ipg,iv);
+	wL[iv]=f->wn[imem];
+      }
+      if (f->model.Source !=0) {
+	f->model.Source(xphy,f->tnow,wL,source);
+      }
+      else {
+	for(int iv=0;iv<f->model.m;iv++){
+	  source[iv]=0;
+	}
+      }
       for(int iv=0;iv<f->model.m;iv++){
 	int imem=f->varindex(f->interp_param,ie,ipg,iv);
 	f->dtwn[imem]/=(wpg*det);
+	f->dtwn[imem]+=source[iv];
       }
     }
   }
@@ -853,7 +891,7 @@ void* DGVolume(void* mc){
 		  int ipgL=offsetL+p[0]+npg[0]*(p[1]+npg[1]*p[2]);
 		  for(int iv=0; iv < m; iv++){
 		    ///int imemL=f->varindex(f_interp_param,ie,ipgL,iv);
-		    wL[iv] = f->wn[imems[m*(ipgL-offsetL)+iv]]; /// big bug !!!!
+		    wL[iv] = f->wn[imems[m*(ipgL-offsetL)+iv]]; 
 
 		    //wL[iv] = f->wn[imemL];
 		  }
@@ -1284,64 +1322,6 @@ void dtFieldSlow(Field* f){
     
 };
 
-// time integration by a second order Runge-Kutta algorithm 
-void RK2(Field* f,double tmax){
-
-  double vmax;
-  if (f->model.vmax != 0) {
-    vmax=f->model.vmax;
-  }
-  else {
-    vmax=1; // to be changed for another model...
-  }
-  double cfl=0.5;
-
-  double dt = cfl * f->hmin / vmax;
-  int itermax=tmax/dt;
-  int freq=(1 >= itermax/10)? 1 : itermax/10;
-  //int param[8]={f->model.m,_DEGX,_DEGY,_DEGZ,_RAFX,_RAFY,_RAFZ,0};
-  int sizew=f->macromesh.nbelems * f->model.m * NPG(f->interp_param+1);
-
-  int iter=0;
-
-  while(f->tnow<tmax){
-    if (iter%freq==0)
-      printf("t=%f iter=%d/%d dt=%f\n",f->tnow,iter,itermax,dt);
-    // predictor
-    dtField(f);
-
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
-    for(int iw=0;iw<sizew;iw++){
-      f->wnp1[iw]=f->wn[iw]+ dt/2 * f->dtwn[iw]; 
-    }
-    //exchange the field pointers 
-    double *temp;
-    temp=f->wnp1;
-    f->wnp1=f->wn;
-    f->wn=temp;
-
-    // corrector
-    f->tnow+=dt/2;
-    dtField(f);
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
-    for(int iw=0;iw<sizew;iw++){
-      f->wnp1[iw]+=dt*f->dtwn[iw];
-    }
-    f->tnow+=dt/2;
-    iter++;
-    //exchange the field pointers 
-    temp=f->wnp1;
-    f->wnp1=f->wn;
-    f->wn=temp;
-
-  }
-  printf("t=%f iter=%d/%d dt=%f\n",f->tnow,iter,itermax,dt);
-
-}
 
 // time integration by a second order Runge-Kutta algorithm
 //  with memory copy instead of pointers exchange 
@@ -1384,6 +1364,92 @@ void RK2Copy(Field* f,double tmax){
     }
  
   }
+}
+
+
+void RK2(Field* f,double tmax,double cfl){
+
+  double vmax;
+  if (f->model.vmax != 0) {
+    vmax=f->model.vmax;
+  }
+  else {
+    vmax=1; // to be changed for another model...
+  }
+
+  double dt = cfl * f->hmin / vmax;
+  int itermax=tmax/dt;
+  int freq=(1 >= itermax/10)? 1 : itermax/10;
+  //int param[8]={f->model.m,_DEGX,_DEGY,_DEGZ,_RAFX,_RAFY,_RAFZ,0};
+  int sizew=f->macromesh.nbelems * f->model.m * NPG(f->interp_param+1);
+
+  int iter=0;
+
+  while(f->tnow<tmax){
+    if (iter%freq==0)
+      printf("t=%f iter=%d/%d dt=%f\n",f->tnow,iter,itermax,dt);
+    // compute charge
+
+    // update before predictor
+    f->rk_substep =1;
+    if(f->update_before_rk !=NULL){
+      f->update_before_rk(f);
+     }   
+    // predictor
+    dtField(f);
+    //assert(1==2);
+
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+    for(int iw=0;iw<sizew;iw++){
+      f->wnp1[iw]=f->wn[iw]+ dt/2 * f->dtwn[iw]; 
+    }
+
+    // update after predictor
+    if(f->update_after_rk !=NULL){
+      f->update_after_rk(f);
+     }   
+
+    
+    //exchange the field pointers 
+    double *temp;
+    temp=f->wnp1;
+    f->wnp1=f->wn;
+    f->wn=temp;
+
+    // update before corrector
+    f->tnow+=dt/2;
+    f->rk_substep =2;
+    if(f->update_before_rk !=NULL){
+      f->update_before_rk(f);
+     }  
+    
+    // corrector
+    dtField(f);
+    
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+    for(int iw=0;iw<sizew;iw++){
+      f->wnp1[iw]+=dt*f->dtwn[iw];
+    }
+
+    // update after corrector
+    if(f->update_after_rk !=NULL){
+      f->update_after_rk(f);
+     }   
+    
+    f->tnow+=dt/2;  
+    iter++;
+    //exchange the field pointers 
+    temp=f->wnp1;
+    f->wnp1=f->wn;
+    f->wn=temp;
+
+  }
+  printf("t=%f iter=%d/%d dt=%f\n",f->tnow,iter,itermax,dt);
+
 }
 
 // compute the normalized L2 distance with the imposed data
@@ -1434,13 +1500,6 @@ double L2error(Field* f){
   return sqrt(error)/sqrt(moy);
 }
 
-//!  \brief solve 1D poisson equation in x direction
-//! \param[in] f the field.
-void SolvePoisson1D(Field* f){
 
-
-
-
-}
 
 

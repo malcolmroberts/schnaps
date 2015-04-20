@@ -29,14 +29,16 @@ int TestGyro(void) {
   
   f.model.m=_INDEX_MAX; // num of conservative variables
   f.model.vmax = _VMAX; // maximal wave speed 
-  //f.model.NumFlux=Gyro_Lagrangian_NumFlux;
-  f.model.NumFlux=NULL;
+  f.model.NumFlux=Gyro_Lagrangian_NumFlux;
+  //f.model.NumFlux=NULL;
   f.model.BoundaryFlux=Gyro_Lagrangian_BoundaryFlux;
   f.model.InitData=GyroInitData;
   f.model.ImposedData=GyroImposedData;
-  f.model.Source = NULL;
-  //f.model.Source = GyroSource;
+  //f.model.Source = NULL;
+  f.model.Source = GyroSource;
   f.varindex=GenericVarindex;
+  f.update_before_rk=NULL;
+  f.update_after_rk=NULL; 
     
     
   f.interp.interp_param[0]= f.model.m;//_MV;  // _M
@@ -75,17 +77,20 @@ int TestGyro(void) {
   // apply the DG scheme
   // time integration by RK2 scheme 
   // up to final time = 1.
-  RK2(&f,0.001);
+  RK2(&f,0.1,0.2);
  
   // save the results and the error
   PlotField(0,(1==0),&f,"dgvisu.msh");
   PlotField(0,(1==1),&f,"dgerror.msh");
 
   double dd=L2error(&f);
+  //double dd_l2_vel =GyroL2VelError(&f)
   //double dd_Kinetic=L2_Kinetic_error(&f);
   
   //printf("erreur kinetic L2=%lf\n",dd_Kinetic);
   printf("erreur L2=%lf\n",dd);
+  printf("tnow is  %lf\n",f.tnow);
+  Velocity_distribution_plot(f.wn);
   test= test && (dd<3e-4);
 
 
@@ -93,4 +98,25 @@ int TestGyro(void) {
 
 };
 
+/* double Velocity_distribution_plot(double* x,double t,double *w){ */
+  
+/*   FILE * ver; */
+/*   ver = fopen( "vel_error.dat", "w" ); */
 
+/*   double wex[_INDEX_MAX]; */
+/*   double err2=0; */
+/*   CollisionImposedData(x, t,wex); */
+/*   // loop on the finite emlements */
+/*   for(int iel=0;iel<_NB_ELEM_V;iel++){ */
+/*     // loop on the local glops */
+/*     for(int iloc=0;iloc<_DEG_V+1;iloc++){ */
+/*       double omega=wglop(_DEG_V,iloc); */
+/*       double vi=-_VMAX+iel*_DV+_DV*glop(_DEG_V,iloc); */
+/*       int ipg=iloc+iel*_DEG_V; */
+/*       err2+=omega*_DV*(w[ipg]-wex[ipg])*(w[ipg]-wex[ipg]); */
+/*       fprintf(ver,"%f %f %f % f\n",vi,w[ipg],wex[ipg],w[ipg]-wex[ipg]); */
+/*     } */
+/*   } */
+/*   fclose(ver); */
+/*   return err2; */
+/* }; */

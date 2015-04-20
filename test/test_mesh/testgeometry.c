@@ -2,7 +2,7 @@
 #include <math.h>
 #include <assert.h>
 
-#include "test.h"
+#include "../test.h"
 #include "schnaps.h"
 
 int main(void) {
