@@ -202,7 +202,6 @@ add_executable(
 target_link_libraries(testfieldrk2-2d-subcell ${LIBS})
 add_test(testfieldrk2-2d-subcell testfieldrk2-2d-subcell)
 
-add_test(testmeq2 testmeq2)
 add_executable(
   testmeq2
   test/test.h
@@ -230,7 +229,6 @@ if(OPENCL_FOUND)
   target_link_libraries(testmanyv ${LIBS})
   add_test(testmanyv testmanyv)
 
-
   add_test(testdtfield_cl testdtfield_cl)
   add_executable(
     testdtfield_cl
@@ -246,6 +244,14 @@ if(OPENCL_FOUND)
     test/testmacrocellinterface.c
     )
   target_link_libraries(testmacrocellinterface ${LIBS})
+
+  add_test(testmeq2_cl testmeq2_cl)
+  add_executable(
+    testmeq2_cl
+    test/test.h
+    test/testmeq2_cl.c
+    )
+  target_link_libraries(testmeq2_cl ${LIBS})
 
   add_test(testfieldrk4_cl testfieldrk4_cl)
   add_executable(

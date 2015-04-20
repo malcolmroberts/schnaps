@@ -14,6 +14,8 @@
 //! \param[inout] f a field
 void CopyfieldtoCPU(field *f);
 
+void set_buf_to_zero_cl(cl_mem *buf, int size, field *f);
+void update_physnode_cl(field *f, int ie, cl_mem physnode_cl, double *physnode);
 void dtfield_CL(field *f, cl_mem *dtwn_cl);
 void DGVolume_CL(void *mcell, field *f, cl_mem *dtwn_cl);
 void DGMacroCellInterface_CL(void *mface, field *f, cl_mem *wn_cl);
