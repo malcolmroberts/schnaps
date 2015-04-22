@@ -434,7 +434,7 @@ void DGMacroCellInterface_CL(void *mf, field *f, cl_mem *wn_cl,
     if(ieR >= 0) {
     
       // Set the remaining loop-dependant kernel arguments
-      size_t kernel_cachesize = 1;
+      size_t kernel_cachesize = 2 * f->model.m;
       initDGMacroCellInterface_CL(f, 
 				  ieL, ieR, locfaL, locfaR, 
 				  f->physnode_cl, f->physnodeR_cl, 
@@ -453,8 +453,8 @@ void DGMacroCellInterface_CL(void *mf, field *f, cl_mem *wn_cl,
       assert(status >= CL_SUCCESS);
       f->minter_time += clv_duration(f->clv_interkernel);
     } else {
-      size_t cachesize = 1; // TODO make use of cache
-      initDGBoundary_CL(f, ieL, locfaL, f->physnode_cl, cachesize);
+      size_t kernel_cachesize = f->model.m;
+      initDGBoundary_CL(f, ieL, locfaL, f->physnode_cl, kernel_cachesize);
       status = clEnqueueNDRangeKernel(f->cli.commandqueue,
 				      f->dgboundary,
 				      1, // cl_uint work_dim,

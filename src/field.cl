@@ -143,7 +143,8 @@ int ref_pg_face(int *ndeg, int *nraf0,
 #define NUMFLUX NumFlux
 #endif
 
-void NumFlux(double wL[], double wR[], double *vnorm, double *flux) {
+void NumFlux(__local double *wL, __local double *wR, 
+	     double *vnorm, double *flux) {
   double vn = sqrt(0.5) * (vnorm[0] + vnorm[1]);
 
   double vnp = vn > 0 ? vn : 0;
@@ -207,13 +208,13 @@ void cemracs2014_TransBoundaryFlux(double x[3], double t,
   vlaTransNumFlux2d(wL, wR, vnorm, flux);
 }
 
-void BoundaryFlux(double x[3], double t, double wL[], double *vnorm,
+void BoundaryFlux(double x[3], double t, 
+		  __local double wL[], double *vnorm,
                   double *flux) 
 {
   double wR[_M];
   double vx = sqrt(0.5) * (x[0] + x[1]);
   wR[0] = cos(vx - t);
-
   NUMFLUX(wL, wR, vnorm, flux);
 }
 
@@ -372,7 +373,8 @@ void DGFlux(__constant int *param,       // 0: interp param
   // TODO: wL and wR could be passed without a copy to __private.
   // (ie we can just pass *wnL and *wnR).
   double flux[_M];
-  NUMFLUX(wL, wR, vnds, flux);
+  //NUMFLUX(wL, wR, vnds, flux); // __private version
+  NUMFLUX(wnL, wnR, vnds, flux);
 
   double wpgs = wglop(deg[dim1], pL[dim1]) * wglop(deg[dim2], pL[dim2]);
 
@@ -550,8 +552,10 @@ void DGVolume(__constant int *param,       // 0: interp param
 	  + codtauii[1] * dphiref[1]
 	  + codtauii[2] * dphiref[2];
       }
-
-      NUMFLUX(wL, wL, dphi, flux);
+      
+      
+      //NUMFLUX(wL, wL, dphi, flux); // __private version
+      NUMFLUX(wnloc0, wnloc0, dphi, flux);
 
       int ipgR = ipg(npg, q, 0);
       int imemR0 = VARINDEX(param, ie, ipgR, 0);
@@ -722,12 +726,15 @@ void DGMacroCellInterface(__constant int *param,        // 0: interp param
   int imemR0 = VARINDEX(param, ieR, ipgR, 0);
   __global double *wnL0 = wn + imemL0;
   __global double *wnR0 = wn + imemR0;
+  __local double *wL0 = cache;
+  __local double *wR0 = cache + m;
   for(int iv = 0; iv < m; iv++) {
-    wL[iv] = wnL0[iv];
-    wR[iv] = wnR0[iv];
+    wL0[iv] = wnL0[iv];
+    wR0[iv] = wnR0[iv];
   }
-
-  NUMFLUX(wL, wR, vnds, flux);
+  
+  //NUMFLUX(wL, wR, vnds, flux); // __private version
+  NUMFLUX(wL0, wR0, vnds, flux);
 
   __global double *dtwnL0 = dtwn + imemL0;
   __global double *dtwnR0 = dtwn + imemR0;
@@ -754,6 +761,8 @@ void DGBoundary(__constant int *param,        // 0: interp param
   // TODO: use __local double *cache.
 
   int ipgfL = get_global_id(0);
+
+  __local double *wL0 = cache;
 
   int m = param[0];
   int ndeg[3] = {param[1], param[2], param[3]};
@@ -782,9 +791,10 @@ void DGBoundary(__constant int *param,        // 0: interp param
   __global double *wn0 = wn + imemL0;
   for(int iv = 0; iv < m; ++iv) {
     wL[iv] = wn0[iv];
+    wL0[iv] = wn0[iv];
   }
 
-  BOUNDARYFLUX(xpg, tnow, wL, vnds, flux);
+  BOUNDARYFLUX(xpg, tnow, wL0, vnds, flux);
 
   // The basis functions is also the gauss point index
   __global double *dtwn0 = dtwn + imemL0; 
