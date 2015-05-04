@@ -35,6 +35,22 @@ else()
   INCLUDE_DIRECTORIES(".")
 endif(OPENCL_FOUND)
 
+OPTION(USE_STARPU
+  "Compile with the StarPU library"
+  ON)
+
+IF(USE_STARPU)# set with: cmake . -DUSE_STARPU:BOOL=ON
+  MESSAGE("Compiling with StarPU Library")
+  find_package (StarPU)
+  if(STARPU_FOUND)
+    MESSAGE("StarPU found")
+  else()
+    MESSAGE("StarPU not found")
+  endif(STARPU_FOUND)
+ENDIF(USE_STARPU)
+
+
+
 if(CMAKE_COMPILER_IS_GNUCC)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror -Wno-deprecated-declarations")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
