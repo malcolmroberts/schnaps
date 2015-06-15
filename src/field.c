@@ -363,8 +363,6 @@ void init_field_cl(field *f)
   // Initialize events. // FIXME: free on exit
   f->clv_zbuf = clCreateUserEvent(f->cli.context, &status);
   
-  f->clv_mapdone = clCreateUserEvent(f->cli.context, &status);
-
   f->clv_physnodeupdate = clCreateUserEvent(f->cli.context, &status);
 
   f->clv_mci = calloc(f->macromesh.nbfaces, sizeof(cl_event));

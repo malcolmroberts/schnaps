@@ -124,9 +124,6 @@ typedef struct field {
 
   // OpenCL events
 
-  // used in update_physnode_cl
-  cl_event clv_mapdone; 
-  
   // set_buf_to_zero event
   cl_event clv_zbuf; 
   
