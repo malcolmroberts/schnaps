@@ -4,15 +4,9 @@
 #include <assert.h>
 #include "test.h"
 #include "collision.h"
+#include "waterwave2d.h"
 
 
-void TestPeriodic_Wave_ImposedData(const real *x, const real t, real *w);
-void TestPeriodic_Wave_InitData(real *x, real *w);
-void Wave_Upwind_BoundaryFlux(real *x, real t, real *wL, real *vnorm,real *flux);
-void Wave_Upwind_NumFlux(real wL[],real wR[],real* vnorm,real* flux);
-
-#define _SPEED_WAVE (10)
-#define _LENGTH_DOMAIN (2.0)
 
 int main(void) {
   
@@ -20,8 +14,8 @@ int main(void) {
     
   int resu = Test_Wave_Periodic();
 	 
-  if (resu) printf("poisson test OK !\n");
-  else printf("poisson test failed !\n");
+  if (resu) printf("wave periodic  test OK !\n");
+  else printf("wave periodic test failed !\n");
 
   return !resu;
 } 
@@ -100,21 +94,6 @@ int Test_Wave_Periodic(void) {
   return test;
 }
 
-void Wave_Upwind_NumFlux(real wL[],real wR[],real* vnorm,real* flux){
-  real flux_temp=0;
-  
-  flux[0]=0.5*((wL[1]+wR[1])*vnorm[0] + (wL[2]+wR[2])*vnorm[1])+0.5*(wL[0]-wR[0]);
-  
-  flux_temp=0.5*(wL[0]+wR[0]) + 0.5*((wL[1]-wR[1])*vnorm[0] + (wL[2]-wR[2])*vnorm[1]);
-  flux[1]=flux_temp*vnorm[0];
-  flux[2]=flux_temp*vnorm[1];
- 
-
-  flux[0]=_SPEED_WAVE*flux[0];
-  flux[1]=_SPEED_WAVE*flux[1];
-  flux[2]=_SPEED_WAVE*flux[2];
-  
-};
 
 
 void TestPeriodic_Wave_ImposedData(const real *x, const real t, real *w) {
@@ -134,7 +113,6 @@ void TestPeriodic_Wave_InitData(real *x, real *w) {
   real t = 0;
   TestPeriodic_Wave_ImposedData(x, t, w);
 }
-
 
 
 void Wave_Upwind_BoundaryFlux(real *x, real t, real *wL, real *vnorm,

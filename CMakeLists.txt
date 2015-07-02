@@ -93,6 +93,8 @@ list(APPEND
   src/h20phi.h
   src/maxwell.h
   src/maxwell.c
+  src/waterwave2d.h
+  src/waterwave2d.c
   src/mhd.h
   src/mhd.c
   src/gyro.h
@@ -100,16 +102,16 @@ list(APPEND
   src/pic.h
   src/pic.c
   src/skyline.h
+   src/skyline.c
   src/dpackfgmres.h
   src/dpackfgmres.c
   src/linear_solver.h
   src/linear_solver.c
   src/solverpoisson.h
-  src/quantities_vp.h
-  src/diagnostics_vp.h
-  src/skyline.c
   src/solverpoisson.c
+  src/quantities_vp.h
   src/quantities_vp.c
+  src/diagnostics_vp.h
   src/diagnostics_vp.c
   src/collision.h
   src/collision.c
