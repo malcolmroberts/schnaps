@@ -1408,7 +1408,7 @@ L20:
 	info[3] = sizewrk;
 	icheck = 1;
 /* save the parameters the the history file */
-
+	     
 	if (ihist != 0) {
 	    printf(" \n \n ");
 	    printf(" CONVERGENCE HISTORY FOR GMRES : \n");
@@ -1445,6 +1445,7 @@ L20:
 	    } else {
 	      printf(" User supplied initial guess \n");
 	    }
+
 	    if (icntl[8] == 1) {
 	      printf(" True residual computed at restart \n");
 	    } else {
@@ -1469,10 +1470,11 @@ L20:
 		printf(" the residual is normalised by  %.2e * ||(P2)y|| + %.2e \n",spa,spb);
 	    }
 	    printf(" Optimal size for the local workspace: %d \n",info[3]);
+	    
 	}
 
     }
-    
+
 /* setup some pointers on the workspace */
     xptr = 1;
     bptr = xptr + *nloc;

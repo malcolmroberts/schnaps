@@ -517,17 +517,22 @@ IF(BUILD_PARALUTION)
   test/testlinearsolver.c
   )
 target_link_libraries(testlinearsolver paralution_c ${LIBS})
-add_test(testlinearsolver testlinearsolver)
+
+add_executable(
+  testnonlinearsolver
+  test/test.h
+  test/testnonlinearsolver.c
+  )
+target_link_libraries(testnonlinearsolver paralution_c ${LIBS})
 
 ELSE()
 
  add_executable(
-  testlinearsolver
+  testnonlinearsolver
   test/test.h
-  test/testlinearsolver.c
+  test/testnonlinearsolver.c
   )
 target_link_libraries(testlinearsolver ${LIBS})
-add_test(testlinearsolver testlinearsolver)
 
 
 ENDIF()
