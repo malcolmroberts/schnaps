@@ -363,11 +363,28 @@ target_link_libraries(testlandau_damping_1D ${LIBS})
 
 
  add_executable(
-    testwave2d
-    test/test.h
-    test/testwave2d.c
-    )
+  testnonlinearsolver
+  test/test.h
+  test/testnonlinearsolver.c
+  )
+target_link_libraries(testnonlinearsolver ${LIBS})
+add_test(testnonlinearsolver testnonlinearsolver)
+
+add_executable(
+  testwave2d
+  test/test.h
+  test/testwave2d.c
+)
   target_link_libraries(testwave2d ${LIBS})
+  add_test(testwave2d testwave2d)
+
+add_executable(
+  testshequilibrium2d
+  test/test.h
+  test/testshequilibrium2d.c
+)
+  target_link_libraries(testshequilibrium2d ${LIBS})
+
 
 ##########  OpenCL unit tests  ##########
 if(OPENCL_FOUND)
@@ -517,13 +534,9 @@ IF(BUILD_PARALUTION)
   test/testlinearsolver.c
   )
 target_link_libraries(testlinearsolver paralution_c ${LIBS})
+add_test(testlinearsolver testlinearsolver)
 
-add_executable(
-  testnonlinearsolver
-  test/test.h
-  test/testnonlinearsolver.c
-  )
-target_link_libraries(testnonlinearsolver paralution_c ${LIBS})
+
 
 ELSE()
 
@@ -533,6 +546,6 @@ ELSE()
   test/testnonlinearsolver.c
   )
 target_link_libraries(testlinearsolver ${LIBS})
-
+add_test(testlinearsolver testlinearsolver)
 
 ENDIF()

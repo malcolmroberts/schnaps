@@ -73,4 +73,6 @@ int TestLandau_Damping_1D(void);
 
 int Test_Wave_Periodic(void);
 
+int Test_SH_equilibrium(void);
+
 #endif
