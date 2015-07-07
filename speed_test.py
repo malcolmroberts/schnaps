@@ -76,7 +76,7 @@ while(deg <= degmax):
         cmd.append("-bMaxwell3DBoundaryFlux_uncentered")
         cmd.append("-iMaxwell3DInitData")
         cmd.append("-IMaxwell3DImposedData")
-        cmd.append("-T" + str(0.1)) # tmax
+        cmd.append("-T" + str(0.01)) # tmax
         cmd.append("-w" + str(0))   # do not write output do disk
         
         cmd.append("-d" + str(deg))
