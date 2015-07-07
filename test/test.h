@@ -73,6 +73,18 @@ int TestLandau_Damping_1D(void);
 
 int Test_Wave_Periodic(void);
 
-int Test_SH_equilibrium(void);
+int Test_SH_equilibrium_Roe(void);
+
+int Test_SH_equilibrium_HLL(void);
+
+int Test_SH_equilibrium_HLLWB(void);
+
+int Test_SH_equilibrium_Rusanov(void);
+
+int Test_SH_periodic_Roe(void);
+
+int Test_SH_periodic_HLL(void);
+
+int Test_SH_periodic_Rusanov(void);
 
 #endif

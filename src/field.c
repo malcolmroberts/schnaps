@@ -852,7 +852,7 @@ void DGSubCellInterface(void *mc, field *f, real *w, real *dtw)
 		    // end TO DO
 		    wL[iv] = w[imemL];
 		    wR[iv] = w[imemR];
-		  }
+		  }		  
 		  f->model.NumFlux(wL, wR, vnds, flux);
 
 		  // subcell ref surface glop weight

@@ -73,6 +73,14 @@ void ShallowWater_Roe_BoundaryFlux(real *x, real t, real *wL, real *vnorm,real *
 //! \param[out] flux : the flux
 void ShallowWater_HLLWB_BoundaryFlux(real *x, real t, real *wL, real *vnorm,real *flux);
 
+//! \brief boundardy HLL wb flux based for shallow water
+//! \param[in] t : current time
+//! \param[in] x : current position
+//! \param[in] w : states
+//! \param[in] vnorm : normal vector
+//! \param[out] flux : the flux
+void ShallowWater_periodic_BoundaryFlux(real *x, real t, real *wL, real *vnorm,real *flux);
+
 
 //! \brief roe flux for shallows water
 //! \param[in] wL,wR : left and right states
@@ -126,5 +134,17 @@ void TestSH_equilibrium_ImposedData(const real *x, const real t, real *w);
 //! \param[in] x : current position
 //! \param[out] w : solution exact
 void TestSH_equilibrium_InitData(real *x, real *w);
+
+//! \brief init solution for x
+//! \param[in] x : current position
+//! \param[in] t : current time
+//! \param[out] w : solution exact
+void TestSH_periodic_ImposedData(const real *x, const real t, real *w);
+
+
+//! \brief init solution for x
+//! \param[in] x : current position
+//! \param[out] w : solution exact
+void TestSH_periodic_InitData(real *x, real *w);
 
 #endif

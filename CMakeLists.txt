@@ -384,6 +384,14 @@ add_executable(
   test/testshequilibrium2d.c
 )
   target_link_libraries(testshequilibrium2d ${LIBS})
+  add_test(testshequilibrium2d testshequilibrium2d)
+
+add_executable(
+  testshperiodic2d
+  test/test.h
+  test/testshperiodic2d.c
+)
+  target_link_libraries(testshperiodic2d ${LIBS})
 
 
 ##########  OpenCL unit tests  ##########

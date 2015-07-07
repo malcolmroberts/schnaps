@@ -107,7 +107,7 @@ void ShallowWater_HLL_NumFlux(real wL[],real wR[],real* vnorm,real* flux){
 
   vL=wL[2]/wL[0];
   vR=wR[2]/wR[0];
-
+ 
   cL = sqrt(g*wL[0]);
   cR = sqrt(g*wR[0]);
   qn = 0.5 * ((uL+uR)*vnorm[0]+(vL+vR)*vnorm[1])+cL-cR;
@@ -211,9 +211,7 @@ void ShallowWater_classical_SourceTerm(const real *x, const real t, const real *
 
 void ShallowWater_HLLWB_NumFlux(real wL[],real wR[],real* vnorm,real* flux){
   real centered_flux[3];
-  real e1[3], e2[3], e3[3];
   real viscosity[3];
-  real alpha =0;
   real g=_GRAVITY;
   real cL=0, cR=0, cstar=0,qn=0;
   real SL=0, SR=0, uL=0, uR=0, vL=0, vR=0;
@@ -234,6 +232,12 @@ void ShallowWater_HLLWB_NumFlux(real wL[],real wR[],real* vnorm,real* flux){
   cL = sqrt(g*wL[0]);
   cR = sqrt(g*wR[0]);
   
+  bL=wL[3];
+  bR=wR[3];
+
+  printf("bl br %.15e %.15e \n",pL,pR);
+
+ 
   qn = 0.5 * ((uL+uR)*vnorm[0]+(vL+vR)*vnorm[1])+cL-cR;
   cstar = 0.5 * (cL + cR) + 0.25 * ((uL-uR)*vnorm[0]+(vL-vR)*vnorm[1]);
 
@@ -242,35 +246,26 @@ void ShallowWater_HLLWB_NumFlux(real wL[],real wR[],real* vnorm,real* flux){
   
   viscosity[0]=SL*SR*(hR-hL)+SL*SR*(bR-bL);
   centered_flux[0]= (SR*wL[1]-SL*wR[1])*vnorm[0] +(SR*wL[2]-SL*wR[2])*vnorm[1];
+  
+   viscosity[1]=SL*SR*(hR*uR-hL*uL);//-SL*0.5*g*(hL+hR)*(bR-bL);//
+   centered_flux[1]= (SR*hL*uL*uL+SR*pL-SL*uR*uR-SL*pR-SL*0.5*g*(hL+hR)*(bR-bL))*vnorm[0] + (SR*hL*uL*vL-SL*hR*uR*vR)*vnorm[1];
 
-  if(vnorm[0] > 0){
-    viscosity[1]=SL*SR*(hR*uR-hL*uL);//-SL*0.5*g*(hL+hR)*(bR-bL);//
-    centered_flux[1]= (SR*hL*uL*uL+SR*pL-SL*uR*uR-SL*0.5*g*pR-SL*0.5*g*(hL+hR)*(bR-bL))*vnorm[0] + (SR*hL*uL*vL-SL*hR*uR*vR)*vnorm[1];
-  } else
-    {
-      viscosity[1]=SL*SR*(hR*uR-hL*uL);//-SR*0.5*g*(hL+hR)*(bR-bL);
-    centered_flux[1]= (SR*hL*uL*uL+SR*pL-SL*uR*uR-SL*0.5*g*pR-SR*0.5*g*(hL+hR)*(bR-bL))*vnorm[0] + (SR*hL*uL*vL-SL*hR*uR*vR)*vnorm[1];
-  }
-  if(vnorm[1] > 0){
     viscosity[2]=SL*SR*(hR*vR-hL*vL);//-SL*0.5*g*(hL+hR)*(bR-bL);
-    centered_flux[2]= (SR*hL*uL*vL-SL*hR*uR*vR)*vnorm[0] + (SR*hL*vL*vL+SR*pL-SL*vR*vR-SL*0.5*g*pR-SL*0.5*g*(hL+hR)*(bR-bL))*vnorm[1];
-  } else
-    {
-      viscosity[2]=SL*SR*(hR*vR-hL*vL);//-SR*0.5*g*(hL+hR)*(bR-bL);
-    centered_flux[2]= (SR*hL*uL*vL-SL*hR*uR*vR)*vnorm[0] + (SR*hL*vL*vL+SR*pL-SL*vR*vR-SL*0.5*g*pR-SR*0.5*g*(hL+hR)*(bR-bL))*vnorm[1];
-  }
-    
+    centered_flux[2]= (SR*hL*uL*vL-SL*hR*uR*vR)*vnorm[0] + (SR*hL*vL*vL+SR*pL-SL*vR*vR-SL*pR-SL*0.5*g*(hL+hR)*(bR-bL))*vnorm[1];
  
-  flux[0]= (1.0/(SR-SL))*(centered_flux[0]+viscosity[0]);
-  flux[1]= (1.0/(SR-SL))*(centered_flux[1]+viscosity[1]);
-  flux[2]= (1.0/(SR-SL))*(centered_flux[2]+viscosity[2]);
-  flux[3]= 0.0;
-  flux[4]= 0.0;
-  flux[5]= 0.0;
 
-  printf(" spleed %f %f\n",SL,SR);
-  printf(" fluw %f %f %f\n",flux[0],flux[1],flux[2]);
-  sleep(1);
+
+  
+  flux[0]= (1.0/(SR-SL))*(centered_flux[0]+viscosity[0]); 
+  flux[1]= (1.0/(SR-SL))*(centered_flux[1]+viscosity[1]); 
+  flux[2]= (1.0/(SR-SL))*(centered_flux[2]+viscosity[2]); 
+   flux[3]= 0.0; 
+   flux[4]= 0.0; 
+   flux[5]= 0.0; 
+
+   //printf(" spleed %f %f\n",SL,SR); 
+   //printf(" fluw %f %f %f\n",flux[0],flux[1],flux[2]);
+   
 
   //A simple well-balanced and positive numerical scheme for the shallow-water system
 //Emmanuel Audusse, Christophe Chalons, Philippe Ung
