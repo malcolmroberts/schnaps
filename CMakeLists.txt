@@ -392,6 +392,7 @@ add_executable(
   test/testshperiodic2d.c
 )
   target_link_libraries(testshperiodic2d ${LIBS})
+  add_test(testshperiodic2d testshperiodic2d)
 
 
 ##########  OpenCL unit tests  ##########
@@ -549,9 +550,9 @@ add_test(testlinearsolver testlinearsolver)
 ELSE()
 
  add_executable(
-  testnonlinearsolver
+  testlinearsolver
   test/test.h
-  test/testnonlinearsolver.c
+  test/testlinearsolver.c
   )
 target_link_libraries(testlinearsolver ${LIBS})
 add_test(testlinearsolver testlinearsolver)

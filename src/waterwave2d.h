@@ -73,14 +73,6 @@ void ShallowWater_Roe_BoundaryFlux(real *x, real t, real *wL, real *vnorm,real *
 //! \param[out] flux : the flux
 void ShallowWater_HLLWB_BoundaryFlux(real *x, real t, real *wL, real *vnorm,real *flux);
 
-//! \brief boundardy HLL wb flux based for shallow water
-//! \param[in] t : current time
-//! \param[in] x : current position
-//! \param[in] w : states
-//! \param[in] vnorm : normal vector
-//! \param[out] flux : the flux
-void ShallowWater_periodic_BoundaryFlux(real *x, real t, real *wL, real *vnorm,real *flux);
-
 
 //! \brief roe flux for shallows water
 //! \param[in] wL,wR : left and right states
@@ -114,6 +106,14 @@ void ShallowWater_HLLWB_NumFlux(real wL[],real wR[],real* vnorm,real* flux);
   //! \param[in] w :  state
   //! \param[out] source : the source
 void ShallowWater_classical_SourceTerm(const real *x, const real t, const real *w, real *source);
+
+
+ //! \brief a pointer to the source function
+ //! \param[in] x : space position
+ //! \param[in] t : time
+  //! \param[in] w :  state
+  //! \param[out] source : the source
+void ShallowWater_periodic_SourceTerm(const real *x, const real t, const real *w, real *source);
 
  //! \brief a pointer to the source function for the HLL scheme
  //! \param[in] x : space position

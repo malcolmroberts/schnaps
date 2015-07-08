@@ -43,8 +43,8 @@ int Test_Wave_Periodic(void) {
   f.interp.interp_param[1] = 2;  // x direction degree
   f.interp.interp_param[2] = 2;  // y direction degree
   f.interp.interp_param[3] = 0;  // z direction degree
-  f.interp.interp_param[4] = 8;  // x direction refinement
-  f.interp.interp_param[5] = 8;  // y direction refinement
+  f.interp.interp_param[4] = 10;  // x direction refinement
+  f.interp.interp_param[5] = 10;  // y direction refinement
   f.interp.interp_param[6] = 1;  // z direction refinement
  // read the gmsh file
 
@@ -63,7 +63,7 @@ int Test_Wave_Periodic(void) {
 
   // prepare the initial fields
   f.vmax = _SPEED_WAVE;
-  f.model.cfl = 0.1;
+  f.model.cfl = 0.2;
   Initfield(&f);
    // maximal wave speed
   f.nb_diags = 0;
