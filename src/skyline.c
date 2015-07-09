@@ -75,11 +75,11 @@ void AllocateSkyline(Skyline* sky){
     sky->vkgs[k]=0;
      if (! sky->is_sym) sky->vkgi[k]=0;
   }
-  
+
 
 }
 
-void SetSkyline(Skyline* sky,int i,int j,real val){
+void AddSkyline(Skyline* sky,int i,int j,real val){
 
   assert(sky->is_alloc);
 
@@ -95,6 +95,29 @@ void SetSkyline(Skyline* sky,int i,int j,real val){
     assert(!(sky->is_sym));
     int k=sky->kld[i+1]-i+j;
     sky->vkgi[k]+=val;
+    //printf("i=%d j=%d k=%d nmem=%d\n",i,j,k,sky->nmem);
+    //printf("i=%d j=%d k=%d v=%f\n",i,j,k,sky->vkgi[k]);
+  }
+
+
+}
+
+void SetSkyline(Skyline* sky,int i,int j,real val){
+
+  assert(sky->is_alloc);
+
+
+  if (i==j){
+    sky->vkgd[i]=val;
+  }
+  else if (j>i){
+    int k=sky->kld[j+1]-j+i;
+    sky->vkgs[k]=val;
+  }
+  else {
+    assert(!(sky->is_sym));
+    int k=sky->kld[i+1]-i+j;
+    sky->vkgi[k]=val;
     //printf("i=%d j=%d k=%d nmem=%d\n",i,j,k,sky->nmem);
     //printf("i=%d j=%d k=%d v=%f\n",i,j,k,sky->vkgi[k]);
   }
@@ -166,11 +189,9 @@ void DisplaySkyline(Skyline* sky){
   for(int i=0;i<n;i++){
     for(int j=0;j<n;j++){
       printf("%f ",GetSkyline(sky,i,j));
-    }
+    }   
     printf("\n");
   }
-
-    
 }
 
 
@@ -536,4 +557,5 @@ real scal_(real *x, real *y, int *n)
     }
     return ret_val;
 } /* scal_ */
+
 

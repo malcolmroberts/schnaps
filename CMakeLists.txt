@@ -12,6 +12,8 @@ SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 #set(CMAKE_C_FLAGS "-std=gnu99 -D_REENTRANT -O3 -g")
 set(CMAKE_C_FLAGS " -std=c99 -D_REENTRANT -O3")
 
+
+
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Dreal=double")
 
 OPTION(USE_OPENCL
@@ -19,12 +21,12 @@ OPTION(USE_OPENCL
   ON)
 
 IF(USE_OPENCL)# set with: cmake . -DUSE_OPENCL:BOOL=ON
-  MESSAGE("Compiling with OpenCL Library")
+  MESSAGE(STATUS "Compiling with OpenCL Library")
   find_package (OpenCL)
   if(OPENCL_FOUND)
-    MESSAGE("OpenCL found")
+    MESSAGE(STATUS "OpenCL found")
   else()
-    MESSAGE("OpenCL not found")
+    MESSAGE(STATUS "OpenCL not found")
   endif(OPENCL_FOUND)
 ENDIF(USE_OPENCL)
 
@@ -45,6 +47,29 @@ if(OPENMP_FOUND)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 endif()
+
+SET(BUILD_PARALUTION      OFF CACHE BOOL   "Build paralution library")
+
+IF(BUILD_PARALUTION)
+
+  ADD_DEFINITIONS(-DPARALUTION)
+  INCLUDE(ExternalProject)
+  SET(PARALUTION_VERSION 1.0.0 CACHE STRING "Paralution version number")
+  EXTERNALPROJECT_ADD( paralution-${PARALUTION_VERSION}
+     URL  http://www.paralution.com/downloads/paralution-${PARALUTION_VERSION}.tar.gz
+     CMAKE_ARGS -DSUPPORT_CUDA=OFF -DSUPPORT_OMP=OFF
+   -DBUILD_EXAMPLES=OFF -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER} -O3
+     INSTALL_COMMAND ""
+  )
+
+  INCLUDE_DIRECTORIES(${CMAKE_BINARY_DIR}/paralution-${PARALUTION_VERSION}-prefix/src/paralution-${PARALUTION_VERSION}/src/)
+  LINK_DIRECTORIES(${CMAKE_BINARY_DIR}/paralution-${PARALUTION_VERSION}-prefix/src/paralution-${PARALUTION_VERSION}-build/lib)
+  ADD_LIBRARY(paralution_c   src/paralution_c.cpp )
+  ADD_DEPENDENCIES(paralution_c  paralution-${PARALUTION_VERSION})
+  TARGET_LINK_LIBRARIES(paralution_c paralution)
+
+ENDIF()
+
 
 include_directories(src)
 
@@ -68,6 +93,8 @@ list(APPEND
   src/h20phi.h
   src/maxwell.h
   src/maxwell.c
+  src/waterwave2d.h
+  src/waterwave2d.c
   src/mhd.h
   src/mhd.c
   src/gyro.h
@@ -75,14 +102,16 @@ list(APPEND
   src/pic.h
   src/pic.c
   src/skyline.h
+   src/skyline.c
+  src/dpackfgmres.h
+  src/dpackfgmres.c
   src/linear_solver.h
   src/linear_solver.c
   src/solverpoisson.h
-  src/quantities_vp.h
-  src/diagnostics_vp.h
-  src/skyline.c
   src/solverpoisson.c
+  src/quantities_vp.h
   src/quantities_vp.c
+  src/diagnostics_vp.h
   src/diagnostics_vp.c
   src/collision.h
   src/collision.c
@@ -103,6 +132,11 @@ endif (OPENCL_FOUND)
 
 #schnaps library
 add_library (_schnaps ${source_files})
+
+IF(BUILD_PARALUTION)
+  target_link_libraries(_schnaps paralution_c paralution)
+ENDIF(BUILD_PARALUTION)
+
 set(LIBS "")
 
 if (OPENCL_FOUND)
@@ -114,7 +148,7 @@ endif (OPENCL_FOUND)
 # nearest neighbour fast search library
 find_package(flann)
 if(FLANN_FOUND)
-  MESSAGE("Delicious!")
+  MESSAGE(STATUS "Delicious!")
   list(APPEND LIBS ${FLANN_LIBRARY})
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_WITH_FLANN")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -D_WITH_FLANN")
@@ -282,14 +316,7 @@ add_executable(
   )
 target_link_libraries(testskyline ${LIBS})
 add_test(testskyline testskyline)
- 
-add_executable(
-  testlinearsolver
-  test/test.h
-  test/testlinearsolver.c
-  )
-target_link_libraries(testlinearsolver ${LIBS})
-add_test(testlinearsolver testlinearsolver)
+
 
 add_executable(
   testpoisson
@@ -323,6 +350,40 @@ add_executable(
 target_link_libraries(testlandau_damping_1D ${LIBS})
 # This test is too slow.  Please re-enable after decreasing execution time.
 #add_test(testlandau_damping_1D testlandau_damping_1D)
+
+
+ add_executable(
+  testnonlinearsolver
+  test/test.h
+  test/testnonlinearsolver.c
+  )
+target_link_libraries(testnonlinearsolver ${LIBS})
+add_test(testnonlinearsolver testnonlinearsolver)
+
+add_executable(
+  testwave2d
+  test/test.h
+  test/testwave2d.c
+)
+  target_link_libraries(testwave2d ${LIBS})
+  add_test(testwave2d testwave2d)
+
+add_executable(
+  testshequilibrium2d
+  test/test.h
+  test/testshequilibrium2d.c
+)
+  target_link_libraries(testshequilibrium2d ${LIBS})
+  add_test(testshequilibrium2d testshequilibrium2d)
+
+add_executable(
+  testshperiodic2d
+  test/test.h
+  test/testshperiodic2d.c
+)
+  target_link_libraries(testshperiodic2d ${LIBS})
+  add_test(testshperiodic2d testshperiodic2d)
+
 
 ##########  OpenCL unit tests  ##########
 if(OPENCL_FOUND)
@@ -449,19 +510,9 @@ if(OPENCL_FOUND)
 
 endif(OPENCL_FOUND)
 
-SET(BUILD_PARALUTION      OFF CACHE BOOL   "Build paralution library")
 
 IF(BUILD_PARALUTION)
 
-  INCLUDE(ExternalProject)
-  SET(PARALUTION_VERSION 1.0.0 CACHE STRING "Paralution version number")
-  EXTERNALPROJECT_ADD( paralution-${PARALUTION_VERSION}
-     URL  http://www.paralution.com/downloads/paralution-${PARALUTION_VERSION}.tar.gz
-     CMAKE_ARGS -DSUPPORT_CUDA=OFF -DBUILD_EXAMPLES=OFF
-     INSTALL_COMMAND ""
-  )
-  INCLUDE_DIRECTORIES(${CMAKE_BINARY_DIR}/paralution-${PARALUTION_VERSION}-prefix/src/paralution-${PARALUTION_VERSION}/src/)
-  LINK_DIRECTORIES(${CMAKE_BINARY_DIR}/paralution-${PARALUTION_VERSION}-prefix/src/paralution-${PARALUTION_VERSION}-build/lib)
 
   SET(MATRIX_FILE gr_30_30.mtx)
 
@@ -483,5 +534,24 @@ IF(BUILD_PARALUTION)
 
   ADD_TEST(NAME testparalution COMMAND paralution_cg ${MATRIX_FILE} 4)
 
+ add_executable(
+  testlinearsolver
+  test/test.h
+  test/testlinearsolver.c
+  )
+target_link_libraries(testlinearsolver paralution_c ${LIBS})
+add_test(testlinearsolver testlinearsolver)
+
+
+
+ELSE()
+
+ add_executable(
+  testlinearsolver
+  test/test.h
+  test/testlinearsolver.c
+  )
+target_link_libraries(testlinearsolver ${LIBS})
+add_test(testlinearsolver testlinearsolver)
 
 ENDIF()
