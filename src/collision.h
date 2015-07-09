@@ -21,6 +21,8 @@
 #define _VMAX 6.
 #define _DV (2*_VMAX / _NB_ELEM_V)
 
+#define _ENTROPY (1)
+
 #include "model.h"
 #include "field.h"
 // collision models

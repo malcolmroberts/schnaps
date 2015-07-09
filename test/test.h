@@ -67,4 +67,6 @@ int TestFieldRK2_CL(void);
 
 int TestLandau_Damping_1D(void);
 
+int TestLandauCollision_1D(void);
+
 #endif
