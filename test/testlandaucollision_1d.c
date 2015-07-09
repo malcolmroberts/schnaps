@@ -39,6 +39,7 @@ int TestLandauCollision_1D(void) {
   int vec=1;
   real k=0.5;
   real pi=4.0*atan(1.0);
+  void (*entropic_transform)(real f,real *ef); 
   
   f.model.m=_INDEX_MAX; // num of conservative variables f(vi) for each vi, phi, E, rho, u, p, e (ou T)
   f.model.NumFlux=VlasovP_Lagrangian_NumFlux;
@@ -55,7 +56,7 @@ int TestLandauCollision_1D(void) {
   f.interp.interp_param[1]=2;  // x direction degree
   f.interp.interp_param[2]=0;  // y direction degree
   f.interp.interp_param[3]=0;  // z direction degree
-  f.interp.interp_param[4]=4;  // x direction refinement
+  f.interp.interp_param[4]=24;  // x direction refinement
   f.interp.interp_param[5]=1;  // y direction refinement
   f.interp.interp_param[6]=1;  // z direction refinement
  // read the gmsh file
@@ -92,11 +93,16 @@ int TestLandauCollision_1D(void) {
   CheckMacroMesh(&(f.macromesh),f.interp.interp_param+1);
 
   printf("cfl param =%f\n",f.hmin);
+
+  entropic_transform = distribution_to_physic_entropy;
+  Entropy_transformation(&f,f.wn,entropic_transform);
+
   
   real dt = set_dt(&f);
-  RK4(&f,0.01, dt);
+  RK4(&f,20, dt);
 
- 
+  entropic_transform = physic_entropy_to_distribution;
+  Entropy_transformation(&f,f.wn,entropic_transform);
   
    // save the results and the error
   int iel=_NB_ELEM_V/2;
@@ -107,12 +113,8 @@ int TestLandauCollision_1D(void) {
   Plotfield(_INDEX_PHI,(1==0),&f,"sol","dgvisuPhi.msh");
   Plotfield(_INDEX_RHO,(1==0),&f,"sol","dgvisuRho.msh");
 
-  Entropy_transformation(&f,distribution_to_physic_entropy);
-  Plotfield(iloc+iel*_DEG_V,(1==0),&f,"sol f ","dgvisu.msh");
-
   Plot_Energies(&f, dt);
 
-  
   
 
   test= 1;
@@ -172,14 +174,21 @@ void UpdateVlasovPoisson(void* vf, real * w){
   int type_bc;
   real bc_l, bc_r;
   int itermax;
+  void (*entropic_transform)(real f,real *ef); 
   field* f=vf;
   type_bc=2;
   bc_l=0;
   bc_r=0;
-    
-  Computation_charge_density(f,w);
   
-  SolvePoisson1D(f,w,type_bc,bc_l,bc_r);    
+  entropic_transform = physic_entropy_to_distribution;
+  Entropy_transformation(f,w,entropic_transform);
+
+  Computation_charge_density(f,w);
+
+  entropic_transform = distribution_to_physic_entropy;
+  Entropy_transformation(f,w,entropic_transform);
+  
+  SolvePoisson1D(f,w,type_bc,bc_l,bc_r,LU,NONE);    
   
 }
 

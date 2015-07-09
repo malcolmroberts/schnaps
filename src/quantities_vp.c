@@ -10,28 +10,28 @@
 
 
 
-void Entropy_transformation(field *f,void (*entropy_transform)(real *f,real *ef)){
+void Entropy_transformation(field *f,real *w,void (*p_entropy_transform)(real f,real *ef)){
   real ef=0;
   
   for(int ie=0;ie<f->macromesh.nbelems;ie++){
     for(int ipg=0;ipg<NPG(f->interp_param+1);ipg++){
   
-      for(int ielv=0;ielv<_NB_ELEM_V;ielv++){
-	// loop on the local glops
-	for(int iloc=0;iloc<_DEG_V+1;iloc++){
-	  int ipgv=iloc+ielv*_DEG_V;
-	  int imem=f->varindex(f->interp_param,ie,ipg,ipgv);
-	  entropy_transform(&f->wn[imem],&ef);
-	  f->wn[imem]=ef;
+      for(int ielv=0;ielv<_INDEX_MAX_KIN+1;ielv++){
+	  int imem=f->varindex(f->interp_param,ie,ipg,ielv);
+	  (*p_entropy_transform)(w[imem],&ef);
+	  w[imem]=ef;
 	}
-      }
     }
   }
 
 }
 
-void distribution_to_physic_entropy(real *f,real *ef){
-  ef=1;
+void distribution_to_physic_entropy(real f,real *ef){
+  *ef=log(f+1);
+}
+
+void physic_entropy_to_distribution(real f,real *ef){
+  *ef=exp(f)-1;
 }
 
 

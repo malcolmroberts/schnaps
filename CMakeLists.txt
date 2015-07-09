@@ -385,6 +385,14 @@ add_executable(
   add_test(testshperiodic2d testshperiodic2d)
 
 
+add_executable(
+  testlandaucollision_1d
+  test/test.h
+  test/testlandaucollision_1d.c
+)
+target_link_libraries(testlandaucollision_1d ${LIBS})
+
+
 ##########  OpenCL unit tests  ##########
 if(OPENCL_FOUND)
   add_test(testclinfo testclinfo)
