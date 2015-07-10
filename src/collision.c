@@ -95,23 +95,18 @@ void VlasovP_Lagrangian_Source(const real* x, const real t, const real* w,
 };
 
 
-real alpha(field *f,real w,real dt,void (*transform)(real f,real *ef)){
-  real alpha =0;
-  real transform_w;
 
-  (*transform)(w,&transform_w);
-  alpha=((_EPS*transform_w))/((_EPS*transform_w)+_LAMBDA*dt);
-
-  return alpha;
-};
-
-void VlasovP_Mass_collision(field *f,real * w,real dt,void (*transform)(real f,real *ef),real* product){
-  // give M^-1 * M_alpha * g 
-  
+void VlasovP_Mass_modified(field *f,real * w,void (*function)(field *f,real w,real *tw),real* product){
+  // give M^-1 * M_f(v)  
+  real tw;
   real Mass[_INDEX_MAX_KIN+1];
-   real MassCollision[_INDEX_MAX_KIN+1];
+  real MassCollision[_INDEX_MAX];
   for(int iv=0;iv<_INDEX_MAX_KIN+1;iv++){
     Mass[iv]=0;
+
+  }
+
+  for(int iv=0;iv<_INDEX_MAX;iv++){
     MassCollision[iv]=0;
     product[iv]=0;
   }
@@ -124,7 +119,8 @@ void VlasovP_Mass_collision(field *f,real * w,real dt,void (*transform)(real f,r
       real omega=wglop(_DEG_V,kloc);
       int kpg=kloc+iel*_DEG_V;
       Mass[kpg]=omega*_DV;
-      MassCollision[kpg]=omega*_DV*alpha(f,w[kpg],dt,transform)*w[kpg];
+      function(f,w[kpg],&tw);
+      MassCollision[kpg]=omega*_DV*tw;
     }
   }
 
@@ -133,5 +129,11 @@ void VlasovP_Mass_collision(field *f,real * w,real dt,void (*transform)(real f,r
 
   }
 
+  product[_INDEX_PHI]=w[_INDEX_PHI];
+  product[_INDEX_EX]=w[_INDEX_EX];
+  product[_INDEX_RHO]=w[_INDEX_RHO];
+  product[_INDEX_VELOCITY]=w[_INDEX_VELOCITY];
+  product[_INDEX_PRESSURE]=w[_INDEX_PRESSURE];
+  product[_INDEX_TEMP]=w[_INDEX_TEMP];
 
 };
