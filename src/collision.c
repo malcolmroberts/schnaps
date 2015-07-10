@@ -49,7 +49,7 @@ void VlasovP_Lagrangian_Source(const real* x, const real t, const real* w,
   }
   
   
-  for(int iv=0;iv<_MV+2;iv++){
+  for(int iv=0;iv<_INDEX_MAX_KIN+1;iv++){
     source[iv]=0;
   }
   // no source on the potential for the moment
@@ -95,3 +95,43 @@ void VlasovP_Lagrangian_Source(const real* x, const real t, const real* w,
 };
 
 
+real alpha(field *f,real w,real dt,void (*transform)(real f,real *ef)){
+  real alpha =0;
+  real transform_w;
+
+  (*transform)(w,&transform_w);
+  alpha=((_EPS*transform_w))/((_EPS*transform_w)+_LAMBDA*dt);
+
+  return alpha;
+};
+
+void VlasovP_Mass_collision(field *f,real * w,real dt,void (*transform)(real f,real *ef),real* product){
+  // give M^-1 * M_alpha * g 
+  
+  real Mass[_INDEX_MAX_KIN+1];
+   real MassCollision[_INDEX_MAX_KIN+1];
+  for(int iv=0;iv<_INDEX_MAX_KIN+1;iv++){
+    Mass[iv]=0;
+    MassCollision[iv]=0;
+    product[iv]=0;
+  }
+  
+  
+  // loop on the finite emlements
+  for(int iel=0;iel<_NB_ELEM_V;iel++){
+    // loop on the local glops
+    for(int kloc=0;kloc<_DEG_V+1;kloc++){
+      real omega=wglop(_DEG_V,kloc);
+      int kpg=kloc+iel*_DEG_V;
+      Mass[kpg]=omega*_DV;
+      MassCollision[kpg]=omega*_DV*alpha(f,w[kpg],dt,transform)*w[kpg];
+    }
+  }
+
+  for(int iv=0;iv<_INDEX_MAX_KIN+1;iv++){
+    product[iv]=MassCollision[iv]/Mass[iv];
+
+  }
+
+
+};

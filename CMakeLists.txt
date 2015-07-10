@@ -10,8 +10,8 @@ SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 #set(CMAKE_C_FLAGS "-std=c99 -D_REENTRANT -O3 -g -D_POSIX_C_SOURCE=200112L")
 #set(CMAKE_C_FLAGS "-std=gnu99 -D_REENTRANT -O3 -g")
-#set(CMAKE_C_FLAGS " -std=c99 -D_REENTRANT -O3 -g")
-set(CMAKE_C_FLAGS " -std=c99 -D_REENTRANT -g")
+set(CMAKE_C_FLAGS " -std=c99 -D_REENTRANT -O3")
+
 
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Dreal=double")
@@ -275,15 +275,6 @@ add_executable(
 target_link_libraries(testmeq2 ${LIBS})
 add_test(testmeq2 testmeq2)
 
-add_test(testmaxwell2d testmaxwell2d)
-add_executable(
-  testmaxwell2d
-  test/test.h
-  test/testmaxwell2d.c
-  )
-target_link_libraries(testmaxwell2d ${LIBS})
-add_test(testmaxwell2d testmaxwell2d)
-
 add_executable(
   testgyro
   test/test.h
@@ -314,8 +305,7 @@ add_executable(
   test/testperiodic.c
 )
 target_link_libraries(testperiodic ${LIBS})
-# This test is too slow.  Please re-enable after decreasing execution time.
-#add_test(testperiodic testperiodic)
+add_test(testperiodic testperiodic)
 
 
 add_test(testskyline testskyline)
@@ -393,6 +383,14 @@ add_executable(
 )
   target_link_libraries(testshperiodic2d ${LIBS})
   add_test(testshperiodic2d testshperiodic2d)
+
+
+add_executable(
+  testlandaucollision_1d
+  test/test.h
+  test/testlandaucollision_1d.c
+)
+target_link_libraries(testlandaucollision_1d ${LIBS})
 
 
 ##########  OpenCL unit tests  ##########
@@ -494,7 +492,14 @@ if(OPENCL_FOUND)
     )
   target_link_libraries(testmeq2_cl ${LIBS})
 
-
+  add_executable(
+    testmaxwell2d
+    test/test.h
+    test/testmaxwell2d.c
+    )
+  target_link_libraries(testmaxwell2d ${LIBS})
+  add_test(testmaxwell2d testmaxwell2d)
+  
   add_test(testmhd testmhd)
   add_executable(
     testmhd

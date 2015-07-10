@@ -344,7 +344,7 @@ void Vector_copy(double x[],double prod[],int N){
 
 double Vector_norm2(double x[],int  N){
   int i;
-  double norm=0;
+  real norm=0;
  
   for(i=0;i<N;i++)
     {
@@ -357,9 +357,9 @@ double Vector_norm2(double x[],int  N){
 
 
 
-double Vector_prodot(double x[],double y[],int N){
+real Vector_prodot(real x[],real y[],int N){
   int i;
-  double prod;
+  real prod;
 
   prod=0;
     for(i=0;i<N;i++)
@@ -547,14 +547,14 @@ void GMRESSolver(LinearSolver* lsol){
   int irc[5+1];
   int icntl[8+1];
   int info[3+1];
-  double cntl[5+1];
-  double rinfo[2+1];
-  double sum,err,sum_rhs,lr_tol;
-  double * work;
-  double *loc_x;
-  double *loc_y;
-  double *loc_z;
-  double prodot=0.0;
+  real cntl[5+1];
+  real rinfo[2+1];
+  real sum,err,sum_rhs,lr_tol;
+  real * work;
+  real *loc_x;
+  real *loc_y;
+  real *loc_z;
+  real prodot=0.0;
   int res=0;
   int matvec=1, precondLeft=2, precondRight=3, dotProd=4;
 
@@ -688,14 +688,14 @@ void SolveJFLinearSolver(JFLinearSolver* lsol,field *f){
   int irc[5+1];
   int icntl[8+1];
   int info[3+1];
-  double cntl[5+1];
-  double rinfo[2+1];
-  double sum,err,sum_rhs,lr_tol;
-  double * work;
-  double *loc_x;
-  double *loc_y;
-  double *loc_z;
-  double prodot=0.0;
+  real cntl[5+1];
+  real rinfo[2+1];
+  real sum,err,sum_rhs,lr_tol;
+  real * work;
+  real *loc_x;
+  real *loc_y;
+  real *loc_z;
+  real prodot=0.0;
   int res=0;
   int matvec=1, precondLeft=2, precondRight=3, dotProd=4;
 
