@@ -221,7 +221,7 @@ void Vector_copy(real x[],real prod[],int N);
 //! \param[in] y vector
 //! \param[in] N size
 //! \param[in] prod dot product between x and y
-double Vector_prodot(double x[],double y[],int N);
+real Vector_prodot(real x[],real y[],int N);
 
   //! \brief dot product
 //! \param[in] x vector
