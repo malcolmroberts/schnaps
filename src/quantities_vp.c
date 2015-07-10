@@ -10,28 +10,12 @@
 
 
 
-void Entropy_transformation(field *f,real *w,void (*p_entropy_transform)(real f,real *ef)){
-  real ef=0;
-  
-  for(int ie=0;ie<f->macromesh.nbelems;ie++){
-    for(int ipg=0;ipg<NPG(f->interp_param+1);ipg++){
-  
-      for(int ielv=0;ielv<_INDEX_MAX_KIN+1;ielv++){
-	  int imem=f->varindex(f->interp_param,ie,ipg,ielv);
-	  (*p_entropy_transform)(w[imem],&ef);
-	  w[imem]=ef;
-	}
-    }
-  }
-
+void distribution_to_physic_entropy(field* f,real w,real *tw){
+  *tw=log(w+1);
 }
 
-void distribution_to_physic_entropy(real f,real *ef){
-  *ef=log(f+1);
-}
-
-void physic_entropy_to_distribution(real f,real *ef){
-  *ef=exp(f)-1;
+void physic_entropy_to_distribution(field* f,real w,real *tw){
+  *tw=exp(w)-1;
 }
 
 

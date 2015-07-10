@@ -17,10 +17,8 @@ void Compute_electric_field(field* f, real * w);
 void ComputeElectricField(field* f);
 real Computation_charge_average(field *f,real * w);
 
-void Entropy_transformation(field *f,real * w,void (*entropy_transform)(real f,real *ef));
+void distribution_to_physic_entropy(field* f,real w,real *tw);
 
-void distribution_to_physic_entropy(real f,real *ef);
-
-void physic_entropy_to_distribution(real f,real *ef);
+void physic_entropy_to_distribution(field* f,real w,real *tw);
 
 #endif
