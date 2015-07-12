@@ -994,9 +994,9 @@ void CheckMacroMesh(MacroMesh *m, int *param) {
 		  /* 	 vnds[0],vnds[1],vnds[2], */
 		  /* 	 vndsR[0],vndsR[1],vndsR[2]); */
 		  /* printf("xpgR:%f %f %f\n", xpgR[0], xpgR[1], xpgR[2]); */
-		  assert(fabs(vnds[0] + vndsR[0]) < 1e-8);
-		  assert(fabs(vnds[1] + vndsR[1]) < 1e-8);
-		  assert(fabs(vnds[2] + vndsR[2]) < 1e-8);
+		  assert(fabs(vnds[0] + vndsR[0]) < _SMALL);
+		  assert(fabs(vnds[1] + vndsR[1]) < _SMALL);
+		  assert(fabs(vnds[2] + vndsR[2]) < _SMALL);
 		  neighb_count++;
 		}
 

@@ -14,7 +14,8 @@ SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 set(CMAKE_C_FLAGS " -std=c99 -D_REENTRANT -O3")
 
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Dreal=double")
+#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Dreal=double")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Dreal=float")
 
 OPTION(USE_OPENCL
   "Compile with the OpenCL library"

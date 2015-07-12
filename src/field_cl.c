@@ -1327,8 +1327,8 @@ void show_cl_timing(field *f)
   printf("\n");
   printf("Device characteristics:\n");
   printf("\tname:\t%s\n", f->cli.devicename);
-  double dev_gflops = cl_dev_gflops(f->cli.devicename);
-  double dev_bwidth = cl_dev_bwidth(f->cli.devicename);
+  real dev_gflops = cl_dev_gflops(f->cli.devicename);
+  real dev_bwidth = cl_dev_bwidth(f->cli.devicename);
   printf("\tgflops:   \t%f\n", dev_gflops);
   printf("\tbandwidth:\t%f\n", dev_bwidth);
 
@@ -1344,28 +1344,28 @@ void show_cl_timing(field *f)
   printf("Terms included in roofline: volume, flux, and mass.\n");
 
   cl_ulong roofline_time_ns = f->vol_time + f->flux_time + f->mass_time;
-  double roofline_time_s = 1e-9 * roofline_time_ns;
-  double roofline_flops = flops_total / roofline_time_s;
-  double roofline_bw = sizeof(real) * reads_total / roofline_time_s;
+  real roofline_time_s = 1e-9 * roofline_time_ns;
+  real roofline_flops = flops_total / roofline_time_s;
+  real roofline_bw = sizeof(real) * reads_total / roofline_time_s;
   
   // Volume terms
-  double vol_time_s = 1e-9 * f->vol_time;
-  double vol_flops = f->flops_vol / vol_time_s;
-  double vol_bw = sizeof(real) * f->reads_vol / vol_time_s;
+  real vol_time_s = 1e-9 * f->vol_time;
+  real vol_flops = f->flops_vol / vol_time_s;
+  real vol_bw = sizeof(real) * f->reads_vol / vol_time_s;
   printf("DGVol:  GFLOP/s: %f\tbandwidth (GB/s): %f\n", 
 	 1e-9 * vol_flops, 1e-9 * vol_bw);
 
   // Flux terms
-  double flux_time_s = 1e-9 * f->flux_time;
-  double flux_flops = f->flops_flux / flux_time_s;
-  double flux_bw = sizeof(real) * f->reads_flux / flux_time_s;
+  real flux_time_s = 1e-9 * f->flux_time;
+  real flux_flops = f->flops_flux / flux_time_s;
+  real flux_bw = sizeof(real) * f->reads_flux / flux_time_s;
   printf("DGFlux: GFLOP/s: %f\tbandwidth (GB/s): %f\n", 
 	 1e-9 * flux_flops, 1e-9 * flux_bw);
   
   // Mass terms
-  double mass_time_s = 1e-9 * f->mass_time;
-  double mass_flops = f->flops_mass / mass_time_s;
-  double mass_bw = sizeof(real) * f->reads_mass / mass_time_s;
+  real mass_time_s = 1e-9 * f->mass_time;
+  real mass_flops = f->flops_mass / mass_time_s;
+  real mass_bw = sizeof(real) * f->reads_mass / mass_time_s;
   printf("DGMass: GFLOP/s: %f\tbandwidth (GB/s): %f\n", 
 	 1e-9 * mass_flops, 1e-9 * mass_bw);
 
@@ -1424,7 +1424,7 @@ void show_cl_timing(field *f)
   printf("\n");
   
   ns = total;
-  double total_time = 1e-9 * ns;
+  real total_time = 1e-9 * ns;
   printf("total time:                   %f%% \t%luns \t%fs\n", 
 	 ns*N, (unsigned long) ns, total_time);
 

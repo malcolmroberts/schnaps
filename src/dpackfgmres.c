@@ -16,9 +16,9 @@
 /* Table of constant values */
 
 static int c__1 = 1;
-static double c_b276 = 1.;
-static double c_b280 = -1.;
-static double c_b305 = 0.;
+static real c_b276 = 1.;
+static real c_b280 = -1.;
+static real c_b305 = 0.;
 
 /* * */
 /* *  Copyright (C) CERFACS 1998 */
@@ -208,8 +208,8 @@ e
 
 
 
-int gcopy(int *n, double *dx, int *incx, 
-	  double *dy, int *incy){
+int gcopy(int *n, real *dx, int *incx, 
+	  real *dy, int *incy){
   int i__1;
   static int i, m, ix, iy, mp1;
 
@@ -272,8 +272,8 @@ L40:
 
 
 
-int gconstantmut(int *n, double *da, double *dx, 
-	int *incx, double *dy, int *incy)
+int gconstantmut(int *n, real *da, real *dx, 
+	int *incx, real *dy, int *incy)
 {
     int i__1;
     static int i, m, ix, iy, mp1;
@@ -338,9 +338,9 @@ L40:
 
 
 
-int MatVectorProduct(char *trans, int *m, int *n, double *
-	alpha, double *a, int *lda, double *x, int *incx, 
-	double *beta, double *y, int *incy)
+int MatVectorProduct(char *trans, int *m, int *n, real *
+	alpha, real *a, int *lda, real *x, int *incx, 
+	real *beta, real *y, int *incy)
 {
 
     /* System generated locals */
@@ -348,7 +348,7 @@ int MatVectorProduct(char *trans, int *m, int *n, double *
 
     /* Local variables */
     static int info;
-    static double temp;
+    static real temp;
     static int lenx, leny, i, j;
     static int ix, iy, jx, jy, kx, ky;
 
@@ -386,11 +386,11 @@ int MatVectorProduct(char *trans, int *m, int *n, double *
              N must be at least zero.   
              Unchanged on exit.   
 
-    ALPHA  - DOUBLE PRECISION.   
+    ALPHA  - REAL PRECISION.   
              On entry, ALPHA specifies the scalar alpha.   
              Unchanged on exit.   
 
-    A      - DOUBLE PRECISION array of DIMENSION ( LDA, n ).   
+    A      - REAL PRECISION array of DIMENSION ( LDA, n ).   
              Before entry, the leading m by n part of the array A must   
              contain the matrix of coefficients.   
              Unchanged on exit.   
@@ -402,7 +402,7 @@ int MatVectorProduct(char *trans, int *m, int *n, double *
              max( 1, m ).   
              Unchanged on exit.   
 
-    X      - DOUBLE PRECISION array of DIMENSION at least   
+    X      - REAL PRECISION array of DIMENSION at least   
              ( 1 + ( n - 1 )*abs( INCX ) ) when TRANS = 'N' or 'n'   
              and at least   
              ( 1 + ( m - 1 )*abs( INCX ) ) otherwise.   
@@ -415,12 +415,12 @@ int MatVectorProduct(char *trans, int *m, int *n, double *
              X. INCX must not be zero.   
              Unchanged on exit.   
 
-    BETA   - DOUBLE PRECISION.   
+    BETA   - REAL PRECISION.   
              On entry, BETA specifies the scalar beta. When BETA is   
              supplied as zero then Y need not be set on input.   
              Unchanged on exit.   
 
-    Y      - DOUBLE PRECISION array of DIMENSION at least   
+    Y      - REAL PRECISION array of DIMENSION at least   
              ( 1 + ( m - 1 )*abs( INCY ) ) when TRANS = 'N' or 'n'   
              and at least   
              ( 1 + ( n - 1 )*abs( INCY ) ) otherwise.   
@@ -453,7 +453,7 @@ int MatVectorProduct(char *trans, int *m, int *n, double *
 	info = 2;
     } else if (*n < 0) {
 	info = 3;
-    } else if (*lda < fmax((double)1,(double)(*m))) {
+    } else if (*lda < fmax((real)1,(real)(*m))) {
 	info = 6;
     } else if (*incx == 0) {
 	info = 8;
@@ -605,19 +605,19 @@ int MatVectorProduct(char *trans, int *m, int *n, double *
 } 
 
 
-double gnorm2(int *n, double *x, int *incx){
+real gnorm2(int *n, real *x, int *incx){
 
 #define abs(x) ((x) >= 0 ? (x) : -(x))
   
     /* System generated locals */
     int i__1, i__2;
-    double ret_val, d__1;
-    double sqrt(double);
+    real ret_val, d__1;
+    //real sqrt(real);
 
     /* Local variables */
-    static double norm, scale, absxi;
+    static real norm, scale, absxi;
     static int ix;
-    static double ssq;
+    static real ssq;
 
     //  -- This version written on 25-October-1982.   
     //   Modified on 14-October-1993 to inline the call to DLASSQ.   
@@ -660,13 +660,13 @@ double gnorm2(int *n, double *x, int *incx){
 }
 
 int UpperLowerSolver(char *uplo, char *trans, char *diag, int *n, 
-		     double *a, int *lda, double *x, int *incx){
+		     real *a, int *lda, real *x, int *incx){
     /* System generated locals */
     int i__1, i__2;
 
     /* Local variables */
     static int info;
-    static double temp;
+    static real temp;
     static int i, j;
     static int ix, jx, kx;
     static int nounit;
@@ -720,7 +720,7 @@ int UpperLowerSolver(char *uplo, char *trans, char *diag, int *n,
              N must be at least zero.   
              Unchanged on exit.   
 
-    A      - DOUBLE PRECISION array of DIMENSION ( LDA, n ).   
+    A      - REAL PRECISION array of DIMENSION ( LDA, n ).   
              Before entry with  UPLO = 'U' or 'u', the leading n by n   
              upper triangular part of the array A must contain the upper 
   
@@ -745,7 +745,7 @@ int UpperLowerSolver(char *uplo, char *trans, char *diag, int *n,
              max( 1, n ).   
              Unchanged on exit.   
 
-    X      - DOUBLE PRECISION array of dimension at least   
+    X      - REAL PRECISION array of dimension at least   
              ( 1 + ( n - 1 )*abs( INCX ) ).   
              Before entry, the incremented array X must contain the n   
              element right-hand side vector b. On exit, X is overwritten 
@@ -777,7 +777,7 @@ int UpperLowerSolver(char *uplo, char *trans, char *diag, int *n,
 	info = 3;
     } else if (*n < 0) {
 	info = 4;
-    } else if (*lda < fmax((double)1,(double)(*n))) {
+    } else if (*lda < fmax((real)1,(real)(*n))) {
 	info = 6;
     } else if (*incx == 0) {
 	info = 8;
@@ -965,23 +965,23 @@ int UpperLowerSolver(char *uplo, char *trans, char *diag, int *n,
 }
 
 
-double Sign(double *a, double *b){
-double x;
+real Sign(real *a, real *b){
+real x;
  x = (*a >= 0 ? *a : - *a);
  return( *b >= 0 ? x : -x);
 }
 
-int GivensRot(double *da, double *db, double *c, 
-	double *s){
+int GivensRot(real *da, real *db, real *c, 
+	real *s){
   
-  static double c_b4 = 1.;
+  static real c_b4 = 1.;
     /* System generated locals */
-    double d__1, d__2;
+    real d__1, d__2;
     /* Builtin functions */
-    double sqrt(double), d_sign(double *, double *);
+    //real sqrt(real), d_sign(real *, real *);
 
     /* Local variables */
-    static double r, scale, z, roe;
+    static real r, scale, z, roe;
     
 /*     construct givens plane rotation.   
        jack dongarra, linpack, 3/11/78. */
@@ -1021,14 +1021,14 @@ L20:
     return 0;
 }
 
-int PlaneRotation(int *n, double *dx, int *incx, 
-	double *dy, int *incy, double *c, double *s)
+int PlaneRotation(int *n, real *dx, int *incx, 
+	real *dy, int *incy, real *c, real *s)
 {
     /* System generated locals */
     int i__1;
     /* Local variables */
     static int i;
-    static double dtemp;
+    static real dtemp;
     static int ix, iy;
 
 /*     applies a plane rotation.   
@@ -1078,23 +1078,23 @@ L20:
 }
 
 /* Subroutine */ int drive_dgmres(int *n, int *nloc, int *m, 
-	int *lwork, double *work, int *irc, int *icntl, 
-	double *cntl, int *info, double *rinfo){
+	int *lwork, real *work, int *irc, int *icntl, 
+	real *cntl, int *info, real *rinfo){
     /* Initialized data */
     static int icheck = 0;
 
     /* System generated locals */
-    double r__1;
+    real r__1;
     
     /* Builtin functions */
-    double sqrt(double);
+    //real sqrt(real);
 
     /* Local variables */
     static int xcurrent, ycurrent;
-    static double sa, sb;
-    static double rc, rn, rx;
+    static real sa, sb;
+    static real rc, rn, rx;
     static int newrestart;
-    static double spa, spb;
+    static real spa, spb;
     static int ierr, bptr, hptr, vptr, wptr, xptr, r0ptr, iwarn, ihist;
     static int rotcos, dotptr, rotsin, comprsd, sizewrk;
 
@@ -1160,7 +1160,7 @@ L20:
 /*            lwork >= m*m + m*(n+5) + 5*n+m+1, if icntl(8) = 1 */
 /*            lwork >= m*m + m*(n+5) + 6*n+m+1, if icntl(8) = 0 */
 
-/*  work   (workspace) double precision/double precision array, length lwork */
+/*  work   (workspace) real precision/real precision array, length lwork */
 /*          work contains the required vector and matrices stored in the */
 /*          following order : */
 /*            x  (n,1)       : computed solution. */
@@ -1189,7 +1189,7 @@ L20:
 /*            icntl(4) : 0 - no preconditioning */
 /*                       1 - left preconditioning */
 /*                       2 - right preconditioning */
-/*                       3 - double side preconditioning */
+/*                       3 - real side preconditioning */
 /*                       4 - error, default set in Init */
 /*            icntl(5) : 0 - modified Gram-Schmidt */
 /*                       1 - iterative modified Gram-Schmidt */
@@ -1201,7 +1201,7 @@ L20:
 /*            icntl(8) : 0 - use recurence formula at restart */
 /*                       1 - default compute the true residual at each restart */
 
-/*  cntl    (input) double precision array, length 5 */
+/*  cntl    (input) real precision array, length 5 */
 /*            cntl(1) : tolerance for convergence */
 /*            cntl(2) : scaling factor for normwise perturbation on A */
 /*            cntl(3) : scaling factor for normwise perturbation on b */
@@ -1221,7 +1221,7 @@ L20:
 /*                      if info(1)=-3 - minimum workspace size necessary */
 /*            info(3) : optimal size for the workspace */
 
-/*  rinfo   (output) double precision array, length 2 */
+/*  rinfo   (output) real precision array, length 2 */
 /*            if info(1)=0 */
 /*              rinfo(1) : backward error for the preconditioned system */
 /*              rinfo(2) : backward error for the unpreconditioned system */
@@ -1362,9 +1362,9 @@ L20:
 	    }
 	    if (*lwork < sizewrk && *n == *nloc) {
 /* Compute the maximum size of the m according to the memory space */
-	        rn = (double) (*n);
+	        rn = (real) (*n);
 		rx = rn + 5.f;
-		rc = rn * 5.f + 1 - (double) (*lwork);
+		rc = rn * 5.f + 1 - (real) (*lwork);
 
 /* Update the linear part of the second order equation to be solved */
 		if (icntl[5] == 2 || icntl[5] == 3) {
@@ -1506,11 +1506,11 @@ return 0;
 } 
 
 
-/* Subroutine */ int dgmres_(int *n, int *m, double *b, 
-	double *x, double *h__, double *w, double *r0, 
-	double *v, double *dot, double *ycurrent, double *
-	xcurrent, double *rotsin, double *rotcos, int *irc, 
-	int *icntl, double *cntl, int *info, double *rinfo)
+/* Subroutine */ int dgmres_(int *n, int *m, real *b, 
+	real *x, real *h__, real *w, real *r0, 
+	real *v, real *dot, real *ycurrent, real *
+	xcurrent, real *rotsin, real *rotcos, int *irc, 
+	int *icntl, real *cntl, int *info, real *rinfo)
 {
     /* Initialized data */
    
@@ -1518,23 +1518,23 @@ return 0;
 
     /* System generated locals */
     int h_dim1, h_offset, v_dim1, v_offset, i__1;
-    double d__1, d__2;
+    real d__1, d__2;
 
     /* Builtin functions */
-    double sqrt(double);
+    //real sqrt(real);
 
     /* Local variables */
-    static double auxhjp1j, dnormres;
+    static real auxhjp1j, dnormres;
     static int typeprec, j, initguess;
-    static double be, bn;
+    static real be, bn;
     static int jh;
-    static double sa, sb, bea, dvi, spa, spb, aux, beta, truenormres, 
+    static real sa, sb, bea, dvi, spa, spb, aux, beta, truenormres, 
 	    dloo, temp;
     static int bptr;
     static int hptr, vptr, wptr, xptr, yptr;
     static int r0ptr;
     static int iwarn, ihist;
-    static double auxhjj, dnormw, dnormx;
+    static real auxhjj, dnormw, dnormx;
     static int northo, dotptr, xcuptr, comprsd, itermax, iorthog, iterout;
 
 
@@ -1613,37 +1613,37 @@ return 0;
 /*           of memory required for matrix H (see WORK and H). */
 /*           Unchanged on exit. */
 
-/*  b        (input) double precision/double precision */
+/*  b        (input) real precision/real precision */
 /*           Right hand side of the linear system. */
 
-/*  x        (output) double precision/double precision */
+/*  x        (output) real precision/real precision */
 /*           Computed solution of the linear system. */
 
-/*  H        (workspace)  double precision/double precision */
+/*  H        (workspace)  real precision/real precision */
 /*           Hessenberg matrix built within dgmres */
 
-/*  w        (workspace)  double precision/double precision */
+/*  w        (workspace)  real precision/real precision */
 /*           Vector used as temporary storage */
 
-/*  r0       (workspace)  double precision/double precision */
+/*  r0       (workspace)  real precision/real precision */
 /*           Vector used as temporary storage */
 
-/*  V        (workspace)  double precision/double precision */
+/*  V        (workspace)  real precision/real precision */
 /*           Basis computed by the Arnoldi's procedure. */
 
-/*  dot      (workspace) double precision/double precision */
+/*  dot      (workspace) real precision/real precision */
 /*           Store the results of the dot product calculation */
 
-/*  yCurrent (workspace) double precision/double precision */
+/*  yCurrent (workspace) real precision/real precision */
 /*           solution of the current LS */
 
-/*  xCurrent (workspace) double precision/double precision */
+/*  xCurrent (workspace) real precision/real precision */
 /*           current iterate */
 
-/*  rotSin   (workspace) double precision/double precision */
+/*  rotSin   (workspace) real precision/real precision */
 /*           Sine of the Givens rotation */
 
-/*  rotCos   (workspace) double precision */
+/*  rotCos   (workspace) real precision */
 /*           Cosine of the Givens rotation */
 
 /*  irc      (input/output) INT array. length 3 */
@@ -1661,7 +1661,7 @@ return 0;
 /*             icntl(4) : 0 - no preconditioning */
 /*                        1 - left preconditioning */
 /*                        2 - right preconditioning */
-/*                        3 - double side preconditioning */
+/*                        3 - real side preconditioning */
 /*                        4 - error, default set in Init */
 /*             icntl(5) : 0 - modified Gram-Schmidt */
 /*                        1 - iterative modified Gram-Schmidt */
@@ -1673,7 +1673,7 @@ return 0;
 /*             icntl(8) : 1 - default compute the true residual at each restart */
 /*                        0 - use recurence formula at restart */
 
-/*  cntl     (input) double precision array, length 5 */
+/*  cntl     (input) real precision array, length 5 */
 /*             cntl(1) : tolerance for convergence */
 /*             cntl(2) : scaling factor for normwise perturbation on A */
 /*             cntl(3) : scaling factor for normwise perturbation on b */
@@ -1693,7 +1693,7 @@ return 0;
 /*                       if info(1)=-3 - minimum workspace size necessary */
 /*             info(3) : optimal size for the workspace */
 
-/* rinfo     (output) double precision array, length 2 */
+/* rinfo     (output) real precision array, length 2 */
 /*             if info(1)=0 */
 /*               rinfo(1) : backward error for the preconditioned system */
 /*               rinfo(2) : backward error for the unpreconditioned system */
@@ -2310,8 +2310,8 @@ L48:
 	    s_wsfe(&io___168);
 	    
 	    do_fio(&c__1, (char *)&i__1, (ftnlen)sizeof(int));
-	    do_fio(&c__1, (char *)&bea, (ftnlen)sizeof(double));
-	    do_fio(&c__1, (char *)&be, (ftnlen)sizeof(double));
+	    do_fio(&c__1, (char *)&bea, (ftnlen)sizeof(real));
+	    do_fio(&c__1, (char *)&be, (ftnlen)sizeof(real));
 	    e_wsfe();*/
 	}
 
@@ -2510,7 +2510,7 @@ L68:
 
 
 
-/* Subroutine */ int init_dgmres(int *icntl, double *cntl)
+/* Subroutine */ int init_dgmres(int *icntl, real *cntl)
 {
 
 /*  Purpose */
@@ -2535,7 +2535,7 @@ L68:
 /*            icntl(4) : 0 - no preconditioning */
 /*                       1 - left preconditioning */
 /*                       2 - right preconditioning */
-/*                       3 - double side preconditioning */
+/*                       3 - real side preconditioning */
 /*                       4 - error, default set in Init */
 /*            icntl(5) : 0 - modified Gram-Schmidt */
 /*                       1 - iterative modified Gram-Schmidt */
@@ -2547,7 +2547,7 @@ L68:
 /*            icntl(8) : 1 - default compute the true residual at each restart */
 /*                       0 - use recurence formaula at restart */
 
-/* cntl     (input) double precision array, length 5 */
+/* cntl     (input) real precision array, length 5 */
 /*            cntl(1) : tolerance for convergence */
 /*            cntl(2) : scaling factor for normwise perturbation on A */
 /*            cntl(3) : scaling factor for normwise perturbation on b */

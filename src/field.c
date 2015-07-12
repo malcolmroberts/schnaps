@@ -166,7 +166,7 @@ void init_data(field *f)
       { // Check the reverse transform at all the GLOPS
  	real xref2[3];
 	Phy2Ref(physnode, xpg, xref2);
-	assert(Dist(xref, xref2) < 1e-8);
+	assert(Dist(xref, xref2) < _SMALL);
       }
 
       real w[f->model.m];
@@ -657,7 +657,7 @@ void Plotfield(int typplot, int compare, field* f, char *fieldname,
 	      int vi = f->varindex(f->interp_param, i, ib, typplot);
 	      value[nodecount] += psi * f->wn[vi];
 	    }
-	    assert(fabs(testpsi-1) < 1e-10);
+	    assert(fabs(testpsi-1) < _SMALL);
 
 	    // Compare with an exact solution
 	    if (compare) {
