@@ -4,7 +4,7 @@ rm -f schnaps.cl
 touch schnaps.cl
 
 #echo "#ifdef cl_khr_fp64" >> schnaps.cl
-echo "#pragma OPENCL EXTENSION cl_khr_fp64: enable" >> schnaps.cl
+#echo "#pragma OPENCL EXTENSION cl_khr_fp64: enable" >> schnaps.cl
 #echo "#else" >> schnaps.cl
 #echo "#error" >> schnaps.cl
 #echo "#endif" >> schnaps.cl
