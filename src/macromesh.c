@@ -868,16 +868,16 @@ void CheckMacroMesh(MacroMesh *m, int *param) {
 
         if(m->is2d) { // in 2D do not check upper and lower face
           if(ifa < 4)
-            assert(Dist(xpgref, xpgref2) < 1e-11);
+            assert(Dist(xpgref, xpgref2) < _SMALL);
         }
 	else if (m->is1d){
 	  if (ifa==1 || ifa==3) {
-	    assert(Dist(xpgref,xpgref2)<1e-11);
+	    assert(Dist(xpgref,xpgref2)< _SMALL);
 	  }
 	}
 	// in 3D check all faces
 	else { // in 3D check all faces
-	  if(Dist(xpgref, xpgref2) >= 1e-11) {
+	  if(Dist(xpgref, xpgref2) >= _SMALL) {
 	    printf("ERROR: face and vol indices give different rev points:\n");
 	    printf("ipgv: %d\n", ipgv);
 	    printf("ipgf: %d\n", ipgf);
@@ -885,7 +885,7 @@ void CheckMacroMesh(MacroMesh *m, int *param) {
 	    printf("xpgref:%f %f %f\n", xpgref[0], xpgref[1], xpgref[2]);
 	    printf("xpgref2:%f %f %f\n", xpgref2[0], xpgref2[1], xpgref2[2]);
 	  }
-          assert(Dist(xpgref, xpgref2) < 1e-11);
+          assert(Dist(xpgref, xpgref2) < _SMALL);
         }
 
       }
@@ -1043,7 +1043,7 @@ void Detect2DMacroMesh(MacroMesh *m)
     zmil /= 20;
     //printf("zmil: %f\n", zmil);
 
-    if(fabs(zmil-0.5) > 1e-6) {
+    if(fabs(zmil-0.5) > _SMALL * 10) {
       // The mesh is not 2d
       m->is2d = false;
       return;
@@ -1187,7 +1187,7 @@ int NearestNode(MacroMesh *m, real *xphy) {
     p.algorithm = FLANN_INDEX_AUTOTUNED;
     p.target_precision = 0.9; /* want 90% target precision */
 
-#if real == double
+#ifdef _DOUBLE_PRECISION
       findex = flann_build_index_double(m->node, m->nbnodes, 3, &speedup, &p);
 #else
       findex = flann_build_index_float(m->node, m->nbnodes, 3, &speedup, &p);
@@ -1286,7 +1286,7 @@ void Detect1DMacroMesh(MacroMesh* m){
     zmil /= 20;
     ymil /= 20;
     // the mesh is not 1d
-    if (fabs(zmil-0.5)>1e-6 || fabs(ymil-0.5)>1e-6) {
+    if (fabs(zmil-0.5) > _SMALL * 10 || fabs(ymil-0.5)> _SMALL * 10) {
       printf("The mesh is not 1D zmil=%f ymil=%f\n",zmil,ymil);
       m->is1d=false;
       return;
@@ -1329,7 +1329,7 @@ void Detect1DMacroMesh(MacroMesh* m){
 		+ vnds[2] * vnds[2]);
 
     // if the mesh is not 1D exit
-    assert(d<1e-6);
+    assert(d < _SMALL * 10);
   }
 }
 

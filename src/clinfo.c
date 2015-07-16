@@ -156,11 +156,11 @@ bool cldevice_is_acceptable(cl_uint nplatform, cl_uint ndevice)
     return false;
   }
 
-#if real == double ////// this test does not work !!!!!
+#ifdef _DOUBLE_PRECISION
   cl_device_id device = get_device_id(platform, ndevice);
   if(!cldevice_supports_double(&device)) {
     printf("cldevice does not support double\n");
-    //return false;
+    return false;
   }
 #endif
 
@@ -426,16 +426,16 @@ void BuildKernels(CLInfo *cli, char *strprog, char *buildoptions)
   if(!(cli->program)) 
     printf("Failed to create program.\n");
 
-  int deflen = 20;
+  int deflen = 400;
   char *buildoptions0 
     = (buildoptions == NULL) ? 
     malloc(deflen + 1) :  
     malloc(deflen + strlen(buildoptions) + 1);
 
-#if real == double
+#ifdef _DOUBLE_PRECISION
   sprintf(buildoptions0, "-D real=double ");
 #else
-  sprintf(buildoptions0, "-D real=float ");
+  sprintf(buildoptions0, "-cl-single-precision-constant -D real=float ");
 #endif
   if(buildoptions != NULL)
     strcat(buildoptions0, buildoptions);

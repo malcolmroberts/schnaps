@@ -54,12 +54,14 @@ char cl_buildoptions[1024];
 #define __local
 #define __private
 
-#if real == float
+#ifndef _DOUBLE_PRECISION
 #define  _VERY_SMALL (1e-8)
 #define _SMALL (1e-5)
+#define real float
 #else
 #define _VERY_SMALL (1e-16)
 #define _SMALL (1e-10)
+#define real double
 #endif
 
 

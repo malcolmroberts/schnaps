@@ -116,9 +116,9 @@ int TestPoisson(void) {
       ref_pg_vol(f.interp_param+1,ipg,xref,&wpg,NULL);
       //printf("Gauss point %d %f %f %f \n",ipg,xref[0],xref[1],xref[2]);
       int imem=f.varindex(f.interp_param,ie,ipg,_MV+1);
-      // printf("gradphi exact=%f gradphinum=%f rap=%f\n",
-      //1-2*xref[0],f.wn[imem],(1-2*xref[0])/f.wn[imem]);
-      test=test && (fabs(f.wn[imem]-(-1+2*xref[0]))<1e-6);
+      printf("gradphi exact=%f gradphinum=%f rap=%f\n",
+      1-2*xref[0],f.wn[imem],(1-2*xref[0])/f.wn[imem]);
+      test=test && (fabs(f.wn[imem]-(-1+2*xref[0])) < 1e-4);
     }
   }
   return test;

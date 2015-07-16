@@ -110,7 +110,7 @@ int TestDtfield_CL(void){
   }
   printf("max error: %f\n", maxerr);
 
-  test = (maxerr < 1e-8);
+  test = (maxerr < _SMALL * 10);
 
   return test;
 }

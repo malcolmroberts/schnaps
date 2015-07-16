@@ -115,7 +115,7 @@ int TestKernelInterface(void){
  
   printf("error: %f\n", maxerr);
 
-  test = (maxerr < 1e-8);
+  test = (maxerr < _SMALL);
 
   return test;
 }

@@ -10,6 +10,8 @@
 
 #include <stdio.h>
 
+#include "global.h"
+
 //! \brief Data structure for managing the OpenCL
 //! system informations
 typedef struct CLInfo{
