@@ -372,7 +372,7 @@ int ref_pg_face(const int *ndeg, const int *nraf0,
   // NB: in OpenCL, we _always_ compute xpgin, so the test can be removed.
   //if(xpgin != NULL) {
   real small = 1e-3;  //0.001
-  real vsmall = 1e-6; //0.000001;
+  real vsmall = 1e-4; //0.000001;
 
   xpgin[paxis[0]] = h[0] * (ncx + gauss_lob_point[offset[0]]);
   xpgin[paxis[1]] = h[1] * (ncy + gauss_lob_point[offset[1]]);
@@ -380,7 +380,7 @@ int ref_pg_face(const int *ndeg, const int *nraf0,
   if(paxis[3] == 0)
     xpgin[paxis[2]] = -vsmall;
   if(paxis[3] == 1)
-    xpgin[paxis[2]] = 1.0 + vsmall;
+    xpgin[paxis[2]] = 1 + vsmall;
 
   if(ix == 0)
     xpgin[paxis[0]]

@@ -201,7 +201,7 @@ void set_physnodes_cl(field *f)
   cl_int status;
   status = clEnqueueWriteBuffer(f->cli.commandqueue,
   				f->physnodes_cl, // cl_mem buffer,
-  				CL_TRUE,// cl_bool blocking_read,
+  				CL_TRUE,// cl_bool blocking_write,
   				0, // size_t offset
   				buf_size, // size_t cb
   				physnode, //  	void *ptr,

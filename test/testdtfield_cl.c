@@ -86,8 +86,8 @@ int TestDtfield_CL(void){
   set_global_m(f.model.m);
   set_source_CL(&f, "OneSource");
   Initfield(&f);
-  
-  cl_event clv_dtfield = clCreateUserEvent(f.cli.context, NULL);
+  cl_int status;
+  cl_event clv_dtfield = clCreateUserEvent(f.cli.context, &status);
   
   dtfield_CL(&f, &f.wn_cl, 0, NULL, &clv_dtfield);
   clWaitForEvents(1, &clv_dtfield);
