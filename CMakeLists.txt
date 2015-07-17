@@ -10,7 +10,7 @@ SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 #set(CMAKE_C_FLAGS "-std=c99 -D_REENTRANT -O3 -g -D_POSIX_C_SOURCE=200112L")
 #set(CMAKE_C_FLAGS "-std=gnu99 -D_REENTRANT -O3 -g")
-set(CMAKE_C_FLAGS " -std=c99 -D_REENTRANT -O3 -g")
+set(CMAKE_C_FLAGS " -std=c99 -D_REENTRANT -O3 ")
 #set(CMAKE_C_FLAGS " -std=c99 -D_REENTRANT -O3  -D_DOUBLE_PRECISION")
 
 
@@ -394,7 +394,7 @@ if(OPENCL_FOUND)
     )
   target_link_libraries(testdtfield_cl ${LIBS})
 
-  add_test(testdtfield_3dcl testdtfield3d_cl)
+  add_test(testdtfield3d_cl testdtfield3d_cl)
   add_executable(
     testdtfield3d_cl
     test/test.h
