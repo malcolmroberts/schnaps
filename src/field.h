@@ -182,29 +182,8 @@ typedef struct field {
 int GenericVarindex(__constant int *param, int elem, int ipg, int iv);
 #pragma end_opencl
 
-//! \brief memory arrangement of field components.
-//! with 3D components
-//! \param[in] param interpolation parameters
-//! param[0] = M
-//! param[1] = deg x
-//! param[2] = deg y
-//! param[3] = deg z
-//! param[4] = raf x
-//! param[5] = raf y
-//! param[6] = raf z
-//! \param[in] elem macro element index
-//! \param[in] ix components of the glop in its subcell
-//! \param[in] ic components of the subcell in the macrocell
-//! \param[in] iv component of the conservative variable
-/* //! \returns the memory position in the arrays wn wnp1 or dtwn. */
-#pragma start_opencl
-/* int GenericVarindex3d(int m, */
-/* 		      int nx0, int nx1, int nx2, */
-/* 		      int nc0, int nc1, int nc2, */
-/* 		      int elem, int *ix,int *ic, int iv); */
-#pragma end_opencl
 
-//! field initialization. Computation of the initial at each glop.
+//! \brief field initialization. Computation of the initial at each glop.
 //! \param[inout] f a field
 void Initfield(field *f);
 
@@ -228,54 +207,65 @@ void dtfieldSlow(field *f);
 //! the time derivative of the field. Works with several subcells.
 //! Fast version: multithreaded and with tensor products optimizations
 //! \param[inout] f a field
+//! \param[inout] w  field values
+//! \param[inout] dtw time derivatives of the field values
 void dtfield(field *f, real *w, real *dtw);
 
 //! \brief  compute the Discontinuous Galerkin inter-macrocells boundary terms
-//! The argument has to be void* (for compatibility with pthread)
-//! but it is logically a MacroCell*
-//! \param[inout] mcell a MacroCell
+//! \param[in] mcell a MacroCell (range of cells)
+//! \param[in] f a field
+//! \param[in] w field values
+//! \param[inout] dtw time derivatives of the field values
 void DGMacroCellInterfaceSlow(void *mcell, field *f, real *w, real *dtw);
 
 //! \brief  compute the Discontinuous Galerkin inter-macrocells boundary terms second implementation with a loop on the faces
-//! The argument has to be void* (for compatibility with pthread)
-//! but it is logically a MacroCell*
-//! \param[inout] mface a MacroFace
+//! \param[in] mface a MacroFace (range of faces on the interface)
+//! \param[in] f a field
+//! \param[in] w field values
+//! \param[inout] dtw time derivatives of the field values
 void DGMacroCellInterface(void *mface, field *f, real *w, real *dtw);
 
 //! \brief compute the Discontinuous Galerkin volume terms
-//! The argument has to be void* (for compatibility with pthread)
-//! but it is logically a MacroCell*
-//! \param[inout] mcell a MacroCell
+//! \param[in] mcell a MacroCell (range of cells)
+//! \param[in] f a field
+//! \param[in] w field values
+//! \param[inout] dtw time derivatives of the field values
 void DGVolume(void *mcell, field *f, real *w, real *dtw);
 
 //! \brief compute the Discontinuous Galerkin inter-subcells terms
-//! \param[inout] mcell a MacroCell
+//! \param[in] mcell a MacroCell (range of cells)
+//! \param[in] f a field
+//! \param[in] w field values
+//! \param[inout] dtw time derivatives of the field values
 void DGSubCellInterface(void *mcell, field *f, real *w, real *dtw);
 
 //! \brief  apply the DG mass term
-//! \param[inout] mcell a MacroCell
+//! \param[in] mcell a MacroCell (range of cells)
+//! \param[in] f a field
+//! \param[inout] dtw time derivatives of the field values
 void DGMass(void *mcell, field *f, real *dtw);
 
 //! \brief Add the source term
-//! \param[inout] mcell a MacroCell
-//! \param[in] w: the field
-//! \param[out] dtw: the derivative
+//! \param[in] mcell a MacroCell (range of cells)
+//! \param[in] f a field
+//! \param[in] w field values
+//! \param[inout] dtw time derivatives of the field values
 void DGSource(void *mcell, field *f, real *w, real *dtw);
 
 //! \brief An out-of-place RK stage
 //! \param[out] fwnp1 field at time n+1
 //! \param[in] fwn field at time n
 //! \param[in] fdtwn time derivative of the field
-//! \param[in] time step
-//! \param[in] size of the field buffer
+//! \param[in] dt time step
+//! \param[in] sizew size of the field buffer
 void RK_out(real *fwnp1, real *fwn, real *fdtwn, const real dt, 
 	    const int sizew);
 
 //! \brief An in-place RK stage
 //! \param[inout] fwnp1 field at time n+1
 //! \param[in] fdtwn time derivative of the field
-//! \param[in] time step
-//! \param[in] size of the field buffer
+//! \param[in] dt time step
+//! \param[in] sizew size of the field buffer
 void RK_in(real *fwnp1, real *fdtwn, const real dt, const int sizew);
 
 real set_dt(field *f);
@@ -283,11 +273,13 @@ real set_dt(field *f);
 //! \brief Time integration by a second order Runge-Kutta algorithm
 //! \param[inout] f a field
 //! \param[in] tmax physical duration of the simulation
+//! \param[in] dt time step
 void RK2(field *f, real tmax, real dt);
 
 //! \brief Time integration by a second order Runge-Kutta algorithm
 //! \param[inout] f a field
 //! \param[in] tmax physical duration of the simulation
+//! \param[in] dt time step
 void RK4(field *f, real tmax, real dt);
 
 #ifdef _WITH_OPENCL
@@ -304,8 +296,9 @@ void RK4_CL(field *f, real tmax, real dt,
 //! \brief save the results in the gmsh format
 //! \param[in] typplot index of the field variable to plot.
 //! \param[in] compare if true, the numerical solution is compared
-//! \param[in] f a field
 //! with the analytical solution
+//! \param[in] f a field
+//! \param[in] fieldname name of the plotted data
 //! \param[in] filename the path to the gmsh visualization file.
 void Plotfield(int typplot, int compare, field *f, char *fieldname, 
 	       char *filename);

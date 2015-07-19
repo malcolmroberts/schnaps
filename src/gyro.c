@@ -53,7 +53,10 @@ void Gyro_Lagrangian_NumFlux(real wL[],real wR[],real* vnorm,real* flux){
 }
 
 //! \brief compute square of velocity L2 error
-//! \param[in] w : values of f at glops
+//! \param[in] x  positions
+//! \param[in] t  time
+//! \param[in] w  values of f at glops
+//! \returns the error
 real GyroL2VelError(real* x,real t,real *w)
 {
   real wex[_INDEX_MAX];

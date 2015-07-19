@@ -53,6 +53,7 @@ void PrintCLInfo(CLInfo *cli);
 //! \brief Compile kernels source
 //! \param[inout] cli pointer to a CLInfo
 //! \param[in] program string containing the kernels sources
+//! \param[in] buildoptions string containing opencl compiler options
 void BuildKernels(CLInfo *cli, char *program, char *buildoptions);
 
 //! \brief scan all *.h and *.c in order to find the code

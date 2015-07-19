@@ -104,21 +104,19 @@ void LUDecompLinearSolver(LinearSolver* lsol);
 
 //! \brief solve the linear system
 //! \param[in] lsol the LinearSolver object
-//! \param[in] rhs the right hand side
-//! \param[in] sol the solution
 void SolveLinearSolver(LinearSolver* lsol);
 
 //! \brief copy vector
 //! \param[in] x vector
 //! \param[in] N size
-//! \param[in] copy x in prod
+//! \param[in]  prod receives x
 void Vector_copy(real x[],real prod[],int N);
 
-  //! \brief dot product
+//! \brief dot product
 //! \param[in] x vector
 //! \param[in] y vector
 //! \param[in] N size
-//! \param[in] prod dot product between x and y
+//! \returns dot product 
 real Vector_prodot(real x[],real y[],int N);
 
 //! \brief solve the linear system with paralution
