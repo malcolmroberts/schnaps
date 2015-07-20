@@ -614,6 +614,7 @@ real gnorm2(int *n, real *x, int *incx){
     real ret_val, d__1;
     //real sqrt(real);
 
+
     /* Local variables */
     static real norm, scale, absxi;
     static int ix;
@@ -980,6 +981,8 @@ int GivensRot(real *da, real *db, real *c,
     /* Builtin functions */
     //real sqrt(real), d_sign(real *, real *);
 
+
+
     /* Local variables */
     static real r, scale, z, roe;
     
@@ -1088,6 +1091,7 @@ L20:
     
     /* Builtin functions */
     //real sqrt(real);
+
 
     /* Local variables */
     static int xcurrent, ycurrent;
@@ -1524,6 +1528,7 @@ return 0;
 
     /* Builtin functions */
     //real sqrt(real);
+
 
     /* Local variables */
     static real auxhjp1j, dnormres;

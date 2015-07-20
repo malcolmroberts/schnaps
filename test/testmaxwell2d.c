@@ -44,7 +44,6 @@ int TestMaxwell2D(void) {
   sprintf(buf," -D NUMFLUX=");
   strcat(buf, numflux_cl_name);
   strcat(cl_buildoptions, buf);
-
   sprintf(buf, " -D BOUNDARYFLUX=%s", "Maxwell2DBoundaryFlux_uncentered");
   strcat(cl_buildoptions, buf);
 
@@ -74,6 +73,7 @@ int TestMaxwell2D(void) {
   Plotfield(0, true, &f, "error", "dgerror.msh");
 
   real dd = L2error(&f);
+
   real tolerance = 1.1e-2;
   test = test && (dd < tolerance);
   printf("L2 error: %f\n", dd);

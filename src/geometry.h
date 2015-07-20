@@ -117,9 +117,10 @@ void PeriodicCorrection(real xyz[3],real period[3]);
 #pragma end_opencl
 
 //! \brief periodic correction
-//! \param[inout] xyz: the vector to be put inside the periodic box
-//! \param[in] period:  sizes of the box in each direction
-//! \param[in] bounds:  limits of the box in each direction
+//! \param[inout] xyz the vector to be put inside the periodic box
+//! \param[in] period  sizes of the box in each direction
+//! \param[in] xmin  lower bounds of the box in each direction
+//! \param[in] xmax  upper bounds of the box in each direction
 //! if period[dim]<0 -> non periodic in direction dim
 void PeriodicCorrectionB(real xyz[3],real period[3],real xmin[3], real xmax[3]);
 

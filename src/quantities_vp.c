@@ -199,10 +199,7 @@ void Compute_electric_field(field* f, real * w){
       }
     }
   }
-  
 }  
-
-
 
 
 

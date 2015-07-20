@@ -45,13 +45,16 @@ void Gyro_Lagrangian_BoundaryFlux(real* x,real t,real* wL,real* vn,
 void GyroInitData(real* x,real* w);
 
 //! \brief particular imposed data for the  gyro model
-//! \param[in] x : space position
-//! \param[out] w : init state at point x
+//! \param[in] x  space position
+//! \param[in] t time
+//! \param[out] w  init state at point x
 void GyroImposedData(const real* x, const real t,real* w);
 
 //! \brief particular imposed data for the  gyro model
-//! \param[in] x,t : space and time position
-//! \param[out] w : imposed state at point x and time t
+//! \param[in] x  space
+//! \param[in] t time
+//! \param[in] v  velocity
+//! \returns value of the distribution function
 real Gyro_ImposedKinetic_Data(const real* x, const real t,real v);
 
 //! \brief compute gyro L2 error in x and v

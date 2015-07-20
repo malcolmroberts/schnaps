@@ -9,12 +9,6 @@
 #include "quantities_vp.h"
 #include "diagnostics_vp.h"
 
-//! \brief compute square of velocity L2 error
-//! \param[in] w : values of f at glops
-//! \param[in] x : point of the mesh
-//! \param[in] t : time
-//! \param[in] t : type of L2norm. if type_norm=0 this is the
-//! numerical solution if type_norm=1 this is the error
 real L2VelError(field *f, real *x, real *w){
 
   real wex[_INDEX_MAX];

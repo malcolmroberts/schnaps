@@ -70,7 +70,7 @@ int TestmEq2(void) {
   real *dtwn = calloc(f.wsize, sizeof(real));
   
   real err;
-  real tolerance = 1e-8;
+  real tolerance = _SMALL;
 
   printf("Test volume terms\n");
   

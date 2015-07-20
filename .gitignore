@@ -113,7 +113,6 @@ toto.c
 *.swp
 /build/
 
-
 wisdom3.txt
 
 paralution-1.0.0-prefix
@@ -168,3 +167,6 @@ testshequilibrium2d
 testshperiodic2d
 
 testwave2d
+
+gr_30_30.mtx
+
