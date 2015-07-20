@@ -55,7 +55,7 @@ int TestLandau_Damping_1D(void) {
   f.interp.interp_param[1]=2;  // x direction degree
   f.interp.interp_param[2]=0;  // y direction degree
   f.interp.interp_param[3]=0;  // z direction degree
-  f.interp.interp_param[4]=60;  // x direction refinement
+  f.interp.interp_param[4]=24;  // x direction refinement
   f.interp.interp_param[5]=1;  // y direction refinement
   f.interp.interp_param[6]=1;  // z direction refinement
  // read the gmsh file
@@ -92,7 +92,7 @@ int TestLandau_Damping_1D(void) {
   printf("cfl param =%f\n",f.hmin);
   
   real dt = set_dt(&f);
-  RK4(&f,50, dt);
+  RK4(&f,40, dt);
  
   
    // save the results and the error
@@ -117,7 +117,7 @@ void Test_Landau_Damping_ImposedData(const real x[3], const real t, real w[])
   //parameters of the case
   
   real k=0.5;
-  real eps = 0.05;
+  real eps = 0.005;
   real my_pi= 4.0*atan(1.0);
   
   for(int i=0;i<_INDEX_MAX_KIN+1;i++){
