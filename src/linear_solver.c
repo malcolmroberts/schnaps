@@ -365,46 +365,6 @@ void MatVecJacobianFree(void * system,field *f,real x[],real prod[]){
 
 
 
-
-void Vector_copy(real x[],real prod[],int N){
-  int i;
- 
-    for(i=0;i<N;i++)
-      {
-	prod[i] = x[i];
-      }      
-}
-
-
-real Vector_norm2(real x[],int  N){
-  int i;
-  real norm=0;
- 
-  for(i=0;i<N;i++)
-    {
-      norm += x[i]*x[i];
-    }
-  norm=sqrt(norm);
-  return norm;
-}
-
-
-
-
-real Vector_prodot(real x[],real y[],int N){
-  int i;
-  real prod;
-
-  prod=0;
-    for(i=0;i<N;i++)
-      {
-	prod += x[i]*y[i];
-      }     
-    return prod;
-}
-
-
-
 void Solver_Paralution(LinearSolver* lsol){
   int * rows=NULL;
   int * cols=NULL;
