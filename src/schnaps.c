@@ -232,6 +232,7 @@ int main(int argc, char *argv[])
     assert(f.macromesh.is1d);
   }
 
+
   // Mesh preparation
   BuildConnectivity(&f.macromesh);
   //PrintMacroMesh(&f.macromesh);

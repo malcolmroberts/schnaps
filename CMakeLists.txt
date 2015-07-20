@@ -10,9 +10,9 @@ SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 #set(CMAKE_C_FLAGS "-std=c99 -D_REENTRANT -O3 -g -D_POSIX_C_SOURCE=200112L")
 #set(CMAKE_C_FLAGS "-std=gnu99 -D_REENTRANT -O3 -g")
+
 #set(CMAKE_C_FLAGS " -std=c99 -D_REENTRANT -O3 ")
 set(CMAKE_C_FLAGS " -std=c99 -D_REENTRANT -O3  -D_DOUBLE_PRECISION")
-
 
 #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_DOUBLE_PRECISION")
 
@@ -93,6 +93,8 @@ list(APPEND
   src/h20phi.h
   src/maxwell.h
   src/maxwell.c
+  src/waterwave2d.h
+  src/waterwave2d.c
   src/mhd.h
   src/mhd.c
   src/gyro.h
@@ -100,16 +102,16 @@ list(APPEND
   src/pic.h
   src/pic.c
   src/skyline.h
+   src/skyline.c
   src/dpackfgmres.h
   src/dpackfgmres.c
   src/linear_solver.h
   src/linear_solver.c
   src/solverpoisson.h
-  src/quantities_vp.h
-  src/diagnostics_vp.h
-  src/skyline.c
   src/solverpoisson.c
+  src/quantities_vp.h
   src/quantities_vp.c
+  src/diagnostics_vp.h
   src/diagnostics_vp.c
   src/collision.h
   src/collision.c
@@ -361,11 +363,45 @@ target_link_libraries(testlandau_damping_1D ${LIBS})
 
 
  add_executable(
-    testwave2d
-    test/test.h
-    test/testwave2d.c
-    )
+  testnonlinearsolver
+  test/test.h
+  test/testnonlinearsolver.c
+  )
+target_link_libraries(testnonlinearsolver ${LIBS})
+add_test(testnonlinearsolver testnonlinearsolver)
+
+add_executable(
+  testwave2d
+  test/test.h
+  test/testwave2d.c
+)
   target_link_libraries(testwave2d ${LIBS})
+  add_test(testwave2d testwave2d)
+
+add_executable(
+  testshequilibrium2d
+  test/test.h
+  test/testshequilibrium2d.c
+)
+  target_link_libraries(testshequilibrium2d ${LIBS})
+  add_test(testshequilibrium2d testshequilibrium2d)
+
+add_executable(
+  testshperiodic2d
+  test/test.h
+  test/testshperiodic2d.c
+)
+  target_link_libraries(testshperiodic2d ${LIBS})
+  add_test(testshperiodic2d testshperiodic2d)
+
+
+add_executable(
+  testlandaucollision_1d
+  test/test.h
+  test/testlandaucollision_1d.c
+)
+target_link_libraries(testlandaucollision_1d ${LIBS})
+
 
 ##########  OpenCL unit tests  ##########
 if(OPENCL_FOUND)
@@ -573,6 +609,8 @@ IF(BUILD_PARALUTION)
 target_link_libraries(testlinearsolver paralution_c ${LIBS})
 add_test(testlinearsolver testlinearsolver)
 
+
+
 ELSE()
 
  add_executable(
@@ -582,6 +620,5 @@ ELSE()
   )
 target_link_libraries(testlinearsolver ${LIBS})
 add_test(testlinearsolver testlinearsolver)
-
 
 ENDIF()

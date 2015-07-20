@@ -4,15 +4,9 @@
 #include <assert.h>
 #include "test.h"
 #include "collision.h"
+#include "waterwave2d.h"
 
 
-void TestPeriodic_Wave_ImposedData(const real *x, const real t, real *w);
-void TestPeriodic_Wave_InitData(real *x, real *w);
-void Wave_Upwind_BoundaryFlux(real *x, real t, real *wL, real *vnorm,real *flux);
-void Wave_Upwind_NumFlux(real wL[],real wR[],real* vnorm,real* flux);
-
-#define _SPEED_WAVE (10)
-#define _LENGTH_DOMAIN (2.0)
 
 int main(void) {
   
@@ -20,8 +14,8 @@ int main(void) {
     
   int resu = Test_Wave_Periodic();
 	 
-  if (resu) printf("poisson test OK !\n");
-  else printf("poisson test failed !\n");
+  if (resu) printf("wave periodic  test OK !\n");
+  else printf("wave periodic test failed !\n");
 
   return !resu;
 } 
@@ -49,8 +43,8 @@ int Test_Wave_Periodic(void) {
   f.interp.interp_param[1] = 2;  // x direction degree
   f.interp.interp_param[2] = 2;  // y direction degree
   f.interp.interp_param[3] = 0;  // z direction degree
-  f.interp.interp_param[4] = 24;  // x direction refinement
-  f.interp.interp_param[5] = 24;  // y direction refinement
+  f.interp.interp_param[4] = 10;  // x direction refinement
+  f.interp.interp_param[5] = 10;  // y direction refinement
   f.interp.interp_param[6] = 1;  // z direction refinement
  // read the gmsh file
 
@@ -69,7 +63,7 @@ int Test_Wave_Periodic(void) {
 
   // prepare the initial fields
   f.vmax = _SPEED_WAVE;
-  f.model.cfl = 0.1;
+  f.model.cfl = 0.2;
   Initfield(&f);
    // maximal wave speed
   f.nb_diags = 0;
@@ -81,12 +75,12 @@ int Test_Wave_Periodic(void) {
 
   printf("cfl param =%f\n", f.hmin);
 
-  real tmax = 0.2;
+  real tmax = 0.01;
   real dt = set_dt(&f);
   RK2(&f, tmax, dt);
 
   real dd = L2error(&f);
-  real tolerance = 9e-3;
+  real tolerance = 1e-2;
   test = test && (dd < tolerance);
   printf("L2 error: %f\n", dd);
 
@@ -100,21 +94,6 @@ int Test_Wave_Periodic(void) {
   return test;
 }
 
-void Wave_Upwind_NumFlux(real wL[],real wR[],real* vnorm,real* flux){
-  real flux_temp=0;
-  
-  flux[0]=0.5*((wL[1]+wR[1])*vnorm[0] + (wL[2]+wR[2])*vnorm[1])+0.5*(wL[0]-wR[0]);
-  
-  flux_temp=0.5*(wL[0]+wR[0]) + 0.5*((wL[1]-wR[1])*vnorm[0] + (wL[2]-wR[2])*vnorm[1]);
-  flux[1]=flux_temp*vnorm[0];
-  flux[2]=flux_temp*vnorm[1];
- 
-
-  flux[0]=_SPEED_WAVE*flux[0];
-  flux[1]=_SPEED_WAVE*flux[1];
-  flux[2]=_SPEED_WAVE*flux[2];
-  
-};
 
 
 void TestPeriodic_Wave_ImposedData(const real *x, const real t, real *w) {
@@ -134,7 +113,6 @@ void TestPeriodic_Wave_InitData(real *x, real *w) {
   real t = 0;
   TestPeriodic_Wave_ImposedData(x, t, w);
 }
-
 
 
 void Wave_Upwind_BoundaryFlux(real *x, real t, real *wL, real *vnorm,

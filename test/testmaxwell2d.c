@@ -35,18 +35,22 @@ int TestMaxwell2D(void) {
 
   BuildConnectivity(&(f.macromesh));
 
+#if 0
   char buf[1000];
   sprintf(buf, "-D _M=%d", f.model.m);
   strcat(cl_buildoptions, buf);
 
   set_source_CL(&f, "Maxwell2DSource");
   sprintf(numflux_cl_name, "%s", "Maxwell2DNumFlux_uncentered");
+  sprintf(numflux_cl_name, "%s", "Maxwell2DNumFlux");
   sprintf(buf," -D NUMFLUX=");
   strcat(buf, numflux_cl_name);
   strcat(cl_buildoptions, buf);
 
   sprintf(buf, " -D BOUNDARYFLUX=%s", "Maxwell2DBoundaryFlux_uncentered");
   strcat(cl_buildoptions, buf);
+#endif
+
 
   Initfield(&f);
   
@@ -62,10 +66,12 @@ int TestMaxwell2D(void) {
 #else
   // OpenCL version
   RK2_CL(&f, tmax, dt, 0, 0, 0);
-  CopyfieldtoCPU(&f);
+
+  CopyfieldtoCPU(&f); 
   printf("\nOpenCL Kernel time:\n");
   show_cl_timing(&f);
   printf("\n");
+
 #endif
 
   // Save the results and the error
@@ -73,6 +79,7 @@ int TestMaxwell2D(void) {
   Plotfield(0, true, &f, "error", "dgerror.msh");
 
   real dd = L2error(&f);
+
   real tolerance = 1.1e-2;
   test = test && (dd < tolerance);
   printf("L2 error: %f\n", dd);
