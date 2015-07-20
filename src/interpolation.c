@@ -409,7 +409,7 @@ void ref_pg_face(int *param, int ifa, int ipg,
   // subcell along the face.
   if(xpgin != NULL) {
     real small = 1e-3;//0.001
-    real vsmall = 1e-6;//0.000001;
+    real vsmall = 1e-4;//0.000001;
 
     xpgin[axis_permut[ifa][0]] = h[0] * (ncx + gauss_lob_point[offset[0]]);
     xpgin[axis_permut[ifa][1]] = h[1] * (ncy + gauss_lob_point[offset[1]]);

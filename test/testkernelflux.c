@@ -118,7 +118,7 @@ int TestKernelFlux()
   }
   printf("max error: %f\n",maxerr);
 
-  real tolerance = 1e-8;
+  real tolerance = _SMALL;
 
   test = (maxerr < tolerance);
 

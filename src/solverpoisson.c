@@ -205,10 +205,10 @@ void SolvePoisson1D(field *f,real * w,int type_bc, real bc_l, real bc_r,Solver s
   // = number of nodes in the mesh
   int degx=f->interp.interp_param[1];
   int nelx=f->interp.interp_param[4];
-  int neq=degx*nelx+1;
   real xmin=f->macromesh.xmin[0];
   real xmax=f->macromesh.xmax[0];  //
   real dx=(xmax-xmin)/nelx;
+  int neq=degx*nelx+1;
   
   // number of conservatives variables
   // = number of velocity glops + 1 (potential)
@@ -238,7 +238,7 @@ void SolvePoisson1D(field *f,real * w,int type_bc, real bc_l, real bc_r,Solver s
     real aloc[degx+1][degx+1];
     for(int iloc=0;iloc<degx+1;iloc++){
       for(int jloc=0;jloc<degx+1;jloc++){
-	   aloc[iloc][jloc]=0;
+	aloc[iloc][jloc]=0;
       }
     }
     for(int ipg=0;ipg<degx+1;ipg++){

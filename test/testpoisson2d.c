@@ -102,7 +102,7 @@ int TestPoisson2d(void)
 
   printf("Erreur L2=%f\n",errl2);
 
-  test = test && (errl2 < 4e-4);
+  test = test && (errl2 < 2e-2);
 
   printf("Plot...\n");
 

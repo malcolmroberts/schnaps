@@ -351,7 +351,7 @@ int TestInterpolation(void){
 	  }
 	}
 
-	test = (test && fabs(int_dfg+int_fdg-int_fgn)<1e-8);
+	test = (test && fabs(int_dfg+int_fdg-int_fgn)<_SMALL);
 	printf("  int_fgn = %.2e sum of ints = %.2e sum_wpg=%f \n", 
 	       int_fgn, int_dfg + int_fdg - int_fgn, sum_wpg);
       }

@@ -28,11 +28,11 @@ int main(int argc, char *argv[]) {
 }
 
 int TestMHD(int argc, char *argv[]) {
-  real cfl = 0.2;
-  real tmax = 1;
+  real cfl = 0.1;
+  real tmax = 0.1;
   bool writemsh = false;
   real vmax = 6.0;
-  bool usegpu = false;
+  bool usegpu = true;
   real dt = 0.0;
   real periodsize = 6.2831853;
   
@@ -78,7 +78,7 @@ int TestMHD(int argc, char *argv[]) {
 
   strcpy(f.model.name,"MHD");
 
-  f.model.NumFlux=MHDNumFluxRusanov;
+  f.model.NumFlux=MHDNumFluxP2;
   f.model.BoundaryFlux=MHDBoundaryFlux;
   f.model.InitData=MHDInitData;
   f.model.ImposedData=MHDImposedData;
@@ -90,7 +90,7 @@ int TestMHD(int argc, char *argv[]) {
           periodsize);
   strcat(cl_buildoptions, buf);
 
-  sprintf(numflux_cl_name, "%s", "MHDNumFluxRusanov");
+  sprintf(numflux_cl_name, "%s", "MHDNumFluxP2");
   sprintf(buf," -D NUMFLUX=");
   strcat(buf, numflux_cl_name);
   strcat(cl_buildoptions, buf);
@@ -103,8 +103,8 @@ int TestMHD(int argc, char *argv[]) {
   f.interp.interp_param[1] = 1; // x direction degree
   f.interp.interp_param[2] = 1; // y direction degree
   f.interp.interp_param[3] = 0; // z direction degree
-  f.interp.interp_param[4] = 10; // x direction refinement
-  f.interp.interp_param[5] = 10; // y direction refinement
+  f.interp.interp_param[4] = 4; // x direction refinement
+  f.interp.interp_param[5] = 4; // y direction refinement
   f.interp.interp_param[6] = 1; // z direction refinement
 
 
@@ -141,19 +141,23 @@ int TestMHD(int argc, char *argv[]) {
     printf("Using OpenCL:\n");
     //executiontime = seconds();
     //assert(1==2);
-    RK2_CL(&f, tmax, dt, 0, NULL, NULL);
+    RK4_CL(&f, tmax, dt, 0, NULL, NULL);
+    CopyfieldtoCPU(&f);
+    show_cl_timing(&f);
+  
     //executiontime = seconds() - executiontime;
+    show_cl_timing(&f);
   } else { 
     printf("Using C:\n");
     //executiontime = seconds();
-    RK2(&f, tmax, dt);
+    RK4(&f, tmax, dt);
     //executiontime = seconds() - executiontime;
   }
 
-  Plotfield(0,false,&f, "Rho", "dgvisu.msh");
+  Plotfield(0,false,&f, "Rho", "rho.msh");
+  Plotfield(2,false,&f, "P", "p.msh");
   //Gnuplot(&f,0,0.0,"data1D.dat");
 
-  show_cl_timing(&f);
 
   printf("tmax: %f, cfl: %f\n", tmax, f.model.cfl);
 

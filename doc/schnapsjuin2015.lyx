@@ -1,0 +1,511 @@
+#LyX 2.1 created this file. For more info see http://www.lyx.org/
+\lyxformat 474
+\begin_document
+\begin_header
+\textclass beamer
+\begin_preamble
+\usetheme{Warsaw}
+% or ...
+
+\setbeamercovered{transparent}
+% or whatever (possibly just delete it)
+\end_preamble
+\use_default_options false
+\maintain_unincluded_children false
+\language french
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman times
+\font_sans default
+\font_typewriter default
+\font_math auto
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100
+\font_tt_scale 100
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\spacing single
+\use_hyperref false
+\papersize default
+\use_geometry true
+\use_package amsmath 2
+\use_package amssymb 2
+\use_package cancel 0
+\use_package esint 0
+\use_package mathdots 1
+\use_package mathtools 0
+\use_package mhchem 1
+\use_package stackrel 0
+\use_package stmaryrd 0
+\use_package undertilde 0
+\cite_engine basic
+\cite_engine_type default
+\biblio_style plain
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\justification true
+\use_refstyle 0
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\secnumdepth 2
+\tocdepth 2
+\paragraph_separation indent
+\paragraph_indentation default
+\quotes_language french
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Title
+CLAC, SCHNAPS et StarPU
+\end_layout
+
+\begin_layout Frame
+\begin_inset Argument 4
+status open
+
+\begin_layout Plain Layout
+Passé
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+SCHNAPS: 
+\begin_inset Quotes fld
+\end_inset
+
+antichambre
+\begin_inset Quotes frd
+\end_inset
+
+ en C de CLAC.
+ Plus facile à apprendre, mais moins robuste.
+\end_layout
+
+\begin_layout Itemize
+Solveur DG explicite C+OpenMP ou OpenCL: RK2, RK4
+\end_layout
+
+\begin_layout Itemize
+Maillages: courbes, conformes, 1D, 2D, 3D, périodiques ou non.
+ Gauss Lobatto discontinus.
+\end_layout
+
+\begin_layout Itemize
+Modèles: MHD, Maxwell 2D-3D, transport, Vlasov réduit
+\end_layout
+
+\begin_layout Itemize
+PIC, Poisson 1D et 2D
+\end_layout
+
+\begin_layout Itemize
+Voir: 
+\begin_inset Flex URL
+status open
+
+\begin_layout Plain Layout
+
+http://schnaps.gforge.inria.fr/
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\begin_layout Separator
+
+\end_layout
+
+\begin_layout Frame
+\begin_inset Argument 4
+status open
+
+\begin_layout Plain Layout
+Présent 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+bilan des perfs (speedup=3).
+\end_layout
+
+\begin_layout Itemize
+Petits essais avec StarPU.
+\end_layout
+
+\begin_layout Itemize
+solveurs linéaires: skyline, paralution, umfpack.
+\end_layout
+
+\begin_layout Itemize
+finir MHD, PIC, Maxwell 3D (tester les perfs).
+\end_layout
+
+\begin_layout Itemize
+TODO: float, nettoyage (indentation (clang-format), documentation, commentaires,
+ merging).
+\end_layout
+
+\end_deeper
+\begin_layout Separator
+
+\end_layout
+
+\begin_layout Frame
+\begin_inset Argument 4
+status open
+
+\begin_layout Plain Layout
+Futur 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Standard
+Proche:
+\end_layout
+
+\begin_layout Itemize
+Algorithmes implicites (CEMRACS)
+\end_layout
+
+\begin_layout Itemize
+
+\series bold
+StarPU
+\series default
+ (que devient OpenMP ?)
+\end_layout
+
+\begin_layout Standard
+Plus lointain:
+\end_layout
+
+\begin_layout Itemize
+Macromaillages non conformes, pas de temps local.
+\end_layout
+
+\begin_layout Itemize
+MHD faible Mach, couplage cinétique/fluide
+\end_layout
+
+\end_deeper
+\begin_layout Separator
+
+\end_layout
+
+\begin_layout Frame
+\begin_inset Argument 4
+status open
+
+\begin_layout Plain Layout
+StarPU
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Standard
+StarPU logiciel développé à l'Inria Bordeaux pour dérouler un graphe des
+ tâches:
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename exemple-task.png
+	width 3cm
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+Soumission des tâches dans un ordre séquentiel
+\end_layout
+
+\begin_layout Itemize
+tâches décrites dans des 
+\begin_inset Quotes fld
+\end_inset
+
+codelettes
+\begin_inset Quotes frd
+\end_inset
+
+ de signature 
+\family typewriter
+my_func(void *buffers[], void *_args)
+\family default
+.
+ Plusieurs codelettes possibles pour la même tâche.
+\end_layout
+
+\begin_layout Itemize
+Dépendances construites automatiquement par les données
+\end_layout
+
+\begin_layout Itemize
+Ordonnancement automatique des calculs, des duplications mémoire et des
+ communications.
+\end_layout
+
+\end_deeper
+\begin_layout Separator
+
+\end_layout
+
+\begin_layout Frame
+\begin_inset Argument 4
+status open
+
+\begin_layout Plain Layout
+StarPU
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Standard
+Success stories:
+\end_layout
+
+\begin_layout Itemize
+Algèbre linéaire.
+ clMAGMA (UTK, Inria)
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset space \qquad{}
+\end_inset
+
+
+\begin_inset space \qquad{}
+\end_inset
+
+
+\begin_inset Graphics
+	filename qr-starpu.png
+	width 7cm
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+Airbus: thèse de Benoît Lizé.
+ Solveur direct H-matrice sous StarPU.
+ Speedup >10 comparé à FMM !
+\end_layout
+
+\begin_layout Itemize
+TOTAL/Inria: solveur DG géophysique.
+\end_layout
+
+\end_deeper
+\begin_layout Separator
+
+\end_layout
+
+\begin_layout Frame
+\begin_inset Argument 4
+status open
+
+\begin_layout Plain Layout
+StarPU
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Standard
+Pour utiliser StarPU il faudra:
+\end_layout
+
+\begin_layout Itemize
+Réserver un tableau:
+\begin_inset Newline newline
+\end_inset
+
+
+\family typewriter
+starpu_data_handle_t vector_handle;
+\begin_inset Newline newline
+\end_inset
+
+starpu_vector_data_register(&vector_handle, 0, (uintptr_t)vector, NX, sizeof(vec
+tor[0])); 
+\end_layout
+
+\begin_layout Itemize
+Créer un codelet:
+\begin_inset Newline newline
+\end_inset
+
+
+\family typewriter
+static struct starpu_codelet cl = { 
+\begin_inset Newline newline
+\end_inset
+
+.modes = { STARPU_RW },
+\begin_inset Newline newline
+\end_inset
+
+ .cpu_funcs = {my_func, NULL},
+\begin_inset Newline newline
+\end_inset
+
+ .nbuffers = 1 };
+\end_layout
+
+\begin_layout Itemize
+Ecrire la fonction avec la signature:
+\begin_inset Newline newline
+\end_inset
+
+
+\family typewriter
+my_func(void *buffers[], void *_args);
+\end_layout
+
+\begin_layout Itemize
+Dans la fonction demander l'accès:
+\begin_inset Newline newline
+\end_inset
+
+
+\family typewriter
+float *val = (float *)STARPU_VECTOR_GET_PTR(buffer[0]);
+\end_layout
+
+\begin_layout Itemize
+Insérer la tâche dans le graphe StarPU:
+\begin_inset Newline newline
+\end_inset
+
+
+\family typewriter
+struct starpu_task *task = starpu_task_create();
+\begin_inset Newline newline
+\end_inset
+
+task->cl = &cl;
+\begin_inset Newline newline
+\end_inset
+
+starpu_task_submit(task);
+\end_layout
+
+\end_deeper
+\begin_layout Separator
+
+\end_layout
+
+\begin_layout Frame
+\begin_inset Argument 4
+status open
+
+\begin_layout Plain Layout
+StarPU
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+Dans la fonction demander l'accès:
+\begin_inset Newline newline
+\end_inset
+
+
+\family typewriter
+float *val = (float *)STARPU_VECTOR_GET_PTR(buffer[0]);
+\end_layout
+
+\begin_layout Itemize
+Insérer la tâche dans le graphe StarPU:
+\begin_inset Newline newline
+\end_inset
+
+
+\family typewriter
+struct starpu_task *task = starpu_task_create();
+\begin_inset Newline newline
+\end_inset
+
+task->cl = &cl;
+\begin_inset Newline newline
+\end_inset
+
+ starpu_task_submit(task);
+\end_layout
+
+\begin_layout Itemize
+On peut cacher ça dans des fonctions SCHNAPS ou CLAC, mais elles doivent
+ retourner immédiatement.
+\end_layout
+
+\begin_layout Standard
+Nommage: schnaps_toto(..) et schnaps_pu_toto(...).
+\end_layout
+
+\end_deeper
+\begin_layout Separator
+
+\end_layout
+
+\end_body
+\end_document

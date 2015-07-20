@@ -118,7 +118,7 @@ int TestSkyline(void){
   FreeSkyline(&sky);
   
 
-  test= (verr<1e-10);
+  test= (verr < _SMALL);
   //assert(1==2);
 
   InitSkyline(&sky,_NN);
@@ -198,12 +198,12 @@ int TestSkyline(void){
     printf("%f ",sol[i]);
     verr+=fabs(sol[i]-i-1);
   }
-  printf("\n");
+  printf("\nerror=%f small=%f test=%d \n",verr,_SMALL, (verr < _SMALL));
 
   // deallocate memory
-  FreeSkyline(&sky);
+  //FreeSkyline(&sky);
 
-  test= test && (verr<1e-10);
+  test= test && (verr < _SMALL);
 
 
   return test;
