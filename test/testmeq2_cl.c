@@ -129,7 +129,7 @@ int TestmEq2(void) {
 
   err = maxerr(dtwn, dtwn_cl, f.wsize);
   printf("\tmax error: %f\n", err);
-  test = (err < tolerance);
+  test = test && (err < tolerance);
 
   printf("Test flux terms\n");
   
@@ -168,7 +168,7 @@ int TestmEq2(void) {
 
   err = maxerr(dtwn, dtwn_cl, f.wsize);
   printf("\tmax error: %f\n", err);
-  test = (err < tolerance);
+  test = test && (err < tolerance);
 
   printf("Test macrocell interfaces\n");
 
@@ -199,7 +199,7 @@ int TestmEq2(void) {
   }
   err = maxerr(dtwn, dtwn_cl, f.wsize);
   printf("\tmax error: %f\n", err);
-  test = (err < tolerance);
+  test = test && (err < tolerance);
 
   printf("Test all terms\n");
   for(int i = 0; i < f.wsize; ++i) {
@@ -219,7 +219,7 @@ int TestmEq2(void) {
 
   err = maxerr(dtwn, dtwn_cl, f.wsize);
   printf("\tmax error: %f\n", err);
-  test = (err < tolerance);
+  test = test && (err < tolerance);
 
   //Displayfield(&f);
  
