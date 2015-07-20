@@ -525,7 +525,7 @@ real cl_dev_bwidth(char *platform_name)
 real kernel_min_time(real dev_flops, real bandwidth,
 		       unsigned long int flop_count, unsigned long int io_count)
 {
-  return flop_count / (1e9 * dev_flops); 
+  return flop_count / (1e9 * dev_flops)
   + io_count * sizeof(real)  / (1e9 * bandwidth); 
 }
 
