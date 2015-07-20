@@ -95,11 +95,6 @@ int TestMacroFace(void){
   
   Initfield(&f);
 
-  MacroFace mface[f.macromesh.nbfaces];
-  for(int ifa = 0; ifa < f.macromesh.nbfaces; ifa++) {
-    mface[ifa].first = ifa;
-    mface[ifa].last_p1 = ifa + 1;
-  }
  
   //f.is2d = true;
 
@@ -134,7 +129,7 @@ int TestMacroFace(void){
   const int ninterfaces = f.macromesh.nmacrointerfaces;
   for(int i = 0; i < ninterfaces; ++i) {
     int ifa = f.macromesh.macrointerface[i];
-    DGMacroCellInterface_CL((void*) (mface + ifa), &f, &(f.wn_cl),
+    DGMacroCellInterface_CL(ifa, &f, &(f.wn_cl),
 			    0, NULL, NULL);
     clFinish(f.cli.commandqueue);
   }
@@ -142,7 +137,7 @@ int TestMacroFace(void){
   const int nboundaryfaces = f.macromesh.nboundaryfaces;
   for(int i = 0; i < nboundaryfaces; ++i) {
     int ifa = f.macromesh.boundaryface[i];
-    DGBoundary_CL((void*) (mface + ifa), &f, &(f.wn_cl),
+    DGBoundary_CL(ifa, &f, &(f.wn_cl),
 			    0, NULL, NULL);
     clFinish(f.cli.commandqueue);
   }
@@ -155,7 +150,7 @@ int TestMacroFace(void){
   for(int iw = 0; iw < f.wsize; iw++)
     f.dtwn[iw] = 0;
   for(int ifa = 0; ifa < f.macromesh.nbfaces; ifa++)
-    DGMacroCellInterface((void*) (mface + ifa), &f, f.wn, f.dtwn);
+    DGMacroCellInterface(ifa, &f, f.wn, f.dtwn);
   real *fdtwn_openmp = f.dtwn;
 
   // Check that the results are the same

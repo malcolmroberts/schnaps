@@ -188,6 +188,8 @@ void CreateParticles(PIC* pic,MacroMesh *m){
 void AccumulateParticles(void *fv, real *w){
   field *f = fv;
   PIC *pic = f->pic;
+
+  assert(f->pic != NULL);
   
   int npg=NPG(f->interp_param + 1);
   

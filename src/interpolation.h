@@ -8,14 +8,14 @@
 //! \brief a struct for managing geometric mapping
 typedef struct Interpolation{
   //! \brief interpolation parameters
-  //! \details generally the convention is <BR>
-  //! param[0] = M number of variables <BR>
-  //! param[1] = deg x <BR>
-  //! param[2] = deg y <BR>
-  //! param[3] = deg z <BR>
-  //! param[4] = raf x <BR>
-  //! param[5] = raf y <BR>
-  //! param[6] = raf z <BR>
+  //! \details generally the convention is 
+  //! param[0] = M number of variables 
+  //! param[1] = deg x 
+  //! param[2] = deg y 
+  //! param[3] = deg z 
+  //! param[4] = raf x 
+  //! param[5] = raf y 
+  //! param[6] = raf z 
   //! param[7..] = others param or return from interp
   int interp_param[8];
 

@@ -78,7 +78,7 @@ int TestKernelVolume(void){
     /* 		       0, NULL, NULL); */
     /* clFinish(f.cli.commandqueue); */
 
-    DGVolume_CL((void*) &(f.mcell[ie]), &f, &(f.wn_cl), 0, NULL, NULL);
+    DGVolume_CL(ie, &f, &(f.wn_cl), 0, NULL, NULL);
     clFinish(f.cli.commandqueue);
   }
   CopyfieldtoCPU(&f);
@@ -93,7 +93,7 @@ int TestKernelVolume(void){
  
   for(int ie = 0; ie < f.macromesh.nbelems; ++ie) {
     //DGSubCellInterface((void*) &(f.mcell[ie]), &f, f.wn, f.dtwn);
-    DGVolume((void*) &(f.mcell[ie]), &f, f.wn, f.dtwn);
+    DGVolume(ie, &f, f.wn, f.dtwn);
   }
 
   Displayfield(&f);

@@ -103,7 +103,7 @@ int TestKernelFlux()
   f.dtwn = calloc(f.wsize, sizeof(real));
  
   for(int ie = 0; ie < f.macromesh.nbelems; ++ie) {
-    DGSubCellInterface((void*) &(f.mcell[ie]), &f, f.wn, f.dtwn);
+    DGSubCellInterface(ie, &f, f.wn, f.dtwn);
     //DGVolume((void*) &(f.mcell[ie]), &f, f.wn, f.dtwn);
   }
 

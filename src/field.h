@@ -9,23 +9,6 @@
 #include "clinfo.h"
 #endif
 
-//! \brief A simple struct for packing a field
-//! and a faces range.  To be passed to a thread
-//! as a void* pointer.
-typedef struct MacroFace {
-  int first; //!< first cell/face index
-  int last_p1;  //!< last cell/face index + 1
-  //field *field; //! pointer to a  field
-} MacroFace;
-
-//! \brief A simple struct for packing a field
-//! and a cells range.  To be passed to a thread
-//! as a void* pointer.
-typedef struct MacroCell {
-  int first; //!< first cell/face index
-  int last_p1;  //!< last cell/face index + 1
-  //  field *field; //! pointer to a  field
-} MacroCell;
 
 //! \brief Data structure for managing a  discrete vector field
 //! solution of a DG approximation
@@ -90,10 +73,6 @@ typedef struct field {
   //! \param[in] iv field component index
   int (*varindex)(int* param, int elem, int ipg, int iv);
 
-  // Array of pointers to MacroFaces used for DGMacroCellInterface
-  MacroFace *mface;
-  // Array of pointers to MacroCell used for various DG routines
-  MacroCell *mcell;
 
 #ifdef _WITH_OPENCL
   //! \brief opencl data
@@ -193,16 +172,6 @@ void init_empty_field(field *f);
 //! \param[inout] f a field
 void Freefield(field *f);
 
-//! \brief compute the Discontinuous Galerkin volume terms
-//! slow version (no optimization using the tensors products)
-//! \param[inout] f a field
-void DGVolumeSlow(field *f);
-
-//! \brief apply the Discontinuous Galerkin approximation for computing
-//! the time derivative of the field. One subcell implementation.
-//! \param[inout] f a field
-void dtfieldSlow(field *f);
-
 //! \brief apply the Discontinuous Galerkin approximation for computing
 //! the time derivative of the field. Works with several subcells.
 //! Fast version: multithreaded and with tensor products optimizations
@@ -211,46 +180,40 @@ void dtfieldSlow(field *f);
 //! \param[inout] dtw time derivatives of the field values
 void dtfield(field *f, real *w, real *dtw);
 
-//! \brief  compute the Discontinuous Galerkin inter-macrocells boundary terms
-//! \param[in] mcell a MacroCell (range of cells)
-//! \param[in] f a field
-//! \param[in] w field values
-//! \param[inout] dtw time derivatives of the field values
-void DGMacroCellInterfaceSlow(void *mcell, field *f, real *w, real *dtw);
 
 //! \brief  compute the Discontinuous Galerkin inter-macrocells boundary terms second implementation with a loop on the faces
-//! \param[in] mface a MacroFace (range of faces on the interface)
+//! \param[in] ifa a MacroFace number
 //! \param[in] f a field
 //! \param[in] w field values
 //! \param[inout] dtw time derivatives of the field values
-void DGMacroCellInterface(void *mface, field *f, real *w, real *dtw);
+void DGMacroCellInterface(int ifa, field *f, real *w, real *dtw);
 
 //! \brief compute the Discontinuous Galerkin volume terms
-//! \param[in] mcell a MacroCell (range of cells)
+//! \param[in] ie a MacroCell number
 //! \param[in] f a field
 //! \param[in] w field values
 //! \param[inout] dtw time derivatives of the field values
-void DGVolume(void *mcell, field *f, real *w, real *dtw);
+void DGVolume(int ie, field *f, real *w, real *dtw);
 
 //! \brief compute the Discontinuous Galerkin inter-subcells terms
-//! \param[in] mcell a MacroCell (range of cells)
+//! \param[in] ie a MacroCell number
 //! \param[in] f a field
 //! \param[in] w field values
 //! \param[inout] dtw time derivatives of the field values
-void DGSubCellInterface(void *mcell, field *f, real *w, real *dtw);
+void DGSubCellInterface(int ie, field *f, real *w, real *dtw);
 
 //! \brief  apply the DG mass term
-//! \param[in] mcell a MacroCell (range of cells)
+//! \param[in] ie a MacroCell number
 //! \param[in] f a field
 //! \param[inout] dtw time derivatives of the field values
-void DGMass(void *mcell, field *f, real *dtw);
+void DGMass(int ie, field *f, real *dtw);
 
 //! \brief Add the source term
-//! \param[in] mcell a MacroCell (range of cells)
+//! \param[in] ie a MacroCell number
 //! \param[in] f a field
 //! \param[in] w field values
 //! \param[inout] dtw time derivatives of the field values
-void DGSource(void *mcell, field *f, real *w, real *dtw);
+void DGSource(int ie, field *f, real *w, real *dtw);
 
 //! \brief An out-of-place RK stage
 //! \param[out] fwnp1 field at time n+1
