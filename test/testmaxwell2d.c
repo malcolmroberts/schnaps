@@ -41,27 +41,19 @@ int TestMaxwell2D(void) {
   strcat(cl_buildoptions, buf);
 
   set_source_CL(&f, "Maxwell2DSource");
-<<<<<<< Updated upstream
   sprintf(numflux_cl_name, "%s", "Maxwell2DNumFlux_uncentered");
-=======
   sprintf(numflux_cl_name, "%s", "Maxwell2DNumFlux");
->>>>>>> Stashed changes
   sprintf(buf," -D NUMFLUX=");
   strcat(buf, numflux_cl_name);
   strcat(cl_buildoptions, buf);
 
-<<<<<<< HEAD
-<<<<<<< Updated upstream
   sprintf(buf, " -D BOUNDARYFLUX=%s", "Maxwell2DBoundaryFlux_centered");
-=======
   sprintf(buf, " -D BOUNDARYFLUX=%s", "Maxwell2DBoundaryFlux_uncentered");
->>>>>>> origin/devel
   strcat(cl_buildoptions, buf);
-=======
   sprintf(buf, " -D BOUNDARYFLUX=%s", "Maxwell2DBoundaryFlux");
   strcat(cl_buildoptions, buf);
 #endif
->>>>>>> Stashed changes
+
 
   Initfield(&f);
   
@@ -77,18 +69,12 @@ int TestMaxwell2D(void) {
 #else
   // OpenCL version
   RK2_CL(&f, tmax, dt, 0, 0, 0);
-<<<<<<< Updated upstream
-  CopyfieldtoCPU(&f);
-  printf("\nOpenCL Kernel time:\n");
-  show_cl_timing(&f);
-  printf("\n");
-=======
+
   CopyfieldtoCPU(&f); 
   printf("\nOpenCL Kernel time:\n");
   show_cl_timing(&f);
   printf("\n");
 
->>>>>>> Stashed changes
 #endif
 
   // Save the results and the error
@@ -96,11 +82,8 @@ int TestMaxwell2D(void) {
   Plotfield(0, true, &f, "error", "dgerror.msh");
 
   real dd = L2error(&f);
-<<<<<<< Updated upstream
+
   real tolerance = 1.1e-2;
-=======
-  real tolerance = 9e-3;
->>>>>>> Stashed changes
   test = test && (dd < tolerance);
   printf("L2 error: %f\n", dd);
 
