@@ -219,7 +219,7 @@ void Vector_copy(real x[],real prod[],int N);
 //! \param[in] N size
 real Vector_prodot(real x[],real y[],int N);
 
-  //! \brief return the l2 norm
+//! \brief return the l2 norm
 //! \param[in] x vector
 //! \param[in] N size
 real Vector_norm2(real x[],int  N);

@@ -982,7 +982,6 @@ int GivensRot(real *da, real *db, real *c,
     //real sqrt(real), d_sign(real *, real *);
 
 
-
     /* Local variables */
     static real r, scale, z, roe;
     

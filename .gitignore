@@ -122,7 +122,6 @@ paralution-1.0.0-prefix
 
 gmres
 paralution_cg
-<<<<<<< HEAD
 
 testskyline
 
@@ -170,3 +169,9 @@ testwave2d
 
 gr_30_30.mtx
 
+
+testnonlinearsolver
+
+testshequilibrium2d
+
+testshperiodic2d

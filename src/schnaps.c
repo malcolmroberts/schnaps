@@ -232,6 +232,7 @@ int main(int argc, char *argv[])
     assert(f.macromesh.is1d);
   }
 
+
   // Mesh preparation
   BuildConnectivity(&f.macromesh);
   //PrintMacroMesh(&f.macromesh);
@@ -247,7 +248,7 @@ int main(int argc, char *argv[])
     dt = set_dt(&f);
 
   printf("\n\n");
-  
+
   if(!usegpu) {
     printf("C version\n");
   } else {
