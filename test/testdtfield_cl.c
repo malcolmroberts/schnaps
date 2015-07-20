@@ -27,6 +27,7 @@ int TestDtfield_CL(void){
   }
 
   field f;
+  init_empty_field(&f);
   
   // 2D meshes:
   // test/disque2d.msh
@@ -48,7 +49,6 @@ int TestDtfield_CL(void){
   f.model.cfl = 0.05;
   f.model.m = 1;
   m = f.model.m;
-
 
   f.model.NumFlux = TransNumFlux2d;
   f.model.BoundaryFlux = TransBoundaryFlux2d;
@@ -86,8 +86,8 @@ int TestDtfield_CL(void){
   set_global_m(f.model.m);
   set_source_CL(&f, "OneSource");
   Initfield(&f);
-  
-  cl_event clv_dtfield = clCreateUserEvent(f.cli.context, NULL);
+  cl_int status;
+  cl_event clv_dtfield = clCreateUserEvent(f.cli.context, &status);
   
   dtfield_CL(&f, &f.wn_cl, 0, NULL, &clv_dtfield);
   clWaitForEvents(1, &clv_dtfield);
@@ -110,7 +110,7 @@ int TestDtfield_CL(void){
   }
   printf("max error: %f\n", maxerr);
 
-  test = (maxerr < 1e-8);
+  test = (maxerr < _SMALL * 10);
 
   return test;
 }

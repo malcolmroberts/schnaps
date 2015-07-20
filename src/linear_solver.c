@@ -216,6 +216,43 @@ void MatVect(void * system,real x[],real prod[]){
   
 }
 
+void Vector_copy(real x[],real prod[],int N){
+  int i;
+ 
+    for(i=0;i<N;i++)
+      {
+	prod[i] = x[i];
+      }      
+}
+
+
+real Vector_norm2(real x[],int  N){
+  int i;
+  real norm=0;
+ 
+  for(i=0;i<N;i++)
+    {
+      norm += x[i]*x[i];
+    }
+  norm=sqrt(norm);
+  return norm;
+}
+
+
+
+
+real Vector_prodot(real x[],real y[],int N){
+  int i;
+  real prod;
+
+  prod=0;
+    for(i=0;i<N;i++)
+      {
+	prod += x[i]*y[i];
+      }     
+    return prod;
+}
+>>>>>>> origin/devel
 
 
 void LUDecompLinearSolver(LinearSolver* lsol){
@@ -376,13 +413,13 @@ void Solver_Paralution(LinearSolver* lsol){
   int * cols=NULL;
   real * coefs=NULL;
   
-  double * mat_coefs=NULL;
-  double * RHS=NULL;
-  double * Sol=NULL;
+  real * mat_coefs=NULL;
+  real * RHS=NULL;
+  real * Sol=NULL;
   char * solver;
   char * pc;
   char * storage;
-  double * residu=0; 
+  real * residu=0; 
   int nnz=0,n=0,c=0;
   Skyline * mat;
   
@@ -390,8 +427,8 @@ void Solver_Paralution(LinearSolver* lsol){
   int* iter_final=0;
   int* ierr=0;
   int maxit=100000;
-  double norm_rhs=0;
-  double a_tol=0,r_tol=0,div_tol=1.e+8;
+  real norm_rhs=0;
+  real a_tol=0,r_tol=0,div_tol=1.e+8;
 
   storage="CSR";
   norm_rhs=Vector_norm2(lsol->rhs,lsol->neq);
@@ -458,12 +495,12 @@ void Solver_Paralution(LinearSolver* lsol){
 
   
   n=lsol->neq;
-  RHS = calloc(n,sizeof(double));
-  Sol = calloc(n,sizeof(double));
+  RHS = calloc(n,sizeof(real));
+  Sol = calloc(n,sizeof(real));
 
   for(int i=0;i<n;i++){
-    RHS[i] = (double) lsol->rhs[i];
-    Sol[i] = (double )lsol->sol[i];   
+    RHS[i] = (real) lsol->rhs[i];
+    Sol[i] = (real )lsol->sol[i];   
   }
 
 
@@ -508,9 +545,9 @@ void Solver_Paralution(LinearSolver* lsol){
       }
     }    
     
-    mat_coefs = malloc(nnz*sizeof(double));
+    mat_coefs = malloc(nnz*sizeof(real));
     for(int i=0;i<nnz;i++){
-      mat_coefs[i] = (double) coefs[i];
+      mat_coefs[i] = (real) coefs[i];
     }
     
 #ifdef PARALUTION
@@ -596,10 +633,10 @@ void GMRESSolver(LinearSolver* lsol){
   pt_Size = &N;
   pt_lwork = &lwork;
 
-  work = calloc(lwork, sizeof(double));
-  loc_x = calloc(N, sizeof(double));
-  loc_y = calloc(N, sizeof(double));
-  loc_z = calloc(N, sizeof(double));
+  work = calloc(lwork, sizeof(real));
+  loc_x = calloc(N, sizeof(real));
+  loc_y = calloc(N, sizeof(real));
+  loc_z = calloc(N, sizeof(real));
   
   for(int ivec = 0; ivec < N; ivec++) {
     work[ivec+1]     = lsol->sol[ivec];                    

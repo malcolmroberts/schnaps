@@ -11,6 +11,9 @@ typedef struct PIC {
   //!  number of particles
   int nbparts;
 
+  //! common weight of each particle
+  real weight;
+
   //! positions and velocity of particles (size=6*nbparts)
   real* xv;
 
@@ -44,16 +47,21 @@ void BoxMuller3d(real *v,int* k1, int* k2);
 void FreePIC(PIC* pic);
 
 
-//! \brief init the PIC structure with 
-//! space for n particles
-//! \param[in] n number of particles
+//! \brief create particles with gaussian velocity 
 //! \param[inout] pic PIC object
+//! \param[in] m a macromesh on which the particles are created
 void CreateParticles(PIC* pic,MacroMesh *m);
 
+//! \brief create particles on a coil of radius one
+//! \param[inout] pic PIC object
+//! \param[in] m a macromesh on which the particles are created
+void CreateCoil2DParticles(PIC* pic,MacroMesh *m);
+
+
 //! \brief compute charge and current associated to particles
-//! \param[in] pic a PIC struct containing the particles
-//! \param[inout] f a maxwell field updated with charge and current sources
-void AccumulateParticles(PIC* pic,field *f);
+//! \param[in] fv a field (containing a PIC struct)
+//! \param[out] w the field values in wich the particles are accumulated 
+void AccumulateParticles(void *fv,real *w);
 
 
 //! brief pseudo-random van der corput number generator

@@ -25,7 +25,7 @@ http://www.cecill.info/licences/Licence_CeCILL_V1.1-US.html
 nécessite git
 
 Accès développeur:
-git clone git+ssh://<gforge_account_name>\@scm.gforge.inria.fr//gitroot/schnaps/schnaps.git
+git clone git+ssh://\<gforge_account_name\>\@scm.gforge.inria.fr//gitroot/schnaps/schnaps.git
 
 Accès lecture seule:
 git clone https://gforge.inria.fr/git/schnaps/schnaps.git

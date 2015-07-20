@@ -1,6 +1,8 @@
 #ifndef _DPACKGMRES_H
 #define _DPACKGMRES_H
 
+#include "global.h"
+
 int drive_dgmres(int *n, int *nloc, int *m, 
 	int *lwork, real *work, int *irc, int *icntl, 
 		   real *cntl, int *info, real *rinfo);

@@ -37,8 +37,9 @@ void VlasovP_Lagrangian_NumFlux(real *wL, real *wR, real *vn, real *flux);
 
 //! \brief  compute the source term of the collision
 //! model: electric force + true collisions
+//! \param[in] x space position
+//! \param[in] t time
 //! \param[in] w the distribution function
-//! \param[in] f the force 
 //! \param[out] source the source
 void VlasovP_Lagrangian_Source(const real *x, const real t, const real *w, real *source);
 

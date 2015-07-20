@@ -65,7 +65,7 @@ int TestKernelInterface(void){
   assert(chkptr == f.dtwn);
 
   for(int i = 0; i < f.wsize; i++)
-    f.dtwn[i] = 0.0;
+    f.dtwn[i] = 0;
 
   status = clEnqueueUnmapMemObject(f.cli.commandqueue,
 				   f.dtwn_cl,
@@ -115,7 +115,7 @@ int TestKernelInterface(void){
  
   printf("error: %f\n", maxerr);
 
-  test = (maxerr < 1e-8);
+  test = (maxerr < _SMALL);
 
   return test;
 }

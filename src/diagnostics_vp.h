@@ -13,10 +13,6 @@
 
 
 //! \brief compute square of velocity L2 error
-//! \param[in] w : values of f at glops
-//! \param[in] x : point of the mesh
-//! \param[in] t : time
-//! \param[in] t : type of L2norm. if type_norm=0 this is the numerical solution if type_norm=1 this is the error 
 real L2VelError(field * f,real* x,real *w);
 
 real L2_Kinetic_error(field* f);

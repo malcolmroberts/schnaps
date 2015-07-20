@@ -47,8 +47,11 @@ int TestSkyline(void);
 
 int TestLinearSolver(void);
 
+<<<<<<< HEAD
 int TestNonLinearSolver(void);
 
+=======
+>>>>>>> origin/devel
 int TestPoisson(void);
 
 int TestPoisson2d(void);
@@ -69,6 +72,7 @@ int TestFieldRK2_CL(void);
 
 int TestLandau_Damping_1D(void);
 
+<<<<<<< HEAD
 int TestLandauCollision_1D(void);
 
 int Test_Wave_Periodic(void);
@@ -77,5 +81,17 @@ int Test_SH_equilibrium(void);
 
 int Test_SH_periodic(void);
 
+=======
+int TestOrszagTang(int argc, char *argv[]);
+
+int TestReconnexion(int argc, char *argv[]);
+
+int TestKelvinHelmotz(int argc, char *argv[]);
+
+int TestDoubleTearing(int argc, char *argv[]);
+
+int Test_Wave_Periodic(void);
+
+>>>>>>> origin/devel
 
 #endif

@@ -78,8 +78,8 @@ typedef struct PoissonSolver{
 int CompareFatNode(const void* a,const void* b);
 
 //! \brief build the fat nodes list from a field
-//! \param[in] a initialized field
-//! \param[out] an allocated, prepared and sorted list of fat nodes
+//! \param[in] f an initialized field
+//! \param[out] fn_list an allocated, prepared and sorted list of fat nodes
 //! \returns the size of the list
 int BuildFatNodeList(field* f,FatNode* fn_list);
 
@@ -97,15 +97,15 @@ void InitPoissonSolver(PoissonSolver* ps, field* fd,int charge_index);
 //!  (1->dirichlet ; 2-> periodic)
 //! \param[in] bc_l left boundary value (dirichlet case)
 //! \param[in] bc_r right boundary value (dirichlet case)
+//! \param[in] solver_sys linear solver
+//! \param[in] precon preconditionner
 void SolvePoisson1D(field *f,real * w,
 		    int type_bc, real bc_l, real bc_r,Solver solver_sys, PC precon);
 
 
 
 //! \brief solve a 2D poisson problem
-//! \param[in] f a field (contains the mesh)
-//! \param[in] w the field values (for computing the charge
-//! , returning the potential and the electric field)
+//! \param[inout] ps a Poisson solver (field + linear solver + other parameters)
 //! \param[in] type_bc the boundary condition type
 //!  (1->dirichlet ; 2-> periodic)
 void SolvePoisson2D(PoissonSolver* ps,int type_bc);

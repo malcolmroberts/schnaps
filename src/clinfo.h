@@ -10,6 +10,8 @@
 
 #include <stdio.h>
 
+#include "global.h"
+
 //! \brief Data structure for managing the OpenCL
 //! system informations
 typedef struct CLInfo{
@@ -51,6 +53,7 @@ void PrintCLInfo(CLInfo *cli);
 //! \brief Compile kernels source
 //! \param[inout] cli pointer to a CLInfo
 //! \param[in] program string containing the kernels sources
+//! \param[in] buildoptions string containing opencl compiler options
 void BuildKernels(CLInfo *cli, char *program, char *buildoptions);
 
 //! \brief scan all *.h and *.c in order to find the code
@@ -66,12 +69,12 @@ void ReadFile(char filename[], char** s);
 
 bool cldevice_is_acceptable(cl_uint ndevice, cl_uint nplatform);
 
-double cl_dev_gflops(char *platform_name);
-double cl_dev_bwidth(char *platform_name);
-double kernel_min_time(double dev_flops, double bandwidth,
+real cl_dev_gflops(char *platform_name);
+real cl_dev_bwidth(char *platform_name);
+real kernel_min_time(real dev_flops, real bandwidth,
 		       unsigned long int flop_count, 
 		       unsigned long int io_count);
-void print_kernel_perf(double dev_fflops, double bandwidth,
+void print_kernel_perf(real dev_fflops, real bandwidth,
 		       unsigned long int flop_count, unsigned long int io_count,
 		       cl_ulong kernel_time_ns);
 

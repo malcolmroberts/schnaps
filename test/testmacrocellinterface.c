@@ -160,7 +160,7 @@ int TestMacroFace(void){
 
   // Check that the results are the same
   test = true;
-  real tolerance = 1e-8;
+  real tolerance = _SMALL;
 
   real maxerr = 0.0;
   for(int i = 0; i < f.wsize; i++) {

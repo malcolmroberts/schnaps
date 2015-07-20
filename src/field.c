@@ -10,6 +10,7 @@
 #include <string.h>
 #include "quantities_vp.h"
 #include "solverpoisson.h"
+#include "model.h"
 
 #ifdef _WITH_OPENCL 
 #include "clutils.h"
@@ -144,7 +145,6 @@ void init_empty_field(field *f)
 void init_data(field *f)
 {
   for(int ie = 0; ie < f->macromesh.nbelems; ie++) {
-    
     real physnode[20][3];
     for(int inoloc = 0; inoloc < 20; inoloc++) {
       int ino = f->macromesh.elem2node[20 * ie + inoloc];
@@ -166,16 +166,14 @@ void init_data(field *f)
       { // Check the reverse transform at all the GLOPS
  	real xref2[3];
 	Phy2Ref(physnode, xpg, xref2);
-	assert(Dist(xref, xref2) < 1e-8);
+	assert(Dist(xref, xref2) < _SMALL);
       }
 
       real w[f->model.m];
       f->model.InitData(xpg, w);
       for(int iv = 0; iv < f->model.m; iv++) {
-	int imem;
-	imem = f->varindex(f->interp_param, ie, ipg, iv);
+	int imem = f->varindex(f->interp_param, ie, ipg, iv);
 	f->wn[imem] = w[iv];
-
       }
     }
   }
@@ -203,7 +201,7 @@ void set_physnodes_cl(field *f)
   cl_int status;
   status = clEnqueueWriteBuffer(f->cli.commandqueue,
   				f->physnodes_cl, // cl_mem buffer,
-  				CL_TRUE,// cl_bool blocking_read,
+  				CL_TRUE,// cl_bool blocking_write,
   				0, // size_t offset
   				buf_size, // size_t cb
   				physnode, //  	void *ptr,
@@ -431,7 +429,13 @@ void Initfield(field *f) {
 
   int nmem = f->model.m * f->macromesh.nbelems * NPG(f->interp_param + 1);
   f->wsize = nmem;
-  printf("allocate %d reals\n", nmem);
+
+  real g_memsize = nmem * sizeof(real) * 1e-9;
+  if(sizeof(real) == sizeof(real))
+    printf("Allocating %d doubles per array (%f GB).\n", nmem, g_memsize);
+  else
+    printf("Allocating %d floats per array (%f GB)\n", nmem, g_memsize);
+
   f->wn = calloc(nmem, sizeof(real));
   assert(f->wn);
   f->dtwn = calloc(nmem, sizeof(real));
@@ -441,6 +445,7 @@ void Initfield(field *f) {
   f->post_dtfield = NULL;
   f->update_after_rk = NULL;
   f->model.Source = NULL;
+  f->pic = NULL;
 
   // TODO: move this to the integrator code
   f->tnow=0;
@@ -657,7 +662,7 @@ void Plotfield(int typplot, int compare, field* f, char *fieldname,
 	      int vi = f->varindex(f->interp_param, i, ib, typplot);
 	      value[nodecount] += psi * f->wn[vi];
 	    }
-	    assert(fabs(testpsi-1) < 1e-10);
+	    assert(fabs(testpsi-1) < _SMALL);
 
 	    // Compare with an exact solution
 	    if (compare) {
@@ -1009,13 +1014,13 @@ void DGMacroCellInterfaceSlow(void *mc, field *f, real *w, real *dtw) {
   	ref_pg_face(iparam + 1, ifa, ipgf, xpgref, &wpg, xpgref_in);
 
 /* #ifdef _PERIOD */
-/* 	assert(f->is1d); // TODO: generalize to 2d */
+/* 	assert(f->macromesh.is1d); // TODO: generalize to 2d */
 /* 	if (xpgref_in[0] > _PERIOD) { */
 /* 	  //printf("à droite ifa= %d x=%f ipgf=%d ieL=%d ieR=%d\n", */
 /* 	  //	 ifa,xpgref_in[0],ipgf,ie,ieR); */
 /* 	  xpgref_in[0] -= _PERIOD; */
 /* 	} */
-/* 	else if (xpgref_in[0] < 0) {  */
+/* 	else if (xpgref_in[0] < 0) { */
 /* 	  //printf("à gauche ifa= %d  x=%f ieL=%d ieR=%d \n", */
 /* 	  //ifa,xpgref_in[0],ie,ieR); */
 /* 	  xpgref_in[0] += _PERIOD; */
@@ -1145,13 +1150,13 @@ void DGMacroCellInterface(void *mc, field *f, real *w, real *dtw)
       ref_pg_face(iparam + 1, locfaL, ipgfL, xpgref, &wpg, xpgref_in);
 
 /* #ifdef _PERIOD */
-/*       assert(f->is1d); // TODO: generalize to 2d */
+/*       assert(f->macromesh.is1d); // TODO: generalize to 2d */
 /*       if (xpgref_in[0] > _PERIOD) { */
 /* 	//printf("à droite ifa= %d x=%f ipgf=%d ieL=%d ieR=%d\n", */
 /* 	//	 ifa,xpgref_in[0],ipgf,ie,ieR); */
 /* 	xpgref_in[0] -= _PERIOD; */
 /*       } */
-/*       else if (xpgref_in[0] < 0) {  */
+/*       else if (xpgref_in[0] < 0) { */
 /* 	//printf("à gauche ifa= %d  x=%f ieL=%d ieR=%d \n", */
 /* 	//ifa,xpgref_in[0],ie,ieR); */
 /* 	xpgref_in[0] += _PERIOD; */
@@ -1193,21 +1198,21 @@ void DGMacroCellInterface(void *mc, field *f, real *w, real *dtw)
 
 	//printf("ipgL=%d ipgR=%d\n",ipgL,ipgR);
 
-	// Uncomment to check that the neighbour-finding algorithm worked.
+	//Uncomment to check that the neighbour-finding algorithm worked.
 	/* { */
 	/*   real xpgR[3], xrefR[3], wpgR; */
 	/*   ref_pg_vol(iparam + 1, ipgR, xrefR, &wpgR, NULL); */
 	/*   Ref2Phy(physnodeR, */
 	/* 	  xrefR, */
-	/* 	  NULL, -1, // dphiref, ifa */
+	/* 	  NULL, -1, dphiref, ifa */
 	/* 	  xpgR, NULL, */
-	/* 	  NULL, NULL, NULL); // codtau, dphi, vnds */
+	/* 	  NULL, NULL, NULL); codtau, dphi, vnds */
 	/*  #ifdef _PERIOD */
-	/*   assert(fabs(Dist(xpg,xpgR)-_PERIOD)<1e-11); */
+	/*   assert(fabs(Dist(xpg,xpgR)-_PERIOD)<_SMALL); */
 	/*   #else */
 	/* assert(Dist(xpg,xpgR)<1e-11); */
 	/* #endif */
-	/* }	 */
+	/* } */
 
 	real wR[m];
         for(int iv = 0; iv < m; iv++) {

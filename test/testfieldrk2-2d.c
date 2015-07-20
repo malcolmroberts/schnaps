@@ -37,6 +37,7 @@ int TestfieldRK2_2D(void) {
 
   CheckMacroMesh(&(f.macromesh), f.interp.interp_param + 1);
 
+  //assert(1==2);
   printf("cfl param =%f\n",f.hmin);
 
   real tmax = 0.2;

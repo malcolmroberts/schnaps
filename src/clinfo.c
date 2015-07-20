@@ -156,7 +156,7 @@ bool cldevice_is_acceptable(cl_uint nplatform, cl_uint ndevice)
     return false;
   }
 
-#if real == double
+#ifdef _DOUBLE_PRECISION
   cl_device_id device = get_device_id(platform, ndevice);
   if(!cldevice_supports_double(&device)) {
     printf("cldevice does not support double\n");
@@ -426,16 +426,16 @@ void BuildKernels(CLInfo *cli, char *strprog, char *buildoptions)
   if(!(cli->program)) 
     printf("Failed to create program.\n");
 
-  int deflen = 20;
+  int deflen = 400;
   char *buildoptions0 
     = (buildoptions == NULL) ? 
     malloc(deflen + 1) :  
     malloc(deflen + strlen(buildoptions) + 1);
 
-#if real == double
+#ifdef _DOUBLE_PRECISION
   sprintf(buildoptions0, "-D real=double ");
 #else
-  sprintf(buildoptions0, "-D real=float ");
+  sprintf(buildoptions0, "-cl-single-precision-constant -D real=float ");
 #endif
   if(buildoptions != NULL)
     strcat(buildoptions0, buildoptions);
@@ -486,7 +486,7 @@ void GetOpenCLCode(void){
   assert(status == 0);
 }
 
-double cl_dev_gflops(char *platform_name)
+real cl_dev_gflops(char *platform_name)
 {
   //if(strcmp(platform_name, "Intel(R) Core(TM) i3-4010U CPU @ 1.70GHz") == 0)
   //  return 2;
@@ -502,7 +502,7 @@ double cl_dev_gflops(char *platform_name)
   return 0;
 }
 
-double cl_dev_bwidth(char *platform_name)
+real cl_dev_bwidth(char *platform_name)
 {
   //if(strcmp(platform_name, "Intel(R) Core(TM) i3-4010U CPU @ 1.70GHz") == 0)
   //  return 2;
@@ -522,23 +522,23 @@ double cl_dev_bwidth(char *platform_name)
 // Given the dev_flops (in gflop/s) and the bandwidth (in GB/s), the
 // number of operations (flop_count), and the number of real io
 // transfers (io_count), compute the theoretical execution time.
-double kernel_min_time(double dev_flops, double bandwidth,
+real kernel_min_time(real dev_flops, real bandwidth,
 		       unsigned long int flop_count, unsigned long int io_count)
 {
   return flop_count / (1e9 * dev_flops); 
   + io_count * sizeof(real)  / (1e9 * bandwidth); 
 }
 
-void print_kernel_perf(double dev_gflops, double dev_bwidth,
+void print_kernel_perf(real dev_gflops, real dev_bwidth,
 		       unsigned long int flop_count, unsigned long int io_count,
 		       cl_ulong kernel_time_ns)
 {
   if(dev_gflops > 0 && dev_bwidth > 0) {
     printf("\tKernel flop count:\t\t%lu\n", flop_count);
     printf("\tKernel io count:\t\t%lu\n", io_count);
-    double total_time = 1e-9 * kernel_time_ns;
+    real total_time = 1e-9 * kernel_time_ns;
     printf("\tKernel time:\t\t\t%f s\n", total_time);
-    double min_time_total = kernel_min_time(dev_gflops, dev_bwidth,
+    real min_time_total = kernel_min_time(dev_gflops, dev_bwidth,
 					    flop_count, io_count);
     printf("\tTheoretical kernel time:\t%f s\n", min_time_total);
     printf("\tEfficiency:\t\t\t%f%%\n", 100.0 * min_time_total / total_time);

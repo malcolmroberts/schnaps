@@ -75,6 +75,48 @@ void BoxMuller3d(real *xx,int* k1, int* k2)
 
 }
 
+void CreateCoil2DParticles(PIC* pic,MacroMesh *m){
+
+  real delta=1; // coil radius
+  real current=1; // electric current
+  real v0=1;  // tangential particle velocity
+  real pi=4*atan(1.);
+
+  pic->weight= pi*delta*current/v0/pic->nbparts;
+
+
+  for(int np=0;np<pic->nbparts;np++){
+
+    real xphi[3];
+
+    real rax=corput(np+1,5,3);
+    xphi[0]=delta*cos(rax*2*pi);
+    xphi[1]=delta*sin(rax*2*pi);
+    xphi[2]=0.5;
+    real vx=-v0*sin(rax*2*pi);
+    real vy=v0*cos(rax*2*pi);
+    real vz=0;
+
+    real weight=2*pi*delta*current/v0/pic->nbparts;
+
+    real xref[3];
+
+    int num_elem=NumElemFromPoint(m,xphi,xref);
+    pic->cell_id[np]=num_elem;
+    pic->old_cell_id[np]=num_elem;
+
+    pic->xv[np*6+0]=xref[0];
+    pic->xv[np*6+1]=xref[1];
+    pic->xv[np*6+2]=xref[2];
+    pic->xv[np*6+3]=vx;
+    pic->xv[np*6+4]=vy;
+    pic->xv[np*6+5]=vz;
+  
+
+  }
+  
+
+}
 
 void CreateParticles(PIC* pic,MacroMesh *m){
 
@@ -143,7 +185,27 @@ void CreateParticles(PIC* pic,MacroMesh *m){
 
 }
 
-void AccumulateParticles(PIC* pic,field *f){
+void AccumulateParticles(void *fv, real *w){
+  field *f = fv;
+  PIC *pic = f->pic;
+  
+  int npg=NPG(f->interp_param + 1);
+  
+  for(int ie = 0; ie < f->macromesh.nbelems; ie++){
+
+    for(int ipg = 0; ipg < npg; ipg++){
+      int iv = 4;
+      int imem = f->varindex(f->interp_param, ie, ipg, iv);
+      f->wn[imem]=0;
+      iv = 5;
+      imem = f->varindex(f->interp_param, ie, ipg, iv);
+      f->wn[imem]=0;
+      iv = 6;
+      imem = f->varindex(f->interp_param, ie, ipg, iv);
+      f->wn[imem]=0;
+    } 
+
+  }
   
   for(int i=0;i<pic->nbparts;i++) {
     
@@ -170,22 +232,22 @@ void AccumulateParticles(PIC* pic,field *f){
     for(int ib=0;ib < npg;ib++){
       real wpg;
       ref_pg_vol(f->interp_param + 1, ib, NULL, &wpg, NULL);
-      printf("det=%f wpg=%f \n", det, wpg);
+      //printf("det=%f wpg=%f \n", det, wpg);
       wpg *= det;
       real psi;
       psi_ref(f->interp_param+1,ib,pic->xv + 6*i,&psi,NULL);
 
-      int iv=6;  // rho index
+      int iv = 6;  // rho index
       int imem = f->varindex(f->interp_param, ie, ib, iv);
-      f->wn[imem]+= psi/wpg;
+      w[imem] += psi / wpg * pic->weight;
  
-      iv=4;  // j1 index
+      iv = 4;  // j1 index
       imem = f->varindex(f->interp_param, ie, ib, iv);
-      f->wn[imem]+= pic->xv[6*i+3]*psi/wpg;
+      w[imem] += pic->xv[6 * i + 3] * psi / wpg * pic->weight;
 
-      iv=5;  // j2 index
+      iv = 5;  // j2 index
       imem = f->varindex(f->interp_param, ie, ib, iv);
-      f->wn[imem]+= pic->xv[6*i+4]*psi/wpg;
+      w[imem] += pic->xv[6 * i + 4] * psi / wpg * pic->weight;
     }
       
     

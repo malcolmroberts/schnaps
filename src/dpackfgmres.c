@@ -60,7 +60,7 @@ static real c_b305 = 0.;
 /* *  upon the use of the Source Code. The licensee shall use reasonable */
 /* *  endeavours to notify the authors of the package of this publication. */
 /* * */
-/* *  [1] V. Frayssé, L. Giraud, S. Gratton, and J. Langou, A set of GMRES */
+/* *  [1] V. FrayssÃ©, L. Giraud, S. Gratton, and J. Langou, A set of GMRES */
 /* *    routines for real and complex arithmetics on high performance */
 /* *    computers, CERFACS Technical Report TR/PA/03/3, public domain software */
 /* *    available on www.cerfacs/algor/Softs, 2003 */
@@ -614,6 +614,7 @@ real gnorm2(int *n, real *x, int *incx){
     real ret_val, d__1;
     real sqrt(real);
 
+
     /* Local variables */
     static real norm, scale, absxi;
     static int ix;
@@ -978,7 +979,9 @@ int GivensRot(real *da, real *db, real *c,
     /* System generated locals */
     real d__1, d__2;
     /* Builtin functions */
+    
     real sqrt(real), d_sign(real *, real *);
+
 
     /* Local variables */
     static real r, scale, z, roe;
@@ -1088,6 +1091,7 @@ L20:
     
     /* Builtin functions */
     real sqrt(real);
+
 
     /* Local variables */
     static int xcurrent, ycurrent;
@@ -1524,6 +1528,7 @@ return 0;
 
     /* Builtin functions */
     real sqrt(real);
+
 
     /* Local variables */
     static real auxhjp1j, dnormres;
