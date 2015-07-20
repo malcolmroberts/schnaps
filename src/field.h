@@ -329,7 +329,7 @@ real L2error(field *f);
 
 //! \brief compute the normalized L2 distance with the imposed data
 //! \param[in] f the field.
-//! \param[in] number of the field.
+//! \param[in] nbfield number of the field.
 //! \returns the error.
 real L2error_onefield(field *f, int nbfield);
 

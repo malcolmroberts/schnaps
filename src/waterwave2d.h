@@ -14,7 +14,7 @@
 //! \brief boundardy flux based on the upwind scheme for wave
 //! \param[in] t : current time
 //! \param[in] x : current position
-//! \param[in] w : states
+//! \param[in] wL : states
 //! \param[in] vnorm : normal vector
 //! \param[out] flux : the flux
 void Wave_Upwind_BoundaryFlux(real *x, real t, real *wL, real *vnorm,real *flux);
@@ -43,7 +43,7 @@ void TestPeriodic_Wave_InitData(real *x, real *w);
 //! \brief boundardy rusanov flux based for shallow water
 //! \param[in] t : current time
 //! \param[in] x : current position
-//! \param[in] w : states
+//! \param[in] wL : states
 //! \param[in] vnorm : normal vector
 //! \param[out] flux : the flux
 void ShallowWater_Rusanov_BoundaryFlux(real *x, real t, real *wL, real *vnorm,real *flux);
@@ -51,7 +51,7 @@ void ShallowWater_Rusanov_BoundaryFlux(real *x, real t, real *wL, real *vnorm,re
 //! \brief boundardy hll flux based for shallow water
 //! \param[in] t : current time
 //! \param[in] x : current position
-//! \param[in] w : states
+//! \param[in] wL : states
 //! \param[in] vnorm : normal vector
 //! \param[out] flux : the flux
 void ShallowWater_HLL_BoundaryFlux(real *x, real t, real *wL, real *vnorm,real *flux);
@@ -59,7 +59,7 @@ void ShallowWater_HLL_BoundaryFlux(real *x, real t, real *wL, real *vnorm,real *
 //! \brief boundardy roe flux based for shallow water
 //! \param[in] t : current time
 //! \param[in] x : current position
-//! \param[in] w : states
+//! \param[in] wL : states
 //! \param[in] vnorm : normal vector
 //! \param[out] flux : the flux
 void ShallowWater_Roe_BoundaryFlux(real *x, real t, real *wL, real *vnorm,real *flux);
@@ -68,7 +68,7 @@ void ShallowWater_Roe_BoundaryFlux(real *x, real t, real *wL, real *vnorm,real *
 //! \brief boundardy HLL wb flux based for shallow water
 //! \param[in] t : current time
 //! \param[in] x : current position
-//! \param[in] w : states
+//! \param[in] wL : states
 //! \param[in] vnorm : normal vector
 //! \param[out] flux : the flux
 void ShallowWater_HLLWB_BoundaryFlux(real *x, real t, real *wL, real *vnorm,real *flux);
