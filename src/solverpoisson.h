@@ -8,6 +8,7 @@
 #include "geometry.h"
 #include "interpolation.h"
 #include "linear_solver.h"
+#include "simulation.h"
 
 #define _Dirichlet_Poisson_BC (1)
 #define _Periodic_Poisson_BC (2)
@@ -35,8 +36,8 @@ typedef struct FatNode{
 //! FE assembly and resolution, etc. 
 typedef struct PoissonSolver{
 
-  //! \brief a field (gives the mesh and the charge)
-  field* fd;
+  //! \brief a simulation (gives the mesh and the charge)
+  Simulation* simu;
 
   //! linear solver
   LinearSolver lsol;
@@ -78,19 +79,20 @@ typedef struct PoissonSolver{
 int CompareFatNode(const void* a,const void* b);
 
 //! \brief build the fat nodes list from a field
-//! \param[in] f an initialized field
+//! \param[in] simu an initialized simulation
 //! \param[out] fn_list an allocated, prepared and sorted list of fat nodes
 //! \returns the size of the list
-int BuildFatNodeList(field* f,FatNode* fn_list);
+int BuildFatNodeList(Simulation *simu,FatNode* fn_list);
 
 //! \brief init a poisson solver
 //! \param[inout] ps a PoissonSolver struct
-//! \param[in] fd a Field
+//! \param[in] simu a simulation
 //! \param[in] charge_index charge index in the field variables
-void InitPoissonSolver(PoissonSolver* ps, field* fd,int charge_index);
+void InitPoissonSolver(PoissonSolver* ps, Simulation* simu,
+		       int charge_index);
 
 //! \brief solve a 1D poisson problem
-//! \param[in] f a field (contains the mesh)
+//! \param[in] simu a simulation
 //! \param[in] w the field values (for computing the charge
 //! , returning the potential and the electric field)
 //! \param[in] type_bc the boundary condition type
@@ -99,7 +101,7 @@ void InitPoissonSolver(PoissonSolver* ps, field* fd,int charge_index);
 //! \param[in] bc_r right boundary value (dirichlet case)
 //! \param[in] solver_sys linear solver
 //! \param[in] precon preconditionner
-void SolvePoisson1D(field *f,real * w,
+void SolvePoisson1D(Simulation *simu,real * w,
 		    int type_bc, real bc_l, real bc_r,Solver solver_sys, PC precon);
 
 

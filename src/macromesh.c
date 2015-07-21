@@ -666,8 +666,9 @@ void BuildConnectivity(MacroMesh* m)
       if (m->elem2elem[6 * ie + ifa] < 0){
 	real xpgref[3],xpgref_in[3];
 	int ipgf=0;
-	int param2[7]={0,0,0,1,1,1,0};
-	ref_pg_face(param2, ifa, ipgf, xpgref, NULL, xpgref_in);
+	int deg[3] = {0,0,0};
+	int raf[3] = {1,1,1};
+	ref_pg_face(deg, raf, ifa, ipgf, xpgref, NULL, xpgref_in);
 	real dtau[3][3],xpg_in[3];
 	real codtau[3][3],vnds[3]={0,0,0};
 	Ref2Phy(physnode,
@@ -775,7 +776,7 @@ int CompareFace4Sort(const void* a,const void* b) {
   return r;
 };
 
-void CheckMacroMesh(MacroMesh *m, int *param) {
+void CheckMacroMesh(MacroMesh *m, int *deg, int *raf) {
   Geom g;
   real face_centers[6][3]={ {0.5,0.0,0.5},
 			    {1.0,0.5,0.5},
@@ -804,7 +805,7 @@ void CheckMacroMesh(MacroMesh *m, int *param) {
 
     // Test that the ref_ipg function is compatible with ref_pg_vol
     //int param[7]={_DEGX,_DEGY,_DEGZ,_RAFX,_RAFY,_RAFZ,0};
-    for(int ipg = 0; ipg < NPG(param); ipg++) {
+    for(int ipg = 0; ipg < NPG(deg,raf); ipg++) {
       real xref1[3], xref_in[3];
       real wpg;
       ref_pg_vol(param, ipg, xref1, &wpg, xref_in);

@@ -106,11 +106,12 @@ void ref_pg_vol(int* deg,int *raf,int ipg,
 
 //! \brief from a reference point find the nearest
 //! gauss point
-//! \param[in] param interp. params list
+//! \param[in] deg degrees list
+//! \param[in] raf refinements list
 //! \param[in] xref  reference Gauss point coordinates
 //! \return Gauss point index
 #pragma start_opencl
-int ref_ipg(__constant int* param,real* xref);
+int ref_ipg(__constant int* deg, __constant int* raf,real* xref);
 #pragma end_opencl
 
 //! \brief compute the position xpg of glop ipg in the local
@@ -132,28 +133,31 @@ int ref_pg_face(int* deg, int *raf,int ifa,int ipgf,real* xpg,real* wpg,
 //! Warning: the value of the gradient is
 //! not reliable if xref is on the boundary
 //! of a subcell (because the gradient is discontinuous)
-//! \param[in] param interpolation parammeters (degrees and refinements)
+//! \param[in] deg degrees parameters 
+//! \param[in] raf refinements parameters 
 //! \param[in] ib basis function index
 //! \param[in] xref position of a point in the reference element
 //! \param[out] psi value of the basis function
 //! \param[out] dpsiref gradient of the basis function in the reference element
-void psi_ref(int* param, int ib, real* xref, real* psi, real* dpsiref);
+void psi_ref(int *deg, int *raf, int ib, real* xref, real* psi, real* dpsiref);
 
 //! \brief  gradient of a basis function at a given glop 
-//! \param[in]  param interpolation parammeters (degrees and refinements)
+//! \param[in] deg degrees parameters 
+//! \param[in] raf refinements parameters 
 //! \param[in] ib basis function index
 //! \param[in] ipg glop index
 //! \param[out] dpsiref gradient of the basis function in the reference element
-void grad_psi_pg(int* param,int ib,int ipg,real* dpsiref);
+void grad_psi_pg(int *deg, int *raf,int ib,int ipg,real* dpsiref);
 
 //! \brief  gradient of a basis function at a given glop in a given subcell
-//! \param[in]  param interpolation parammeters (degrees and refinements)
+//! \param[in] deg degrees parameters 
+//! \param[in] raf refinements parameters 
 //! \param[in] is a vector of three integer indices locating the subcell
 //! \param[in] ib basis function index
 //! \param[in] xref position of a point in the reference element
 //! \param[out] psi value of the basis function
 //! \param[out] dpsiref gradient of the basis function in the reference element
-void psi_ref_subcell(int* param, int* is,int ib, real* xref, real* psi, real* dpsiref);
+void psi_ref_subcell(int *deg, int *raf, int* is,int ib, real* xref, real* psi, real* dpsiref);
 
 //! \brief return the 1d ith GLOP position for degree deg
 //! \param[in] deg degree

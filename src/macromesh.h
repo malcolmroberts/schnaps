@@ -119,8 +119,9 @@ void Detect2DMacroMesh(MacroMesh *m);
 //! The function simply aborts if the mesh is bad because
 //! going on with computations has no meaning.
 //! \param[in] m a macromesh
-//! \param[in] param interpolation parameters (m, degrees and refinements)
-void CheckMacroMesh(MacroMesh *m, int param[7]);
+//! \param[in] deg degrees parameters 
+//! \param[in] raf refinement parameters 
+void CheckMacroMesh(MacroMesh *m, int *deg, int *raf);
 //! \brief list the mesh data
 //! \param[in] m a macromesh
 void PrintMacroMesh(MacroMesh *m);

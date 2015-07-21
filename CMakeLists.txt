@@ -78,6 +78,8 @@ enable_testing()
 list(APPEND
   source_files
   src/schnaps.h
+  src/simulation.c
+  src/simulation.h
   src/field.c
   src/field.h
   src/geometry.c

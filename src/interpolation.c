@@ -215,18 +215,7 @@ void ipg_to_xyz(const int *raf, const int *deg, int *ic, int *ix,
 
 // From a reference point find the nearest gauss point
 // Warning: works only  degree 1,2 or 3
-int ref_ipg(int *param, real *xref) {
-  int deg[3], nraf[3];
-
-  // Approximation degree in each direction
-  deg[0] = param[0];
-  deg[1] = param[1];
-  deg[2] = param[2];
-
-  // Number of subcells in each direction
-  nraf[0] = param[3];
-  nraf[1] = param[4];
-  nraf[2] = param[5];
+int ref_ipg(int *deg, int *nraf, real *xref) {
 
   real hh[3] = {1./nraf[0],1./nraf[1],1./nraf[2]};
 
@@ -438,22 +427,14 @@ real dlag(int deg, int ib, int ipg)
 // ib at point xref[3].
 // Warning: the value of the gradient is not reliable if xref is on
 // the boundary of a subcell (because the gradient is discontinuous)
-void psi_ref(int *param, int ib, real *xref, real *psi, real *dpsi)
+void psi_ref(int *deg, int *nraf, int ib, real *xref, real *psi, real *dpsi)
 {
   real dpsibx;
   real dpsiby;
   real dpsibz;
 
-  int deg[3], offset[3], nraf[3];
+  int offset[3];
 
-  // approximation degree in each direction
-  deg[0] = param[0];
-  deg[1] = param[1];
-  deg[2] = param[2];
-  // number of subcells in each direction
-  nraf[0] = param[3];
-  nraf[1] = param[4];
-  nraf[2] = param[5];
   // Starting Gauss-Lobatto point in each direction
   offset[0] = gauss_lob_offset[deg[0]];
   offset[1] = gauss_lob_offset[deg[1]];
@@ -526,22 +507,15 @@ void psi_ref(int *param, int ib, real *xref, real *psi, real *dpsi)
 // Return the value psi and the gradient dpsi[3] of the basis function
 // ib at point xref[3] given the subcell indices is[3].
 // The computation is reliable.
-void psi_ref_subcell(int *param, int *is, int ib,
+void psi_ref_subcell(int *deg, int *nraf, int *is, int ib,
 		     real *xref, real *psi, real *dpsi) {
   real dpsibx;
   real dpsiby;
   real dpsibz;
 
-  int deg[3],offset[3],nraf[3];
 
-  // Approximation degree in each direction
-  deg[0] = param[0];
-  deg[1] = param[1];
-  deg[2] = param[2];
-  // Number of subcells in each direction
-  nraf[0] = param[3];
-  nraf[1] = param[4];
-  nraf[2] = param[5];
+  int offset[3];
+
   // Starting Gauss-Lobatto point in each direction
   offset[0] = gauss_lob_offset[deg[0]];
   offset[1] = gauss_lob_offset[deg[1]];
@@ -594,17 +568,8 @@ void psi_ref_subcell(int *param, int *is, int ib,
 
 // Return the gradient dpsi[0..2] of the basis function ib at GLOP
 // ipg.
-void grad_psi_pg(int *param, int ib, int ipg, real *dpsi) {
-  int deg[3], offset[3], nraf[3];
-
-  // approximation degree in each direction
-  deg[0] = param[0];
-  deg[1] = param[1];
-  deg[2] = param[2];
-  // number of subcells in each direction
-  nraf[0] = param[3];
-  nraf[1] = param[4];
-  nraf[2] = param[5];
+void grad_psi_pg(int *deg, int *nraf, int ib, int ipg, real *dpsi) {
+  int offset[3];
 
   // glop 3d indices
   int ix[3],ic[3];

@@ -154,7 +154,7 @@ void init_data(field *f)
       real w[f->model.m];
       f->model.InitData(xpg, w);
       for(int iv = 0; iv < f->model.m; iv++) {
-	int imem = f->varindex(f->interp_param, ie, ipg, iv);
+	int imem = f->varindex(f->deg, f->raf, f->model.m, ipg, iv);
 	f->wn[imem] = w[iv];
       }
     }
@@ -400,16 +400,31 @@ void init_field_cl(field *f)
 }
 #endif
 
-void Initfield(field *f) {
+void Initfield(field *f, Model model, Interpolation interp) {
   //int param[8]={f->model.m,_DEGX,_DEGY,_DEGZ,_RAFX,_RAFY,_RAFZ,0};
   
   //f->vmax = 1.0; // FIXME: make this variable ??????
 
-  // a copy for avoiding too much "->"
-  for(int ip = 0; ip < 8; ip++)
-    f->interp_param[ip] = f->interp.interp_param[ip];
+  f->model = model;
 
-  int nmem = f->model.m * f->macromesh.nbelems * NPG(f->deg, f->raf);
+  f->interp = interp;
+
+  assert(model.m == interp.interp_param[0]);
+
+  f->deg[0] = interp.interp_param[1];
+  f->deg[1] = interp.interp_param[2];
+  f->deg[2] = interp.interp_param[3];
+
+  f->raf[0] = interp.interp_param[4];
+  f->raf[1] = interp.interp_param[5];
+  f->raf[2] = interp.interp_param[6];
+
+  f->npg[0] = f->deg[0] + 1;
+  f->npg[1] = f->deg[1] + 1;
+  f->npg[2] = f->deg[2] + 1;
+
+
+  int nmem = f->model.m * NPG(f->deg, f->raf);
   f->wsize = nmem;
 
   real g_memsize = nmem * sizeof(real) * 1e-9;
@@ -422,7 +437,6 @@ void Initfield(field *f) {
   assert(f->wn);
   f->dtwn = calloc(nmem, sizeof(real));
   assert(f->dtwn);
-  f->Diagnostics = NULL;
   f->pre_dtfield = NULL;
   f->post_dtfield = NULL;
   f->update_after_rk = NULL;
@@ -431,11 +445,6 @@ void Initfield(field *f) {
 
   // TODO: move this to the integrator code
   f->tnow=0;
-  f->itermax=0;
-  f->iter_time=0;
-  f->nb_diags = 0;
-
-  f->tnow = 0;
 
   init_data(f);
 
@@ -475,8 +484,7 @@ void free_field(field *f)
 // Display the field on screen
 void Displayfield(field *f) {
   printf("Display field...\n");
-  for(int ie = 0; ie < f->macromesh.nbelems; ie++) {
-    printf("elem %d\n", ie);
+    printf("elem data \n");
     for(int ipg = 0; ipg < NPG(f->deg, f->raf); ipg++) {
       real xref[3], wpg;
       ref_pg_vol(f->deg, f->raf, ipg, xref, &wpg, NULL);
@@ -484,45 +492,38 @@ void Displayfield(field *f) {
       printf("Gauss point %d %f %f %f \n", ipg, xref[0], xref[1], xref[2]);
       printf("dtw= ");
       for(int iv = 0; iv < f->model.m; iv++) {
-	int imem = f->varindex(f->interp_param, ie, ipg, iv);
+	int imem = f->varindex(f->deg, f->raf, f->model.m, ipg, iv);
 	printf("%f ", f->dtwn[imem]);
       }
       printf("\n");
       printf("w= ");
       for(int iv = 0; iv < f->model.m; iv++) {
-	int imem = f->varindex(f->interp_param, ie, ipg, iv);
+	int imem = f->varindex(f->deg, f->raf, f->model.m, ipg, iv);
 	printf("%f ", f->wn[imem]);
       }
       printf("\n");
-    }
+    
   }
 };
 
 // Save the results in a text file
 // in order plot it with Gnuplot
-void Gnuplot(field* f,int dir, real fixval, char* filename) {
+void Gnuplot(Simulation *simu,int dir, real fixval, char* filename) {
 
   FILE * gmshfile;
   gmshfile = fopen(filename, "w" );
 
   printf("Save for Gnuplot...\n");
-  for(int ie = 0; ie < f->macromesh.nbelems; ie++) {
 
-    real physnode[20][3];
-    for(int inoloc = 0; inoloc < 20; inoloc++) {
-      int ino = f->macromesh.elem2node[20 * ie + inoloc];
-      physnode[inoloc][0] = f->macromesh.node[3 * ino + 0];
-      physnode[inoloc][1] = f->macromesh.node[3 * ino + 1];
-      physnode[inoloc][2] = f->macromesh.node[3 * ino + 2];
-    }
-
+  for(int ie=0; ie < simu->macromesh.nbelems; ie++){
+    field *f = &simu->fd[ie];
     for(int ipg = 0; ipg < NPG(f->deg, f->raf); ipg++) {
 
       real xref[3], xphy[3], wpg;
       real dtau[3][3];
       ref_pg_vol(f->deg, f->raf, ipg, xref, &wpg, NULL);
 
-      Ref2Phy(physnode,
+      Ref2Phy(f->physnode,
 	      xref,
 	      0, -1, // dphiref, ifa
 	      xphy, dtau,
@@ -533,264 +534,31 @@ void Gnuplot(field* f,int dir, real fixval, char* filename) {
 	fprintf(gmshfile, "%f ",xphy[1-dir]);
 
 	for(int iv = 0; iv < f->model.m; iv++) {
-	  int imem = f->varindex(f->interp_param, ie, ipg, iv);
+	  int imem = f->varindex(f->deg, f->raf, f->model.m, ipg, iv);
 	  fprintf(gmshfile, "%f ",f->wn[imem]);
 	}
 	fprintf(gmshfile, "\n");
 
       }
     }
-  }
+}
+  
   fclose(gmshfile);
 };
 
 
-// Save the results in the gmsh format typplot: index of the plotted
-// variable int compare == true -> compare with the exact value.  If
-// fieldname is NULL, then the fieldname is typpplot.
-void Plotfield(int typplot, int compare, field* f, char *fieldname,
-	       char *filename) {
-
-  real hexa64ref[3 * 64] = { 
-    0, 0, 3, 3, 0, 3, 3, 3, 3, 0, 3, 3, 0, 0, 0, 3, 0, 0, 3, 3, 0, 0, 3, 0,
-    1, 0, 3, 2, 0, 3, 0, 1, 3, 0, 2, 3, 0, 0, 2, 0, 0, 1, 3, 1, 3, 3, 2, 3,
-    3, 0, 2, 3, 0, 1, 2, 3, 3, 1, 3, 3, 3, 3, 2, 3, 3, 1, 0, 3, 2, 0, 3, 1,
-    1, 0, 0, 2, 0, 0, 0, 1, 0, 0, 2, 0, 3, 1, 0, 3, 2, 0, 2, 3, 0, 1, 3, 0,
-    1, 1, 3, 1, 2, 3, 2, 2, 3, 2, 1, 3, 1, 0, 2, 2, 0, 2, 2, 0, 1, 1, 0, 1,
-    0, 1, 2, 0, 1, 1, 0, 2, 1, 0, 2, 2, 3, 1, 2, 3, 2, 2, 3, 2, 1, 3, 1, 1,
-    2, 3, 2, 1, 3, 2, 1, 3, 1, 2, 3, 1, 1, 1, 0, 2, 1, 0, 2, 2, 0, 1, 2, 0,
-    1, 1, 2, 2, 1, 2, 2, 2, 2, 1, 2, 2, 1, 1, 1, 2, 1, 1, 2, 2, 1, 1, 2, 1};
-  for(int i = 0; i < 3 * 64; ++i)
-    hexa64ref[i] /= 3.0;
-
-  int *elem2nodes = f->macromesh.elem2node;
-  real *node = f->macromesh.node;
-
-  FILE * gmshfile;
-  gmshfile = fopen(filename, "w" );
-
-  //int param[8] = {f->model.m, _DEGX, _DEGY, _DEGZ, _RAFX, _RAFY, _RAFZ, 0};
-  int nraf[3] = {f->interp_param[4], f->interp_param[5], f->interp_param[6]};
-  // Refinement size in each direction
-  real hh[3] = {1.0 / nraf[0], 1.0 / nraf[1], 1.0 / nraf[2]};
-
-  // Header
-  fprintf(gmshfile, "$MeshFormat\n2.2 0 %d\n", (int) sizeof(real));
-
-  int nb_plotnodes = f->macromesh.nbelems * nraf[0] * nraf[1] * nraf[2] * 64;
-  fprintf(gmshfile, "$EndMeshFormat\n$Nodes\n%d\n", nb_plotnodes);
-
-  real *value = malloc(nb_plotnodes * sizeof(real));
-  assert(value);
-  int nodecount = 0;
-
-  // Nodes
-  int npgv = NPG(f->deg, f->raf);
-  for(int i = 0; i < f->macromesh.nbelems; i++) {
-    // Get the nodes of element L
-    int nnodes = 20;
-    real physnode[nnodes][3];
-    for(int ino = 0; ino < nnodes; ino++) {
-      int numnoe = elem2nodes[nnodes * i + ino];
-      for(int ii = 0; ii < 3; ii++) {
-        physnode[ino][ii] = node[3 * numnoe + ii];
-      }
-    }
-
-    // Loop on the macro elem subcells
-    int icL[3];
-    // Loop on the subcells
-    for(icL[0] = 0; icL[0] < nraf[0]; icL[0]++) {
-      for(icL[1] = 0; icL[1] < nraf[1]; icL[1]++) {
-	for(icL[2] = 0; icL[2] < nraf[2]; icL[2]++) {
-
-	  for(int ino = 0; ino < 64; ino++) {
-	    real Xr[3] = { hh[0] * (icL[0] + hexa64ref[3 * ino + 0]),
-			     hh[1] * (icL[1] + hexa64ref[3 * ino + 1]),
-			     hh[2] * (icL[2] + hexa64ref[3 * ino + 2]) };
-	    
-	    for(int ii = 0; ii < 3; ii++) {
-	      assert(Xr[ii] < 1 +  1e-10);
-	      assert(Xr[ii] > -1e-10);
-	    }
-
-	    real Xphy[3];
-	    Ref2Phy(physnode, Xr, NULL, -1, Xphy, NULL,  NULL, NULL, NULL);
-
-	    real Xplot[3] = {Xphy[0], Xphy[1], Xphy[2]};
-
-	    value[nodecount] = 0;
-	    real testpsi = 0;
-	    for(int ib = 0; ib < npgv; ib++) {
-	      real psi;
-	      psi_ref_subcell(f->deg, f->raf, icL, ib, Xr, &psi, NULL);
-	      testpsi += psi;
-	      int vi = f->varindex(f->interp_param, i, ib, typplot);
-	      value[nodecount] += psi * f->wn[vi];
-	    }
-	    assert(fabs(testpsi-1) < _SMALL);
-
-	    // Compare with an exact solution
-	    if (compare) {
-	      real wex[f->model.m];
-	      f->model.ImposedData(Xphy, f->tnow, wex);
-	      value[nodecount] -= wex[typplot];
-
-	    }
-	    nodecount++;
-	    fprintf(gmshfile, "%d %f %f %f\n", nodecount,
-		    Xplot[0], Xplot[1], Xplot[2]);
-	  }
-	}
-      }
-    }
-  }
-
-  fprintf(gmshfile, "$EndNodes\n");
-
-  // Elements
-  fprintf(gmshfile, "$Elements\n");
-  fprintf(gmshfile, "%d\n", 
-	  f->macromesh.nbelems * nraf[0] * nraf[1] * nraf[2]);
-
-  int elm_type = 92;
-  int num_tags = 0;
-
-  // fwrite((char*) &elm_type, sizeof(int), 1, gmshfile);
-  // fwrite((char*) &num_elm_follow, sizeof(int), 1, gmshfile);
-  // fwrite((char*) &num_tags, sizeof(int), 1, gmshfile);
-
-  for(int i = 0; i < f->macromesh.nbelems; i++) {
-    // Loop on the subcells
-    int icL[3];
-    for(icL[0] = 0; icL[0] < nraf[0]; icL[0]++) {
-      for(icL[1] = 0; icL[1] < nraf[1]; icL[1]++) {
-	for(icL[2] = 0; icL[2] < nraf[2]; icL[2]++) {
-	  // Get the subcell id
-	  int ncL = icL[0] + nraf[0] * (icL[1] + nraf[1] * icL[2]);
-
-	  // Global subcell id
-	  int numelem = ncL + i * nraf[0] * nraf[1] * nraf[2] + 1;
-
-	  //fwrite((char*) &numelem, sizeof(int), 1, gmshfile);
-	  fprintf(gmshfile, "%d ", numelem);
-	  fprintf(gmshfile, "%d ", elm_type);
-	  fprintf(gmshfile, "%d ", num_tags);
-
-	  for(int ii = 0; ii < 64; ii++) {
-	    int numnoe = 64 * (i * nraf[0] * nraf[1] * nraf[2] + ncL) + ii  + 1;
-	    //fwrite((char*) &numnoe, sizeof(int), 1, gmshfile);
-	    fprintf(gmshfile, "%d ", numnoe);
-	  }
-	  fprintf(gmshfile, "\n");
-	}
-      }
-    }
-  }
-
-  fprintf(gmshfile, "$EndElements\n");
-
-  // Now display data
-  fprintf(gmshfile, "$NodeData\n");
-  fprintf(gmshfile, "1\n");
-  if(fieldname == NULL)
-    fprintf(gmshfile, "\"field %d\"\n", typplot);
-  else 
-    fprintf(gmshfile, "\"field: %s\"\n", fieldname);
-
-  real t = 0;
-  fprintf(gmshfile, "1\n%f\n3\n0\n1\n", t);
-  fprintf(gmshfile, "%d\n", nb_plotnodes);
-
-  for(int ino = 0; ino < nb_plotnodes; ino++) {
-    //fwrite(const void *ptr, size_t size_of_elements,
-    // size_t number_of_elements, FILE *a_file);
-    //fwrite((char*) &nodenumber, sizeof(int), 1, gmshfile);
-    //fwrite((char*) &value, sizeof(real), 1, gmshfile);
-    //fprintf(gmshfile, "%d %f\n", nodenumber, value);
-    fprintf(gmshfile, "%d %f\n", ino + 1, value[ino]);
-  }
-
-  /* for(int i = 0;i < f->macromesh.nbelems;i++) { */
-  /*   for(int ino = 0;ino < 20;ino++) { */
-  /* 	int numnoe = elem2nodes[nnodes*i+ino]; */
-  /* 	for(int ii = 0;ii < 3;ii++) { */
-  /* 	  physnode[ino][ii] = node[3 * numnoe+ii]; */
-  /* 	} */
-  /*   } */
-
-  /*   // data at the eight nodes */
-  /*   for(int ii = 0;ii < 64;ii++) { */
-  /* 	int nodenumber = 64*i + ii  + 1; */
-
-  /* 	Xr[0] = (real) (hexa64ref[3 * ii+0]) / 3; */
-  /* 	Xr[1] = (real) (hexa64ref[3 * ii + 1]) / 3; */
-  /* 	Xr[2] = (real) (hexa64ref[3 * ii+2]) / 3; */
-
-  /* 	Ref2Phy(physnode, */
-  /* 		Xr, */
-  /* 		NULL, */
-  /* 		-1, */
-  /* 		Xphy, */
-  /* 		NULL, */
-  /* 		NULL, */
-  /* 		NULL, */
-  /* 		NULL); */
-
-
-  /* 	real value = 0; */
-  /* 	for(int ib = 0;ib < npgv;ib++) { */
-  /* 	  real psi; */
-  /* 	  psi_ref(f->deg, f->raf, ib, Xr, &psi, NULL); */
-
-  /* 	  int vi  =  f->varindex(f->interp_param, i, ib, typplot); */
-  /* 	  value += psi * f->wn[vi]; */
-  /* 	} */
-
-  /* 	// compare with an */
-  /* 	// exact solution */
-  /*     if (compare) { */
-  /*       real wex[f->model.m]; */
-  /*       f->model.ImposedData(Xphy, f->tnow, wex); */
-  /*       value -= wex[typplot]; */
-  /*     } */
-
-
-  /* 	//fwrite(const void *ptr, size_t size_of_elements, */
-  /* 	// size_t number_of_elements, FILE *a_file); */
-  /* 	//fwrite((char*) &nodenumber, sizeof(int), 1, gmshfile); */
-  /* 	//fwrite((char*) &value, sizeof(real), 1, gmshfile); */
-  /* 	//fprintf(gmshfile, "%d %f\n", nodenumber, value); */
-  /* 	fprintf(gmshfile, "%d %f\n", nodenumber, value); */
-  /*   } */
-
-  /* } */
-
-  fprintf(gmshfile, "\n$EndNodeData\n");
-
-  fclose(gmshfile);
-  free(value);
-}
 
 // Compute inter-subcell fluxes
-void DGSubCellInterface(int ie, field *f, real *w, real *dtw) 
+void DGSubCellInterface(field *f, real *w, real *dtw) 
 {
 
-  // get the physical nodes of element ie
-  real physnode[20][3];
-  for(int inoloc = 0; inoloc < 20; inoloc++) {
-    int ino = f->macromesh.elem2node[20 * ie + inoloc];
-    physnode[inoloc][0] = f->macromesh.node[3 * ino + 0];
-    physnode[inoloc][1] = f->macromesh.node[3 * ino + 1];
-    physnode[inoloc][2] = f->macromesh.node[3 * ino + 2];
-  }
 
-  const int nraf[3] = {f->interp_param[4],
-		       f->interp_param[5],
-		       f->interp_param[6]};
-  const int deg[3] = {f->interp_param[1],
-		      f->interp_param[2],
-		      f->interp_param[3]};
+  const int nraf[3] = {f->raf[0],
+		       f->raf[1],
+		       f->raf[2]};
+  const int deg[3] = {f->deg[0],
+		      f->deg[1],
+		      f->deg[2]};
   const int npg[3] = {deg[0] + 1,
 		      deg[1] + 1,
 		      deg[2] + 1};
@@ -854,7 +622,7 @@ void DGSubCellInterface(int ie, field *f, real *w, real *dtw)
 		  ref_pg_vol(f->deg, f->raf, ipgL, xref, &wpg3, NULL);
 		  // mapping from the ref glop to the physical glop
 		  real dtau[3][3], codtau[3][3];
-		  Ref2Phy(physnode,
+		  Ref2Phy(f->physnode,
 			  xref,
 			  NULL, // dphiref
 			  -1,  // ifa
@@ -877,8 +645,8 @@ void DGSubCellInterface(int ie, field *f, real *w, real *dtw)
 		real wL[m], wR[m], flux[m];
 		for(int iv = 0; iv < m; iv++) {
 		  // TO DO change the varindex signature
-		  int imemL = f->varindex(f->interp_param, ie, ipgL, iv); 
-		  int imemR = f->varindex(f->interp_param, ie, ipgR, iv);
+		  int imemL = f->varindex(f->deg, f->raf, f->model.m, ipgL, iv); 
+		  int imemR = f->varindex(f->deg, f->raf, f->model.m, ipgR, iv);
 		  // end TO DO
 		  wL[iv] = w[imemL];
 		  wR[iv] = w[imemR];
@@ -897,8 +665,8 @@ void DGSubCellInterface(int ie, field *f, real *w, real *dtw)
 		// finally distribute the flux on the two sides
 		for(int iv = 0; iv < m; iv++) {
 		  // TO DO change the varindex signature
-		  int imemL = f->varindex(f->interp_param, ie, ipgL, iv);
-		  int imemR = f->varindex(f->interp_param, ie, ipgR, iv);
+		  int imemL = f->varindex(f->deg, f->raf, f->model.m, ipgL, iv);
+		  int imemR = f->varindex(f->deg, f->raf, f->model.m, ipgR, iv);
 		  // end TO DO
 		  dtw[imemL] -= flux[iv] * wpg;
 		  dtw[imemR] += flux[iv] * wpg;
@@ -917,71 +685,31 @@ void DGSubCellInterface(int ie, field *f, real *w, real *dtw)
 
 // Compute the Discontinuous Galerkin inter-macrocells boundary terms.
 // Second implementation with a loop on the faces.
-void DGMacroCellInterface(int ifa, field *f, real *w, real *dtw) 
+void DGMacroCellInterface(int locfaL, field *fL, field *fR, real *w, real *dtw) 
 {
-  MacroMesh *msh = &f->macromesh;
-  const unsigned int m = f->model.m;
+  
+  const unsigned int m = fL->model.m;
 
-  int iparam[8];
-  for(int ip = 0; ip < 8; ip++)
-    iparam[ip] = f->interp_param[ip];
 
   // Assembly of the surface terms loop on the macrocells faces
-  int ieL = msh->face2elem[4 * ifa + 0];
-  int locfaL = msh->face2elem[4 * ifa + 1];
+  //int ieL = msh->face2elem[4 * ifa + 0];
+  //int locfaL = msh->face2elem[4 * ifa + 1];
 
-  // Get the physical nodes of element ieL
-  real physnode[20][3];
-  for(int inoloc = 0; inoloc < 20; inoloc++) {
-    int ino = msh->elem2node[20 * ieL + inoloc];
-    physnode[inoloc][0] = msh->node[3 * ino + 0];
-    physnode[inoloc][1] = msh->node[3 * ino + 1];
-    physnode[inoloc][2] = msh->node[3 * ino + 2];
-  }
 
-  int ieR = msh->face2elem[4 * ifa + 2];
-  int locfaR = msh->face2elem[4 * ifa + 3];
-  real physnodeR[20][3];
-  if (ieR >= 0) {
-    for(int inoloc = 0; inoloc < 20; inoloc++) {
-      int ino = msh->elem2node[20 * ieR + inoloc];
-      physnodeR[inoloc][0] = msh->node[3 * ino + 0];
-      physnodeR[inoloc][1] = msh->node[3 * ino + 1];
-      physnodeR[inoloc][2] = msh->node[3 * ino + 2];
-    }
-  }
+  //int ieR = msh->face2elem[4 * ifa + 2];
+  //int locfaR = msh->face2elem[4 * ifa + 3];
 
   // Loop over the points on a single macro cell interface.
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
-  for(int ipgfL = 0; ipgfL < NPGF(f->deg, f->raf, locfaL); ipgfL++) {
-
-    int iparam[8];
-    for(int ip = 0; ip < 8; ip++)
-      iparam[ip] = f->interp_param[ip];
+  for(int ipgfL = 0; ipgfL < NPGF(fL->deg, fL->raf, locfaL); ipgfL++) {
 
     real xpgref[3], xpgref_in[3], wpg;
+
     // Get the coordinates of the Gauss point and coordinates of a
     // point slightly inside the opposite element in xref_in
-    ref_pg_face(iparam + 1, locfaL, ipgfL, xpgref, &wpg, xpgref_in);
-
-    /* #ifdef _PERIOD */
-    /*       assert(f->macromesh.is1d); // TODO: generalize to 2d */
-    /*       if (xpgref_in[0] > _PERIOD) { */
-    /* 	//printf("à droite ifa= %d x=%f ipgf=%d ieL=%d ieR=%d\n", */
-    /* 	//	 ifa,xpgref_in[0],ipgf,ie,ieR); */
-    /* 	xpgref_in[0] -= _PERIOD; */
-    /*       } */
-    /*       else if (xpgref_in[0] < 0) { */
-    /* 	//printf("à gauche ifa= %d  x=%f ieL=%d ieR=%d \n", */
-    /* 	//ifa,xpgref_in[0],ie,ieR); */
-    /* 	xpgref_in[0] += _PERIOD; */
-    /*       } */
-    /* #endif */
-
-    // Recover the volume gauss point from the face index
-    int ipgL = iparam[7];
+    int ipgL = ref_pg_face(fL->deg, fL->raf, locfaL, ipgfL, xpgref, &wpg, xpgref_in);
 
     real flux[m];
     real wL[m];
@@ -990,28 +718,28 @@ void DGMacroCellInterface(int ifa, field *f, real *w, real *dtw)
     real vnds[3], xpg[3];
     {
       real dtau[3][3], codtau[3][3];
-      Ref2Phy(physnode,
+      Ref2Phy(fL->physnode,
 	      xpgref,
 	      NULL, locfaL, // dpsiref, ifa
 	      xpg, dtau,
 	      codtau, NULL, vnds); // codtau, dpsi, vnds
     }
 
-    if (ieR >= 0) {  // the right element exists
+    if (fR != NULL) {  // the right element exists
       real xrefL[3];
       {
 	real xpg_in[3];
-	Ref2Phy(physnode,
+	Ref2Phy(fL->physnode,
 		xpgref_in,
 		NULL, -1, // dpsiref, ifa
 		xpg_in, NULL,
 		NULL, NULL, NULL); // codtau, dpsi, vnds
-	PeriodicCorrection(xpg_in,f->macromesh.period);
-	Phy2Ref(physnodeR, xpg_in, xrefL);
+	//PeriodicCorrection(xpg_in,f->macromesh.period);
+	Phy2Ref(fR->physnode, xpg_in, xrefL);
 
       }
 
-      int ipgR = ref_ipg(iparam + 1, xrefL);
+      int ipgR = ref_ipg(fR->deg,fR->raf, xrefL);
 
       //printf("ipgL=%d ipgR=%d\n",ipgL,ipgR);
 
@@ -1033,37 +761,37 @@ void DGMacroCellInterface(int ifa, field *f, real *w, real *dtw)
 
       real wR[m];
       for(int iv = 0; iv < m; iv++) {
-	int imemL = f->varindex(iparam, ieL, ipgL, iv);
+	int imemL = fL->varindex(fL->deg, fL->raf,fL->model.m, ipgL, iv);
 	wL[iv] = w[imemL];
-	int imemR = f->varindex(iparam, ieR, ipgR, iv);
+	int imemR = fR->varindex(fR->deg, fR->raf,fR->model.m, ipgR, iv);
 	wR[iv] = w[imemR];
       }
 
       // int_dL F(wL, wR, grad phi_ib)
 
-      f->model.NumFlux(wL, wR, vnds, flux);
+      fL->model.NumFlux(wL, wR, vnds, flux);
 
       // Add flux to both sides
       for(int iv = 0; iv < m; iv++) {
 	// The basis functions is also the gauss point index
-	int imemL = f->varindex(iparam, ieL, ipgL, iv);
-	int imemR = f->varindex(iparam, ieR, ipgR, iv);
-	dtw[imemL] -= flux[iv] * wpg;
-	dtw[imemR] += flux[iv] * wpg;
+	int imemL = fL->varindex(fL->deg, fL->raf,fL->model.m, ipgL, iv);
+	int imemR = fR->varindex(fR->deg, fR->raf,fR->model.m, ipgR, iv);
+	fL->dtwn[imemL] -= flux[iv] * wpg;
+	fR->dtwn[imemR] += flux[iv] * wpg;
       }
 
     } else { // The point is on the boundary.
       for(int iv = 0; iv < m; iv++) {
-	int imemL = f->varindex(iparam, ieL, ipgL, iv);
+	int imemL = fL->varindex(fL->deg, fL->raf,fL->model.m, ipgL, iv);
 	wL[iv] = w[imemL];
       }
 
-      f->model.BoundaryFlux(xpg, f->tnow, wL, vnds, flux);
+      fL->model.BoundaryFlux(xpg, fL->tnow, wL, vnds, flux);
 
       for(int iv = 0; iv < m; iv++) {
 	// The basis functions is also the gauss point index
-	int imemL = f->varindex(iparam, ieL, ipgL, iv);
-	dtw[imemL] -= flux[iv] * wpg;
+	int imemL = fL->varindex(fL->deg, fL->raf,fL->model.m, ipgL, iv);
+	fL->dtwn[imemL] -= flux[iv] * wpg;
       }
     }
 
@@ -1073,31 +801,22 @@ void DGMacroCellInterface(int ifa, field *f, real *w, real *dtw)
 }
 
 // Apply division by the mass matrix
-void DGMass(int ie, field *f, real *dtw) 
+void DGMass(field *f, real *w, real *dtw) 
 {
 
   int m = f->model.m;
 
-  // loop on the elements
-  // get the physical nodes of element ie
-  real physnode[20][3];
-  for(int inoloc = 0; inoloc < 20; inoloc++) {
-    int ino = f->macromesh.elem2node[20 * ie + inoloc];
-    physnode[inoloc][0] = f->macromesh.node[3 * ino + 0];
-    physnode[inoloc][1] = f->macromesh.node[3 * ino + 1];
-    physnode[inoloc][2] = f->macromesh.node[3 * ino + 2];
-  }
   for(int ipg = 0; ipg < NPG(f->deg, f->raf); ipg++) {
     real dtau[3][3], codtau[3][3], xpgref[3], xphy[3], wpg;
     ref_pg_vol(f->deg, f->raf, ipg, xpgref, &wpg, NULL);
-    Ref2Phy(physnode, // phys. nodes
+    Ref2Phy(f->physnode, // phys. nodes
 	    xpgref, // xref
 	    NULL, -1, // dpsiref, ifa
 	    xphy, dtau, // xphy, dtau
 	    codtau, NULL, NULL); // codtau, dpsi, vnds
     real det = dot_product(dtau[0], codtau[0]);
     for(int iv = 0; iv < f->model.m; iv++) {
-      int imem = f->varindex(f->interp_param, ie, ipg, iv);
+      int imem = f->varindex(f->deg, f->raf, f->model.m, ipg, iv);
       dtw[imem] /= (wpg * det);
     }
   }
@@ -1105,7 +824,7 @@ void DGMass(int ie, field *f, real *dtw)
 }
 
 // Apply the source term
-void DGSource(int ie, field *f, real *w, real *dtw) 
+void DGSource(field *f, real *w, real *dtw) 
 {
   if (f->model.Source == NULL) {
     return;
@@ -1113,33 +832,24 @@ void DGSource(int ie, field *f, real *w, real *dtw)
 
   const int m = f->model.m;
 
-  // Loop on the elements
-  // Get the physical nodes of element ie
-  real physnode[20][3];
-  for(int inoloc = 0; inoloc < 20; inoloc++) {
-    int ino = f->macromesh.elem2node[20 * ie + inoloc];
-    physnode[inoloc][0] = f->macromesh.node[3 * ino + 0];
-    physnode[inoloc][1] = f->macromesh.node[3 * ino + 1];
-    physnode[inoloc][2] = f->macromesh.node[3 * ino + 2];
-  }
   for(int ipg = 0; ipg < NPG(f->deg, f->raf); ipg++) {
     real dtau[3][3], codtau[3][3], xpgref[3], xphy[3], wpg;
     ref_pg_vol(f->deg, f->raf, ipg, xpgref, &wpg, NULL);
-    Ref2Phy(physnode, // phys. nodes
+    Ref2Phy(f->physnode, // phys. nodes
 	    xpgref, // xref
 	    NULL, -1, // dpsiref, ifa
 	    xphy, dtau, // xphy, dtau
 	    codtau, NULL, NULL); // codtau, dpsi, vnds
     real wL[m], source[m];
     for(int iv = 0; iv < m; ++iv){
-      int imem = f->varindex(f->interp_param, ie, ipg, iv);
+      int imem = f->varindex(f->deg, f->raf, f->model.m, ipg, iv);
       wL[iv] = w[imem];
     }
       
     f->model.Source(xphy, f->tnow, wL, source);
       
     for(int iv = 0; iv < m; ++iv) {
-      int imem = f->varindex(f->interp_param, ie, ipg, iv);
+      int imem = f->varindex(f->deg, f->raf, f->model.m, ipg, iv);
       dtw[imem] += source[iv];
 	
     }
@@ -1148,39 +858,23 @@ void DGSource(int ie, field *f, real *w, real *dtw)
 }
 
 // Compute the Discontinuous Galerkin volume terms, fast version
-void DGVolume(int ie, field *f, real *w, real *dtw) 
+void DGVolume(field *f, real *w, real *dtw) 
 {
 
-  // get the physical nodes of element ie
-  real physnode[20][3];
-  for(int inoloc = 0; inoloc < 20; inoloc++) {
-    int ino = f->macromesh.elem2node[20*ie+inoloc];
-    physnode[inoloc][0] = f->macromesh.node[3 * ino + 0];
-    physnode[inoloc][1] = f->macromesh.node[3 * ino + 1];
-    physnode[inoloc][2] = f->macromesh.node[3 * ino + 2];
-  }
 
   const int m = f->model.m;
-  const int deg[3] = {f->interp_param[1],
-		      f->interp_param[2],
-		      f->interp_param[3]};
+  const int deg[3] = {f->deg[0],
+		      f->deg[1],
+		      f->deg[2]};
   const int npg[3] = {deg[0] + 1,
 		      deg[1] + 1,
 		      deg[2] + 1};
-  const int nraf[3] = {f->interp_param[4],
-		       f->interp_param[5],
-		       f->interp_param[6]};
+  const int nraf[3] = {f->raf[0],
+		       f->raf[1],
+		       f->raf[2]};
 
   const unsigned int sc_npg = npg[0] * npg[1] * npg[2];
 
-  int f_interp_param[8] = {f->interp_param[0],
-			   f->interp_param[1],
-			   f->interp_param[2],
-			   f->interp_param[3],
-			   f->interp_param[4],
-			   f->interp_param[5],
-			   f->interp_param[6],
-			   f->interp_param[7]};
 
   // Loop on the subcells
   for(int icL0 = 0; icL0 < nraf[0]; icL0++) {
@@ -1211,7 +905,7 @@ void DGVolume(int ie, field *f, real *w, real *dtw)
 	  omega[p] = tomega;
 
 	  for(int im = 0; im < m; ++im) {
-	    imems[pos++] = f->varindex(f_interp_param, ie, offsetL + p, im);
+	    imems[pos++] = f->varindex(f->deg,f->raf,f->model.m, offsetL + p, im);
 	  }
 	}
 
@@ -1248,7 +942,7 @@ void DGVolume(int ie, field *f, real *w, real *dtw)
 
 		  // mapping from the ref glop to the physical glop
 		  real dtau[3][3], codtau[3][3], dphiL[3];
-		  Ref2Phy(physnode,
+		  Ref2Phy(f->physnode,
 			  xrefL,
 			  dphiref, // dphiref
 			  -1,  // ifa
@@ -1262,7 +956,7 @@ void DGVolume(int ie, field *f, real *w, real *dtw)
 
 		  int ipgR = offsetL+q[0]+npg[0]*(q[1]+npg[1]*q[2]);
 		  for(int iv = 0; iv < m; iv++) {
-		    int imemR = f->varindex(f_interp_param, ie, ipgR, iv);
+		    int imemR = f->varindex(f->deg,f->raf,f->model.m, ipgR, iv);
 		    int temp = m * (ipgR - offsetL) + iv;  
 		    assert(imemR == imems[temp]);
 		    dtw[imems[temp]] += flux[iv] * wpgL;
@@ -1286,7 +980,7 @@ void DGVolume(int ie, field *f, real *w, real *dtw)
   
 }
 
-
+cmake . -DUSE_OPENCL:BOOL=OFF
 
 // Apply the Discontinuous Galerkin approximation for computing the
 // time derivative of the field
@@ -1496,7 +1190,7 @@ real L2error(field *f) {
     for(int ipg = 0; ipg < npg; ipg++) {
       real w[f->model.m];
       for(int iv = 0; iv < f->model.m; iv++) {
-	int imem = f->varindex(f->interp_param, ie, ipg, iv);
+	int imem = f->varindex(f->deg, f->raf, f->model.m, ipg, iv);
 	w[iv] = f->wn[imem];
       }
 
@@ -1550,7 +1244,7 @@ real L2error_onefield(field *f, int nbfield) {
     for(int ipg = 0; ipg < npg; ipg++) {
       real w[f->model.m];
       for(int iv = 0; iv < f->model.m; iv++) {
-	int imem = f->varindex(f->interp_param, ie, ipg, iv);
+	int imem = f->varindex(f->deg, f->raf, f->model.m, ipg, iv);
 	w[iv] = f->wn[imem];
       }
 
@@ -1608,7 +1302,7 @@ void InterpField(field *f, int ie, real *xref, real *w){
     psi_ref_subcell(f->deg, f->raf, is, ib, xref, &psi, NULL);
     
     for(int iv=0;iv<f->model.m;iv++){
-      int imem = f->varindex(f->interp_param, ie, ib, iv);
+      int imem = f->varindex(f->deg, f->raf, f->model.m, ib, iv);
       w[iv] += psi * f->wn[imem];
     }
   }

@@ -34,6 +34,9 @@ typedef struct field {
   real tnow;
   real dt;
 
+  //! ref length of the mesh subcells
+  real hmin;
+
   //! PIC struct pointer (=NULL if not used)
   void *pic;
 
@@ -68,7 +71,7 @@ typedef struct field {
   //! \param[in] elem macro element index
   //! \param[in] ipg glop index
   //! \param[in] iv field component index
-  int (*varindex)(int* param, int elem, int ipg, int iv);
+  int (*varindex)(int* deg, int *ref, int m, int ipg, int iv);
 
 
 #ifdef _WITH_OPENCL
@@ -165,28 +168,27 @@ void init_empty_field(field *f);
 void Freefield(field *f);
 
 //! \brief  compute the Discontinuous Galerkin inter-macrocells boundary terms second implementation with a loop on the faces
-//! \param[in] ifa a MacroFace number
+//! \param[in] locfaL local index of the face in the left element
 //! \param[inout] fL a left field
 //! \param[inout] fR a right field
-//! \param[in] m the underlying macromesh
-void DGMacroCellInterface(int ifa, field *fL, field *fR,
-			  MacroMesh *m);
+void DGMacroCellInterface(int locfaL, field *fL, field *fR,
+			   real *w, real *dtw);
 
 //! \brief compute the Discontinuous Galerkin volume terms
 //! \param[in] f a field
-void DGVolume(field *f, real *w);
+void DGVolume(field *f, real *w, real *dtw);
 
 //! \brief compute the Discontinuous Galerkin inter-subcells terms
 //! \param[in] f a field
-void DGSubCellInterface(field *f);
+void DGSubCellInterface(field *f, real *w, real *dtw);
 
 //! \brief  apply the DG mass term
 //! \param[in] f a field
-void DGMass(field *f);
+void DGMass(field *f, real *w, real *dtw);
 
 //! \brief Add the source term
 //! \param[in] f a field
-void DGSource(field *f);
+void DGSource(field *f, real *w, real *dtw);
 
 //! \brief An out-of-place RK stage
 //! \param[out] fwnp1 field at time n+1
@@ -217,15 +219,15 @@ void RK4_CL(field *f, real tmax, real dt,
 	    cl_uint nwait, cl_event *wait, cl_event *done);
 #endif
 
-//! \brief save the results in the gmsh format
-//! \param[in] typplot index of the field variable to plot.
-//! \param[in] compare if true, the numerical solution is compared
-//! with the analytical solution
-//! \param[in] f a field
-//! \param[in] fieldname name of the plotted data
-//! \param[in] filename the path to the gmsh visualization file.
-void Plotfield(int typplot, int compare, field *f, char *fieldname, 
-	       char *filename);
+/* //! \brief save the results in the gmsh format */
+/* //! \param[in] typplot index of the field variable to plot. */
+/* //! \param[in] compare if true, the numerical solution is compared */
+/* //! with the analytical solution */
+/* //! \param[in] f a field */
+/* //! \param[in] fieldname name of the plotted data */
+/* //! \param[in] filename the path to the gmsh visualization file. */
+/* void Plotfield(int typplot, int compare, field *f, char *fieldname,  */
+/* 	       char *filename); */
 
 //! \brief interpolate field at a reference point a macrocell
 //! \param[in] f a field

@@ -157,7 +157,7 @@ real GyroL2_Kinetic_error(field* f)
 	+ dtau[0][2] * codtau[0][2]; 
       real w[f->model.m];
       for(int iv=0;iv<f->model.m;iv++){
-	int imem=f->varindex(f->interp_param,ie,ipg,iv);
+	int imem=f->varindex(f->deg, f->raf, f->model.m,ipg,iv);
 	w[iv]=f->wn[imem];
       }
       // get the exact value
