@@ -16,6 +16,9 @@ typedef struct Simulation {
   //! List of fields for each macrocell
   field *fd;
 
+  //! sum of sizes of field data
+  int wsize;
+
   //! Current time
   real tnow;
   //! CFL parameter min_i (vol_i / surf_i)
@@ -56,7 +59,7 @@ void InitSimulation(Simulation *simu);
 //! \brief apply the Discontinuous Galerkin approximation for computing
 //! the time derivative of the fields. Works with several subcells.
 //! \param[inout] simu A simulation
-void DtFields(Simulation *simu);
+void DtFields(Simulation *simu, real *w, real *dtw);
 
 //! \brief compute the time step of the RK scheme 
 //! respecting a cfl condition

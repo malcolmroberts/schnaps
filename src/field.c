@@ -400,7 +400,7 @@ void init_field_cl(field *f)
 }
 #endif
 
-void Initfield(field *f, Model model, Interpolation interp) {
+void Initfield(field *f, Model model, Interpolation interp, real *w, real *dtw) {
   //int param[8]={f->model.m,_DEGX,_DEGY,_DEGZ,_RAFX,_RAFY,_RAFZ,0};
   
   //f->vmax = 1.0; // FIXME: make this variable ??????
@@ -433,10 +433,20 @@ void Initfield(field *f, Model model, Interpolation interp) {
   else
     printf("Allocating %d floats per array (%f GB)\n", nmem, g_memsize);
 
-  f->wn = calloc(nmem, sizeof(real));
+  if (w != NULL){
+    f->wn = calloc(nmem, sizeof(real));
+  } else {
+    f->wn = w;
+  }
   assert(f->wn);
-  f->dtwn = calloc(nmem, sizeof(real));
+
+  if (dtw != NULL){
+    f->dtwn = calloc(nmem, sizeof(real));
+  } else {
+    f->dtwn = dtw;
+  }
   assert(f->dtwn);
+
   f->pre_dtfield = NULL;
   f->post_dtfield = NULL;
   f->update_after_rk = NULL;
@@ -980,39 +990,7 @@ void DGVolume(field *f, real *w, real *dtw)
   
 }
 
-cmake . -DUSE_OPENCL:BOOL=OFF
-
-// Apply the Discontinuous Galerkin approximation for computing the
-// time derivative of the field
-void dtfield(field *f, real *w, real *dtw) {
-  if(f->pre_dtfield != NULL) // FIXME: rename to before dtfield
-      f->pre_dtfield(f, w);
-
-
-#ifdef _OPENMP
-#pragma omp parallel
-#endif
-  for(int iw = 0; iw < f->wsize; iw++)
-    dtw[iw] = 0;
-
-  for(int ifa = 0; ifa < f->macromesh.nbfaces; ifa++){
-    DGMacroCellInterface(ifa, f, w, dtw);
-  }
-
-#ifdef _OPENMP
-#pragma omp parallel for schedule(dynamic, 1)
-#endif
-  for(int ie = 0; ie < f->macromesh.nbelems; ++ie) {
-    DGSubCellInterface(ie, f, w, dtw);
-    DGVolume(ie, f, w, dtw);
-    DGMass(ie, f, dtw);
-    DGSource(ie, f, w, dtw);
-
-  }
-
-  if(f->post_dtfield != NULL) // FIXME: rename to after dtfield
-      f->post_dtfield(f, w);
-}
+//cmake . -DUSE_OPENCL:BOOL=OFF
 
 
 // An out-of-place RK step

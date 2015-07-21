@@ -159,7 +159,11 @@ int GenericVarindex(__constant int *deg, __constant int *raf, int m,
 
 //! \brief field initialization. Computation of the initial at each glop.
 //! \param[inout] f a field
-void Initfield(field *f,Model m, Interpolation interp);
+//! \param[in] m a model
+//! \param[in] interp an interpolation
+//! \param[in] w a pointer to field value (if NULL memory will be allocated)
+//! \param[inout] dtw a pointer to derivatives (if NULL memory will be allocated)
+void Initfield(field *f, Model m, Interpolation interp, real *w, real* dtw);
 
 void init_empty_field(field *f);
 

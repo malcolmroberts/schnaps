@@ -4,6 +4,23 @@
 #include <assert.h>
 #include <math.h>
 
+
+
+
+void InitSimulation(Simulation *simu){
+
+  MacroMesh *mesh = &simu->macromesh;
+  field *fd = simu->fd;
+
+  simu->wsize = 0 
+  
+  for(int ie=0; ie < mesh->nbelems; ++ie){
+    simu->wsize += NPG(fd[ie].deg,fd[ie].raf) * fd[ie].model.m;
+  }
+
+}
+
+
 // Save the results in the gmsh format typplot: index of the plotted
 // variable int compare == true -> compare with the exact value.  If
 // fieldname is NULL, then the fieldname is typpplot.
@@ -229,3 +246,37 @@ void PlotFields(int typplot, int compare, Simulation* simu, char *fieldname,
   fclose(gmshfile);
   free(value);
 }
+
+// Apply the Discontinuous Galerkin approximation for computing the
+// time derivative of the field
+void DtFields(Simulation *simu, real *w, real *dtw) {
+  /* if(f->pre_dtfield != NULL) // FIXME: rename to before dtfield */
+  /*     f->pre_dtfield(f, w); */
+
+
+#ifdef _OPENMP
+#pragma omp parallel
+#endif
+  for(int iw = 0; iw < f->wsize; iw++)
+    dtw[iw] = 0;
+
+  for(int ifa = 0; ifa < f->macromesh.nbfaces; ifa++){
+    DGMacroCellInterface(ifa, f, w, dtw);
+  }
+
+#ifdef _OPENMP
+#pragma omp parallel for schedule(dynamic, 1)
+#endif
+  for(int ie = 0; ie < f->macromesh.nbelems; ++ie) {
+    DGSubCellInterface(ie, f, w, dtw);
+    DGVolume(ie, f, w, dtw);
+    DGMass(ie, f, dtw);
+    DGSource(ie, f, w, dtw);
+
+  }
+
+  if(f->post_dtfield != NULL) // FIXME: rename to after dtfield
+      f->post_dtfield(f, w);
+}
+
+
