@@ -191,7 +191,7 @@ void AccumulateParticles(void *fv, real *w){
 
   assert(f->pic != NULL);
   
-  int npg=NPG(f->interp_param + 1);
+  int npg=NPG(f->deg, f->raf);
   
   for(int ie = 0; ie < f->macromesh.nbelems; ie++){
 

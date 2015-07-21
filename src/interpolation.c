@@ -156,14 +156,14 @@ void dlagrange_polynomial(real* dp, const real* subdiv,
 }
 
 // Number of Gauss Lobatto Points (GLOPS) in a macrocell
-int NPG(int param[]) {
+int NPG(int deg[], int raf[]) {
   return 
-    (param[0] + 1) * (param[1] + 1) * (param[2] + 1) 
-    * param[3] * param[4] * param[5];
+    (deg[0] + 1) * (deg[1] + 1) * (deg[2] + 1) 
+    * raf[0] * raf[1] * raf[2];
 }
 
 // Number of interpolation points for each face of a subcell
-int NPGF(int param[], int ifa) {
+int NPGF(int deg[], int raf[], int ifa) {
   // For each face, give the dimension index i
   int permut[6][4] = {
     {0, 2, 1, 0},
@@ -175,7 +175,7 @@ int NPGF(int param[], int ifa) {
   };
   int i0 = permut[ifa][0];
   int i1 = permut[ifa][1];
-  return (param[i0] + 1) * (param[i1] + 1) * param[i0+3] * param[i1+3];
+  return (deg[i0] + 1) * (deg[i1] + 1) * raf[i0] * raf[i1];
 }
 
 #pragma start_opencl
@@ -264,20 +264,10 @@ int ref_ipg(int *param, real *xref) {
   return ipg;
 }
 
-// ncx ncy ncz ix iy iz
-// Return the reference coordinates xpg[3] and weight wpg of the GLOP
-// ipg
-void ref_pg_vol(int *param, int ipg, real *xpg, real *wpg, real *xpg_in) {
-  int deg[3], offset[3], nraf[3];
 
-  // approximation degree in each direction
-  deg[0] = param[0];
-  deg[1] = param[1];
-  deg[2] = param[2];
-  // number of subcells in each direction
-  nraf[0] = param[3];
-  nraf[1] = param[4];
-  nraf[2] = param[5];
+void ref_pg_vol(int *deg, int *nraf, int ipg, real *xpg, real *wpg, real *xpg_in) {
+  int offset[3];
+
 
   int ix[3], ic[3];
 
@@ -323,9 +313,10 @@ void ref_pg_vol(int *param, int ipg, real *xpg, real *wpg, real *xpg_in) {
   }
 }
 
-// Return the reference coordinates xpg[3] and weight wpg of the GLOP
+// compute the reference coordinates xpg[3] and weight wpg of the GLOP
 // ipg on the face ifa.
-void ref_pg_face(int *param, int ifa, int ipg, 
+// and returns the index of the volume gauss point
+int ref_pg_face(int deg3d[], int nraf3d[], int ifa, int ipg, 
 		 real *xpg, real *wpg, real *xpgin) {
   // For each face, give the dimension index i
   const int axis_permut[6][4] = { {0, 2, 1, 0},
@@ -341,14 +332,14 @@ void ref_pg_face(int *param, int ifa, int ipg,
   //int ipgf=ipg;
 
   // approximation degree in each direction
-  deg[0] = param[axis_permut[ifa][0]];
-  deg[1] = param[axis_permut[ifa][1]];
-  deg[2] = param[axis_permut[ifa][2]];
+  deg[0] = deg3d[axis_permut[ifa][0]];
+  deg[1] = deg3d[axis_permut[ifa][1]];
+  deg[2] = deg3d[axis_permut[ifa][2]];
 
   // number of subcells in each direction
-  nraf[0] = param[3 + axis_permut[ifa][0]];
-  nraf[1] = param[3 + axis_permut[ifa][1]];
-  nraf[2] = param[3 + axis_permut[ifa][2]];
+  nraf[0] = nraf3d[axis_permut[ifa][0]];
+  nraf[1] = nraf3d[axis_permut[ifa][1]];
+  nraf[2] = nraf3d[axis_permut[ifa][2]];
 
   // Compute permuted indices
   int ix = ipg % (deg[0] + 1);
@@ -383,11 +374,11 @@ void ref_pg_face(int *param, int ifa, int ipg,
 
   // Compute the global index of the
   // Gauss-Lobatto point in the volume
-  param[6] = ipgxyz[0] + (param[0] + 1) *
-    (ipgxyz[1] + (param[1] + 1) *
-     (ipgxyz[2] + (param[2] + 1) *
-      (ncpgxyz[0] + param[3] *
-       (ncpgxyz[1] + param[4] *
+  int ipg3d = ipgxyz[0] + (deg3d[0] + 1) *
+    (ipgxyz[1] + (deg3d[1] + 1) *
+     (ipgxyz[2] + (deg3d[2] + 1) *
+      (ncpgxyz[0] + nraf3d[0] *
+       (ncpgxyz[1] + nraf3d[1] *
 	ncpgxyz[2]))));
 
   // Compute the reference coordinates of the Gauss-Lobatto point in
@@ -433,6 +424,8 @@ void ref_pg_face(int *param, int ifa, int ipg,
       xpgin[axis_permut[ifa][1]]
 	= h[1] * (ncy + gauss_lob_point[offset[1]] - small);
   }
+
+  return ipg3d;
 }
 
 // return the 1d derivative of lagrange polynomial ib at glop ipg

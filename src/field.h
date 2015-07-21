@@ -13,40 +13,37 @@
 //! \brief Data structure for managing a  discrete vector field
 //! solution of a DG approximation
 typedef struct field {
-  //! Underlying mesh
-  MacroMesh macromesh;
+  //! Physical nodes of the macrocell
+  real physnode[20][3];
+  
   //! Physical and numerical model
   Model model;
   //! Interpolation used for each component of the field
   Interpolation interp;
-  //! A copy of the interpolation parameters
-  int interp_param[8];
-  //! Current time
+
+  //! Refinement of the macrocell in each direction
+  int raf[3];
+
+  //! Degrees of interpolation in each direction
+  int deg[3];
+
+  //! number og Gauss points in each direction
+  int npg[3];
+  
+  //! Current time and time steps
   real tnow;
-  //! CFL parameter min_i (vol_i / surf_i)
-  real hmin;
+  real dt;
 
   //! PIC struct pointer (=NULL if not used)
   void *pic;
 
-  // TODO: once the output of the diagnostics is done by appending,
-  // remove dt, ieter_time, itermax, nb_diags, and Diagnostics.
-  int iter_time;
-  //! final time iter
-  int itermax;
-  //! nb of diagnostics
-  int nb_diags;
-  //! table for diagnostics
-  real *Diagnostics;
-
   //! Size of the field buffers
   int wsize;
-  //! fields at time steps n
+  //! fields at current time step
   real *wn;
   //! Time derivative of the field
   real *dtwn;
-  //! vmax
-  real vmax;
+
 
   
 
@@ -145,26 +142,21 @@ typedef struct field {
 
 //! \brief memory arrangement of field components.
 //! Generic implementation.
-//! \param[in] param interpolation parameters
-//! param[0] = M
-//! param[1] = deg x
-//! param[2] = deg y
-//! param[3] = deg z
-//! param[4] = raf x
-//! param[5] = raf y
-//! param[6] = raf z
-//! \param[in] elem macro element index
+//! \param[in] deg degrees parameters
+//! \param[in] raf refinement parameters
+//! \param[in] m number of conservative variables
 //! \param[in] ipg glop index
 //! \param[in] iv field component index
 //! \returns the memory position in the arrays wn wnp1 or dtwn.
 #pragma start_opencl
-int GenericVarindex(__constant int *param, int elem, int ipg, int iv);
+int GenericVarindex(__constant int *deg, __constant int *raf, int m,
+		    int ipg, int iv);
 #pragma end_opencl
 
 
 //! \brief field initialization. Computation of the initial at each glop.
 //! \param[inout] f a field
-void Initfield(field *f);
+void Initfield(field *f,Model m, Interpolation interp);
 
 void init_empty_field(field *f);
 
@@ -172,48 +164,29 @@ void init_empty_field(field *f);
 //! \param[inout] f a field
 void Freefield(field *f);
 
-//! \brief apply the Discontinuous Galerkin approximation for computing
-//! the time derivative of the field. Works with several subcells.
-//! Fast version: multithreaded and with tensor products optimizations
-//! \param[inout] f a field
-//! \param[inout] w  field values
-//! \param[inout] dtw time derivatives of the field values
-void dtfield(field *f, real *w, real *dtw);
-
-
 //! \brief  compute the Discontinuous Galerkin inter-macrocells boundary terms second implementation with a loop on the faces
 //! \param[in] ifa a MacroFace number
-//! \param[in] f a field
-//! \param[in] w field values
-//! \param[inout] dtw time derivatives of the field values
-void DGMacroCellInterface(int ifa, field *f, real *w, real *dtw);
+//! \param[inout] fL a left field
+//! \param[inout] fR a right field
+//! \param[in] m the underlying macromesh
+void DGMacroCellInterface(int ifa, field *fL, field *fR,
+			  MacroMesh *m);
 
 //! \brief compute the Discontinuous Galerkin volume terms
-//! \param[in] ie a MacroCell number
 //! \param[in] f a field
-//! \param[in] w field values
-//! \param[inout] dtw time derivatives of the field values
-void DGVolume(int ie, field *f, real *w, real *dtw);
+void DGVolume(field *f, real *w);
 
 //! \brief compute the Discontinuous Galerkin inter-subcells terms
-//! \param[in] ie a MacroCell number
 //! \param[in] f a field
-//! \param[in] w field values
-//! \param[inout] dtw time derivatives of the field values
-void DGSubCellInterface(int ie, field *f, real *w, real *dtw);
+void DGSubCellInterface(field *f);
 
 //! \brief  apply the DG mass term
-//! \param[in] ie a MacroCell number
 //! \param[in] f a field
-//! \param[inout] dtw time derivatives of the field values
-void DGMass(int ie, field *f, real *dtw);
+void DGMass(field *f);
 
 //! \brief Add the source term
-//! \param[in] ie a MacroCell number
 //! \param[in] f a field
-//! \param[in] w field values
-//! \param[inout] dtw time derivatives of the field values
-void DGSource(int ie, field *f, real *w, real *dtw);
+void DGSource(field *f);
 
 //! \brief An out-of-place RK stage
 //! \param[out] fwnp1 field at time n+1
@@ -231,19 +204,7 @@ void RK_out(real *fwnp1, real *fwn, real *fdtwn, const real dt,
 //! \param[in] sizew size of the field buffer
 void RK_in(real *fwnp1, real *fdtwn, const real dt, const int sizew);
 
-real set_dt(field *f);
 
-//! \brief Time integration by a second order Runge-Kutta algorithm
-//! \param[inout] f a field
-//! \param[in] tmax physical duration of the simulation
-//! \param[in] dt time step
-void RK2(field *f, real tmax, real dt);
-
-//! \brief Time integration by a second order Runge-Kutta algorithm
-//! \param[inout] f a field
-//! \param[in] tmax physical duration of the simulation
-//! \param[in] dt time step
-void RK4(field *f, real tmax, real dt);
 
 #ifdef _WITH_OPENCL
 //! \brief OpenCL version of RK2
@@ -277,23 +238,7 @@ void InterpField(field *f,int ie,real* xref,real* w);
 //! \param[in] f the field.
 void Displayfield(field *f);
 
-//! \brief Save 1D results in a text file
-//! \param[in] f the field.
-//! \param[in] dir fixed direction to plot
-//! \param[in] fixval fixed value to plot
-//! \param[in] filename the path to the gmsh visualization file.
-void Gnuplot(field* f,int dir, real fixval,char* filename);
-
-//! \brief compute the normalized L2 distance with the imposed data
-//! \param[in] f the field.
-//! \returns the error.
-real L2error(field *f);
 
 
-//! \brief compute the normalized L2 distance with the imposed data
-//! \param[in] f the field.
-//! \param[in] nbfield number of the field.
-//! \returns the error.
-real L2error_onefield(field *f, int nbfield);
 
 #endif

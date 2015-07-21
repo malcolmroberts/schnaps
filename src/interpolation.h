@@ -60,13 +60,14 @@ typedef struct Interpolation{
 // parameters (the user has to ensure that enough memory is reserved
 
 //! \brief number of Gauss-LObatto Points (GLOPs) on the macro cell
-//! \param[in] param the param list
-int NPG(int param[]);
+//! \param[in] deg degrees list
+//! \param[in] raf refinements list
+int NPG(int deg[], int raf[]);
 
 //! \brief number of GLOPs on the face ifa of the macrocell
 //! \param[in] param the param list
 //! \param[in] ifa face index
-int NPGF(int param[],int ifa);
+int NPGF(int deg[], int raf[],int ifa);
 
 //! \brief compute 3d glop and subcell indices from the index
 //! of the glop in the macrocell
@@ -93,13 +94,14 @@ void xyz_to_ipg(const int *raf, const int *deg, const int *ic, const int *ix,
 #pragma end_opencl
 
 //! \brief return the reference coordinates xpg[3] and weight wpg of the GLOP ipg
-//! \param[in] param interp. params list
+//! \param[in] deg degrees list
+//! \param[in] raf refinements list
 //! \param[in] ipg Gauss point index
 //! \param[out] xpg  reference Gauss point coordinates
 //! \param[out] wpg reference Gauss weight
 //! \param[in] xpg_in same as xpg but slightly moved such
 //! that the resulting point is in the interior of the ref. element
-void ref_pg_vol(int* param,int ipg,
+void ref_pg_vol(int* deg,int *raf,int ipg,
 		real* xpg,real* wpg,real* xpg_in);
 
 //! \brief from a reference point find the nearest
@@ -114,14 +116,16 @@ int ref_ipg(__constant int* param,real* xref);
 //! \brief compute the position xpg of glop ipg in the local
 //! numbering on face ifa. If xpgin is not NULL also compute
 //! the position of point slightly inside the opposite subcell.
-//! \param[inout] param interp. params list. param[6] also contains the volume Gauss point index
+//! \param[in] deg degrees list
+//! \param[in] raf refinements list
 //! \param[in] ifa local face index (0..5)
 //! \param[in] ipgf local 2d Gauss point index on the face ifa
 //! \param[out] xpg Gauss point coordinates
 //! \param[out] wpg Gauss point weight.
 //! \param[out] xpgin same as xpg but slightly moved such
 //! that the resulting point is in the interior of the ref. element
-void ref_pg_face(int* param,int ifa,int ipgf,real* xpg,real* wpg,
+//! returns the volume index of the face gauss point
+int ref_pg_face(int* deg, int *raf,int ifa,int ipgf,real* xpg,real* wpg,
 		 real* xpgin);
 //! \brief return the value and the gradient of the basis
 //! functions.
