@@ -238,7 +238,8 @@ void SolvePoisson1D(field *f,real * w,int type_bc, real bc_l, real bc_r,Solver s
     real aloc[degx+1][degx+1];
     for(int iloc=0;iloc<degx+1;iloc++){
       for(int jloc=0;jloc<degx+1;jloc++){
-	aloc[iloc][jloc]=0;
+          aloc[iloc][jloc]=0;
+
       }
     }
     for(int ipg=0;ipg<degx+1;ipg++){

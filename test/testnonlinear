@@ -6,6 +6,7 @@
 #include "schnaps.h"
 
 #define _NN 5
+#define _NNN 3
 
 int main(void) {
   
@@ -22,14 +23,24 @@ int main(void) {
 
 
 
+void NonlinearVector_GX(void* system,field * f,real * solvector,real *nlvector){
+  JFLinearSolver* lsol=system;
+
+  nlvector[0] = 9*solvector[0]*solvector[0]+36*solvector[1]*solvector[1]+4*solvector[2]*solvector[2];
+  nlvector[1] = solvector[0]*solvector[0]-2*solvector[1]*solvector[1]-20*solvector[2];
+  nlvector[2] = solvector[0]*solvector[0]-solvector[1]*solvector[1]+solvector[2]*solvector[2];
+
+}
+
 
 int TestLinearSolver(void){
 
-  int test=1,test1=1,test2=1,test3=1;
+  int test=1,test1=1,test2=1,test3=1,test4=1;
 
   LinearSolver sky;
-
+  JFLinearSolver skyJF;
  
+
 
   // preliminary work on the skyline struct
   // _NN is the size of the linear system to be solved
@@ -40,7 +51,7 @@ int TestLinearSolver(void){
 
   real A[_NN][_NN];
   real vf[_NN],sol[_NN];
-
+  real b[_NNN],sold[_NNN],soln[_NNN],fsoln[_NNN];
 
   A[0][0] = 0.2e1;
   A[0][1] = -0.1e1;
@@ -103,7 +114,6 @@ int TestLinearSolver(void){
       /* } */
     }
   }
-
 
 
   // printf for checking...
@@ -225,7 +235,7 @@ int TestLinearSolver(void){
   
 
   test2= (verr<1e-6);
-#endif
+#endif*/
 
   InitLinearSolver(&sky,_NN,NULL,NULL);
 
@@ -311,8 +321,137 @@ int TestLinearSolver(void){
 
   test3 =  (verr<1e-6);
 
+  InitLinearSolver(&sky,_NNN,NULL,NULL);
 
-  if(test1==1 &&  test2==1 && test3==1) test=1;
+  sky.solver_type = PAR_GMRES;
+  sky.pc_type=NONE;
+
+  A[0][0] = 1.8e1;
+  A[0][1] = 7.2e1;
+  A[0][2] = 0;
+  A[1][0] = 2.0e0;
+  A[1][1] = -4.0e0;
+  A[1][2] = -2.0e1;
+  A[2][0] = 2.0e0;
+  A[2][1] = -2.0e0;
+  A[2][2] = -0.0;
+  vf[0] = -0.9e1;
+  vf[1] = 0.1e1;
+  vf[2] = 0.0;
+
+  sol[0] = 0;
+  sol[1] = 0;
+  sol[2] = 0;
+
+  sky.is_sym=false;
+
+  // first mark the nonzero values in A
+  for(int i=0;i<_NNN;i++){
+    for(int j=0;j<_NNN;j++){
+      if (A[i][j] != 0) IsNonZero(&sky,i,j);
+    }
+  }
+
+  // once the nonzero positions are known allocate memory
+  AllocateLinearSolver(&sky);
+
+  // now set the nonzero terms
+  for(int i=0;i<_NNN;i++){
+    for(int j=0;j<_NNN;j++){
+      if (A[i][j] != 0){
+      	AddLinearSolver(&sky,i,j,A[i][j]);
+      }
+    }
+  }
+
+  sky.rhs=vf;
+  sky.sol=sol;
+  SolveLinearSolver(&sky);
+
+
+  // checking
+  verr=0;
+  printf("sol ofsdlmdjskfjksfjs=");
+  for(int i=0;i<_NNN;i++){
+    printf("%f ",sol[i]);
+  }
+  printf("\n");
+  printf("\n");
+
+  // deallocate memory
+  FreeLinearSolver(&sky);
+
+
+
+  
+
+  InitJFLinearSolver(&skyJF,_NNN,NULL);
+
+  skyJF.solver_type = GMRES;
+  skyJF.pc_type=NONE;
+  skyJF.eps=0.00001;
+  skyJF.NonlinearVector_computation=NonlinearVector_GX;
+  
+  b[0] = 3.6e1;
+  b[1] = 0;
+  b[2] = 0;
+
+
+  sold[0] = 0.0;
+  sold[1] = 0.0;
+  sold[2] = 0.0;
+  
+  soln[0] = 1;
+  soln[1] = 1;
+  soln[2] = 0;
+
+  fsoln[0] = 0;
+  fsoln[1] = 0;
+  fsoln[2] = 0;
+  
+  skyJF.sol=sold;
+  skyJF.soln=soln;
+  skyJF.rhs=b;
+  
+  for(int i=1;i<2;i++){
+    NonlinearVector_GX(&skyJF,NULL,soln,fsoln);
+    
+    b[0] = b[0]-fsoln[0];
+    b[1] = b[1]-fsoln[1];
+    b[2] = b[2]-fsoln[2];
+    
+    
+    SolveJFLinearSolver(&skyJF,NULL);
+    
+    soln[0] = soln[0]+skyJF.sol[0];
+    soln[1] = soln[1]+skyJF.sol[1];
+    soln[2] = soln[2]+skyJF.sol[2];
+
+    printf("linear solution:");
+    printf(" Delta sol %f %f %f \n",skyJF.sol[0],skyJF.sol[1],skyJF.sol[2]);
+    printf(" sol %f %f %f \n",soln[0],soln[1],soln[2]);
+    printf(" rhs %f %f %f \n",skyJF.rhs[0],skyJF.rhs[1],skyJF.rhs[2]);
+    printf("\n");
+    printf("\n");
+
+  }
+
+  // checking
+  verr=0;
+  printf("nonlienar solution:");
+  printf(" sol %f %f %f \n",sol[0],sol[1],sol[2]);
+  verr=fabs(sol[0]-0.893628)+fabs(sol[1]-0.894527)+fabs(sol[2]+0.040083);
+  printf("\n");
+  printf("\n");
+
+  // deallocate memory
+  FreeJFLinearSolver(&skyJF);
+
+  test4 =  (verr<1e-6);
+
+  
+
+  if(test1==1 &&  test2==1 && test3==1 && test4) test=1;
 
   return test;
 

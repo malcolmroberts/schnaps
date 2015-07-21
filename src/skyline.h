@@ -69,7 +69,14 @@ void AllocateSkyline(Skyline* sky);
 //! \param[in] i row index
 //! \param[in] j column index
 //! \param[in] val value
-void SetSkyline(Skyline* sky,int i,int j,real val); 
+void SetSkyline(Skyline* sky,int i,int j,real val);
+
+//! \brief add elem (i,j) to value val
+//! \param[inout] sky the skyline object
+//! \param[in] i row index
+//! \param[in] j column index
+//! \param[in] val value
+void AddSkyline(Skyline* sky,int i,int j,real val); 
 
 //! \brief get elem (i,j)
 //! \param[inout] sky the skyline object

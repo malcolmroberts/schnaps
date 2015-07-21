@@ -48,6 +48,7 @@ int TestMaxwell2D(void) {
   sprintf(buf, " -D BOUNDARYFLUX=%s", "Maxwell2DBoundaryFlux_uncentered");
   strcat(cl_buildoptions, buf);
 
+
   Initfield(&f);
   
   CheckMacroMesh(&(f.macromesh), f.interp.interp_param + 1);
@@ -62,10 +63,12 @@ int TestMaxwell2D(void) {
 #else
   // OpenCL version
   RK2_CL(&f, tmax, dt, 0, 0, 0);
-  CopyfieldtoCPU(&f);
+
+  CopyfieldtoCPU(&f); 
   printf("\nOpenCL Kernel time:\n");
   show_cl_timing(&f);
   printf("\n");
+
 #endif
 
   // Save the results and the error
@@ -73,6 +76,7 @@ int TestMaxwell2D(void) {
   Plotfield(0, true, &f, "error", "dgerror.msh");
 
   real dd = L2error(&f);
+
   real tolerance = 1.1e-2;
   test = test && (dd < tolerance);
   printf("L2 error: %f\n", dd);
