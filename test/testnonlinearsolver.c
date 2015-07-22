@@ -153,7 +153,7 @@ int TestNonLinearSolver(void){
 
   // checking
   verr=0;
-  printf("nonlienar solution:");
+  printf("nonlinear solution:");
   printf(" sol %f %f %f \n",soln[0],soln[1],soln[2]);
   verr=fabs(soln[0]-0.893628)+fabs(soln[1]-0.894527)+fabs(soln[2]+0.040083);
   printf("\n");
@@ -268,7 +268,7 @@ int TestNonLinearSolver(void){
 
   // checking
   verr=0;
-  printf("nonlienar solution:");
+  printf("nonlinear solution:");
   printf(" sol %f %f %f \n",soln[0],soln[1],soln[2]);
   verr=fabs(soln[0]-0.893628)+fabs(soln[1]-0.894527)+fabs(soln[2]+0.040083);
   printf("\n");
@@ -342,7 +342,7 @@ int TestNonLinearSolver(void){
 
   // checking
   verr=0;
-  printf("nonlienar solution:");
+  printf("nonlinear solution:");
   printf(" sol %f %f %f \n",soln[0],soln[1],soln[2]);
   verr=fabs(soln[0]-0.893628)+fabs(soln[1]-0.894527)+fabs(soln[2]+0.040083);
   printf("\n");

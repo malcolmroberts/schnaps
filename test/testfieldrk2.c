@@ -37,7 +37,7 @@ int TestfieldRK2(void){
   model.ImposedData = TransImposedData2d;
 
   int deg[]={3, 3, 0};
-  int raf[]={8, 8, 1};
+  int raf[]={4, 4, 1};
 
   assert(mesh.is2d);
 #else
@@ -89,7 +89,7 @@ int TestfieldRK2(void){
 
   InitSimulation(&simu, &mesh, deg, raf, &model);
  
-  real tmax = 0.5;
+  real tmax = 0.1;
   simu.cfl=0.2;
   simu.vmax=1;
   RK2(&simu,tmax);

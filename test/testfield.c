@@ -26,7 +26,6 @@ int Testfield(void){
   CheckMacroMesh(&mesh, deg, raf);
 
   field f;
-  init_empty_field(&f);
 
   real physnode[20][3];
 

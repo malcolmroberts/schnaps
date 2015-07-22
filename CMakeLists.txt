@@ -188,6 +188,7 @@ add_executable(
   test/testmodel.c
   )
 target_link_libraries(testmodel ${LIBS})
+add_test(testmodel testmodel)
 
 add_executable(
   testfield
@@ -221,5 +222,86 @@ add_executable(
   )
 target_link_libraries(testfieldrk2 ${LIBS})
 add_test(testfieldrk2 testfieldrk2)
+
+add_test(test2dmeshdetection test2dmeshdetection)
+add_executable(
+  test2dmeshdetection
+  test/test.h
+  test/test2dmeshdetection.c
+  )
+target_link_libraries(test2dmeshdetection ${LIBS})
+add_test(test2dmeshdetection test2dmeshdetection)
+
+add_test(testfieldrk2-2d testfieldrk2-2d)
+add_executable(
+  testfieldrk2-2d
+  test/test.h
+  test/testfieldrk2-2d.c
+  )
+target_link_libraries(testfieldrk2-2d ${LIBS})
+add_test(testfieldrk2-2d testfieldrk2-2d)
+
+add_test(testskyline testskyline)
+add_executable(
+  testskyline
+  test/test.h
+  test/testskyline.c
+  )
+target_link_libraries(testskyline ${LIBS})
+add_test(testskyline testskyline)
+
+add_executable(
+  testnonlinearsolver
+  test/test.h
+  test/testnonlinearsolver.c
+  )
+target_link_libraries(testnonlinearsolver ${LIBS})
+add_test(testnonlinearsolver testnonlinearsolver)
+
+IF(BUILD_PARALUTION)
+
+
+  SET(MATRIX_FILE gr_30_30.mtx)
+
+  IF(EXISTS ${MATRIX_FILE})
+  ELSE()
+    FILE(DOWNLOAD "ftp://math.nist.gov/pub/MatrixMarket2/Harwell-Boeing/laplace/${MATRIX_FILE}.gz" 
+                  ${CMAKE_BINARY_DIR}/${MATRIX_FILE}.gz)
+
+    FIND_PROGRAM(GZIP_TOOL
+               NAMES gzip
+               PATHS /bin /usr/bin /usr/local/bin /opt/local/bin)
+
+    EXECUTE_PROCESS( COMMAND ${GZIP_TOOL} -d ${MATRIX_FILE}.gz
+                     WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+  ENDIF()
+
+  ADD_EXECUTABLE(paralution_cg test/cg.cpp)
+  TARGET_LINK_LIBRARIES(paralution_cg paralution)
+
+  ADD_TEST(NAME testparalution COMMAND paralution_cg ${MATRIX_FILE} 4)
+
+ add_executable(
+  testlinearsolver
+  test/test.h
+  test/testlinearsolver.c
+  )
+target_link_libraries(testlinearsolver paralution_c ${LIBS})
+add_test(testlinearsolver testlinearsolver)
+
+
+
+ELSE()
+
+ add_executable(
+  testlinearsolver
+  test/test.h
+  test/testlinearsolver.c
+  )
+target_link_libraries(testlinearsolver ${LIBS})
+add_test(testlinearsolver testlinearsolver)
+
+ENDIF()
+
 
 
