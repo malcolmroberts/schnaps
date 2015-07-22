@@ -176,9 +176,14 @@ void Freefield(field *f);
 //! \brief  compute the Discontinuous Galerkin inter-macrocells boundary terms second implementation with a loop on the faces
 //! \param[in] locfaL local index of the face in the left element
 //! \param[inout] fL a left field
+//! \param[in] offsetL left offset for accessing data in w and dtw
 //! \param[inout] fR a right field
-void DGMacroCellInterface(int locfaL, field *fL, field *fR,
-			   real *w, real *dtw);
+//! \param[in] offsetR right offset for accessing data in w and dtw
+//! \param[in] w field data 
+//! \param[out] dtw time derivative of the field data w
+void DGMacroCellInterface(int locfaL,
+			  field *fL, int offsetL, field *fR, int offsetR,
+			  real *w, real *dtw);
 
 //! \brief compute the Discontinuous Galerkin volume terms
 //! \param[in] f a field

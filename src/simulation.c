@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <math.h>
+#include <float.h>
 
 
 
@@ -24,11 +25,15 @@ void InitSimulation(Simulation *simu, MacroMesh *mesh,
 
   printf("field_size = %d simusize = %d\n",field_size,simu->wsize);
 
-  real *w = malloc(simu->wsize * sizeof(real));
-  real *dtw = malloc(simu->wsize * sizeof(real));
+  simu->w = malloc(simu->wsize * sizeof(real));
+  simu->dtw = malloc(simu->wsize * sizeof(real));
+
+  real *w = simu->w;
+  real *dtw = simu->dtw;
   
   real physnode[20][3];
   
+  simu->hmin = FLT_MAX;
 
   for(int ie=0; ie < mesh->nbelems; ++ie){
     for(int inoloc = 0; inoloc < 20; ++inoloc){
@@ -41,6 +46,7 @@ void InitSimulation(Simulation *simu, MacroMesh *mesh,
     init_empty_field(fd + ie);
     Initfield(fd+ie, *model, physnode, deg, raf,
 	      w + ie * field_size, dtw + ie * field_size);
+    simu->hmin = simu->hmin > fd[ie].hmin ? fd[ie].hmin : simu->hmin;
   }
 
 }
@@ -301,18 +307,29 @@ void DtFields(Simulation *simu, real *w, real *dtw) {
   for(int iw = 0; iw < simu->wsize; iw++)
     dtw[iw] = 0;
 
+  for(int ie = 0; ie < simu->macromesh.nbelems; ++ie) {
+    simu->fd[ie].tnow = simu->tnow;
+  } 
+
   for(int ifa = 0; ifa < simu->macromesh.nbfaces; ifa++){
     int ieL = simu->macromesh.face2elem[4 * ifa + 0];
     int locfaL = simu->macromesh.face2elem[4 * ifa + 1];
     int ieR = simu->macromesh.face2elem[4 * ifa + 2];
     field *fL = simu->fd + ieL;
     field *fR = NULL;
+    int offsetR = -1;
     //printf("iel=%d ier=%d\n",ieL,ieR);
+    int offsetL = fsize * ieL;
     if (ieR >= 0) {
       fR = simu->fd + ieR;
+      offsetR = fsize * ieR;
     }
-          
-    DGMacroCellInterface(locfaL, fL, fR, w, dtw);
+         
+    
+ 
+    DGMacroCellInterface(locfaL,
+			 fL, offsetL, fR, offsetR,
+			 w, dtw);
   }
 
 #ifdef _OPENMP
@@ -364,7 +381,7 @@ real L2error(Simulation *simu) {
 	det = dot_product(dtau[0], codtau[0]);
 
 	// Get the exact value
-	f->model.ImposedData(xphy, f->tnow, wex);
+	f->model.ImposedData(xphy, simu->tnow, wex);
       }
 
       for(int iv = 0; iv < f->model.m; iv++) {
@@ -376,6 +393,63 @@ real L2error(Simulation *simu) {
   }
   return sqrt(error) / (sqrt(mean)  + 1e-14);
 }
+
+// Time integration by a second-order Runge-Kutta algorithm
+void RK2(Simulation *simu, real tmax){
+
+  simu->dt = Get_Dt_RK(simu);
+
+
+  real dt = simu->dt;
+
+  simu->tmax = tmax;
+
+  simu->itermax_rk = tmax / simu->dt;
+  int size_diags;
+  int freq = (1 >= simu->itermax_rk / 10)? 1 : simu->itermax_rk / 10;
+  int iter = 0;
+
+  real *wnp1 = calloc(simu->wsize, sizeof(real));
+  assert(wnp1);
+
+  // FIXME: remove
+  size_diags = simu->nb_diags * simu->itermax_rk;
+  simu->iter_time_rk = iter;
+
+  if(simu->nb_diags != 0)
+    simu->Diagnostics = malloc(size_diags * sizeof(real));
+
+  while(simu->tnow < tmax) {
+    if (iter % freq == 0)
+      printf("t=%f iter=%d/%d dt=%f\n", simu->tnow, iter, simu->itermax_rk, dt);
+
+    DtFields(simu, simu->w, simu->dtw);
+    RK_out(wnp1, simu->w, simu->dtw, 0.5 * dt, simu->wsize);
+
+    simu->tnow += 0.5 * dt;
+
+    DtFields(simu, wnp1, simu->dtw);
+    RK_in(simu->w, simu->dtw, dt, simu->wsize);
+
+    simu->tnow += 0.5 * dt;
+
+    /* if(simu->update_after_rk != NULL) */
+    /*   simu->update_after_rk(f, simu->wn); */
+
+    iter++;
+    simu->iter_time_rk = iter;
+  }
+  printf("t=%f iter=%d/%d dt=%f\n", simu->tnow, iter, simu->itermax_rk, dt);
+  free(wnp1);
+}
+
+real Get_Dt_RK(Simulation *simu)
+{
+  return simu->cfl * simu->hmin / simu->vmax; 
+  
+}
+
+
 
 
 

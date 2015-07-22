@@ -12,7 +12,7 @@ SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 #set(CMAKE_C_FLAGS "-std=gnu99 -D_REENTRANT -O3 -g")
 
 #set(CMAKE_C_FLAGS " -std=c99 -D_REENTRANT -O3 ")
-set(CMAKE_C_FLAGS " -std=c99  -D_DOUBLE_PRECISION  -g")
+set(CMAKE_C_FLAGS " -std=c99  -D_DOUBLE_PRECISION  -O3")
 
 #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_DOUBLE_PRECISION")
 
@@ -213,13 +213,13 @@ add_executable(
 target_link_libraries(testfielddg ${LIBS})
 add_test(testfielddg testfielddg)
 
-#add_test(testfieldrk2 testfieldrk2)
-#add_executable(
-#  testfieldrk2
-#  test/test.h
-#  test/testfieldrk2.c
-#  )
-#target_link_libraries(testfieldrk2 ${LIBS})
-#add_test(testfieldrk2 testfieldrk2)
+add_test(testfieldrk2 testfieldrk2)
+add_executable(
+  testfieldrk2
+  test/test.h
+  test/testfieldrk2.c
+  )
+target_link_libraries(testfieldrk2 ${LIBS})
+add_test(testfieldrk2 testfieldrk2)
 
 

@@ -112,6 +112,7 @@ real min_grid_spacing(field *f)
       }
     }
     hmin = hmin < vol/surf ? hmin : vol/surf;
+    printf("vol/surf=%f npg=%d\n",vol/surf,NPG(f->deg, f->raf));
 
   
  
@@ -120,7 +121,7 @@ real min_grid_spacing(field *f)
   maxd = maxd > f->deg[1] ? maxd : f->deg[1];
   maxd = maxd > f->deg[2] ? maxd : f->deg[2];
 
-  hmin /= ((maxd + 1) * f->raf[3]);
+  hmin /= ((maxd + 1) * f->raf[1]);
 
   return hmin;
 }
@@ -699,7 +700,9 @@ void DGSubCellInterface(field *f, real *w, real *dtw)
 
 // Compute the Discontinuous Galerkin inter-macrocells boundary terms.
 // Second implementation with a loop on the faces.
-void DGMacroCellInterface(int locfaL, field *fL, field *fR, real *w, real *dtw) 
+void DGMacroCellInterface(int locfaL,
+			  field *fL, int offsetL, field *fR, int offsetR,
+			  real *w, real *dtw) 
 {
   
   const unsigned int m = fL->model.m;
@@ -712,6 +715,12 @@ void DGMacroCellInterface(int locfaL, field *fL, field *fR, real *w, real *dtw)
 
   //int ieR = msh->face2elem[4 * ifa + 2];
   //int locfaR = msh->face2elem[4 * ifa + 3];
+
+  real *fwL = w + offsetL;
+  real *fwR = w + offsetR;
+
+  real *fdtwL = dtw + offsetL;
+  real *fdtwR = dtw + offsetR;
 
   // Loop over the points on a single macro cell interface.
 #ifdef _OPENMP
@@ -778,9 +787,9 @@ void DGMacroCellInterface(int locfaL, field *fL, field *fR, real *w, real *dtw)
       real wR[m];
       for(int iv = 0; iv < m; iv++) {
 	int imemL = fL->varindex(fL->deg, fL->raf,fL->model.m, ipgL, iv);
-	wL[iv] = fL->wn[imemL];
+	wL[iv] = fwL[imemL];
 	int imemR = fR->varindex(fR->deg, fR->raf,fR->model.m, ipgR, iv);
-	wR[iv] = fR->wn[imemR];
+	wR[iv] = fwR[imemR];
       }
 
       // int_dL F(wL, wR, grad phi_ib)
@@ -792,14 +801,14 @@ void DGMacroCellInterface(int locfaL, field *fL, field *fR, real *w, real *dtw)
 	// The basis functions is also the gauss point index
 	int imemL = fL->varindex(fL->deg, fL->raf,fL->model.m, ipgL, iv);
 	int imemR = fR->varindex(fR->deg, fR->raf,fR->model.m, ipgR, iv);
-	fL->dtwn[imemL] -= flux[iv] * wpg;
-	fR->dtwn[imemR] += flux[iv] * wpg;
+	fdtwL[imemL] -= flux[iv] * wpg;
+	fdtwR[imemR] += flux[iv] * wpg;
       }
 
     } else { // The point is on the boundary.
       for(int iv = 0; iv < m; iv++) {
 	int imemL = fL->varindex(fL->deg, fL->raf,fL->model.m, ipgL, iv);
-	wL[iv] = fL->wn[imemL];
+	wL[iv] = fwL[imemL];
       }
 
 
@@ -808,7 +817,7 @@ void DGMacroCellInterface(int locfaL, field *fL, field *fR, real *w, real *dtw)
       for(int iv = 0; iv < m; iv++) {
 	// The basis functions is also the gauss point index
 	int imemL = fL->varindex(fL->deg, fL->raf,fL->model.m, ipgL, iv);
-	fL->dtwn[imemL] -= flux[iv] * wpg;
+	fdtwL[imemL] -= flux[iv] * wpg;
       }
     }
 
@@ -1023,55 +1032,7 @@ void RK_in(real *fwnp1, real *fdtwn, const real dt, const int sizew)
   }
 }
 
-real set_dt(Simulation *simu)
-{
-  return simu->cfl * simu->hmin / simu->vmax; 
-}
 
-// Time integration by a second-order Runge-Kutta algorithm
-/* void RK2(field *f, real tmax, real dt)  *//* { */
-/*   if(dt <= 0) */
-/*     dt = set_dt(f); */
-
-/*   f->itermax = tmax / dt; */
-/*   int size_diags; */
-/*   int freq = (1 >= f->itermax / 10)? 1 : f->itermax / 10; */
-/*   int sizew = f->macromesh.nbelems * f->model.m * NPG(f->deg, f->raf); */
-/*   int iter = 0; */
-
-/*   real *wnp1 = calloc(f->wsize, sizeof(real)); */
-/*   assert(wnp1); */
-
-/*   // FIXME: remove */
-/*   size_diags = f->nb_diags * f->itermax; */
-/*   f->iter_time = iter; */
-
-/*   if(f->nb_diags != 0) */
-/*     f->Diagnostics = malloc(size_diags * sizeof(real)); */
-
-/*   while(f->tnow < tmax) { */
-/*     if (iter % freq == 0) */
-/*       printf("t=%f iter=%d/%d dt=%f\n", f->tnow, iter, f->itermax, dt); */
-
-/*     dtfield(f, f->wn, f->dtwn); */
-/*     RK_out(wnp1, f->wn, f->dtwn, 0.5 * dt, sizew); */
-
-/*     f->tnow += 0.5 * dt; */
-
-/*     dtfield(f, wnp1, f->dtwn); */
-/*     RK_in(f->wn, f->dtwn, dt, sizew); */
-
-/*     f->tnow += 0.5 * dt; */
-
-/*     if(f->update_after_rk != NULL) */
-/*       f->update_after_rk(f, f->wn); */
-
-/*     iter++; */
-/*     f->iter_time=iter; */
-/*   } */
-/*   printf("t=%f iter=%d/%d dt=%f\n", f->tnow, iter, f->itermax, dt); */
-/*   free(wnp1); */
-/* } */
 
 void RK4_final_inplace(real *w, real *l1, real *l2, real *l3, 
 		       real *dtw, const real dt, const int sizew)

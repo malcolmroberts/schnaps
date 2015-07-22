@@ -204,7 +204,7 @@ void GeomPhy2Ref(Geom* g)
 
 void Phy2Ref(real physnode[20][3], real xphy[3], real xref[3]) 
 {
-#define ITERNEWTON 10
+#define ITERNEWTON 20
 
   real dtau[3][3], codtau[3][3];
   real dxref[3], dxphy[3];

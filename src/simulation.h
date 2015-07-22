@@ -16,6 +16,10 @@ typedef struct Simulation {
   //! List of fields for each macrocell
   field *fd;
 
+  //! memory spaces for w and dtw
+  real *w;
+  real *dtw;
+
   //! sum of sizes of field data
   int wsize;
 
@@ -69,7 +73,7 @@ void DtFields(Simulation *simu, real *w, real *dtw);
 //! \brief compute the time step of the RK scheme 
 //! respecting a cfl condition
 //! \param[inout] simu A simulation
-real Set_Dt_RK(Simulation *simu);
+real Get_Dt_RK(Simulation *simu);
 
 //! \brief Time integration by a second order Runge-Kutta algorithm
 //! \param[inout] simu a simulation
