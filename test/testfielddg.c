@@ -18,8 +18,8 @@ int TestfieldDG(void){
   model.InitData = TestTransInitData;
   model.ImposedData = TestTransImposedData;
 
-  int deg[]={1, 1, 1};
-  int raf[]={1, 1, 1};
+  int deg[]={2, 2, 2};
+  int raf[]={2, 2, 2};
   
   MacroMesh mesh;
   //ReadMacroMesh(&mesh,"test/testmacromesh.msh");

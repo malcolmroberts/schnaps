@@ -213,15 +213,15 @@ void TestTransInitData2d(real *x, real *w)
 
 void TestTransImposedData(const real *x, const real t, real *w) {
   const real sqrt_third =  sqrt(1.0/3.0);
-  //const real transport_v[] = {sqrt_third, sqrt_third, sqrt_third};
-  const real transport_v[] = {1,0,0};
+  const real transport_v[] = {sqrt_third, sqrt_third, sqrt_third};
+  //const real transport_v[] = {1,0,0};
   real vx 
     = transport_v[0] * x[0] 
     + transport_v[1] * x[1] 
     + transport_v[2] * x[2];
   real xx = vx - t;
-  w[0] = 1;
-  //w[0] = xx * xx;
+  //w[0] = 1;
+  w[0] = xx * xx;
   //w[0]=0;
 }
 

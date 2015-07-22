@@ -295,6 +295,8 @@ void DtFields(Simulation *simu, real *w, real *dtw) {
 
   //real *w = simu->fd[0].wn;
   //real *dtw = simu->fd[0].dtwn;
+
+  int fsize =  simu->wsize / simu->macromesh.nbelems;
   
   for(int iw = 0; iw < simu->wsize; iw++)
     dtw[iw] = 0;
@@ -317,10 +319,10 @@ void DtFields(Simulation *simu, real *w, real *dtw) {
 #pragma omp parallel for schedule(dynamic, 1)
 #endif
   for(int ie = 0; ie < simu->macromesh.nbelems; ++ie) {
-    DGSubCellInterface(simu->fd + ie, w, dtw);
-    DGVolume(simu->fd + ie, w, dtw);
-    DGMass(simu->fd + ie, w, dtw);
-    DGSource(simu->fd + ie, w, dtw);
+    DGSubCellInterface(simu->fd + ie, w + ie * fsize, dtw + ie * fsize);
+    DGVolume(simu->fd + ie, w + ie * fsize, dtw + ie * fsize);
+    DGMass(simu->fd + ie, w + ie * fsize, dtw + ie * fsize);
+    DGSource(simu->fd + ie, w + ie * fsize, dtw + ie * fsize);
 
   }
 

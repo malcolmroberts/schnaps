@@ -778,9 +778,9 @@ void DGMacroCellInterface(int locfaL, field *fL, field *fR, real *w, real *dtw)
       real wR[m];
       for(int iv = 0; iv < m; iv++) {
 	int imemL = fL->varindex(fL->deg, fL->raf,fL->model.m, ipgL, iv);
-	wL[iv] = w[imemL];
+	wL[iv] = fL->wn[imemL];
 	int imemR = fR->varindex(fR->deg, fR->raf,fR->model.m, ipgR, iv);
-	wR[iv] = w[imemR];
+	wR[iv] = fR->wn[imemR];
       }
 
       // int_dL F(wL, wR, grad phi_ib)
@@ -799,7 +799,7 @@ void DGMacroCellInterface(int locfaL, field *fL, field *fR, real *w, real *dtw)
     } else { // The point is on the boundary.
       for(int iv = 0; iv < m; iv++) {
 	int imemL = fL->varindex(fL->deg, fL->raf,fL->model.m, ipgL, iv);
-	wL[iv] = w[imemL];
+	wL[iv] = fL->wn[imemL];
       }
 
 
