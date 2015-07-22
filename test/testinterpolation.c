@@ -118,9 +118,9 @@ int TestInterpolation(void){
 
     real xref1[3], xref2[3], xphy[3], xref_in[3];
 
-    for(int ipg = 0; ipg < NPG(deg); ipg++){
+    for(int ipg = 0; ipg < NPG(deg,nraf); ipg++){
       real wpg;
-      ref_pg_vol(deg, ipg, xref1, &wpg, xref_in);
+      ref_pg_vol(deg, nraf, ipg, xref1, &wpg, xref_in);
       //printf("xref_in %f %f %f \n",xref_in[0],xref_in[1],xref_in[2]);
       Ref2Phy(physnode,
 	      xref_in,
@@ -133,7 +133,7 @@ int TestInterpolation(void){
 	      0);
    
       Phy2Ref(physnode, xphy, xref2);
-      test = test && (ipg == ref_ipg(deg, xref2));
+      test = test && (ipg == ref_ipg(deg, nraf, xref2));
       //printf("ipg=%d ipg2=%d\n",ipg,ref_ipg(deg,xref2));
       assert(test);
     }
@@ -155,7 +155,7 @@ int TestInterpolation(void){
 	    for(int r2=0;r2<_DMAX;r2++){
 	      int deg[6]={d0,d1,d2,r0,r1,r2};
 	      int* raf=deg+3;
-	      for (int ipg=0;ipg<NPG(deg);ipg++){
+	      for (int ipg=0;ipg<NPG(deg,raf);ipg++){
 		int ix[3],ic[3];
 		int ipgcopy=ipg;
 		//printf("avant %d %d %d npg=%d \n",d0,d1,d2,NPG(deg));
@@ -192,11 +192,10 @@ int TestInterpolation(void){
 
     real xref1[3],xref2[3],xphy[3],xref_in[3];
     for(int ifa=0;ifa<6;ifa++){
-      for(int ipgf=0;ipgf<NPGF(deg,ifa);ipgf++){
+      for(int ipgf=0;ipgf<NPGF(deg, nraf, ifa);ipgf++){
 	real wpg;
-	ref_pg_face(deg,ifa,ipgf,xref1,&wpg,NULL);
-	int ipg=deg[6];
-	ref_pg_vol(deg,ipg,xref1,&wpg,xref_in);
+	int ipg = ref_pg_face(deg, nraf,ifa,ipgf,xref1,&wpg,NULL);
+	ref_pg_vol(deg, nraf,ipg,xref1,&wpg,xref_in);
 	Ref2Phy(physnode,
 		xref_in,
 		0,
@@ -207,7 +206,7 @@ int TestInterpolation(void){
 		0,
 		0);
 	Phy2Ref(physnode,xphy,xref2);
-	test=test &&(ipg==ref_ipg(deg,xref2));
+	test=test &&(ipg==ref_ipg(deg,nraf,xref2));
 	assert(test);
       }
     }
@@ -238,7 +237,7 @@ int TestInterpolation(void){
 	// check that integration by parts works with
 	// two arbitrary polynomials
 
-	npg = NPG(deg);
+	npg = NPG(deg,nraf);
 	real f[npg];
 	real g[npg];
 	real xref[3],omega;
@@ -246,7 +245,7 @@ int TestInterpolation(void){
 
 	// Define test functions f and g
 	for(int ipg = 0; ipg < npg; ipg++){
-	  ref_pg_vol(deg, ipg, xref, &omega,NULL);
+	  ref_pg_vol(deg, nraf, ipg, xref, &omega,NULL);
 	  real xphy[3];
 	  real dtau[3][3], codtau[3][3];
 	  Ref2Phy(physnode, xref, NULL, -1,
@@ -271,8 +270,8 @@ int TestInterpolation(void){
 	  real dphi[3];
 	  //printf(" ipg= %d \n", ipg);
 	  for(int l = 0; l < npg; l++){
-	    grad_psi_pg(deg, l, ipg, dphiref);
-	    ref_pg_vol(deg, ipg, xref, &omega, NULL);
+	    grad_psi_pg(deg, nraf, l, ipg, dphiref);
+	    ref_pg_vol(deg, nraf, ipg, xref, &omega, NULL);
 	    real xphy[3];
 	    real dtau[3][3], codtau[3][3];
 	    Ref2Phy(physnode, xref, dphiref, -1,
@@ -285,7 +284,7 @@ int TestInterpolation(void){
 	    dkf += f[l] * dphi[k] / det;
 		
 	  }
-	  ref_pg_vol(deg, ipg, xref, &omega,NULL);
+	  ref_pg_vol(deg, nraf, ipg, xref, &omega,NULL);
 	  real xphy[3];
 	  real dtau[3][3], codtau[3][3];
 	  Ref2Phy(physnode, xref, NULL, -1,
@@ -305,8 +304,8 @@ int TestInterpolation(void){
 	  real dkg = 0;
 	  real dphi[3], dphiref[3];
 	  for(int l = 0; l < npg; l++){
-	    grad_psi_pg(deg, l, ipg, dphiref);
-	    ref_pg_vol(deg, ipg, xref, &omega,NULL);
+	    grad_psi_pg(deg, nraf, l, ipg, dphiref);
+	    ref_pg_vol(deg, nraf, ipg, xref, &omega,NULL);
 	    real xphy[3];
 	    real dtau[3][3], codtau[3][3];
 	    Ref2Phy(physnode, xref, dphiref, -1,
@@ -318,7 +317,7 @@ int TestInterpolation(void){
 	      + dtau[0][2] * codtau[0][2];
 	    dkg += dphi[k] * g[l] / det;
 	  }
-	  ref_pg_vol(deg, ipg, xref, &omega,NULL);
+	  ref_pg_vol(deg, nraf, ipg, xref, &omega,NULL);
 	  real xphy[3];
 	  real dtau[3][3], codtau[3][3];
 	  Ref2Phy(physnode, xref, NULL, -1,
@@ -341,13 +340,13 @@ int TestInterpolation(void){
 	for(int ifa=0;ifa<6;ifa++){
 	  real xphy[3], vnds[3];
 	  real dtau[3][3], codtau[3][3];
-	  int npg_f = NPGF(deg, ifa);
+	  int npg_f = NPGF(deg, nraf, ifa);
 	  for(int ipgf = 0; ipgf < npg_f; ipgf++){
-	    ref_pg_face(deg, ifa, ipgf, xref, &omega, NULL);
+	    int ninvol = ref_pg_face(deg, nraf, ifa, ipgf, xref, &omega, NULL);
  	
 	    Ref2Phy(physnode, xref, NULL, ifa,
 		    xphy, dtau, codtau, NULL, vnds);
-	    int_fgn += f[deg[6]] * g[deg[6]] * vnds[k] * omega;
+	    int_fgn += f[ninvol] * g[ninvol] * vnds[k] * omega;
 	  }
 	}
 

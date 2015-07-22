@@ -52,8 +52,13 @@ typedef struct Simulation {
 
 //! \brief simulation initialization.
 //! Computation of the initial data at each glop.
-//! \param[inout] simu a fieldsimulation
-void InitSimulation(Simulation *simu);
+//! \param[inout] simu a simulation
+//! \param[in] mesh a macromesh
+//! \param[in] deg degrees parameters 
+//! \param[in] raf refinements parameters 
+//! \param[in] model a model
+void InitSimulation(Simulation *simu, MacroMesh *mesh,
+		    int *deg, int *raf, Model *model);
 
 
 //! \brief apply the Discontinuous Galerkin approximation for computing

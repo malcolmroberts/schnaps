@@ -12,7 +12,7 @@ SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 #set(CMAKE_C_FLAGS "-std=gnu99 -D_REENTRANT -O3 -g")
 
 #set(CMAKE_C_FLAGS " -std=c99 -D_REENTRANT -O3 ")
-set(CMAKE_C_FLAGS " -std=c99  -D_DOUBLE_PRECISION")
+set(CMAKE_C_FLAGS " -std=c99  -D_DOUBLE_PRECISION  -g")
 
 #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_DOUBLE_PRECISION")
 
@@ -42,11 +42,11 @@ if(CMAKE_COMPILER_IS_GNUCC)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
 endif()
 
-find_package(OpenMP)
-if(OPENMP_FOUND)
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-endif()
+#find_package(OpenMP)
+#if(OPENMP_FOUND)
+#  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+#  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+#endif()
 
 SET(BUILD_PARALUTION      OFF CACHE BOOL   "Build paralution library")
 
@@ -189,7 +189,6 @@ add_executable(
   )
 target_link_libraries(testmodel ${LIBS})
 
-add_test(testfield testfield)
 add_executable(
   testfield
   test/test.h
@@ -198,7 +197,14 @@ add_executable(
 target_link_libraries(testfield ${LIBS})
 add_test(testfield testfield)
 
-add_test(testfielddg testfielddg)
+add_executable(
+  testsimulation
+  test/test.h
+  test/testsimulation.c
+  )
+target_link_libraries(testsimulation ${LIBS})
+add_test(testsimulation testsimulation)
+
 add_executable(
   testfielddg
   test/test.h

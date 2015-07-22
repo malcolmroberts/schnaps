@@ -7,19 +7,54 @@
 
 
 
-void InitSimulation(Simulation *simu){
+void InitSimulation(Simulation *simu, MacroMesh *mesh,
+		    int *deg, int *raf, Model *model){
 
-  MacroMesh *mesh = &simu->macromesh;
+  simu->macromesh = *mesh;
+
+  simu->tnow = 0;
+
+  simu->fd = malloc(mesh->nbelems * sizeof(field));
+
   field *fd = simu->fd;
 
-  simu->wsize = 0 
+  int field_size = NPG(deg,raf) * model->m;
+
+  simu->wsize = field_size * mesh->nbelems;
+
+  printf("field_size = %d simusize = %d\n",field_size,simu->wsize);
+
+  real *w = malloc(simu->wsize * sizeof(real));
+  real *dtw = malloc(simu->wsize * sizeof(real));
   
+  real physnode[20][3];
+  
+
   for(int ie=0; ie < mesh->nbelems; ++ie){
-    simu->wsize += NPG(fd[ie].deg,fd[ie].raf) * fd[ie].model.m;
+    for(int inoloc = 0; inoloc < 20; ++inoloc){
+      int ino = mesh->elem2node[20 * ie + inoloc];
+      physnode[inoloc][0] = mesh->node[3 * ino + 0];
+      physnode[inoloc][1] = mesh->node[3 * ino + 1];
+      physnode[inoloc][2] = mesh->node[3 * ino + 2];
+    }
+
+    init_empty_field(fd + ie);
+    Initfield(fd+ie, *model, physnode, deg, raf,
+	      w + ie * field_size, dtw + ie * field_size);
   }
 
 }
 
+
+void DisplaySimulation(Simulation *simu){
+
+  for(int ie = 0; ie < simu->macromesh.nbelems; ++ie){
+    printf("Field %d\n",ie);
+
+    Displayfield(simu->fd + ie);
+  }
+
+}
 
 // Save the results in the gmsh format typplot: index of the plotted
 // variable int compare == true -> compare with the exact value.  If
@@ -257,26 +292,88 @@ void DtFields(Simulation *simu, real *w, real *dtw) {
 #ifdef _OPENMP
 #pragma omp parallel
 #endif
-  for(int iw = 0; iw < f->wsize; iw++)
+
+  //real *w = simu->fd[0].wn;
+  //real *dtw = simu->fd[0].dtwn;
+  
+  for(int iw = 0; iw < simu->wsize; iw++)
     dtw[iw] = 0;
 
-  for(int ifa = 0; ifa < f->macromesh.nbfaces; ifa++){
-    DGMacroCellInterface(ifa, f, w, dtw);
+  for(int ifa = 0; ifa < simu->macromesh.nbfaces; ifa++){
+    int ieL = simu->macromesh.face2elem[4 * ifa + 0];
+    int locfaL = simu->macromesh.face2elem[4 * ifa + 1];
+    int ieR = simu->macromesh.face2elem[4 * ifa + 2];
+    field *fL = simu->fd + ieL;
+    field *fR = NULL;
+    //printf("iel=%d ier=%d\n",ieL,ieR);
+    if (ieR >= 0) {
+      fR = simu->fd + ieR;
+    }
+          
+    DGMacroCellInterface(locfaL, fL, fR, w, dtw);
   }
 
 #ifdef _OPENMP
 #pragma omp parallel for schedule(dynamic, 1)
 #endif
-  for(int ie = 0; ie < f->macromesh.nbelems; ++ie) {
-    DGSubCellInterface(ie, f, w, dtw);
-    DGVolume(ie, f, w, dtw);
-    DGMass(ie, f, dtw);
-    DGSource(ie, f, w, dtw);
+  for(int ie = 0; ie < simu->macromesh.nbelems; ++ie) {
+    DGSubCellInterface(simu->fd + ie, w, dtw);
+    DGVolume(simu->fd + ie, w, dtw);
+    DGMass(simu->fd + ie, w, dtw);
+    DGSource(simu->fd + ie, w, dtw);
 
   }
 
-  if(f->post_dtfield != NULL) // FIXME: rename to after dtfield
-      f->post_dtfield(f, w);
+  //if(f->post_dtfield != NULL) // FIXME: rename to after dtfield
+    //f->post_dtfield(f, w);
 }
+
+real L2error(Simulation *simu) {
+  //int param[8] = {f->model.m, _DEGX, _DEGY, _DEGZ, _RAFX, _RAFY, _RAFZ, 0};
+  real error = 0;
+  real mean = 0;
+
+  for(int ie = 0; ie < simu->macromesh.nbelems; ++ie) {
+
+    field *f = simu->fd + ie;
+
+    // Loop on the glops (for numerical integration)
+    const int npg = NPG(f->deg, f->raf);
+    for(int ipg = 0; ipg < npg; ipg++) {
+      real w[f->model.m];
+      for(int iv = 0; iv < f->model.m; iv++) {
+	int imem = f->varindex(f->deg, f->raf, f->model.m, ipg, iv);
+	w[iv] = f->wn[imem];
+      }
+
+      real wex[f->model.m];
+      real wpg, det;
+      // Compute wpg, det, and the exact solution
+      { 
+	real xphy[3], xpgref[3];
+	real dtau[3][3], codtau[3][3];
+	// Get the coordinates of the Gauss point
+	ref_pg_vol(f->deg, f->raf, ipg, xpgref, &wpg, NULL);
+	Ref2Phy(f->physnode, // phys. nodes
+		xpgref, // xref
+		NULL, -1, // dpsiref, ifa
+		xphy, dtau, // xphy, dtau
+		codtau, NULL, NULL); // codtau, dpsi, vnds
+	det = dot_product(dtau[0], codtau[0]);
+
+	// Get the exact value
+	f->model.ImposedData(xphy, f->tnow, wex);
+      }
+
+      for(int iv = 0; iv < f->model.m; iv++) {
+	real diff = w[iv] - wex[iv];
+        error += diff * diff * wpg * det;
+        mean += w[iv] * w[iv] * wpg * det;
+       }
+    }
+  }
+  return sqrt(error) / (sqrt(mean)  + 1e-14);
+}
+
 
 

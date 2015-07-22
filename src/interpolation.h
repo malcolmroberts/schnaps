@@ -21,6 +21,8 @@ typedef struct Interpolation{
 
   //! \brief underlying geometry mapping
   Geom geo;
+  //! \brief current Gauss point index
+  int i;
   //! \brief number of Gauss points in the volume
   int npgv;
   //! \brief current Gauss point index

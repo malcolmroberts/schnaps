@@ -13,6 +13,8 @@ int TestModel(void);
 
 int TestField(void);
 
+int TestSimulation(void);
+
 int TestCache(void);
 
 int TestFieldDG(void);

@@ -18,12 +18,13 @@ int TestMacroMesh(void)
 {
   MacroMesh m;
 
-  int param[]={4, 4, 4, 1, 1, 1, 0};
+  int deg[]={4, 4, 4};
+  int raf[]={1, 1, 1};
   
   // test gmsh file reading
   ReadMacroMesh(&m, "test/testmacromesh.msh");
   BuildConnectivity(&m);
-  CheckMacroMesh(&m, param);
+  CheckMacroMesh(&m, deg, raf);
   PrintMacroMesh(&m);
 
   int test = (m.nbelems == 5);

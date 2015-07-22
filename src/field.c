@@ -155,7 +155,7 @@ void init_data(field *f)
       f->model.InitData(xpg, w);
       for(int iv = 0; iv < f->model.m; iv++) {
 	int imem = f->varindex(f->deg, f->raf, f->model.m, ipg, iv);
-	f->wn[imem] = w[iv];
+		f->wn[imem] = w[iv];
       }
     }
   
@@ -400,29 +400,33 @@ void init_field_cl(field *f)
 }
 #endif
 
-void Initfield(field *f, Model model, Interpolation interp, real *w, real *dtw) {
+void Initfield(field *f, Model model, 
+	       real physnode[][3], int *deg, int *raf, real *w, real* dtw) {
   //int param[8]={f->model.m,_DEGX,_DEGY,_DEGZ,_RAFX,_RAFY,_RAFZ,0};
   
   //f->vmax = 1.0; // FIXME: make this variable ??????
 
   f->model = model;
 
-  f->interp = interp;
+  f->deg[0] = deg[0];
+  f->deg[1] = deg[1];
+  f->deg[2] = deg[2];
 
-  assert(model.m == interp.interp_param[0]);
-
-  f->deg[0] = interp.interp_param[1];
-  f->deg[1] = interp.interp_param[2];
-  f->deg[2] = interp.interp_param[3];
-
-  f->raf[0] = interp.interp_param[4];
-  f->raf[1] = interp.interp_param[5];
-  f->raf[2] = interp.interp_param[6];
+  f->raf[0] = raf[0];
+  f->raf[1] = raf[1];
+  f->raf[2] = raf[2];
 
   f->npg[0] = f->deg[0] + 1;
   f->npg[1] = f->deg[1] + 1;
   f->npg[2] = f->deg[2] + 1;
 
+  for(int inoloc = 0 ; inoloc < 20; ++inoloc){
+    f->physnode[inoloc][0] = physnode[inoloc][0];
+    f->physnode[inoloc][1] = physnode[inoloc][1];
+    f->physnode[inoloc][2] = physnode[inoloc][2];
+  }
+
+  f->varindex = GenericVarindex;
 
   int nmem = f->model.m * NPG(f->deg, f->raf);
   f->wsize = nmem;
@@ -433,14 +437,14 @@ void Initfield(field *f, Model model, Interpolation interp, real *w, real *dtw) 
   else
     printf("Allocating %d floats per array (%f GB)\n", nmem, g_memsize);
 
-  if (w != NULL){
+  if (w == NULL){
     f->wn = calloc(nmem, sizeof(real));
   } else {
     f->wn = w;
   }
   assert(f->wn);
 
-  if (dtw != NULL){
+  if (dtw == NULL){
     f->dtwn = calloc(nmem, sizeof(real));
   } else {
     f->dtwn = dtw;
@@ -751,6 +755,8 @@ void DGMacroCellInterface(int locfaL, field *fL, field *fR, real *w, real *dtw)
 
       int ipgR = ref_ipg(fR->deg,fR->raf, xrefL);
 
+      //assert(1==2);
+
       //printf("ipgL=%d ipgR=%d\n",ipgL,ipgR);
 
       //Uncomment to check that the neighbour-finding algorithm worked.
@@ -795,6 +801,7 @@ void DGMacroCellInterface(int locfaL, field *fL, field *fR, real *w, real *dtw)
 	int imemL = fL->varindex(fL->deg, fL->raf,fL->model.m, ipgL, iv);
 	wL[iv] = w[imemL];
       }
+
 
       fL->model.BoundaryFlux(xpg, fL->tnow, wL, vnds, flux);
 
@@ -1016,56 +1023,55 @@ void RK_in(real *fwnp1, real *fdtwn, const real dt, const int sizew)
   }
 }
 
-real set_dt(field *f)
+real set_dt(Simulation *simu)
 {
-  return f->model.cfl * f->hmin / f->vmax; 
+  return simu->cfl * simu->hmin / simu->vmax; 
 }
 
 // Time integration by a second-order Runge-Kutta algorithm
-void RK2(field *f, real tmax, real dt) 
-{
-  if(dt <= 0)
-    dt = set_dt(f);
+/* void RK2(field *f, real tmax, real dt)  *//* { */
+/*   if(dt <= 0) */
+/*     dt = set_dt(f); */
 
-  f->itermax = tmax / dt;
-  int size_diags;
-  int freq = (1 >= f->itermax / 10)? 1 : f->itermax / 10;
-  int sizew = f->macromesh.nbelems * f->model.m * NPG(f->deg, f->raf);
-  int iter = 0;
+/*   f->itermax = tmax / dt; */
+/*   int size_diags; */
+/*   int freq = (1 >= f->itermax / 10)? 1 : f->itermax / 10; */
+/*   int sizew = f->macromesh.nbelems * f->model.m * NPG(f->deg, f->raf); */
+/*   int iter = 0; */
 
-  real *wnp1 = calloc(f->wsize, sizeof(real));
-  assert(wnp1);
+/*   real *wnp1 = calloc(f->wsize, sizeof(real)); */
+/*   assert(wnp1); */
 
-  // FIXME: remove
-  size_diags = f->nb_diags * f->itermax;
-  f->iter_time = iter;
+/*   // FIXME: remove */
+/*   size_diags = f->nb_diags * f->itermax; */
+/*   f->iter_time = iter; */
 
-  if(f->nb_diags != 0)
-    f->Diagnostics = malloc(size_diags * sizeof(real));
+/*   if(f->nb_diags != 0) */
+/*     f->Diagnostics = malloc(size_diags * sizeof(real)); */
 
-  while(f->tnow < tmax) {
-    if (iter % freq == 0)
-      printf("t=%f iter=%d/%d dt=%f\n", f->tnow, iter, f->itermax, dt);
+/*   while(f->tnow < tmax) { */
+/*     if (iter % freq == 0) */
+/*       printf("t=%f iter=%d/%d dt=%f\n", f->tnow, iter, f->itermax, dt); */
 
-    dtfield(f, f->wn, f->dtwn);
-    RK_out(wnp1, f->wn, f->dtwn, 0.5 * dt, sizew);
+/*     dtfield(f, f->wn, f->dtwn); */
+/*     RK_out(wnp1, f->wn, f->dtwn, 0.5 * dt, sizew); */
 
-    f->tnow += 0.5 * dt;
+/*     f->tnow += 0.5 * dt; */
 
-    dtfield(f, wnp1, f->dtwn);
-    RK_in(f->wn, f->dtwn, dt, sizew);
+/*     dtfield(f, wnp1, f->dtwn); */
+/*     RK_in(f->wn, f->dtwn, dt, sizew); */
 
-    f->tnow += 0.5 * dt;
+/*     f->tnow += 0.5 * dt; */
 
-    if(f->update_after_rk != NULL)
-      f->update_after_rk(f, f->wn);
+/*     if(f->update_after_rk != NULL) */
+/*       f->update_after_rk(f, f->wn); */
 
-    iter++;
-    f->iter_time=iter;
-  }
-  printf("t=%f iter=%d/%d dt=%f\n", f->tnow, iter, f->itermax, dt);
-  free(wnp1);
-}
+/*     iter++; */
+/*     f->iter_time=iter; */
+/*   } */
+/*   printf("t=%f iter=%d/%d dt=%f\n", f->tnow, iter, f->itermax, dt); */
+/*   free(wnp1); */
+/* } */
 
 void RK4_final_inplace(real *w, real *l1, real *l2, real *l3, 
 		       real *dtw, const real dt, const int sizew)
@@ -1086,82 +1092,79 @@ void RK4_final_inplace(real *w, real *l1, real *l2, real *l3,
 }
 
 // Time integration by a fourth-order Runge-Kutta algorithm
-void RK4(field *f, real tmax, real dt) 
-{
-  if(dt <= 0)
-    dt = set_dt(f);
+/* void RK4(field *f, real tmax, real dt)  */
+/* { */
+/*   if(dt <= 0) */
+/*     dt = set_dt(f); */
 
-  f->itermax = tmax / dt;
-  int size_diags;
-  int freq = (1 >= f->itermax / 10)? 1 : f->itermax / 10;
-  int sizew = f->macromesh.nbelems * f->model.m * NPG(f->deg, f->raf);
-  int iter = 0;
+/*   f->itermax = tmax / dt; */
+/*   int size_diags; */
+/*   int freq = (1 >= f->itermax / 10)? 1 : f->itermax / 10; */
+/*   int sizew = f->macromesh.nbelems * f->model.m * NPG(f->deg, f->raf); */
+/*   int iter = 0; */
 
-  // Allocate memory for RK time-stepping
-  real *l1, *l2, *l3;
-  l1 = calloc(sizew, sizeof(real));
-  l2 = calloc(sizew, sizeof(real));
-  l3 = calloc(sizew, sizeof(real));
+/*   // Allocate memory for RK time-stepping */
+/*   real *l1, *l2, *l3; */
+/*   l1 = calloc(sizew, sizeof(real)); */
+/*   l2 = calloc(sizew, sizeof(real)); */
+/*   l3 = calloc(sizew, sizeof(real)); */
   
-  size_diags = f->nb_diags * f->itermax;
-  f->iter_time = iter;
+/*   size_diags = f->nb_diags * f->itermax; */
+/*   f->iter_time = iter; */
   
-    if(f->nb_diags != 0)
-    f->Diagnostics = malloc(size_diags * sizeof(real));
+/*     if(f->nb_diags != 0) */
+/*     f->Diagnostics = malloc(size_diags * sizeof(real)); */
   
-  while(f->tnow < tmax) {
-    if (iter % freq == 0)
-      printf("t=%f iter=%d/%d dt=%f\n", f->tnow, iter, f->itermax, dt);
+/*   while(f->tnow < tmax) { */
+/*     if (iter % freq == 0) */
+/*       printf("t=%f iter=%d/%d dt=%f\n", f->tnow, iter, f->itermax, dt); */
 
-    // l_1 = w_n + 0.5dt * S(w_n, t_0)
-    dtfield(f, f->wn, f->dtwn);
-    RK_out(l1, f->wn, f->dtwn, 0.5 * dt, sizew);
+/*     // l_1 = w_n + 0.5dt * S(w_n, t_0) */
+/*     dtfield(f, f->wn, f->dtwn); */
+/*     RK_out(l1, f->wn, f->dtwn, 0.5 * dt, sizew); */
 
-    f->tnow += 0.5 * dt;
+/*     f->tnow += 0.5 * dt; */
 
-    // l_2 = w_n + 0.5dt * S(l_1, t_0 + 0.5 * dt)
-    dtfield(f, l1, f->dtwn);
-    RK_out(l2, f->wn, f->dtwn, 0.5 * dt, sizew);
+/*     // l_2 = w_n + 0.5dt * S(l_1, t_0 + 0.5 * dt) */
+/*     dtfield(f, l1, f->dtwn); */
+/*     RK_out(l2, f->wn, f->dtwn, 0.5 * dt, sizew); */
 
-    // l_3 = w_n + dt * S(l_2, t_0 + 0.5 * dt)
-    dtfield(f, l2, f->dtwn);
-    RK_out(l3, f->wn, f->dtwn, dt, sizew);
+/*     // l_3 = w_n + dt * S(l_2, t_0 + 0.5 * dt) */
+/*     dtfield(f, l2, f->dtwn); */
+/*     RK_out(l3, f->wn, f->dtwn, dt, sizew); */
 
-    f->tnow += 0.5 * dt;
+/*     f->tnow += 0.5 * dt; */
 
-    // Compute S(l_3, t_0 + dt)
-    dtfield(f, l3, f->dtwn);
-    RK4_final_inplace(f->wn, l1, l2, l3, f->dtwn, dt, sizew);
+/*     // Compute S(l_3, t_0 + dt) */
+/*     dtfield(f, l3, f->dtwn); */
+/*     RK4_final_inplace(f->wn, l1, l2, l3, f->dtwn, dt, sizew); */
 
     
-    if(f->update_after_rk != NULL)
-      f->update_after_rk(f, f->wn);
+/*     if(f->update_after_rk != NULL) */
+/*       f->update_after_rk(f, f->wn); */
     
-    iter++;
-     f->iter_time=iter;
-  }
-  printf("t=%f iter=%d/%d dt=%f\n", f->tnow, iter, f->itermax, dt);
+/*     iter++; */
+/*      f->iter_time=iter; */
+/*   } */
+/*   printf("t=%f iter=%d/%d dt=%f\n", f->tnow, iter, f->itermax, dt); */
 
-  free(l3);
-  free(l2);
-  free(l1);
-}
+/*   free(l3); */
+/*   free(l2); */
+/*   free(l1); */
+/* } */
 
 // Compute the normalized L2 distance with the imposed data
-real L2error(field *f) {
+
+// Compute the normalized L2 distance with the imposed data
+real L2error_onefield(Simulation *simu, int nbfield) {
   //int param[8] = {f->model.m, _DEGX, _DEGY, _DEGZ, _RAFX, _RAFY, _RAFZ, 0};
   real error = 0;
   real mean = 0;
 
-  for (int ie = 0; ie < f->macromesh.nbelems; ie++) {
+  for (int ie = 0; ie < simu->macromesh.nbelems; ie++) {
     // Get the physical nodes of element ie
-    real physnode[20][3];
-    for(int inoloc = 0; inoloc < 20; inoloc++) {
-      int ino = f->macromesh.elem2node[20*ie+inoloc];
-      physnode[inoloc][0] = f->macromesh.node[3 * ino + 0];
-      physnode[inoloc][1] = f->macromesh.node[3 * ino + 1];
-      physnode[inoloc][2] = f->macromesh.node[3 * ino + 2];
-    }
+
+    field *f = simu->fd + ie;
 
     // Loop on the glops (for numerical integration)
     const int npg = NPG(f->deg, f->raf);
@@ -1180,61 +1183,7 @@ real L2error(field *f) {
 	real dtau[3][3], codtau[3][3];
 	// Get the coordinates of the Gauss point
 	ref_pg_vol(f->deg, f->raf, ipg, xpgref, &wpg, NULL);
-	Ref2Phy(physnode, // phys. nodes
-		xpgref, // xref
-		NULL, -1, // dpsiref, ifa
-		xphy, dtau, // xphy, dtau
-		codtau, NULL, NULL); // codtau, dpsi, vnds
-	det = dot_product(dtau[0], codtau[0]);
-
-	// Get the exact value
-	f->model.ImposedData(xphy, f->tnow, wex);
-      }
-
-      for(int iv = 0; iv < f->model.m; iv++) {
-	real diff = w[iv] - wex[iv];
-        error += diff * diff * wpg * det;
-        mean += w[iv] * w[iv] * wpg * det;
-       }
-    }
-  }
-  return sqrt(error) / (sqrt(mean)  + 1e-14);
-}
-
-// Compute the normalized L2 distance with the imposed data
-real L2error_onefield(field *f, int nbfield) {
-  //int param[8] = {f->model.m, _DEGX, _DEGY, _DEGZ, _RAFX, _RAFY, _RAFZ, 0};
-  real error = 0;
-  real mean = 0;
-
-  for (int ie = 0; ie < f->macromesh.nbelems; ie++) {
-    // Get the physical nodes of element ie
-    real physnode[20][3];
-    for(int inoloc = 0; inoloc < 20; inoloc++) {
-      int ino = f->macromesh.elem2node[20*ie+inoloc];
-      physnode[inoloc][0] = f->macromesh.node[3 * ino + 0];
-      physnode[inoloc][1] = f->macromesh.node[3 * ino + 1];
-      physnode[inoloc][2] = f->macromesh.node[3 * ino + 2];
-    }
-
-    // Loop on the glops (for numerical integration)
-    const int npg = NPG(f->deg, f->raf);
-    for(int ipg = 0; ipg < npg; ipg++) {
-      real w[f->model.m];
-      for(int iv = 0; iv < f->model.m; iv++) {
-	int imem = f->varindex(f->deg, f->raf, f->model.m, ipg, iv);
-	w[iv] = f->wn[imem];
-      }
-
-      real wex[f->model.m];
-      real wpg, det;
-      // Compute wpg, det, and the exact solution
-      { 
-	real xphy[3], xpgref[3];
-	real dtau[3][3], codtau[3][3];
-	// Get the coordinates of the Gauss point
-	ref_pg_vol(f->deg, f->raf, ipg, xpgref, &wpg, NULL);
-	Ref2Phy(physnode, // phys. nodes
+	Ref2Phy(f->physnode, // phys. nodes
 		xpgref, // xref
 		NULL, -1, // dpsiref, ifa
 		xphy, dtau, // xphy, dtau
@@ -1255,33 +1204,33 @@ real L2error_onefield(field *f, int nbfield) {
 }
 
 
-void InterpField(field *f, int ie, real *xref, real *w){
-  const int nraf[3] = {f->interp_param[4],
-		       f->interp_param[5],
-		       f->interp_param[6]};
-  const int deg[3] = {f->interp_param[1],
-		      f->interp_param[2],
-		      f->interp_param[3]};
+/* void InterpField(field *f, int ie, real *xref, real *w){ */
+/*   const int nraf[3] = {f->interp_param[4], */
+/* 		       f->interp_param[5], */
+/* 		       f->interp_param[6]}; */
+/*   const int deg[3] = {f->interp_param[1], */
+/* 		      f->interp_param[2], */
+/* 		      f->interp_param[3]}; */
 
-  for(int iv = 0; iv < f->model.m; iv++)
-    w[iv] = 0;
+/*   for(int iv = 0; iv < f->model.m; iv++) */
+/*     w[iv] = 0; */
 
-  int is[3];
+/*   int is[3]; */
 
-  for(int ii = 0; ii < 3; ii++){
-    is[ii] = xref[ii] * nraf[ii];
-    assert(is[ii] < nraf[ii] && is[ii]>= 0);
-  }
+/*   for(int ii = 0; ii < 3; ii++){ */
+/*     is[ii] = xref[ii] * nraf[ii]; */
+/*     assert(is[ii] < nraf[ii] && is[ii]>= 0); */
+/*   } */
   
-  int npgv = NPG(f->deg, f->raf);
-  // TODO: loop only on non zero basis function
-  for(int ib = 0; ib < npgv; ib++) { 
-    real psi;
-    psi_ref_subcell(f->deg, f->raf, is, ib, xref, &psi, NULL);
+/*   int npgv = NPG(f->deg, f->raf); */
+/*   // TODO: loop only on non zero basis function */
+/*   for(int ib = 0; ib < npgv; ib++) {  */
+/*     real psi; */
+/*     psi_ref_subcell(f->deg, f->raf, is, ib, xref, &psi, NULL); */
     
-    for(int iv=0;iv<f->model.m;iv++){
-      int imem = f->varindex(f->deg, f->raf, f->model.m, ib, iv);
-      w[iv] += psi * f->wn[imem];
-    }
-  }
-}
+/*     for(int iv=0;iv<f->model.m;iv++){ */
+/*       int imem = f->varindex(f->deg, f->raf, f->model.m, ib, iv); */
+/*       w[iv] += psi * f->wn[imem]; */
+/*     } */
+/*   } */
+/* } */

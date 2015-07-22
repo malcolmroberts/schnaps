@@ -234,12 +234,13 @@ void build_face(MacroMesh *m, Face4Sort *face)
   // check
   /* for(int ie = 0;ie<m->nbelems;ie++) { */
   /*   for(int ifa = 0;ifa<6;ifa++) { */
-  /*     f=face+ifa+6*ie; */
+  /*     Face4Sort *f=face+ifa+6*ie; */
   /*     printf("left=%d right=%d, nodes %d %d %d %d\n", */
-  /* 	     f->left,f->right,f->node[0], */
+  /* 	     f->left,-100,f->node[0], */
   /* 	     f->node[1],f->node[2],f->node[3]); */
   /*   } */
   /* } */
+  /* assert(1==2); */
 }
 
 // Find the coordinates of the minimal bounding box for the MacroMesh
@@ -808,7 +809,7 @@ void CheckMacroMesh(MacroMesh *m, int *deg, int *raf) {
     for(int ipg = 0; ipg < NPG(deg,raf); ipg++) {
       real xref1[3], xref_in[3];
       real wpg;
-      ref_pg_vol(param, ipg, xref1, &wpg, xref_in);
+      ref_pg_vol(deg, raf, ipg, xref1, &wpg, xref_in);
       memcpy(g.xref, xref1, sizeof(g.xref));
 
       g.ifa = 0;
@@ -820,7 +821,7 @@ void CheckMacroMesh(MacroMesh *m, int *deg, int *raf) {
       //	     ref_ipg(param,xref_in),xref_in[0],xref_in[1],xref_in[2]);
 
       // Ensure that the physical coordinates give the same point:
-      assert(ipg == ref_ipg(param, xref_in));
+      assert(ipg == ref_ipg(deg, raf, xref_in));
 
       //}
     }
@@ -850,21 +851,22 @@ void CheckMacroMesh(MacroMesh *m, int *deg, int *raf) {
       assert(0 < dot_product(g.vnds, vec));
 
       // Check compatibility between face and volume numbering
-      for(int ipgf = 0; ipgf < NPGF(param, ifa); ipgf++) {
+      for(int ipgf = 0; ipgf < NPGF(deg, raf, ifa); ipgf++) {
 
         // Get the coordinates of the Gauss point
         real xpgref[3];
-	{
+	
 	  real wpg;
-	  ref_pg_face(param, ifa, ipgf, xpgref, &wpg, NULL);
-	}
+
+	// Recover the volume gauss point from the face index
+	  int ipgv = ref_pg_face(deg, raf, ifa, ipgf, xpgref, &wpg, NULL);
+	
         
 	// Recover the volume gauss point from the face index
-	int ipgv = param[6];
 	real xpgref2[3];
 	{
 	  real wpg2;
-	  ref_pg_vol(param, ipgv, xpgref2, &wpg2, NULL);
+	  ref_pg_vol(deg, raf, ipgv, xpgref2, &wpg2, NULL);
 	}
 
         if(m->is2d) { // in 2D do not check upper and lower face
@@ -896,7 +898,6 @@ void CheckMacroMesh(MacroMesh *m, int *deg, int *raf) {
   // Check that the faces are defined by the same mapping with
   // opposite normals
   for (int ie = 0; ie < m->nbelems; ie++) {
-    // int param[8]={1,_DEGX,_DEGY,_DEGZ,_RAFX,_RAFY,_RAFZ,0};
     // Get the geometry for the macro element ie
     real physnode[20][3];
     for(int inoloc = 0; inoloc < 20; inoloc++) {
@@ -909,7 +910,7 @@ void CheckMacroMesh(MacroMesh *m, int *deg, int *raf) {
     // Loop on the 6 faces
     for(int ifa = 0; ifa < 6; ifa++) {
       // Loop on the glops (numerical integration) of the face ifa
-      for(int ipgf = 0; ipgf < NPGF(param, ifa); ipgf++) {
+      for(int ipgf = 0; ipgf < NPGF(deg, raf, ifa); ipgf++) {
 
 	// Get the right elem or the boundary id
 	int ieR = m->elem2elem[6 * ie + ifa];
@@ -920,16 +921,7 @@ void CheckMacroMesh(MacroMesh *m, int *deg, int *raf) {
 	  // face-local point index and the point slightly inside the
 	  // macrocell.
 	  real xpgref[3], xpgref_in[3];
-	  ref_pg_face(param, ifa, ipgf, xpgref, NULL, xpgref_in);
-	  //ref_pg_face(param, ifa, ipgf, xpgref, NULL, NULL);
-	  int ipg=param[6];
-
-/* #ifdef _PERIOD */
-/* 	  assert(m->is1d); // TODO: generalize to 2d */
-/* 	  if (xpgref_in[0] > _PERIOD) xpgref_in[0] -= _PERIOD; */
-/* 	  if (xpgref_in[0] < 0) xpgref_in[0] += _PERIOD; */
-/* #endif */
-
+	  int ipg = ref_pg_face(deg, raf, ifa, ipgf, xpgref, NULL, xpgref_in);
 
 	  // Compute the position of the point and the face normal.
 	  real xpg[3], vnds[3];
@@ -965,7 +957,7 @@ void CheckMacroMesh(MacroMesh *m, int *deg, int *raf) {
   	  real xpgrefR_in[3];//,xpgrefR[3];
 	  Phy2Ref(physnodeR, xpg_in, xpgrefR_in);
 	  //Phy2Ref(physnodeR, xpg, xpgrefR);
-	  int ipgR = ref_ipg(param, xpgrefR_in);
+	  int ipgR = ref_ipg(deg, raf, xpgrefR_in);
 	  
 	  // search the id of the face in the right elem
 	  // special treatment if the mesh is periodic
@@ -973,14 +965,15 @@ void CheckMacroMesh(MacroMesh *m, int *deg, int *raf) {
 	  int neighb_count=0;
 	  for(int ifaR=0;ifaR<6;ifaR++){
 	    if (m->elem2elem[6*ieR+ifaR] == ie) {
-	      for(int ipgfR = 0; ipgfR < NPGF(param, ifaR); ipgfR++) {
+	      for(int ipgfR = 0; ipgfR < NPGF(deg, raf, ifaR); ipgfR++) {
 		real xpgrefR[3];
-		ref_pg_face(param, ifaR, ipgfR, xpgrefR, NULL, NULL);
-		if (param[6] == ipgR){
+		int numvol = ref_pg_face(deg, raf, ifaR, ipgfR,
+					 xpgrefR, NULL, NULL);
+		if (numvol == ipgR){
 		  real xpgR[3];
 		  real vndsR[3];
 		  {
-		    ref_pg_vol(param, ipgR, xpgrefR, NULL, NULL);
+		    ref_pg_vol(deg, raf, ipgR, xpgrefR, NULL, NULL);
 		    real dtauR[3][3], codtauR[3][3];
 		    Ref2Phy(physnodeR,
 			    xpgrefR,
