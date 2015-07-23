@@ -12,7 +12,7 @@ SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 #set(CMAKE_C_FLAGS "-std=gnu99 -D_REENTRANT -O3 -g")
 
 #set(CMAKE_C_FLAGS " -std=c99 -D_REENTRANT -O3 ")
-set(CMAKE_C_FLAGS " -std=c99  -D_DOUBLE_PRECISION  -g")
+set(CMAKE_C_FLAGS " -std=c99  -D_DOUBLE_PRECISION  -O3")
 
 #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_DOUBLE_PRECISION")
 
@@ -275,6 +275,14 @@ add_executable(
 )
 target_link_libraries(testpoisson2d ${LIBS})
 add_test(testpoisson2d testpoisson2d)
+
+add_executable(
+  testwave2d
+  test/test.h
+  test/testwave2d.c
+)
+target_link_libraries(testwave2d ${LIBS})
+add_test(testwave2d testwave2d)
 
 
 
