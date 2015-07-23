@@ -242,7 +242,6 @@ add_executable(
 target_link_libraries(test2dmeshdetection ${LIBS})
 add_test(test2dmeshdetection test2dmeshdetection)
 
-add_test(testfieldrk2-2d testfieldrk2-2d)
 add_executable(
   testfieldrk2-2d
   test/test.h
@@ -250,6 +249,14 @@ add_executable(
   )
 target_link_libraries(testfieldrk2-2d ${LIBS})
 add_test(testfieldrk2-2d testfieldrk2-2d)
+
+add_executable(
+  testmeq2
+  test/test.h
+  test/testmeq2.c
+  )
+target_link_libraries(testmeq2 ${LIBS})
+add_test(testmeq2 testmeq2)
 
 add_test(testskyline testskyline)
 add_executable(
