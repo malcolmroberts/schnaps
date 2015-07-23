@@ -12,7 +12,7 @@ SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 #set(CMAKE_C_FLAGS "-std=gnu99 -D_REENTRANT -O3 -g")
 
 #set(CMAKE_C_FLAGS " -std=c99 -D_REENTRANT -O3 ")
-set(CMAKE_C_FLAGS " -std=c99  -D_DOUBLE_PRECISION  -O3")
+set(CMAKE_C_FLAGS " -std=c99  -D_DOUBLE_PRECISION  -g")
 
 #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_DOUBLE_PRECISION")
 
@@ -109,6 +109,8 @@ list(APPEND
   src/dpackfgmres.c
   src/linear_solver.h
   src/linear_solver.c
+  src/solvercontinuous.h
+  src/solvercontinuous.c
   src/solverpoisson.h
   src/solverpoisson.c
   src/quantities_vp.h

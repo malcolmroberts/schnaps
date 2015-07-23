@@ -61,21 +61,26 @@ int TestPoisson2d(void)
   model.ImposedData = TestPoisson_ImposedData;
   model.Source = NULL;
  
-  int deg[]={3, 3, 0};
+  int deg[]={2, 2, 0};
   int raf[]={4, 4, 1};
-    
-  PrintMacroMesh(&mesh);
-  //assert(1==2);
-  //AffineMapMacroMesh(&(f.macromesh));
+   
  
   CheckMacroMesh(&mesh, deg, raf);
   Simulation simu;
 
   InitSimulation(&simu, &mesh, deg, raf, &model);
 
-
-  PoissonSolver ps;
-  InitPoissonSolver(&ps,&simu,_INDEX_PHI);
+  ContinuousSolver ps;
+  
+  int nb_var=1;
+  int * listvar= malloc(nb_var * sizeof(int));
+  listvar[0]=_INDEX_PHI;
+  
+  InitContinuousSolver(&ps,&simu,1,nb_var,listvar);
+  ps.matrix_assembly=MatrixPoisson_Continuous;
+  ps.rhs_assembly=RHSPoisson_Continuous;
+  ps.bc_assembly= ExactDirichletContinuousMatrix;
+  ps.postcomputation_assembly=Computation_ElectricField_Poisson;
 
 #ifdef PARALUTION
   ps.lsol.solver_type = PAR_AMG;
@@ -85,7 +90,7 @@ int TestPoisson2d(void)
   ps.lsol.pc_type=NONE;
 #endif
 
-  SolvePoisson2D(&ps,_Dirichlet_Poisson_BC);
+  SolveContinuous2D(&ps);
 
   real errl2 = L2error(&simu);
 
