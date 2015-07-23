@@ -93,13 +93,9 @@ int TestCoil2D(void)
   Simulation simu;
 
   InitSimulation(&simu, &mesh, deg, raf, &model);
+  simu.pre_dtfields = coil_pre_dtfields; // must be called after init
 
    
-  //AffineMapMacroMesh(&(f.macromesh));
- 
-  // Prepare the initial fields
-  simu.pre_dtfields = coil_pre_dtfields;
-  //f.dt = 1e-3;
   
   PIC pic;
   simu.pic = &pic;

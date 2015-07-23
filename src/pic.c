@@ -212,7 +212,7 @@ void AccumulateParticles(void *vs, real *w){
   
   for(int i = 0; i < pic->nbparts; i++) {
     
-    int ie=pic->old_cell_id[i];
+    int ie = pic->old_cell_id[i];
     
     if (ie < 0) goto nexti;
  
@@ -231,13 +231,13 @@ void AccumulateParticles(void *vs, real *w){
 	    codtau, NULL, NULL); // codtau, dpsi, vnds
     real det = dot_product(dtau[0], codtau[0]);
 
-    for(int ib=0;ib < npg;ib++){
+    for(int ib=0 ; ib < npg; ib++){
       real wpg;
       ref_pg_vol(f->deg, f->raf, ib, NULL, &wpg, NULL);
       //printf("det=%f wpg=%f \n", det, wpg);
       wpg *= det;
       real psi;
-      psi_ref(f->deg, f->raf, ib,pic->xv + 6*i,&psi,NULL);
+      psi_ref(f->deg, f->raf, ib, pic->xv + 6 * i, &psi, NULL);
 
       int iv = 6;  // rho index
       int imem = f->varindex(f->deg, f->raf, f->model.m, ib, iv);

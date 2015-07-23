@@ -54,6 +54,8 @@ void InitSimulation(Simulation *simu, MacroMesh *mesh,
     simu->hmin = simu->hmin > fd[ie].hmin ? fd[ie].hmin : simu->hmin;
   }
 
+  simu->pre_dtfields = NULL;
+
 }
 
 
