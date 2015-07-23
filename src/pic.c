@@ -195,11 +195,11 @@ void AccumulateParticles(void *vs, real *w){
     for(int ie = 0; ie < simu->macromesh.nbelems; ie++){
       field *f = simu->fd + ie;
       int offset = ie * f->wsize;
-      int npg=NPG(f->deg, f->raf);
+      int npg = NPG(f->deg, f->raf);
       for(int ipg = 0; ipg < npg; ipg++){
 	int iv = 4;
 	int imem = f->varindex(f->deg, f->raf, f->model.m, ipg, iv);
-	w[imem + offset]=0;
+	w[imem + offset] = 0;
 	iv = 5;
 	imem = f->varindex(f->deg, f->raf, f->model.m, ipg, iv);
 	w[imem + offset]=0;
