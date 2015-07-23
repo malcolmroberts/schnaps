@@ -41,8 +41,6 @@ int TestPIC(void)
 
   CheckMacroMesh(&mesh, deg, raf);
 
-  Model model;
-  
   // test gmsh file reading
   ReadMacroMesh(&mesh, "test/testmacromesh.msh");
   BuildConnectivity(&mesh);
@@ -55,6 +53,8 @@ int TestPIC(void)
   CreateParticles(&pic,&mesh);
   PlotParticles(&pic,&mesh);
 
+  Model model;
+  
   model.m = 7; // num of conservative variables
 
   /* f.model.NumFlux = Maxwell2DNumFlux; */
@@ -99,7 +99,7 @@ int TestPIC(void)
 
   test = test && (final_cell == pic.cell_id[0]);
 
-  AccumulateParticles(&simu,simu.w);
+  AccumulateParticles(&simu);
 
   return test;
 }

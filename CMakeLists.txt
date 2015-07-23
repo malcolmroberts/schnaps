@@ -283,13 +283,13 @@ add_test(testpic testpic)
 #target_link_libraries(testcoil2d ${LIBS})
 #add_test(testcoil2d testcoil2d)
 
-#add_executable(
-#  testpic_accumulate
-#  test/test.h
-#  test/testpic_accumulate.c
-#  )
-#target_link_libraries(testpic_accumulate ${LIBS})
-#add_test(testpic_accumulate testpic_accumulate)
+add_executable(
+  testpic_accumulate
+  test/test.h
+  test/testpic_accumulate.c
+  )
+target_link_libraries(testpic_accumulate ${LIBS})
+add_test(testpic_accumulate testpic_accumulate)
 
 
 add_executable(

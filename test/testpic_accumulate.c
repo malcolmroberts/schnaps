@@ -27,53 +27,56 @@ void Maxwell2DConstInitData(real x[3], real w[]) {
 // some unit tests of the macromesh code
 int TestPICAccumulate(void)
 {
-  MacroMesh m;
+  bool test = true;
 
-  bool test=true;
+  char *mshname =  "test/testmacromesh.msh";
+  
+  MacroMesh mesh;
+  ReadMacroMesh(&mesh,mshname);
+  Detect2DMacroMesh(&mesh);
+  BuildConnectivity(&mesh);
 
-  int param[]={4, 4, 4, 1, 1, 1, 0};
-  
-  field f;
-  init_empty_field(&f);
-  
+  int deg4[]={4, 4, 4};
+  int raf4[]={1, 1, 1};
+
+  CheckMacroMesh(&mesh, deg4, raf4);
+
   // test gmsh file reading
-  ReadMacroMesh(&(f.macromesh), "test/testmacromesh.msh");
-  BuildConnectivity(&(f.macromesh));
-  CheckMacroMesh(&(f.macromesh), param);
+  ReadMacroMesh(&mesh, "test/testmacromesh.msh");
+  BuildConnectivity(&mesh);
+  CheckMacroMesh(&mesh, deg4, raf4);
   //PrintMacroMesh(&m);
 
   PIC pic;
 
-
   InitPIC(&pic,1); 
-  CreateParticles(&pic,&(f.macromesh));
-  PlotParticles(&pic,&(f.macromesh));
+  CreateParticles(&pic,&mesh);
+  PlotParticles(&pic,&mesh);
 
-  f.model.m = 7; // num of conservative variables
+  Model model;
+
+  model.m = 7; // num of conservative variables
 
   /* f.model.NumFlux = Maxwell2DNumFlux; */
   /* f.model.BoundaryFlux = Maxwell2DBoundaryFlux; */
-  f.model.InitData = Maxwell2DConstInitData;
+  model.InitData = Maxwell2DConstInitData;
   /* f.model.ImposedData = Maxwell2DImposedData; */
-  f.varindex = GenericVarindex;
     
-  f.interp.interp_param[0] = f.model.m;
-  f.interp.interp_param[1] = 1; // x direction degree
-  f.interp.interp_param[2] = 1; // y direction degree
-  f.interp.interp_param[3] = 0; // z direction degree
-  f.interp.interp_param[4] = 1; // x direction refinement
-  f.interp.interp_param[5] = 1; // y direction refinement
-  f.interp.interp_param[6] = 1; // z direction refinement
+  int deg[]={1, 1, 0};
+  int raf[]={1, 1, 1};
 
-  Initfield(&f);
+  Simulation simu;
 
-  f.pic = &pic;
-  // place the particle at (0,1,0) and v=(1,0,0)
+  InitSimulation(&simu, &mesh, deg, raf, &model);
+
+  simu.pic = &pic;
+
+  // place the particle 
   pic.xv[0]=0;
   pic.xv[1]=0;
   pic.xv[2]=0.5;
   real xref[3];
-  pic.cell_id[0]=NumElemFromPoint(&f.macromesh,pic.xv,xref);
+  pic.cell_id[0]=NumElemFromPoint(&mesh,pic.xv,xref);
   pic.xv[0]=xref[0];  
   pic.xv[1]=xref[1];  
   pic.xv[2]=xref[2];  
@@ -83,22 +86,24 @@ int TestPICAccumulate(void)
 
   pic.weight = 1;
 
-  PlotParticles(&pic,&(f.macromesh));
+  PlotParticles(&pic,&mesh);
+
+
+  AccumulateParticles(&simu);
 
   int ie=2;
   int ipg=2;
   int iv=4;
 
-  int imem=f.varindex(f.interp_param, ie, ipg, iv);
+  field *f = simu.fd + ie;
 
-  AccumulateParticles(&f,f.wn);
+  int imem=f->varindex(f->deg, f->raf, f->model.m, ipg, iv);
+
+  printf("w=%f wex=%f\n",f->wn[imem],1/1.96);
+  test = test && (fabs(f->wn[imem]-1/1.96) < 1e-8);
 
 
-  printf("w=%f wex=%f\n",f.wn[imem],1/1.96);
-  test = test && (fabs(f.wn[imem]-1/1.96) < 1e-8);
-
-
-  Displayfield(&f);
+  Displayfield(f);
 
   return test;
 }

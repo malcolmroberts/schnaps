@@ -185,7 +185,7 @@ void CreateParticles(PIC* pic,MacroMesh *m){
 
 }
 
-void AccumulateParticles(void *vs, real *w){
+void AccumulateParticles(void *vs){
   Simulation *simu = vs;
   PIC *pic = simu->pic;
 
@@ -216,6 +216,8 @@ void AccumulateParticles(void *vs, real *w){
     if (ie < 0) goto nexti;
  
     field *f = simu->fd + ie;
+    
+    real *w = f->wn;
 
     int npg=NPG(f->deg, f->raf);
     real dtau[3][3], codtau[3][3];
