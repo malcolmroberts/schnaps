@@ -16,10 +16,10 @@ void Coil2DImposedData(const real x[3],const real t,real w[])
   w[6] = 0;
 }
 
-void coil_pre_dtfield(void *f, real *w);
+void coil_pre_dtfields(void *simu, real *w);
 
-void coil_pre_dtfield(void *fv, real *w){
-  AccumulateParticles(fv,w);
+void coil_pre_dtfields(void *simu, real *w){
+  AccumulateParticles(simu, w);
 }
 
 
@@ -59,73 +59,66 @@ void Coil2DInitData(real x[3], real w[])
 int TestCoil2D(void)
 {
   bool test = true;
-  field f;
-  init_empty_field(&f);
 
-  init_empty_field(&f);
+  char *mshname =  "test/testmacromesh.msh";
+  
+  MacroMesh mesh;
+  ReadMacroMesh(&mesh,mshname);
+  Detect2DMacroMesh(&mesh);
+  BuildConnectivity(&mesh);
 
-  f.model.cfl = 0.2;  
-  f.model.m = 7; // num of conservative variables
 
-  f.model.NumFlux = Maxwell2DNumFlux_uncentered;
-  f.model.BoundaryFlux = Coil2DBoundaryFlux;
-  f.model.InitData = Coil2DInitData;
-  f.model.ImposedData = Coil2DImposedData;
-  f.varindex = GenericVarindex;
+  // test gmsh file reading
+  ReadMacroMesh(&mesh, "test/testmacromesh.msh");
+  Detect2DMacroMesh(&mesh);
+  assert(mesh.is2d);
+  BuildConnectivity(&mesh);
+  //PrintMacroMesh(&m);
+
+  Model model;
+
+  model.m = 7; // num of conservative variables
+
+  model.NumFlux = Maxwell2DNumFlux_uncentered;
+  model.BoundaryFlux = Coil2DBoundaryFlux;
+  model.InitData = Coil2DInitData;
+  model.Source = Coil2DSource;
+  model.ImposedData = Coil2DImposedData;
     
-  f.interp.interp_param[0] = f.model.m;
-  f.interp.interp_param[1] = 2; // x direction degree
-  f.interp.interp_param[2] = 2; // y direction degree
-  f.interp.interp_param[3] = 0; // z direction degree
-  f.interp.interp_param[4] = 4; // x direction refinement
-  f.interp.interp_param[5] = 4; // y direction refinement
-  f.interp.interp_param[6] = 1; // z direction refinement
+  int deg[]={2, 2, 0};
+  int raf[]={8, 8, 1};
 
-  // Read the gmsh file
-  ReadMacroMesh(&(f.macromesh), "test/testmacromesh.msh");
-  // Try to detect a 2d mesh
-  Detect2DMacroMesh(&(f.macromesh));
-  assert(f.macromesh.is2d);
+  CheckMacroMesh(&mesh, deg, raf);
 
-  // Mesh preparation
-  BuildConnectivity(&(f.macromesh));
+  Simulation simu;
 
+  InitSimulation(&simu, &mesh, deg, raf, &model);
+
+   
   //AffineMapMacroMesh(&(f.macromesh));
  
   // Prepare the initial fields
-  Initfield(&f);
-  f.model.Source = Coil2DSource;
-  f.pre_dtfield = coil_pre_dtfield;
+  simu.pre_dtfields = coil_pre_dtfields;
   //f.dt = 1e-3;
   
-  // Prudence...
-  CheckMacroMesh(&(f.macromesh), f.interp.interp_param + 1);
-
-  printf("cfl param =%f\n", f.hmin);
-
-  // time derivative
-  //dtfield(&f);
-  //Displayfield(&f);
- 
-  // init the particles on a circle
   PIC pic;
-  InitPIC(&pic, 100);
-  CreateCoil2DParticles(&pic, &f.macromesh);
-  PlotParticles(&pic, &f.macromesh);
+  simu.pic = &pic;
 
-  f.pic = &pic;
+  InitPIC(&pic,100); 
+  CreateCoil2DParticles(&pic, &mesh);
+  PlotParticles(&pic, &mesh);
 
   // time evolution
   real tmax = 0.1;
-  f.vmax = 1;
-  real dt = set_dt(&f);
-  RK2(&f, tmax, dt);
+  simu.cfl=0.2;
+  simu.vmax = 1;
+  RK2(&simu, tmax);
  
   // Save the results and the error
-  Plotfield(2, false, &f, NULL, "dgvisu.msh");
-  Plotfield(2, true, &f, "error", "dgerror.msh");
+  PlotFields(2, false, &simu, NULL, "dgvisu.msh");
+  PlotFields(2, true, &simu, "error", "dgerror.msh");
 
-  real dd = L2error(&f);
+  real dd = L2error(&simu);
   real tolerance = 0.3;
   test = test && (dd < tolerance);
   printf("L2 error: %f\n", dd);

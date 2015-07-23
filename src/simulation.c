@@ -296,8 +296,9 @@ void PlotFields(int typplot, int compare, Simulation* simu, char *fieldname,
 // Apply the Discontinuous Galerkin approximation for computing the
 // time derivative of the field
 void DtFields(Simulation *simu, real *w, real *dtw) {
-  /* if(f->pre_dtfield != NULL) // FIXME: rename to before dtfield */
-  /*     f->pre_dtfield(f, w); */
+  if(simu->pre_dtfields != NULL) {
+    simu->pre_dtfields(simu, w);
+  }
 
 
 #ifdef _OPENMP

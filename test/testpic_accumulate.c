@@ -89,7 +89,7 @@ int TestPICAccumulate(void)
   PlotParticles(&pic,&mesh);
 
 
-  AccumulateParticles(&simu);
+  AccumulateParticles(&simu, simu.w);
 
   int ie=2;
   int ipg=2;

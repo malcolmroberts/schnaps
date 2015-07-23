@@ -99,7 +99,7 @@ int TestPIC(void)
 
   test = test && (final_cell == pic.cell_id[0]);
 
-  AccumulateParticles(&simu);
+  AccumulateParticles(&simu, simu.w);
 
   return test;
 }

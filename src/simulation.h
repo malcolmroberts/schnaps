@@ -47,6 +47,11 @@ typedef struct Simulation {
   //! table for diagnostics
   real *Diagnostics;
 
+  //! \brief Pointer to a generic function called before computing dtfields. 
+  //! \param[inout] simu a simulation (to be converted from void*)
+  void (*pre_dtfields)(void *simu, real *w);
+
+
   //! vmax
   real vmax;
 

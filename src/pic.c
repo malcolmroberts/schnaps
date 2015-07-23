@@ -185,7 +185,7 @@ void CreateParticles(PIC* pic,MacroMesh *m){
 
 }
 
-void AccumulateParticles(void *vs){
+void AccumulateParticles(void *vs, real *w){
   Simulation *simu = vs;
   PIC *pic = simu->pic;
 
@@ -194,30 +194,33 @@ void AccumulateParticles(void *vs){
 
     for(int ie = 0; ie < simu->macromesh.nbelems; ie++){
       field *f = simu->fd + ie;
+      int offset = ie * f->wsize;
       int npg=NPG(f->deg, f->raf);
       for(int ipg = 0; ipg < npg; ipg++){
 	int iv = 4;
 	int imem = f->varindex(f->deg, f->raf, f->model.m, ipg, iv);
-	f->wn[imem]=0;
+	w[imem + offset]=0;
 	iv = 5;
 	imem = f->varindex(f->deg, f->raf, f->model.m, ipg, iv);
-	f->wn[imem]=0;
+	w[imem + offset]=0;
 	iv = 6;
 	imem = f->varindex(f->deg, f->raf, f->model.m, ipg, iv);
-	f->wn[imem]=0;
+	w[imem + offset]=0;
       } 
     }
   
   
-  for(int i=0;i<pic->nbparts;i++) {
+  for(int i = 0; i < pic->nbparts; i++) {
     
     int ie=pic->old_cell_id[i];
     
     if (ie < 0) goto nexti;
  
     field *f = simu->fd + ie;
+
+    int offset = ie * f->wsize;
     
-    real *w = f->wn;
+    real *wf = w + offset;
 
     int npg=NPG(f->deg, f->raf);
     real dtau[3][3], codtau[3][3];
@@ -238,15 +241,15 @@ void AccumulateParticles(void *vs){
 
       int iv = 6;  // rho index
       int imem = f->varindex(f->deg, f->raf, f->model.m, ib, iv);
-      w[imem] += psi / wpg * pic->weight;
+      wf[imem] += psi / wpg * pic->weight;
  
       iv = 4;  // j1 index
       imem = f->varindex(f->deg, f->raf, f->model.m, ib, iv);
-      w[imem] += pic->xv[6 * i + 3] * psi / wpg * pic->weight;
+      wf[imem] += pic->xv[6 * i + 3] * psi / wpg * pic->weight;
 
       iv = 5;  // j2 index
       imem = f->varindex(f->deg, f->raf, f->model.m, ib, iv);
-      w[imem] += pic->xv[6 * i + 4] * psi / wpg * pic->weight;
+      wf[imem] += pic->xv[6 * i + 4] * psi / wpg * pic->weight;
     }
       
     
