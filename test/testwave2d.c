@@ -24,70 +24,51 @@ int Test_Wave_Periodic(void) {
 
   bool test = true;
 
-  field f;
-  init_empty_field(&f);
-
-  int vec=1;
-  f.model.m=3; 
-  f.model.NumFlux=Wave_Upwind_NumFlux;
- 
-  //f.model.Source = NULL;
- 
-  f.model.InitData = TestPeriodic_Wave_InitData;
-  f.model.ImposedData = TestPeriodic_Wave_ImposedData;
-  f.model.BoundaryFlux = Wave_Upwind_BoundaryFlux;
-
-  f.varindex = GenericVarindex;
-    
-  f.interp.interp_param[0] = f.model.m;  // _M
-  f.interp.interp_param[1] = 2;  // x direction degree
-  f.interp.interp_param[2] = 2;  // y direction degree
-  f.interp.interp_param[3] = 0;  // z direction degree
-  f.interp.interp_param[4] = 10;  // x direction refinement
-  f.interp.interp_param[5] = 10;  // y direction refinement
-  f.interp.interp_param[6] = 1;  // z direction refinement
- // read the gmsh file
-
-  ReadMacroMesh(&(f.macromesh), "test/testcube.msh");
-
-  Detect2DMacroMesh(&(f.macromesh));
-  assert(f.macromesh.is2d);
-
+  MacroMesh mesh;
+  ReadMacroMesh(&mesh,"test/testcube.msh");
+  Detect2DMacroMesh(&mesh);
+  
   real A[3][3] = {{_LENGTH_DOMAIN, 0, 0}, {0, _LENGTH_DOMAIN, 0}, {0, 0,1}};
   real x0[3] = {0, 0, 0};
-  AffineMapMacroMesh(&(f.macromesh),A,x0);
+  AffineMapMacroMesh(&mesh,A,x0);
 
-  f.macromesh.period[0]=_LENGTH_DOMAIN;
-  f.macromesh.period[1]=_LENGTH_DOMAIN;
-  BuildConnectivity(&(f.macromesh));
+  BuildConnectivity(&mesh);
 
-  // prepare the initial fields
-  f.vmax = _SPEED_WAVE;
-  f.model.cfl = 0.2;
-  Initfield(&f);
-   // maximal wave speed
-  f.nb_diags = 0;
-  f.pre_dtfield = NULL;
-  f.update_after_rk = NULL;
-  f.model.Source = NULL;
-  // prudence...
-  CheckMacroMesh(&(f.macromesh), f.interp.interp_param + 1);
+  Model model;
 
-  printf("cfl param =%f\n", f.hmin);
+  model.m=3; 
+  model.NumFlux=Wave_Upwind_NumFlux;
+ 
+  model.InitData = TestPeriodic_Wave_InitData;
+  model.ImposedData = TestPeriodic_Wave_ImposedData;
+  model.BoundaryFlux = Wave_Upwind_BoundaryFlux;
 
+  int deg[]={3, 3, 0};
+  int raf[]={8, 8, 1};
+    
+  CheckMacroMesh(&mesh, deg, raf);
+  Simulation simu;
+
+  InitSimulation(&simu, &mesh, deg, raf, &model);
+ 
   real tmax = 0.01;
-  real dt = set_dt(&f);
-  RK2(&f, tmax, dt);
+  simu.cfl=0.2;
+  simu.vmax=_SPEED_WAVE;
+  RK2(&simu,tmax);
 
-  real dd = L2error(&f);
-  real tolerance = 1e-2;
-  test = test && (dd < tolerance);
-  printf("L2 error: %f\n", dd);
+  real dd = 0;
+  dd = L2error(&simu);
+
+  printf("erreur L2=%f\n", dd);
+
+  real tolerance = 0.001;
+
+  test = dd < tolerance;
 
    // Save the results and the error
-  Plotfield(0,false, &f, "p", "dgvisup.msh");
-  Plotfield(1,false, &f, "u1", "dgvisuu1.msh");
-  Plotfield(2,false, &f, "u2", "dgvisuu2.msh");
+  //PlotFields(0,false, &simu, "p", "dgvisup.msh");
+  //PlotFields(1,false, &simu, "u1", "dgvisuu1.msh");
+  //PlotFields(2,false, &simu, "u2", "dgvisuu2.msh");
 
   
 

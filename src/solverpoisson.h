@@ -1,6 +1,7 @@
 #ifndef _SOLVERPOISSON_H
 #define _SOLVERPOISSON_H
 
+
 #include "collision.h"
 #include <math.h>
 #include <stdio.h>
@@ -9,87 +10,26 @@
 #include "interpolation.h"
 #include "linear_solver.h"
 #include "simulation.h"
-
-#define _Dirichlet_Poisson_BC (1)
-#define _Periodic_Poisson_BC (2)
+#include "solvercontinuous.h"
 
 
-//! \brief a struct for sorting and pasting the
-//! nodes of the DG mesh for obtaining a FE mesh
-typedef struct FatNode{
-
-  //! \brief index in the dg mesh
-  int dg_index;
-  //! \brief index in the fe mesh
-  int fe_index;
-
-  //! \brief physical coordinates of the node
-  real x[3];
-  //! \brief int converted coordinates for sorting and searching
-  int x_int[3];
+//! \brief init the rhs for poisson solver
+//! \param[inout] lsol a linear solver allocate
+//! \param[in] a continuous solver
+void MatrixPoisson_Continuous(void * cs,LinearSolver* lsol);
 
 
-} FatNode;
-
-//! \brief a struct for the resolution of the poisson equation:
-//! conversion between a DG and Finite Element FE mesh
-//! FE assembly and resolution, etc. 
-typedef struct PoissonSolver{
-
-  //! \brief a simulation (gives the mesh and the charge)
-  Simulation* simu;
-
-  //! linear solver
-  LinearSolver lsol;
-  
-  //! \brief charge index in the conservative variables vector
-  int charge_index;
-
-  //! \brief vector containing the charge (right hand side)
-  //real* rhs;
-
-  //! \brief vector containing the potential (solution)
-  //real* sol;
-
-  //! \brief number of FE nodes
-  int nb_fe_nodes;
-
-  //! \brief number of DG nodes
-  int nb_dg_nodes;
-
-  //! \brief node list with coordinates converted to integer
-  //! and DG/FE indices
-  FatNode* fn_list;
-
-  //! \brief connectivity DG node -> FE node
-  int* dg_to_fe_index;
-
-  //! \brief list that marks boundary nodes
-  int* is_boundary_node;
-
-} PoissonSolver;
+//! \brief compute the electirc field for poisson
+//! \param[inout] lsol a linear solver allocate
+//! \param[in] a continuous solver
+void Computation_ElectricField_Poisson(void * cs,LinearSolver* lsol);
 
 
+//! \brief init the rhs for poisson solver
+//! \param[inout] lsol a linear solver allocate
+//! \param[in] a continuous solver
+void RHSPoisson_Continuous(void * cs,LinearSolver* lsol);
 
-//! \brief compare two nodes (used by quicksort).
-//! Lexicographic order on the coordinates converted to integers.
-//! \param[in] a first node
-//! \param[in] b second node
-//! \returns a value v, v<0 if a<b, v=0 if a==b, v>0 if a>b
-int CompareFatNode(const void* a,const void* b);
-
-//! \brief build the fat nodes list from a field
-//! \param[in] simu an initialized simulation
-//! \param[out] fn_list an allocated, prepared and sorted list of fat nodes
-//! \returns the size of the list
-int BuildFatNodeList(Simulation *simu,FatNode* fn_list);
-
-//! \brief init a poisson solver
-//! \param[inout] ps a PoissonSolver struct
-//! \param[in] simu a simulation
-//! \param[in] charge_index charge index in the field variables
-void InitPoissonSolver(PoissonSolver* ps, Simulation* simu,
-		       int charge_index);
 
 //! \brief solve a 1D poisson problem
 //! \param[in] simu a simulation
@@ -104,12 +44,5 @@ void InitPoissonSolver(PoissonSolver* ps, Simulation* simu,
 void SolvePoisson1D(Simulation *simu,real * w,
 		    int type_bc, real bc_l, real bc_r,Solver solver_sys, PC precon);
 
-
-
-//! \brief solve a 2D poisson problem
-//! \param[inout] ps a Poisson solver (field + linear solver + other parameters)
-//! \param[in] type_bc the boundary condition type
-//!  (1->dirichlet ; 2-> periodic)
-void SolvePoisson2D(PoissonSolver* ps,int type_bc);
 
 #endif

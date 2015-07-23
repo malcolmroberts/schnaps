@@ -109,6 +109,8 @@ list(APPEND
   src/dpackfgmres.c
   src/linear_solver.h
   src/linear_solver.c
+  src/solvercontinuous.h
+  src/solvercontinuous.c
   src/solverpoisson.h
   src/solverpoisson.c
   src/quantities_vp.h
@@ -281,6 +283,14 @@ add_executable(
 )
 target_link_libraries(testpoisson2d ${LIBS})
 add_test(testpoisson2d testpoisson2d)
+
+add_executable(
+  testwave2d
+  test/test.h
+  test/testwave2d.c
+)
+target_link_libraries(testwave2d ${LIBS})
+add_test(testwave2d testwave2d)
 
 
 
