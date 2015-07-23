@@ -34,7 +34,6 @@ int BuildFatNodeList(Simulation *simu,FatNode* fn_list){
     field *f = &simu->fd[ie];
 
     nb_dg_nodes =  NPG(f->deg, f->raf) * simu->macromesh.nbelems;
-    assert(ino == nb_dg_nodes);
 
     
     for(int ipg = 0; ipg < NPG(f->deg, f->raf); ipg++) {
@@ -64,6 +63,7 @@ int BuildFatNodeList(Simulation *simu,FatNode* fn_list){
   }
 
 
+  assert(ino == nb_dg_nodes);
   qsort(fn_list, nb_dg_nodes, sizeof(FatNode),CompareFatNode);
 
   fn_list[0].fe_index=0;
@@ -144,24 +144,36 @@ void InitPoissonSolver(PoissonSolver* ps, Simulation* simu,int charge_index){
 
   for (int ie = 0; ie < simu->macromesh.nbelems; ie++) {
     int nbfa = 6;
-    if (simu->macromesh.is2d) nbfa = 4;
-    for(int ifa = 0; ifa < nbfa; ifa++) {
+    if (simu->macromesh.is2d)  nbfa = 4; 
+    if (simu->macromesh.is1d) nbfa = 2;
+    for(int ii = 0; ii < nbfa; ii++) {
+      int ifa = ii;
+      if (simu->macromesh.is1d) ifa = 2 * ii + 1;
       int ieR = simu->macromesh.elem2elem[6*ie+ifa];
       if (ieR < 0) {
 	for(int ipgf = 0; ipgf < NPGF(deg,nraf, ifa); ipgf++) {
+	  printf("NPGF=%d ipgf=%d\n",NPGF(deg,nraf, ifa),ipgf);
 	  int ipg = ref_pg_face(deg,nraf, ifa, ipgf,
 		      NULL, NULL, NULL);
 	  int ino_dg = ipg + ie * npgmacrocell;
 	  int ino_fe = ps->dg_to_fe_index[ino_dg];
-	  /* printf("ie=%d ino_dg=%d ino_fe=%d boundary=%d\n", */
-	  /* 	 ie,ino_dg,ino_fe,ps->is_boundary_node[ino_fe]); */
 	  ps->is_boundary_node[ino_fe] = 1;
+	  printf("ie=%d ino_dg=%d ino_fe=%d boundary=%d\n",
+	  	 ie,ino_dg,ino_fe,ps->is_boundary_node[ino_fe]);
 
 	}
       }
     }
   }
 
+  int count_boundary = 0;
+
+  for(int ino = 0; ino < ps->nb_fe_nodes; ino++){
+    count_boundary += ps->is_boundary_node[ino];
+  }
+
+  printf("found %d boundary nodes (on %d fe nodes)\n",
+	 count_boundary, ps->nb_fe_nodes);
 	
   InitLinearSolver(&ps->lsol,ps->nb_fe_nodes,NULL,NULL); //InitSkyline(&sky, neq);
 
@@ -350,12 +362,22 @@ void SolvePoisson2D(PoissonSolver* ps,int type_bc){
   int m = f0->model.m;
 
   int nraf[3] = {f0->raf[0],f0->raf[1],f0->raf[2]};
+  int deg[3] = {f0->deg[0],f0->deg[1],f0->deg[2]};
 
   real delta_x = 1. / nraf[0];
   real dv = pow(delta_x,2.);
-  assert( nraf[0] == nraf[1]);
-  assert( nraf[2] == 1);
+  if (ps->simu->macromesh.is2d) {
+    assert( nraf[0] == nraf[1]);
+    assert( nraf[2] == 1);
+    assert(deg[2] == 0);
+  }
   
+  if (ps->simu->macromesh.is1d) {
+    assert( nraf[1] == 1);
+    assert(deg[1] == 0);
+    assert( nraf[2] == 1);
+    assert(deg[2] == 0);
+  }
   int npg[3] = {f0->npg[0],f0->npg[1],f0->npg[2]};
   
   int nbel = ps->simu->macromesh.nbelems * nraf[0] * nraf[1] * nraf[2];

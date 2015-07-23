@@ -5,7 +5,7 @@
 #include <math.h>
 
 int TestfieldRK2(void){
-  int test = true;
+  bool test = true;
 
   // 2D meshes:
   // test/disque2d.msh

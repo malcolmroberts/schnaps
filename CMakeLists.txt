@@ -258,6 +258,24 @@ add_executable(
 target_link_libraries(testnonlinearsolver ${LIBS})
 add_test(testnonlinearsolver testnonlinearsolver)
 
+add_executable(
+  testpoisson
+  test/test.h
+  test/testpoisson.c
+)
+target_link_libraries(testpoisson ${LIBS})
+add_test(testpoisson testpoisson)
+
+add_executable(
+  testpoisson2d
+  test/test.h
+  test/testpoisson2d.c
+)
+target_link_libraries(testpoisson2d ${LIBS})
+add_test(testpoisson2d testpoisson2d)
+
+
+
 IF(BUILD_PARALUTION)
 
 
