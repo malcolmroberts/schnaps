@@ -460,7 +460,7 @@ void Initfield(field *f, Model model,
   f->post_dtfield = NULL;
   f->update_after_rk = NULL;
   f->model.Source = NULL;
-  f->pic = NULL;
+  //f->pic = NULL;
 
   // TODO: move this to the integrator code
   f->tnow=0;
@@ -1068,33 +1068,34 @@ real L2error_onefield(Simulation *simu, int nbfield) {
 }
 
 
-/* void InterpField(field *f, int ie, real *xref, real *w){ */
-/*   const int nraf[3] = {f->interp_param[4], */
-/* 		       f->interp_param[5], */
-/* 		       f->interp_param[6]}; */
-/*   const int deg[3] = {f->interp_param[1], */
-/* 		      f->interp_param[2], */
-/* 		      f->interp_param[3]}; */
+void InterpField(field *f, real *xref, real *w){
+  const int deg[3] = {f->deg[0],
+		      f->deg[1],
+		      f->deg[2]};
 
-/*   for(int iv = 0; iv < f->model.m; iv++) */
-/*     w[iv] = 0; */
+  const int nraf[3] = {f->raf[0],
+		       f->raf[1],
+		       f->raf[2]};
 
-/*   int is[3]; */
+  for(int iv = 0; iv < f->model.m; iv++)
+    w[iv] = 0;
 
-/*   for(int ii = 0; ii < 3; ii++){ */
-/*     is[ii] = xref[ii] * nraf[ii]; */
-/*     assert(is[ii] < nraf[ii] && is[ii]>= 0); */
-/*   } */
+  int is[3];
+
+  for(int ii = 0; ii < 3; ii++){
+    is[ii] = xref[ii] * nraf[ii];
+    assert(is[ii] < nraf[ii] && is[ii]>= 0);
+  }
   
-/*   int npgv = NPG(f->deg, f->raf); */
-/*   // TODO: loop only on non zero basis function */
-/*   for(int ib = 0; ib < npgv; ib++) {  */
-/*     real psi; */
-/*     psi_ref_subcell(f->deg, f->raf, is, ib, xref, &psi, NULL); */
+  int npgv = NPG(f->deg, f->raf);
+  // TODO: loop only on non zero basis function
+  for(int ib = 0; ib < npgv; ib++) {
+    real psi;
+    psi_ref_subcell(f->deg, f->raf, is, ib, xref, &psi, NULL);
     
-/*     for(int iv=0;iv<f->model.m;iv++){ */
-/*       int imem = f->varindex(f->deg, f->raf, f->model.m, ib, iv); */
-/*       w[iv] += psi * f->wn[imem]; */
-/*     } */
-/*   } */
-/* } */
+    for(int iv=0;iv<f->model.m;iv++){
+      int imem = f->varindex(f->deg, f->raf, f->model.m, ib, iv);
+      w[iv] += psi * f->wn[imem];
+    }
+  }
+}

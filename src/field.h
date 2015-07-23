@@ -43,7 +43,7 @@ typedef struct field {
 
 
   //! PIC struct pointer (=NULL if not used)
-  void *pic;
+  //void *pic;
 
   //! Size of the field buffers
   int wsize;
@@ -206,22 +206,6 @@ void DGMass(field *f, real *w, real *dtw);
 //! \param[in] f a field
 void DGSource(field *f, real *w, real *dtw);
 
-//! \brief An out-of-place RK stage
-//! \param[out] fwnp1 field at time n+1
-//! \param[in] fwn field at time n
-//! \param[in] fdtwn time derivative of the field
-//! \param[in] dt time step
-//! \param[in] sizew size of the field buffer
-void RK_out(real *fwnp1, real *fwn, real *fdtwn, const real dt, 
-	    const int sizew);
-
-//! \brief An in-place RK stage
-//! \param[inout] fwnp1 field at time n+1
-//! \param[in] fdtwn time derivative of the field
-//! \param[in] dt time step
-//! \param[in] sizew size of the field buffer
-void RK_in(real *fwnp1, real *fdtwn, const real dt, const int sizew);
-
 
 
 #ifdef _WITH_OPENCL
@@ -250,7 +234,7 @@ void RK4_CL(field *f, real tmax, real dt,
 //! \param[in] ie the macrocell index
 //! \param[in] xref reference coordinates
 //! \param[out] w the m field values
-void InterpField(field *f,int ie,real* xref,real* w);
+void InterpField(field *f,real* xref,real* w);
 
 //! \brief  display the field on screen
 //! \param[in] f the field.

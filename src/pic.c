@@ -185,27 +185,28 @@ void CreateParticles(PIC* pic,MacroMesh *m){
 
 }
 
-void AccumulateParticles(void *fv, real *w){
-  field *f = fv;
-  PIC *pic = f->pic;
+void AccumulateParticles(void *vs, real *w){
+  Simulation *simu = vs;
+  PIC *pic = simu->pic;
 
-  assert(f->pic != NULL);
-  
-  int npg=NPG(f->deg, f->raf);
+  assert(simu->pic != NULL);
   
 
-    for(int ipg = 0; ipg < npg; ipg++){
-      int iv = 4;
-      int imem = f->varindex(f->deg, f->raf, f->model.m, ipg, iv);
-      f->wn[imem]=0;
-      iv = 5;
-      imem = f->varindex(f->deg, f->raf, f->model.m, ipg, iv);
-      f->wn[imem]=0;
-      iv = 6;
-      imem = f->varindex(f->deg, f->raf, f->model.m, ipg, iv);
-      f->wn[imem]=0;
-    } 
-
+    for(int ie = 0; ie < simu->macromesh.nbelems; ie++){
+      field *f = simu->fd + ie;
+      int npg=NPG(f->deg, f->raf);
+      for(int ipg = 0; ipg < npg; ipg++){
+	int iv = 4;
+	int imem = f->varindex(f->deg, f->raf, f->model.m, ipg, iv);
+	f->wn[imem]=0;
+	iv = 5;
+	imem = f->varindex(f->deg, f->raf, f->model.m, ipg, iv);
+	f->wn[imem]=0;
+	iv = 6;
+	imem = f->varindex(f->deg, f->raf, f->model.m, ipg, iv);
+	f->wn[imem]=0;
+      } 
+    }
   
   
   for(int i=0;i<pic->nbparts;i++) {
@@ -214,6 +215,8 @@ void AccumulateParticles(void *fv, real *w){
     
     if (ie < 0) goto nexti;
  
+    field *f = simu->fd + ie;
+
     int npg=NPG(f->deg, f->raf);
     real dtau[3][3], codtau[3][3];
     Ref2Phy(f->physnode, // phys. nodes
@@ -319,23 +322,22 @@ void PlotParticles(PIC* pic,MacroMesh *m){
 
 }
 
-void PushParticles(field *f,PIC* pic){
+void PushParticles(Simulation *simu,PIC* pic){
 
   for(int i=0;i<pic->nbparts;i++) {
     
 
     // jacobian of tau at the particle
-    real physnode[20][3];
     int ie=pic->cell_id[i];
     if (ie >=0) {
-      real w[f->model.m];
-      InterpField(f,pic->cell_id[i],&(pic->xv[6*i]),w);
+      real w[simu->fd[ie].model.m];
+      InterpField(simu->fd + ie, &(pic->xv[6*i]),w);
 
 
       real dtau[3][3],codtau[3][3];
       
       real xphy[3];
-      Ref2Phy(f->physnode, // phys. nodes
+      Ref2Phy(simu->fd[ie].physnode, // phys. nodes
 	      &(pic->xv[6*i]), // xref
 	      NULL, -1, // dpsiref, ifa
 	      xphy, dtau, // xphy, dtau
@@ -372,7 +374,7 @@ void PushParticles(field *f,PIC* pic){
       //is_out = false;
 
       if (is_out) {
-	Ref2Phy(physnode, // phys. nodes
+	Ref2Phy(simu->fd[ie].physnode, // phys. nodes
 		&(pic->xv[6*i]), // xref
 		NULL, -1, // dpsiref, ifa
 		xphy, NULL, // xphy, dtau
@@ -380,11 +382,9 @@ void PushParticles(field *f,PIC* pic){
 	int old=pic->cell_id[i];
 	printf("oldref=%f %f %f \n",pic->xv[6*i+0],
 	       pic->xv[6*i+1],pic->xv[6*i+2]);
-	/* pic->cell_id[i]= NumElemFromPoint(&(f->macromesh), */
-	/* 				  xphy, */
-	/* 				  &(pic->xv[6*i])); */
-	pic->cell_id[i]= -10;
-	assert( pic->cell_id[i] != -10);
+	pic->cell_id[i]= NumElemFromPoint(&(simu->macromesh),
+					  xphy,
+					  &(pic->xv[6*i]));
 	if (pic->cell_id[i] != -1) pic->old_cell_id[i]=pic->cell_id[i]; 
 	printf("newref=%f %f %f \n",pic->xv[6*i+0],
 	       pic->xv[6*i+1],pic->xv[6*i+2]);

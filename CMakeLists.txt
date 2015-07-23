@@ -12,7 +12,7 @@ SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 #set(CMAKE_C_FLAGS "-std=gnu99 -D_REENTRANT -O3 -g")
 
 #set(CMAKE_C_FLAGS " -std=c99 -D_REENTRANT -O3 ")
-set(CMAKE_C_FLAGS " -std=c99  -D_DOUBLE_PRECISION  -O3")
+set(CMAKE_C_FLAGS " -std=c99  -D_DOUBLE_PRECISION -g  -O3")
 
 #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_DOUBLE_PRECISION")
 
@@ -266,7 +266,32 @@ add_executable(
 target_link_libraries(testfieldrk4 ${LIBS})
 add_test(testfieldrk4 testfieldrk4)
 
-add_test(testskyline testskyline)
+
+add_executable(
+  testpic
+  test/test.h
+  test/testpic.c
+  )
+target_link_libraries(testpic ${LIBS})
+add_test(testpic testpic)
+
+#add_executable(
+#  testcoil2d
+#  test/test.h
+#  test/testcoil2d.c
+#  )
+#target_link_libraries(testcoil2d ${LIBS})
+#add_test(testcoil2d testcoil2d)
+
+#add_executable(
+#  testpic_accumulate
+#  test/test.h
+#  test/testpic_accumulate.c
+#  )
+#target_link_libraries(testpic_accumulate ${LIBS})
+#add_test(testpic_accumulate testpic_accumulate)
+
+
 add_executable(
   testskyline
   test/test.h
