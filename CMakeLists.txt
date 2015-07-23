@@ -258,6 +258,14 @@ add_executable(
 target_link_libraries(testmeq2 ${LIBS})
 add_test(testmeq2 testmeq2)
 
+add_executable(
+  testfieldrk4
+  test/test.h
+  test/testfieldrk4.c
+  )
+target_link_libraries(testfieldrk4 ${LIBS})
+add_test(testfieldrk4 testfieldrk4)
+
 add_test(testskyline testskyline)
 add_executable(
   testskyline

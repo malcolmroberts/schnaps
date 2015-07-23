@@ -75,6 +75,33 @@ void DtFields(Simulation *simu, real *w, real *dtw);
 //! \param[inout] simu A simulation
 real Get_Dt_RK(Simulation *simu);
 
+//! \brief An out-of-place RK stage
+//! \param[out] fwnp1 field at time n+1
+//! \param[in] fwn field at time n
+//! \param[in] fdtwn time derivative of the field
+//! \param[in] dt time step
+//! \param[in] sizew size of the field buffer
+void RK_out(real *fwnp1, real *fwn, real *fdtwn, const real dt, 
+	    const int sizew);
+
+//! \brief An in-place RK stage
+//! \param[inout] fwnp1 field at time n+1
+//! \param[in] fdtwn time derivative of the field
+//! \param[in] dt time step
+//! \param[in] sizew size of the field buffer
+void RK_in(real *fwnp1, real *fdtwn, const real dt, const int sizew);
+
+//! \brief Final in-place RK stage
+//! \param[out] w field at time n+1
+//! \param[in] l1 first rk4 vector
+//! \param[in] l2 second rk4 vector
+//! \param[in] l3 third rk4 vector
+//! \param[in] dtw last rk4 vector
+//! \param[in] dt time step
+//! \param[in] sizew size of the field buffer
+void RK4_final_inplace(real *w, real *l1, real *l2, real *l3, 
+		       real *dtw, const real dt, const int sizew);
+
 //! \brief Time integration by a second order Runge-Kutta algorithm
 //! \param[inout] simu a simulation
 //! \param[in] tmax physical duration of the simulation

@@ -112,7 +112,7 @@ real min_grid_spacing(field *f)
       }
     }
     hmin = hmin < vol/surf ? hmin : vol/surf;
-    printf("vol/surf=%f npg=%d\n",vol/surf,NPG(f->deg, f->raf));
+    //printf("vol/surf=%f npg=%d\n",vol/surf,NPG(f->deg, f->raf));
 
   
  
@@ -436,12 +436,11 @@ void Initfield(field *f, Model model,
 
   int nmem = f->model.m * NPG(f->deg, f->raf);
   f->wsize = nmem;
-
   real g_memsize = nmem * sizeof(real) * 1e-9;
-  if(sizeof(real) == sizeof(real))
-    printf("Allocating %d doubles per array (%f GB).\n", nmem, g_memsize);
-  else
-    printf("Allocating %d floats per array (%f GB)\n", nmem, g_memsize);
+  /* if(sizeof(real) == sizeof(real)) */
+  /*   printf("Allocating %d doubles per array (%f GB).\n", nmem, g_memsize); */
+  /* else */
+  /*   printf("Allocating %d floats per array (%f GB)\n", nmem, g_memsize); */
 
   if (w == NULL){
     f->wn = calloc(nmem, sizeof(real));
@@ -471,7 +470,7 @@ void Initfield(field *f, Model model,
   // Compute cfl parameter min_i vol_i/surf_i
   f->hmin = min_grid_spacing(f);
 
-  printf("hmin=%f\n", f->hmin);
+  //printf("hmin=%f\n", f->hmin);
 
 
 #ifdef _WITH_OPENCL
@@ -484,7 +483,7 @@ void Initfield(field *f, Model model,
   }
 #endif // _WITH_OPENCL
   
-  printf("field init done\n");
+  //printf("field init done\n");
 }
 
 // This is the destructor for a field
@@ -1014,110 +1013,9 @@ void DGVolume(field *f, real *w, real *dtw)
 //cmake . -DUSE_OPENCL:BOOL=OFF
 
 
-// An out-of-place RK step
-void RK_out(real *dest, real *fwn, real *fdtwn, const real dt, 
-	    const int sizew)
-{
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
-  for(int iw = 0; iw < sizew; iw++) {
-    dest[iw] = fwn[iw] + dt * fdtwn[iw];
-  }
-}
-
-// An in-place RK step
-void RK_in(real *fwnp1, real *fdtwn, const real dt, const int sizew)
-{
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
-  for(int iw = 0; iw < sizew; iw++) {
-    fwnp1[iw] += dt * fdtwn[iw];
-  }
-}
 
 
 
-void RK4_final_inplace(real *w, real *l1, real *l2, real *l3, 
-		       real *dtw, const real dt, const int sizew)
-{
-  const real b = -1.0 / 3.0;
-  const real a[] = {1.0 / 3.0, 2.0 / 3.0, 1.0 / 3.0, dt / 6.0};
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
-  for(int i = 0; i < sizew; ++i) {
-    w[i] = 
-      b * w[i] +
-      a[0] * l1[i] +
-      a[1] * l2[i] +
-      a[2] * l3[i] +
-      a[3] * dtw[i];
-  }
-}
-
-// Time integration by a fourth-order Runge-Kutta algorithm
-/* void RK4(field *f, real tmax, real dt)  */
-/* { */
-/*   if(dt <= 0) */
-/*     dt = set_dt(f); */
-
-/*   f->itermax = tmax / dt; */
-/*   int size_diags; */
-/*   int freq = (1 >= f->itermax / 10)? 1 : f->itermax / 10; */
-/*   int sizew = f->macromesh.nbelems * f->model.m * NPG(f->deg, f->raf); */
-/*   int iter = 0; */
-
-/*   // Allocate memory for RK time-stepping */
-/*   real *l1, *l2, *l3; */
-/*   l1 = calloc(sizew, sizeof(real)); */
-/*   l2 = calloc(sizew, sizeof(real)); */
-/*   l3 = calloc(sizew, sizeof(real)); */
-  
-/*   size_diags = f->nb_diags * f->itermax; */
-/*   f->iter_time = iter; */
-  
-/*     if(f->nb_diags != 0) */
-/*     f->Diagnostics = malloc(size_diags * sizeof(real)); */
-  
-/*   while(f->tnow < tmax) { */
-/*     if (iter % freq == 0) */
-/*       printf("t=%f iter=%d/%d dt=%f\n", f->tnow, iter, f->itermax, dt); */
-
-/*     // l_1 = w_n + 0.5dt * S(w_n, t_0) */
-/*     dtfield(f, f->wn, f->dtwn); */
-/*     RK_out(l1, f->wn, f->dtwn, 0.5 * dt, sizew); */
-
-/*     f->tnow += 0.5 * dt; */
-
-/*     // l_2 = w_n + 0.5dt * S(l_1, t_0 + 0.5 * dt) */
-/*     dtfield(f, l1, f->dtwn); */
-/*     RK_out(l2, f->wn, f->dtwn, 0.5 * dt, sizew); */
-
-/*     // l_3 = w_n + dt * S(l_2, t_0 + 0.5 * dt) */
-/*     dtfield(f, l2, f->dtwn); */
-/*     RK_out(l3, f->wn, f->dtwn, dt, sizew); */
-
-/*     f->tnow += 0.5 * dt; */
-
-/*     // Compute S(l_3, t_0 + dt) */
-/*     dtfield(f, l3, f->dtwn); */
-/*     RK4_final_inplace(f->wn, l1, l2, l3, f->dtwn, dt, sizew); */
-
-    
-/*     if(f->update_after_rk != NULL) */
-/*       f->update_after_rk(f, f->wn); */
-    
-/*     iter++; */
-/*      f->iter_time=iter; */
-/*   } */
-/*   printf("t=%f iter=%d/%d dt=%f\n", f->tnow, iter, f->itermax, dt); */
-
-/*   free(l3); */
-/*   free(l2); */
-/*   free(l1); */
-/* } */
 
 // Compute the normalized L2 distance with the imposed data
 

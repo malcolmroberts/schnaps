@@ -448,6 +448,116 @@ void RK2(Simulation *simu, real tmax){
   free(wnp1);
 }
 
+
+
+// Time integration by a fourth-order Runge-Kutta algorithm
+void RK4(Simulation *simu, real tmax)
+{
+
+  simu->dt = Get_Dt_RK(simu);
+
+  real dt = simu->dt;
+
+  simu->tmax = tmax;
+
+  simu->itermax_rk = tmax / simu->dt;
+  int size_diags;
+  int freq = (1 >= simu->itermax_rk / 10)? 1 : simu->itermax_rk / 10;
+  int iter = 0;
+
+  // Allocate memory for RK time-stepping
+  real *l1, *l2, *l3;
+  l1 = calloc(simu->wsize, sizeof(real));
+  l2 = calloc(simu->wsize, sizeof(real));
+  l3 = calloc(simu->wsize, sizeof(real));
+  
+  size_diags = simu->nb_diags * simu->itermax_rk;
+  simu->iter_time_rk = iter;
+  
+    if(simu->nb_diags != 0)
+    simu->Diagnostics = malloc(size_diags * sizeof(real));
+  
+  while(simu->tnow < tmax) {
+    if (iter % freq == 0)
+      printf("t=%f iter=%d/%d dt=%f\n", simu->tnow, iter, simu->itermax_rk, dt);
+
+    // l_1 = w_n + 0.5dt * S(w_n, t_0)
+    DtFields(simu, simu->w, simu->dtw);
+    RK_out(l1, simu->w, simu->dtw, 0.5 * dt, simu->wsize);
+
+    simu->tnow += 0.5 * dt;
+
+    // l_2 = w_n + 0.5dt * S(l_1, t_0 + 0.5 * dt)
+    DtFields(simu, l1, simu->dtw);
+    RK_out(l2, simu->w, simu->dtw, 0.5 * dt, simu->wsize);
+
+    // l_3 = w_n + dt * S(l_2, t_0 + 0.5 * dt)
+    DtFields(simu, l2, simu->dtw);
+    RK_out(l3, simu->w, simu->dtw, dt, simu->wsize);
+
+    simu->tnow += 0.5 * dt;
+
+    // Compute S(l_3, t_0 + dt)
+    DtFields(simu, l3, simu->dtw);
+    RK4_final_inplace(simu->w, l1, l2, l3, simu->dtw, dt, simu->wsize);
+
+    
+    /* if(f->update_after_rk != NULL) */
+    /*   f->update_after_rk(f, f->wn); */
+    
+    iter++;
+     simu->iter_time_rk=iter;
+  }
+  printf("t=%f iter=%d/%d dt=%f\n", simu->tnow, iter, simu->itermax_rk, dt);
+
+  free(l3);
+  free(l2);
+  free(l1);
+}
+
+// An out-of-place RK step
+void RK_out(real *dest, real *fwn, real *fdtwn, const real dt, 
+	    const int sizew)
+{
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+  for(int iw = 0; iw < sizew; iw++) {
+    dest[iw] = fwn[iw] + dt * fdtwn[iw];
+  }
+}
+
+
+// An in-place RK step
+void RK_in(real *fwnp1, real *fdtwn, const real dt, const int sizew)
+{
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+  for(int iw = 0; iw < sizew; iw++) {
+    fwnp1[iw] += dt * fdtwn[iw];
+  }
+}
+
+void RK4_final_inplace(real *w, real *l1, real *l2, real *l3, 
+		       real *dtw, const real dt, const int sizew)
+{
+  const real b = -1.0 / 3.0;
+  const real a[] = {1.0 / 3.0, 2.0 / 3.0, 1.0 / 3.0, dt / 6.0};
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+  for(int i = 0; i < sizew; ++i) {
+    w[i] = 
+      b * w[i] +
+      a[0] * l1[i] +
+      a[1] * l2[i] +
+      a[2] * l3[i] +
+      a[3] * dtw[i];
+  }
+}
+
+
 real Get_Dt_RK(Simulation *simu)
 {
   return simu->cfl * simu->hmin / simu->vmax; 
