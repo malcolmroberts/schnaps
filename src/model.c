@@ -104,6 +104,9 @@ void VecTransNumFlux2d(__private real *wL, real *wR, real *vnorm, real *flux)
   real vnp = vn > 0.0 ? vn : 0.0;
   real vnm = vn - vnp;
   flux[0] = vnp * wL[0] + vnm * wR[0];
+  vn = -vn;
+  vnp = vn > 0.0 ? vn : 0.0;
+  vnm = vn - vnp;
   flux[1] = vnp * wL[1] + vnm * wR[1];
 }
 #pragma end_opencl
@@ -131,6 +134,7 @@ void VecTransImposedData2d(const real *x, const real t, real* w)
   real vx = sqrt(0.5) * x[0] + sqrt(0.5) * x[1];
   real xx = vx - t;
   w[0] = xx * xx;
+  xx = vx + t;
   w[1] = xx * xx;
   /* w[0] = 1000; */
   /* w[1] = 2000; */

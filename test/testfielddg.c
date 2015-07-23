@@ -17,6 +17,7 @@ int TestfieldDG(void){
   model.BoundaryFlux = TestTransBoundaryFlux;
   model.InitData = TestTransInitData;
   model.ImposedData = TestTransImposedData;
+  model.Source = NULL;
 
   int deg[]={4, 4, 4};
   int raf[]={4, 4, 4};

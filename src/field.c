@@ -414,6 +414,7 @@ void Initfield(field *f, Model model,
 
   f->model = model;
 
+
   f->deg[0] = deg[0];
   f->deg[1] = deg[1];
   f->deg[2] = deg[2];
@@ -459,7 +460,7 @@ void Initfield(field *f, Model model,
   f->pre_dtfield = NULL;
   f->post_dtfield = NULL;
   f->update_after_rk = NULL;
-  f->model.Source = NULL;
+  //f->model.Source = NULL;
   //f->pic = NULL;
 
   // TODO: move this to the integrator code
@@ -877,7 +878,8 @@ void DGSource(field *f, real *w, real *dtw)
     }
       
     f->model.Source(xphy, f->tnow, wL, source);
-      
+    // printf("tnow=%f\n",f->tnow);
+
     for(int iv = 0; iv < m; ++iv) {
       int imem = f->varindex(f->deg, f->raf, f->model.m, ipg, iv);
       dtw[imem] += source[iv];

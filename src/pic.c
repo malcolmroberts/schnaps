@@ -222,7 +222,7 @@ void AccumulateParticles(void *vs, real *w){
     
     real *wf = w + offset;
 
-    int npg=NPG(f->deg, f->raf);
+    int npg = NPG(f->deg, f->raf);
     real dtau[3][3], codtau[3][3];
     Ref2Phy(f->physnode, // phys. nodes
 	    pic->xv + 6 * i, // xref

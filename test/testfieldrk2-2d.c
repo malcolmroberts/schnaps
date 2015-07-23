@@ -21,6 +21,7 @@ int TestfieldRK2_2D(void) {
   model.BoundaryFlux = TransBoundaryFlux2d;
   model.InitData = TransInitData2d;
   model.ImposedData = TransImposedData2d;
+  model.Source = NULL;
 
   int deg[]={2, 2, 0};
   int raf[]={1, 1, 1};

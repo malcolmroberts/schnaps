@@ -27,12 +27,13 @@ int TestmEq2(void){
   Model model;
 
   model.cfl = 0.05;
-  model.m = 1;
+  model.m = 2;
 
   model.NumFlux = VecTransNumFlux2d;
   model.BoundaryFlux = VecTransBoundaryFlux2d;
   model.InitData = VecTransInitData2d;
   model.ImposedData = VecTransImposedData2d;
+  model.Source = NULL;
 
   int deg[]={3, 3, 0};
   int raf[]={4, 4, 1};
@@ -52,13 +53,13 @@ int TestmEq2(void){
 
   InitSimulation(&simu, &mesh, deg, raf, &model);
  
-  real tmax = 0.1;
+  real tmax = 0.5;
   simu.cfl=0.2;
   simu.vmax=1;
   RK2(&simu,tmax);
  
-  PlotFields(0, false, &simu, NULL, "dgvisu.msh");
-  PlotFields(0, true , &simu, "error", "dgerror.msh");
+  PlotFields(1, false, &simu, NULL, "dgvisu.msh");
+  PlotFields(1, true , &simu, "error", "dgerror.msh");
 
   real dd = 0;
   dd = L2error(&simu);

@@ -25,8 +25,8 @@ void InitSimulation(Simulation *simu, MacroMesh *mesh,
 
   printf("field_size = %d simusize = %d\n",field_size,simu->wsize);
 
-  simu->w = malloc(simu->wsize * sizeof(real));
-  simu->dtw = malloc(simu->wsize * sizeof(real));
+  simu->w = calloc(simu->wsize, sizeof(real));
+  simu->dtw = calloc(simu->wsize, sizeof(real));
 
   real *w = simu->w;
   real *dtw = simu->dtw;
@@ -49,8 +49,9 @@ void InitSimulation(Simulation *simu, MacroMesh *mesh,
     fd[ie].period[1] = simu->macromesh.period[1];
     fd[ie].period[2] = simu->macromesh.period[2];
 
-    Initfield(fd+ie, *model, physnode, deg, raf,
+    Initfield(fd + ie, *model, physnode, deg, raf,
 	      w + ie * field_size, dtw + ie * field_size);
+
     simu->hmin = simu->hmin > fd[ie].hmin ? fd[ie].hmin : simu->hmin;
   }
 
@@ -119,7 +120,7 @@ void PlotFields(int typplot, int compare, Simulation* simu, char *fieldname,
     // Get the nodes of element L
     int nnodes = 20;
 
-    field *f = &simu->fd[i];
+    field *f = simu->fd + i;
     // Loop on the macro elem subcells
     int icL[3];
     // Loop on the subcells
@@ -298,6 +299,7 @@ void PlotFields(int typplot, int compare, Simulation* simu, char *fieldname,
 // Apply the Discontinuous Galerkin approximation for computing the
 // time derivative of the field
 void DtFields(Simulation *simu, real *w, real *dtw) {
+
   if(simu->pre_dtfields != NULL) {
     simu->pre_dtfields(simu, w);
   }
@@ -356,7 +358,7 @@ void DtFields(Simulation *simu, real *w, real *dtw) {
 }
 
 real L2error(Simulation *simu) {
-  //int param[8] = {f->model.m, _DEGX, _DEGY, _DEGZ, _RAFX, _RAFY, _RAFZ, 0};
+
   real error = 0;
   real mean = 0;
 

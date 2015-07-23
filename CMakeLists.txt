@@ -258,6 +258,14 @@ add_executable(
 target_link_libraries(testmeq2 ${LIBS})
 add_test(testmeq2 testmeq2)
 
+  add_executable(
+    testmaxwell2d
+    test/test.h
+    test/testmaxwell2d.c
+    )
+  target_link_libraries(testmaxwell2d ${LIBS})
+  add_test(testmaxwell2d testmaxwell2d)
+
 add_executable(
   testfieldrk4
   test/test.h

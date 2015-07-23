@@ -157,7 +157,7 @@ void Maxwell2DInitData(real *x, real *w)
 #pragma start_opencl
 void Maxwell2DSource(const real *x, const real t, const real *w, real *source)
 {
-  // w: (Ex, Ey, Hz, \lambda, rho, Jx, Jy)
+  // w: (Ex, Ey, Hz, \lambda,  Jx, Jy, rho)
   
   // FIXME add documentation
   
