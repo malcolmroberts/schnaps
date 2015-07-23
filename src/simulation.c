@@ -44,6 +44,11 @@ void InitSimulation(Simulation *simu, MacroMesh *mesh,
     }
 
     init_empty_field(fd + ie);
+
+    fd[ie].period[0] = simu->macromesh.period[0];
+    fd[ie].period[1] = simu->macromesh.period[1];
+    fd[ie].period[2] = simu->macromesh.period[2];
+
     Initfield(fd+ie, *model, physnode, deg, raf,
 	      w + ie * field_size, dtw + ie * field_size);
     simu->hmin = simu->hmin > fd[ie].hmin ? fd[ie].hmin : simu->hmin;

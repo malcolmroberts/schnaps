@@ -131,6 +131,11 @@ void init_empty_field(field *f)
 #ifdef _WITH_OPENCL
   f->use_source_cl = false;
 #endif
+
+  f->period[0] = -1;
+  f->period[1] = -1;
+  f->period[2] = -1;
+
 }
 
 void init_data(field *f)
@@ -757,7 +762,7 @@ void DGMacroCellInterface(int locfaL,
 		NULL, -1, // dpsiref, ifa
 		xpg_in, NULL,
 		NULL, NULL, NULL); // codtau, dpsi, vnds
-	//PeriodicCorrection(xpg_in,f->macromesh.period);
+	PeriodicCorrection(xpg_in,fL->period);
 	Phy2Ref(fR->physnode, xpg_in, xrefL);
 
       }

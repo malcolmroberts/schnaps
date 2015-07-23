@@ -27,67 +27,57 @@ int main(void) {
 int TestPeriodic(void) {
   bool test = true;
 
+  MacroMesh mesh;
+  ReadMacroMesh(&mesh,"test/testcube.msh");
+  Detect1DMacroMesh(&mesh);
+  assert(mesh.is1d);
+  // periodic mesh
+  mesh.period[0] = 1;
+  BuildConnectivity(&mesh);
+  int deg[]={2, 0, 0};
+  int raf[]={16, 1, 1};
 
-  field f;
-  init_empty_field(&f);  
+  CheckMacroMesh(&mesh,deg,raf);
+  PrintMacroMesh(&mesh);
 
-  f.model.m = _INDEX_MAX; // num of conservative variables
-  f.vmax = _VMAX; // maximal wave speed 
-  f.model.NumFlux = VlasovP_Lagrangian_NumFlux;
-  f.model.Source = NULL;
+
+  Model model;
+
+  model.m = 1; // only one conservative variable
+  model.NumFlux = TransNumFlux2d;
+  model.BoundaryFlux = TransBoundaryFlux2d;
+  model.InitData = TransInitData2d;
+  model.ImposedData = TransImposedData2d;
+
+  model.m = _INDEX_MAX; // num of conservative variables
+  model.NumFlux = VlasovP_Lagrangian_NumFlux;
+  model.Source = NULL;
   
-  f.model.BoundaryFlux = TestPeriodic_BoundaryFlux;
-  f.model.InitData = TestPeriodic_InitData;
-  f.model.ImposedData = TestPeriodic_ImposedData;
- 
-  f.varindex=GenericVarindex;
-  f.pre_dtfield = NULL;
-  f.post_dtfield = NULL;
-  f.update_after_rk = NULL; 
-  f.model.cfl = 0.05;
-    
-  f.interp.interp_param[0] = f.model.m;  // _M
-  f.interp.interp_param[1] = 2;  // x direction degree
-  f.interp.interp_param[2] = 0;  // y direction degree
-  f.interp.interp_param[3] = 0;  // z direction degree
-  f.interp.interp_param[4] = 4;  // x direction refinement
-  f.interp.interp_param[5] = 1;  // y direction refinement
-  f.interp.interp_param[6] = 1;  // z direction refinement
-  // read the gmsh file
-  ReadMacroMesh(&f.macromesh, "test/testcube.msh");
-  // try to detect a 2d mesh
-  Detect1DMacroMesh(&(f.macromesh));
-  assert(f.macromesh.is1d);
+  model.BoundaryFlux = TestPeriodic_BoundaryFlux;
+  model.InitData = TestPeriodic_InitData;
+  model.ImposedData = TestPeriodic_ImposedData;
 
-  // mesh preparation
-  f.macromesh.period[0] = 1;
 
-  BuildConnectivity(&(f.macromesh));
 
-  PrintMacroMesh(&(f.macromesh));
-  //AffineMapMacroMesh(&(f.macromesh));
- 
-  // prepare the initial fields
-  Initfield(&f);
-  f.nb_diags = 0;
+  Simulation simu;
 
-  CheckMacroMesh(&(f.macromesh),f.interp.interp_param + 1);
+  InitSimulation(&simu, &mesh, deg, raf, &model);
+  printf("cfl param =%f\n",simu.hmin);
 
-  printf("minimum grid spacing: %f\n", f.hmin);
-
-  f.vmax = _VMAX;
-  real dt = set_dt(&f);
+  simu.vmax = _VMAX; // maximal wave speed 
+  simu.cfl = 0.05;
   real tmax = 0.5;
-  RK2(&f, tmax, dt);
+ 
+  RK2(&simu,tmax);
  
   // save the results and the error
-  Plotfield(0, false, &f, "sol","dgvisu.msh");
-  Plotfield(0, true, &f, "error","dgerror.msh");
+  PlotFields(0, false, &simu, "sol","dgvisu.msh");
+  PlotFields(0, true, &simu, "error","dgerror.msh");
 
-  real dd = L2error(&f);
-  real dd_Kinetic = L2_Kinetic_error(&f);
-  
-  printf("erreur kinetic L2: %lf\n", dd_Kinetic);
+  real dd = L2error(&simu);
+  //real dd_Kinetic = L2_Kinetic_error(&simu);
+  //printf("erreur kinetic L2: %lf\n", dd_Kinetic);
+
   printf("erreur L2: %lf\n", dd);
   test = test && (dd<2e-1);
 

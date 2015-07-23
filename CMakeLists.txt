@@ -223,6 +223,14 @@ add_executable(
 target_link_libraries(testfieldrk2 ${LIBS})
 add_test(testfieldrk2 testfieldrk2)
 
+add_executable(
+  testperiodic
+  test/test.h
+  test/testperiodic.c
+)
+target_link_libraries(testperiodic ${LIBS})
+add_test(testperiodic testperiodic)
+
 add_test(test2dmeshdetection test2dmeshdetection)
 add_executable(
   test2dmeshdetection

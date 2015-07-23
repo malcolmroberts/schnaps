@@ -15,7 +15,7 @@
 //! \brief compute square of velocity L2 error
 real L2VelError(field * f,real* x,real *w);
 
-real L2_Kinetic_error(field* f);
+//real L2_Kinetic_error(field* f);
 
 real local_kinetic_energy(field * f,real* x,real *w);
 

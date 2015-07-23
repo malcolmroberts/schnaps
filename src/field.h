@@ -37,6 +37,11 @@ typedef struct field {
   //! ref length of the mesh subcells
   real hmin;
 
+  //! period in each direction
+  //! if negative: non-periodic computation (default)
+  real period[3];
+
+
   //! PIC struct pointer (=NULL if not used)
   void *pic;
 
