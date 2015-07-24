@@ -19,14 +19,14 @@ int TestfieldRK2(void){
   char *mshname =  "test/disque2d.msh";
   
   MacroMesh mesh;
-  ReadMacroMesh(&mesh,"test/testmacromesh.msh");
+  ReadMacroMesh(&mesh,"test/testdisque.msh");
   //ReadMacroMesh(&mesh,"test/testcube2.msh");
-  Detect2DMacroMesh(&mesh);
+  //Detect2DMacroMesh(&mesh);
   BuildConnectivity(&mesh);
 
   Model model;
 
-#if 1
+#if 0
   // 2D version
   model.cfl = 0.05;
   model.m = 1;
@@ -38,7 +38,7 @@ int TestfieldRK2(void){
   model.Source = NULL;
 
   int deg[]={3, 3, 0};
-  int raf[]={4, 4, 1};
+  int raf[]={3, 3, 1};
 
   assert(mesh.is2d);
 #else
@@ -48,10 +48,10 @@ int TestfieldRK2(void){
   model.BoundaryFlux = TestTransBoundaryFlux;
   model.InitData = TestTransInitData;
   model.ImposedData = TestTransImposedData;
+  model.Source = NULL;
 
-  int deg[]={2, 2, 2};
-  int raf[]={3, 3, 3};
-  assert(1==2);
+  int deg[]={3, 3, 3};
+  int raf[]={1, 1, 1};
 
 #endif
 
@@ -90,7 +90,7 @@ int TestfieldRK2(void){
 
   InitSimulation(&simu, &mesh, deg, raf, &model);
  
-  real tmax = 0.1;
+  real tmax = 0.25;
   simu.cfl=0.2;
   simu.vmax=1;
   RK2(&simu,tmax);
@@ -103,7 +103,7 @@ int TestfieldRK2(void){
 
   printf("erreur L2=%f\n", dd);
 
-  real tolerance = 0.001;
+  real tolerance = 0.0025;
 
   test = dd < tolerance;
   

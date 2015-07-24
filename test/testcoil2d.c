@@ -55,7 +55,7 @@ void Coil2DBoundaryFlux(real x[3], real t, real wL[], real *vnorm,
 {
   real wR[7];
   Coil2DImposedData(x, t, wR);
-  Maxwell2DNumFlux_uncentered(wL, wR, vnorm, flux);
+  Maxwell2DNumFlux_upwind(wL, wR, vnorm, flux);
 }
 
 void Coil2DInitData(real x[3], real w[])
@@ -87,7 +87,7 @@ int TestCoil2D(void)
 
   model.m = 7; // num of conservative variables
 
-  model.NumFlux = Maxwell2DNumFlux_uncentered;
+  model.NumFlux = Maxwell2DNumFlux_upwind;
   model.BoundaryFlux = Coil2DBoundaryFlux;
   model.InitData = Coil2DInitData;
   model.Source = Coil2DSource;
@@ -95,7 +95,7 @@ int TestCoil2D(void)
   model.ImposedData = Coil2DImposedData;
     
   int deg[]={2, 2, 0};
-  int raf[]={8, 8, 1};
+  int raf[]={4, 4, 1};
 
   CheckMacroMesh(&mesh, deg, raf);
 

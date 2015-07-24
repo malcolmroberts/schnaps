@@ -38,7 +38,7 @@ int TestfieldRK4(void){
   model.Source = NULL;
 
   int deg[]={3, 3, 0};
-  int raf[]={4, 4, 1};
+  int raf[]={2, 2, 1};
 
   assert(mesh.is2d);
 #else
@@ -81,7 +81,7 @@ int TestfieldRK4(void){
 
   printf("erreur L2=%f\n", dd);
 
-  real tolerance = 0.001;
+  real tolerance = 0.007;
 
   test = dd < tolerance;
   

@@ -36,7 +36,7 @@ int TestmEq2(void){
   model.Source = NULL;
 
   int deg[]={3, 3, 0};
-  int raf[]={4, 4, 1};
+  int raf[]={2, 2, 1};
 
   assert(mesh.is2d);
 
@@ -53,20 +53,20 @@ int TestmEq2(void){
 
   InitSimulation(&simu, &mesh, deg, raf, &model);
  
-  real tmax = 0.5;
-  simu.cfl=0.2;
+  real tmax = 1;
+  simu.cfl=0.05;
   simu.vmax=1;
   RK2(&simu,tmax);
  
-  PlotFields(1, false, &simu, NULL, "dgvisu.msh");
-  PlotFields(1, true , &simu, "error", "dgerror.msh");
+  PlotFields(0, false, &simu, NULL, "dgvisu.msh");
+  PlotFields(0, true , &simu, "error", "dgerror.msh");
 
   real dd = 0;
   dd = L2error(&simu);
 
   printf("erreur L2=%f\n", dd);
 
-  real tolerance = 0.001;
+  real tolerance = 0.015;
 
   test = dd < tolerance;
   

@@ -14,8 +14,8 @@ fluxptr numflux(const char *name)
   if(strcmp(name, "TransNumFlux2d") == 0)
     return &TransNumFlux2d;
 
-  if(strcmp(name, "Maxwell3DNumFluxClean_uncentered") == 0)
-    return &Maxwell3DNumFluxClean_uncentered;
+  if(strcmp(name, "Maxwell3DNumFluxClean_upwind") == 0)
+    return &Maxwell3DNumFluxClean_upwind;
 
   printf("Numerical flux %s not found!\n", name);
   assert(false);
@@ -27,8 +27,8 @@ bfluxptr bflux(const char *name)
   if(strcmp(name, "TransBoundaryFlux2d") == 0)
     return &TransBoundaryFlux2d;
 
-  if(strcmp(name, "Maxwell3DBoundaryFlux_uncentered") == 0)
-    return &Maxwell3DBoundaryFlux_uncentered;
+  if(strcmp(name, "Maxwell3DBoundaryFlux_upwind") == 0)
+    return &Maxwell3DBoundaryFlux_upwind;
 
   printf("Boundary flux %s not found!\n", name);
   assert(false);
@@ -134,8 +134,10 @@ void VecTransImposedData2d(const real *x, const real t, real* w)
   real vx = sqrt(0.5) * x[0] + sqrt(0.5) * x[1];
   real xx = vx - t;
   w[0] = xx * xx;
+  w[0] = sin(xx);
   xx = vx + t;
   w[1] = xx * xx;
+  w[1] = sin(xx);
   /* w[0] = 1000; */
   /* w[1] = 2000; */
 }
@@ -184,7 +186,7 @@ void TransImposedData2d(const real *x, const real t, real *w)
 {
   real vx  = sqrt(0.5) * x[0] + sqrt(0.5) * x[1];
   real xx = vx - t;
-  w[0] = cos(xx);
+  w[0] = sin(3*xx);
 }
 #pragma end_opencl
 
@@ -225,6 +227,7 @@ void TestTransImposedData(const real *x, const real t, real *w) {
     + transport_v[2] * x[2];
   real xx = vx - t;
   //w[0] = 1;
+  w[0] = sin(3*xx);
   w[0] = xx * xx;
   //w[0]=0;
 }
@@ -237,6 +240,7 @@ void TestTransImposedData2d(const real *x, const real t, real *w) {
     + transport_v2d[2] * x[2];
   real xx = vx - t;
   w[0] = xx * xx;
+  w[0] = sin(3*xx);
 }
 
 void set_global_m(int m0)

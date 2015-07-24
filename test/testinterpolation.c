@@ -141,7 +141,7 @@ int TestInterpolation(void){
 
 
 
-#define _MAXDEGTEST 5
+#define _MAXDEGTEST 4
 
   // test that ipg_to_xyz and xyz_to_ipg are inverses of each other
 

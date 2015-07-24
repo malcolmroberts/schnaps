@@ -19,8 +19,8 @@ int TestMaxwell2D(void) {
   char *mshname =  "test/testcube.msh";
   
   MacroMesh mesh;
-  ReadMacroMesh(&mesh,"test/testcube.msh");
-  //ReadMacroMesh(&mesh,"test/testmacromesh.msh");
+  //ReadMacroMesh(&mesh,"test/testcube.msh");
+  ReadMacroMesh(&mesh,"test/testmacromesh.msh");
   Detect2DMacroMesh(&mesh);
   BuildConnectivity(&mesh);
 
@@ -28,12 +28,13 @@ int TestMaxwell2D(void) {
 
   model.m = 7;
 
-  model.NumFlux = Maxwell2DNumFlux_uncentered;
+  model.NumFlux = Maxwell2DNumFlux_upwind;
   //f.model.NumFlux = Maxwell2DNumFlux_centered;
-  model.BoundaryFlux = Maxwell2DBoundaryFlux_uncentered;
+  model.BoundaryFlux = Maxwell2DBoundaryFlux_upwind;
   model.InitData = Maxwell2DInitData;
   model.ImposedData = Maxwell2DImposedData;
   model.Source = Maxwell2DSource;
+  model.Source = NULL;
 
 
   int deg[]={3, 3, 0};
@@ -56,12 +57,12 @@ int TestMaxwell2D(void) {
   /* strcat(cl_buildoptions, buf); */
 
   /* set_source_CL(&f, "Maxwell2DSource"); */
-  /* sprintf(numflux_cl_name, "%s", "Maxwell2DNumFlux_uncentered"); */
+  /* sprintf(numflux_cl_name, "%s", "Maxwell2DNumFlux_upwind"); */
   /* sprintf(buf," -D NUMFLUX="); */
   /* strcat(buf, numflux_cl_name); */
   /* strcat(cl_buildoptions, buf); */
 
-  /* sprintf(buf, " -D BOUNDARYFLUX=%s", "Maxwell2DBoundaryFlux_uncentered"); */
+  /* sprintf(buf, " -D BOUNDARYFLUX=%s", "Maxwell2DBoundaryFlux_upwind"); */
   /* strcat(cl_buildoptions, buf); */
 
 
@@ -78,7 +79,7 @@ int TestMaxwell2D(void) {
 
 #if 1
   // C version
-  RK4(&simu, tmax);
+  RK2(&simu, tmax);
 #else
   // OpenCL version
   RK2_CL(&f, tmax, dt, 0, 0, 0);
@@ -99,7 +100,7 @@ int TestMaxwell2D(void) {
 
   printf("erreur L2=%f\n", dd);
 
-  real tolerance = 0.01;
+  real tolerance = 0.0025;
 
   test = dd < tolerance;
   

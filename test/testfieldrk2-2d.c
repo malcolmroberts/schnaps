@@ -48,7 +48,7 @@ int TestfieldRK2_2D(void) {
 
   printf("erreur L2=%f\n", dd);
 
-  real tolerance = 0.01;
+  real tolerance = 0.07;
 
   test = dd < tolerance;
 
