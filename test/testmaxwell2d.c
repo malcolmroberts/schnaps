@@ -36,7 +36,7 @@ int TestMaxwell2D(void) {
   model.Source = Maxwell2DSource;
 
 
-  int deg[]={2, 2, 0};
+  int deg[]={3, 3, 0};
   int raf[]={4, 4, 1};
 
   assert(mesh.is2d);
@@ -72,13 +72,13 @@ int TestMaxwell2D(void) {
 
   InitSimulation(&simu, &mesh, deg, raf, &model);
  
-  real tmax = 5;
+  real tmax = .5;
   simu.cfl=0.2;
   simu.vmax=1;
 
 #if 1
   // C version
-  RK2(&simu, tmax);
+  RK4(&simu, tmax);
 #else
   // OpenCL version
   RK2_CL(&f, tmax, dt, 0, 0, 0);
@@ -87,7 +87,7 @@ int TestMaxwell2D(void) {
   printf("\nOpenCL Kernel time:\n");
   show_cl_timing(&f);
   printf("\n");
-
+  assert(1==2);
 #endif
 
 
@@ -99,7 +99,7 @@ int TestMaxwell2D(void) {
 
   printf("erreur L2=%f\n", dd);
 
-  real tolerance = 0.001;
+  real tolerance = 0.01;
 
   test = dd < tolerance;
   

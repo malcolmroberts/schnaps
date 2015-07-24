@@ -28,6 +28,8 @@ void Coil2DSource(const real *x, const real t, const real *w, real *source)
   // w: (Ex, Ey, Hz, Hz, \lambda, rho, Jx, Jy)
   
   // FIXME add documentation
+
+  static int icall = 0;
   
   const real khi = 1.0;
   source[0] = -w[4];
@@ -37,6 +39,12 @@ void Coil2DSource(const real *x, const real t, const real *w, real *source)
   source[4] = 0;
   source[5] = 0;
   source[6] = 0;
+
+  icall++;
+  //printf("source call %d w=%f\n",icall,w[4]);
+
+
+  
 }
 
 
@@ -83,6 +91,7 @@ int TestCoil2D(void)
   model.BoundaryFlux = Coil2DBoundaryFlux;
   model.InitData = Coil2DInitData;
   model.Source = Coil2DSource;
+  //model.Source = NULL;
   model.ImposedData = Coil2DImposedData;
     
   int deg[]={2, 2, 0};
@@ -90,11 +99,13 @@ int TestCoil2D(void)
 
   CheckMacroMesh(&mesh, deg, raf);
 
+  
   Simulation simu;
 
   InitSimulation(&simu, &mesh, deg, raf, &model);
-  simu.pre_dtfields = coil_pre_dtfields; // must be called after init
+  simu.pre_dtfields = coil_pre_dtfields; // must be DEFINED after init
 
+  printf("cfl param=%f \n", simu.hmin);
    
   
   PIC pic;
@@ -105,14 +116,41 @@ int TestCoil2D(void)
   PlotParticles(&pic, &mesh);
 
   // time evolution
-  real tmax = 0.1;
+  real tmax = 0.5;
   simu.cfl=0.2;
   simu.vmax = 1;
   RK2(&simu, tmax);
+
+  // for a good comparison with the exact solution
+  // we have to cancel the data used for the source term
+
+  for(int ie = 0; ie < simu.macromesh.nbelems; ie++){
+    field *f = simu.fd + ie;
+    int offset = ie * f->wsize;
+    //real *wf = f->wn;
+    real *wf = simu.w + offset;
+    //assert(1==3); xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+    int npg = NPG(f->deg, f->raf);
+    for(int ipg = 0; ipg < npg; ipg++){
+      int iv = 4;
+      int imem = f->varindex(f->deg, f->raf, f->model.m, ipg, iv);
+      wf[imem] = 0;
+      iv = 5;
+      imem = f->varindex(f->deg, f->raf, f->model.m, ipg, iv);
+      wf[imem]=0;
+      iv = 6;
+      imem = f->varindex(f->deg, f->raf, f->model.m, ipg, iv);
+      wf[imem]=0;
+    } 
+  }
  
+
+  
   // Save the results and the error
   PlotFields(2, false, &simu, NULL, "dgvisu.msh");
   PlotFields(2, true, &simu, "error", "dgerror.msh");
+
+  DisplaySimulation(&simu);
 
   real dd = L2error(&simu);
   real tolerance = 0.3;

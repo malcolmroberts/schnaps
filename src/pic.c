@@ -82,10 +82,10 @@ void CreateCoil2DParticles(PIC* pic,MacroMesh *m){
   real v0=1;  // tangential particle velocity
   real pi=4*atan(1.);
 
-  pic->weight= pi*delta*current/v0/pic->nbparts;
+  pic->weight= 2 * pi * delta * current / v0 / pic->nbparts;
 
 
-  for(int np=0;np<pic->nbparts;np++){
+  for(int np = 0; np<pic->nbparts; np++){
 
     real xphi[3];
 
@@ -97,11 +97,10 @@ void CreateCoil2DParticles(PIC* pic,MacroMesh *m){
     real vy=v0*cos(rax*2*pi);
     real vz=0;
 
-    real weight=2*pi*delta*current/v0/pic->nbparts;
-
     real xref[3];
 
     int num_elem=NumElemFromPoint(m,xphi,xref);
+    //printf("part %d numelem=%d\n",np,num_elem);
     pic->cell_id[np]=num_elem;
     pic->old_cell_id[np]=num_elem;
 
@@ -189,23 +188,28 @@ void AccumulateParticles(void *vs, real *w){
   Simulation *simu = vs;
   PIC *pic = simu->pic;
 
+  static int icall=0;
+  
   assert(simu->pic != NULL);
   
 
     for(int ie = 0; ie < simu->macromesh.nbelems; ie++){
       field *f = simu->fd + ie;
       int offset = ie * f->wsize;
-      int npg = NPG(f->deg, f->raf);
+      //real *wf = f->wn;
+      real *wf = w + offset;
+      //assert(1==3); xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+       int npg = NPG(f->deg, f->raf);
       for(int ipg = 0; ipg < npg; ipg++){
 	int iv = 4;
 	int imem = f->varindex(f->deg, f->raf, f->model.m, ipg, iv);
-	w[imem + offset] = 0;
+	wf[imem] = 0;
 	iv = 5;
 	imem = f->varindex(f->deg, f->raf, f->model.m, ipg, iv);
-	w[imem + offset]=0;
+	wf[imem]=0;
 	iv = 6;
 	imem = f->varindex(f->deg, f->raf, f->model.m, ipg, iv);
-	w[imem + offset]=0;
+	wf[imem]=0;
       } 
     }
   
@@ -250,6 +254,11 @@ void AccumulateParticles(void *vs, real *w){
       iv = 5;  // j2 index
       imem = f->varindex(f->deg, f->raf, f->model.m, ib, iv);
       wf[imem] += pic->xv[6 * i + 4] * psi / wpg * pic->weight;
+
+      /* if (i == 35){ */
+      /* 	icall++; */
+      /* 	printf("call %d psi=%f w=%f ie=%d\n",icall,psi,wf[imem],ie); */
+      /* } */
     }
       
     

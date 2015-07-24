@@ -42,6 +42,7 @@ int Test_Wave_Periodic(void) {
   model.InitData = TestPeriodic_Wave_InitData;
   model.ImposedData = TestPeriodic_Wave_ImposedData;
   model.BoundaryFlux = Wave_Upwind_BoundaryFlux;
+  model.Source = NULL;
 
   int deg[]={3, 3, 0};
   int raf[]={8, 8, 1};

@@ -52,7 +52,7 @@ int TestmEq2(void) {
   strcat(cl_buildoptions, buf);
 
   // Read the gmsh file
-  ReadMacroMesh(&(f.macromesh), "test/testcube.msh");
+  ReadMacroMesh(&(f.macromesh), "test/testdisque2d.msh");
 
   // Try to detect a 2d mesh
   Detect2DMacroMesh(&(f.macromesh));
@@ -223,7 +223,7 @@ int TestmEq2(void) {
   /* CopyfieldtoCPU(&f); */
  
   /* // Save the results and the error */
-  /* Plotfield(0, false, &f, NULL, "dgvisu.msh"); */
+   Plotfield(1, false, &f, NULL, "dgvisu.msh"); 
   /* Plotfield(0, true, &f, "error", "dgerror.msh"); */
 
   /* real dd = L2error(&f); */

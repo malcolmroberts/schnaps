@@ -302,6 +302,7 @@ void DtFields(Simulation *simu, real *w, real *dtw) {
 
   if(simu->pre_dtfields != NULL) {
     simu->pre_dtfields(simu, w);
+    //assert(1==2);
   }
 
 
@@ -395,12 +396,15 @@ real L2error(Simulation *simu) {
       }
 
       for(int iv = 0; iv < f->model.m; iv++) {
+	//for(int iv = 0; iv < 4; iv++) {   ///////error here for coil2d
 	real diff = w[iv] - wex[iv];
-        error += diff * diff * wpg * det;
+       error += diff * diff * wpg * det;
         mean += w[iv] * w[iv] * wpg * det;
-       }
+	//printf("ie=%d ipg=%d iv=%d err=%f \n",ie,ipg,iv,diff);
+        }
     }
   }
+  //printf("errl2=%f\n",sqrt(error) / (sqrt(mean)  + 1e-14));
   return sqrt(error) / (sqrt(mean)  + 1e-14);
 }
 
@@ -426,8 +430,8 @@ void RK2(Simulation *simu, real tmax){
   size_diags = simu->nb_diags * simu->itermax_rk;
   simu->iter_time_rk = iter;
 
-  if(simu->nb_diags != 0)
-    simu->Diagnostics = malloc(size_diags * sizeof(real));
+  /* if(simu->nb_diags != 0) */
+  /*   simu->Diagnostics = malloc(size_diags * sizeof(real)); */
 
   while(simu->tnow < tmax) {
     if (iter % freq == 0)
