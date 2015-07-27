@@ -26,5 +26,10 @@ void AssemblyImplicitLinearSolver(Simulation *simu, LinearSolver *solver);
 void InitImplicitLinearSolver(Simulation *simu, LinearSolver *solver);
 
 
+void InternalCoupling(Simulation *simu,  LinearSolver *solver, int itest);
+void FluxCoupling(Simulation *simu,  LinearSolver *solver,int itest);
+
+
+
 
 #endif

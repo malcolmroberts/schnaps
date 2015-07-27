@@ -9,6 +9,8 @@ void InternalAssembly(Simulation *simu,  LinearSolver *solver);
 void FluxAssembly(Simulation *simu,  LinearSolver *solver);
 void SourceAssembly(Simulation *simu,  LinearSolver *solver);
 
+void AssemblyImplicitLinearSolver(Simulation *simu, LinearSolver *solver);
+
 
 void InitImplicitLinearSolver(Simulation *simu, LinearSolver *solver){
 
@@ -38,7 +40,7 @@ void AssemblyImplicitLinearSolver(Simulation *simu, LinearSolver *solver){
 
   
   InternalAssembly(simu, solver);
-  //FluxAssembly(simu, solver);
+  FluxAssembly(simu, solver);
 
   //SourceAssembly(simu, solver);
   
@@ -353,3 +355,161 @@ void InternalAssembly(Simulation *simu,  LinearSolver *solver){
 
 }
 
+
+void FluxAssembly(Simulation *simu, LinearSolver *solver){
+
+
+  for(int ie = 0; ie < simu->macromesh.nbelems; ie++){
+    field *f = simu->fd + ie; // &(simu->fd[ie])
+
+    const int m = f->model.m;
+
+  
+
+    int nraf[3] = {f->raf[0],
+		   f->raf[1],
+		   f->raf[2]};
+    int deg[3] = {f->deg[0],
+		  f->deg[1],
+		  f->deg[2]};
+    int npg[3] = {deg[0] + 1,
+		  deg[1] + 1,
+		  deg[2] + 1};
+
+ 
+    // Loop on the subcells
+    for(int icL0 = 0; icL0 < nraf[0]; icL0++) {
+      for(int icL1 = 0; icL1 < nraf[1]; icL1++) {
+	for(int icL2 = 0; icL2 < nraf[2]; icL2++) {
+	  
+	  int icL[3] = {icL0, icL1, icL2};
+	  
+	  // Get the left subcell id
+	  int ncL = icL[0] + nraf[0] * (icL[1] + nraf[1] * icL[2]);
+	  // First glop index in the subcell
+	  int offsetL = npg[0] * npg[1] * npg[2] * ncL;
+	  
+	  // Sweeping subcell faces in the three directions
+	  for(int dim0 = 0; dim0 < 3; dim0++) { 
+	    
+	    // Compute the subface flux only if we do not touch the
+	    // subcell boundary along the current direction dim0
+	    if (icL[dim0] != nraf[dim0] - 1) {
+	      int icR[3] = {icL[0], icL[1], icL[2]};
+	      // The right cell index corresponds to an increment in
+	      // the dim0 direction
+	      icR[dim0]++;
+	      int ncR = icR[0] + nraf[0] * (icR[1] + nraf[1] * icR[2]);
+	      int offsetR = npg[0] * npg[1] * npg[2] * ncR;
+	      
+	      // FIXME: write only write to L-values (and do both
+	      // faces) to parallelise better.
+	      
+	      const int altdim1[3] = {1, 0, 0};
+	      const int altdim2[3] = {2, 2, 1};
+	      
+	      // now loop on the left glops of the subface
+	      //int dim1 = (dim0 + 1)%3, dim2 = (dim0+2)%3;
+	      int dim1 = altdim1[dim0];
+	      int dim2 = altdim2[dim0];
+	      int iL[3];
+	      iL[dim0] = deg[dim0];
+	      for(iL[dim2] = 0; iL[dim2] < npg[dim2]; iL[dim2]++) {
+		for(iL[dim1] = 0; iL[dim1] < npg[dim1]; iL[dim1]++) {
+		  // find the right and left glops volume indices
+
+		  int iR[3] = {iL[0], iL[1], iL[2]};
+		  iR[dim0] = 0;
+		  
+		  int ipgL = offsetL 
+		    + iL[0] + (deg[0] + 1) * (iL[1] + (deg[1] + 1) * iL[2]);
+		  int ipgR = offsetR 
+		    + iR[0] + (deg[0] + 1) * (iR[1] + (deg[1] + 1) * iR[2]);
+		  //printf("ipgL=%d ipgR=%d\n", ipgL, ipgR);
+
+		  // Compute the normal vector for integrating on the
+		  // face
+		  real vnds[3];
+		  {
+		    real xref[3], wpg3;
+		    ref_pg_vol(f->deg, f->raf, ipgL, xref, &wpg3, NULL);
+		    // mapping from the ref glop to the physical glop
+		    real dtau[3][3], codtau[3][3];
+		    Ref2Phy(f->physnode,
+			    xref,
+			    NULL, // dphiref
+			    -1,  // ifa
+			    NULL, // xphy
+			    dtau,
+			    codtau,
+			    NULL, // dphi
+			    NULL);  // vnds
+		    // we compute ourself the normal vector because we
+		    // have to take into account the subcell surface
+
+		    real h1h2 = 1. / nraf[dim1] / nraf[dim2];
+		    vnds[0] = codtau[0][dim0] * h1h2;
+		    vnds[1] = codtau[1][dim0] * h1h2;
+		    vnds[2] = codtau[2][dim0] * h1h2;
+		  }
+
+
+		  real wpg
+		    = wglop(deg[dim1], iL[dim1])
+		    * wglop(deg[dim2], iL[dim2]);
+		  
+		  
+		  // numerical flux from the left and right state and
+		  // normal vector
+		  real wL[m], wR[m], flux[m];
+
+		  for (int iv1 = 0; iv1 < m; iv1++){	  
+		    for(int iv = 0; iv < m; iv++) {
+		      wL[iv] = (iv == iv1);
+		      wR[iv] = 0;
+		    }
+
+		    f->model.NumFlux(wL, wR, vnds, flux);
+
+
+		    int imem1 = f->varindex(f->deg, f->raf, f->model.m, ipgL, iv1);
+
+		    for(int iv2 = 0; iv2 < m; iv2++) {
+		      int imem2 = f->varindex(f->deg, f->raf, f->model.m, ipgL, iv2);		  
+		      real val = flux[iv2] * wpg;		      
+		      AddLinearSolver(solver, imem1, imem2, -val);
+		      
+		      imem2 = f->varindex(f->deg, f->raf, f->model.m, ipgR, iv2);
+		      val = flux[iv2] * wpg;		      
+		      AddLinearSolver(solver, imem1, imem2, val);
+		    }
+		  
+		    for(int iv = 0; iv < m; iv++) {
+		      wL[iv] = 0;
+		      wR[iv] = (iv == iv1);
+		    }
+
+
+		    f->model.NumFlux(wL, wR, vnds, flux);
+
+		    for(int iv2 = 0; iv2 < m; iv2++) {
+		      int imem2 = f->varindex(f->deg, f->raf, f->model.m, ipgL, iv2);
+		      real val = flux[iv2] * wpg;
+		      AddLinearSolver(solver, imem1, imem2, -val);
+		    
+		      imem2 = f->varindex(f->deg, f->raf, f->model.m, ipgR, iv2);		    
+		      val = flux[iv2] * wpg;		    
+		      AddLinearSolver(solver, imem1, imem2, val);
+		    }
+		  }
+
+		}  // face yhat loop
+	      } // face xhat loop
+	    } // endif internal face
+	  } // dim loop
+	} // subcell icl2 loop
+      } // subcell icl1 loop
+    } // subcell icl0 loop
+
+  }
+}

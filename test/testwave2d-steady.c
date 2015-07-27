@@ -24,6 +24,9 @@ void Wave_Upwind_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
 			      real *flux);
 
 
+void AssemblyImplicitLinearSolver(Simulation *simu, LinearSolver *solver);
+
+
 
 
 int main(void) {

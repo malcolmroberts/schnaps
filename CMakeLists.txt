@@ -82,6 +82,8 @@ list(APPEND
   src/simulation.h
   src/field.c
   src/field.h
+  src/implicit.h
+  src/implicit.c
   src/geometry.c
   src/geometry.h
   src/global.c
@@ -109,8 +111,6 @@ list(APPEND
   src/dpackfgmres.c
   src/linear_solver.h
   src/linear_solver.c
-  src/implicit.h
-  src/implicit.c
   src/solvercontinuous.h
   src/solvercontinuous.c
   src/solverpoisson.h
