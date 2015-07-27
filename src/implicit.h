@@ -1,5 +1,5 @@
-#ifndef _IMPLICIT_H
-#define _IMPLICIT_H
+#ifndef _IMPLICIT_LS_H
+#define _IMPLICIT_LS_H
 
 
 #include <math.h>
@@ -13,8 +13,9 @@
 //! for the generic implicit linear solver
 //! \param[inout] simu a simulation
 //! \param[inout] solver a linear solver
-void AssemblyImplicitLinearSolver(Simulation *simu, LinearSolver *solver);
+//void AssemblyImplicitLinearSolver(Simulation *simu, LinearSolver *solver);
 
+void AssemblyImplicitLinearSolver(Simulation *simu, LinearSolver *solver);
 
 
 

@@ -102,8 +102,10 @@ int Test_Wave_Steady(void) {
   LinearSolver solver;
   
   InitImplicitLinearSolver(&simu, &solver);
-  AssemblyImplicitLinearSolver(&simu, &solver);
+  //AssemblyImplicitLinearSolver(&simu, &solver);
 
+  AssemblyImplicitLinearSolver(&simu, &solver);
+  
   return test;
 }
 
