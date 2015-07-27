@@ -188,7 +188,7 @@ void DisplaySkyline(Skyline* sky){
 
   for(int i=0;i<n;i++){
     for(int j=0;j<n;j++){
-      printf("%f ",GetSkyline(sky,i,j));
+      printf("%f ", GetSkyline(sky,i,j));
     }   
     printf("\n");
   }

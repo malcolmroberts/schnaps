@@ -57,6 +57,8 @@ void InitSimulation(Simulation *simu, MacroMesh *mesh,
 
   simu->pre_dtfields = NULL;
 
+  simu->nb_diags = 0;
+
 }
 
 

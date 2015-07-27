@@ -19,8 +19,8 @@ int TestMaxwell2D(void) {
   char *mshname =  "test/testcube.msh";
   
   MacroMesh mesh;
-  //ReadMacroMesh(&mesh,"test/testcube.msh");
-  ReadMacroMesh(&mesh,"test/testmacromesh.msh");
+  ReadMacroMesh(&mesh,"test/testcube.msh");
+  //ReadMacroMesh(&mesh,"test/testmacromesh.msh");
   Detect2DMacroMesh(&mesh);
   BuildConnectivity(&mesh);
 
@@ -41,7 +41,6 @@ int TestMaxwell2D(void) {
   int raf[]={4, 4, 1};
 
   assert(mesh.is2d);
-
 
 #ifdef _WITH_OPENCL
   if(!cldevice_is_acceptable(nplatform_cl, ndevice_cl)) {

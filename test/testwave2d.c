@@ -44,9 +44,12 @@ int Test_Wave_Periodic(void) {
   model.BoundaryFlux = Wave_Upwind_BoundaryFlux;
   model.Source = NULL;
 
-  int deg[]={3, 3, 0};
-  int raf[]={8, 8, 1};
-    
+  int deg[]={4, 4, 0};
+  int raf[]={4, 4, 1};
+
+
+  assert(mesh.is2d);
+
   CheckMacroMesh(&mesh, deg, raf);
   Simulation simu;
 
@@ -55,7 +58,7 @@ int Test_Wave_Periodic(void) {
   real tmax = 0.01;
   simu.cfl=0.2;
   simu.vmax=_SPEED_WAVE;
-  RK2(&simu,tmax);
+  RK4(&simu,tmax);
 
   real dd = 0;
   dd = L2error(&simu);

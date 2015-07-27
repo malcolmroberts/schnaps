@@ -388,8 +388,8 @@ int ref_pg_face(int deg3d[], int nraf3d[], int ifa, int ipg,
   // If xpgin exists, compute a point slightly INSIDE the opposite
   // subcell along the face.
   if(xpgin != NULL) {
-    real small = 1e-5;//0.001
-    real vsmall = 1e-7;//0.000001;
+    real small = 1e-4;//0.001
+    real vsmall = 1e-6;//0.000001;
 
     xpgin[axis_permut[ifa][0]] = h[0] * (ncx + gauss_lob_point[offset[0]]);
     xpgin[axis_permut[ifa][1]] = h[1] * (ncy + gauss_lob_point[offset[1]]);

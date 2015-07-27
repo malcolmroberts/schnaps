@@ -109,6 +109,8 @@ list(APPEND
   src/dpackfgmres.c
   src/linear_solver.h
   src/linear_solver.c
+  src/implicit.h
+  src/implicit.c
   src/solvercontinuous.h
   src/solvercontinuous.c
   src/solverpoisson.h
@@ -339,6 +341,15 @@ add_executable(
 )
 target_link_libraries(testwave2d ${LIBS})
 add_test(testwave2d testwave2d)
+
+
+add_executable(
+  testwave2d-steady
+  test/test.h
+  test/testwave2d-steady.c
+)
+target_link_libraries(testwave2d-steady ${LIBS})
+add_test(testwave2d-steady testwave2d-steady)
 
 
 
