@@ -13,8 +13,10 @@ void SourceAssembly(Simulation *simu,  LinearSolver *solver);
 void InitImplicitLinearSolver(Simulation *simu, LinearSolver *solver){
 
   int neq = simu->wsize;
-  
-  InitLinearSolver(solver,neq,SKYLINE,LU);
+
+  MatrixStorage ms = SKYLINE;
+  Solver st = LU; 
+  InitLinearSolver(solver,neq,&ms,&st);
 
   int itest = 2;
 
