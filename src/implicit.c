@@ -333,7 +333,7 @@ void InternalAssembly(Simulation *simu,  LinearSolver *solver,real theta, real d
 		      for(int iv2 = 0; iv2 < m; iv2++) {
 			real val = theta * dt * flux[iv2] * wpgL;
 			int imemR = f->varindex(f->deg,f->raf,f->model.m, ipgR, iv2);
-			AddLinearSolver(solver, imemL, imemR,val);
+			AddLinearSolver(solver, imemR, imemL,-val);
 		      }
 		    }
 		  } // iq
@@ -481,11 +481,11 @@ void FluxAssembly(Simulation *simu, LinearSolver *solver,real theta, real dt){
 		    for(int iv2 = 0; iv2 < m; iv2++) {
 		      int imem2 = f->varindex(f->deg, f->raf, f->model.m, ipgL, iv2);		  
 		      real val = theta * dt * flux[iv2] * wpg;		      
-		      AddLinearSolver(solver, imem1, imem2, -val);
+		      AddLinearSolver(solver, imem2, imem1, val);
 		      
 		      imem2 = f->varindex(f->deg, f->raf, f->model.m, ipgR, iv2);
 		      val = theta * dt * flux[iv2] * wpg;		      
-		      AddLinearSolver(solver, imem1, imem2, val);
+		      AddLinearSolver(solver, imem2, imem1, -val);
 		    }
 		  
 		    for(int iv = 0; iv < m; iv++) {
@@ -499,11 +499,11 @@ void FluxAssembly(Simulation *simu, LinearSolver *solver,real theta, real dt){
 		    for(int iv2 = 0; iv2 < m; iv2++) {
 		      int imem2 = f->varindex(f->deg, f->raf, f->model.m, ipgL, iv2);
 		      real val = theta * dt * flux[iv2] * wpg;
-		      AddLinearSolver(solver, imem1, imem2, -val);
+		      AddLinearSolver(solver, imem2, imem1, val);
 		    
 		      imem2 = f->varindex(f->deg, f->raf, f->model.m, ipgR, iv2);		    
 		      val = theta *dt * flux[iv2] * wpg;		    
-		      AddLinearSolver(solver, imem1, imem2, val);
+		      AddLinearSolver(solver, imem2, imem1, -val);
 		    }
 		  }
 
