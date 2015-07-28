@@ -11,15 +11,12 @@ const  real a[6]={1,1,1,1,1,1};
 const  real b[6]={1,1,1,1,1,1};
 const  real c[6]={1,1,1,1,1,1};
   
+void TestSteady_Transport_ImposedData(const real *x, const real t, real *w);
+void TestSteady_Transport_InitData(real *x, real *w);
+void TestSteady_Transport_Source(const real *xy, const real t, const real *w, real *S);
+void Transport_Upwind_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
+                              real *flux);
 
-
-
-
-void TestSteady_Wave_ImposedData(const real *x, const real t, real *w);
-void TestSteady_Wave_InitData(real *x, real *w);
-void TestSteady_Wave_Source(const real *xy, const real t, const real *w, real *S);
-void Wave_Upwind_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
-			      real *flux);
 
 void AssemblyImplicitLinearSolver(Simulation *simu, LinearSolver *solver,real theta,real dt);
 
@@ -30,15 +27,15 @@ int main(void) {
   
   // unit tests
     
-  int resu = Test_Wave_Steady();
+  int resu = Test_Transport_Steady();
 	 
-  if (resu) printf("wave steady  test OK !\n");
-  else printf("wave steady test failed !\n");
+  if (resu) printf("transport steady  test OK !\n");
+  else printf("transport steady test failed !\n");
 
   return !resu;
 } 
 
-int Test_Wave_Steady(void) {
+int Test_Transport_Steady(void) {
 
   bool test = true;
 
@@ -54,12 +51,12 @@ int Test_Wave_Steady(void) {
 
   Model model;
 
-  model.m=3; 
-   model.NumFlux=Wave_Upwind_NumFlux; 
-    model.InitData = TestSteady_Wave_InitData; 
-   model.ImposedData = TestSteady_Wave_ImposedData; 
-   model.BoundaryFlux = Wave_Upwind_BoundaryFlux; 
-   model.Source = TestSteady_Wave_Source; 
+   model.m=1;
+  model.NumFlux = TransNumFlux2d;
+  model.BoundaryFlux = Transport_Upwind_BoundaryFlux;
+  model.InitData = TestSteady_Transport_InitData;
+  model.ImposedData = TestSteady_Transport_ImposedData;
+  model.Source = TestSteady_Transport_Source;
 
   int deg[]={4, 4, 0};
   int raf[]={2, 2, 1};
@@ -121,47 +118,36 @@ int Test_Wave_Steady(void) {
   return test;
 }
 
-
-
-void TestSteady_Wave_ImposedData(const real *xy, const real t, real *w) {
+void TestSteady_Transport_ImposedData(const real *xy, const real t, real *w) {
 
   real x=xy[0];
   real y=xy[1];
 
-
-  w[0] = x*(1-x)*y*(1-y);
-  w[1] = 2*x*(1-x)*y*(1-y);
-  w[2] = 3*x*(1-x)*y*(1-y);
-
-
+  w[0] = x * (1 - x) * y * (1-y);
 }
 
-void TestSteady_Wave_Source(const real *xy, const real t, const real *w, real *S){
-  
+void TestSteady_Transport_Source(const real *xy, const real t, const real *w, real *S){
+
   real x=xy[0];
   real y=xy[1];
 
-  S[0] = 2*(1-2*x)*(y*(1-y))+3*(1-2*y)*(x*(1-x));
-  S[1] = (1-2*x)*(y*(1-y));
-  S[2] = (1-2*y)*(x*(1-x));
+  const real v2[] = {sqrt(0.5), sqrt(0.5), 0};
 
-  S[0] *= _SPEED_WAVE;
-  S[1] *= _SPEED_WAVE;
-  S[2] *= _SPEED_WAVE;
+  S[0] = v2[0] * (1 - 2 * x) * y * (1 - y) +
+    v2[1] * (1 - 2 * y) * x * (1 - x);
 
 }
 
-void TestSteady_Wave_InitData(real *x, real *w) {
+void TestSteady_Transport_InitData(real *x, real *w) {
   real t = 0;
-  TestSteady_Wave_ImposedData(x, t, w);
+  TestSteady_Transport_ImposedData(x, t, w);
 }
 
 
-void Wave_Upwind_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
-				       real *flux) {
+void Transport_Upwind_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
+                                       real *flux) {
   real wR[3];
-  TestSteady_Wave_ImposedData(x , t, wR);
-  Wave_Upwind_NumFlux(wL, wR, vnorm, flux);
+  TestSteady_Transport_ImposedData(x , t, wR);
+  TransNumFlux2d(wL, wR, vnorm, flux);
 }
-
  

@@ -351,6 +351,14 @@ add_executable(
 target_link_libraries(testwave2d-steady ${LIBS})
 add_test(testwave2d-steady testwave2d-steady)
 
+add_executable(
+  testtransport_steady
+  test/test.h
+  test/testtransport_steady.c
+)
+target_link_libraries(testtransport_steady ${LIBS})
+add_test(testtransport_steady testtransport_steady)
+
 
 
 IF(BUILD_PARALUTION)
