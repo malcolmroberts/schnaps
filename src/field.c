@@ -883,7 +883,7 @@ void DGSource(field *f, real *w, real *dtw)
 
     for(int iv = 0; iv < m; ++iv) {
       int imem = f->varindex(f->deg, f->raf, f->model.m, ipg, iv);
-      dtw[imem] += source[iv]; // * det * wpg;
+      dtw[imem] += source[iv];// det * wpg;
 	
     }
   }

@@ -18,7 +18,7 @@ void InitImplicitLinearSolver(Simulation *simu, LinearSolver *solver){
   int neq = simu->wsize;
 
   MatrixStorage ms = SKYLINE;
-  Solver st = LU; 
+  Solver st = PAR_LU; 
   InitLinearSolver(solver,neq,&ms,&st);
 
   int itest = 1;
@@ -41,7 +41,7 @@ void AssemblyImplicitLinearSolver(Simulation *simu, LinearSolver *solver){
 
   
   InternalAssembly(simu, solver);
-  //FluxAssembly(simu, solver);
+  FluxAssembly(simu, solver);
   //MassAssembly(simu, solver);
   //SourceAssembly(simu, solver);
   DisplayLinearSolver(solver);
@@ -467,16 +467,17 @@ void FluxAssembly(Simulation *simu, LinearSolver *solver){
 		  // normal vector
 		  real wL[m], wR[m], flux[m];
 
-		  for (int iv1 = 0; iv1 < m; iv1++){	  
+		  for (int iv1 = 0; iv1 < m; iv1++){
+
+		    int imem1 = f->varindex(f->deg, f->raf, f->model.m, ipgL, iv1);
+			    
+
 		    for(int iv = 0; iv < m; iv++) {
 		      wL[iv] = (iv == iv1);
 		      wR[iv] = 0;
 		    }
 
-		    f->model.NumFlux(wL, wR, vnds, flux);
-
-
-		    int imem1 = f->varindex(f->deg, f->raf, f->model.m, ipgL, iv1);
+		    f->model.NumFlux(wL, wR, vnds, flux);	
 
 		    for(int iv2 = 0; iv2 < m; iv2++) {
 		      int imem2 = f->varindex(f->deg, f->raf, f->model.m, ipgL, iv2);		  

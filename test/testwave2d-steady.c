@@ -74,19 +74,19 @@ int Test_Wave_Steady(void) {
   model.ImposedData = TestSteady_Transport_ImposedData;
   model.Source = TestSteady_Transport_Source;
 
-  int deg[]={1, 1, 0};
-  int raf[]={2, 1, 1};
+  int deg[]={4, 4, 0};
+  int raf[]={2, 2, 1};
   
   CheckMacroMesh(&mesh, deg, raf);
   Simulation simu;
 
   InitSimulation(&simu, &mesh, deg, raf, &model);
- 
+
   real tmax = .1;
   simu.cfl=0.2;
   simu.vmax=_SPEED_WAVE;
   RK4(&simu,tmax);
-
+ 
   real dd = 0;
   dd = L2error(&simu);
 
@@ -110,18 +110,22 @@ int Test_Wave_Steady(void) {
 
   real *sourcex = calloc(simu.wsize, sizeof(real));
 
-  
+  for(int i=0;i<solver.neq;i++){
+    printf("pouet ----- %f \n",simu.w[i]);
+  }
   
   MatVect(&solver, simu.w, res);
 
-  for(int ie = 0; ie < simu.macromesh.nbelems; ie++){
-    field *f = simu.fd +ie;
+  //for(int ie = 0; ie < simu.macromesh.nbelems; ie++){
+  //field *f = simu.fd +ie;
 
-    DGSource(f, simu.w, sourcex);
-  }
+  //DGSource(f, simu.w, sourcex);
+  //}
+
+  SourceAssembly(&simu, &solver);
   
   for(int i=0;i<solver.neq;i++){
-    printf("pouet ooo %f  %f %f \n",res[i], sourcex[i], sourcex[i] / res[i]);
+    printf("pouet ooo %f  %f %f \n",res[i], solver.rhs[i], solver.rhs[i] - res[i]);
   }
 
   
@@ -186,10 +190,7 @@ void TestSteady_Transport_ImposedData(const real *xy, const real t, real *w) {
   real x=xy[0];
   real y=xy[1];
 
-
   w[0] = x * (1 - x) * y * (1-y);
- 
-
 }
 
 void TestSteady_Transport_Source(const real *xy, const real t, const real *w, real *S){
