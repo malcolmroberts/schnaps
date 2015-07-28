@@ -60,9 +60,9 @@ int Test_Wave_Steady(void) {
 
   model.m=3; 
   model.NumFlux=Wave_Upwind_NumFlux; 
-  model.InitData = TestSteady_Wave_InitData; 
-  model.ImposedData = TestSteady_Wave_ImposedData; 
-  model.BoundaryFlux = Wave_Upwind_BoundaryFlux; 
+  model.InitData = TestSteady2_Wave_InitData; 
+  model.ImposedData = TestSteady2_Wave_ImposedData; 
+  model.BoundaryFlux = Wave2_Upwind_BoundaryFlux; 
   model.Source = TestSteady_Wave_Source; 
 
   int deg[]={4, 4, 0};

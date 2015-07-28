@@ -568,12 +568,13 @@ void MassAssembly(Simulation *simu,  LinearSolver *solver){
 
 void SourceAssembly(Simulation *simu,  LinearSolver *solver, real theta, real dt){
 
-  for(int ie = 0; ie < simu->macromesh.nbelems; ie++){
-    field *f = simu->fd + ie;
+  if(simu->fd[0].model.Source != NULL) {
+    for(int ie = 0; ie < simu->macromesh.nbelems; ie++){
+      field *f = simu->fd + ie;
     
     
     const int m = f->model.m;
-
+    
     int deg[3] = {f->deg[0],
 		  f->deg[1],
 		  f->deg[2]};
@@ -611,7 +612,7 @@ void SourceAssembly(Simulation *simu,  LinearSolver *solver, real theta, real dt
  
      
   }
-
+ }
   // assembly of the boundary terms
 
   int fsize =  simu->wsize / simu->macromesh.nbelems;

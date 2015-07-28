@@ -5,6 +5,7 @@
 #include "test.h"
 #include "collision.h"
 #include "waterwave2d.h"
+#include "implicit.h"
 
 
 
@@ -58,7 +59,7 @@ int Test_Wave_Periodic(void) {
   real tmax = 0.01;
   simu.cfl=0.2;
   simu.vmax=_SPEED_WAVE;
-  RK4(&simu,tmax);
+  RK2(&simu,tmax);
 
   real dd = 0;
   dd = L2error(&simu);
@@ -67,13 +68,49 @@ int Test_Wave_Periodic(void) {
 
   real tolerance = 0.001;
 
-  test = dd < tolerance;
+  test = test && (dd < tolerance);
 
-   // Save the results and the error
-  //PlotFields(0,false, &simu, "p", "dgvisup.msh");
-  //PlotFields(1,false, &simu, "u1", "dgvisuu1.msh");
-  //PlotFields(2,false, &simu, "u2", "dgvisuu2.msh");
 
+  Simulation simu2;
+
+  InitSimulation(&simu2, &mesh, deg, raf, &model);
+
+  LinearSolver solver_implicit;
+  LinearSolver solver_explicit;  
+
+  real theta=0.5;
+  real dt=0.000167;
+  int itermax=tmax/dt;
+  InitImplicitLinearSolver(&simu2, &solver_implicit);
+  InitImplicitLinearSolver(&simu2, &solver_explicit);
+  AssemblyImplicitLinearSolver(&simu2, &solver_implicit,theta,dt);
+  AssemblyImplicitLinearSolver(&simu2, &solver_explicit,-(1.0-theta),dt);
+  
+
+  real *res = calloc(simu2.wsize, sizeof(real));
+
+  for(int tstep=0;tstep<itermax;tstep++){
+
+    MatVect(&solver_explicit, simu2.w, res);
+
+    for(int i=0;i<solver_implicit.neq;i++){
+      solver_implicit.rhs[i]=solver_explicit.rhs[i]+res[i];
+    }
+  
+    SolveLinearSolver(&solver_implicit);
+
+    for(int i=0;i<solver_implicit.neq;i++){
+      simu2.w[i]=solver_implicit.sol[i];
+    }
+   
+
+ }
+  
+  dd = L2error(&simu2);
+
+  printf("erreur implicit L2=%f\n", dd);
+
+  test = test && (dd < tolerance);
   
 
   return test;
