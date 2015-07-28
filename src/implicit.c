@@ -8,6 +8,7 @@ void FluxCoupling(Simulation *simu,  LinearSolver *solver,int itest);
 void InternalAssembly(Simulation *simu,  LinearSolver *solver);
 void FluxAssembly(Simulation *simu,  LinearSolver *solver);
 void SourceAssembly(Simulation *simu,  LinearSolver *solver);
+void MassAssembly(Simulation *simu,  LinearSolver *solver);
 
 void AssemblyImplicitLinearSolver(Simulation *simu, LinearSolver *solver);
 
@@ -20,7 +21,7 @@ void InitImplicitLinearSolver(Simulation *simu, LinearSolver *solver){
   Solver st = LU; 
   InitLinearSolver(solver,neq,&ms,&st);
 
-  int itest = 2;
+  int itest = 1;
 
   for (int isky=0 ; isky < itest; isky++){
   
@@ -41,9 +42,9 @@ void AssemblyImplicitLinearSolver(Simulation *simu, LinearSolver *solver){
   
   InternalAssembly(simu, solver);
   FluxAssembly(simu, solver);
-
-  //SourceAssembly(simu, solver);
-  
+  //MassAssembly(simu, solver);
+  SourceAssembly(simu, solver);
+  //DisplayLinearSolver(solver);
 
 }
 
@@ -126,6 +127,9 @@ void InternalCoupling(Simulation *simu,  LinearSolver *solver, int isky){
 
   
 }
+
+
+
 
 
 void FluxCoupling(Simulation *simu,  LinearSolver *solver, int isky){
@@ -512,4 +516,102 @@ void FluxAssembly(Simulation *simu, LinearSolver *solver){
     } // subcell icl0 loop
 
   }
+}
+
+
+
+void MassAssembly(Simulation *simu,  LinearSolver *solver){
+
+  for(int ie = 0; ie < simu->macromesh.nbelems; ie++){
+    field *f = simu->fd + ie;
+    
+    
+    const int m = f->model.m;
+
+    int deg[3] = {f->deg[0],
+		  f->deg[1],
+		  f->deg[2]};
+    const int npg[3] = {deg[0] + 1,
+			deg[1] + 1,
+			deg[2] + 1};
+    int nraf[3] = {f->raf[0],
+		   f->raf[1],
+		   f->raf[2]};
+
+
+    for(int ipg = 0; ipg < NPG(f->deg, f->raf); ipg++) {
+      real dtau[3][3], codtau[3][3], xpgref[3], xphy[3], wpg;
+      ref_pg_vol(f->deg, f->raf, ipg, xpgref, &wpg, NULL);
+      Ref2Phy(f->physnode, // phys. nodes
+	      xpgref, // xref
+	      NULL, -1, // dpsiref, ifa
+	      xphy, dtau, // xphy, dtau
+	      codtau, NULL, NULL); // codtau, dpsi, vnds
+      real det = dot_product(dtau[0], codtau[0]);
+      for(int iv1 = 0; iv1 < m; iv1++) {
+	int imem = f->varindex(deg, nraf, m, ipg, iv1);
+	real val = wpg * det;
+	AddLinearSolver(solver, imem, imem,val);
+      }
+    }
+ 
+      
+
+  }
+
+  real vol = 0;
+  for(int i = 0; i < simu->wsize; i++) vol += GetLinearSolver(solver, i, i);
+  printf("vol=%f\n",vol);
+
+}
+
+void SourceAssembly(Simulation *simu,  LinearSolver *solver){
+
+  for(int ie = 0; ie < simu->macromesh.nbelems; ie++){
+    field *f = simu->fd + ie;
+    
+    
+    const int m = f->model.m;
+
+    int deg[3] = {f->deg[0],
+		  f->deg[1],
+		  f->deg[2]};
+    const int npg[3] = {deg[0] + 1,
+			deg[1] + 1,
+			deg[2] + 1};
+    int nraf[3] = {f->raf[0],
+		   f->raf[1],
+		   f->raf[2]};
+
+
+    for(int ipg = 0; ipg < NPG(f->deg, f->raf); ipg++) {
+      real dtau[3][3], codtau[3][3], xpgref[3], xphy[3], wpg;
+      ref_pg_vol(f->deg, f->raf, ipg, xpgref, &wpg, NULL);
+      Ref2Phy(f->physnode, // phys. nodes
+	      xpgref, // xref
+	      NULL, -1, // dpsiref, ifa
+	      xphy, dtau, // xphy, dtau
+	      codtau, NULL, NULL); // codtau, dpsi, vnds
+      real det = dot_product(dtau[0], codtau[0]);
+      real wL[m], source[m];
+      /* for(int iv = 0; iv < m; ++iv){ */
+      /* 	int imem = f->varindex(f->deg, f->raf, f->model.m, ipg, iv); */
+      /* 	wL[iv] = w[imem]; */
+      /* } */
+      f->model.Source(xphy, f->tnow, wL, source);
+      for(int iv1 = 0; iv1 < m; iv1++) {
+	int imem = f->varindex(deg, nraf, m, ipg, iv1);
+	real val = source[iv1] * wpg * det;
+	solver->rhs[imem] += val;
+	AddLinearSolver(solver, imem, imem,val);
+      }
+    }
+
+
+ 
+      
+
+  }
+
+ 
 }

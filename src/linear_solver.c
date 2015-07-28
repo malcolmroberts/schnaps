@@ -30,6 +30,9 @@ void InitLinearSolver(LinearSolver* lsol,int n,
   if (matstor != NULL) lsol->storage_type = *matstor;
   if (solvtyp != NULL) lsol->solver_type = *solvtyp;
 
+  lsol->rhs=calloc(n,sizeof(real));
+  lsol->sol=calloc(n,sizeof(real));
+
   switch(lsol->storage_type) {
 
   Skyline* sky;
