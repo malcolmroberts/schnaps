@@ -41,10 +41,10 @@ void AssemblyImplicitLinearSolver(Simulation *simu, LinearSolver *solver){
 
   
   InternalAssembly(simu, solver);
-  FluxAssembly(simu, solver);
+  //FluxAssembly(simu, solver);
   //MassAssembly(simu, solver);
-  SourceAssembly(simu, solver);
-  //DisplayLinearSolver(solver);
+  //SourceAssembly(simu, solver);
+  DisplayLinearSolver(solver);
 
 }
 

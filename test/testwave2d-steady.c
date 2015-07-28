@@ -74,8 +74,8 @@ int Test_Wave_Steady(void) {
   model.ImposedData = TestSteady_Transport_ImposedData;
   model.Source = TestSteady_Transport_Source;
 
-  int deg[]={4, 4, 0};
-  int raf[]={2, 2, 1};
+  int deg[]={1, 1, 0};
+  int raf[]={2, 1, 1};
   
   CheckMacroMesh(&mesh, deg, raf);
   Simulation simu;
@@ -106,17 +106,30 @@ int Test_Wave_Steady(void) {
   InitImplicitLinearSolver(&simu, &solver);
   AssemblyImplicitLinearSolver(&simu, &solver);
 
+  real *res = calloc(simu.wsize, sizeof(real));
+
+  real *sourcex = calloc(simu.wsize, sizeof(real));
+
+  
+  
+  MatVect(&solver, simu.w, res);
+
+  for(int ie = 0; ie < simu.macromesh.nbelems; ie++){
+    field *f = simu.fd +ie;
+
+    DGSource(f, simu.w, sourcex);
+  }
   
   for(int i=0;i<solver.neq;i++){
-    printf("pouet ooo %d  %f \n",i,solver.sol[i]);
+    printf("pouet ooo %f  %f %f \n",res[i], sourcex[i], sourcex[i] / res[i]);
   }
 
   
-  SolveLinearSolver(&solver);
+  /* SolveLinearSolver(&solver); */
 
-  for(int i=0;i<solver.neq;i++){
-    printf("pouet %d  %f \n",i,solver.sol[i]);
-  }
+  /* for(int i=0;i<solver.neq;i++){ */
+  /*   printf("pouet %d  %f \n",i,solver.sol[i]); */
+  /* } */
 
   
 

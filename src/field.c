@@ -871,6 +871,7 @@ void DGSource(field *f, real *w, real *dtw)
 	    NULL, -1, // dpsiref, ifa
 	    xphy, dtau, // xphy, dtau
 	    codtau, NULL, NULL); // codtau, dpsi, vnds
+    real det = dot_product(dtau[0], codtau[0]);  //// temp !!!!!!!!!!!!!!!
     real wL[m], source[m];
     for(int iv = 0; iv < m; ++iv){
       int imem = f->varindex(f->deg, f->raf, f->model.m, ipg, iv);
@@ -882,7 +883,7 @@ void DGSource(field *f, real *w, real *dtw)
 
     for(int iv = 0; iv < m; ++iv) {
       int imem = f->varindex(f->deg, f->raf, f->model.m, ipg, iv);
-      dtw[imem] += source[iv];
+      dtw[imem] += source[iv]; // * det * wpg;
 	
     }
   }
