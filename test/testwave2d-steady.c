@@ -133,9 +133,9 @@ void TestSteady_Wave_ImposedData(const real *xy, const real t, real *w) {
   real y=xy[1];
 
 
-  w[0] = x*(1-x)*y*(1-y);
-  w[1] = 2*x*(1-x)*y*(1-y);
-  w[2] = 3*x*(1-x)*y*(1-y);
+  w[0] = x*(1-x)*y*(1-y)+1;
+  w[1] = 2*x*(1-x)*y*(1-y)+1;
+  w[2] = 3*x*(1-x)*y*(1-y)+1;
 
 
 }
