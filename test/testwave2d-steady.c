@@ -27,7 +27,7 @@ void Transport_Upwind_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
 			      real *flux);
 
 
-void AssemblyImplicitLinearSolver(Simulation *simu, LinearSolver *solver);
+void AssemblyImplicitLinearSolver(Simulation *simu, LinearSolver *solver,real theta,real dt);
 
 
 
@@ -60,19 +60,19 @@ int Test_Wave_Steady(void) {
 
   Model model;
 
-  /* model.m=3; */
-  /* model.NumFlux=Wave_Upwind_NumFlux; */
-  /*  model.InitData = TestSteady_Wave_InitData; */
-  /* model.ImposedData = TestSteady_Wave_ImposedData; */
-  /* model.BoundaryFlux = Wave_Upwind_BoundaryFlux; */
-  /* model.Source = TestSteady_Wave_Source; */
+  model.m=3; 
+   model.NumFlux=Wave_Upwind_NumFlux; 
+    model.InitData = TestSteady_Wave_InitData; 
+   model.ImposedData = TestSteady_Wave_ImposedData; 
+   model.BoundaryFlux = Wave_Upwind_BoundaryFlux; 
+   model.Source = TestSteady_Wave_Source; 
 
-  model.m=1;
+   /*model.m=1;
   model.NumFlux = TransNumFlux2d;
   model.BoundaryFlux = Transport_Upwind_BoundaryFlux;
   model.InitData = TestSteady_Transport_InitData;
   model.ImposedData = TestSteady_Transport_ImposedData;
-  model.Source = TestSteady_Transport_Source;
+  model.Source = TestSteady_Transport_Source;*/
 
   int deg[]={4, 4, 0};
   int raf[]={2, 2, 1};
@@ -90,55 +90,47 @@ int Test_Wave_Steady(void) {
   real dd = 0;
   dd = L2error(&simu);
 
-  printf("erreur L2=%f\n", dd);
+  printf("erreur explicit L2=%f\n", dd);
 
-  real tolerance = 0.001;
+  real tolerance = 0.0000001;
 
-  test = dd < tolerance;
+  test = test && (dd < tolerance);
 
-  // Save the results and the error
-  PlotFields(0,false, &simu, "p", "dgvisup.msh");
-  PlotFields(1,false, &simu, "u1", "dgvisuu1.msh");
-  PlotFields(2,false, &simu, "u2", "dgvisuu2.msh");
+  LinearSolver solver_implicit;
+  LinearSolver solver_explicit;  
 
-  LinearSolver solver;
-  
-  InitImplicitLinearSolver(&simu, &solver);
-  AssemblyImplicitLinearSolver(&simu, &solver);
+  real theta=0.5;
+  real dt=simu.dt;
+  InitImplicitLinearSolver(&simu, &solver_implicit);
+  InitImplicitLinearSolver(&simu, &solver_explicit);
+  AssemblyImplicitLinearSolver(&simu, &solver_implicit,theta,dt);
+  AssemblyImplicitLinearSolver(&simu, &solver_explicit,-(1.0-theta),dt);
 
   real *res = calloc(simu.wsize, sizeof(real));
 
-  real *sourcex = calloc(simu.wsize, sizeof(real));
+  for(int tstep=0;tstep<10;tstep++){
 
-  for(int i=0;i<solver.neq;i++){
-    printf("pouet ----- %f \n",simu.w[i]);
-  }
+    MatVect(&solver_explicit, simu.w, res);
+
+    for(int i=0;i<solver_implicit.neq;i++){
+      solver_implicit.rhs[i]=solver_explicit.rhs[i]+res[i];
+    }
   
-  MatVect(&solver, simu.w, res);
+    SolveLinearSolver(&solver_implicit);
 
-  //for(int ie = 0; ie < simu.macromesh.nbelems; ie++){
-  //field *f = simu.fd +ie;
+    for(int i=0;i<solver_implicit.neq;i++){
+      simu.w[i]=solver_implicit.sol[i];
+    }
+   
 
-  //DGSource(f, simu.w, sourcex);
-  //}
-
-  SourceAssembly(&simu, &solver);
+ }
   
-  for(int i=0;i<solver.neq;i++){
-    printf("pouet ooo %f  %f %f \n",res[i], solver.rhs[i], solver.rhs[i] - res[i]);
-  }
+  dd = L2error(&simu);
 
-  
-  /* SolveLinearSolver(&solver); */
+  printf("erreur implicit L2=%f\n", dd);
 
-  /* for(int i=0;i<solver.neq;i++){ */
-  /*   printf("pouet %d  %f \n",i,solver.sol[i]); */
-  /* } */
-
-  
-
-  //AssemblyImplicitLinearSolver(&simu, &solver);
-  
+  test = test && (dd < tolerance);
+   
   return test;
 }
 
@@ -150,9 +142,9 @@ void TestSteady_Wave_ImposedData(const real *xy, const real t, real *w) {
   real y=xy[1];
 
 
-  w[0] = a[3] * x * x + a[5] * x * y + a[4] * y * y + a[1] * x + a[2] * y + a[0];
-  w[1] = b[3] * x * x + b[5] * x * y + b[4] * y * y + b[1] * x + b[2] * y + b[0];
-  w[2] = c[3] * x * x + c[5] * x * y + c[4] * y * y + c[1] * x + c[2] * y + c[0];
+  w[0] = x*(1-x)*y*(1-y);
+  w[1] = 2*x*(1-x)*y*(1-y);
+  w[2] = 3*x*(1-x)*y*(1-y);
 
 
 }
@@ -162,9 +154,9 @@ void TestSteady_Wave_Source(const real *xy, const real t, const real *w, real *S
   real x=xy[0];
   real y=xy[1];
 
-  S[0] = 2 * x * b[3] + x * c[5] + y * b[5] + 2 * y * c[4] + b[1] + c[2];
-  S[1] = 2 * x * a[3] + y * a[5] + a[1];
-  S[2] = x * a[5] + 2 * y * a[4] + a[2];
+  S[0] = 2*(1-2*x)*(y*(1-y))+3*(1-2*y)*(x*(1-x));
+  S[1] = (1-2*x)*(y*(1-y));
+  S[2] = (1-2*y)*(x*(1-x));
 
   S[0] *= _SPEED_WAVE;
   S[1] *= _SPEED_WAVE;

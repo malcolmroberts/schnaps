@@ -15,7 +15,7 @@
 //! \param[inout] solver a linear solver
 //void AssemblyImplicitLinearSolver(Simulation *simu, LinearSolver *solver);
 
-void AssemblyImplicitLinearSolver(Simulation *simu, LinearSolver *solver);
+void AssemblyImplicitLinearSolver(Simulation *simu, LinearSolver *solver,real theta, real dt);
 
 
 

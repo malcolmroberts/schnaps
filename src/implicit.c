@@ -5,12 +5,12 @@
 void InternalCoupling(Simulation *simu,  LinearSolver *solver, int itest);
 void FluxCoupling(Simulation *simu,  LinearSolver *solver,int itest);
 
-void InternalAssembly(Simulation *simu,  LinearSolver *solver);
-void FluxAssembly(Simulation *simu,  LinearSolver *solver);
-void SourceAssembly(Simulation *simu,  LinearSolver *solver);
+void InternalAssembly(Simulation *simu,  LinearSolver *solver,real theta, real dt);
+void FluxAssembly(Simulation *simu,  LinearSolver *solver,real theta, real dt);
+void SourceAssembly(Simulation *simu,  LinearSolver *solver,real theta, real dt);
 void MassAssembly(Simulation *simu,  LinearSolver *solver);
 
-void AssemblyImplicitLinearSolver(Simulation *simu, LinearSolver *solver);
+void AssemblyImplicitLinearSolver(Simulation *simu, LinearSolver *solver,real theta, real dt);
 
 
 void InitImplicitLinearSolver(Simulation *simu, LinearSolver *solver){
@@ -18,7 +18,7 @@ void InitImplicitLinearSolver(Simulation *simu, LinearSolver *solver){
   int neq = simu->wsize;
 
   MatrixStorage ms = SKYLINE;
-  Solver st = PAR_LU; 
+  Solver st = LU; 
   InitLinearSolver(solver,neq,&ms,&st);
 
   int itest = 1;
@@ -37,15 +37,14 @@ void InitImplicitLinearSolver(Simulation *simu, LinearSolver *solver){
 
 }
 
-void AssemblyImplicitLinearSolver(Simulation *simu, LinearSolver *solver){
+void AssemblyImplicitLinearSolver(Simulation *simu, LinearSolver *solver,real theta, real dt){
 
-  
-  InternalAssembly(simu, solver);
-  FluxAssembly(simu, solver);
-  //MassAssembly(simu, solver);
-  //SourceAssembly(simu, solver);
-  DisplayLinearSolver(solver);
+  MassAssembly(simu, solver);
+  InternalAssembly(simu, solver,theta,dt);
+  FluxAssembly(simu, solver,theta,dt);
 
+  //DisplayLinearSolver(solver);
+  SourceAssembly(simu, solver,1,dt);
 }
 
 
@@ -228,7 +227,7 @@ void FluxCoupling(Simulation *simu,  LinearSolver *solver, int isky){
 
 }
 
-void InternalAssembly(Simulation *simu,  LinearSolver *solver){
+void InternalAssembly(Simulation *simu,  LinearSolver *solver,real theta, real dt){
 
   for(int ie = 0; ie < simu->macromesh.nbelems; ie++){
     field *f = simu->fd + ie;
@@ -332,7 +331,7 @@ void InternalAssembly(Simulation *simu,  LinearSolver *solver){
 
 		      int ipgR = offsetL+q[0]+npg[0]*(q[1]+npg[1]*q[2]);
 		      for(int iv2 = 0; iv2 < m; iv2++) {
-			real val = flux[iv2] * wpgL;
+			real val = theta * dt * flux[iv2] * wpgL;
 			int imemR = f->varindex(f->deg,f->raf,f->model.m, ipgR, iv2);
 			AddLinearSolver(solver, imemL, imemR,val);
 		      }
@@ -360,7 +359,7 @@ void InternalAssembly(Simulation *simu,  LinearSolver *solver){
 }
 
 
-void FluxAssembly(Simulation *simu, LinearSolver *solver){
+void FluxAssembly(Simulation *simu, LinearSolver *solver,real theta, real dt){
 
 
   for(int ie = 0; ie < simu->macromesh.nbelems; ie++){
@@ -481,11 +480,11 @@ void FluxAssembly(Simulation *simu, LinearSolver *solver){
 
 		    for(int iv2 = 0; iv2 < m; iv2++) {
 		      int imem2 = f->varindex(f->deg, f->raf, f->model.m, ipgL, iv2);		  
-		      real val = flux[iv2] * wpg;		      
+		      real val = theta * dt * flux[iv2] * wpg;		      
 		      AddLinearSolver(solver, imem1, imem2, -val);
 		      
 		      imem2 = f->varindex(f->deg, f->raf, f->model.m, ipgR, iv2);
-		      val = flux[iv2] * wpg;		      
+		      val = theta * dt * flux[iv2] * wpg;		      
 		      AddLinearSolver(solver, imem1, imem2, val);
 		    }
 		  
@@ -499,11 +498,11 @@ void FluxAssembly(Simulation *simu, LinearSolver *solver){
 
 		    for(int iv2 = 0; iv2 < m; iv2++) {
 		      int imem2 = f->varindex(f->deg, f->raf, f->model.m, ipgL, iv2);
-		      real val = flux[iv2] * wpg;
+		      real val = theta * dt * flux[iv2] * wpg;
 		      AddLinearSolver(solver, imem1, imem2, -val);
 		    
 		      imem2 = f->varindex(f->deg, f->raf, f->model.m, ipgR, iv2);		    
-		      val = flux[iv2] * wpg;		    
+		      val = theta *dt * flux[iv2] * wpg;		    
 		      AddLinearSolver(solver, imem1, imem2, val);
 		    }
 		  }
@@ -566,7 +565,7 @@ void MassAssembly(Simulation *simu,  LinearSolver *solver){
 
 }
 
-void SourceAssembly(Simulation *simu,  LinearSolver *solver){
+void SourceAssembly(Simulation *simu,  LinearSolver *solver, real theta, real dt){
 
   for(int ie = 0; ie < simu->macromesh.nbelems; ie++){
     field *f = simu->fd + ie;
@@ -602,16 +601,14 @@ void SourceAssembly(Simulation *simu,  LinearSolver *solver){
       f->model.Source(xphy, f->tnow, wL, source);
       for(int iv1 = 0; iv1 < m; iv1++) {
 	int imem = f->varindex(deg, nraf, m, ipg, iv1);
-	real val = source[iv1] * wpg * det;
+	real val = theta * dt * source[iv1] * wpg * det;
 	solver->rhs[imem] += val;
-	AddLinearSolver(solver, imem, imem,val);
       }
     }
 
 
  
-      
-
+     
   }
 
  
