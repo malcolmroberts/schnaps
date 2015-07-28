@@ -84,7 +84,9 @@ int Test_Transport_Steady(void) {
   LinearSolver solver_explicit;  
 
   real theta=0.5;
-  real dt=simu.dt;
+  //real dt=simu.dt;
+
+  real dt = 1;
   InitImplicitLinearSolver(&simu, &solver_implicit);
   InitImplicitLinearSolver(&simu, &solver_explicit);
   AssemblyImplicitLinearSolver(&simu, &solver_implicit,theta,dt);
@@ -123,7 +125,7 @@ void TestSteady_Transport_ImposedData(const real *xy, const real t, real *w) {
   real x=xy[0];
   real y=xy[1];
 
-  w[0] = x * (1 - x) * y * (1-y);
+  w[0] = x * (1 - x) * y * (1-y) + 1;
 }
 
 void TestSteady_Transport_Source(const real *xy, const real t, const real *w, real *S){

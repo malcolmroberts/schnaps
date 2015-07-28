@@ -7,6 +7,7 @@ void FluxCoupling(Simulation *simu,  LinearSolver *solver,int itest);
 
 void InternalAssembly(Simulation *simu,  LinearSolver *solver,real theta, real dt);
 void FluxAssembly(Simulation *simu,  LinearSolver *solver,real theta, real dt);
+void InterfaceAssembly(Simulation *simu,  LinearSolver *solver,real theta, real dt);
 void SourceAssembly(Simulation *simu,  LinearSolver *solver,real theta, real dt);
 void MassAssembly(Simulation *simu,  LinearSolver *solver);
 
@@ -42,7 +43,7 @@ void AssemblyImplicitLinearSolver(Simulation *simu, LinearSolver *solver,real th
   MassAssembly(simu, solver);
   InternalAssembly(simu, solver,theta,dt);
   FluxAssembly(simu, solver,theta,dt);
-
+  InterfaceAssembly(simu, solver,theta,dt);
   //DisplayLinearSolver(solver);
   SourceAssembly(simu, solver,1,dt);
 }
@@ -611,5 +612,215 @@ void SourceAssembly(Simulation *simu,  LinearSolver *solver, real theta, real dt
      
   }
 
+  // assembly of the boundary terms
+
+  int fsize =  simu->wsize / simu->macromesh.nbelems;
+
+  for(int ifa = 0; ifa < simu->macromesh.nbfaces; ifa++){
+    int ieL = simu->macromesh.face2elem[4 * ifa + 0];
+    int locfaL = simu->macromesh.face2elem[4 * ifa + 1];
+    int ieR = simu->macromesh.face2elem[4 * ifa + 2];
+    field *fL = simu->fd + ieL;
+    //printf("iel=%d ier=%d\n",ieL,ieR);
+    int offsetL = fsize * ieL;
+    if (ieR < 0) {
  
+      const unsigned int m = fL->model.m;
+      
+      // Loop over the points on a single macro cell interface.
+      for(int ipgfL = 0; ipgfL < NPGF(fL->deg, fL->raf, locfaL); ipgfL++) {
+	
+	real xpgref[3], xpgref_in[3], wpg;
+	
+	// Get the coordinates of the Gauss point and coordinates of a
+	// point slightly inside the opposite element in xref_in
+	int ipgL = ref_pg_face(fL->deg, fL->raf, locfaL, ipgfL, xpgref, &wpg, xpgref_in);
+	
+	// Normal vector at gauss point ipgL
+	real vnds[3], xpg[3];
+	{
+	  real dtau[3][3], codtau[3][3];
+	  Ref2Phy(fL->physnode,
+		  xpgref,
+		  NULL, locfaL, // dpsiref, ifa
+		  xpg, dtau,
+		  codtau, NULL, vnds); // codtau, dpsi, vnds
+	}
+	
+ 	// the boundary flux is an affine function
+	real flux0[m], wL[m];
+	for(int iv = 0; iv < m; iv++) {
+	  wL[iv] = 0;
+	}
+	fL->model.BoundaryFlux(xpg, fL->tnow, wL, vnds, flux0);
+	
+	for(int iv2 = 0; iv2 < m; iv2++) {
+	  int imem2 = fL->varindex(fL->deg, fL->raf,fL->model.m, ipgL, iv2);
+	  real val = theta *dt * flux0[iv2] * wpg;
+	  solver->rhs[imem2] -= val;
+	}
+      }
+    } // if ier < 0
+  } // macroface loop
+
+
+ 
+}
+
+
+/* void DGMacroCellInterface(int locfaL, */
+/* 			  field *fL, int offsetL, field *fR, int offsetR, */
+/* 			  real *w, real *dtw)  */
+void InterfaceAssembly(Simulation *simu,  LinearSolver *solver,real theta, real dt)
+{
+
+  int fsize =  simu->wsize / simu->macromesh.nbelems;
+
+  for(int ifa = 0; ifa < simu->macromesh.nbfaces; ifa++){
+    int ieL = simu->macromesh.face2elem[4 * ifa + 0];
+    int locfaL = simu->macromesh.face2elem[4 * ifa + 1];
+    int ieR = simu->macromesh.face2elem[4 * ifa + 2];
+    field *fL = simu->fd + ieL;
+    field *fR = NULL;
+    int offsetR = -1;
+    //printf("iel=%d ier=%d\n",ieL,ieR);
+    int offsetL = fsize * ieL;
+    if (ieR >= 0) {
+      fR = simu->fd + ieR;
+      offsetR = fsize * ieR;
+    }
+
+  
+    const unsigned int m = fL->model.m;
+
+
+    // Loop over the points on a single macro cell interface.
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+    for(int ipgfL = 0; ipgfL < NPGF(fL->deg, fL->raf, locfaL); ipgfL++) {
+
+      real xpgref[3], xpgref_in[3], wpg;
+    
+      // Get the coordinates of the Gauss point and coordinates of a
+      // point slightly inside the opposite element in xref_in
+      int ipgL = ref_pg_face(fL->deg, fL->raf, locfaL, ipgfL, xpgref, &wpg, xpgref_in);
+    
+      // Normal vector at gauss point ipgL
+      real vnds[3], xpg[3];
+      {
+	real dtau[3][3], codtau[3][3];
+	Ref2Phy(fL->physnode,
+		xpgref,
+		NULL, locfaL, // dpsiref, ifa
+		xpg, dtau,
+		codtau, NULL, vnds); // codtau, dpsi, vnds
+      }
+    
+      if (fR != NULL) {  // the right element exists
+	real xrefL[3];
+	{
+	  real xpg_in[3];
+	  Ref2Phy(fL->physnode,
+		  xpgref_in,
+		  NULL, -1, // dpsiref, ifa
+		  xpg_in, NULL,
+		  NULL, NULL, NULL); // codtau, dpsi, vnds
+	  PeriodicCorrection(xpg_in,fL->period);
+	  Phy2Ref(fR->physnode, xpg_in, xrefL);
+	
+	}
+      
+	int ipgR = ref_ipg(fR->deg,fR->raf, xrefL);
+
+
+	real flux[m];
+	real wL[m];
+	real wR[m];
+
+	for (int iv1 = 0; iv1 < m; iv1++){
+
+	  int imem1 = fL->varindex(fL->deg, fL->raf, fL->model.m, ipgL, iv1);
+			    
+
+	  for(int iv = 0; iv < m; iv++) {
+	    wL[iv] = (iv == iv1);
+	    wR[iv] = 0;
+	  }
+
+	  // int_dL F(wL, wR, grad phi_ib)
+
+	  fL->model.NumFlux(wL, wR, vnds, flux);
+
+	  // Add flux to both sides
+
+	  for(int iv2 = 0; iv2 < m; iv2++) {
+	    int imem2 = fL->varindex(fL->deg, fL->raf, fL->model.m, ipgL, iv2) + offsetL;		  
+	    real val = theta * dt * flux[iv2] * wpg;		      
+	    AddLinearSolver(solver, imem2, imem1, val);
+		      
+	    imem2 = fR->varindex(fR->deg, fR->raf, fR->model.m, ipgR, iv2) + offsetR;
+	    val = theta * dt * flux[iv2] * wpg;		      
+	    AddLinearSolver(solver, imem2, imem1, -val);
+	  }
+		  
+	  for(int iv = 0; iv < m; iv++) {
+	    wL[iv] = 0;
+	    wR[iv] = (iv == iv1);
+	  }
+
+
+	  fL->model.NumFlux(wL, wR, vnds, flux);
+
+	  for(int iv2 = 0; iv2 < m; iv2++) {
+	    int imem2 = fL->varindex(fL->deg, fL->raf, fL->model.m, ipgL, iv2);
+	    real val = theta * dt * flux[iv2] * wpg;
+	    AddLinearSolver(solver, imem2, imem1, val);
+		    
+	    imem2 = fR->varindex(fR->deg, fR->raf, fR->model.m, ipgR, iv2);		    
+	    val = theta *dt * flux[iv2] * wpg;		    
+	    AddLinearSolver(solver, imem2, imem1, -val);
+	  }
+	}
+
+      } else { // The point is on the boundary.
+
+	// the boundary flux is an affine function
+	real flux0[m], wL[m];
+	for(int iv = 0; iv < m; iv++) {
+	  wL[iv] = 0;
+	}
+	fL->model.BoundaryFlux(xpg, fL->tnow, wL, vnds, flux0);
+
+	/* for(int iv2 = 0; iv2 < m; iv2++) { */
+	/*   int imem2 = fL->varindex(fL->deg, fL->raf,fL->model.m, ipgL, iv2); */
+	/*   real val = theta *dt * flux0[iv2] * wpg; */
+	/*   solver->rhs[imem2] -= val; */
+	/* } */
+      
+	for(int iv1 = 0; iv1 < m; iv1++) {
+	  int imem1 = fL->varindex(fL->deg, fL->raf,fL->model.m, ipgL, iv1);
+
+	  for(int iv = 0; iv < m; iv++) {
+	    wL[iv] = (iv == iv1);
+	  }
+
+	  real flux[m];
+	  fL->model.BoundaryFlux(xpg, fL->tnow, wL, vnds, flux);
+
+	  for(int iv2 = 0; iv2 < m; iv2++) {
+	    // The basis functions is also the gauss point index
+	    int imem2 = fL->varindex(fL->deg, fL->raf,fL->model.m, ipgL, iv2);
+	    real val = theta *dt * (flux[iv2]-flux0[iv2]) * wpg;		    
+	    AddLinearSolver(solver, imem2, imem1, val);
+	  }
+	} // iv1
+
+      } // else
+
+  
+    } // ipgfl
+
+  } // macroface loop
+
 }
