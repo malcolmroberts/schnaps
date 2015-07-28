@@ -177,37 +177,4 @@ void Wave_Upwind_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
   Wave_Upwind_NumFlux(wL, wR, vnorm, flux);
 }
 
-void TestSteady_Transport_ImposedData(const real *xy, const real t, real *w) {
-
-  real x=xy[0];
-  real y=xy[1];
-
-  w[0] = x * (1 - x) * y * (1-y);
-}
-
-void TestSteady_Transport_Source(const real *xy, const real t, const real *w, real *S){
-  
-  real x=xy[0];
-  real y=xy[1];
-
-  const real v2[] = {sqrt(0.5), sqrt(0.5), 0};
-
-  S[0] = v2[0] * (1 - 2 * x) * y * (1 - y) +
-    v2[1] * (1 - 2 * y) * x * (1 - x);
-
-}
-
-void TestSteady_Transport_InitData(real *x, real *w) {
-  real t = 0;
-  TestSteady_Transport_ImposedData(x, t, w);
-}
-
-
-void Transport_Upwind_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
-				       real *flux) {
-  real wR[3];
-  TestSteady_Transport_ImposedData(x , t, wR);
-  TransNumFlux2d(wL, wR, vnorm, flux);
-}
-
  
