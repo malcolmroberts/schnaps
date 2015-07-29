@@ -88,7 +88,14 @@ real GetSkyline(Skyline* sky,int i,int j);
 
 //! \brief display the matrix
 //! \param[inout] sky the skyline object
-void DisplaySkyline(Skyline* sky); 
+void DisplaySkyline(Skyline* sky);
+
+//! \brief compute a matrix vector product
+//! \param[in] sky a skyline matrix
+//! \param[in] x a vector
+//! \param[out] prod Ax
+void MatVectSkyline(Skyline * sky, real * x, real * prod);
+
 
 //! \brief compute the inplace LU decomposition
 //! \param[inout] sky the skyline object

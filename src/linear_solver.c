@@ -201,15 +201,17 @@ void MatVect(void * system,real x[],real prod[]){
   switch(lsol->storage_type) {
 
   case SKYLINE :
-  
-    for(i=0;i<lsol->neq;i++)
-      {
-	prod[i]=0;
-	for(j=0;j<lsol->neq;j++) {
-	  aij=GetLinearSolver(lsol,i,j);
-	  prod[i] += aij*x[j];
-	}
-      }
+
+    MatVectSkyline((Skyline*) lsol->matrix, x, prod);
+ 
+    /* for(i=0;i<lsol->neq;i++) */
+    /*   { */
+    /* 	prod[i]=0; */
+    /* 	for(j=0;j<lsol->neq;j++) { */
+    /* 	  aij=GetLinearSolver(lsol,i,j); */
+    /* 	  prod[i] += aij*x[j]; */
+    /* 	} */
+    /*   } */
     
     break;
 
