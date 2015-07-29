@@ -8,18 +8,21 @@ project(schnaps)
 #set(CMAKE_C_COMPILER "/opt/local/bin/gcc-mp-4.8")
 SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
+
 #set(CMAKE_C_FLAGS "-std=c99 -D_REENTRANT -O3 -g -D_POSIX_C_SOURCE=200112L")
 #set(CMAKE_C_FLAGS "-std=gnu99 -D_REENTRANT -O3 -g")
 
 #set(CMAKE_C_FLAGS " -std=c99 -D_REENTRANT -O3 ")
-set(CMAKE_C_FLAGS " -std=c99  -D_DOUBLE_PRECISION -g  -O3")
+set(CMAKE_C_FLAGS " -std=c99  -D_DOUBLE_PRECISION -D_SCHNAPS_DIR=${PROJECT_SOURCE_DIR} -g  -O3")
+
+MESSAGE(${CMAKE_C_FLAGS})
+
 
 #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_DOUBLE_PRECISION")
 
-OPTION(USE_OPENCL 
-  "Activate OpenCL library" OFF)
+OPTION(USE_OPENCL "Activate OpenCL library" OFF)
 
-IF(USE_OPENCL)# set with: cmake . -DUSE_OPENCL:BOOL=ON
+IF(USE_OPENCL) # set with: cmake . -DUSE_OPENCL:BOOL=ON
   MESSAGE(STATUS "Try to find OpenCL Library")
   find_package (OpenCL)
   if(OPENCL_FOUND)

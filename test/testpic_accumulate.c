@@ -29,7 +29,7 @@ int TestPICAccumulate(void)
 {
   bool test = true;
 
-  char *mshname =  "test/testmacromesh.msh";
+  char *mshname =  "../test/testmacromesh.msh";
   
   MacroMesh mesh;
   ReadMacroMesh(&mesh,mshname);
@@ -42,7 +42,7 @@ int TestPICAccumulate(void)
   CheckMacroMesh(&mesh, deg4, raf4);
 
   // test gmsh file reading
-  ReadMacroMesh(&mesh, "test/testmacromesh.msh");
+  ReadMacroMesh(&mesh, "../test/testmacromesh.msh");
   BuildConnectivity(&mesh);
   CheckMacroMesh(&mesh, deg4, raf4);
   //PrintMacroMesh(&m);

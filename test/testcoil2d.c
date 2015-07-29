@@ -68,7 +68,7 @@ int TestCoil2D(void)
 {
   bool test = true;
 
-  char *mshname =  "test/testmacromesh.msh";
+  char *mshname =  "../test/testmacromesh.msh";
   
   MacroMesh mesh;
   ReadMacroMesh(&mesh,mshname);
@@ -77,7 +77,7 @@ int TestCoil2D(void)
 
 
   // test gmsh file reading
-  ReadMacroMesh(&mesh, "test/testmacromesh.msh");
+  ReadMacroMesh(&mesh, "../test/testmacromesh.msh");
   Detect2DMacroMesh(&mesh);
   assert(mesh.is2d);
   BuildConnectivity(&mesh);

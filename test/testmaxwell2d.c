@@ -16,11 +16,11 @@ int TestMaxwell2D(void) {
   // 3D meshes"
   // test/testdisque.msh
 
-  char *mshname =  "test/testcube.msh";
+  char *mshname =  "../test/testcube.msh";
   
   MacroMesh mesh;
-  ReadMacroMesh(&mesh,"test/testcube.msh");
-  //ReadMacroMesh(&mesh,"test/testmacromesh.msh");
+  ReadMacroMesh(&mesh,"../test/testcube.msh");
+  //ReadMacroMesh(&mesh,"../test/testmacromesh.msh");
   Detect2DMacroMesh(&mesh);
   BuildConnectivity(&mesh);
 
