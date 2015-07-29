@@ -45,7 +45,7 @@ int Test_Transport_ExImp(void) {
   model.Source = NULL;
 
   int deg[]={2, 2, 0};
-  int raf[]={8, 8, 1};
+  int raf[]={2, 2, 1};
 
 
   assert(mesh.is2d);

@@ -77,7 +77,7 @@ void ThetaTimeScheme(Simulation *simu, real tmax, real dt){
     simu->fd[ie].tnow=simu->tnow;
   } 
 
-  for(int tstep=0;simu->itermax_rk;tstep++){
+  for(int tstep=0;tstep<simu->itermax_rk;tstep++){
   
 
     if(tstep==0){ 
