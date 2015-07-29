@@ -38,14 +38,14 @@ int Test_Transport_ExImp(void) {
   Model model;
 
   model.m=1; 
-  model.NumFlux = TransNumFlux;
-  model.BoundaryFlux = TestTransBoundaryFlux;
-  model.InitData = TestTransInitData;
-  model.ImposedData = TestTransImposedData;
+  model.NumFlux = TransNumFlux2d;
+  model.BoundaryFlux = TestTransBoundaryFlux2d;
+  model.InitData = TestTransInitData2d;
+  model.ImposedData = TestTransImposedData2d;
   model.Source = NULL;
 
-  int deg[]={3, 3, 0};
-  int raf[]={10, 10, 1};
+  int deg[]={2, 2, 0};
+  int raf[]={16, 16, 1};
 
 
   assert(mesh.is2d);
@@ -55,7 +55,7 @@ int Test_Transport_ExImp(void) {
 
   InitSimulation(&simu, &mesh, deg, raf, &model);
  
-  real tmax = 0.01;
+  real tmax = 1;
   simu.cfl=0.2;
   simu.vmax=_SPEED_WAVE;
   RK2(&simu,tmax);
@@ -79,7 +79,7 @@ int Test_Transport_ExImp(void) {
   LinearSolver solver_explicit;  
 
   real theta=0.5;
-  simu2.dt=0.000167;
+  simu2.dt=simu.dt;
   int itermax=tmax/simu2.dt+1;
   InitImplicitLinearSolver(&simu2, &solver_implicit);
   InitImplicitLinearSolver(&simu2, &solver_explicit);
