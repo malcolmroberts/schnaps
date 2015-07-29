@@ -28,6 +28,7 @@ void InitImplicitLinearSolver(Simulation *simu, LinearSolver *solver){
   
     InternalCoupling(simu, solver, isky);
     FluxCoupling(simu, solver, isky);
+    InterfaceCoupling(simu, solver, isky);
 
     if (isky == 0) AllocateLinearSolver(solver);
   }
@@ -127,7 +128,8 @@ void InternalCoupling(Simulation *simu,  LinearSolver *solver, int isky){
   
   for(int ie = 0; ie < simu->macromesh.nbelems; ie++){
     field *f = simu->fd + ie; // &(simu->fd[ie])
-
+    int offsetw = f->wsize * ie;
+    
     const int m = f->model.m;
     int deg[3] = {f->deg[0],
 		  f->deg[1],
@@ -163,7 +165,7 @@ void InternalCoupling(Simulation *simu,  LinearSolver *solver, int isky){
 		  int p[3] = {p0, p1, p2};
 		  int ipgL = offsetL + p[0] + npg[0] * (p[1] + npg[1] * p[2]);
 		  for(int iv1 = 0; iv1 < m; iv1++) {
-		    int imemL = f->varindex(deg, nraf, m, ipgL, iv1);
+		    int imemL = f->varindex(deg, nraf, m, ipgL, iv1) + offsetw;
 
 		    int q[3] = {p[0], p[1], p[2]};
 		    // loop on the direction dim0 on the "cross"
@@ -172,7 +174,7 @@ void InternalCoupling(Simulation *simu,  LinearSolver *solver, int isky){
 
 		      int ipgR = offsetL + q[0] + npg[0] * (q[1] + npg[1] * q[2]);
 		      for(int iv2 = 0; iv2 < m; iv2++) {
-			int imemR = f->varindex(f->deg,f->raf,f->model.m, ipgR, iv2);
+			int imemR = f->varindex(f->deg,f->raf,f->model.m, ipgR, iv2) + offsetw;
 			if (isky ==0) IsNonZero(solver, imemL, imemR);
 			if (isky ==1) AddLinearSolver(solver, imemL, imemR,1);
 			// dtw[imems[temp]] += flux[iv] * wpgL;
@@ -208,7 +210,7 @@ void FluxCoupling(Simulation *simu,  LinearSolver *solver, int isky){
   
   for(int ie = 0; ie < simu->macromesh.nbelems; ie++){
     field *f = simu->fd + ie; // &(simu->fd[ie])
-
+    int offsetw = f->wsize * ie;
     const int m = f->model.m;
 
 
@@ -273,11 +275,11 @@ void FluxCoupling(Simulation *simu,  LinearSolver *solver, int isky){
 		  //printf("ipgL=%d ipgR=%d\n", ipgL, ipgR);
 
 		  for(int iv1 = 0; iv1 < m; iv1++) {
-		    int imemL = f->varindex(f->deg, f->raf, f->model.m, ipgL, iv1); 
+		    int imemL = f->varindex(f->deg, f->raf, f->model.m, ipgL, iv1) + offsetw; 
 
 		    // finally distribute the flux on the two sides
 		    for(int iv2 = 0; iv2 < m; iv2++) {
-		      int imemR = f->varindex(f->deg, f->raf, f->model.m, ipgR, iv2);
+		      int imemR = f->varindex(f->deg, f->raf, f->model.m, ipgR, iv2) + offsetw;
 		      if (isky ==0) IsNonZero(solver, imemL, imemR);
 		      if (isky ==1) {
 			AddLinearSolver(solver, imemL, imemR,1);
@@ -303,7 +305,7 @@ void InternalAssembly(Simulation *simu,  LinearSolver *solver,real theta, real d
 
   for(int ie = 0; ie < simu->macromesh.nbelems; ie++){
     field *f = simu->fd + ie;
-    
+    int offsetw = f->wsize * ie;
     
     const int m = f->model.m;
 
@@ -349,7 +351,7 @@ void InternalAssembly(Simulation *simu,  LinearSolver *solver,real theta, real d
 	    omega[p] = tomega;
 	    
 	    for(int im = 0; im < m; ++im) {
-	      imems[pos++] = f->varindex(f->deg,f->raf,f->model.m, offsetL + p, im);
+	      imems[pos++] = f->varindex(f->deg,f->raf,f->model.m, offsetL + p, im) + offsetw;
 	    }
 	  }
 
@@ -394,7 +396,7 @@ void InternalAssembly(Simulation *simu,  LinearSolver *solver,real theta, real d
 
 
 		    for(int iv1 = 0; iv1 < m; iv1++) {
-		      int imemL = f->varindex(deg, nraf, m, ipgL, iv1);
+		      int imemL = f->varindex(deg, nraf, m, ipgL, iv1) + offsetw;
 		      for(int iv = 0; iv < m; iv++) {
 			wL[iv] = (iv == iv1);
 		      }
@@ -404,7 +406,7 @@ void InternalAssembly(Simulation *simu,  LinearSolver *solver,real theta, real d
 		      int ipgR = offsetL+q[0]+npg[0]*(q[1]+npg[1]*q[2]);
 		      for(int iv2 = 0; iv2 < m; iv2++) {
 			real val = theta * dt * flux[iv2] * wpgL;
-			int imemR = f->varindex(f->deg,f->raf,f->model.m, ipgR, iv2);
+			int imemR = f->varindex(f->deg,f->raf,f->model.m, ipgR, iv2) + offsetw;
 			AddLinearSolver(solver, imemR, imemL,-val);
 		      }
 		    }
@@ -436,7 +438,8 @@ void FluxAssembly(Simulation *simu, LinearSolver *solver,real theta, real dt){
 
   for(int ie = 0; ie < simu->macromesh.nbelems; ie++){
     field *f = simu->fd + ie; // &(simu->fd[ie])
-
+    int offsetw = f->wsize * ie;
+    
     const int m = f->model.m;
 
   
@@ -546,16 +549,16 @@ void FluxAssembly(Simulation *simu, LinearSolver *solver,real theta, real dt){
 		      wL[iv] = (iv == iv1);
 		      wR[iv] = 0;
 		    }
-		    int imem1 = f->varindex(f->deg, f->raf, f->model.m, ipgL, iv1);
+		    int imem1 = f->varindex(f->deg, f->raf, f->model.m, ipgL, iv1)+offsetw;
 
 		    f->model.NumFlux(wL, wR, vnds, flux);	
 
 		    for(int iv2 = 0; iv2 < m; iv2++) {
-		      int imem2 = f->varindex(f->deg, f->raf, f->model.m, ipgL, iv2);		  
+		      int imem2 = f->varindex(f->deg, f->raf, f->model.m, ipgL, iv2)+offsetw;		  
 		      real val = theta * dt * flux[iv2] * wpg;		      
 		      AddLinearSolver(solver, imem2, imem1, val);
 		      
-		      imem2 = f->varindex(f->deg, f->raf, f->model.m, ipgR, iv2);
+		      imem2 = f->varindex(f->deg, f->raf, f->model.m, ipgR, iv2)+offsetw;
 		      val = theta * dt * flux[iv2] * wpg;		      
 		      AddLinearSolver(solver, imem2, imem1, -val);
 		    }
@@ -564,17 +567,17 @@ void FluxAssembly(Simulation *simu, LinearSolver *solver,real theta, real dt){
 		      wL[iv] = 0;
 		      wR[iv] = (iv == iv1);
 		    }
-		    imem1 = f->varindex(f->deg, f->raf, f->model.m, ipgR, iv1);
+		    imem1 = f->varindex(f->deg, f->raf, f->model.m, ipgR, iv1)+offsetw;
 
 
 		    f->model.NumFlux(wL, wR, vnds, flux);
 
 		    for(int iv2 = 0; iv2 < m; iv2++) {
-		      int imem2 = f->varindex(f->deg, f->raf, f->model.m, ipgL, iv2);
+		      int imem2 = f->varindex(f->deg, f->raf, f->model.m, ipgL, iv2)+offsetw;
 		      real val = theta * dt * flux[iv2] * wpg;
 		      AddLinearSolver(solver, imem2, imem1, val);
 		    
-		      imem2 = f->varindex(f->deg, f->raf, f->model.m, ipgR, iv2);		    
+		      imem2 = f->varindex(f->deg, f->raf, f->model.m, ipgR, iv2)+offsetw;		    
 		      val = theta *dt * flux[iv2] * wpg;		    
 		      AddLinearSolver(solver, imem2, imem1, -val);
 		    }
@@ -597,7 +600,7 @@ void MassAssembly(Simulation *simu,  LinearSolver *solver){
 
   for(int ie = 0; ie < simu->macromesh.nbelems; ie++){
     field *f = simu->fd + ie;
-    
+    int offsetw = f->wsize * ie;
     
     const int m = f->model.m;
 
@@ -622,7 +625,7 @@ void MassAssembly(Simulation *simu,  LinearSolver *solver){
 	      codtau, NULL, NULL); // codtau, dpsi, vnds
       real det = dot_product(dtau[0], codtau[0]);
       for(int iv1 = 0; iv1 < m; iv1++) {
-	int imem = f->varindex(deg, nraf, m, ipg, iv1);
+	int imem = f->varindex(deg, nraf, m, ipg, iv1)+offsetw;
 	real val = wpg * det;
 	AddLinearSolver(solver, imem, imem,val);
       }
@@ -639,7 +642,7 @@ void SourceAssembly(Simulation *simu,  LinearSolver *solver, real theta, real dt
   if(simu->fd[0].model.Source != NULL) {
     for(int ie = 0; ie < simu->macromesh.nbelems; ie++){
       field *f = simu->fd + ie;
-    
+      int offsetw = f->wsize * ie;
     
     const int m = f->model.m;
     
@@ -671,7 +674,7 @@ void SourceAssembly(Simulation *simu,  LinearSolver *solver, real theta, real dt
       f->model.Source(xphy, f->tnow, wL, source);
 
       for(int iv1 = 0; iv1 < m; iv1++) {
-	int imem = f->varindex(deg, nraf, m, ipg, iv1);
+	int imem = f->varindex(deg, nraf, m, ipg, iv1)+offsetw;
 	real val = theta * dt * source[iv1] * wpg * det;
 	solver->rhs[imem] += val;
       }
@@ -726,7 +729,7 @@ void SourceAssembly(Simulation *simu,  LinearSolver *solver, real theta, real dt
 	fL->model.BoundaryFlux(xpg, fL->tnow, wL, vnds, flux0);
 	
 	for(int iv2 = 0; iv2 < m; iv2++) {
-	  int imem2 = fL->varindex(fL->deg, fL->raf,fL->model.m, ipgL, iv2);
+	  int imem2 = fL->varindex(fL->deg, fL->raf,fL->model.m, ipgL, iv2)+offsetL;
 	  real val = theta *dt * flux0[iv2] * wpg;
 	  solver->rhs[imem2] -= val;
 	}
@@ -736,8 +739,127 @@ void SourceAssembly(Simulation *simu,  LinearSolver *solver, real theta, real dt
 
 
  
-}
+} // SourceAssembly
 
+
+/* void DGMacroCellInterface(int locfaL, */
+/* 			  field *fL, int offsetL, field *fR, int offsetR, */
+/* 			  real *w, real *dtw)  */
+void InterfaceCoupling(Simulation *simu,  LinearSolver *solver, int itest)
+{
+
+  int fsize =  simu->wsize / simu->macromesh.nbelems;
+
+  for(int ifa = 0; ifa < simu->macromesh.nbfaces; ifa++){
+    int ieL = simu->macromesh.face2elem[4 * ifa + 0];
+    int locfaL = simu->macromesh.face2elem[4 * ifa + 1];
+    int ieR = simu->macromesh.face2elem[4 * ifa + 2];
+    field *fL = simu->fd + ieL;
+    field *fR = NULL;
+    int offsetR = -1;
+    //printf("iel=%d ier=%d\n",ieL,ieR);
+    int offsetL = fsize * ieL;
+    if (ieR >= 0) {
+      fR = simu->fd + ieR;
+      offsetR = fsize * ieR;
+    }
+
+  
+    const unsigned int m = fL->model.m;
+
+
+    // Loop over the points on a single macro cell interface.
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+    for(int ipgfL = 0; ipgfL < NPGF(fL->deg, fL->raf, locfaL); ipgfL++) {
+
+      real xpgref[3], xpgref_in[3], wpg;
+    
+      // Get the coordinates of the Gauss point and coordinates of a
+      // point slightly inside the opposite element in xref_in
+      int ipgL = ref_pg_face(fL->deg, fL->raf, locfaL, ipgfL, xpgref, &wpg, xpgref_in);
+    
+      // Normal vector at gauss point ipgL
+      real vnds[3], xpg[3];
+      {
+	real dtau[3][3], codtau[3][3];
+	Ref2Phy(fL->physnode,
+		xpgref,
+		NULL, locfaL, // dpsiref, ifa
+		xpg, dtau,
+		codtau, NULL, vnds); // codtau, dpsi, vnds
+      }
+    
+      if (fR != NULL) {  // the right element exists
+	real xrefL[3];
+	{
+	  real xpg_in[3];
+	  Ref2Phy(fL->physnode,
+		  xpgref_in,
+		  NULL, -1, // dpsiref, ifa
+		  xpg_in, NULL,
+		  NULL, NULL, NULL); // codtau, dpsi, vnds
+	  PeriodicCorrection(xpg_in,fL->period);
+	  Phy2Ref(fR->physnode, xpg_in, xrefL);
+	
+	}
+      
+	int ipgR = ref_ipg(fR->deg,fR->raf, xrefL);
+
+
+
+	for (int iv1 = 0; iv1 < m; iv1++){
+
+			    
+	  int imem1 = fL->varindex(fL->deg, fL->raf, fL->model.m, ipgL, iv1) + offsetL;
+
+	  for(int iv2 = 0; iv2 < m; iv2++) {
+	    int imem2 = fL->varindex(fL->deg, fL->raf, fL->model.m, ipgL, iv2) + offsetL;		  
+	    IsNonZero(solver, imem2, imem1);
+		      
+	    imem2 = fR->varindex(fR->deg, fR->raf, fR->model.m, ipgR, iv2) + offsetR;
+	    IsNonZero(solver, imem2, imem1);
+	  }
+		  
+	  imem1 = fL->varindex(fL->deg, fL->raf, fL->model.m, ipgR, iv1) + offsetR;
+
+
+	  for(int iv2 = 0; iv2 < m; iv2++) {
+	    int imem2 = fL->varindex(fL->deg, fL->raf, fL->model.m, ipgL, iv2) + offsetL;
+	    IsNonZero(solver, imem2, imem1);
+		    
+	    imem2 = fR->varindex(fR->deg, fR->raf, fR->model.m, ipgR, iv2) + offsetR;		    
+	    IsNonZero(solver, imem2, imem1);
+	  }
+	}
+
+      } else { // The point is on the boundary.
+
+
+	/* for(int iv2 = 0; iv2 < m; iv2++) { */
+	/*   int imem2 = fL->varindex(fL->deg, fL->raf,fL->model.m, ipgL, iv2); */
+	/*   real val = theta *dt * flux0[iv2] * wpg; */
+	/*   solver->rhs[imem2] -= val; */
+	/* } */
+      
+	for(int iv1 = 0; iv1 < m; iv1++) {
+	  int imem1 = fL->varindex(fL->deg, fL->raf,fL->model.m, ipgL, iv1) + offsetL;
+
+	  for(int iv2 = 0; iv2 < m; iv2++) {
+	    int imem2 = fL->varindex(fL->deg, fL->raf,fL->model.m, ipgL, iv2) + offsetL;
+	    IsNonZero(solver, imem2, imem1);
+	  }
+	} // iv1
+
+      } // else
+
+  
+    } // ipgfl
+
+  } // macroface loop
+
+}
 
 /* void DGMacroCellInterface(int locfaL, */
 /* 			  field *fL, int offsetL, field *fR, int offsetR, */
@@ -817,7 +939,7 @@ void InterfaceAssembly(Simulation *simu,  LinearSolver *solver,real theta, real 
 	    wL[iv] = (iv == iv1);
 	    wR[iv] = 0;
 	  }
-	  int imem1 = fL->varindex(fL->deg, fL->raf, fL->model.m, ipgL, iv1);
+	  int imem1 = fL->varindex(fL->deg, fL->raf, fL->model.m, ipgL, iv1) + offsetL;
 
 	  // int_dL F(wL, wR, grad phi_ib)
 
@@ -839,17 +961,17 @@ void InterfaceAssembly(Simulation *simu,  LinearSolver *solver,real theta, real 
 	    wL[iv] = 0;
 	    wR[iv] = (iv == iv1);
 	  }
-	  imem1 = fL->varindex(fL->deg, fL->raf, fL->model.m, ipgR, iv1);
+	  imem1 = fL->varindex(fL->deg, fL->raf, fL->model.m, ipgR, iv1) + offsetR;
 
 
 	  fL->model.NumFlux(wL, wR, vnds, flux);
 
 	  for(int iv2 = 0; iv2 < m; iv2++) {
-	    int imem2 = fL->varindex(fL->deg, fL->raf, fL->model.m, ipgL, iv2);
+	    int imem2 = fL->varindex(fL->deg, fL->raf, fL->model.m, ipgL, iv2) + offsetL;
 	    real val = theta * dt * flux[iv2] * wpg;
 	    AddLinearSolver(solver, imem2, imem1, val);
 		    
-	    imem2 = fR->varindex(fR->deg, fR->raf, fR->model.m, ipgR, iv2);		    
+	    imem2 = fR->varindex(fR->deg, fR->raf, fR->model.m, ipgR, iv2) + offsetR;		    
 	    val = theta *dt * flux[iv2] * wpg;		    
 	    AddLinearSolver(solver, imem2, imem1, -val);
 	  }
@@ -871,7 +993,7 @@ void InterfaceAssembly(Simulation *simu,  LinearSolver *solver,real theta, real 
 	/* } */
       
 	for(int iv1 = 0; iv1 < m; iv1++) {
-	  int imem1 = fL->varindex(fL->deg, fL->raf,fL->model.m, ipgL, iv1);
+	  int imem1 = fL->varindex(fL->deg, fL->raf,fL->model.m, ipgL, iv1) + offsetL;
 
 	  for(int iv = 0; iv < m; iv++) {
 	    wL[iv] = (iv == iv1);
@@ -882,7 +1004,7 @@ void InterfaceAssembly(Simulation *simu,  LinearSolver *solver,real theta, real 
 
 	  for(int iv2 = 0; iv2 < m; iv2++) {
 	    // The basis functions is also the gauss point index
-	    int imem2 = fL->varindex(fL->deg, fL->raf,fL->model.m, ipgL, iv2);
+	    int imem2 = fL->varindex(fL->deg, fL->raf,fL->model.m, ipgL, iv2) + offsetL;
 	    real val = theta *dt * (flux[iv2]-flux0[iv2]) * wpg;		    
 	    AddLinearSolver(solver, imem2, imem1, val);
 	  }

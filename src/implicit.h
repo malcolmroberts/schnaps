@@ -40,6 +40,14 @@ void InternalCoupling(Simulation *simu,  LinearSolver *solver, int itest);
 void FluxCoupling(Simulation *simu,  LinearSolver *solver,int itest);
 
 //! \brief Assembly of the DG operator into a sparse matrix
+//! prepare the matrix structure of the interface fluxes between fields
+//! \param[inout] simu a simulation
+//! \param[inout] solver a linear solver
+//! \param[in] theta the crank nicholson parameter
+//! \param[in] itest should be 0 (1 for debugging purposes)
+void InterfaceCoupling(Simulation *simu,  LinearSolver *solver,int itest);
+
+//! \brief Assembly of the DG operator into a sparse matrix
 //! assembly of the differential terms
 //! \param[inout] simu a simulation
 //! \param[inout] solver a linear solver

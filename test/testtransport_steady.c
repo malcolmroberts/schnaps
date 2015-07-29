@@ -40,7 +40,9 @@ int Test_Transport_Steady(void) {
   bool test = true;
 
   MacroMesh mesh;
-  ReadMacroMesh(&mesh,"../test/testcube.msh");
+  //ReadMacroMesh(&mesh,"../test/testcube.msh");
+  ReadMacroMesh(&mesh,"../test/testdisque2d.msh");
+  //ReadMacroMesh(&mesh,"../test/testmacromesh.msh");
   Detect2DMacroMesh(&mesh);
   
   real A[3][3] = {{_LENGTH_DOMAIN, 0, 0}, {0, _LENGTH_DOMAIN, 0}, {0, 0,1}};
@@ -72,7 +74,7 @@ int Test_Transport_Steady(void) {
  
   real dd = 0;
 
-  real tolerance = 0.0000001;
+  real tolerance = 3e-5;
 
   test = test && (dd < tolerance);
 
