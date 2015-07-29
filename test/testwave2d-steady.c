@@ -20,6 +20,11 @@ void TestSteady_Wave_InitData(real *x, real *w);
 void TestSteady_Wave_Source(const real *xy, const real t, const real *w, real *S);
 void Wave_Upwind_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
 			      real *flux);
+void TestSteady_Transport_ImposedData(const real *x, const real t, real *w);
+void TestSteady_Transport_InitData(real *x, real *w);
+void TestSteady_Transport_Source(const real *xy, const real t, const real *w, real *S);
+void Transport_Upwind_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
+                              real *flux);
 
 
 void AssemblyImplicitLinearSolver(Simulation *simu, LinearSolver *solver,real theta,real dt);
@@ -55,22 +60,44 @@ int Test_Wave_Steady(void) {
 
   Model model;
 
+  //model.m = 7;
+  //model.NumFlux = Maxwell2DNumFlux_upwind;
+  //model.BoundaryFlux = Maxwell2DBoundaryFlux_upwind;
+  //model.InitData = Maxwell2DInitData;
+  //model.ImposedData = Maxwell2DImposedData;
+  //model.Source = Maxwell2DSource;
+  //model.Source = NULL;
+
+  //model.m=1;
+  //model.NumFlux = TransNumFlux2d;
+  //model.BoundaryFlux = Transport_Upwind_BoundaryFlux;
+  //model.InitData = TestSteady_Transport_InitData;
+  //model.ImposedData = TestSteady_Transport_ImposedData;
+  //model.Source = TestSteady_Transport_Source;
+  
   model.m=3; 
-  model.NumFlux=Wave_Upwind_NumFlux; 
+  model.NumFlux=Wave_Upwind_NumFlux;//Wave_Upwind_NumFlux; 
   model.InitData = TestSteady_Wave_InitData; 
   model.ImposedData = TestSteady_Wave_ImposedData; 
   model.BoundaryFlux = Wave_Upwind_BoundaryFlux; 
   model.Source = TestSteady_Wave_Source; 
 
-  int deg[]={4, 4, 0};
+  //model.m = 2;
+  //model.NumFlux = VecTransNumFlux2d;
+  //model.BoundaryFlux = VecTransBoundaryFlux2d;
+  //model.InitData = VecTransInitData2d;
+  //model.ImposedData = VecTransImposedData2d;
+  //model.Source = NULL;
+
+  int deg[]={3, 3, 0};
   int raf[]={2, 2, 1};
   
   CheckMacroMesh(&mesh, deg, raf);
-  Simulation simu;
+  Simulation simu, simu2;
 
   InitSimulation(&simu, &mesh, deg, raf, &model);
 
-  real tmax = .1;
+  real tmax = 1.0;
   simu.cfl=0.2;
   simu.vmax=_SPEED_WAVE;
   RK4(&simu,tmax);
@@ -78,44 +105,26 @@ int Test_Wave_Steady(void) {
   real dd = 0;
   dd = L2error(&simu);
 
-  printf("erreur explicit L2=%f\n", dd);
+  printf("erreur explicit L2=%.12e\n", dd);
+
+  PlotFields(0,false, &simu, "p", "dgvisu_exp.msh");
+  PlotFields(1,false, &simu, "u", "dgvisu_exu.msh");
+  PlotFields(2,false, &simu, "v", "dgvisu_exv.msh");
 
   real tolerance = 0.0000001;
 
   test = test && (dd < tolerance);
 
-  LinearSolver solver_implicit;
-  LinearSolver solver_explicit;  
-
-  real theta=0.5;
-  real dt=simu.dt;
-  InitImplicitLinearSolver(&simu, &solver_implicit);
-  InitImplicitLinearSolver(&simu, &solver_explicit);
-  AssemblyImplicitLinearSolver(&simu, &solver_implicit,theta,dt);
-  AssemblyImplicitLinearSolver(&simu, &solver_explicit,-(1.0-theta),dt);
-
-  real *res = calloc(simu.wsize, sizeof(real));
-
-  for(int tstep=0;tstep<10;tstep++){
-
-    MatVect(&solver_explicit, simu.w, res);
-
-    for(int i=0;i<solver_implicit.neq;i++){
-      solver_implicit.rhs[i]=solver_explicit.rhs[i]+res[i];
-    }
+  InitSimulation(&simu2, &mesh, deg, raf, &model);
+  ThetaTimeScheme(&simu2, tmax, 0.1);
   
-    SolveLinearSolver(&solver_implicit);
+  dd = L2error(&simu2);
 
-    for(int i=0;i<solver_implicit.neq;i++){
-      simu.w[i]=solver_implicit.sol[i];
-    }
-   
+  printf("erreur implicit L2=%.12e\n", dd);
 
- }
-  
-  dd = L2error(&simu);
-
-  printf("erreur implicit L2=%f\n", dd);
+  PlotFields(0,false, &simu2, "p", "dgvisu_imp.msh");
+  PlotFields(1,false, &simu2, "u", "dgvisu_imu.msh");
+  PlotFields(2,false, &simu2, "v", "dgvisu_imv.msh");
 
   test = test && (dd < tolerance);
    
@@ -168,3 +177,35 @@ void Wave_Upwind_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
   Wave_Upwind_NumFlux(wL, wR, vnorm, flux);
 }
 
+void TestSteady_Transport_ImposedData(const real *xy, const real t, real *w) {
+
+  real x=xy[0];
+  real y=xy[1];
+
+  w[0] = x * (1 - x) * y * (1-y) + 1;
+}
+
+void TestSteady_Transport_Source(const real *xy, const real t, const real *w, real *S){
+
+  real x=xy[0];
+  real y=xy[1];
+
+  const real v2[] = {sqrt(0.5), sqrt(0.5), 0};
+
+  S[0] = v2[0] * (1 - 2 * x) * y * (1 - y) +
+    v2[1] * (1 - 2 * y) * x * (1 - x);
+
+}
+
+void TestSteady_Transport_InitData(real *x, real *w) {
+  real t = 0;
+  TestSteady_Transport_ImposedData(x, t, w);
+}
+
+
+void Transport_Upwind_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
+                                       real *flux) {
+  real wR[3];
+  TestSteady_Transport_ImposedData(x , t, wR);
+  TransNumFlux2d(wL, wR, vnorm, flux);
+}

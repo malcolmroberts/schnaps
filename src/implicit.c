@@ -66,6 +66,7 @@ void ThetaTimeScheme(Simulation *simu, real tmax, real dt){
 
   real theta=0.5;
   simu->dt=dt;
+  
   int itermax=tmax/simu->dt+1;
   simu->itermax_rk=itermax;
   InitImplicitLinearSolver(simu, &solver_implicit);
@@ -535,13 +536,13 @@ void FluxAssembly(Simulation *simu, LinearSolver *solver,real theta, real dt){
 
 		  for (int iv1 = 0; iv1 < m; iv1++){
 
-		    int imem1 = f->varindex(f->deg, f->raf, f->model.m, ipgL, iv1);
 			    
 
 		    for(int iv = 0; iv < m; iv++) {
 		      wL[iv] = (iv == iv1);
 		      wR[iv] = 0;
 		    }
+		    int imem1 = f->varindex(f->deg, f->raf, f->model.m, ipgL, iv1);
 
 		    f->model.NumFlux(wL, wR, vnds, flux);	
 
@@ -559,6 +560,7 @@ void FluxAssembly(Simulation *simu, LinearSolver *solver,real theta, real dt){
 		      wL[iv] = 0;
 		      wR[iv] = (iv == iv1);
 		    }
+		    imem1 = f->varindex(f->deg, f->raf, f->model.m, ipgR, iv1);
 
 
 		    f->model.NumFlux(wL, wR, vnds, flux);
@@ -809,13 +811,13 @@ void InterfaceAssembly(Simulation *simu,  LinearSolver *solver,real theta, real 
 
 	for (int iv1 = 0; iv1 < m; iv1++){
 
-	  int imem1 = fL->varindex(fL->deg, fL->raf, fL->model.m, ipgL, iv1);
 			    
 
 	  for(int iv = 0; iv < m; iv++) {
 	    wL[iv] = (iv == iv1);
 	    wR[iv] = 0;
 	  }
+	  int imem1 = fL->varindex(fL->deg, fL->raf, fL->model.m, ipgL, iv1);
 
 	  // int_dL F(wL, wR, grad phi_ib)
 
@@ -837,6 +839,7 @@ void InterfaceAssembly(Simulation *simu,  LinearSolver *solver,real theta, real 
 	    wL[iv] = 0;
 	    wR[iv] = (iv == iv1);
 	  }
+	  imem1 = fL->varindex(fL->deg, fL->raf, fL->model.m, ipgR, iv1);
 
 
 	  fL->model.NumFlux(wL, wR, vnds, flux);

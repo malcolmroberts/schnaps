@@ -37,16 +37,30 @@ int Test_Wave_Periodic(void) {
 
   Model model;
 
-  model.m=3; 
+  //model.m = 7;
+  //model.NumFlux = Maxwell2DNumFlux_upwind;
+  //model.BoundaryFlux = Maxwell2DBoundaryFlux_upwind;
+  //model.InitData = Maxwell2DInitData;
+  //model.ImposedData = Maxwell2DImposedData;
+  //model.Source = Maxwell2DSource;
+  //model.Source = NULL;
+
+  model.m = 3; 
   model.NumFlux=Wave_Upwind_NumFlux;
- 
   model.InitData = TestPeriodic_Wave_InitData;
   model.ImposedData = TestPeriodic_Wave_ImposedData;
   model.BoundaryFlux = Wave_Upwind_BoundaryFlux;
   model.Source = NULL;
 
+  //model.m = 2;
+  //model.NumFlux = VecTransNumFlux2d;
+  //model.BoundaryFlux = VecTransBoundaryFlux2d;
+  //model.InitData = VecTransInitData2d;
+  //model.ImposedData = VecTransImposedData2d;
+  //model.Source = NULL;
+
   int deg[]={3, 3, 0};
-  int raf[]={10, 10, 1};
+  int raf[]={16, 16, 1};
 
 
   assert(mesh.is2d);
@@ -56,15 +70,15 @@ int Test_Wave_Periodic(void) {
 
   InitSimulation(&simu, &mesh, deg, raf, &model);
  
-  real tmax = 0.01;
+  real tmax = 0.5;
   simu.cfl=0.2;
   simu.vmax=_SPEED_WAVE;
-  RK2(&simu,tmax);
+  RK4(&simu,tmax);
 
   real dd = 0;
   dd = L2error(&simu);
 
-  printf("erreur L2=%f\n", dd);
+  printf("erreur L2=%.12e\n", dd);
 
   real tolerance = 0.001;
 
@@ -77,67 +91,12 @@ int Test_Wave_Periodic(void) {
   Simulation simu2;
 
   InitSimulation(&simu2, &mesh, deg, raf, &model);
+  ThetaTimeScheme(&simu2, tmax, simu.dt);
 
-  LinearSolver solver_implicit;
-  LinearSolver solver_explicit;  
-
-  real theta=0.5;
-  simu2.dt=simu.dt;
-  int itermax=tmax/simu2.dt+1;
-  InitImplicitLinearSolver(&simu2, &solver_implicit);
-  InitImplicitLinearSolver(&simu2, &solver_explicit);
-
-  real *res = calloc(simu2.wsize, sizeof(real));
-
-    simu2.tnow=0;
-    for(int ie=0; ie < simu2.macromesh.nbelems; ++ie){
-      simu2.fd[ie].tnow=simu2.tnow;
-    } 
-
-  for(int tstep=0;tstep<itermax;tstep++){
-  
-
-    if(tstep==0){ 
-      solver_implicit.mat_is_assembly=false;
-      solver_explicit.mat_is_assembly=false;
-    } 
-    else 
-      { 
-      solver_implicit.mat_is_assembly=true;
-      solver_explicit.mat_is_assembly=true;
-    } 
-
-    solver_implicit.rhs_is_assembly=false;
-    solver_explicit.rhs_is_assembly=false;
-
-    
-    AssemblyImplicitLinearSolver(&simu2, &solver_explicit,-(1.0-theta),simu2.dt);
-    simu2.tnow=simu2.tnow+simu2.dt;
-    for(int ie=0; ie < simu2.macromesh.nbelems; ++ie){
-      simu2.fd[ie].tnow=simu2.tnow;
-    } 
-    AssemblyImplicitLinearSolver(&simu2, &solver_implicit,theta,simu2.dt);
-  
-
-    MatVect(&solver_explicit, simu2.w, res);
-
-    for(int i=0;i<solver_implicit.neq;i++){
-      solver_implicit.rhs[i]=-solver_explicit.rhs[i]+solver_implicit.rhs[i]+res[i];
-    }
-  
-    SolveLinearSolver(&solver_implicit);
-
-    for(int i=0;i<solver_implicit.neq;i++){
-      simu2.w[i]=solver_implicit.sol[i];
-    }
-
-       
-
- }
   
   dd = L2error(&simu2);
 
-  printf("erreur implicit L2=%f\n", dd);
+  printf("erreur implicit L2=%.12e\n", dd);
 
   test = test && (dd < tolerance);
 
