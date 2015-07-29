@@ -22,7 +22,7 @@ int TestMacroMesh(void)
   int raf[]={1, 1, 1};
   
   // test gmsh file reading
-  ReadMacroMesh(&m, "test/testmacromesh.msh");
+  ReadMacroMesh(&m, "../test/testmacromesh.msh");
   BuildConnectivity(&m);
   CheckMacroMesh(&m, deg, raf);
   PrintMacroMesh(&m);
