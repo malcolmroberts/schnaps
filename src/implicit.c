@@ -2,16 +2,16 @@
 #include <stdlib.h>
 
 
-void InternalCoupling(Simulation *simu,  LinearSolver *solver, int itest);
-void FluxCoupling(Simulation *simu,  LinearSolver *solver,int itest);
+//void InternalCoupling(Simulation *simu,  LinearSolver *solver, int itest);
+//void FluxCoupling(Simulation *simu,  LinearSolver *solver,int itest);
 
-void InternalAssembly(Simulation *simu,  LinearSolver *solver,real theta, real dt);
-void FluxAssembly(Simulation *simu,  LinearSolver *solver,real theta, real dt);
-void InterfaceAssembly(Simulation *simu,  LinearSolver *solver,real theta, real dt);
-void SourceAssembly(Simulation *simu,  LinearSolver *solver,real theta, real dt);
-void MassAssembly(Simulation *simu,  LinearSolver *solver);
+/* void InternalAssembly(Simulation *simu,  LinearSolver *solver,real theta, real dt); */
+/* void FluxAssembly(Simulation *simu,  LinearSolver *solver,real theta, real dt); */
+/* void InterfaceAssembly(Simulation *simu,  LinearSolver *solver,real theta, real dt); */
+/* void SourceAssembly(Simulation *simu,  LinearSolver *solver,real theta, real dt); */
+/* void MassAssembly(Simulation *simu,  LinearSolver *solver); */
 
-void AssemblyImplicitLinearSolver(Simulation *simu, LinearSolver *solver,real theta, real dt);
+/* void AssemblyImplicitLinearSolver(Simulation *simu, LinearSolver *solver,real theta, real dt); */
 
 
 void InitImplicitLinearSolver(Simulation *simu, LinearSolver *solver){

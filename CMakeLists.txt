@@ -16,18 +16,19 @@ set(CMAKE_C_FLAGS " -std=c99  -D_DOUBLE_PRECISION -g  -O3")
 
 #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_DOUBLE_PRECISION")
 
-OPTION(USE_OPENCL
-  "Compile with the OpenCL library"
-  OFF)
+OPTION(USE_OPENCL 
+  "Activate OpenCL library" OFF)
 
 IF(USE_OPENCL)# set with: cmake . -DUSE_OPENCL:BOOL=ON
-  MESSAGE(STATUS "Compiling with OpenCL Library")
+  MESSAGE(STATUS "Try to find OpenCL Library")
   find_package (OpenCL)
   if(OPENCL_FOUND)
     MESSAGE(STATUS "OpenCL found")
   else()
     MESSAGE(STATUS "OpenCL not found")
   endif(OPENCL_FOUND)
+else()
+  MESSAGE(STATUS "OpenCL is not activated")
 ENDIF(USE_OPENCL)
 
 if(OPENCL_FOUND)

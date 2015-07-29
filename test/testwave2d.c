@@ -1,3 +1,4 @@
+#include "implicit.h"
 #include "schnaps.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -5,7 +6,6 @@
 #include "test.h"
 #include "collision.h"
 #include "waterwave2d.h"
-#include "implicit.h"
 
 
 
