@@ -40,12 +40,21 @@ void InitImplicitLinearSolver(Simulation *simu, LinearSolver *solver){
 
 void AssemblyImplicitLinearSolver(Simulation *simu, LinearSolver *solver,real theta, real dt){
 
-  MassAssembly(simu, solver);
-  InternalAssembly(simu, solver,theta,dt);
-  FluxAssembly(simu, solver,theta,dt);
-  InterfaceAssembly(simu, solver,theta,dt);
+  if(solver->mat_is_assembly == false){
+    MassAssembly(simu, solver);
+    InternalAssembly(simu, solver,theta,dt);
+    FluxAssembly(simu, solver,theta,dt);
+    InterfaceAssembly(simu, solver,theta,dt);
+  }
+
+  if(solver->rhs_is_assembly == false){
+    for(int i=0;i<solver->neq;i++){
+      solver->rhs[i]=0;
+    }
+      SourceAssembly(simu, solver,1,dt);
+  }
   //DisplayLinearSolver(solver);
-  SourceAssembly(simu, solver,1,dt);
+
 }
 
 
@@ -653,6 +662,7 @@ void SourceAssembly(Simulation *simu,  LinearSolver *solver, real theta, real dt
 	for(int iv = 0; iv < m; iv++) {
 	  wL[iv] = 0;
 	}
+
 	fL->model.BoundaryFlux(xpg, fL->tnow, wL, vnds, flux0);
 	
 	for(int iv2 = 0; iv2 < m; iv2++) {

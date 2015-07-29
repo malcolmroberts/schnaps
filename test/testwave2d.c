@@ -70,6 +70,9 @@ int Test_Wave_Periodic(void) {
 
   test = test && (dd < tolerance);
 
+  PlotFields(0,false, &simu, "p", "dgvisu_exp.msh");
+  PlotFields(1,false, &simu, "u", "dgvisu_exu.msh");
+  PlotFields(2,false, &simu, "v", "dgvisu_exv.msh");
 
   Simulation simu2;
 
@@ -79,17 +82,37 @@ int Test_Wave_Periodic(void) {
   LinearSolver solver_explicit;  
 
   real theta=0.5;
-  real dt=0.000167;
-  int itermax=tmax/dt;
+  simu2.dt=0.000167;
+  int itermax=tmax/simu2.dt+1;
   InitImplicitLinearSolver(&simu2, &solver_implicit);
   InitImplicitLinearSolver(&simu2, &solver_explicit);
-  AssemblyImplicitLinearSolver(&simu2, &solver_implicit,theta,dt);
-  AssemblyImplicitLinearSolver(&simu2, &solver_explicit,-(1.0-theta),dt);
-  
 
   real *res = calloc(simu2.wsize, sizeof(real));
 
   for(int tstep=0;tstep<itermax;tstep++){
+
+    simu2.tnow=tstep*simu2.dt;
+    for(int ie=0; ie < simu2.macromesh.nbelems; ++ie){
+      simu2.fd[ie].tnow=simu2.tnow;
+    }
+
+    if(tstep==0){ 
+      solver_implicit.mat_is_assembly=false;
+      solver_explicit.mat_is_assembly=false;
+    } 
+    else 
+      { 
+      solver_implicit.mat_is_assembly=true;
+      solver_explicit.mat_is_assembly=true;
+    } 
+
+    solver_implicit.rhs_is_assembly=false;
+    solver_explicit.rhs_is_assembly=false;
+
+    AssemblyImplicitLinearSolver(&simu2, &solver_implicit,theta,simu2.dt);
+    AssemblyImplicitLinearSolver(&simu2, &solver_explicit,-(1.0-theta),simu2.dt);
+
+  
 
     MatVect(&solver_explicit, simu2.w, res);
 
@@ -102,7 +125,8 @@ int Test_Wave_Periodic(void) {
     for(int i=0;i<solver_implicit.neq;i++){
       simu2.w[i]=solver_implicit.sol[i];
     }
-   
+
+       
 
  }
   
@@ -111,6 +135,10 @@ int Test_Wave_Periodic(void) {
   printf("erreur implicit L2=%f\n", dd);
 
   test = test && (dd < tolerance);
+
+  PlotFields(0,false, &simu2, "p", "dgvisu_imp.msh");
+  PlotFields(1,false, &simu2, "u", "dgvisu_imu.msh");
+  PlotFields(2,false, &simu2, "v", "dgvisu_imv.msh");
   
 
   return test;

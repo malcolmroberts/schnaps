@@ -19,7 +19,8 @@ void InitLinearSolver(LinearSolver* lsol,int n,
   lsol->is_sym = false;
   lsol->is_init = false;
   lsol->is_alloc = false;
-  lsol->is_assembly = false;
+  lsol->rhs_is_assembly = false;
+  lsol->mat_is_assembly = false;
   lsol->rhs=NULL;
   lsol->sol=NULL;
   lsol->MatVecProduct=NULL;

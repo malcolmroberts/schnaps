@@ -16,14 +16,11 @@ const  real c[6]={1,1,1,1,1,1};
 
 
 void TestSteady_Wave_ImposedData(const real *x, const real t, real *w);
-void TestSteady2_Wave_ImposedData(const real *x, const real t, real *w);
 void TestSteady_Wave_InitData(real *x, real *w);
-void TestSteady2_Wave_InitData(real *x, real *w);
 void TestSteady_Wave_Source(const real *xy, const real t, const real *w, real *S);
 void Wave_Upwind_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
 			      real *flux);
-void Wave2_Upwind_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
-			      real *flux);
+
 
 void AssemblyImplicitLinearSolver(Simulation *simu, LinearSolver *solver,real theta,real dt);
 
@@ -60,9 +57,9 @@ int Test_Wave_Steady(void) {
 
   model.m=3; 
   model.NumFlux=Wave_Upwind_NumFlux; 
-  model.InitData = TestSteady2_Wave_InitData; 
-  model.ImposedData = TestSteady2_Wave_ImposedData; 
-  model.BoundaryFlux = Wave2_Upwind_BoundaryFlux; 
+  model.InitData = TestSteady_Wave_InitData; 
+  model.ImposedData = TestSteady_Wave_ImposedData; 
+  model.BoundaryFlux = Wave_Upwind_BoundaryFlux; 
   model.Source = TestSteady_Wave_Source; 
 
   int deg[]={4, 4, 0};
@@ -134,24 +131,12 @@ void TestSteady_Wave_ImposedData(const real *xy, const real t, real *w) {
 
 
   w[0] = x*(1-x)*y*(1-y)+1;
-  w[1] = 2*x*(1-x)*y*(1-y)+1;
-  w[2] = 3*x*(1-x)*y*(1-y)+1;
+  w[1] = 2*x*(1-x)*y*(1-y)+2;
+  w[2] = 3*x*(1-x)*y*(1-y)+3;
 
 
 }
 
-void TestSteady2_Wave_ImposedData(const real *xy, const real t, real *w) {
-
-  real x=xy[0];
-  real y=xy[1];
-
-
-  w[0] = x*(1-x)*y*(1-y)+1;
-  w[1] = 2*x*(1-x)*y*(1-y)+1;
-  w[2] = 3*x*(1-x)*y*(1-y)+1;
-
-
-}
 
 void TestSteady_Wave_Source(const real *xy, const real t, const real *w, real *S){
   
@@ -173,10 +158,7 @@ void TestSteady_Wave_InitData(real *x, real *w) {
   TestSteady_Wave_ImposedData(x, t, w);
 }
 
-void TestSteady2_Wave_InitData(real *x, real *w) {
-  real t = 0;
-  TestSteady2_Wave_ImposedData(x, t, w);
-}
+
 
 
 void Wave_Upwind_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
@@ -186,10 +168,3 @@ void Wave_Upwind_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
   Wave_Upwind_NumFlux(wL, wR, vnorm, flux);
 }
 
-void Wave2_Upwind_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
-				       real *flux) {
-  real wR[3];
-  TestSteady2_Wave_ImposedData(x , t, wR);
-  Wave_Upwind_NumFlux(wL, wR, vnorm, flux);
-}
- 
