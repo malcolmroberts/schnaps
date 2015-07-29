@@ -66,21 +66,17 @@ int Test_Transport_Steady(void) {
 
   InitSimulation(&simu, &mesh, deg, raf, &model);
 
-  real tmax = 10.0;
+  real tmax = 1000.0;
   simu.cfl=0.2;
   simu.vmax=_SPEED_WAVE;
-  RK4(&simu,tmax);
  
   real dd = 0;
-  dd = L2error(&simu);
-
-  printf("erreur explicit L2=%.12e\n", dd);
 
   real tolerance = 0.0000001;
 
   test = test && (dd < tolerance);
 
-  ThetaTimeScheme(&simu, tmax, 1);
+  ThetaTimeScheme(&simu, tmax, 10);
   
   dd = L2error(&simu);
 

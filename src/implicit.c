@@ -114,7 +114,11 @@ void ThetaTimeScheme(Simulation *simu, real tmax, real dt){
     for(int i=0;i<solver_implicit.neq;i++){
       simu->w[i]=solver_implicit.sol[i];
     }
+    int freq = (1 >= simu->itermax_rk / 10)? 1 : simu->itermax_rk / 10;
+    if (tstep % freq == 0)
+      printf("t=%f iter=%d/%d dt=%f\n", simu->tnow, tstep, simu->itermax_rk, dt);
   }
+  
 }
 
 void InternalCoupling(Simulation *simu,  LinearSolver *solver, int isky){
@@ -627,10 +631,6 @@ void MassAssembly(Simulation *simu,  LinearSolver *solver){
       
 
   }
-
-  real vol = 0;
-  for(int i = 0; i < simu->wsize; i++) vol += GetLinearSolver(solver, i, i);
-  printf("vol=%f\n",vol);
 
 }
 

@@ -26,10 +26,16 @@ void Wave_Upwind_BoundaryFlux(real *x, real t, real *wL, real *vnorm,real *flux)
 //! \param[out] flux : the flux
 void Wave_Upwind_NumFlux(real wL[],real wR[],real* vnorm,real* flux);
 
-//! TODO ADD DESCRIPTION
+//! \brief rusanov flux for wave
+//! \param[in] wL,wR : left and right states
+//! \param[in] vnorm : normal vector
+//! \param[out] flux : the flux
 void Wave_Rusanov_NumFlux(real wL[],real wR[],real* vnorm,real* flux);
 
-//! TODO ADD DESCRIPTION
+//! \brief centered flux for wave
+//! \param[in] wL,wR : left and right states
+//! \param[in] vnorm : normal vector
+//! \param[out] flux : the flux
 void Wave_Centered_NumFlux(real wL[],real wR[],real* vnorm,real* flux);
 
 //! \brief compute exact solution for x and t

@@ -37,14 +37,6 @@ int Test_Wave_Periodic(void) {
 
   Model model;
 
-  //model.m = 7;
-  //model.NumFlux = Maxwell2DNumFlux_upwind;
-  //model.BoundaryFlux = Maxwell2DBoundaryFlux_upwind;
-  //model.InitData = Maxwell2DInitData;
-  //model.ImposedData = Maxwell2DImposedData;
-  //model.Source = Maxwell2DSource;
-  //model.Source = NULL;
-
   model.m = 3; 
   model.NumFlux=Wave_Upwind_NumFlux;
   model.InitData = TestPeriodic_Wave_InitData;
@@ -52,15 +44,8 @@ int Test_Wave_Periodic(void) {
   model.BoundaryFlux = Wave_Upwind_BoundaryFlux;
   model.Source = NULL;
 
-  //model.m = 2;
-  //model.NumFlux = VecTransNumFlux2d;
-  //model.BoundaryFlux = VecTransBoundaryFlux2d;
-  //model.InitData = VecTransInitData2d;
-  //model.ImposedData = VecTransImposedData2d;
-  //model.Source = NULL;
-
-  int deg[]={3, 3, 0};
-  int raf[]={16, 16, 1};
+  int deg[]={4, 4, 0};
+  int raf[]={4, 4, 1};
 
 
   assert(mesh.is2d);
@@ -70,7 +55,7 @@ int Test_Wave_Periodic(void) {
 
   InitSimulation(&simu, &mesh, deg, raf, &model);
  
-  real tmax = 0.5;
+  real tmax = 0.025;
   simu.cfl=0.2;
   simu.vmax=_SPEED_WAVE;
   RK4(&simu,tmax);
@@ -80,7 +65,7 @@ int Test_Wave_Periodic(void) {
 
   printf("erreur L2=%.12e\n", dd);
 
-  real tolerance = 0.001;
+  real tolerance = 0.002;
 
   test = test && (dd < tolerance);
 
