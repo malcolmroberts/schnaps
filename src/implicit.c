@@ -59,6 +59,67 @@ void AssemblyImplicitLinearSolver(Simulation *simu, LinearSolver *solver,real th
 }
 
 
+void ThetaTimeScheme(Simulation *simu, real tmax, real dt){
+
+  LinearSolver solver_implicit;
+  LinearSolver solver_explicit;  
+
+  real theta=0.5;
+  simu->dt=dt;
+  
+  int itermax=tmax/simu->dt+1;
+  simu->itermax_rk=itermax;
+  InitImplicitLinearSolver(simu, &solver_implicit);
+  InitImplicitLinearSolver(simu, &solver_explicit);
+  real *res = calloc(simu->wsize, sizeof(real));
+
+  simu->tnow=0;
+  for(int ie=0; ie < simu->macromesh.nbelems; ++ie){
+    simu->fd[ie].tnow=simu->tnow;
+  } 
+
+  for(int tstep=0;tstep<simu->itermax_rk;tstep++){
+  
+
+    if(tstep==0){ 
+      solver_implicit.mat_is_assembly=false;
+      solver_explicit.mat_is_assembly=false;
+    } 
+    else 
+      { 
+      solver_implicit.mat_is_assembly=true;
+      solver_explicit.mat_is_assembly=true;
+    } 
+
+    solver_implicit.rhs_is_assembly=false;
+    solver_explicit.rhs_is_assembly=false;
+
+    
+    AssemblyImplicitLinearSolver(simu, &solver_explicit,-(1.0-theta),simu->dt);
+    simu->tnow=simu->tnow+simu->dt;
+    for(int ie=0; ie < simu->macromesh.nbelems; ++ie){
+      simu->fd[ie].tnow=simu->tnow;
+    } 
+    AssemblyImplicitLinearSolver(simu, &solver_implicit,theta,simu->dt);
+  
+
+    MatVect(&solver_explicit, simu->w, res);
+
+    for(int i=0;i<solver_implicit.neq;i++){
+      solver_implicit.rhs[i]=-solver_explicit.rhs[i]+solver_implicit.rhs[i]+res[i];
+    }
+  
+    SolveLinearSolver(&solver_implicit);
+
+    for(int i=0;i<solver_implicit.neq;i++){
+      simu->w[i]=solver_implicit.sol[i];
+    }
+    int freq = (1 >= simu->itermax_rk / 10)? 1 : simu->itermax_rk / 10;
+    if (tstep % freq == 0)
+      printf("t=%f iter=%d/%d dt=%f\n", simu->tnow, tstep, simu->itermax_rk, dt);
+  }
+  
+}
 
 void InternalCoupling(Simulation *simu,  LinearSolver *solver, int isky){
 
@@ -479,13 +540,13 @@ void FluxAssembly(Simulation *simu, LinearSolver *solver,real theta, real dt){
 
 		  for (int iv1 = 0; iv1 < m; iv1++){
 
-		    int imem1 = f->varindex(f->deg, f->raf, f->model.m, ipgL, iv1);
 			    
 
 		    for(int iv = 0; iv < m; iv++) {
 		      wL[iv] = (iv == iv1);
 		      wR[iv] = 0;
 		    }
+		    int imem1 = f->varindex(f->deg, f->raf, f->model.m, ipgL, iv1);
 
 		    f->model.NumFlux(wL, wR, vnds, flux);	
 
@@ -503,6 +564,7 @@ void FluxAssembly(Simulation *simu, LinearSolver *solver,real theta, real dt){
 		      wL[iv] = 0;
 		      wR[iv] = (iv == iv1);
 		    }
+		    imem1 = f->varindex(f->deg, f->raf, f->model.m, ipgR, iv1);
 
 
 		    f->model.NumFlux(wL, wR, vnds, flux);
@@ -569,10 +631,6 @@ void MassAssembly(Simulation *simu,  LinearSolver *solver){
       
 
   }
-
-  real vol = 0;
-  for(int i = 0; i < simu->wsize; i++) vol += GetLinearSolver(solver, i, i);
-  printf("vol=%f\n",vol);
 
 }
 
@@ -753,13 +811,13 @@ void InterfaceAssembly(Simulation *simu,  LinearSolver *solver,real theta, real 
 
 	for (int iv1 = 0; iv1 < m; iv1++){
 
-	  int imem1 = fL->varindex(fL->deg, fL->raf, fL->model.m, ipgL, iv1);
 			    
 
 	  for(int iv = 0; iv < m; iv++) {
 	    wL[iv] = (iv == iv1);
 	    wR[iv] = 0;
 	  }
+	  int imem1 = fL->varindex(fL->deg, fL->raf, fL->model.m, ipgL, iv1);
 
 	  // int_dL F(wL, wR, grad phi_ib)
 
@@ -781,6 +839,7 @@ void InterfaceAssembly(Simulation *simu,  LinearSolver *solver,real theta, real 
 	    wL[iv] = 0;
 	    wR[iv] = (iv == iv1);
 	  }
+	  imem1 = fL->varindex(fL->deg, fL->raf, fL->model.m, ipgR, iv1);
 
 
 	  fL->model.NumFlux(wL, wR, vnds, flux);

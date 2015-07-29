@@ -56,21 +56,21 @@ int Test_Wave_Steady(void) {
   Model model;
 
   model.m=3; 
-  model.NumFlux=Wave_Upwind_NumFlux; 
+  model.NumFlux=Wave_Upwind_NumFlux;
   model.InitData = TestSteady_Wave_InitData; 
   model.ImposedData = TestSteady_Wave_ImposedData; 
   model.BoundaryFlux = Wave_Upwind_BoundaryFlux; 
   model.Source = TestSteady_Wave_Source; 
 
-  int deg[]={4, 4, 0};
+  int deg[]={3, 3, 0};
   int raf[]={2, 2, 1};
   
   CheckMacroMesh(&mesh, deg, raf);
-  Simulation simu;
+  Simulation simu, simu2;
 
   InitSimulation(&simu, &mesh, deg, raf, &model);
 
-  real tmax = .1;
+  real tmax = 0.01;
   simu.cfl=0.2;
   simu.vmax=_SPEED_WAVE;
   RK4(&simu,tmax);
@@ -78,44 +78,26 @@ int Test_Wave_Steady(void) {
   real dd = 0;
   dd = L2error(&simu);
 
-  printf("erreur explicit L2=%f\n", dd);
+  printf("erreur explicit L2=%.12e\n", dd);
+
+  PlotFields(0,false, &simu, "p", "dgvisu_exp.msh");
+  PlotFields(1,false, &simu, "u", "dgvisu_exu.msh");
+  PlotFields(2,false, &simu, "v", "dgvisu_exv.msh");
 
   real tolerance = 0.0000001;
 
   test = test && (dd < tolerance);
 
-  LinearSolver solver_implicit;
-  LinearSolver solver_explicit;  
-
-  real theta=0.5;
-  real dt=simu.dt;
-  InitImplicitLinearSolver(&simu, &solver_implicit);
-  InitImplicitLinearSolver(&simu, &solver_explicit);
-  AssemblyImplicitLinearSolver(&simu, &solver_implicit,theta,dt);
-  AssemblyImplicitLinearSolver(&simu, &solver_explicit,-(1.0-theta),dt);
-
-  real *res = calloc(simu.wsize, sizeof(real));
-
-  for(int tstep=0;tstep<10;tstep++){
-
-    MatVect(&solver_explicit, simu.w, res);
-
-    for(int i=0;i<solver_implicit.neq;i++){
-      solver_implicit.rhs[i]=solver_explicit.rhs[i]+res[i];
-    }
+  InitSimulation(&simu2, &mesh, deg, raf, &model);
+  ThetaTimeScheme(&simu2, tmax, simu.dt);
   
-    SolveLinearSolver(&solver_implicit);
+  dd = L2error(&simu2);
 
-    for(int i=0;i<solver_implicit.neq;i++){
-      simu.w[i]=solver_implicit.sol[i];
-    }
-   
+  printf("erreur implicit L2=%.12e\n", dd);
 
- }
-  
-  dd = L2error(&simu);
-
-  printf("erreur implicit L2=%f\n", dd);
+  PlotFields(0,false, &simu2, "p", "dgvisu_imp.msh");
+  PlotFields(1,false, &simu2, "u", "dgvisu_imu.msh");
+  PlotFields(2,false, &simu2, "v", "dgvisu_imv.msh");
 
   test = test && (dd < tolerance);
    
@@ -167,4 +149,3 @@ void Wave_Upwind_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
   TestSteady_Wave_ImposedData(x , t, wR);
   Wave_Upwind_NumFlux(wL, wR, vnorm, flux);
 }
-

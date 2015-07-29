@@ -13,7 +13,7 @@ SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 #set(CMAKE_C_FLAGS "-std=gnu99 -D_REENTRANT -O3 -g")
 
 #set(CMAKE_C_FLAGS " -std=c99 -D_REENTRANT -O3 ")
-set(CMAKE_C_FLAGS " -std=c99  -D_DOUBLE_PRECISION -D_SCHNAPS_DIR=${PROJECT_SOURCE_DIR} -g  ")
+set(CMAKE_C_FLAGS " -std=c99  -D_DOUBLE_PRECISION -D_SCHNAPS_DIR=${PROJECT_SOURCE_DIR} -O3  ")
 
 MESSAGE(${CMAKE_C_FLAGS})
 
@@ -362,14 +362,6 @@ add_executable(
 )
 target_link_libraries(testtransport_steady ${LIBS})
 add_test(testtransport_steady testtransport_steady)
-
-add_executable(
-  test_transport_eximp
-  test/test.h
-  test/test_transport_eximp.c
-)
-target_link_libraries(test_transport_eximp ${LIBS})
-add_test(test_transport_eximp test_transport_eximp)
 
 add_executable(
   testshequilibrium2d

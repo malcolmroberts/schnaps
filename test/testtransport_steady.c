@@ -66,54 +66,21 @@ int Test_Transport_Steady(void) {
 
   InitSimulation(&simu, &mesh, deg, raf, &model);
 
-  real tmax = .1;
+  real tmax = 1000.0;
   simu.cfl=0.2;
   simu.vmax=_SPEED_WAVE;
-  RK4(&simu,tmax);
  
   real dd = 0;
-  dd = L2error(&simu);
-
-  printf("erreur explicit L2=%f\n", dd);
 
   real tolerance = 0.0000001;
 
   test = test && (dd < tolerance);
 
-  LinearSolver solver_implicit;
-  LinearSolver solver_explicit;  
-
-  real theta=0.5;
-  //real dt=simu.dt;
-
-  real dt = 1;
-  InitImplicitLinearSolver(&simu, &solver_implicit);
-  InitImplicitLinearSolver(&simu, &solver_explicit);
-  AssemblyImplicitLinearSolver(&simu, &solver_implicit,theta,dt);
-  AssemblyImplicitLinearSolver(&simu, &solver_explicit,-(1.0-theta),dt);
-
-  real *res = calloc(simu.wsize, sizeof(real));
-
-  for(int tstep=0;tstep<10;tstep++){
-
-    MatVect(&solver_explicit, simu.w, res);
-
-    for(int i=0;i<solver_implicit.neq;i++){
-      solver_implicit.rhs[i]=solver_explicit.rhs[i]+res[i];
-    }
-  
-    SolveLinearSolver(&solver_implicit);
-
-    for(int i=0;i<solver_implicit.neq;i++){
-      simu.w[i]=solver_implicit.sol[i];
-    }
-   
-
- }
+  ThetaTimeScheme(&simu, tmax, 10);
   
   dd = L2error(&simu);
 
-  printf("erreur implicit L2=%f\n", dd);
+  printf("erreur implicit L2=%.12e\n", dd);
 
   test = test && (dd < tolerance);
    
