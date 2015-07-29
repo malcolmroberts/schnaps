@@ -75,10 +75,6 @@ int Test_Transport_ExImp(void) {
 
   InitSimulation(&simu2, &mesh, deg, raf, &model);
 
-  LinearSolver solver_implicit;
-  LinearSolver solver_explicit;  
-
-  real theta=0.5;
   real dt=20*simu.dt;
   ThetaTimeScheme(&simu2, tmax, dt);
   dd = L2error(&simu2);
