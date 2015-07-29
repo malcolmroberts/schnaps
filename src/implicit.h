@@ -55,6 +55,9 @@ void InternalAssembly(Simulation *simu,  LinearSolver *solver,real theta, real d
 //!  \param[in] dt time step
 void FluxAssembly(Simulation *simu,  LinearSolver *solver,real theta, real dt);
 
+//! ADD DESCRIPTION
+void ThetaTimeScheme(Simulation *simu, LinearSolver *solver,real theta, real dt){
+
 //! \brief Assembly of the DG operator into a sparse matrix
 //! assembly of the interface fluxes between the neighboring fields
 //! \param[inout] simu a simulation

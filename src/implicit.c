@@ -59,6 +59,62 @@ void AssemblyImplicitLinearSolver(Simulation *simu, LinearSolver *solver,real th
 }
 
 
+void ThetaTimeScheme(Simulation *simu, real tmax, real dt){
+
+  LinearSolver solver_implicit;
+  LinearSolver solver_explicit;  
+
+  real theta=0.5;
+  simu->dt=dt;
+  int itermax=tmax/simu->dt+1;
+  simu->itermax_rk=itermax;
+  InitImplicitLinearSolver(simu, &solver_implicit);
+  InitImplicitLinearSolver(simu, &solver_explicit);
+  real *res = calloc(simu->wsize, sizeof(real));
+
+  simu->tnow=0;
+  for(int ie=0; ie < simu->macromesh.nbelems; ++ie){
+    simu->fd[ie].tnow=simu->tnow;
+  } 
+
+  for(int tstep=0;simu->itermax_rk;tstep++){
+  
+
+    if(tstep==0){ 
+      solver_implicit.mat_is_assembly=false;
+      solver_explicit.mat_is_assembly=false;
+    } 
+    else 
+      { 
+      solver_implicit.mat_is_assembly=true;
+      solver_explicit.mat_is_assembly=true;
+    } 
+
+    solver_implicit.rhs_is_assembly=false;
+    solver_explicit.rhs_is_assembly=false;
+
+    
+    AssemblyImplicitLinearSolver(simu, &solver_explicit,-(1.0-theta),simu->dt);
+    simu->tnow=simu->tnow+simu->dt;
+    for(int ie=0; ie < simu->macromesh.nbelems; ++ie){
+      simu->fd[ie].tnow=simu->tnow;
+    } 
+    AssemblyImplicitLinearSolver(simu, &solver_implicit,theta,simu->dt);
+  
+
+    MatVect(&solver_explicit, simu->w, res);
+
+    for(int i=0;i<solver_implicit.neq;i++){
+      solver_implicit.rhs[i]=-solver_explicit.rhs[i]+solver_implicit.rhs[i]+res[i];
+    }
+  
+    SolveLinearSolver(&solver_implicit);
+
+    for(int i=0;i<solver_implicit.neq;i++){
+      simu->w[i]=solver_implicit.sol[i];
+    }
+  }
+}
 
 void InternalCoupling(Simulation *simu,  LinearSolver *solver, int isky){
 

@@ -79,59 +79,8 @@ int Test_Transport_ExImp(void) {
   LinearSolver solver_explicit;  
 
   real theta=0.5;
-  simu2.dt=20*simu.dt;
-  int itermax=tmax/simu2.dt+1;
-  InitImplicitLinearSolver(&simu2, &solver_implicit);
-  InitImplicitLinearSolver(&simu2, &solver_explicit);
-
-  real *res = calloc(simu2.wsize, sizeof(real));
-
-    simu2.tnow=0;
-    for(int ie=0; ie < simu2.macromesh.nbelems; ++ie){
-      simu2.fd[ie].tnow=simu2.tnow;
-    } 
-
-  for(int tstep=0;tstep<itermax;tstep++){
-  
-
-    if(tstep==0){ 
-      solver_implicit.mat_is_assembly=false;
-      solver_explicit.mat_is_assembly=false;
-    } 
-    else 
-      { 
-      solver_implicit.mat_is_assembly=true;
-      solver_explicit.mat_is_assembly=true;
-    } 
-
-    solver_implicit.rhs_is_assembly=false;
-    solver_explicit.rhs_is_assembly=false;
-
-    
-    AssemblyImplicitLinearSolver(&simu2, &solver_explicit,-(1.0-theta),simu2.dt);
-    simu2.tnow=simu2.tnow+simu2.dt;
-    for(int ie=0; ie < simu2.macromesh.nbelems; ++ie){
-      simu2.fd[ie].tnow=simu2.tnow;
-    } 
-    AssemblyImplicitLinearSolver(&simu2, &solver_implicit,theta,simu2.dt);
-  
-
-    MatVect(&solver_explicit, simu2.w, res);
-
-    for(int i=0;i<solver_implicit.neq;i++){
-      solver_implicit.rhs[i]=-solver_explicit.rhs[i]+solver_implicit.rhs[i]+res[i];
-    }
-  
-    SolveLinearSolver(&solver_implicit);
-
-    for(int i=0;i<solver_implicit.neq;i++){
-      simu2.w[i]=solver_implicit.sol[i];
-    }
-
-       
-
- }
-  
+  real dt=20*simu.dt;
+  ThetaTimeScheme(&simu2, tmax, dt);
   dd = L2error(&simu2);
 
   printf("erreur implicit L2=%f\n", dd);
