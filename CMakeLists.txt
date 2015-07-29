@@ -363,7 +363,13 @@ add_executable(
 target_link_libraries(testtransport_steady ${LIBS})
 add_test(testtransport_steady testtransport_steady)
 
-
+add_executable(
+  test_transport_eximp
+  test/test.h
+  test/test_transport_eximp.c
+)
+target_link_libraries(test_transport_eximp ${LIBS})
+add_test(test_transport_eximp test_transport_eximp)
 
 IF(BUILD_PARALUTION)
 

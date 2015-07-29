@@ -13,15 +13,15 @@ int main(void) {
   
   // unit tests
     
-  int resu = Test_Wave_Periodic();
+  int resu = Test_Transport_ExImp();
 	 
-  if (resu) printf("wave periodic  test OK !\n");
-  else printf("wave periodic test failed !\n");
+  if (resu) printf("transport  test OK !\n");
+  else printf("transport test failed !\n");
 
   return !resu;
 } 
 
-int Test_Wave_Periodic(void) {
+int Test_Transport_ExImp(void) {
 
   bool test = true;
 
@@ -37,12 +37,11 @@ int Test_Wave_Periodic(void) {
 
   Model model;
 
-  model.m=3; 
-  model.NumFlux=Wave_Upwind_NumFlux;
- 
-  model.InitData = TestPeriodic_Wave_InitData;
-  model.ImposedData = TestPeriodic_Wave_ImposedData;
-  model.BoundaryFlux = Wave_Upwind_BoundaryFlux;
+  model.m=1; 
+  model.NumFlux = TransNumFlux;
+  model.BoundaryFlux = TestTransBoundaryFlux;
+  model.InitData = TestTransInitData;
+  model.ImposedData = TestTransImposedData;
   model.Source = NULL;
 
   int deg[]={3, 3, 0};
@@ -70,9 +69,7 @@ int Test_Wave_Periodic(void) {
 
   test = test && (dd < tolerance);
 
-  PlotFields(0,false, &simu, "p", "dgvisu_exp.msh");
-  PlotFields(1,false, &simu, "u", "dgvisu_exu.msh");
-  PlotFields(2,false, &simu, "v", "dgvisu_exv.msh");
+  PlotFields(0,false, &simu, "rho", "dgvisu_rhoex.msh");
 
   Simulation simu2;
 
@@ -136,9 +133,7 @@ int Test_Wave_Periodic(void) {
 
   test = test && (dd < tolerance);
 
-  PlotFields(0,false, &simu2, "p", "dgvisu_imp.msh");
-  PlotFields(1,false, &simu2, "u", "dgvisu_imu.msh");
-  PlotFields(2,false, &simu2, "v", "dgvisu_imv.msh");
+  PlotFields(0,false, &simu2, "rho", "dgvisu_rhoimp.msh");
   
 
   return test;
@@ -171,5 +166,3 @@ void Wave_Upwind_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
   TestPeriodic_Wave_ImposedData(x , t, wR);
   Wave_Upwind_NumFlux(wL, wR, vnorm, flux);
 }
-
-
