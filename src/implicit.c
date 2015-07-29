@@ -51,7 +51,8 @@ void AssemblyImplicitLinearSolver(Simulation *simu, LinearSolver *solver,real th
     for(int i=0;i<solver->neq;i++){
       solver->rhs[i]=0;
     }
-      SourceAssembly(simu, solver,1,dt);
+      SourceAssembly(simu, solver,theta,dt);
+      
   }
   //DisplayLinearSolver(solver);
 
@@ -610,6 +611,7 @@ void SourceAssembly(Simulation *simu,  LinearSolver *solver, real theta, real dt
       /* 	wL[iv] = w[imem]; */
       /* } */
       f->model.Source(xphy, f->tnow, wL, source);
+
       for(int iv1 = 0; iv1 < m; iv1++) {
 	int imem = f->varindex(deg, nraf, m, ipg, iv1);
 	real val = theta * dt * source[iv1] * wpg * det;
