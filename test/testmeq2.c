@@ -16,11 +16,11 @@ int TestmEq2(void){
   // 3D meshes"
   // test/testdisque.msh
 
-  char *mshname =  "test/testcube.msh";
+  char *mshname =  "../test/testcube.msh";
   
   MacroMesh mesh;
-  ReadMacroMesh(&mesh,"test/testmacromesh.msh");
-  //ReadMacroMesh(&mesh,"test/testcube2.msh");
+  ReadMacroMesh(&mesh,"../test/testmacromesh.msh");
+  //ReadMacroMesh(&mesh,"../test/testcube2.msh");
   Detect2DMacroMesh(&mesh);
   BuildConnectivity(&mesh);
 

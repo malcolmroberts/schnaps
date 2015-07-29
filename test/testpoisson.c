@@ -41,7 +41,7 @@ int TestPoisson(void)
 
   
   MacroMesh mesh;
-  ReadMacroMesh(&mesh,"test/testcube.msh");
+  ReadMacroMesh(&mesh,"../test/testcube.msh");
   Detect1DMacroMesh(&mesh);
   bool is1d=mesh.is1d;
   assert(is1d);

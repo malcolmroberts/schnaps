@@ -28,7 +28,7 @@ int TestPeriodic(void) {
   bool test = true;
 
   MacroMesh mesh;
-  ReadMacroMesh(&mesh,"test/testcube.msh");
+  ReadMacroMesh(&mesh,"../test/testcube.msh");
   Detect1DMacroMesh(&mesh);
   assert(mesh.is1d);
   // periodic mesh

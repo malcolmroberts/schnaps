@@ -50,7 +50,7 @@ int Test_SH_equilibrium(void) {
   f.interp.interp_param[6] = 1;  // z direction refinement
  // read the gmsh file
 
-  ReadMacroMesh(&(f.macromesh), "test/testcube.msh");
+  ReadMacroMesh(&(f.macromesh), "../test/testcube.msh");
 
   Detect2DMacroMesh(&(f.macromesh));
   assert(f.macromesh.is2d);
