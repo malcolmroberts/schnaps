@@ -13,7 +13,7 @@ SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 #set(CMAKE_C_FLAGS "-std=gnu99 -D_REENTRANT -O3 -g")
 
 #set(CMAKE_C_FLAGS " -std=c99 -D_REENTRANT -O3 ")
-set(CMAKE_C_FLAGS " -std=c99  -D_DOUBLE_PRECISION -D_SCHNAPS_DIR=${PROJECT_SOURCE_DIR} -g  -O3")
+set(CMAKE_C_FLAGS " -std=c99  -D_DOUBLE_PRECISION -D_SCHNAPS_DIR=${PROJECT_SOURCE_DIR} -g  ")
 
 MESSAGE(${CMAKE_C_FLAGS})
 
@@ -370,6 +370,22 @@ add_executable(
 )
 target_link_libraries(test_transport_eximp ${LIBS})
 add_test(test_transport_eximp test_transport_eximp)
+
+add_executable(
+  testshequilibrium2d
+  test/test.h
+  test/testshequilibrium2d.c
+)
+target_link_libraries(testshequilibrium2d ${LIBS})
+add_test(testshequilibrium2d testshequilibrium2d)
+
+add_executable(
+  testshperiodic2d
+  test/test.h
+  test/testshperiodic2d.c
+)
+target_link_libraries(testshperiodic2d ${LIBS})
+add_test(testshperiodic2d testshperiodic2d)
 
 IF(BUILD_PARALUTION)
 
