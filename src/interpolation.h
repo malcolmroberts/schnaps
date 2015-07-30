@@ -79,10 +79,20 @@ typedef struct Interpolation{
 //! \param[in] raf refinements list
 int NPG(int deg[], int raf[]);
 
+//! \brief number of Gauss-LObatto Points (GLOPs) on the continuous macrocell
+//! \param[in] deg degrees list
+//! \param[in] raf refinements list
+int NPG_CG(int deg[], int raf[]);
+
 //! \brief number of GLOPs on the face ifa of the macrocell
 //! \param[in] param the param list
 //! \param[in] ifa face index
 int NPGF(int deg[], int raf[],int ifa);
+
+//! \brief number of GLOPs on the face ifa of the continuous macrocell
+//! \param[in] param the param list
+//! \param[in] ifa face index
+int NPGF_CG(int deg[], int raf[],int ifa);
 
 
 //! \brief return the reference coordinates xpg[3] and weight wpg of the GLOP ipg
@@ -96,6 +106,17 @@ int NPGF(int deg[], int raf[],int ifa);
 void ref_pg_vol(int* deg,int *raf,int ipg,
 		real* xpg,real* wpg,real* xpg_in);
 
+//! \brief return the reference coordinates xpg[3] and weight wpg of the GLOP ipg
+//! \param[in] deg degrees list
+//! \param[in] raf refinements list
+//! \param[in] ipg Gauss point index
+//! \param[out] xpg  reference Gauss point coordinates
+//! \param[out] wpg reference Gauss weight
+//! \param[in] xpg_in same as xpg but slightly moved such
+//! that the resulting point is in the interior of the ref. element
+void ref_pg_vol_CG(int* deg,int *raf,int ipg,
+		real* xpg,real* wpg,real* xpg_in);
+
 //! \brief from a reference point find the nearest
 //! gauss point
 //! \param[in] deg degrees list
@@ -106,9 +127,20 @@ void ref_pg_vol(int* deg,int *raf,int ipg,
 int ref_ipg(__constant int* deg, __constant int* raf,real* xref);
 #pragma end_opencl
 
+//! \brief from a reference point find the nearest
+//! gauss point in the continuous macrocell
+//! \param[in] deg degrees list
+//! \param[in] raf refinements list
+//! \param[in] xref  reference Gauss point coordinates
+//! \return Gauss point index
+#pragma start_opencl
+int ref_ipg_CG(__constant int* deg, __constant int* raf,real* xref);
+#pragma end_opencl
+
 //! \brief compute the position xpg of glop ipg in the local
 //! numbering on face ifa. If xpgin is not NULL also compute
 //! the position of point slightly inside the opposite subcell.
+//! Discontinuous Galerkin version
 //! \param[in] deg degrees list
 //! \param[in] raf refinements list
 //! \param[in] ifa local face index (0..5)
@@ -119,6 +151,22 @@ int ref_ipg(__constant int* deg, __constant int* raf,real* xref);
 //! that the resulting point is in the interior of the ref. element
 //! returns the volume index of the face gauss point
 int ref_pg_face(int* deg, int *raf,int ifa,int ipgf,real* xpg,real* wpg,
+		 real* xpgin);
+
+//! \brief compute the position xpg of glop ipg in the local
+//! numbering on face ifa. If xpgin is not NULL also compute
+//! the position of point slightly inside the opposite subcell.
+//! Continuous Galerkin (CG) version
+//! \param[in] deg degrees list
+//! \param[in] raf refinements list
+//! \param[in] ifa local face index (0..5)
+//! \param[in] ipgf local 2d Gauss point index on the face ifa
+//! \param[out] xpg Gauss point coordinates
+//! \param[out] wpg Gauss point weight.
+//! \param[out] xpgin same as xpg but slightly moved such
+//! that the resulting point is in the interior of the ref. element
+//! returns the volume index of the face gauss point
+int ref_pg_face_CG(int* deg, int *raf,int ifa,int ipgf,real* xpg,real* wpg,
 		 real* xpgin);
 
 //! \brief return the value and the gradient of the basis
