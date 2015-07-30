@@ -43,6 +43,10 @@ int Test_Wave_Steady(void) {
 
   bool test = true;
 
+#ifdef PARALUTION 
+  paralution_begin();
+#endif 
+
   MacroMesh mesh;
   ReadMacroMesh(&mesh,"../test/testcube.msh");
   Detect2DMacroMesh(&mesh);
@@ -101,6 +105,10 @@ int Test_Wave_Steady(void) {
 
   test = test && (dd < tolerance);
    
+#ifdef PARALUTION 
+  paralution_end();
+#endif 
+
   return test;
 }
 

@@ -30,6 +30,10 @@ int TestPoisson(void)
 {
   bool test = true;
 
+#ifdef PARALUTION 
+  paralution_begin();
+#endif 
+
   // 2D meshes:
   // test/disque2d.msh
   // test/testdisque2d.msh
@@ -87,7 +91,7 @@ int TestPoisson(void)
   ps.postcomputation_assembly=Computation_ElectricField_Poisson;
 
 #ifdef PARALUTION
-  ps.lsol.solver_type = PAR_AMG;
+  ps.lsol.solver_type = PAR_GMRES;
   ps.lsol.pc_type=NONE;
 #else
   ps.lsol.solver_type = LU;
@@ -98,7 +102,7 @@ int TestPoisson(void)
 
   real errl2 = L2error(&simu);
 
-  printf("Erreur L2=%f\n",errl2);
+  printf("Erreur L2=%.12e\n",errl2);
 
   test = test && (errl2 < 2e-2);
 
@@ -108,6 +112,9 @@ int TestPoisson(void)
   PlotFields(_INDEX_PHI, false, &simu, NULL, "dgvisu.msh");
   PlotFields(_INDEX_EX, false, &simu, NULL, "dgex.msh");
 
+#ifdef PARALUTION 
+  paralution_end();
+#endif 
 
   return test;
 }

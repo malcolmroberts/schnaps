@@ -21,6 +21,7 @@ void InitImplicitLinearSolver(Simulation *simu, LinearSolver *solver){
   MatrixStorage ms = SKYLINE;
   Solver st = LU; 
   InitLinearSolver(solver,neq,&ms,&st);
+  solver->tol=1.e-8;
 
   int itest = 1;
 
@@ -119,7 +120,8 @@ void ThetaTimeScheme(Simulation *simu, real tmax, real dt){
     if (tstep % freq == 0)
       printf("t=%f iter=%d/%d dt=%f\n", simu->tnow, tstep, simu->itermax_rk, dt);
   }
-  
+ 
+
 }
 
 void InternalCoupling(Simulation *simu,  LinearSolver *solver, int isky){

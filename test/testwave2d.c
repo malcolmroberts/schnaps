@@ -25,6 +25,10 @@ int Test_Wave_Periodic(void) {
 
   bool test = true;
 
+#ifdef PARALUTION 
+  paralution_begin();
+#endif 
+
   MacroMesh mesh;
   ReadMacroMesh(&mesh,"../test/testcube.msh");
   Detect2DMacroMesh(&mesh);
@@ -88,7 +92,10 @@ int Test_Wave_Periodic(void) {
   PlotFields(0,false, &simu2, "p", "dgvisu_imp.msh");
   PlotFields(1,false, &simu2, "u", "dgvisu_imu.msh");
   PlotFields(2,false, &simu2, "v", "dgvisu_imv.msh");
-  
+ 
+#ifdef PARALUTION 
+  paralution_end();
+#endif  
 
   return test;
 }

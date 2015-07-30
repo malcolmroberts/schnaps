@@ -39,6 +39,10 @@ int Test_Transport_Steady(void) {
 
   bool test = true;
 
+#ifdef PARALUTION 
+  paralution_begin();
+#endif 
+
   MacroMesh mesh;
   //ReadMacroMesh(&mesh,"../test/testcube.msh");
   ReadMacroMesh(&mesh,"../test/testdisque2d.msh");
@@ -86,6 +90,10 @@ int Test_Transport_Steady(void) {
 
   test = test && (dd < tolerance);
    
+#ifdef PARALUTION 
+  paralution_end();
+#endif 
+
   return test;
 }
 

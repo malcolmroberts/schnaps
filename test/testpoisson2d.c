@@ -30,6 +30,9 @@ int TestPoisson2d(void)
 {
   bool test = true;
 
+#ifdef PARALUTION 
+  paralution_begin();
+#endif   
   // 2D meshes:
   // test/disque2d.msh
   // test/testdisque2d.msh
@@ -104,6 +107,9 @@ int TestPoisson2d(void)
   PlotFields(_INDEX_PHI, false, &simu, NULL, "dgvisu.msh");
   PlotFields(_INDEX_EX, false, &simu, NULL, "dgex.msh");
 
+#ifdef PARALUTION 
+  paralution_end();
+#endif 
 
   return test;
 }
