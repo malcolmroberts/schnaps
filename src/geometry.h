@@ -9,7 +9,6 @@
 //! \brief a struct for managing geometric mapping
 typedef struct Geom{
   //! number of nodes in the reference element
-  //#define _NB_REF_NODES 20
   int nbrefnodes;
   /* //! nodes of the reference element */
   /* real physnode[_NB_REF_NODES][3]; */
@@ -92,7 +91,7 @@ void RobustPhy2Ref(real physnode[20][3],real xphy[3],real xref[3]);
 //! \brief inverse mapping tau from the physical point to the reference point.
 //! Function with encapsulation
 //! \param[inout] g a Geom data structure
-void GeomPhy2Ref(Geom* g);
+//void GeomPhy2Ref(Geom* g);
 
 //! \brief dot product between two vectors
 //! \param[in] a, b : the two points

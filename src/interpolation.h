@@ -49,6 +49,20 @@ typedef struct Interpolation{
   /* //! \brief basis function physical gradient */
   /* real dphi[3]; */
 
+  //! \brief pointer to NPG function computation
+  int (*NPG)(int deg[], int raf[]);
+
+  //! \brief pointer to NPGF function computation
+  int (*NPGF)(int deg[], int raf[],int ifa);
+
+  void (*ref_pg_vol)(int* deg,int *raf,int ipg,
+		real* xpg,real* wpg,real* xpg_in);
+
+  int (*ref_ipg)(__constant int* deg, __constant int* raf,real* xref);
+
+  int (*ref_pg_face)(int* deg, int *raf,int ifa,int ipgf,real* xpg,real* wpg,
+		 real* xpgin);
+
 } Interpolation;
 
 // in all these functions
@@ -70,29 +84,6 @@ int NPG(int deg[], int raf[]);
 //! \param[in] ifa face index
 int NPGF(int deg[], int raf[],int ifa);
 
-//! \brief compute 3d glop and subcell indices from the index
-//! of the glop in the macrocell
-//! \param[in] deg the degrees list (size [3])
-//! \param[in] raf the refinments list (size [3])
-//! \param[in] ipg the glop index in the macrocell
-//! \param[out] ic the 3 subcell indices in x,y,z directions
-//! \param[out] ix the 3 glop indices in the subcell
-#pragma start_opencl
-void ipg_to_xyz(const int *raf, const int *deg, int *ic, int *ix, const 
-		int *ipg);
-#pragma end_opencl
-
-//! \brief compute the index of the glop in the macrocell
-//!  from 3d glop and subcell indices
-//! \param[in] deg the degrees list (size [3])
-//! \param[in] raf the refinments list (size [3])
-//! \param[out] ipg the glop index in the macrocell
-//! \param[in] ic the 3 subcell indices in x,y,z directions
-//! \param[in] ix the 3 glop indices in the subcell
-#pragma start_opencl
-void xyz_to_ipg(const int *raf, const int *deg, const int *ic, const int *ix,
-		int *ipg);
-#pragma end_opencl
 
 //! \brief return the reference coordinates xpg[3] and weight wpg of the GLOP ipg
 //! \param[in] deg degrees list
@@ -166,6 +157,30 @@ void psi_ref_subcell(int *deg, int *raf, int* is,int ib, real* xref, real* psi, 
 //! \param[in] i GLOP 1D index
 //! \returns the position in [0,1]
 real glop(int deg,int i);
+
+//! \brief compute 3d glop and subcell indices from the index
+//! of the glop in the macrocell
+//! \param[in] deg the degrees list (size [3])
+//! \param[in] raf the refinments list (size [3])
+//! \param[in] ipg the glop index in the macrocell
+//! \param[out] ic the 3 subcell indices in x,y,z directions
+//! \param[out] ix the 3 glop indices in the subcell
+#pragma start_opencl
+void ipg_to_xyz(const int *raf, const int *deg, int *ic, int *ix, const 
+		int *ipg);
+#pragma end_opencl
+
+//! \brief compute the index of the glop in the macrocell
+//!  from 3d glop and subcell indices
+//! \param[in] deg the degrees list (size [3])
+//! \param[in] raf the refinments list (size [3])
+//! \param[out] ipg the glop index in the macrocell
+//! \param[in] ic the 3 subcell indices in x,y,z directions
+//! \param[in] ix the 3 glop indices in the subcell
+#pragma start_opencl
+void xyz_to_ipg(const int *raf, const int *deg, const int *ic, const int *ix,
+		int *ipg);
+#pragma end_opencl
 
 //! \brief return the 1d ith GLOP weight for degree deg
 //! \param[in] deg degree
