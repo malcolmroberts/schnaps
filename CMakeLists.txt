@@ -364,6 +364,14 @@ target_link_libraries(testtransport_steady ${LIBS})
 add_test(testtransport_steady testtransport_steady)
 
 add_executable(
+  testextractionimplicit
+  test/test.h
+  test/testextractionimplicit.c
+)
+target_link_libraries(testextractionimplicit ${LIBS})
+add_test(testextractionimplicit testextractionimplicit)
+
+add_executable(
   testshequilibrium2d
   test/test.h
   test/testshequilibrium2d.c
