@@ -7,48 +7,47 @@
 // on a macrocell
 //! \brief a struct for managing geometric mapping
 typedef struct Interpolation{
-  //! \brief interpolation parameters
-  //! \details generally the convention is 
-  //! param[0] = M number of variables 
-  //! param[1] = deg x 
-  //! param[2] = deg y 
-  //! param[3] = deg z 
-  //! param[4] = raf x 
-  //! param[5] = raf y 
-  //! param[6] = raf z 
-  //! param[7..] = others param or return from interp
-  int interp_param[8];
+
+  //! number of conservative variables 
+  int m;
+
+  //! approximation degrees in each direction
+  int deg[3];
+
+  //! refinement of the macrocell in each direction
+  int raf[3];
 
   //! \brief underlying geometry mapping
   Geom geo;
-  //! \brief current Gauss point index
-  int i;
-  //! \brief number of Gauss points in the volume
-  int npgv;
-  //! \brief current Gauss point index
-  int ipgv;
-  //! \brief current face id
-  int ifa;
-  //! \brief number of Gauss points on the current face
-  int npgf;
-  //! \brief current face Gauss point index
-  int ipgf;
-  //! \brief basis function index
-  int ib;
-  //! \brief current volume Gauss weight
-  real wpgv;
-  //! \brief  current face Gauss weight
-  real wpgf;
-  //! \brief Gauss point ref location
-  real xpgref[3];
-  //! \brief Gauss point physical location
-  real xpg[3];
-  //! \brief basis function values
-  real phi;
-  //! \brief basis function reference gradient
-  real dphiref[3];
-  //! \brief basis function physical gradient
-  real dphi[3];
+  
+  /* //! \brief current Gauss point index */
+  /* int i; */
+  /* //! \brief number of Gauss points in the volume */
+  /* int npgv; */
+  /* //! \brief current Gauss point index */
+  /* int ipgv; */
+  /* //! \brief current face id */
+  /* int ifa; */
+  /* //! \brief number of Gauss points on the current face */
+  /* int npgf; */
+  /* //! \brief current face Gauss point index */
+  /* int ipgf; */
+  /* //! \brief basis function index */
+  /* int ib; */
+  /* //! \brief current volume Gauss weight */
+  /* real wpgv; */
+  /* //! \brief  current face Gauss weight */
+  /* real wpgf; */
+  /* //! \brief Gauss point ref location */
+  /* real xpgref[3]; */
+  /* //! \brief Gauss point physical location */
+  /* real xpg[3]; */
+  /* //! \brief basis function values */
+  /* real phi; */
+  /* //! \brief basis function reference gradient */
+  /* real dphiref[3]; */
+  /* //! \brief basis function physical gradient */
+  /* real dphi[3]; */
 
 } Interpolation;
 

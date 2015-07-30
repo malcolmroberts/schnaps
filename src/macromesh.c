@@ -779,6 +779,10 @@ int CompareFace4Sort(const void* a,const void* b) {
 
 void CheckMacroMesh(MacroMesh *m, int *deg, int *raf) {
   Geom g;
+  g.nbrefnodes = 20;
+
+  real physnode[g.nbrefnodes][3];
+  
   real face_centers[6][3]={ {0.5,0.0,0.5},
 			    {1.0,0.5,0.5},
 			    {0.5,1.0,0.5},
@@ -797,11 +801,11 @@ void CheckMacroMesh(MacroMesh *m, int *deg, int *raf) {
 
   for(int ie = 0; ie < m->nbelems; ie++) {
     // Load geometry for macro element ie:
-    for(int inoloc = 0; inoloc < 20; inoloc++) {
-      int ino = m->elem2node[20 * ie + inoloc];
-      g.physnode[inoloc][0] = m->node[3 * ino + 0];
-      g.physnode[inoloc][1] = m->node[3 * ino + 1];
-      g.physnode[inoloc][2] = m->node[3 * ino + 2];
+    for(int inoloc = 0; inoloc < g.nbrefnodes; inoloc++) {
+      int ino = m->elem2node[g.nbrefnodes * ie + inoloc];
+      physnode[inoloc][0] = m->node[3 * ino + 0];
+      physnode[inoloc][1] = m->node[3 * ino + 1];
+      physnode[inoloc][2] = m->node[3 * ino + 2];
     }
 
     // Test that the ref_ipg function is compatible with ref_pg_vol
@@ -810,11 +814,11 @@ void CheckMacroMesh(MacroMesh *m, int *deg, int *raf) {
       real xref1[3], xref_in[3];
       real wpg;
       ref_pg_vol(deg, raf, ipg, xref1, &wpg, xref_in);
-      memcpy(g.xref, xref1, sizeof(g.xref));
+      //memcpy(g.xref, xref1, sizeof(g.xref));
 
-      g.ifa = 0;
-      GeomRef2Phy(&g);
-      GeomPhy2Ref(&g);
+      /* g.ifa = 0; */
+      /* GeomRef2Phy(&g); */
+      /* GeomPhy2Ref(&g); */
 
       // if(param[4]==1 && param[5]==1 && param[6]==1) {
       //printf("ipg %d ipg2 %d xref %f %f %f\n",ipg,
@@ -827,28 +831,37 @@ void CheckMacroMesh(MacroMesh *m, int *deg, int *raf) {
     }
 
     // middle of the element
-    g.xref[0] = 0.5;
-    g.xref[1] = 0.5;
-    g.xref[2] = 0.5;
+    real xref[3];
+    
+    xref[0] = 0.5;
+    xref[1] = 0.5;
+    xref[2] = 0.5;
 
-    GeomRef2Phy(&g);
     real xphym[3];
-    memcpy(xphym, g.xphy, sizeof(xphym));
+    Ref2Phy(physnode, xref, NULL, 0, xphym, NULL, NULL, NULL, NULL);
+    /* GeomRef2Phy(&g); */
+    /* memcpy(xphym, g.xphy, sizeof(xphym)); */
 
     for(int ifa = 0; ifa < 6; ifa++) {
       // Middle of the face
-      memcpy(g.xref, face_centers[ifa], sizeof(g.xref));
-      g.ifa = ifa;
-      GeomRef2Phy(&g);
-      // Check volume  orientation
-      assert(g.det > 0);
+      /* memcpy(g.xref, face_centers[ifa], sizeof(g.xref)); */
+      /* g.ifa = ifa; */
+      /* GeomRef2Phy(&g); */
 
-      real vec[3] = {g.xphy[0] - xphym[0],
-		     g.xphy[1] - xphym[1],
-		     g.xphy[2] - xphym[2]};
+      real xphy[3];
+      real dtau[3][3], codtau[3][3], vnds[3];
+      Ref2Phy(physnode, face_centers[ifa], NULL, ifa, xphy, dtau, codtau, NULL, vnds); 
+      real det = dot_product(dtau[0], codtau[0]);
+      
+      // Check volume  orientation
+      assert(det > 0);
+
+      real vec[3] = {xphy[0] - xphym[0],
+		     xphy[1] - xphym[1],
+		     xphy[2] - xphym[2]};
 
       // Check face orientation
-      assert(0 < dot_product(g.vnds, vec));
+      assert(0 < dot_product(vnds, vec));
 
       // Check compatibility between face and volume numbering
       for(int ipgf = 0; ipgf < NPGF(deg, raf, ifa); ipgf++) {

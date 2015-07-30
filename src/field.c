@@ -414,6 +414,15 @@ void Initfield(field *f, Model model,
 
   f->model = model;
 
+  f->interp.m = model.m;
+  
+  f->interp.deg[0] = deg[0];
+  f->interp.deg[1] = deg[1];
+  f->interp.deg[2] = deg[2];
+
+  f->interp.raf[0] = raf[0];
+  f->interp.raf[1] = raf[1];
+  f->interp.raf[2] = raf[2];
 
   f->deg[0] = deg[0];
   f->deg[1] = deg[1];

@@ -9,28 +9,29 @@
 //! \brief a struct for managing geometric mapping
 typedef struct Geom{
   //! number of nodes in the reference element
-#define _NB_REF_NODES 20
-  //! nodes of the reference element
-  real physnode[_NB_REF_NODES][3];
-  //! position of a point on the ref elem
-  real xref[3];
-  //! gradient of a function on the ref elem
-  real dphiref[3];
-  //! position of a point on the physical elem
-  real xphy[3];
-  //! mapping jacobian, its comatrix and the determinant
-  real dtau[3][3];
-  real codtau[3][3];
-  real det;
-  //! gradient of a function on the physical elem
-  real dphi[3];
-  //! normal vector in the physical elem on face ifa
-  int ifa;
-  real vnds[3];
+  //#define _NB_REF_NODES 20
+  int nbrefnodes;
+  /* //! nodes of the reference element */
+  /* real physnode[_NB_REF_NODES][3]; */
+  /* //! position of a point on the ref elem */
+  /* real xref[3]; */
+  /* //! gradient of a function on the ref elem */
+  /* real dphiref[3]; */
+  /* //! position of a point on the physical elem */
+  /* real xphy[3]; */
+  /* //! mapping jacobian, its comatrix and the determinant */
+  /* real dtau[3][3]; */
+  /* real codtau[3][3]; */
+  /* real det; */
+  /* //! gradient of a function on the physical elem */
+  /* real dphi[3]; */
+  /* //! normal vector in the physical elem on face ifa */
+  /* int ifa; */
+  /* real vnds[3]; */
 
   // some pointers to particular functions
   //! \brief pointer to particular Ref2Phy mapping
-  void (*Ref2Phy)(real physnode[_NB_REF_NODES][3],
+  void (*Ref2Phy)(real physnode[][3],
                       real xref[3],
                       real dphiref[3],
                       int ifa,
@@ -41,7 +42,7 @@ typedef struct Geom{
                       real vnds[3]);
 
   //! \brief pointer to a particular Phy2Ref inverse mapping
-  void (*Phy2Ref)(real physnode[_NB_REF_NODES][3],real xphy[3],real xref[3]);
+  void (*Phy2Ref)(real physnode[][3],real xphy[3],real xref[3]);
 } Geom;
 
 
