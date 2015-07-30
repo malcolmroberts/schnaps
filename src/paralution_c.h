@@ -12,4 +12,8 @@
     char*, int*, int*, double*, double*, double, 
     double, double, int, int, int, int, double*, int*, double*, int*);
 
+void paralution_begin();
+
+void paralution_end();
+
 #endif /* PARALUTION */

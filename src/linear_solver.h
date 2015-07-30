@@ -4,6 +4,7 @@
 #include "global.h"
 #include <stdbool.h>
 #include "field.h"
+#include "paralution_c.h"
 
 
 typedef enum MatrixStorage{SKYLINE,CSR} MatrixStorage;

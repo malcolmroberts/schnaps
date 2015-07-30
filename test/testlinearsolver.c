@@ -29,7 +29,9 @@ int TestLinearSolver(void){
 
   LinearSolver sky;
 
- 
+#ifdef PARALUTION 
+  paralution_begin();
+#endif 
 
   // preliminary work on the skyline struct
   // _NN is the size of the linear system to be solved
@@ -313,6 +315,10 @@ int TestLinearSolver(void){
 
 
   if(test1==1 &&  test2==1 && test3==1) test=1;
+
+#ifdef PARALUTION 
+  paralution_end();
+#endif 
 
   return test;
 

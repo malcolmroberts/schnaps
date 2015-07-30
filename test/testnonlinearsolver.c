@@ -48,6 +48,10 @@ int TestNonLinearSolver(void){
   real b[_NN],sold[_NN],soln[_NN],fsoln[_NN],rhs[_NN];
   double verr;
 
+#ifdef PARALUTION 
+  paralution_begin();
+#endif 
+
   LinearSolver sky;
   JFLinearSolver skyJF;
     Skyline * skymat;
@@ -355,6 +359,10 @@ int TestNonLinearSolver(void){
   
 
   if(test1==1 &&  test2==1 && test3==1) test=1;
+
+#ifdef PARALUTION 
+  paralution_end();
+#endif 
 
   return test;
 

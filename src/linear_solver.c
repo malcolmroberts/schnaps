@@ -24,7 +24,7 @@ void InitLinearSolver(LinearSolver* lsol,int n,
   lsol->rhs=NULL;
   lsol->sol=NULL;
   lsol->MatVecProduct=NULL;
-  lsol->tol=1.e-6;
+  lsol->tol=1.e-8;
   lsol->restart_gmres=1;
   lsol->iter_max=10000;
 
@@ -396,7 +396,15 @@ void Solver_Paralution(LinearSolver* lsol){
 
   storage="CSR";
   norm_rhs=Vector_norm2(lsol->rhs,lsol->neq);
-  a_tol=1.e-8*(1.0+1.e-20*norm_rhs);
+  a_tol=1.e-9*(1.0+1.e-20*norm_rhs);
+
+  if(lsol->neq<61) {
+    basis_size_gmres = (int) (lsol->neq/2);
+    }
+  else {
+      basis_size_gmres = 30;
+    }
+
 
   switch(lsol->solver_type){
   case PAR_CG :
