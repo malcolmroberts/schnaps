@@ -141,7 +141,7 @@ void InternalCoupling(Simulation *simu,  LinearSolver *solver, int isky){
 		   f->raf[1],
 		   f->raf[2]};
 
-    const unsigned int sc_npg = npg[0] * npg[1] * npg[2];
+    //const unsigned int sc_npg = npg[0] * npg[1] * npg[2];
 
     // Loop on the subcells
     for(int icL0 = 0; icL0 < nraf[0]; icL0++) {
@@ -607,9 +607,7 @@ void MassAssembly(Simulation *simu,  LinearSolver *solver){
     int deg[3] = {f->deg[0],
 		  f->deg[1],
 		  f->deg[2]};
-    const int npg[3] = {deg[0] + 1,
-			deg[1] + 1,
-			deg[2] + 1};
+
     int nraf[3] = {f->raf[0],
 		   f->raf[1],
 		   f->raf[2]};
@@ -649,9 +647,7 @@ void SourceAssembly(Simulation *simu,  LinearSolver *solver, real theta, real dt
     int deg[3] = {f->deg[0],
 		  f->deg[1],
 		  f->deg[2]};
-    const int npg[3] = {deg[0] + 1,
-			deg[1] + 1,
-			deg[2] + 1};
+
     int nraf[3] = {f->raf[0],
 		   f->raf[1],
 		   f->raf[2]};

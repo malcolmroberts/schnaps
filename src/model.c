@@ -333,9 +333,9 @@ real compact_poly6(real r)
 
 void vlaTransImposedData2d(const real *x, const real t, real *w) 
 {
-  real PI = 4.0 * atan(1.0);
-  real s2pi = sqrt(2.0 * PI);
-  real xval = 1.0;
+  //real PI = 4.0 * atan(1.0);
+  //real s2pi = sqrt(2.0 * PI);
+  //real xval = 1.0;
   real sigma = 0.1;
 
   for(int ix = 0; ix < vlasov_mx; ++ix) {
@@ -347,7 +347,7 @@ void vlaTransImposedData2d(const real *x, const real t, real *w)
       real py = x[1] - vy * t;
 
       real r = sqrt(px * px + py * py);
-      real pi = 4.0 * atan(1.0);
+      //real pi = 4.0 * atan(1.0);
       real pr = icgaussian(r, sigma);
 
       real vr = sqrt(vx * vx + vy * vy);

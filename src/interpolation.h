@@ -130,6 +130,7 @@ int ref_ipg(__constant int* deg, __constant int* raf,real* xref);
 //! returns the volume index of the face gauss point
 int ref_pg_face(int* deg, int *raf,int ifa,int ipgf,real* xpg,real* wpg,
 		 real* xpgin);
+
 //! \brief return the value and the gradient of the basis
 //! functions.
 //! Warning: the value of the gradient is

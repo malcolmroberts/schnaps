@@ -89,9 +89,7 @@ void PlotFields(int typplot, int compare, Simulation* simu, char *fieldname,
   for(int i = 0; i < 3 * 64; ++i)
     hexa64ref[i] /= 3.0;
 
-  int *elem2nodes = simu->macromesh.elem2node;
-  real *node = simu->macromesh.node;
-
+ 
   FILE * gmshfile;
   gmshfile = fopen(filename, "w" );
 
@@ -119,8 +117,7 @@ void PlotFields(int typplot, int compare, Simulation* simu, char *fieldname,
   int npgv = NPG(deg, nraf);
   for(int i = 0; i < simu->macromesh.nbelems; i++) {
     // Get the nodes of element L
-    int nnodes = 20;
-
+ 
     field *f = simu->fd + i;
     // Loop on the macro elem subcells
     int icL[3];
@@ -420,7 +417,6 @@ void RK2(Simulation *simu, real tmax){
   simu->tmax = tmax;
 
   simu->itermax_rk = tmax / simu->dt;
-  int size_diags;
   int freq = (1 >= simu->itermax_rk / 10)? 1 : simu->itermax_rk / 10;
   int iter = 0;
 
@@ -428,7 +424,7 @@ void RK2(Simulation *simu, real tmax){
   assert(wnp1);
 
   // FIXME: remove
-  size_diags = simu->nb_diags * simu->itermax_rk;
+  //int size_diags = simu->nb_diags * simu->itermax_rk;
   simu->iter_time_rk = iter;
 
   /* if(simu->nb_diags != 0) */

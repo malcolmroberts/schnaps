@@ -63,7 +63,7 @@ int Test_Wave_Steady(void) {
   model.Source = TestSteady_Wave_Source; 
 
   int deg[]={3, 3, 0};
-  int raf[]={2, 2, 1};
+  int raf[]={8, 8, 1};
   
   CheckMacroMesh(&mesh, deg, raf);
   Simulation simu, simu2;
@@ -88,6 +88,8 @@ int Test_Wave_Steady(void) {
 
   test = test && (dd < tolerance);
 
+  tmax = 1;
+  
   InitSimulation(&simu2, &mesh, deg, raf, &model);
   ThetaTimeScheme(&simu2, tmax, simu.dt);
   

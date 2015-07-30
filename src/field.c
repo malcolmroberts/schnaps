@@ -29,9 +29,9 @@
 #pragma start_opencl
 int GenericVarindex(__constant int *deg, __constant int *raf, int m,
 		    int ipg, int iv) {
-  int npg = (deg[0] + 1) * (deg[1] + 1) * (deg[2] + 1)
-    * raf[0] * raf[1] * raf[2];
   return iv + m * ipg;
+  //int npg = (deg[0] + 1) * (deg[1] + 1) * (deg[2] + 1)
+  //  * raf[0] * raf[1] * raf[2];
   //return ipg + npg * iv;
 }
 #pragma end_opencl
@@ -437,7 +437,7 @@ void Initfield(field *f, Model model,
 
   int nmem = f->model.m * NPG(f->deg, f->raf);
   f->wsize = nmem;
-  real g_memsize = nmem * sizeof(real) * 1e-9;
+  //real g_memsize = nmem * sizeof(real) * 1e-9;
   /* if(sizeof(real) == sizeof(real)) */
   /*   printf("Allocating %d doubles per array (%f GB).\n", nmem, g_memsize); */
   /* else */
@@ -846,7 +846,7 @@ void DGMass(field *f, real *w, real *dtw)
 	    xphy, dtau, // xphy, dtau
 	    codtau, NULL, NULL); // codtau, dpsi, vnds
     real det = dot_product(dtau[0], codtau[0]);
-    for(int iv = 0; iv < f->model.m; iv++) {
+    for(int iv = 0; iv < m; iv++) {
       int imem = f->varindex(f->deg, f->raf, f->model.m, ipg, iv);
       dtw[imem] /= (wpg * det);
     }
@@ -871,7 +871,7 @@ void DGSource(field *f, real *w, real *dtw)
 	    NULL, -1, // dpsiref, ifa
 	    xphy, dtau, // xphy, dtau
 	    codtau, NULL, NULL); // codtau, dpsi, vnds
-    real det = dot_product(dtau[0], codtau[0]);  //// temp !!!!!!!!!!!!!!!
+    //real det = dot_product(dtau[0], codtau[0]);  //// temp !!!!!!!!!!!!!!!
     real wL[m], source[m];
     for(int iv = 0; iv < m; ++iv){
       int imem = f->varindex(f->deg, f->raf, f->model.m, ipg, iv);
@@ -1072,11 +1072,11 @@ real L2error_onefield(Simulation *simu, int nbfield) {
 
 
 void InterpField(field *f, real *xref, real *w){
-  const int deg[3] = {f->deg[0],
+  int deg[3] = {f->deg[0],
 		      f->deg[1],
 		      f->deg[2]};
 
-  const int nraf[3] = {f->raf[0],
+  int nraf[3] = {f->raf[0],
 		       f->raf[1],
 		       f->raf[2]};
 
@@ -1090,14 +1090,14 @@ void InterpField(field *f, real *xref, real *w){
     assert(is[ii] < nraf[ii] && is[ii]>= 0);
   }
   
-  int npgv = NPG(f->deg, f->raf);
+  int npgv = NPG(deg, nraf);
   // TODO: loop only on non zero basis function
   for(int ib = 0; ib < npgv; ib++) {
     real psi;
-    psi_ref_subcell(f->deg, f->raf, is, ib, xref, &psi, NULL);
+    psi_ref_subcell(deg, nraf, is, ib, xref, &psi, NULL);
     
     for(int iv=0;iv<f->model.m;iv++){
-      int imem = f->varindex(f->deg, f->raf, f->model.m, ib, iv);
+      int imem = f->varindex(deg, nraf, f->model.m, ib, iv);
       w[iv] += psi * f->wn[imem];
     }
   }
