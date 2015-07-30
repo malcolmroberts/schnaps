@@ -117,6 +117,8 @@ list(APPEND
   src/linear_solver.c
   src/solvercontinuous.h
   src/solvercontinuous.c
+  src/continuouspc.h
+  src/continuouspc.c
   src/solverpoisson.h
   src/solverpoisson.c
   src/quantities_vp.h
