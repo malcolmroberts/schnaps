@@ -20,7 +20,7 @@ int Testfield(void){
   int raf[]={2, 2, 2};
   
   MacroMesh mesh;
-  ReadMacroMesh(&mesh,"test/testmacromesh.msh");
+  ReadMacroMesh(&mesh,"../test/testmacromesh.msh");
   BuildConnectivity(&mesh);
 
   CheckMacroMesh(&mesh, deg, raf);

@@ -111,9 +111,9 @@ int TestMHD(int argc, char *argv[]) {
   //set_vlasov_params(&(f.model));
 
   // Read the gmsh file
-  //ReadMacroMesh(&(f.macromesh), "test/testcartesiangrid2d2.msh");
-  ReadMacroMesh(&(f.macromesh), "test/testOTgrid.msh");
-  //ReadMacroMesh(&(f.macromesh), "test/testcube.msh");
+  //ReadMacroMesh(&(f.macromesh), "../test/testcartesiangrid2d2.msh");
+  ReadMacroMesh(&(f.macromesh), "../test/testOTgrid.msh");
+  //ReadMacroMesh(&(f.macromesh), "../test/testcube.msh");
   // Try to detect a 2d mesh
   Detect2DMacroMesh(&(f.macromesh)); 
   bool is2d=f.macromesh.is2d; 

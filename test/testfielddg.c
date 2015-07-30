@@ -23,8 +23,8 @@ int TestfieldDG(void){
   int raf[]={4, 4, 4};
   
   MacroMesh mesh;
-  ReadMacroMesh(&mesh,"test/testmacromesh.msh");
-  //ReadMacroMesh(&mesh,"test/testcube2.msh");
+  ReadMacroMesh(&mesh,"../test/testmacromesh.msh");
+  //ReadMacroMesh(&mesh,"../test/testcube2.msh");
   BuildConnectivity(&mesh);
 
   /* real A[3][3] = {{10,2 , 0}, {0, 1, -0.1}, {0, 0.1,1}}; */

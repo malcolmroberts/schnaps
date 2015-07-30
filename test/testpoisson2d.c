@@ -41,7 +41,7 @@ int TestPoisson2d(void)
 
   
   MacroMesh mesh;
-  ReadMacroMesh(&mesh,"test/testdisque2d.msh");
+  ReadMacroMesh(&mesh,"../test/testdisque2d.msh");
   Detect2DMacroMesh(&mesh);
   bool is2d=mesh.is2d;
   assert(is2d);

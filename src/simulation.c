@@ -56,7 +56,6 @@ void InitSimulation(Simulation *simu, MacroMesh *mesh,
   }
 
   simu->pre_dtfields = NULL;
-
   simu->nb_diags = 0;
 
 }
@@ -401,7 +400,7 @@ real L2error(Simulation *simu) {
 	//for(int iv = 0; iv < 4; iv++) {   ///////error here for coil2d
 	real diff = w[iv] - wex[iv];
        error += diff * diff * wpg * det;
-        mean += w[iv] * w[iv] * wpg * det;
+        mean += wex[iv] * wex[iv] * wpg * det;
 	//printf("ie=%d ipg=%d iv=%d err=%f \n",ie,ipg,iv,diff);
         }
     }

@@ -1,3 +1,4 @@
+#include "implicit.h"
 #include "schnaps.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -25,7 +26,7 @@ int Test_Wave_Periodic(void) {
   bool test = true;
 
   MacroMesh mesh;
-  ReadMacroMesh(&mesh,"test/testcube.msh");
+  ReadMacroMesh(&mesh,"../test/testcube.msh");
   Detect2DMacroMesh(&mesh);
   
   real A[3][3] = {{_LENGTH_DOMAIN, 0, 0}, {0, _LENGTH_DOMAIN, 0}, {0, 0,1}};
@@ -36,9 +37,8 @@ int Test_Wave_Periodic(void) {
 
   Model model;
 
-  model.m=3; 
+  model.m = 3; 
   model.NumFlux=Wave_Upwind_NumFlux;
- 
   model.InitData = TestPeriodic_Wave_InitData;
   model.ImposedData = TestPeriodic_Wave_ImposedData;
   model.BoundaryFlux = Wave_Upwind_BoundaryFlux;
@@ -55,7 +55,7 @@ int Test_Wave_Periodic(void) {
 
   InitSimulation(&simu, &mesh, deg, raf, &model);
  
-  real tmax = 0.01;
+  real tmax = 0.025;
   simu.cfl=0.2;
   simu.vmax=_SPEED_WAVE;
   RK4(&simu,tmax);
@@ -63,17 +63,31 @@ int Test_Wave_Periodic(void) {
   real dd = 0;
   dd = L2error(&simu);
 
-  printf("erreur L2=%f\n", dd);
+  printf("erreur L2=%.12e\n", dd);
 
-  real tolerance = 0.001;
+  real tolerance = 0.002;
 
-  test = dd < tolerance;
+  test = test && (dd < tolerance);
 
-   // Save the results and the error
-  //PlotFields(0,false, &simu, "p", "dgvisup.msh");
-  //PlotFields(1,false, &simu, "u1", "dgvisuu1.msh");
-  //PlotFields(2,false, &simu, "u2", "dgvisuu2.msh");
+  PlotFields(0,false, &simu, "p", "dgvisu_exp.msh");
+  PlotFields(1,false, &simu, "u", "dgvisu_exu.msh");
+  PlotFields(2,false, &simu, "v", "dgvisu_exv.msh");
 
+  Simulation simu2;
+
+  InitSimulation(&simu2, &mesh, deg, raf, &model);
+  ThetaTimeScheme(&simu2, tmax, simu.dt);
+
+  
+  dd = L2error(&simu2);
+
+  printf("erreur implicit L2=%.12e\n", dd);
+
+  test = test && (dd < tolerance);
+
+  PlotFields(0,false, &simu2, "p", "dgvisu_imp.msh");
+  PlotFields(1,false, &simu2, "u", "dgvisu_imu.msh");
+  PlotFields(2,false, &simu2, "v", "dgvisu_imv.msh");
   
 
   return test;

@@ -16,11 +16,11 @@ int TestfieldRK4(void){
   // 3D meshes"
   // test/testdisque.msh
 
-  char *mshname =  "test/disque2d.msh";
+  char *mshname =  "../test/disque2d.msh";
   
   MacroMesh mesh;
   ReadMacroMesh(&mesh,mshname);
-  //ReadMacroMesh(&mesh,"test/testcube2.msh");
+  //ReadMacroMesh(&mesh,"../test/testcube2.msh");
   Detect2DMacroMesh(&mesh);
   BuildConnectivity(&mesh);
 

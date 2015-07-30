@@ -26,7 +26,7 @@ int TestMacroFace(void){
   // 3D meshes"
   // test/testdisque.msh
 
-  char *mshname =  "test/disque2d.msh";
+  char *mshname =  "../test/disque2d.msh";
   
   ReadMacroMesh(&(f.macromesh), mshname);
 
@@ -76,7 +76,7 @@ int TestMacroFace(void){
 
   // From testfieldrk2:
   
-  //char *mshname =  "test/testdisque.msh";
+  //char *mshname =  "../test/testdisque.msh";
   /* f.model.cfl = 0.05; */
   /* f.model.m = 1; */
   /* f.model.NumFlux = TransNumFlux; */

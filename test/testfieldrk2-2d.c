@@ -8,7 +8,7 @@ int TestfieldRK2_2D(void) {
   bool test = true;
 
   MacroMesh mesh;
-  ReadMacroMesh(&mesh,"test/testdisque2d.msh");
+  ReadMacroMesh(&mesh,"../test/testdisque2d.msh");
   Detect2DMacroMesh(&mesh);
   // require a 2d computation
   assert(mesh.is2d);

@@ -33,7 +33,10 @@ typedef struct LinearSolver{
   bool is_alloc;
 
    //! \brief true if the matrix is assembly
-  bool is_assembly;
+  bool mat_is_assembly;
+
+   //! \brief true if the matrix is assembly
+  bool rhs_is_assembly;
 
   //! solver type;
   Solver solver_type;

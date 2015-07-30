@@ -25,7 +25,7 @@ void MatrixPoisson_Continuous(void * cs,LinearSolver* lsol){
 
    field* f0 = &ps->simu->fd[0];
 
-  if(!ps->lsol.is_assembly){
+  if(!ps->lsol.mat_is_assembly){
     for(int ie = 0; ie < ps->nbel; ie++){  
 
       // local matrix 
@@ -212,7 +212,7 @@ void SolvePoisson1D(Simulation *simu,real * w,int type_bc, real bc_l, real bc_r,
     AllocateLinearSolver(&sky);
   }
 
-  if(!sky.is_assembly){
+  if(!sky.mat_is_assembly){
   // local matrix (assuming identical finite elements)
     real aloc[degx+1][degx+1];
     for(int iloc=0;iloc<degx+1;iloc++){
@@ -250,7 +250,7 @@ void SolvePoisson1D(Simulation *simu,real * w,int type_bc, real bc_l, real bc_r,
       AddLinearSolver(&sky,neq-1,neq-1,1e20);
     }
 
-    sky.is_assembly=true;
+    sky.mat_is_assembly=true;
   }
 
   //DisplayLinearSolver(&sky);

@@ -288,7 +288,7 @@ void ExactDirichletContinuousMatrix(void * cs,LinearSolver* lsol){
     real bigval = 1e20;
     if (ps->is_boundary_node[ino]) AddLinearSolver(&ps->lsol,ino,ino,bigval);
   }
-  ps->lsol.is_assembly=true;
+  ps->lsol.mat_is_assembly=true;
   
   for(int var =0; var < ps->nb_phy_vars; var++){ 
     for(int ie = 0; ie < ps->simu->macromesh.nbelems; ie++){  

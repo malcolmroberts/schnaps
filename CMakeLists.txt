@@ -8,26 +8,30 @@ project(schnaps)
 #set(CMAKE_C_COMPILER "/opt/local/bin/gcc-mp-4.8")
 SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
+
 #set(CMAKE_C_FLAGS "-std=c99 -D_REENTRANT -O3 -g -D_POSIX_C_SOURCE=200112L")
 #set(CMAKE_C_FLAGS "-std=gnu99 -D_REENTRANT -O3 -g")
 
 #set(CMAKE_C_FLAGS " -std=c99 -D_REENTRANT -O3 ")
-set(CMAKE_C_FLAGS " -std=c99  -D_DOUBLE_PRECISION -g  -O3")
+set(CMAKE_C_FLAGS " -std=c99  -D_DOUBLE_PRECISION -D_SCHNAPS_DIR=${PROJECT_SOURCE_DIR} -O3 -g  ")
+
+MESSAGE(${CMAKE_C_FLAGS})
+
 
 #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_DOUBLE_PRECISION")
 
-OPTION(USE_OPENCL
-  "Compile with the OpenCL library"
-  OFF)
+OPTION(USE_OPENCL "Activate OpenCL library" OFF)
 
-IF(USE_OPENCL)# set with: cmake . -DUSE_OPENCL:BOOL=ON
-  MESSAGE(STATUS "Compiling with OpenCL Library")
+IF(USE_OPENCL) # set with: cmake . -DUSE_OPENCL:BOOL=ON
+  MESSAGE(STATUS "Try to find OpenCL Library")
   find_package (OpenCL)
   if(OPENCL_FOUND)
     MESSAGE(STATUS "OpenCL found")
   else()
     MESSAGE(STATUS "OpenCL not found")
   endif(OPENCL_FOUND)
+else()
+  MESSAGE(STATUS "OpenCL is not activated")
 ENDIF(USE_OPENCL)
 
 if(OPENCL_FOUND)
@@ -82,6 +86,8 @@ list(APPEND
   src/simulation.h
   src/field.c
   src/field.h
+  src/implicit.h
+  src/implicit.c
   src/geometry.c
   src/geometry.h
   src/global.c
@@ -109,8 +115,6 @@ list(APPEND
   src/dpackfgmres.c
   src/linear_solver.h
   src/linear_solver.c
-  src/implicit.h
-  src/implicit.c
   src/solvercontinuous.h
   src/solvercontinuous.c
   src/solverpoisson.h
@@ -351,7 +355,29 @@ add_executable(
 target_link_libraries(testwave2d-steady ${LIBS})
 add_test(testwave2d-steady testwave2d-steady)
 
+add_executable(
+  testtransport_steady
+  test/test.h
+  test/testtransport_steady.c
+)
+target_link_libraries(testtransport_steady ${LIBS})
+add_test(testtransport_steady testtransport_steady)
 
+add_executable(
+  testshequilibrium2d
+  test/test.h
+  test/testshequilibrium2d.c
+)
+target_link_libraries(testshequilibrium2d ${LIBS})
+add_test(testshequilibrium2d testshequilibrium2d)
+
+add_executable(
+  testshperiodic2d
+  test/test.h
+  test/testshperiodic2d.c
+)
+target_link_libraries(testshperiodic2d ${LIBS})
+add_test(testshperiodic2d testshperiodic2d)
 
 IF(BUILD_PARALUTION)
 
