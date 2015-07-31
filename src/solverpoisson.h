@@ -13,11 +13,6 @@
 #include "solvercontinuous.h"
 
 
-//! \brief init the rhs for poisson solver
-//! \param[inout] lsol a linear solver allocate
-//! \param[in] a continuous solver
-void MatrixPoisson_Continuous(void * cs,LinearSolver* lsol);
-
 
 //! \brief compute the electirc field for poisson
 //! \param[inout] lsol a linear solver allocate

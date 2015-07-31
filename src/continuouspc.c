@@ -14,7 +14,17 @@ void physicPC_wave(Simulation *simu, real* globalSol, real* globalRHS){
   listvar[0]=0;
   
   InitContinuousSolver(&pressionSolver,simu,1,nb_var,listvar);
-  pressionSolver.matrix_assembly=MassMatrix;
+
+  real D[4][4] = {{1,0,0,0},
+                  {0,0,0,0},
+                  {0,0,0,0},
+                  {0,0,0,0}};
+  for (int i=0;i<4;i++){
+    for (int j=0;j<4;j++){
+      pressionSolver.diff_op[i][j]=D[i][j];
+    }
+  }
+  pressionSolver.matrix_assembly=GenericOperatorScalar_Continuous;//MassMatrix;
   pressionSolver.bc_assembly=NULL;// ExactDirichletContinuousMatrix;
   pressionSolver.postcomputation_assembly=NULL;//Computation_ElectricField_Poisson;
 
@@ -42,7 +52,32 @@ void physicPC_wave(Simulation *simu, real* globalSol, real* globalRHS){
   listvar2[1]=2;
   
   InitContinuousSolver(&velocitySolver,simu,1,nb_var,listvar2);
-  velocitySolver.matrix_assembly=MassMatrix;
+  real D2[4][4][4] = {    {{1,0,0,0},
+                           {0,0,0,0},
+                           {0,0,0,0},
+                           {0,0,0,0}},
+                          {{0,0,0,0},
+                           {0,0,0,0},
+                           {0,0,0,0},
+                           {0,0,0,0}},
+                          {{0,0,0,0},
+                           {0,0,0,0},
+                           {0,0,0,0},
+                           {0,0,0,0}},
+                          {{1,0,0,0},
+                           {0,0,0,0},
+                           {0,0,0,0},
+                           {0,0,0,0}}};
+                          
+  for (int k=0;k<4;k++){
+    for (int i=0;i<4;i++){
+      for (int j=0;j<4;j++){
+        velocitySolver.diff_op2vec[k][i][j]=D2[k][i][j];
+      }
+    }
+  }
+
+  velocitySolver.matrix_assembly=GenericOperator2Vec_Continuous;
   velocitySolver.bc_assembly=NULL;// ExactDirichletContinuousMatrix;
   velocitySolver.postcomputation_assembly=NULL;//Computation_ElectricField_Poisson;
 
@@ -129,67 +164,29 @@ void VectorDgToCg(ContinuousSolver * cs,real * rhs){
   free(rhsCopy);
 }
 
+void VectorCgToDg(ContinuousSolver * cs,real * rhs){
 
-void MassMatrix(void* ps, LinearSolver *lsol){
+  field* f0 = &cs->simu->fd[0];
 
-  ContinuousSolver *cs = ps;
-   field* fg = &cs->simu->fd[0];
+  printf("Copy...\n");
 
-  if(!cs->lsol.mat_is_assembly){
-    for(int ie = 0; ie < cs->nbel; ie++){  
-
-      // local matrix 
-      real aloc[cs->nnodes*cs->nb_phy_vars][cs->nnodes*cs->nb_phy_vars];
-      for(int iloc = 0; iloc < cs->nnodes*cs->nb_phy_vars; iloc++){
-	for(int jloc = 0; jloc < cs->nnodes*cs->nb_phy_vars; jloc++){
-	  aloc[iloc][jloc] = 0;
-	}
-      }
-
-      int iemacro = ie / (fg->raf[0] * fg->raf[1] * fg->raf[2]);
-      int isubcell = ie % (fg->raf[0] * fg->raf[1] * fg->raf[2]);
-
-  //    for(int ipg = 0;ipg < cs->nnodes; ipg++){
-	  //real wpg;
-	  //real xref[3];
-	//int ipgmacro= ipg + isubcell * cs->nnodes;
-
-	//ref_pg_vol(fg->deg,f0->raf,ipgmacro,xref,&wpg,NULL);
-
-	for(int iloc = 0; iloc < cs->nnodes; iloc++){
-	  real wpg;
-	  real xref[3];
-	  real dtau[3][3],codtau[3][3];
-	  int ilocmacro = iloc + isubcell * cs->nnodes;
-    ref_pg_vol(fg->deg,fg->raf,ilocmacro,xref,&wpg,NULL);
-	  Ref2Phy(cs->simu->fd[iemacro].physnode,
-		  xref,NULL,0,NULL,
-		  dtau,codtau,NULL,NULL);
-	  real det = dot_product(dtau[0], codtau[0]);
-	  for (int iv=0; iv<cs->nb_phy_vars;iv++){
-	    aloc[iloc*cs->nb_phy_vars+iv][iloc*cs->nb_phy_vars+iv] += wpg * det  ;
-    }
-//	}
-      }
-
-
-      for(int iloc = 0; iloc < cs->nnodes; iloc++){
-	for(int jloc = 0; jloc < cs->nnodes; jloc++){
-	  int ino_dg = iloc + ie * cs->nnodes;
-	  int jno_dg = jloc + ie * cs->nnodes;
-	  int ino_fe = cs->dg_to_fe_index[ino_dg];
-	  int jno_fe = cs->dg_to_fe_index[jno_dg];
-	  for (int iv=0;iv<cs->nb_phy_vars;iv++){
-	    real val = aloc[iloc*cs->nb_phy_vars+iv][jloc*cs->nb_phy_vars+iv];
-	    AddLinearSolver(&cs->lsol,ino_fe*cs->nb_phy_vars+iv,jno_fe*cs->nb_phy_vars+iv,val);
-    }
-	}
-      }
-   
-    }
-  } 
   
- }
+  // copy the potential at the right place
+  for(int var =0; var < cs->nb_phy_vars; var++){ 
+    for(int ie = 0; ie < cs->simu->macromesh.nbelems; ie++){  
+      for(int ipg = 0;ipg < cs->npgmacrocell; ipg++){
+	int ino_dg = ipg + ie * cs->npgmacrocell;
+	int ino_fe = cs->dg_to_fe_index[ino_dg];
+	int ipot = f0->varindex(f0->deg,f0->raf,f0->model.m,
+				ipg,cs->list_of_var[var]);
+	rhs[ipot]=cs->lsol.sol[ino_fe];
+	}
+    }
+  }
+
+}
+
+
 
 
 

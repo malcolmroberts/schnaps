@@ -80,7 +80,18 @@ int TestPoisson2d(void)
   listvar[0]=_INDEX_PHI;
   
   InitContinuousSolver(&ps,&simu,1,nb_var,listvar);
-  ps.matrix_assembly=MatrixPoisson_Continuous;
+
+  real D[4][4] = {{0,0,0,0},
+                 {0,1,0,0},
+                 {0,0,1,0},
+                 {0,0,0,1}};
+  for (int i=0;i<4;i++){
+    for (int j=0;j<4;j++){
+      ps.diff_op[i][j]=D[i][j];
+    }
+  }
+
+  ps.matrix_assembly=GenericOperatorScalar_Continuous;
   ps.rhs_assembly=RHSPoisson_Continuous;
   ps.bc_assembly= ExactDirichletContinuousMatrix;
   ps.postcomputation_assembly=Computation_ElectricField_Poisson;

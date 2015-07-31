@@ -17,8 +17,9 @@
 void VectorDgToCg (ContinuousSolver * ps,real * rhs);
 
 // ! TOODODODODODOODODODOD
-void MassMatrix(void * cs, LinearSolver *lsol);
+void VectorCgToDg(ContinuousSolver * cs,real * rhs);
 
 // ! TOODODODODODOODODODOD
 void physicPC_wave(Simulation *simu, real* globalSol, real* globalRHS);
+
 #endif

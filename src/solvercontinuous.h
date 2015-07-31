@@ -78,8 +78,14 @@ typedef struct ContinuousSolver{
   //! \brief list of index for the variables
   int * list_of_var;
 
-  //! for dirchilet homogeneous, 2 for periodic 
+  //! \brief for dirchilet homogeneous, 2 for periodic 
   int type_bc;
+
+  //! \brief Differential operator for scalar problems
+  real diff_op[4][4];
+
+  //! \brief Differential operator for 2d vectorial problems
+  real diff_op2vec[4][4][4];
 
   //! \brief pointer on the function which assembly the rhs
   //! \param[inout] lsol a linear solver allocate
@@ -150,5 +156,11 @@ void ExactDirichletContinuousMatrix(void * cs,LinearSolver* lsol);
 //! \param[in] type_bc the boundary condition type
 //!  (1->dirichlet ; 2-> periodic)
 void SolveContinuous2D(void * cs);
+
+//! TODOODODODODOOD
+void GenericOperatorScalar_Continuous(void * cs,LinearSolver* lsol);
+
+//! TODOODODODODOOD
+void GenericOperator2Vec_Continuous(void * cs,LinearSolver* lsol);
 
 #endif
