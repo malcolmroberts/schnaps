@@ -274,7 +274,7 @@ int TestInterpolation(void){
 
     real xref1[3],xref2[3],xphy[3],xref_in[3];
     for(int ifa=0;ifa<6;ifa++){
-      for(int ipgf=0;ipgf<NPGF(deg, nraf, ifa);ipgf++){
+      for(int ipgf=0;ipgf<NPGF_CG(deg, nraf, ifa);ipgf++){
 	real wpg;
 	int ipg = ref_pg_face_CG(deg, nraf,ifa,ipgf,xref1,&wpg,NULL);
 	ref_pg_vol_CG(deg, nraf,ipg,xref1,&wpg,xref_in);
@@ -296,6 +296,7 @@ int TestInterpolation(void){
   } // end degree loop
 
 
+  assert(1==2);
 
   // test green formula for Gauss-Lobatto points
 
