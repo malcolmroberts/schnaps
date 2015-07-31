@@ -614,7 +614,7 @@ int ref_pg_face_CG(int deg3d[], int nraf3d[], int ifa, int ipg,
   ipg /= nx[1];
 
   // Equals 0 or nx (a side of the cube)
-  int iz = axis_permut[ifa][3] * nx[2];
+  int iz = axis_permut[ifa][3] * (nx[2] - 1);
 
 
   // point index in each subcell in [0..deg]
