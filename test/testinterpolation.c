@@ -103,11 +103,11 @@ int TestInterpolation(void){
   // test that the ref_ipg function
   // is compatible with ref_pg_vol
 
-  deg[0]=2;
-  deg[1]=2;
-  deg[2]=0;
+  deg[0]=1;
+  deg[1]=1;
+  deg[2]=1;
   
-  nraf[0]=2;
+  nraf[0]=1;
   nraf[1]=2;
   nraf[2]=1;
 
@@ -121,7 +121,7 @@ int TestInterpolation(void){
 	   wpg);
   }
 
-  assert(NPG_CG(deg, nraf) == 25);
+  assert(NPG_CG(deg, nraf) == 12);
 
   assert(fabs(xref[1]-1) < _SMALL);
   
@@ -132,7 +132,7 @@ int TestInterpolation(void){
     deg[1] = d;
     deg[2] = d;
     deg[3] = 1;
-    deg[4] = 1;
+    deg[4] = 2;
     deg[5] = 1;
     
     nraf[0] = deg[3];
@@ -268,8 +268,8 @@ int TestInterpolation(void){
     deg[1]=d;
     deg[2]=d;
     
-    nraf[0]=2;
-    nraf[1]=1;
+    nraf[0]=1;
+    nraf[1]=2;
     nraf[2]=1;
 
     real xref1[3],xref2[3],xphy[3],xref_in[3];
@@ -289,7 +289,7 @@ int TestInterpolation(void){
 		0);
 	Phy2Ref(physnode,xphy,xref2);
 	test=test && (ipg == ref_ipg_CG(deg, nraf, xref2));
-	printf("ipgf=%d ipg=%d ref_ipg=%d\n",ipgf,ipg,ref_ipg_CG(deg, nraf, xref2));
+	printf("ipgf=%d ipg=%d ref_ipg=%d\n\n",ipgf,ipg,ref_ipg_CG(deg, nraf, xref2));
 	assert(test);
       }
     }
