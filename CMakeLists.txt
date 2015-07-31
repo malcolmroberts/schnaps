@@ -13,10 +13,10 @@ SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 #set(CMAKE_C_FLAGS "-std=gnu99 -D_REENTRANT -O3 -g")
 
 #set(CMAKE_C_FLAGS " -std=c99 -D_REENTRANT -O3 ")
-set(CMAKE_C_FLAGS " -std=c99   -D_DOUBLE_PRECISION -D_SCHNAPS_DIR=${PROJECT_SOURCE_DIR} -O3 -g  ")
+set(CMAKE_C_FLAGS " -std=c99 -lumfpack -lamd -lblas -lsuitesparseconfig -lcholmod -lcolamd -D_DOUBLE_PRECISION -D_SCHNAPS_DIR=${PROJECT_SOURCE_DIR} -O3 -g  ")
+#set(CMAKE_C_FLAGS " -std=c99 -D_DOUBLE_PRECISION -D_SCHNAPS_DIR=${PROJECT_SOURCE_DIR} -O3 -g  ")
 
 MESSAGE(Compil. options: ${CMAKE_C_FLAGS})
-
 
 #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_DOUBLE_PRECISION")
 
@@ -110,7 +110,9 @@ list(APPEND
   src/pic.h
   src/pic.c
   src/skyline.h
-   src/skyline.c
+  src/skyline.c
+  src/solverumfpack.h
+  src/solverumfpack.c
   src/dpackfgmres.h
   src/dpackfgmres.c
   src/linear_solver.h
@@ -163,6 +165,14 @@ if(FLANN_FOUND)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_WITH_FLANN")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -D_WITH_FLANN")
 endif()
+
+#set(SuiteSparse_VERBOSE ON)
+#find_package(suitesparse)
+#    if(SuiteSparse_FOUND)
+#       MESSAGE(STATUS "umfpack libs ok")
+#       list(APPEND INCLUDE_DIRECTORIES ${SuiteSparse_INCLUDE_DIRS})
+#       list(APPEND LIBS ${SuiteSparse_LIBRARIES})
+#endif()
 
 
 # list of tests
@@ -313,6 +323,14 @@ add_executable(
   )
 target_link_libraries(testskyline ${LIBS})
 add_test(testskyline testskyline)
+
+add_executable(
+  testumfpack
+  test/test.h
+  test/testumfpack.c
+  )
+target_link_libraries(testumfpack ${LIBS})
+add_test(testumfpack testumfpack)
 
 add_executable(
   testnonlinearsolver

@@ -296,7 +296,7 @@ int TestInterpolation(void){
   } // end degree loop
 
 
-  assert(1==2);
+  //assert(1==2);
 
   // test green formula for Gauss-Lobatto points
 

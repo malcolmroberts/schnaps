@@ -47,6 +47,8 @@ int TestPeriodic(void);
 
 int TestSkyline(void);
 
+int TestUmfPack(void);
+
 int TestLinearSolver(void);
 
 int TestNonLinearSolver(void);
