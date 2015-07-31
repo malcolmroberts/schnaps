@@ -162,6 +162,19 @@ int GenericVarindex(__constant int *deg, __constant int *raf, int m,
 #pragma end_opencl
 
 
+//! \brief memory arrangement of field components.
+//! Generic implementation continuous case
+//! \param[in] deg degrees parameters
+//! \param[in] raf refinement parameters
+//! \param[in] m number of conservative variables
+//! \param[in] ipg glop index
+//! \param[in] iv field component index
+//! \returns the memory position in the arrays wn wnp1 or dtwn.
+#pragma start_opencl
+int GenericVarindex_CG(__constant int *deg, __constant int *raf, int m,
+		    int ipg, int iv);
+#pragma end_opencl
+
 //! \brief field initialization. Computation of the initial at each glop.
 //! \param[inout] f a field
 //! \param[in] m a model

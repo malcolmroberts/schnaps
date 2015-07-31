@@ -37,6 +37,18 @@ int GenericVarindex(__constant int *deg, __constant int *raf, int m,
 #pragma end_opencl
 
 #pragma start_opencl
+int GenericVarindex_CG(__constant int *deg, __constant int *raf, int m,
+		    int ipg, int iv) {
+  return iv + m * ipg;
+
+  //int npg = NPG_CG(deg, raf);
+  //return ipg + npg * iv;
+}
+#pragma end_opencl
+
+
+
+#pragma start_opencl
 int GenericVarindex3d(int m, int *nx, int *nc,
 		      int elem,
 		      int iv, int *ix, int *ic) 

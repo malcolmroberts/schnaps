@@ -190,6 +190,15 @@ void psi_ref(int *deg, int *raf, int ib, real* xref, real* psi, real* dpsiref);
 //! \param[out] dpsiref gradient of the basis function in the reference element
 void grad_psi_pg(int *deg, int *raf,int ib,int ipg,real* dpsiref);
 
+//! \brief  gradient of a basis function at a given glop
+//! continuous version
+//! \param[in] deg degrees parameters 
+//! \param[in] raf refinements parameters 
+//! \param[in] ib basis function index
+//! \param[in] ipg glop index
+//! \param[out] dpsiref gradient of the basis function in the reference element
+void grad_psi_pg_CG(int *deg, int *raf,int ib,int ipg,real* dpsiref);
+
 //! \brief  gradient of a basis function at a given glop in a given subcell
 //! \param[in] deg degrees parameters 
 //! \param[in] raf refinements parameters 
