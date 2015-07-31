@@ -8,6 +8,8 @@
 
 void physicPC_wave(Simulation *simu, real* globalSol, real* globalRHS){
 
+
+  // Prediction pressure step.
   ContinuousSolver pressionSolver;
   int nb_var = 1;
   int * listvar = malloc(nb_var * sizeof(int));
@@ -41,10 +43,48 @@ void physicPC_wave(Simulation *simu, real* globalSol, real* globalRHS){
     printf("Pouet %d, %f\n",i,pressionSolver.lsol.sol[i]);
   }
 
+  // Construction of the L operator
+  
+  real DL1[4][4] = {{0,0,0,0},
+                   {-1,0,0,0},
+                   { 0,0,0,0},
+                   { 0,0,0,0}};
+  real DL2[4][4] = {{0,0,0,0},
+                   { 0,0,0,0},
+                   {-1,0,0,0},
+                   { 0,0,0,0}};
+  real DL3[4][4] = {{0,0,0,0},
+                   { 0,0,0,0},
+                   { 0,0,0,0},
+                   {-1,0,0,0}};
+  
+  ContinuousSolver L1;
+  ContinuousSolver L2;
+  nb_var = 1;
+  int * listvarL = malloc(nb_var * sizeof(int));
+  listvarL[0]=0;
 
+  InitContinuousSolver(&L1,simu,1,nb_var,listvarL);
+  InitContinuousSolver(&L2,simu,1,nb_var,listvarL);
+  for (int i=0;i<4;i++){
+    for (int j=0;j<4;j++){
+      L1.diff_op[i][j]=DL1[i][j];
+      L2.diff_op[i][j]=DL2[i][j];
+    }
+  }
+  L1.matrix_assembly=GenericOperatorScalar_Continuous;
+  L2.matrix_assembly=GenericOperatorScalar_Continuous;
+  printf("Matrix assembly.....\n");
+  L1.matrix_assembly(&L1,&L1.lsol);
+  L2.matrix_assembly(&L2,&L2.lsol);
+  // cs.lsol->MAtVECT L1Psolved, L2Psolved
+  // Cat L1Psolved, L2Psolved
+  // SUM WITH RU (plus bas)
+  // Check
+  //lsol->MatVecProduct=MatVect;
+  //lsol->MatVecProduct(lsol,loc_x,loc_z);
 
-
-
+  // Computation of the velocity
   ContinuousSolver velocitySolver;
   nb_var = 2;
   int * listvar2 = malloc(nb_var * sizeof(int));

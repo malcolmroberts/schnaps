@@ -386,19 +386,6 @@ void GenericOperatorScalar_Continuous(void * cs,LinearSolver* lsol){
       int iemacro = ie / (f0->raf[0] * f0->raf[1] * f0->raf[2]);
       int isubcell = ie % (f0->raf[0] * f0->raf[1] * f0->raf[2]);
 
-      /* real physnode[20][3]; */
-      /* for(int ino = 0; ino < 20; ino++) { */
-      /* 	int numnoe = ps->simu->macromesh.elem2node[20 * iemacro + ino]; */
-      /* 	for(int ii = 0; ii < 3; ii++) { */
-      /* 	  physnode[ino][ii] = ps->simu->macromesh.node[3 * numnoe + ii]; */
-      /* 	} */
-      /* } */
-      //ref_pg_vol(ps->fd->interp_param+1,int ipg,
-      // real* xpg,real* wpg,real* xpg_in);
-      // grad_psi_pg(ps->fd->interp_param+1,ib,ipg,dphiref)
-      // Ref2Phy(physnode,xref,dphiref,NULL,NULL,dtau,codtau,dphi,NULL);
-
-
       for(int ipg = 0;ipg < ps->nnodes; ipg++){
 	real wpg;
 	real xref[3];
@@ -590,3 +577,14 @@ void GenericOperator2Vec_Continuous(void * cs,LinearSolver* lsol){
  }
 
 
+void catCGVectors(void * cs,real *L1, real *L2, real *L){
+
+  ContinuousSolver * ps = cs;
+  int cc=0;
+  for (int i=0; i<ps->nb_fe_nodes;i++)
+  {
+    L[cc] = L1[i];
+    L[cc+1]=L2[i];
+    cc+=2;
+  }
+}

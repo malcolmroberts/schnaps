@@ -163,4 +163,6 @@ void GenericOperatorScalar_Continuous(void * cs,LinearSolver* lsol);
 //! TODOODODODODOOD
 void GenericOperator2Vec_Continuous(void * cs,LinearSolver* lsol);
 
+//! TODOODODODODOOD
+void catCGVectors(void * cs,real *L1, real *L2, real *L);
 #endif
