@@ -86,14 +86,15 @@ int Test_Extraction(void) {
   }
   
   physicPC_wave(&simu,simu.fd[0].dtwn,simu.fd[0].wn);
+  simu.fd[0].wn = simu.fd[0].dtwn;
  
   dd = L2error(&simu);
 
   //printf("erreur L2=%.12e\n", dd);
 
- // PlotFields(0,false, &simu, "p", "dgvisu_exp.msh");
- // PlotFields(1,false, &simu, "u", "dgvisu_exu.msh");
- // PlotFields(2,false, &simu, "v", "dgvisu_exv.msh");
+  PlotFields(0,false, &simu, "p", "dgvisu_exp.msh");
+  PlotFields(1,false, &simu, "u", "dgvisu_exu.msh");
+  PlotFields(2,false, &simu, "v", "dgvisu_exv.msh");
 
 #ifdef PARALUTION 
   paralution_end();
@@ -106,7 +107,7 @@ int Test_Extraction(void) {
 
 void TestExtraction_ImposedData(const real *x, const real t, real *w) {
 
-  w[0] = 5;
+  w[0] = 1;
   w[1] = 2; 
   w[2] = 3;
   

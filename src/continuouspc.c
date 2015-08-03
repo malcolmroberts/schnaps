@@ -125,9 +125,9 @@ void physicPC_wave(Simulation *simu, real* globalSol, real* globalRHS){
   listvar2[1]=2;
   
   InitContinuousSolver(&velocitySolver,simu,1,nb_var,listvar2);
-  velocitySolver.lsol.solver_type=PAR_GMRES;
+  velocitySolver.lsol.solver_type=LU;
   //real h=simu->dt*simu->vmax;
-  real h=1;//1.e-4 * 10;
+  real h=0;//1.e-4 * 10;
   real PSchur[4][4][4] = {    {{1,0,0,0},
                                {0,h,0,0},
                                {0,0,h,0},
@@ -190,7 +190,7 @@ void physicPC_wave(Simulation *simu, real* globalSol, real* globalRHS){
   
   // Correction step
   for (int i=0; i<pressionSolver.nb_fe_nodes; i++){
-    pressionSolver.lsol.rhs[i] = Mp[i];// - L1u1[i] - L2u2[i];
+    pressionSolver.lsol.rhs[i] = Mp[i] - L1u1[i] - L2u2[i];
   }
   
   SolveLinearSolver(&pressionSolver.lsol);
