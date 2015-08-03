@@ -202,11 +202,11 @@ void MatVect(void * system,real x[],real prod[]){
 
   case SKYLINE :
 
-    if (!((Skyline*)lsol->matrix)->is_lu){
+     if (!((Skyline*)lsol->matrix)->is_lu){
       MatVectSkyline((Skyline*) lsol->matrix, x, prod);
-    }
-    else
-    {
+      }
+     else
+       {
       for(i=0;i<lsol->neq;i++)
       { 
         prod[i]=0; 
@@ -215,7 +215,7 @@ void MatVect(void * system,real x[],real prod[]){
           prod[i] += aij*x[j]; 
         } 
       } 
-    }
+      }
     
     break;
 

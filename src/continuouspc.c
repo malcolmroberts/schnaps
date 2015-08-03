@@ -8,6 +8,8 @@
 
 void physicPC_wave(Simulation *simu, real* globalSol, real* globalRHS){
 
+
+  // Global Solver
   ContinuousSolver waveSolver;
   int nb_var = 3;
   int * listvarGlobal = malloc(nb_var * sizeof(int));
@@ -24,10 +26,11 @@ void physicPC_wave(Simulation *simu, real* globalSol, real* globalRHS){
   
   InitContinuousSolver(&pressionSolver,simu,1,nb_var,listvar);
   //pressionSolver.lsol.solver_type=GMRES;
+  pressionSolver.lsol.solver_type=PAR_GMRES;
 
   real D[4][4] = {{1,0,0,0},
-                  {0,1,0,0},
-                  {0,0,1,0},
+                  {0,0,0,0},
+                  {0,0,0,0},
                   {0,0,0,0}};
   for (int i=0;i<4;i++){
     for (int j=0;j<4;j++){
@@ -54,6 +57,8 @@ void physicPC_wave(Simulation *simu, real* globalSol, real* globalRHS){
 
   printf("Solution...\n");
   SolveLinearSolver(&pressionSolver.lsol);
+
+   pressionSolver.lsol.solver_type=LU;
 
   //for (int i=0; i<pressionSolver.lsol.neq;i++){
   //  printf("Pouet %d, %.12e\n",i,pressionSolver.lsol.sol[i]);
@@ -120,6 +125,7 @@ void physicPC_wave(Simulation *simu, real* globalSol, real* globalRHS){
   listvar2[1]=2;
   
   InitContinuousSolver(&velocitySolver,simu,1,nb_var,listvar2);
+  velocitySolver.lsol.solver_type=PAR_GMRES;
   //real h=simu->dt*simu->vmax;
   real h=1;//1.e-4 * 10;
   real PSchur[4][4][4] = {    {{1,0,0,0},

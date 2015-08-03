@@ -31,6 +31,11 @@ int Test_Extraction(void) {
   bool test = true;
   real dd;
 
+
+#ifdef PARALUTION 
+  paralution_begin();
+#endif 
+
   MacroMesh mesh;
   ReadMacroMesh(&mesh,"../test/testcube.msh");
   Detect2DMacroMesh(&mesh);
@@ -89,6 +94,10 @@ int Test_Extraction(void) {
  // PlotFields(0,false, &simu, "p", "dgvisu_exp.msh");
  // PlotFields(1,false, &simu, "u", "dgvisu_exu.msh");
  // PlotFields(2,false, &simu, "v", "dgvisu_exv.msh");
+
+#ifdef PARALUTION 
+  paralution_end();
+#endif 
 
   return test;
 }
