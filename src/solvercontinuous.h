@@ -87,12 +87,12 @@ typedef struct ContinuousSolver{
   //! \brief Differential operator for 2d vectorial problems
   real diff_op2vec[4][4][4];
 
-  //! \brief pointer on the function which assembly the rhs
+  //! \brief pointer on the function which assembles the rhs
   //! \param[inout] lsol a linear solver allocate
   //! \param[in] a continuous solver
   void (*rhs_assembly)(void * cs,LinearSolver* lsol);
 
-  //! \brief pointer on the function which assembly the matrix
+  //! \brief pointer on the function which assembles the matrix
   //! \param[inout] lsol a linear solver allocate
   //! \param[in] a continuous solver
   void (*matrix_assembly)(void * cs,LinearSolver* lsol);
@@ -164,5 +164,11 @@ void GenericOperatorScalar_Continuous(void * cs,LinearSolver* lsol);
 void GenericOperator2Vec_Continuous(void * cs,LinearSolver* lsol);
 
 //! TODOODODODODOOD
-void catCGVectors(void * cs,real *L1, real *L2, real *L);
+void cat2CGVectors(ContinuousSolver* L1Solver,ContinuousSolver* L2Solver, real *L1, real *L2, real *L);
+
+//! TODOODODODODOOD
+void extract2CGVectors(ContinuousSolver* L1Solver,ContinuousSolver* L2Solver, real *L, real *L1, real *L2);
+
+//! TODOODODODODOOD
+void MatrixPoisson_Continuous(void * cs,LinearSolver* lsol);
 #endif

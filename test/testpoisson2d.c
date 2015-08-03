@@ -65,7 +65,7 @@ int TestPoisson2d(void)
   model.Source = NULL;
  
   int deg[]={2, 2, 0};
-  int raf[]={2, 2, 1};
+  int raf[]={1, 1, 1};
    
  
   CheckMacroMesh(&mesh, deg, raf);

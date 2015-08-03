@@ -297,7 +297,7 @@ void PlotFields(int typplot, int compare, Simulation* simu, char *fieldname,
   free(value);
 }
 
-// Apply the Discontinuous Galerkin approximation for computing the
+// Apply the Discontinuous Galerkin approximation to compute the
 // time derivative of the field
 void DtFields(Simulation *simu, real *w, real *dtw) {
 

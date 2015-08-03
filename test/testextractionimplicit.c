@@ -50,8 +50,8 @@ int Test_Extraction(void) {
   model.BoundaryFlux = Wave_Upwind_BoundaryFlux;
   model.Source = NULL;
 
-  int deg[]={4, 4, 0};
-  int raf[]={2, 2, 1};
+  int deg[]={2, 2, 0};
+  int raf[]={4, 4, 1};
 
 
   assert(mesh.is2d);
@@ -80,15 +80,15 @@ int Test_Extraction(void) {
     }
   }
   
-  physicPC_wave(&simu,NULL,simu.fd[0].wn);
+  physicPC_wave(&simu,simu.fd[0].dtwn,simu.fd[0].wn);
  
   dd = L2error(&simu);
 
-  printf("erreur L2=%.12e\n", dd);
+  //printf("erreur L2=%.12e\n", dd);
 
-  PlotFields(0,false, &simu, "p", "dgvisu_exp.msh");
-  PlotFields(1,false, &simu, "u", "dgvisu_exu.msh");
-  PlotFields(2,false, &simu, "v", "dgvisu_exv.msh");
+ // PlotFields(0,false, &simu, "p", "dgvisu_exp.msh");
+ // PlotFields(1,false, &simu, "u", "dgvisu_exu.msh");
+ // PlotFields(2,false, &simu, "v", "dgvisu_exv.msh");
 
   return test;
 }

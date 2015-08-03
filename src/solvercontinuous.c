@@ -2,6 +2,7 @@
 #include "geometry.h"
 #include "quantities_vp.h"
 #include "linear_solver.h"
+#include "macromesh.h"
 
 
 int CompareFatNode(const void* a,const void* b){
@@ -158,14 +159,11 @@ void InitContinuousSolver(void * cs, Simulation* simu,int type_bc,int nb_phy_var
       int ieR = simu->macromesh.elem2elem[6*ie+ifa];
       if (ieR < 0) {
 	for(int ipgf = 0; ipgf < NPGF(deg,nraf, ifa); ipgf++) {
-	  printf("NPGF=%d ipgf=%d\n",NPGF(deg,nraf, ifa),ipgf);
 	  int ipg = ref_pg_face(deg,nraf, ifa, ipgf,
 		      NULL, NULL, NULL);
 	  int ino_dg = ipg + ie * ps->npgmacrocell;
 	  int ino_fe = ps->dg_to_fe_index[ino_dg];
 	  ps->is_boundary_node[ino_fe] = 1;
-	  printf("ie=%d ino_dg=%d ino_fe=%d boundary=%d\n",
-	  	 ie,ino_dg,ino_fe,ps->is_boundary_node[ino_fe]);
 
 	}
       }
@@ -284,29 +282,72 @@ void ExactDirichletContinuousMatrix(void * cs,LinearSolver* lsol){
   
   field* f0 = &ps->simu->fd[0];
 
-  for(int ino=0; ino<ps->nb_fe_dof; ino++){
-    real bigval = 1e20;
-    if (ps->is_boundary_node[ino]) AddLinearSolver(&ps->lsol,ino,ino,bigval);
-  }
-  ps->lsol.mat_is_assembly=true;
-  
-  for(int var =0; var < ps->nb_phy_vars; var++){ 
-    for(int ie = 0; ie < ps->simu->macromesh.nbelems; ie++){  
-      for(int ipg = 0;ipg < ps->npgmacrocell; ipg++){
-	int ino_dg = ipg + ie * ps->npgmacrocell;
-	int ino_fe = ps->dg_to_fe_index[ino_dg];
-	int ipot = f0->varindex(f0->deg,f0->raf,f0->model.m,
-				ipg,ps->list_of_var[var]);
-	if (ps->is_boundary_node[ino_fe]){
-	  real bigval = 1e20;
-	  ps->lsol.rhs[ino_fe] = ps->simu->fd[ie].wn[ipot] * bigval;
-	  //printf("ino_dg=%d ino_fe=%d ipot=%d\n",ino_dg,ino_fe,ipot);
-	}
+  for(int ino=0; ino<ps->nb_fe_nodes; ino++){
+    real bigval = 1e16;
+    if (ps->is_boundary_node[ino]){
+      for (int iv=0; iv<ps->nb_phy_vars;iv++){
+        AddLinearSolver(&ps->lsol,ps->nb_phy_vars*ino+iv,ps->nb_phy_vars*ino+iv,bigval);
+        //printf("i de aii : %d\n", ps->nb_phy_vars*ino+iv);
       }
     }
   }
 
+  ps->lsol.mat_is_assembly=true;
   
+  for(int var =0; var < ps->nb_phy_vars; var++){ 
+    //for(int ie = 0; ie < ps->simu->macromesh.nbelems; ie++){  
+      for (int i=0; i<ps->simu->macromesh.nboundaryfaces;i++){
+        int ifa = ps->simu->macromesh.boundaryface[i];
+        int locfaL = ps->simu->macromesh.face2elem[4 * ifa + 1];
+        int ie = ps->simu->macromesh.face2elem[4 * ifa ];
+        int ieR = ps->simu->macromesh.face2elem[4 * ifa + 2];
+        //printf("ifa=%d,locfaL=%d, ieL=%d, ieR=%d\n", ifa,locfaL,ie,ieR);
+        field *f = &ps->simu->fd[ie];
+
+        for(int ipg = 0;ipg < ps->npgmacrocell; ipg++){
+          int ino_dg = ipg + ie * ps->npgmacrocell;
+          int ino_fe = ps->dg_to_fe_index[ino_dg];
+          int ipot = f0->varindex(f0->deg,f0->raf,f0->model.m,
+          			ipg,ps->list_of_var[var]);
+          int ipot_fe = ino_fe*ps->nb_phy_vars + var;
+          if (ps->is_boundary_node[ino_fe]&&ieR<0){
+            real bigval = 1e16;
+            real xpgref[3], xpgref_in[3], wpg;
+            
+            // Get the coordinates of the Gauss point and coordinates of a
+            // point slightly inside the opposite element in xref_in
+            int ipgL = ref_pg_face(f->deg, f->raf, locfaL, ipg, xpgref, &wpg, xpgref_in);
+            // Normal vector at gauss point ipgL
+            real vnds[3], xpg[3];
+            {
+              real dtau[3][3], codtau[3][3];
+              Ref2Phy(f->physnode,
+                      xpgref,
+                      NULL, locfaL, // dpsiref, ifa
+                      xpg, dtau,
+                      codtau, NULL, vnds); // codtau, dpsi, vnds
+            }
+            
+            // the boundary flux is an affine function
+            real flux0[f->model.m];
+            f->model.ImposedData(xpg, f->tnow, flux0);
+            ps->lsol.rhs[ipot_fe] = flux0[ps->list_of_var[var]] * bigval;
+            //printf("lovar=%d,ino_fe=%d,flux = %f\n",ps->list_of_var[var],ino_fe,flux0[ps->list_of_var[var]]);
+            //printf("i de bi : %d\n", ipot_fe);
+            //printf("ifa=%d locfaL=%d \n",ifa,locfaL);
+        }
+      }
+    }
+  }
+  //for(int ino=0; ino<ps->nb_fe_nodes; ino++){
+  //  if (ps->is_boundary_node[ino]){
+  //    for (int iv=0; iv<ps->nb_phy_vars;iv++){
+  //      int pouet=ps->nb_phy_vars*ino+iv;
+  //      printf("i=%d, bi=%f, aij=%f, quotient=%f\n", pouet,ps->lsol.rhs[pouet],GetLinearSolver(&ps->lsol,pouet,pouet),ps->lsol.rhs[pouet]/GetLinearSolver(&ps->lsol,pouet,pouet));
+  //      //printf("i de aii : %d\n", ps->nb_phy_vars*ino+iv);
+  //    }
+  //  }
+  //}
 }
 
 void AllocateContinuousMatrix(void *cs,LinearSolver* lsol){
@@ -350,8 +391,8 @@ void AllocateContinuousMatrix(void *cs,LinearSolver* lsol){
 	  int ino_dg = iloc + ie * ps->nnodes;
 	  int jno_dg = jloc + ie * ps->nnodes;
 	  for(int var = 0; var < ps->nb_phy_vars; var++){
-	    int ino_fe = ps->dg_to_fe_index[ino_dg]+var;
-	    int jno_fe = ps->dg_to_fe_index[jno_dg]+var;
+	    int ino_fe = ps->nb_phy_vars*ps->dg_to_fe_index[ino_dg]+var;
+	    int jno_fe = ps->nb_phy_vars*ps->dg_to_fe_index[jno_dg]+var;
 	    IsNonZero(&ps->lsol, ino_fe, jno_fe);
 	  }
 	}
@@ -370,6 +411,229 @@ void GenericOperatorScalar_Continuous(void * cs,LinearSolver* lsol){
 
   ContinuousSolver * ps=cs;
 
+  field* f0 = &ps->simu->fd[0];
+
+  if(!ps->lsol.mat_is_assembly){
+    for(int ie = 0; ie < ps->nbel; ie++){  
+
+      // local matrix 
+      real aloc[ps->nnodes][ps->nnodes];
+      for(int iloc = 0; iloc < ps->nnodes; iloc++){
+        for(int jloc = 0; jloc < ps->nnodes; jloc++){
+          aloc[iloc][jloc] = 0;
+        }
+      }
+        
+      int iemacro = ie / (f0->raf[0] * f0->raf[1] * f0->raf[2]);
+      int isubcell = ie % (f0->raf[0] * f0->raf[1] * f0->raf[2]);
+        
+      for(int ipg = 0;ipg < ps->nnodes; ipg++){
+        real wpg;
+        real xref[3];
+        int ipgmacro= ipg + isubcell * ps->nnodes;
+        
+        ref_pg_vol(f0->deg,f0->raf,ipgmacro,xref,&wpg,NULL);
+        
+        for(int iloc = 0; iloc < ps->nnodes; iloc++){
+          real dtau[3][3],codtau[3][3];
+          real dphiref_i[3],dphiref_j[3];
+          real dphi_i[3],dphi_j[3];
+          real basisPhi_i[4], basisPhi_j[4];
+          int ilocmacro = iloc + isubcell * ps->nnodes;
+          grad_psi_pg(f0->deg,f0->raf,ilocmacro,ipgmacro,dphiref_i);
+          Ref2Phy(ps->simu->fd[iemacro].physnode,
+                  xref,dphiref_i,0,NULL,
+                  dtau,codtau,dphi_i,NULL);
+        
+          real det = dot_product(dtau[0], codtau[0]);
+          if (ilocmacro==ipgmacro){
+            basisPhi_i[0]=1;
+          }
+          else
+          {
+            basisPhi_i[0]=0;
+          }
+          basisPhi_i[1]=dphi_i[0]/det;
+          basisPhi_i[2]=dphi_i[1]/det;
+          basisPhi_i[3]=dphi_i[2]/det;
+          for(int jloc = 0; jloc < ps->nnodes; jloc++){
+            int jlocmacro = jloc + isubcell * ps->nnodes;
+            grad_psi_pg(f0->deg,f0->raf,jlocmacro,ipgmacro,dphiref_j);
+            Ref2Phy(ps->simu->fd[iemacro].physnode,
+                    xref,dphiref_j,0,NULL,
+                    dtau,codtau,dphi_j,NULL);
+            if (jlocmacro==ipgmacro){
+              basisPhi_j[0]=1;
+            }
+            else
+            {
+              basisPhi_j[0]=0;
+            }
+            basisPhi_j[1]=dphi_j[0]/det;
+            basisPhi_j[2]=dphi_j[1]/det;
+            basisPhi_j[3]=dphi_j[2]/det;
+            real res[4] = {0, 0, 0, 0};
+            for (int i=0; i<4; i++){
+              for (int j=0; j<4; j++){
+                res[i]+=basisPhi_j[j]*ps->diff_op[i][j];
+              }
+            }
+            aloc[iloc][jloc] += dot_product(basisPhi_i, res) * wpg * det  ;
+          }
+        }
+      }
+        
+        
+      for(int iloc = 0; iloc < ps->nnodes; iloc++){
+        for(int jloc = 0; jloc < ps->nnodes; jloc++){
+          int ino_dg = iloc + ie * ps->nnodes;
+          int jno_dg = jloc + ie * ps->nnodes;
+          int ino_fe = ps->dg_to_fe_index[ino_dg];
+          int jno_fe = ps->dg_to_fe_index[jno_dg];
+          real val = aloc[iloc][jloc];
+          AddLinearSolver(&ps->lsol,ino_fe,jno_fe,val);
+        }
+      }
+    }
+  }
+}
+
+
+void GenericOperator2Vec_Continuous(void * cs,LinearSolver* lsol){
+
+  ContinuousSolver * ps=cs;
+
+  field* f0 = &ps->simu->fd[0];
+  if (ps->nb_phy_vars>2){
+    printf("Not implemented for three variables.\n");
+    exit;
+  }
+
+  if(!ps->lsol.mat_is_assembly){
+    for(int ie = 0; ie < ps->nbel; ie++){  
+
+      // local matrix 
+      real aloc[ps->nnodes*ps->nb_phy_vars][ps->nnodes*ps->nb_phy_vars];
+      for(int iloc = 0; iloc < ps->nnodes*ps->nb_phy_vars; iloc++){
+        for(int jloc = 0; jloc < ps->nnodes*ps->nb_phy_vars; jloc++){
+          aloc[iloc][jloc] = 0;
+        }
+      }
+
+      int iemacro = ie / (f0->raf[0] * f0->raf[1] * f0->raf[2]);
+      int isubcell = ie % (f0->raf[0] * f0->raf[1] * f0->raf[2]);
+
+      for(int ipg = 0;ipg < ps->nnodes; ipg++){
+        real wpg;
+        real xref[3];
+        int ipgmacro= ipg + isubcell * ps->nnodes;
+
+        ref_pg_vol(f0->deg,f0->raf,ipgmacro,xref,&wpg,NULL);
+
+        for(int iloc = 0; iloc < ps->nnodes; iloc++){
+          real dtau[3][3],codtau[3][3];
+          real dphiref_i[3],dphiref_j[3];
+          real dphi_i[3],dphi_j[3];
+          real basisPhi_i[4], basisPhi_j[4];
+          int ilocmacro = iloc + isubcell * ps->nnodes;
+          grad_psi_pg(f0->deg,f0->raf,ilocmacro,ipgmacro,dphiref_i);
+          Ref2Phy(ps->simu->fd[iemacro].physnode,
+                  xref,dphiref_i,0,NULL,
+                  dtau,codtau,dphi_i,NULL);
+        
+          real det = dot_product(dtau[0], codtau[0]);
+          if (ilocmacro==ipgmacro){
+            basisPhi_i[0]=1;
+          }
+          else
+          {
+            basisPhi_i[0]=0;
+          }
+          basisPhi_i[1]=dphi_i[0]/det;
+          basisPhi_i[2]=dphi_i[1]/det;
+          basisPhi_i[3]=dphi_i[2]/det;
+          for(int jloc = 0; jloc < ps->nnodes; jloc++){
+            int jlocmacro = jloc + isubcell * ps->nnodes;
+            grad_psi_pg(f0->deg,f0->raf,jlocmacro,ipgmacro,dphiref_j);
+            Ref2Phy(ps->simu->fd[iemacro].physnode,
+                    xref,dphiref_j,0,NULL,
+                    dtau,codtau,dphi_j,NULL);
+            if (jlocmacro==ipgmacro){
+              basisPhi_j[0]=1;
+            }
+            else
+            {
+              basisPhi_j[0]=0;
+            }
+            basisPhi_j[1]=dphi_j[0]/det;
+            basisPhi_j[2]=dphi_j[1]/det;
+            basisPhi_j[3]=dphi_j[2]/det;
+            for (int iv1=0; iv1<ps->nb_phy_vars; iv1++){
+              for (int iv2=0; iv2<ps->nb_phy_vars; iv2++){
+                real res[4] = {0, 0, 0, 0};
+                for (int i=0; i<4; i++){
+                  for (int j=0; j<4; j++){
+                    res[i]+=basisPhi_j[j]*ps->diff_op2vec[2*iv1+iv2][i][j];
+                  }
+                }
+                aloc[iv1+iloc*ps->nb_phy_vars][iv2+jloc*ps->nb_phy_vars] += dot_product(basisPhi_i, res) * wpg * det  ;
+              }
+            }
+          }
+        }
+      }
+
+      for(int iloc = 0; iloc < ps->nnodes; iloc++){
+        for(int jloc = 0; jloc < ps->nnodes; jloc++){
+          int ino_dg = iloc + ie * ps->nnodes;
+          int jno_dg = jloc + ie * ps->nnodes;
+          int ino_fe = ps->dg_to_fe_index[ino_dg];
+          int jno_fe = ps->dg_to_fe_index[jno_dg];
+          for (int iv1=0;iv1<ps->nb_phy_vars;iv1++){
+            for (int iv2=0;iv2<ps->nb_phy_vars;iv2++){
+              real val = aloc[iloc*ps->nb_phy_vars+iv1][jloc*ps->nb_phy_vars+iv2];
+              AddLinearSolver(&ps->lsol,ino_fe*ps->nb_phy_vars+iv1,jno_fe*ps->nb_phy_vars+iv2,val);
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+
+void cat2CGVectors(ContinuousSolver* L1Solver,ContinuousSolver* L2Solver, real *L1, real *L2, real *L){
+
+  int cc=0;
+  for (int i=0; i<L1Solver->nb_fe_nodes;i++){
+    for (int iv1=0; iv1<L1Solver->nb_phy_vars;iv1++){
+      L[cc+L1Solver->list_of_var[iv1]] = L1[i*L1Solver->nb_phy_vars+iv1];
+    }
+    for (int iv2=0; iv2<L2Solver->nb_phy_vars;iv2++){
+      L[cc+L2Solver->list_of_var[iv2]] = L2[i*L2Solver->nb_phy_vars+iv2];
+    }
+    cc+=L1Solver->nb_phy_vars+L2Solver->nb_phy_vars;
+  }
+}
+
+void extract2CGVectors(ContinuousSolver* L1Solver,ContinuousSolver* L2Solver, real *L, real *L1, real *L2){
+  
+  int cc=0;
+  for (int i=0; i<L1Solver->nb_fe_nodes;i++){
+    for (int iv1=0; iv1<L1Solver->nb_phy_vars;iv1++){
+      L1[i*L1Solver->nb_phy_vars+iv1] = L[cc+L1Solver->list_of_var[iv1]];
+    }
+    for (int iv2=0; iv2<L2Solver->nb_phy_vars;iv2++){
+      L2[i*L2Solver->nb_phy_vars+iv2] = L[cc+L2Solver->list_of_var[iv2]];
+    }
+    cc+=L1Solver->nb_phy_vars+L2Solver->nb_phy_vars;
+  }
+}
+
+void MatrixPoisson_Continuous(void * cs,LinearSolver* lsol){
+
+  ContinuousSolver * ps=cs;
+
    field* f0 = &ps->simu->fd[0];
 
   if(!ps->lsol.mat_is_assembly){
@@ -378,107 +642,9 @@ void GenericOperatorScalar_Continuous(void * cs,LinearSolver* lsol){
       // local matrix 
       real aloc[ps->nnodes][ps->nnodes];
       for(int iloc = 0; iloc < ps->nnodes; iloc++){
-	for(int jloc = 0; jloc < ps->nnodes; jloc++){
-	  aloc[iloc][jloc] = 0;
-	}
-      }
-
-      int iemacro = ie / (f0->raf[0] * f0->raf[1] * f0->raf[2]);
-      int isubcell = ie % (f0->raf[0] * f0->raf[1] * f0->raf[2]);
-
-      for(int ipg = 0;ipg < ps->nnodes; ipg++){
-	real wpg;
-	real xref[3];
-	int ipgmacro= ipg + isubcell * ps->nnodes;
-
-	ref_pg_vol(f0->deg,f0->raf,ipgmacro,xref,&wpg,NULL);
-
-	for(int iloc = 0; iloc < ps->nnodes; iloc++){
-	  real dtau[3][3],codtau[3][3];
-	  real dphiref_i[3],dphiref_j[3];
-	  real dphi_i[3],dphi_j[3];
-	  real basisPhi_i[4], basisPhi_j[4];
-	  int ilocmacro = iloc + isubcell * ps->nnodes;
-	  grad_psi_pg(f0->deg,f0->raf,ilocmacro,ipgmacro,dphiref_i);
-	  Ref2Phy(ps->simu->fd[iemacro].physnode,
-		  xref,dphiref_i,0,NULL,
-		  dtau,codtau,dphi_i,NULL);
-
-	  real det = dot_product(dtau[0], codtau[0]);
-	  if (ilocmacro==ipgmacro){
-	    basisPhi_i[0]=1;
-    }
-	  else
-    {
-      basisPhi_i[0]=0;
-    }
-    basisPhi_i[1]=dphi_i[0]/det;
-    basisPhi_i[2]=dphi_i[1]/det;
-    basisPhi_i[3]=dphi_i[2]/det;
-	  for(int jloc = 0; jloc < ps->nnodes; jloc++){
-	    int jlocmacro = jloc + isubcell * ps->nnodes;
-	    grad_psi_pg(f0->deg,f0->raf,jlocmacro,ipgmacro,dphiref_j);
-	    Ref2Phy(ps->simu->fd[iemacro].physnode,
-		    xref,dphiref_j,0,NULL,
-		    dtau,codtau,dphi_j,NULL);
-	    if (jlocmacro==ipgmacro){
-	      basisPhi_j[0]=1;
-      }
-	    else
-      {
-        basisPhi_j[0]=0;
-      }
-      basisPhi_j[1]=dphi_j[0]/det;
-      basisPhi_j[2]=dphi_j[1]/det;
-      basisPhi_j[3]=dphi_j[2]/det;
-      real res[4] = {0, 0, 0, 0};
-      for (int i=0; i<4; i++){
-        for (int j=0; j<4; j++){
-          res[i]+=basisPhi_j[j]*ps->diff_op[i][j];
+        for(int jloc = 0; jloc < ps->nnodes; jloc++){
+         aloc[iloc][jloc] = 0;
         }
-      }
-	    aloc[iloc][jloc] += dot_product(basisPhi_i, res) * wpg * det  ;
-	  }
-	}
-      }
-
-
-      for(int iloc = 0; iloc < ps->nnodes; iloc++){
-	for(int jloc = 0; jloc < ps->nnodes; jloc++){
-	  int ino_dg = iloc + ie * ps->nnodes;
-	  int jno_dg = jloc + ie * ps->nnodes;
-	  int ino_fe = ps->dg_to_fe_index[ino_dg];
-	  int jno_fe = ps->dg_to_fe_index[jno_dg];
-	  real val = aloc[iloc][jloc];
-	  AddLinearSolver(&ps->lsol,ino_fe,jno_fe,val);
-	}
-      }
-   
-    }
-  } 
-  
- }
-
-
-void GenericOperator2Vec_Continuous(void * cs,LinearSolver* lsol){
-
-  ContinuousSolver * ps=cs;
-
-   field* f0 = &ps->simu->fd[0];
-   if (ps->nb_phy_vars>2){
-     printf("Not implemented for three variables.\n");
-     exit;
-   }
-
-  if(!ps->lsol.mat_is_assembly){
-    for(int ie = 0; ie < ps->nbel; ie++){  
-
-      // local matrix 
-      real aloc[ps->nnodes*ps->nb_phy_vars][ps->nnodes*ps->nb_phy_vars];
-      for(int iloc = 0; iloc < ps->nnodes*ps->nb_phy_vars; iloc++){
-	for(int jloc = 0; jloc < ps->nnodes*ps->nb_phy_vars; jloc++){
-	  aloc[iloc][jloc] = 0;
-	}
       }
 
       int iemacro = ie / (f0->raf[0] * f0->raf[1] * f0->raf[2]);
@@ -488,7 +654,7 @@ void GenericOperator2Vec_Continuous(void * cs,LinearSolver* lsol){
       /* for(int ino = 0; ino < 20; ino++) { */
       /* 	int numnoe = ps->simu->macromesh.elem2node[20 * iemacro + ino]; */
       /* 	for(int ii = 0; ii < 3; ii++) { */
-      /* 	  physnode[ino][ii] = ps->simu->macromesh.node[3 * numnoe + ii]; */
+      /* 	 physnode[ino][ii] = ps->simu->macromesh.node[3 * numnoe + ii]; */
       /* 	} */
       /* } */
       //ref_pg_vol(ps->fd->interp_param+1,int ipg,
@@ -498,93 +664,47 @@ void GenericOperator2Vec_Continuous(void * cs,LinearSolver* lsol){
 
 
       for(int ipg = 0;ipg < ps->nnodes; ipg++){
-	real wpg;
-	real xref[3];
-	int ipgmacro= ipg + isubcell * ps->nnodes;
-
-	ref_pg_vol(f0->deg,f0->raf,ipgmacro,xref,&wpg,NULL);
-
-	for(int iloc = 0; iloc < ps->nnodes; iloc++){
-	  real dtau[3][3],codtau[3][3];
-	  real dphiref_i[3],dphiref_j[3];
-	  real dphi_i[3],dphi_j[3];
-	  real basisPhi_i[4], basisPhi_j[4];
-	  int ilocmacro = iloc + isubcell * ps->nnodes;
-	  grad_psi_pg(f0->deg,f0->raf,ilocmacro,ipgmacro,dphiref_i);
-	  Ref2Phy(ps->simu->fd[iemacro].physnode,
-		  xref,dphiref_i,0,NULL,
-		  dtau,codtau,dphi_i,NULL);
-
-	  real det = dot_product(dtau[0], codtau[0]);
-	  if (ilocmacro==ipgmacro){
-	    basisPhi_i[0]=1;
-    }
-	  else
-    {
-      basisPhi_i[0]=0;
-    }
-    basisPhi_i[1]=dphi_i[0]/det;
-    basisPhi_i[2]=dphi_i[1]/det;
-    basisPhi_i[3]=dphi_i[2]/det;
-	  for(int jloc = 0; jloc < ps->nnodes; jloc++){
-	    int jlocmacro = jloc + isubcell * ps->nnodes;
-	    grad_psi_pg(f0->deg,f0->raf,jlocmacro,ipgmacro,dphiref_j);
-	    Ref2Phy(ps->simu->fd[iemacro].physnode,
-		    xref,dphiref_j,0,NULL,
-		    dtau,codtau,dphi_j,NULL);
-	    if (jlocmacro==ipgmacro){
-	      basisPhi_j[0]=1;
-      }
-	    else
-      {
-        basisPhi_j[0]=0;
-      }
-      basisPhi_j[1]=dphi_j[0]/det;
-      basisPhi_j[2]=dphi_j[1]/det;
-      basisPhi_j[3]=dphi_j[2]/det;
-      for (int iv1=0; iv1<ps->nb_phy_vars; iv1++){
-        for (int iv2=0; iv2<ps->nb_phy_vars; iv2++){
-          real res[4] = {0, 0, 0, 0};
-          for (int i=0; i<4; i++){
-            for (int j=0; j<4; j++){
-              res[i]+=basisPhi_j[j]*ps->diff_op2vec[2*iv1+iv2][i][j];
-            }
-          }
-	        aloc[iv1+iloc*ps->nb_phy_vars][iv1+jloc*ps->nb_phy_vars] += dot_product(basisPhi_i, res) * wpg * det  ;
+        real wpg;
+        real xref[3];
+        int ipgmacro= ipg + isubcell * ps->nnodes;
+        
+        ref_pg_vol(f0->deg,f0->raf,ipgmacro,xref,&wpg,NULL);
+        
+        for(int iloc = 0; iloc < ps->nnodes; iloc++){
+         real dtau[3][3],codtau[3][3];
+         real dphiref_i[3],dphiref_j[3];
+         real dphi_i[3],dphi_j[3];
+         int ilocmacro = iloc + isubcell * ps->nnodes;
+         grad_psi_pg(f0->deg,f0->raf,ilocmacro,ipgmacro,dphiref_i);
+        
+         Ref2Phy(ps->simu->fd[iemacro].physnode,
+        	 xref,dphiref_i,0,NULL,
+        	 dtau,codtau,dphi_i,NULL);
+         real det = dot_product(dtau[0], codtau[0]);
+         for(int jloc = 0; jloc < ps->nnodes; jloc++){
+           int jlocmacro = jloc + isubcell * ps->nnodes;
+           grad_psi_pg(f0->deg,f0->raf,jlocmacro,ipgmacro,dphiref_j);
+           Ref2Phy(ps->simu->fd[iemacro].physnode,
+        	   xref,dphiref_j,0,NULL,
+        	   dtau,codtau,dphi_j,NULL);
+           aloc[iloc][jloc] += dot_product(dphi_i, dphi_j) * wpg / det  ;
+         }
         }
-	    }
-    }
-	}
-      }
-
-
-      for(int iloc = 0; iloc < ps->nnodes; iloc++){
-	for(int jloc = 0; jloc < ps->nnodes; jloc++){
-	  int ino_dg = iloc + ie * ps->nnodes;
-	  int jno_dg = jloc + ie * ps->nnodes;
-	  int ino_fe = ps->dg_to_fe_index[ino_dg];
-	  int jno_fe = ps->dg_to_fe_index[jno_dg];
-	  for (int iv=0;iv<ps->nb_phy_vars;iv++){
-	    real val = aloc[iloc*ps->nb_phy_vars+iv][jloc*ps->nb_phy_vars+iv];
-	    AddLinearSolver(&ps->lsol,ino_fe*ps->nb_phy_vars+iv,jno_fe*ps->nb_phy_vars+iv,val);
-    }
-	}
+            }
+        
+        
+            for(int iloc = 0; iloc < ps->nnodes; iloc++){
+        for(int jloc = 0; jloc < ps->nnodes; jloc++){
+         int ino_dg = iloc + ie * ps->nnodes;
+         int jno_dg = jloc + ie * ps->nnodes;
+         int ino_fe = ps->dg_to_fe_index[ino_dg];
+         int jno_fe = ps->dg_to_fe_index[jno_dg];
+         real val = aloc[iloc][jloc];
+         AddLinearSolver(&ps->lsol,ino_fe,jno_fe,val);
+        }
       }
    
     }
   } 
   
  }
-
-
-void catCGVectors(void * cs,real *L1, real *L2, real *L){
-
-  ContinuousSolver * ps = cs;
-  int cc=0;
-  for (int i=0; i<ps->nb_fe_nodes;i++)
-  {
-    L[cc] = L1[i];
-    L[cc+1]=L2[i];
-    cc+=2;
-  }
-}

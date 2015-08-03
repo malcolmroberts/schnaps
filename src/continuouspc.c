@@ -8,56 +8,71 @@
 
 void physicPC_wave(Simulation *simu, real* globalSol, real* globalRHS){
 
+  ContinuousSolver waveSolver;
+  int nb_var = 3;
+  int * listvarGlobal = malloc(nb_var * sizeof(int));
+  listvarGlobal[0]=0;
+  listvarGlobal[1]=1;
+  listvarGlobal[2]=2;
+  InitContinuousSolver(&waveSolver,simu,1,nb_var,listvarGlobal);
 
   // Prediction pressure step.
   ContinuousSolver pressionSolver;
-  int nb_var = 1;
+  nb_var = 1;
   int * listvar = malloc(nb_var * sizeof(int));
   listvar[0]=0;
   
   InitContinuousSolver(&pressionSolver,simu,1,nb_var,listvar);
+  //pressionSolver.lsol.solver_type=GMRES;
 
   real D[4][4] = {{1,0,0,0},
-                  {0,0,0,0},
-                  {0,0,0,0},
+                  {0,1,0,0},
+                  {0,0,1,0},
                   {0,0,0,0}};
   for (int i=0;i<4;i++){
     for (int j=0;j<4;j++){
       pressionSolver.diff_op[i][j]=D[i][j];
     }
   }
-  pressionSolver.matrix_assembly=GenericOperatorScalar_Continuous;//MassMatrix;
-  pressionSolver.bc_assembly=NULL;// ExactDirichletContinuousMatrix;
+  pressionSolver.matrix_assembly=GenericOperatorScalar_Continuous;//MatrixPoisson_Continuous;//MassMatrix;
+  pressionSolver.bc_assembly=ExactDirichletContinuousMatrix;
   pressionSolver.postcomputation_assembly=NULL;//Computation_ElectricField_Poisson;
+  pressionSolver.lsol.MatVecProduct=MatVect;
 
   printf("Matrix assembly.....\n");
   pressionSolver.matrix_assembly(&pressionSolver,&pressionSolver.lsol);
 
+  printf("BC assembly.....\n");
+  pressionSolver.bc_assembly(&pressionSolver,&pressionSolver.lsol);
+
   printf("RHS assembly.....\n");
-  VectorDgToCg(&pressionSolver,globalRHS);
+  real * rhsPression = calloc(pressionSolver.lsol.neq,sizeof(real));
+  VectorDgToCg(&pressionSolver, globalRHS, rhsPression);
+  for (int i=0;i<pressionSolver.nb_fe_nodes;i++){
+    pressionSolver.lsol.rhs[i]+=rhsPression[i];
+  }
 
   printf("Solution...\n");
   SolveLinearSolver(&pressionSolver.lsol);
 
-  for (int i=0; i<pressionSolver.lsol.neq;i++){
-    printf("Pouet %d, %f\n",i,pressionSolver.lsol.sol[i]);
-  }
+  //for (int i=0; i<pressionSolver.lsol.neq;i++){
+  //  printf("Pouet %d, %.12e\n",i,pressionSolver.lsol.sol[i]);
+  //}
 
   // Construction of the L operator
   
-  real DL1[4][4] = {{0,0,0,0},
-                   {-1,0,0,0},
+  real DL1[4][4] = {{0,1,0,0},
+                   { 0,0,0,0},
                    { 0,0,0,0},
                    { 0,0,0,0}};
-  real DL2[4][4] = {{0,0,0,0},
+  real DL2[4][4] = {{0,0,1,0},
                    { 0,0,0,0},
-                   {-1,0,0,0},
+                   { 0,0,0,0},
                    { 0,0,0,0}};
-  real DL3[4][4] = {{0,0,0,0},
+  real DL3[4][4] = {{0,0,0,1},
                    { 0,0,0,0},
                    { 0,0,0,0},
-                   {-1,0,0,0}};
-  
+                   { 0,0,0,0}};
   ContinuousSolver L1;
   ContinuousSolver L2;
   nb_var = 1;
@@ -74,15 +89,28 @@ void physicPC_wave(Simulation *simu, real* globalSol, real* globalRHS){
   }
   L1.matrix_assembly=GenericOperatorScalar_Continuous;
   L2.matrix_assembly=GenericOperatorScalar_Continuous;
-  printf("Matrix assembly.....\n");
+  //L1.bc_assembly    =ExactDirichletContinuousMatrix;
+  //L2.bc_assembly    =ExactDirichletContinuousMatrix;
   L1.matrix_assembly(&L1,&L1.lsol);
   L2.matrix_assembly(&L2,&L2.lsol);
-  // cs.lsol->MAtVECT L1Psolved, L2Psolved
-  // Cat L1Psolved, L2Psolved
-  // SUM WITH RU (plus bas)
-  // Check
-  //lsol->MatVecProduct=MatVect;
-  //lsol->MatVecProduct(lsol,loc_x,loc_z);
+
+  //printf("BC assembly L1.....\n");
+  //L1.bc_assembly(&L1,&L1.lsol);
+  //printf("BC assembly L2.....\n");
+  //L2.bc_assembly(&L2,&L2.lsol);
+
+
+
+
+  real *L1Psolved=calloc(pressionSolver.nb_fe_nodes, sizeof(real));
+  real *L2Psolved=calloc(pressionSolver.nb_fe_nodes, sizeof(real));
+  L1.lsol.MatVecProduct=MatVect;
+  L1.lsol.MatVecProduct(&L1.lsol,pressionSolver.lsol.sol,L1Psolved);
+  L2.lsol.MatVecProduct=MatVect;
+  L2.lsol.MatVecProduct(&L2.lsol,pressionSolver.lsol.sol,L2Psolved);
+
+  real *LPsolved=calloc(2*pressionSolver.nb_fe_nodes, sizeof(real));
+  cat2CGVectors(&L1,&L2,L1Psolved,L2Psolved,LPsolved);
 
   // Computation of the velocity
   ContinuousSolver velocitySolver;
@@ -92,49 +120,97 @@ void physicPC_wave(Simulation *simu, real* globalSol, real* globalRHS){
   listvar2[1]=2;
   
   InitContinuousSolver(&velocitySolver,simu,1,nb_var,listvar2);
-  real D2[4][4][4] = {    {{1,0,0,0},
-                           {0,0,0,0},
-                           {0,0,0,0},
-                           {0,0,0,0}},
-                          {{0,0,0,0},
-                           {0,0,0,0},
-                           {0,0,0,0},
-                           {0,0,0,0}},
-                          {{0,0,0,0},
-                           {0,0,0,0},
-                           {0,0,0,0},
-                           {0,0,0,0}},
-                          {{1,0,0,0},
-                           {0,0,0,0},
-                           {0,0,0,0},
-                           {0,0,0,0}}};
-                          
+  //real h=simu->dt*simu->vmax;
+  real h=1;//1.e-4 * 10;
+  real PSchur[4][4][4] = {    {{1,0,0,0},
+                               {0,h,0,0},
+                               {0,0,h,0},
+                               {0,0,0,0}},
+                              {{0,0,0,0},
+                               {0,0,0,0},
+                               {0,0,0,0},
+                               {0,0,0,0}},
+                              {{0,0,0,0},
+                               {0,0,0,0},
+                               {0,0,0,0},
+                               {0,0,0,0}},
+                              {{1,0,0,0},
+                               {0,h,0,0},
+                               {0,0,h,0},
+                               {0,0,0,0}}};
   for (int k=0;k<4;k++){
     for (int i=0;i<4;i++){
       for (int j=0;j<4;j++){
-        velocitySolver.diff_op2vec[k][i][j]=D2[k][i][j];
+        velocitySolver.diff_op[i][j]=PSchur[0][i][j];
+        velocitySolver.diff_op2vec[k][i][j]=PSchur[k][i][j];
       }
     }
   }
 
   velocitySolver.matrix_assembly=GenericOperator2Vec_Continuous;
-  velocitySolver.bc_assembly=NULL;// ExactDirichletContinuousMatrix;
+  velocitySolver.bc_assembly=ExactDirichletContinuousMatrix;
   velocitySolver.postcomputation_assembly=NULL;//Computation_ElectricField_Poisson;
 
   printf("Matrix assembly.....\n");
   velocitySolver.matrix_assembly(&velocitySolver,&velocitySolver.lsol);
 
+  printf("BC assembly.....\n");
+  velocitySolver.bc_assembly(&velocitySolver,&velocitySolver.lsol);
+
   printf("RHS assembly.....\n");
-  VectorDgToCg(&velocitySolver,globalRHS);
+  real * rhsVelocity = calloc(velocitySolver.lsol.neq,sizeof(real));
+  VectorDgToCg(&velocitySolver, globalRHS, rhsVelocity);
+  for (int i=0;i<2*pressionSolver.nb_fe_nodes;i++){
+    velocitySolver.lsol.rhs[i]+=rhsVelocity[i]-LPsolved[i];
+  }
 
   printf("Solution...\n");
   SolveLinearSolver(&velocitySolver.lsol);
-  for (int i=0; i<velocitySolver.lsol.neq;i++){
-    printf("Pouet 2 %d, %f\n",i,velocitySolver.lsol.sol[i]);
+  //for (int i=0; i<velocitySolver.nb_fe_dof;i++){
+  //  printf("Pouet pas final %.12e\n",velocitySolver.lsol.sol[i]);
+  //}
+
+  // Contruction of the operator U
+  real *solU1=calloc(L1.nb_fe_nodes, sizeof(real));
+  real *solU2=calloc(L2.nb_fe_nodes, sizeof(real));
+  extract2CGVectors(&L1,&L2,velocitySolver.lsol.sol,solU1,solU2);
+  real *L1u1=calloc(L1.nb_fe_nodes, sizeof(real));
+  real *L2u2=calloc(L2.nb_fe_nodes, sizeof(real));
+  real *Mp=calloc(pressionSolver.nb_fe_nodes, sizeof(real));
+  
+  L1.lsol.MatVecProduct(&L1.lsol,solU1,L1u1);
+  L2.lsol.MatVecProduct(&L2.lsol,solU2,L2u2);
+  pressionSolver.lsol.MatVecProduct(&pressionSolver.lsol,pressionSolver.lsol.sol,Mp);
+  
+  // Correction step
+  for (int i=0; i<pressionSolver.nb_fe_nodes; i++){
+    pressionSolver.lsol.rhs[i] = Mp[i];// - L1u1[i] - L2u2[i];
   }
+  
+  SolveLinearSolver(&pressionSolver.lsol);
+  
+  // Final concatenation
+  cat2CGVectors(&pressionSolver,&velocitySolver,pressionSolver.lsol.sol,velocitySolver.lsol.sol,waveSolver.lsol.sol);
+
+  // Back from CG to DG
+  VectorCgToDg(&waveSolver,globalSol);
+  for (int i=0; i<waveSolver.nb_dg_dof;i++){
+    printf("Pouet %f\n",globalSol[i]);
+  }
+
+  
+  free(LPsolved);
+  free(L1Psolved);
+  free(L2Psolved);
+  free(solU1);
+  free(solU2);
+  free(L1u1);
+  free(L2u2);
+  free(Mp);
+
 }
 
-void VectorDgToCg(ContinuousSolver * cs,real * rhs){
+void VectorDgToCg(ContinuousSolver * cs,real * rhs, real * rhs_out){
   
   field* f = &cs->simu->fd[0];
   real* coeff = calloc(cs->nb_fe_nodes, sizeof(real));
@@ -162,7 +238,7 @@ void VectorDgToCg(ContinuousSolver * cs,real * rhs){
   
   // right hand side assembly
   for(int ino = 0; ino < cs->nb_fe_dof; ino++){
-    cs->lsol.rhs[ino] = 0;
+    rhs_out[ino] = 0;
   }
 
   for(int ie = 0; ie < cs->nbel; ie++){  
@@ -190,7 +266,7 @@ void VectorDgToCg(ContinuousSolver * cs,real * rhs){
 		          ilocmacro,cs->list_of_var[iv]) ;
 
         // TODO it is not ino_dg and ino_fe because it not depend of the number of the variable 
-        cs->lsol.rhs[iv + cs->nb_phy_vars * ino_fe] += rhsCopy[imem] * wpg * det; 
+        rhs_out[iv + cs->nb_phy_vars * ino_fe] += rhsCopy[imem] * wpg * det; 
       }
     }
  
@@ -208,19 +284,20 @@ void VectorCgToDg(ContinuousSolver * cs,real * rhs){
 
   field* f0 = &cs->simu->fd[0];
 
-  printf("Copy...\n");
-
+  printf("Cg to Dg Copy...\n");
   
+  printf("%d %d %d\n", cs->list_of_var[0],cs->list_of_var[1],cs->list_of_var[2]);
   // copy the potential at the right place
-  for(int var =0; var < cs->nb_phy_vars; var++){ 
-    for(int ie = 0; ie < cs->simu->macromesh.nbelems; ie++){  
-      for(int ipg = 0;ipg < cs->npgmacrocell; ipg++){
-	int ino_dg = ipg + ie * cs->npgmacrocell;
-	int ino_fe = cs->dg_to_fe_index[ino_dg];
-	int ipot = f0->varindex(f0->deg,f0->raf,f0->model.m,
-				ipg,cs->list_of_var[var]);
-	rhs[ipot]=cs->lsol.sol[ino_fe];
-	}
+  for(int ie = 0; ie < cs->simu->macromesh.nbelems; ie++){  
+    for(int ipg = 0;ipg < cs->npgmacrocell; ipg++){
+      int ino_dg = ipg + ie * cs->npgmacrocell;
+      int ino_fe = cs->dg_to_fe_index[ino_dg];
+      for(int var =0; var < cs->nb_phy_vars; var++){ 
+        int ipot_fe = cs->nb_phy_vars*ino_fe + cs->list_of_var[var];
+        int ipot = f0->varindex(f0->deg,f0->raf,f0->model.m,
+                                ipg,cs->list_of_var[var]);
+        rhs[ipot]=cs->lsol.sol[ipot_fe];
+      }
     }
   }
 
