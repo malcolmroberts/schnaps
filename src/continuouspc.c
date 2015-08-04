@@ -18,7 +18,10 @@ void physicPC_wave(Simulation *simu, real* globalSol, real* globalRHS){
   listvarGlobal[2]=2;
   InitContinuousSolver(&waveSolver,simu,1,nb_var,listvarGlobal);
 
-  // Prediction pressure step.
+
+
+
+  ////////////////////////////////// Prediction pressure step.
   ContinuousSolver pressionSolver;
   nb_var = 1;
   int * listvar = malloc(nb_var * sizeof(int));
@@ -26,7 +29,7 @@ void physicPC_wave(Simulation *simu, real* globalSol, real* globalRHS){
   
   InitContinuousSolver(&pressionSolver,simu,1,nb_var,listvar);
   //pressionSolver.lsol.solver_type=GMRES;
-  pressionSolver.lsol.solver_type=PAR_GMRES;
+  pressionSolver.lsol.solver_type=LU;
 
   real D[4][4] = {{1,0,0,0},
                   {0,0,0,0},
@@ -58,23 +61,21 @@ void physicPC_wave(Simulation *simu, real* globalSol, real* globalRHS){
   printf("Solution...\n");
   SolveLinearSolver(&pressionSolver.lsol);
 
-   pressionSolver.lsol.solver_type=LU;
+  pressionSolver.lsol.solver_type=GMRES;
 
-  //for (int i=0; i<pressionSolver.lsol.neq;i++){
-  //  printf("Pouet %d, %.12e\n",i,pressionSolver.lsol.sol[i]);
-  //}
 
-  // Construction of the L operator
+  //////////////////////////// Construction of the L operator
   
-  real DL1[4][4] = {{0,1,0,0},
+  real h1=simu->vmax*simu->dt*simu->theta;
+  real DL1[4][4] = {{0,h1,0,0},
                    { 0,0,0,0},
                    { 0,0,0,0},
                    { 0,0,0,0}};
-  real DL2[4][4] = {{0,0,1,0},
+  real DL2[4][4] = {{0,0,h1,0},
                    { 0,0,0,0},
                    { 0,0,0,0},
                    { 0,0,0,0}};
-  real DL3[4][4] = {{0,0,0,1},
+  real DL3[4][4] = {{0,0,0,h1},
                    { 0,0,0,0},
                    { 0,0,0,0},
                    { 0,0,0,0}};
@@ -94,17 +95,8 @@ void physicPC_wave(Simulation *simu, real* globalSol, real* globalRHS){
   }
   L1.matrix_assembly=GenericOperatorScalar_Continuous;
   L2.matrix_assembly=GenericOperatorScalar_Continuous;
-  //L1.bc_assembly    =ExactDirichletContinuousMatrix;
-  //L2.bc_assembly    =ExactDirichletContinuousMatrix;
   L1.matrix_assembly(&L1,&L1.lsol);
   L2.matrix_assembly(&L2,&L2.lsol);
-
-  //printf("BC assembly L1.....\n");
-  //L1.bc_assembly(&L1,&L1.lsol);
-  //printf("BC assembly L2.....\n");
-  //L2.bc_assembly(&L2,&L2.lsol);
-
-
 
 
   real *L1Psolved=calloc(pressionSolver.nb_fe_nodes, sizeof(real));
@@ -126,28 +118,26 @@ void physicPC_wave(Simulation *simu, real* globalSol, real* globalRHS){
   
   InitContinuousSolver(&velocitySolver,simu,1,nb_var,listvar2);
   velocitySolver.lsol.solver_type=LU;
-  //real h=simu->dt*simu->vmax;
-  real h=0;//1.e-4 * 10;
+  real h=h1;
   real PSchur[4][4][4] = {    {{1,0,0,0},
-                               {0,h,0,0},
-                               {0,0,h,0},
-                               {0,0,0,0}},
-                              {{0,0,0,0},
-                               {0,0,0,0},
+                               {0,h*h,0,0},
                                {0,0,0,0},
                                {0,0,0,0}},
                               {{0,0,0,0},
+                               {0,0,h*h,0},
                                {0,0,0,0},
+                               {0,0,0,0}},
+                              {{0,0,0,0},
                                {0,0,0,0},
+                               {0,h*h,0,0},
                                {0,0,0,0}},
                               {{1,0,0,0},
-                               {0,h,0,0},
-                               {0,0,h,0},
+                               {0,0,0,0},
+                               {0,0,h*h,0},
                                {0,0,0,0}}};
   for (int k=0;k<4;k++){
     for (int i=0;i<4;i++){
       for (int j=0;j<4;j++){
-        velocitySolver.diff_op[i][j]=PSchur[0][i][j];
         velocitySolver.diff_op2vec[k][i][j]=PSchur[k][i][j];
       }
     }
@@ -173,10 +163,12 @@ void physicPC_wave(Simulation *simu, real* globalSol, real* globalRHS){
   printf("Solution...\n");
   SolveLinearSolver(&velocitySolver.lsol);
   //for (int i=0; i<velocitySolver.nb_fe_dof;i++){
-  //  printf("Pouet pas final %.12e\n",velocitySolver.lsol.sol[i]);
+  //  printf("Pouet pas final %d, %.12e\n",i,velocitySolver.lsol.sol[i]);
   //}
 
   // Contruction of the operator U
+  L1.list_of_var[0]=0;
+  L2.list_of_var[0]=1;
   real *solU1=calloc(L1.nb_fe_nodes, sizeof(real));
   real *solU2=calloc(L2.nb_fe_nodes, sizeof(real));
   extract2CGVectors(&L1,&L2,velocitySolver.lsol.sol,solU1,solU2);
@@ -187,7 +179,6 @@ void physicPC_wave(Simulation *simu, real* globalSol, real* globalRHS){
   L1.lsol.MatVecProduct(&L1.lsol,solU1,L1u1);
   L2.lsol.MatVecProduct(&L2.lsol,solU2,L2u2);
   pressionSolver.lsol.MatVecProduct(&pressionSolver.lsol,pressionSolver.lsol.sol,Mp);
-  
   // Correction step
   for (int i=0; i<pressionSolver.nb_fe_nodes; i++){
     pressionSolver.lsol.rhs[i] = Mp[i] - L1u1[i] - L2u2[i];
@@ -200,9 +191,9 @@ void physicPC_wave(Simulation *simu, real* globalSol, real* globalRHS){
 
   // Back from CG to DG
   VectorCgToDg(&waveSolver,globalSol);
-  for (int i=0; i<waveSolver.nb_dg_dof;i++){
-    printf("Pouet %f\n",globalSol[i]);
-  }
+  //for (int i=0; i<waveSolver.nb_dg_dof;i++){
+  //  printf("Pouet %f\n",globalSol[i]);
+  //}
 
   
   free(LPsolved);
@@ -272,14 +263,13 @@ void VectorDgToCg(ContinuousSolver * cs,real * rhs, real * rhs_out){
 		          ilocmacro,cs->list_of_var[iv]) ;
 
         // TODO it is not ino_dg and ino_fe because it not depend of the number of the variable 
-        rhs_out[iv + cs->nb_phy_vars * ino_fe] += rhsCopy[imem] * wpg * det; 
+        rhs_out[iv + cs->nb_phy_vars * ino_fe] += rhsCopy[imem] * wpg * det;//rhs[imem] * wpg * det; 
       }
     }
- 
   }
   //for (int i=0; i<cs->nb_fe_nodes;i++){
   //  for (int iv=0; iv<cs->nb_phy_vars;iv++){
-  //    cs->lsol.rhs[iv+cs->nb_phy_vars*i]/=coeff[i];//*coeff[i];
+  //    rhs_out[iv+cs->nb_phy_vars*i]/=coeff[i];//*coeff[i];
   //  }
   //}
   free(coeff);

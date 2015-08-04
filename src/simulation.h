@@ -35,8 +35,8 @@ typedef struct Simulation {
   //! final time of simulation
   real tmax;
 
-  //! time step and cfl
-  real dt,cfl;
+  //! time step, theta (Crank-Nicholson) and cfl
+  real dt,theta,cfl;
 
   //! current iteration of the RK algorithm
   int iter_time_rk;

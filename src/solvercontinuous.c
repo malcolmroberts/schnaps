@@ -97,7 +97,11 @@ void InitContinuousSolver(void * cs, Simulation* simu,int type_bc,int nb_phy_var
 
   ps->type_bc=type_bc;
   ps->nb_phy_vars=nb_phy_vars;
-  ps->list_of_var=listvar;
+  ps->list_of_var = calloc(nb_phy_vars,sizeof(int));
+  assert(sizeof(ps->list_of_var)==sizeof(listvar));
+  for (int i=0; i<nb_phy_vars;i++){
+    ps->list_of_var[i]=listvar[i];
+  }
 
   ps->postcomputation_assembly=NULL;
   ps->matrix_assembly=NULL;
@@ -296,58 +300,45 @@ void ExactDirichletContinuousMatrix(void * cs,LinearSolver* lsol){
   
   for(int var =0; var < ps->nb_phy_vars; var++){ 
     //for(int ie = 0; ie < ps->simu->macromesh.nbelems; ie++){  
-      for (int i=0; i<ps->simu->macromesh.nboundaryfaces;i++){
-        int ifa = ps->simu->macromesh.boundaryface[i];
-        int locfaL = ps->simu->macromesh.face2elem[4 * ifa + 1];
-        int ie = ps->simu->macromesh.face2elem[4 * ifa ];
-        int ieR = ps->simu->macromesh.face2elem[4 * ifa + 2];
-        //printf("ifa=%d,locfaL=%d, ieL=%d, ieR=%d\n", ifa,locfaL,ie,ieR);
+    for (int i=0; i<ps->simu->macromesh.nboundaryfaces;i++){
+      int ifa = ps->simu->macromesh.boundaryface[i];
+      int locfaL = ps->simu->macromesh.face2elem[4 * ifa + 1];
+      int ie = ps->simu->macromesh.face2elem[4 * ifa ];
+      int ieR = ps->simu->macromesh.face2elem[4 * ifa + 2];
+      if (ieR<0){
         field *f = &ps->simu->fd[ie];
 
-        for(int ipg = 0;ipg < ps->npgmacrocell; ipg++){
+        for(int ipglf = 0;ipglf < NPGF(f->deg,f->raf,locfaL); ipglf++){
+          real bigval = 1e16;
+          real xpgref[3], xpgref_in[3], wpg;
+          
+          // Get the coordinates of the Gauss point and coordinates of a
+          // point slightly inside the opposite element in xref_in
+          int ipg = ref_pg_face(f->deg, f->raf, locfaL, ipglf, xpgref, &wpg, xpgref_in);
           int ino_dg = ipg + ie * ps->npgmacrocell;
           int ino_fe = ps->dg_to_fe_index[ino_dg];
           int ipot = f0->varindex(f0->deg,f0->raf,f0->model.m,
           			ipg,ps->list_of_var[var]);
           int ipot_fe = ino_fe*ps->nb_phy_vars + var;
-          if (ps->is_boundary_node[ino_fe]&&ieR<0){
-            real bigval = 1e16;
-            real xpgref[3], xpgref_in[3], wpg;
-            
-            // Get the coordinates of the Gauss point and coordinates of a
-            // point slightly inside the opposite element in xref_in
-            int ipgL = ref_pg_face(f->deg, f->raf, locfaL, ipg, xpgref, &wpg, xpgref_in);
-            // Normal vector at gauss point ipgL
-            real vnds[3], xpg[3];
-            {
-              real dtau[3][3], codtau[3][3];
-              Ref2Phy(f->physnode,
-                      xpgref,
-                      NULL, locfaL, // dpsiref, ifa
-                      xpg, dtau,
-                      codtau, NULL, vnds); // codtau, dpsi, vnds
-            }
-            
-            // the boundary flux is an affine function
-            real flux0[f->model.m];
-            f->model.ImposedData(xpg, f->tnow, flux0);
-            ps->lsol.rhs[ipot_fe] = flux0[ps->list_of_var[var]] * bigval;
-            //printf("lovar=%d,ino_fe=%d,flux = %f\n",ps->list_of_var[var],ino_fe,flux0[ps->list_of_var[var]]);
-            //printf("i de bi : %d\n", ipot_fe);
-            //printf("ifa=%d locfaL=%d \n",ifa,locfaL);
+          // Normal vector at gauss point ipgL
+          real vnds[3], xpg[3];
+          {
+            real dtau[3][3], codtau[3][3];
+            Ref2Phy(f->physnode,
+                    xpgref,
+                    NULL, locfaL, // dpsiref, ifa
+                    xpg, dtau,
+                    codtau, NULL, vnds); // codtau, dpsi, vnds
+          }
+          
+          // the boundary flux is an affine function
+          real flux0[f->model.m];
+          f->model.ImposedData(xpg, f->tnow, flux0);
+          ps->lsol.rhs[ipot_fe] = flux0[ps->list_of_var[var]] * bigval;
         }
       }
     }
   }
-  //for(int ino=0; ino<ps->nb_fe_nodes; ino++){
-  //  if (ps->is_boundary_node[ino]){
-  //    for (int iv=0; iv<ps->nb_phy_vars;iv++){
-  //      int pouet=ps->nb_phy_vars*ino+iv;
-  //      printf("i=%d, bi=%f, aij=%f, quotient=%f\n", pouet,ps->lsol.rhs[pouet],GetLinearSolver(&ps->lsol,pouet,pouet),ps->lsol.rhs[pouet]/GetLinearSolver(&ps->lsol,pouet,pouet));
-  //      //printf("i de aii : %d\n", ps->nb_phy_vars*ino+iv);
-  //    }
-  //  }
-  //}
 }
 
 void AllocateContinuousMatrix(void *cs,LinearSolver* lsol){
@@ -390,10 +381,12 @@ void AllocateContinuousMatrix(void *cs,LinearSolver* lsol){
 	for(int jloc = 0; jloc < ps->nnodes; jloc++){
 	  int ino_dg = iloc + ie * ps->nnodes;
 	  int jno_dg = jloc + ie * ps->nnodes;
-	  for(int var = 0; var < ps->nb_phy_vars; var++){
-	    int ino_fe = ps->nb_phy_vars*ps->dg_to_fe_index[ino_dg]+var;
-	    int jno_fe = ps->nb_phy_vars*ps->dg_to_fe_index[jno_dg]+var;
-	    IsNonZero(&ps->lsol, ino_fe, jno_fe);
+	  int ino_fe = ps->dg_to_fe_index[ino_dg];
+	  int jno_fe = ps->dg_to_fe_index[jno_dg];
+    for (int iv1=0;iv1<ps->nb_phy_vars;iv1++){
+      for (int iv2=0;iv2<ps->nb_phy_vars;iv2++){
+	      IsNonZero(&ps->lsol, ino_fe*ps->nb_phy_vars+iv1, jno_fe*ps->nb_phy_vars+iv2);
+      }
 	  }
 	}
       }
