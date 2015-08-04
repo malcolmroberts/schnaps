@@ -121,7 +121,7 @@ void InitContinuousSolver(void * cs, Simulation* simu,int type_bc,int nb_phy_var
   ps->nb_fe_nodes=BuildFatNodeList(simu,ps->fn_list);
   ps->nb_fe_dof= ps->nb_fe_nodes * ps->nb_phy_vars;
 
-  printf("nb dg nodes=%d ; nb fe nodes=%d\n",ps->nb_dg_nodes,ps->nb_fe_nodes);
+  //printf("nb dg nodes=%d ; nb fe nodes=%d\n",ps->nb_dg_nodes,ps->nb_fe_nodes);
   // build the connectivity array
 
   ps->dg_to_fe_index = malloc(ps->nb_dg_nodes * sizeof(int));
@@ -180,8 +180,8 @@ void InitContinuousSolver(void * cs, Simulation* simu,int type_bc,int nb_phy_var
     count_boundary += ps->is_boundary_node[ino];
   }
 
-  printf("found %d boundary nodes (on %d fe nodes)\n",
-	 count_boundary, ps->nb_fe_nodes);
+  //printf("found %d boundary nodes (on %d fe nodes)\n",
+	// count_boundary, ps->nb_fe_nodes);
 	
   InitLinearSolver(&ps->lsol,ps->nb_fe_dof,NULL,NULL); //InitSkyline(&sky, neq);
 
@@ -203,7 +203,7 @@ void SolveContinuous2D(void* cs){
   
   field* f0 = &ps->simu->fd[0];
 
-  printf("Init...\n");
+  //printf("Init...\n");
   
   int nraf[3] = {f0->raf[0],f0->raf[1],f0->raf[2]};
   int deg[3] = {f0->deg[0],f0->deg[1],f0->deg[2]};
@@ -212,7 +212,7 @@ void SolveContinuous2D(void* cs){
   // number of equation of the Poisson solver
   int neq=ps->nb_fe_dof; //(nodes)
 
-  printf("Matrix assembly.....\n");
+  //printf("Matrix assembly.....\n");
   if(ps->matrix_assembly != NULL){
     ps->matrix_assembly(ps,&ps->lsol);
   }
@@ -222,7 +222,7 @@ void SolveContinuous2D(void* cs){
       exit(1);
     }
   
-  printf("RHS assembly.....\n");
+  //printf("RHS assembly.....\n");
   if(ps->rhs_assembly != NULL){
     ps->rhs_assembly(ps,&ps->lsol);
   }
@@ -232,7 +232,7 @@ void SolveContinuous2D(void* cs){
       exit(1);
     }
 
-  printf("BC assembly.....\n");
+  //printf("BC assembly.....\n");
   if(ps->bc_assembly != NULL){
     ps->bc_assembly(ps,&ps->lsol);
   }
@@ -242,18 +242,18 @@ void SolveContinuous2D(void* cs){
       exit(1);
     }
   
-  printf("Solution...\n");
+  //printf("Solution...\n");
 
   SolveLinearSolver(&ps->lsol);
 
   
-  printf("post computation assembly.....\n");
+  //printf("post computation assembly.....\n");
   if(ps->postcomputation_assembly != NULL){
     ps->postcomputation_assembly(ps,&ps->lsol);
   }
 
 
-  printf("End SolvePoisson2D.\n");
+  //printf("End SolvePoisson2D.\n");
 
 }
 
@@ -262,7 +262,7 @@ void ContinuousToDiscontinuous_Copy(ContinuousSolver * cs,LinearSolver* lsol){
   
   field* f0 = &cs->simu->fd[0];
 
-  printf("Copy...\n");
+  //printf("Copy...\n");
 
   
   // copy the potential at the right place
@@ -347,7 +347,7 @@ void AllocateContinuousMatrix(void *cs,LinearSolver* lsol){
   //static bool is_lu = false;
 
   field* f0 = &ps->simu->fd[0];
-  printf("Init...\n");
+  //printf("Init...\n");
 
   // number of equation of the Poisson solver
   int neq=ps->nb_fe_dof; //(nodes)
@@ -372,7 +372,7 @@ void AllocateContinuousMatrix(void *cs,LinearSolver* lsol){
     assert(deg[2] == 0);
   }
  
-  printf("Allocation...\n");
+  //printf("Allocation...\n");
   if(!ps->lsol.is_alloc){
 
     // compute the profile of the matrix

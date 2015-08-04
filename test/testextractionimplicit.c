@@ -14,6 +14,11 @@
 void TestExtraction_ImposedData(const real *x, const real t, real *w);
 void TestExtraction_InitData(real *x, real *w);
 void TestExtraction_Source(const real *xy, const real t, const real *w, real *S);
+void TestExtraction_ImposedDataWorking(const real *x, const real t, real *w);
+void TestExtraction_InitDataWorking(real *x, real *w);
+void TestExtraction_SourceWorking(const real *xy, const real t, const real *w, real *S);
+void Wave_Upwind_BoundaryFluxWorking(real *x, real t, real *wL, real *vnorm,
+				                                                        real *flux);
 
 int main(void) {
   
@@ -51,13 +56,13 @@ int Test_Extraction(void) {
 
   model.m = 3; 
   model.NumFlux=Wave_Upwind_NumFlux;
-  model.InitData = TestExtraction_InitData;
-  model.ImposedData = TestExtraction_ImposedData;
-  model.BoundaryFlux = Wave_Upwind_BoundaryFlux;
-  model.Source =NULL;// TestExtraction_Source;
+  model.InitData = TestExtraction_InitData;//TestExtraction_InitDataWorking;
+  model.ImposedData = TestExtraction_ImposedData;//TestExtraction_ImposedDataWorking;//
+  model.BoundaryFlux = Wave_Upwind_BoundaryFlux;//Wave_Upwind_BoundaryFluxWorking;//
+  model.Source = TestExtraction_Source;//TestExtraction_SourceWorking;//
 
-  int deg[]={4, 4, 0};
-  int raf[]={2, 2, 1};
+  int deg[]={2, 2, 0};
+  int raf[]={8, 8, 1};
 
 
   assert(mesh.is2d);
@@ -73,11 +78,11 @@ int Test_Extraction(void) {
 
   real theta=0.5;
   simu.theta=theta;
-  simu.dt=1;
+  simu.dt=0.01/8;
   simu.vmax=_SPEED_WAVE;
-  real tmax=1;
+  real tmax=0.1;
   
-  int itermax=tmax/simu.dt+1;
+  int itermax=tmax/simu.dt;
   simu.itermax_rk=itermax;
   InitImplicitLinearSolver(&simu, &solver_implicit);
   InitImplicitLinearSolver(&simu, &solver_explicit);
@@ -169,6 +174,10 @@ int Test_Extraction(void) {
   PlotFields(1,false, &simu, "u", "dgvisu_exu.msh");
   PlotFields(2,false, &simu, "v", "dgvisu_exv.msh");
 
+  PlotFields(0,true, &simu, "p", "dgerr_exp.msh");
+  PlotFields(1,true, &simu, "u", "dgerr_exu.msh");
+  PlotFields(2,true, &simu, "v", "dgerr_exv.msh");
+
 #ifdef PARALUTION 
   paralution_end();
 #endif 
@@ -178,19 +187,14 @@ int Test_Extraction(void) {
 
 
 
-void TestExtraction_ImposedData(const real *xy, const real t, real *w) {
+void TestExtraction_ImposedDataWorking(const real *xy, const real t, real *w) {
 
   real x=xy[0];
   real y=xy[1];
 
-
-  //w[0] = x*(1-x)*y*(1-y)+1;
-  //w[1] = 2*x*(1-x)*y*(1-y)+2;
-  //w[2] = 3*x*(1-x)*y*(1-y)+3;
-
   w[0] = 10;
-  w[1] = y*x+2;//x+2;// 
-  w[2] = -y*y*0.5+5;//-y+3;//
+  w[1] = y*x+2;
+  w[2] = -y*y*0.5+y;
   
   //w[0] = 1;
   //w[1] = x+2;// 
@@ -198,11 +202,34 @@ void TestExtraction_ImposedData(const real *xy, const real t, real *w) {
 
 }
 
+void TestExtraction_ImposedData(const real *xy, const real t, real *w) {
+
+  real x=xy[0];
+  real y=xy[1];
+
+
+  w[0] = y+1;//x*(1-x)*y*(1-y)+1;
+  w[1] = 0.01*x+y+1;//2*x*(1-x)*y*(1-y)+1;
+  w[2] = x+0.02*y;//3*x*(1-x)*y*(1-y)+1;
+
+}
+
+void TestExtraction_InitDataWorking(real *x, real *w) {
+  real t = 0;
+  TestExtraction_ImposedDataWorking(x, t, w);
+}
+
 void TestExtraction_InitData(real *x, real *w) {
   real t = 0;
   TestExtraction_ImposedData(x, t, w);
 }
 
+void Wave_Upwind_BoundaryFluxWorking(real *x, real t, real *wL, real *vnorm,
+				       real *flux) {
+  real wR[3];
+  TestExtraction_ImposedDataWorking(x , t, wR);
+  Wave_Upwind_NumFlux(wL, wR, vnorm, flux);
+}
 
 void Wave_Upwind_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
 				       real *flux) {
@@ -211,18 +238,28 @@ void Wave_Upwind_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
   Wave_Upwind_NumFlux(wL, wR, vnorm, flux);
 }
 
+void TestExtraction_SourceWorking(const real *xy, const real t, const real *w, real *S){
+  
+  real x=xy[0];
+  real y=xy[1];
+
+  S[0] = 1;
+  S[1] = 0;
+  S[2] = 0;
+
+}
+
 void TestExtraction_Source(const real *xy, const real t, const real *w, real *S){
   
   real x=xy[0];
   real y=xy[1];
 
-  S[0] = 2*(1-2*x)*(y*(1-y))+3*(1-2*y)*(x*(1-x));
-  S[1] = (1-2*x)*(y*(1-y));
-  S[2] = (1-2*y)*(x*(1-x));
+  S[0] = 0.03;//2*(1-2*x)*(y*(1-y))+3*(1-2*y)*(x*(1-x));
+  S[1] = 0;//(1-2*x)*(y*(1-y));
+  S[2] = 1;//(1-2*y)*(x*(1-x));
 
   S[0] *= _SPEED_WAVE;
   S[1] *= _SPEED_WAVE;
   S[2] *= _SPEED_WAVE;
 
 }
-

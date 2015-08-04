@@ -45,21 +45,25 @@ void physicPC_wave(Simulation *simu, real* globalSol, real* globalRHS){
   pressionSolver.postcomputation_assembly=NULL;//Computation_ElectricField_Poisson;
   pressionSolver.lsol.MatVecProduct=MatVect;
 
-  printf("Matrix assembly.....\n");
+  //printf("Matrix assembly.....\n");
   pressionSolver.matrix_assembly(&pressionSolver,&pressionSolver.lsol);
 
-  printf("BC assembly.....\n");
+  //printf("BC assembly.....\n");
   pressionSolver.bc_assembly(&pressionSolver,&pressionSolver.lsol);
 
-  printf("RHS assembly.....\n");
+  //printf("RHS assembly.....\n");
   real * rhsPression = calloc(pressionSolver.lsol.neq,sizeof(real));
   VectorDgToCg(&pressionSolver, globalRHS, rhsPression);
   for (int i=0;i<pressionSolver.nb_fe_nodes;i++){
     pressionSolver.lsol.rhs[i]+=rhsPression[i];
   }
 
-  printf("Solution...\n");
+  //printf("Solution...\n");
   SolveLinearSolver(&pressionSolver.lsol);
+  //for (int i=0;i<pressionSolver.nb_fe_nodes;i++){
+  //  printf("%d, %f\n", i,pressionSolver.lsol.sol[i]);
+  //}
+  
 
   pressionSolver.lsol.solver_type=GMRES;
 
@@ -147,24 +151,22 @@ void physicPC_wave(Simulation *simu, real* globalSol, real* globalRHS){
   velocitySolver.bc_assembly=ExactDirichletContinuousMatrix;
   velocitySolver.postcomputation_assembly=NULL;//Computation_ElectricField_Poisson;
 
-  printf("Matrix assembly.....\n");
+  //printf("Matrix assembly.....\n");
   velocitySolver.matrix_assembly(&velocitySolver,&velocitySolver.lsol);
 
-  printf("BC assembly.....\n");
+  //printf("BC assembly.....\n");
   velocitySolver.bc_assembly(&velocitySolver,&velocitySolver.lsol);
 
-  printf("RHS assembly.....\n");
+  //printf("RHS assembly.....\n");
   real * rhsVelocity = calloc(velocitySolver.lsol.neq,sizeof(real));
   VectorDgToCg(&velocitySolver, globalRHS, rhsVelocity);
   for (int i=0;i<2*pressionSolver.nb_fe_nodes;i++){
     velocitySolver.lsol.rhs[i]+=rhsVelocity[i]-LPsolved[i];
   }
 
-  printf("Solution...\n");
+  //printf("Solution...\n");
   SolveLinearSolver(&velocitySolver.lsol);
-  //for (int i=0; i<velocitySolver.nb_fe_dof;i++){
-  //  printf("Pouet pas final %d, %.12e\n",i,velocitySolver.lsol.sol[i]);
-  //}
+  real * zut = calloc(velocitySolver.nb_fe_dof,sizeof(real));
 
   // Contruction of the operator U
   L1.list_of_var[0]=0;
@@ -280,9 +282,9 @@ void VectorCgToDg(ContinuousSolver * cs,real * rhs){
 
   field* f0 = &cs->simu->fd[0];
 
-  printf("Cg to Dg Copy...\n");
+  //printf("Cg to Dg Copy...\n");
   
-  printf("%d %d %d\n", cs->list_of_var[0],cs->list_of_var[1],cs->list_of_var[2]);
+  //printf("%d %d %d\n", cs->list_of_var[0],cs->list_of_var[1],cs->list_of_var[2]);
   // copy the potential at the right place
   for(int ie = 0; ie < cs->simu->macromesh.nbelems; ie++){  
     for(int ipg = 0;ipg < cs->npgmacrocell; ipg++){

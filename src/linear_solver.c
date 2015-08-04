@@ -24,7 +24,7 @@ void InitLinearSolver(LinearSolver* lsol,int n,
   lsol->rhs=NULL;
   lsol->sol=NULL;
   lsol->MatVecProduct=NULL;
-  lsol->tol=1.e-8;
+  lsol->tol=1.e-9;
   lsol->restart_gmres=1;
   lsol->iter_max=10000;
 
