@@ -167,6 +167,9 @@ void GenericOperator2Vec_Continuous(void * cs,LinearSolver* lsol);
 void cat2CGVectors(ContinuousSolver* L1Solver,ContinuousSolver* L2Solver, real *L1, real *L2, real *L);
 
 //! TODOODODODODOOD
+void catGradients(ContinuousSolver* L1Solver,ContinuousSolver* L2Solver, real *L1, real *L2, real *L);
+
+//! TODOODODODODOOD
 void extract2CGVectors(ContinuousSolver* L1Solver,ContinuousSolver* L2Solver, real *L, real *L1, real *L2);
 
 //! TODOODODODODOOD

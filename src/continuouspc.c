@@ -28,7 +28,6 @@ void physicPC_wave(Simulation *simu, real* globalSol, real* globalRHS){
   listvar[0]=0;
   
   InitContinuousSolver(&pressionSolver,simu,1,nb_var,listvar);
-  //pressionSolver.lsol.solver_type=GMRES;
   pressionSolver.lsol.solver_type=LU;
 
   real D[4][4] = {{1,0,0,0},
@@ -60,12 +59,9 @@ void physicPC_wave(Simulation *simu, real* globalSol, real* globalRHS){
 
   //printf("Solution...\n");
   SolveLinearSolver(&pressionSolver.lsol);
-  //for (int i=0;i<pressionSolver.nb_fe_nodes;i++){
-  //  printf("%d, %f\n", i,pressionSolver.lsol.sol[i]);
-  //}
-  
 
   pressionSolver.lsol.solver_type=GMRES;
+  pressionSolver.lsol.tol=1.e-11;
 
 
   //////////////////////////// Construction of the L operator
@@ -110,10 +106,11 @@ void physicPC_wave(Simulation *simu, real* globalSol, real* globalRHS){
   L2.lsol.MatVecProduct=MatVect;
   L2.lsol.MatVecProduct(&L2.lsol,pressionSolver.lsol.sol,L2Psolved);
 
-  real *LPsolved=calloc(2*pressionSolver.nb_fe_nodes, sizeof(real));
-  cat2CGVectors(&L1,&L2,L1Psolved,L2Psolved,LPsolved);
 
-  // Computation of the velocity
+  real *LPsolved=calloc(2*pressionSolver.nb_fe_nodes, sizeof(real));
+  catGradients(&L1,&L2,L1Psolved,L2Psolved,LPsolved);
+
+  //////////////////////////// Computation of the velocity
   ContinuousSolver velocitySolver;
   nb_var = 2;
   int * listvar2 = malloc(nb_var * sizeof(int));
@@ -166,7 +163,7 @@ void physicPC_wave(Simulation *simu, real* globalSol, real* globalRHS){
 
   //printf("Solution...\n");
   SolveLinearSolver(&velocitySolver.lsol);
-  real * zut = calloc(velocitySolver.nb_fe_dof,sizeof(real));
+
 
   // Contruction of the operator U
   L1.list_of_var[0]=0;
@@ -192,10 +189,7 @@ void physicPC_wave(Simulation *simu, real* globalSol, real* globalRHS){
   cat2CGVectors(&pressionSolver,&velocitySolver,pressionSolver.lsol.sol,velocitySolver.lsol.sol,waveSolver.lsol.sol);
 
   // Back from CG to DG
-  VectorCgToDg(&waveSolver,globalSol);
-  //for (int i=0; i<waveSolver.nb_dg_dof;i++){
-  //  printf("Pouet %f\n",globalSol[i]);
-  //}
+  VectorCgToDg(&waveSolver,waveSolver.lsol.sol,globalSol);
 
   
   free(LPsolved);
@@ -278,7 +272,7 @@ void VectorDgToCg(ContinuousSolver * cs,real * rhs, real * rhs_out){
   free(rhsCopy);
 }
 
-void VectorCgToDg(ContinuousSolver * cs,real * rhs){
+void VectorCgToDg(ContinuousSolver * cs, real * rhsIn, real * rhsOut){
 
   field* f0 = &cs->simu->fd[0];
 
@@ -294,7 +288,7 @@ void VectorCgToDg(ContinuousSolver * cs,real * rhs){
         int ipot_fe = cs->nb_phy_vars*ino_fe + cs->list_of_var[var];
         int ipot = f0->varindex(f0->deg,f0->raf,f0->model.m,
                                 ipg,cs->list_of_var[var]);
-        rhs[ipot]=cs->lsol.sol[ipot_fe];
+        rhsOut[ipot]=rhsIn[ipot_fe];
       }
     }
   }

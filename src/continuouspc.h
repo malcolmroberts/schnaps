@@ -17,7 +17,7 @@
 void VectorDgToCg (ContinuousSolver * ps,real * rhs, real * rhs_out);
 
 // ! TOODODODODODOODODODOD
-void VectorCgToDg(ContinuousSolver * cs,real * rhs);
+void VectorCgToDg(ContinuousSolver * cs, real * rhsIn, real * rhsOut);
 
 // ! TOODODODODODOODODODOD
 void physicPC_wave(Simulation *simu, real* globalSol, real* globalRHS);
