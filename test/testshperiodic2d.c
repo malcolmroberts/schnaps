@@ -61,8 +61,8 @@ int Test_SH_periodic(void) {
   InitSimulation(&simu, &mesh, deg, raf, &model);
   
   tmax = 0.01;
-  simu.vmax = _SPEED_WAVE;
-  simu.cfl = 0.2;
+  simu.vmax = 1;//_SPEED_WAVE;
+  simu.cfl = 0.025;
   RK2(&simu, tmax);
 
   dd = L2error_onefield(&simu,0);
@@ -88,8 +88,8 @@ int Test_SH_periodic(void) {
   InitSimulation(&simu2, &mesh, deg, raf, &model);
   
   tmax = 0.01;
-  simu2.vmax = _SPEED_WAVE;
-  simu2.cfl = 0.2;
+  simu2.vmax = 1;//_SPEED_WAVE;
+  simu2.cfl = 0.025;
   RK2(&simu2, tmax);
 
   dd = L2error_onefield(&simu2,0);
@@ -115,13 +115,13 @@ int Test_SH_periodic(void) {
   InitSimulation(&simu3, &mesh, deg, raf, &model);
   
   tmax = 0.01;
-  simu3.vmax = _SPEED_WAVE;
-  simu3.cfl = 0.2;
+  simu3.vmax = 1;//_SPEED_WAVE;
+  simu3.cfl = 0.025;
   RK2(&simu3, tmax);
 
-  dd = L2error_onefield(&simu,0);
-  dd2 = L2error_onefield(&simu,1);
-  dd3 = L2error_onefield(&simu,2);
+  dd = L2error_onefield(&simu3,0);
+  dd2 = L2error_onefield(&simu3,1);
+  dd3 = L2error_onefield(&simu3,2);
   tolerance = 5e-3;
   
   if(dd+dd2+dd3 < tolerance){

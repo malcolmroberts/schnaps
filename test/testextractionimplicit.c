@@ -54,94 +54,92 @@ int Test_Extraction(void) {
 
   BuildConnectivity(&mesh);
 
-  /////////////////////////// Test One: No error splitting
-  //Model model;
+  /////////////////////////// Test One: No splitting error
+  Model model;
 
-  //model.m = 3; 
-  //model.NumFlux=Wave_Upwind_NumFlux;
-  //model.InitData = SteadyStateOne_InitData;
-  //model.ImposedData = SteadyStateOne_ImposedData;
-  //model.BoundaryFlux = SteadyStateOne_BoundaryFlux;
-  //model.Source = SteadyStateOne_Source;
+  model.m = 3; 
+  model.NumFlux=Wave_Upwind_NumFlux;
+  model.InitData = SteadyStateOne_InitData;
+  model.ImposedData = SteadyStateOne_ImposedData;
+  model.BoundaryFlux = SteadyStateOne_BoundaryFlux;
+  model.Source = SteadyStateOne_Source;
 
-  //int deg[]={4, 4, 0};
-  //int raf[]={4, 4, 1};
-
-
-  //assert(mesh.is2d);
-
-  //CheckMacroMesh(&mesh, deg, raf);
-  //Simulation simu;
-
-  //InitSimulation(&simu, &mesh, deg, raf, &model);
+  int deg[]={4, 4, 0};
+  int raf[]={4, 4, 1};
 
 
-  //LinearSolver solver_implicit;
-  //LinearSolver solver_explicit;  
+  assert(mesh.is2d);
 
-  //real theta=0.5;
-  //simu.theta=theta;
-  //simu.dt=0.1;
-  //simu.vmax=_SPEED_WAVE;
-  //real tmax=0.5;
-  //
-  //int itermax=tmax/simu.dt;
-  //simu.itermax_rk=itermax;
-  //InitImplicitLinearSolver(&simu, &solver_implicit);
-  //InitImplicitLinearSolver(&simu, &solver_explicit);
-  //real *res = calloc(simu.wsize, sizeof(real));
+  CheckMacroMesh(&mesh, deg, raf);
+  Simulation simu;
 
-  //simu.tnow=0;
-  //for(int ie=0; ie < simu.macromesh.nbelems; ++ie){
-  //  simu.fd[ie].tnow=simu.tnow;
-  //} 
+  InitSimulation(&simu, &mesh, deg, raf, &model);
 
-  //for(int tstep=0;tstep<simu.itermax_rk;tstep++){
-  //
 
-  //  if(tstep==0){ 
-  //    solver_implicit.mat_is_assembly=false;
-  //    solver_explicit.mat_is_assembly=false;
-  //  } 
-  //  else 
-  //    { 
-  //    solver_implicit.mat_is_assembly=true;
-  //    solver_explicit.mat_is_assembly=true;
-  //  } 
+  LinearSolver solver_implicit;
+  LinearSolver solver_explicit;  
 
-  //  solver_implicit.rhs_is_assembly=false;
-  //  solver_explicit.rhs_is_assembly=false;
+  real theta=0.5;
+  simu.theta=theta;
+  simu.dt=0.1;
+  simu.vmax=_SPEED_WAVE;
+  real tmax=0.5;
+  
+  int itermax=tmax/simu.dt;
+  simu.itermax_rk=itermax;
+  InitImplicitLinearSolver(&simu, &solver_implicit);
+  InitImplicitLinearSolver(&simu, &solver_explicit);
+  real *res = calloc(simu.wsize, sizeof(real));
 
-  //  
-  //  AssemblyImplicitLinearSolver(&simu, &solver_explicit,-(1.0-theta),simu.dt);
-  //  simu.tnow=simu.tnow+simu.dt;
-  //  for(int ie=0; ie < simu.macromesh.nbelems; ++ie){
-  //    simu.fd[ie].tnow=simu.tnow;
-  //  } 
-  //  AssemblyImplicitLinearSolver(&simu, &solver_implicit,theta,simu.dt);
-  //
+  simu.tnow=0;
+  for(int ie=0; ie < simu.macromesh.nbelems; ++ie){
+    simu.fd[ie].tnow=simu.tnow;
+  } 
 
-  //  MatVect(&solver_explicit, simu.w, res);
+  for(int tstep=0;tstep<simu.itermax_rk;tstep++){
+  
 
-  //  for(int i=0;i<solver_implicit.neq;i++){
-  //    solver_implicit.rhs[i]=solver_implicit.rhs[i]+res[i]-solver_explicit.rhs[i];
-  //  }
-  //  physicPC_wave(&simu,simu.fd[0].wn,solver_implicit.rhs);
-  //  printf("t=%f iter=%d/%d dt=%f\n", simu.tnow, tstep, simu.itermax_rk, simu.dt);
-  //}
-  //dd = L2error(&simu);
+    if(tstep==0){ 
+      solver_implicit.mat_is_assembly=false;
+      solver_explicit.mat_is_assembly=false;
+    } 
+    else 
+      { 
+      solver_implicit.mat_is_assembly=true;
+      solver_explicit.mat_is_assembly=true;
+    } 
 
-  //printf("erreur L2=%.12e\n", dd);
+    solver_implicit.rhs_is_assembly=false;
+    solver_explicit.rhs_is_assembly=false;
 
-  //PlotFields(0,false, &simu, "p", "dgvisu_exp.msh");
-  //PlotFields(1,false, &simu, "u", "dgvisu_exu.msh");
-  //PlotFields(2,false, &simu, "v", "dgvisu_exv.msh");
+    
+    AssemblyImplicitLinearSolver(&simu, &solver_explicit,-(1.0-theta),simu.dt);
+    simu.tnow=simu.tnow+simu.dt;
+    for(int ie=0; ie < simu.macromesh.nbelems; ++ie){
+      simu.fd[ie].tnow=simu.tnow;
+    } 
+    AssemblyImplicitLinearSolver(&simu, &solver_implicit,theta,simu.dt);
+  
 
-  //test = test && (dd<1.e-10);
+    MatVect(&solver_explicit, simu.w, res);
+
+    for(int i=0;i<solver_implicit.neq;i++){
+      solver_implicit.rhs[i]=solver_implicit.rhs[i]+res[i]-solver_explicit.rhs[i];
+    }
+    physicPC_wave(&simu,simu.fd[0].wn,solver_implicit.rhs);
+    printf("t=%f iter=%d/%d dt=%f\n", simu.tnow, tstep, simu.itermax_rk, simu.dt);
+  }
+  dd = L2error(&simu);
+
+  printf("erreur L2=%.12e\n", dd);
+
+  test = test && (dd<1.e-10);
 
   ///////////////////////////////// Test TWO: Splitting error
   printf("//////////////////////////////////////\n");
   printf("TEST TWO!\n");
+  printf("//////////////////////////////////////\n");
+
   Model model2;
 
   model2.m = 3; 
@@ -152,7 +150,7 @@ int Test_Extraction(void) {
   model2.Source = SteadyStateTwo_Source;
 
   int deg2[]={4, 4, 0};
-  int raf2[]={12, 12, 1};
+  int raf2[]={4, 4, 1};
 
 
   CheckMacroMesh(&mesh, deg2, raf2);
@@ -166,7 +164,7 @@ int Test_Extraction(void) {
 
   real theta2=0.5;
   simu2.theta=theta2;
-  simu2.dt=0.2/32;
+  simu2.dt=0.05;
   simu2.vmax=_SPEED_WAVE;
   real tmax2 = 0.2;
   
@@ -218,11 +216,7 @@ int Test_Extraction(void) {
 
   printf("erreur L2=%.12e\n", dd);
 
-  PlotFields(0,false, &simu2, "p", "dgvisu_exp.msh");
-  PlotFields(1,false, &simu2, "u", "dgvisu_exu.msh");
-  PlotFields(2,false, &simu2, "v", "dgvisu_exv.msh");
-
-  test = test && (dd<1.e-10);
+  test = test && (dd<5.e-3);
 #ifdef PARALUTION 
   paralution_end();
 #endif 
@@ -249,8 +243,8 @@ void SteadyStateTwo_ImposedData(const real *xy, const real t, real *w) {
 
 
   w[0] = x*(1-x)*y*(1-y)+1;
-  w[1] = x*y-y+2;//2*x*(1-x)*y*(1-y);
-  w[2] = y+x-y*y*0.5+5.6;//3*x*(1-x)*y*(1-y);
+  w[1] = 2*x*(1-x)*y*(1-y);
+  w[2] = 3*x*(1-x)*y*(1-y);
 
 }
 
@@ -274,7 +268,7 @@ void SteadyStateTwo_Source(const real *xy, const real t, const real *w, real *S)
   real x=xy[0];
   real y=xy[1];
 
-  S[0] = 1;//2*(1-2*x)*(y*(1-y))+3*(1-2*y)*(x*(1-x));
+  S[0] = 2*(1-2*x)*(y*(1-y))+3*(1-2*y)*(x*(1-x));
   S[1] = (1-2*x)*(y*(1-y));
   S[2] = (1-2*y)*(x*(1-x));
 
