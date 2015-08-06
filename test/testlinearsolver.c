@@ -25,7 +25,7 @@ int main(void) {
 
 int TestLinearSolver(void){
 
-  int test=1,test1=1,test2=1,test3=1;
+  int test=1,test1=1,test2=1,test3=1,test4=1;
 
   LinearSolver sky;
 
@@ -314,7 +314,78 @@ int TestLinearSolver(void){
   test3 =  (verr<1e-6);
 
 
-  if(test1==1 &&  test2==1 && test3==1) test=1;
+  int NPoisson=40;
+  real h=1.0/NPoisson;
+  
+
+  InitLinearSolver(&sky,NPoisson,NULL,NULL);
+
+  sky.solver_type = GMRES;
+  sky.pc_type=NONE;
+  sky.iter_max=80;
+  sky.tol=1.e-7;
+  
+  for(int i=0;i<NPoisson;i++){
+    if (i==0){ 
+      IsNonZero(&sky,0,0);
+      IsNonZero(&sky,0,1);
+    } 
+    else if (i==NPoisson-1){ 
+      IsNonZero(&sky,NPoisson-1,NPoisson-1);
+      IsNonZero(&sky,NPoisson-1,NPoisson-2);
+    } 
+    else { 
+    IsNonZero(&sky,i,i);
+    IsNonZero(&sky,i,i+1);
+    IsNonZero(&sky,i,i-1);
+    } 
+  }
+  // once the nonzero positions are known allocate memory
+  AllocateLinearSolver(&sky);
+
+  for(int i=0;i<NPoisson;i++){
+    if (i==0){ 
+      AddLinearSolver(&sky,0,0,2.0/(h*h));
+      AddLinearSolver(&sky,0,1,-1.0/(h*h));
+    } 
+    else if (i==NPoisson-1){ 
+      AddLinearSolver(&sky,NPoisson-1,NPoisson-1,2.0/(h*h));
+      AddLinearSolver(&sky,NPoisson-1,NPoisson-2,-1.0/(h*h));
+    } 
+    else { 
+      AddLinearSolver(&sky,i,i,2.0/(h*h));
+      AddLinearSolver(&sky,i,i+1,-1.0/(h*h));
+      AddLinearSolver(&sky,i,i-1,-1.0/(h*h));
+    } 
+    sky.sol[i]=0.0;
+    sky.rhs[i]=2.0;
+  }
+
+  real bigval=1.e+15;
+  AddLinearSolver(&sky,NPoisson-1,NPoisson-1,bigval);
+  AddLinearSolver(&sky,0,0,bigval);
+ 
+  SolveLinearSolver(&sky);
+
+
+  // checking
+  verr=0;
+  printf("sol of laplacien with gmres=");
+  for(int i=0;i<NPoisson;i++){
+    printf("%f ",sky.sol[i]);
+    verr+=fabs(sky.sol[i]-(i*h)*(1-i*h));
+  }
+  printf("\n");
+  printf("\n");
+
+  // deallocate memory
+  FreeLinearSolver(&sky);
+
+  test4 =  (verr<1e-5);
+
+
+
+  if(test1==1 &&  test2==1 && test3==1 && test4==1) test=1;
 
 #ifdef PARALUTION 
   paralution_end();
