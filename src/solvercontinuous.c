@@ -244,7 +244,7 @@ void SolveContinuous2D(void* cs){
   
   //printf("Solution...\n");
 
-  SolveLinearSolver(&ps->lsol);
+  SolveLinearSolver(&ps->lsol,ps->simu);
 
   
   //printf("post computation assembly.....\n");

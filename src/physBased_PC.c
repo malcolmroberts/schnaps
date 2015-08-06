@@ -3,7 +3,22 @@
 #include "geometry.h"
 #include "quantities_vp.h"
 #include "linear_solver.h"
-#include "continuouspc.h"
+#include "physBased_PC.h"
+
+//! class managing Physics Based Preconditioners
+typedef struct PB_PC{
+
+  int list_mat2assemble;
+  ContinuousSolver* D;
+  ContinuousSolver* Schur;
+  ContinuousSolver* L1;
+  ContinuousSolver* L2;
+  ContinuousSolver* U1;
+  ContinuousSolver* U2;
+
+} PB_PC;
+
+//void InitPhy_Wave(Simulation *simu, PB_PC* pb_pc){
 
 
 void physicPC_wave(Simulation *simu, real* globalSol, real* globalRHS){
@@ -58,7 +73,7 @@ void physicPC_wave(Simulation *simu, real* globalSol, real* globalRHS){
   }
 
   //printf("Solution...\n");
-  SolveLinearSolver(&pressionSolver.lsol);
+  SolveLinearSolver(&pressionSolver.lsol,simu);
 
   pressionSolver.lsol.solver_type=GMRES;
   pressionSolver.lsol.tol=1.e-11;
@@ -162,7 +177,7 @@ void physicPC_wave(Simulation *simu, real* globalSol, real* globalRHS){
   }
 
   //printf("Solution...\n");
-  SolveLinearSolver(&velocitySolver.lsol);
+  SolveLinearSolver(&velocitySolver.lsol,simu);
 
 
   // Contruction of the operator U
@@ -183,7 +198,7 @@ void physicPC_wave(Simulation *simu, real* globalSol, real* globalRHS){
     pressionSolver.lsol.rhs[i] = Mp[i] - L1u1[i] - L2u2[i];
   }
   
-  SolveLinearSolver(&pressionSolver.lsol);
+  SolveLinearSolver(&pressionSolver.lsol,simu);
   
   // Final concatenation
   cat2CGVectors(&pressionSolver,&velocitySolver,pressionSolver.lsol.sol,velocitySolver.lsol.sol,waveSolver.lsol.sol);

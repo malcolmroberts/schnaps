@@ -202,7 +202,7 @@ void SolvePoisson1D(Simulation *simu,real * w,int type_bc, real bc_l, real bc_r,
   real solution[neq];
   sky.rhs=source;
   sky.sol=solution;
-  SolveLinearSolver(&sky);
+  SolveLinearSolver(&sky,simu);
 
 
   // now put the solution at the right place

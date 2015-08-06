@@ -117,8 +117,8 @@ list(APPEND
   src/linear_solver.c
   src/solvercontinuous.h
   src/solvercontinuous.c
-  src/continuouspc.h
-  src/continuouspc.c
+  src/physBased_PC.h
+  src/physBased_PC.c
   src/solverpoisson.h
   src/solverpoisson.c
   src/quantities_vp.h
@@ -366,12 +366,12 @@ target_link_libraries(testtransport_steady ${LIBS})
 add_test(testtransport_steady testtransport_steady)
 
 add_executable(
-  testextractionimplicit
+  testPCWave
   test/test.h
-  test/testextractionimplicit.c
+  test/testPCWave.c
 )
-target_link_libraries(testextractionimplicit ${LIBS})
-add_test(testextractionimplicit testextractionimplicit)
+target_link_libraries(testPCWave ${LIBS})
+add_test(testPCWave testPCWave)
 
 add_executable(
   testshequilibrium2d

@@ -26,6 +26,7 @@ int main(void) {
 int TestLinearSolver(void){
 
   int test=1,test1=1,test2=1,test3=1,test4=1;
+  Simulation simu;
 
   LinearSolver sky;
 
@@ -118,7 +119,7 @@ int TestLinearSolver(void){
 
   sky.rhs=vf;
   sky.sol=sol;
-  SolveLinearSolver(&sky);
+  SolveLinearSolver(&sky,&simu);
 
 
   // checking
@@ -209,7 +210,7 @@ int TestLinearSolver(void){
 
   sky.rhs=vf;
   sky.sol=sol;
-  SolveLinearSolver(&sky);
+  SolveLinearSolver(&sky,&simu);
 
 
   // checking
@@ -295,7 +296,7 @@ int TestLinearSolver(void){
 
   sky.rhs=vf;
   sky.sol=sol;
-  SolveLinearSolver(&sky);
+  SolveLinearSolver(&sky,&simu);
 
 
   // checking
@@ -365,7 +366,7 @@ int TestLinearSolver(void){
   AddLinearSolver(&sky,NPoisson-1,NPoisson-1,bigval);
   AddLinearSolver(&sky,0,0,bigval);
  
-  SolveLinearSolver(&sky);
+  SolveLinearSolver(&sky,&simu);
 
 
   // checking

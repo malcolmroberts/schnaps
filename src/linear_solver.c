@@ -282,7 +282,7 @@ void LUDecompLinearSolver(LinearSolver* lsol){
 
 }
 
-void SolveLinearSolver(LinearSolver* lsol){
+void SolveLinearSolver(LinearSolver* lsol, Simulation* simu){
   
   assert(lsol->is_init);
   assert(lsol->is_alloc);
@@ -306,11 +306,11 @@ void SolveLinearSolver(LinearSolver* lsol){
        }
   }
   else if(lsol->solver_type == GMRES) {
-    GMRESSolver(lsol);
+    GMRESSolver(lsol,simu);
   }
   else {
 #ifdef PARALUTION
-    Solver_Paralution(lsol);
+    Solver_Paralution(lsol,simu);
 #else
     printf("paralution is not build this solver is not accessible.");
     assert(1==2);
@@ -376,7 +376,7 @@ void MatVecJacobianFree(void * system,field *f,real x[],real prod[]){
 
 
 
-void Solver_Paralution(LinearSolver* lsol){
+void Solver_Paralution(LinearSolver* lsol, Simulation* simu){
   int * rows=NULL;
   int * cols=NULL;
   real * coefs=NULL;
@@ -549,7 +549,7 @@ void Solver_Paralution(LinearSolver* lsol){
 
 
 
-void GMRESSolver(LinearSolver* lsol){
+void GMRESSolver(LinearSolver* lsol, Simulation* simu){
   int revcom, colx, coly, colz, nbscal;
   int li_maxiter;
   int m,lwork,N;

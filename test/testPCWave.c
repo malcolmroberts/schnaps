@@ -4,11 +4,9 @@
 #include <stdlib.h>
 #include <assert.h>
 #include "test.h"
-#include "collision.h"
 #include "solvercontinuous.h"
 #include "waterwave2d.h"
-#include "continuouspc.h"
-
+#include "physBased_PC.h"
 
 
 void SteadyStateOne_ImposedData(const real *x, const real t, real *w);
@@ -26,7 +24,7 @@ int main(void) {
   
   // unit tests
     
-  int resu = Test_Extraction();
+  int resu = TestPCWave();
 	 
   if (resu) printf("wave periodic  test OK !\n");
   else printf("wave periodic test failed !\n");
@@ -34,7 +32,7 @@ int main(void) {
   return !resu;
 } 
 
-int Test_Extraction(void) {
+int TestPCWave(void) {
 
   bool test = true;
   real dd;
@@ -164,9 +162,9 @@ int Test_Extraction(void) {
 
   real theta2=0.5;
   simu2.theta=theta2;
-  simu2.dt=0.05;
+  simu2.dt=0.02;
   simu2.vmax=_SPEED_WAVE;
-  real tmax2 = 0.2;
+  real tmax2 = 0.08;
   
   real itermax2=tmax2/simu2.dt;
   simu2.itermax_rk=itermax2;
@@ -216,7 +214,92 @@ int Test_Extraction(void) {
 
   printf("erreur L2=%.12e\n", dd);
 
-  test = test && (dd<5.e-3);
+  test = test && (dd<1.e-2);
+
+  ///////////////////////////////// Test THREE: Time-dependent problem
+  printf("//////////////////////////////////////\n");
+  printf("TEST THREE!\n");
+  printf("//////////////////////////////////////\n");
+
+  Model model3;
+
+  model3.m = 3; 
+  model3.NumFlux=Wave_Upwind_NumFlux;
+  model3.InitData = TestPeriodic_Wave_InitData;
+  model3.ImposedData = TestPeriodic_Wave_ImposedData;
+  model3.BoundaryFlux = Wave_Upwind_BoundaryFlux;
+  model3.Source = NULL;
+
+  int deg3[]={4, 4, 0};
+  int raf3[]={4, 4, 1};
+
+
+  CheckMacroMesh(&mesh, deg3, raf3);
+  Simulation simu3;
+
+  InitSimulation(&simu3, &mesh, deg3, raf3, &model3);
+
+
+  LinearSolver solver_implicit3;
+  LinearSolver solver_explicit3;  
+
+  real theta3=0.5;
+  simu3.theta=theta3;
+  simu3.dt=0.001;
+  simu3.vmax=_SPEED_WAVE;
+  real tmax3 = 0.008;
+  
+  real itermax3=tmax3/simu3.dt;
+  simu3.itermax_rk=itermax3;
+  InitImplicitLinearSolver(&simu3, &solver_implicit3);
+  InitImplicitLinearSolver(&simu3, &solver_explicit3);
+  real *res3 = calloc(simu3.wsize, sizeof(real));
+
+  simu3.tnow=0;
+  for(int ie=0; ie < simu3.macromesh.nbelems; ++ie){
+    simu3.fd[ie].tnow=simu3.tnow;
+  } 
+
+  for(int tstep=0;tstep<simu3.itermax_rk;tstep++){
+  
+
+    if(tstep==0){ 
+      solver_implicit3.mat_is_assembly=false;
+      solver_explicit3.mat_is_assembly=false;
+    } 
+    else 
+      { 
+      solver_implicit3.mat_is_assembly=true;
+      solver_explicit3.mat_is_assembly=true;
+    } 
+
+    solver_implicit3.rhs_is_assembly=false;
+    solver_explicit3.rhs_is_assembly=false;
+
+    
+    AssemblyImplicitLinearSolver(&simu3, &solver_explicit3,-(1.0-theta3),simu3.dt);
+    simu3.tnow=simu3.tnow+simu3.dt;
+    for(int ie=0; ie < simu3.macromesh.nbelems; ++ie){
+      simu3.fd[ie].tnow=simu3.tnow;
+    } 
+    AssemblyImplicitLinearSolver(&simu3, &solver_implicit3,theta3,simu3.dt);
+  
+
+    MatVect(&solver_explicit3, simu3.w, res3);
+
+    for(int i=0;i<solver_implicit3.neq;i++){
+      solver_implicit3.rhs[i]=solver_implicit3.rhs[i]+res3[i]-solver_explicit3.rhs[i];
+    }
+    physicPC_wave(&simu3,simu3.fd[0].wn,solver_implicit3.rhs);
+    printf("t=%f iter=%d/%d dt=%f\n", simu3.tnow, tstep, simu3.itermax_rk, simu3.dt);
+  }
+  dd = L2error(&simu3);
+
+  printf("erreur L2=%.13e\n", dd);
+
+  test = test && (dd<1.e-2);
+
+
 #ifdef PARALUTION 
   paralution_end();
 #endif 
@@ -302,3 +385,28 @@ void SteadyStateTwo_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
   Wave_Upwind_NumFlux(wL, wR, vnorm, flux);
 }
 
+void TestPeriodic_Wave_ImposedData(const real *x, const real t, real *w) {
+  real pi=4.0*atan(1.0);
+  real L=_LENGTH_DOMAIN;
+  real Coef=(2.0*pi)/L;
+  real a=_SPEED_WAVE;
+
+  w[0] = -a*Coef*sqrt(2.0)*sin(a*Coef*sqrt(2.0)*t)*cos(Coef*x[0])*cos(Coef*x[1]);
+  w[1] = a*Coef*cos(Coef*a*sqrt(2.0)*t)*sin(Coef*x[0])*cos(Coef*x[1]);
+  w[2] = a*Coef*cos(Coef*a*sqrt(2.0)*t)*cos(Coef*x[0])*sin(Coef*x[1]);
+  
+
+}
+
+void TestPeriodic_Wave_InitData(real *x, real *w) {
+  real t = 0;
+  TestPeriodic_Wave_ImposedData(x, t, w);
+}
+
+
+void Wave_Upwind_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
+				       real *flux) {
+  real wR[3];
+  TestPeriodic_Wave_ImposedData(x , t, wR);
+  Wave_Upwind_NumFlux(wL, wR, vnorm, flux);
+}

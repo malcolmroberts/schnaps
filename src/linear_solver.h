@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include "field.h"
 #include "paralution_c.h"
+#include "simulation.h"
 
 
 typedef enum MatrixStorage{SKYLINE,CSR} MatrixStorage;
@@ -177,7 +178,8 @@ void LUDecompLinearSolver(LinearSolver* lsol);
 
 //! \brief solve the linear system
 //! \param[in] lsol the LinearSolver object
-void SolveLinearSolver(LinearSolver* lsol);
+//! \param[in] simu the Simulation object
+void SolveLinearSolver(LinearSolver* lsol,Simulation* simu);
 
 
 
@@ -230,11 +232,11 @@ real Vector_norm2(real x[],int  N);
 
 //! \brief solve the linear system with paralution
 //! \param[in] lsol contains the matrices rhs and sol
-void Solver_Paralution(LinearSolver* lsol);
+void Solver_Paralution(LinearSolver* lsol, Simulation* simu);
 
 //! \brief solve the linear system with the GMREs of the cerfacs
 //! \param[in] lsol contains the matrices rhs and sol
-void GMRESSolver(LinearSolver* lsol);
+void GMRESSolver(LinearSolver* lsol, Simulation* simu);
 
 
 #endif

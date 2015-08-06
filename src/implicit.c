@@ -112,7 +112,7 @@ void ThetaTimeScheme(Simulation *simu, real tmax, real dt){
       solver_implicit.rhs[i]=-solver_explicit.rhs[i]+solver_implicit.rhs[i]+res[i];
     }
   
-    SolveLinearSolver(&solver_implicit);
+    SolveLinearSolver(&solver_implicit,simu);
 
     for(int i=0;i<solver_implicit.neq;i++){
       simu->w[i]=solver_implicit.sol[i];
