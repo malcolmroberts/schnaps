@@ -140,9 +140,9 @@ real min_grid_spacing(field *f)
 
 void init_empty_field(field *f)
 {
-#ifdef _WITH_OPENCL
-  f->use_source_cl = false;
-#endif
+  //#ifdef _WITH_OPENCL
+  //f->use_source_cl = false;
+  //#endif
 
   f->period[0] = -1;
   f->period[1] = -1;
@@ -180,18 +180,18 @@ void init_data(field *f)
 }
 
 #ifdef _WITH_OPENCL
-void set_physnodes_cl(field *f) 
+void set_physnodes_cl(Simulation *simu) 
 {
-  const int nmacro = f->macromesh.nbelems;
+  const int nmacro = simu->macromesh.nbelems;
   real buf_size = sizeof(real) * 60 * nmacro;
   real *physnode = malloc(buf_size);
   
   for(int ie = 0; ie < nmacro; ++ie) {
     int ie20 = 20 * ie;
     for(int inoloc = 0; inoloc < 20; ++inoloc) {
-      int ino = 3 * f->macromesh.elem2node[ie20 + inoloc];
+      int ino = 3 * simu->macromesh.elem2node[ie20 + inoloc];
       real *iphysnode = physnode + 3 * ie20 + 3 * inoloc;
-      real *nodeino = f->macromesh.node + ino;
+      real *nodeino = simu->macromesh.node + ino;
       iphysnode[0] = nodeino[0];
       iphysnode[1] = nodeino[1];
       iphysnode[2] = nodeino[2];
@@ -199,8 +199,8 @@ void set_physnodes_cl(field *f)
   }
   
   cl_int status;
-  status = clEnqueueWriteBuffer(f->cli.commandqueue,
-  				f->physnodes_cl, // cl_mem buffer,
+  status = clEnqueueWriteBuffer(simu->cli.commandqueue,
+  				simu->physnodes_cl, // cl_mem buffer,
   				CL_TRUE,// cl_bool blocking_write,
   				0, // size_t offset
   				buf_size, // size_t cb
@@ -210,211 +210,6 @@ void set_physnodes_cl(field *f)
   assert(status >= CL_SUCCESS);
   
   free(physnode);
-}
-
-void init_field_cl(field *f)
-{
-  InitCLInfo(&f->cli, nplatform_cl, ndevice_cl);
-  cl_int status;
-
-  f->wn_cl = clCreateBuffer(f->cli.context,
-			    CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR,
-			    sizeof(real) * f->wsize,
-			    f->wn,
-			    &status);
-  if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
-  assert(status >= CL_SUCCESS);
-
-  f->dtwn_cl = clCreateBuffer(f->cli.context,
-			      CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR,
-			      sizeof(real) * f->wsize,
-			      f->dtwn,
-			      &status);
-  if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
-  assert(status >= CL_SUCCESS);
-
-  f->param_cl = clCreateBuffer(f->cli.context,
-			       CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
-			       sizeof(int) * 7,
-			       f->interp_param,
-			       &status);
-  if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
-  assert(status >= CL_SUCCESS);
-
-  // Allocate one physnode buffer
-  f->physnode = calloc(60, sizeof(real));
-  f->physnode_cl = clCreateBuffer(f->cli.context,
-				  CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
-				  sizeof(real) * 60,
-				  f->physnode,
-				  &status);
-  if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
-  assert(status >= CL_SUCCESS);
-
-  // Allocate and fill buffer for all macrocell geometries.
-  const int nmacro = f->macromesh.nbelems;
-  const size_t buf_size = sizeof(real) * 60 * nmacro;
-  f->physnodes_cl = clCreateBuffer(f->cli.context,
-				   CL_MEM_READ_ONLY,
-				   buf_size,
-				   NULL,
-				   &status);
-  if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
-  assert(status >= CL_SUCCESS);
-  set_physnodes_cl(f);
-
-  // Allocate one physnode buffer for R macrocell
-  f->physnodeR = calloc(60, sizeof(real));
-  f->physnodeR_cl = clCreateBuffer(f->cli.context,
-				   CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
-				   sizeof(real) * 60,
-				   f->physnodeR,
-				   &status);
-
-  // Program compilation
-  char *strprog;
-  GetOpenCLCode();
-  ReadFile("schnaps.cl", &strprog);
-
-  printf("\t%s\n", numflux_cl_name);
-  //printf("\t%s\n", strprog);
-
-  // If the source term is set (via set_source_CL) then add it to the
-  // buildoptions and compile using the new buildoptions.
-  if(f->use_source_cl) {
-    char *temp;
-    int len0 = strlen(cl_buildoptions);
-    char *D_SOURCE_FUNC = " -D_SOURCE_FUNC=";
-    int len1 = strlen(D_SOURCE_FUNC);
-    int len2 = strlen(f->sourcename_cl);
-    temp = calloc(sizeof(char), len0 + len1 + len2 + 2);
-    strcat(temp, cl_buildoptions);
-    strcat(temp, D_SOURCE_FUNC);
-    strcat(temp, f->sourcename_cl);
-    strcat(temp, " ");
-    BuildKernels(&f->cli, strprog, temp);
-  } else {
-    printf("No source term\n");
-    BuildKernels(&f->cli, strprog, cl_buildoptions);
-  }
-
-  f->dgmass = clCreateKernel(f->cli.program,
-			     "DGMass",
-			     &status);
-  if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
-  assert(status >= CL_SUCCESS);
-
-  f->dgflux = clCreateKernel(f->cli.program,
-			     "DGFlux",
-			     &status);
-  if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
-  assert(status >= CL_SUCCESS);
-
-  f->dgvolume = clCreateKernel(f->cli.program,
-			       "DGVolume",
-			       &status);
-  if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
-  assert(status >= CL_SUCCESS);
-
-  f->dgsource = clCreateKernel(f->cli.program,
-			       "DGSource",
-			       &status);
-  if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
-  assert(status >= CL_SUCCESS);
-
-  f->dginterface = clCreateKernel(f->cli.program,
-				  "DGMacroCellInterface",
-				  &status);
-  if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
-  assert(status >= CL_SUCCESS);
-
-  f->dgboundary = clCreateKernel(f->cli.program,
-				 "DGBoundary",
-				 &status);
-  if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
-  assert(status >= CL_SUCCESS);
-
-  f->RK_out_CL = clCreateKernel(f->cli.program,
-				"RK_out_CL",
-				&status);
-  if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
-  assert(status >= CL_SUCCESS);
-
-  f->RK4_final_stage = clCreateKernel(f->cli.program,
-				      "RK4_final_stage",
-				      &status);
-  if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
-  assert(status >= CL_SUCCESS);
-
-  f->RK_in_CL = clCreateKernel(f->cli.program,
-			       "RK_in_CL",
-			       &status);
-  if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
-  assert(status >= CL_SUCCESS);
-
-  f->zero_buf = clCreateKernel(f->cli.program,
-			       "set_buffer_to_zero",
-			       &status);
-  if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
-  assert(status >= CL_SUCCESS);
-
-  // Initialize events. // FIXME: free on exit
-  f->clv_zbuf = clCreateUserEvent(f->cli.context, &status);
-
-  const int ninterfaces = f->macromesh.nmacrointerfaces;
-  if(ninterfaces > 0) {
-    f->clv_mci = calloc(ninterfaces, sizeof(cl_event));
-    for(int ifa = 0; ifa < ninterfaces; ++ifa)
-      f->clv_mci[ifa] = clCreateUserEvent(f->cli.context, &status);
-  }
-    
-  const int nbound = f->macromesh.nboundaryfaces;
-  if(nbound > 0) {
-    f->clv_boundary = calloc(nbound, sizeof(cl_event));
-    for(int ifa = 0; ifa < nbound; ++ifa)
-      f->clv_boundary[ifa] = clCreateUserEvent(f->cli.context, &status);
-  }
-  
-  f->clv_mass = calloc(nmacro, sizeof(cl_event));
-  for(int ie = 0; ie < nmacro; ++ie)
-    f->clv_mass[ie] = clCreateUserEvent(f->cli.context, &status);
-
-  f->clv_flux0 = calloc(nmacro, sizeof(cl_event));
-  f->clv_flux1 = calloc(nmacro, sizeof(cl_event));
-  f->clv_flux2 = calloc(nmacro, sizeof(cl_event));
-  for(int ie = 0; ie < nmacro; ++ie) {
-    f->clv_flux0[ie] = clCreateUserEvent(f->cli.context, &status);
-    f->clv_flux1[ie] = clCreateUserEvent(f->cli.context, &status);
-    f->clv_flux2[ie] = clCreateUserEvent(f->cli.context, &status);
-  }
-  
-  f->clv_volume = calloc(nmacro, sizeof(cl_event));
-  for(int ie = 0; ie < nmacro; ++ie) {
-    f->clv_volume[ie] = clCreateUserEvent(f->cli.context, &status);
-  }
-
-  f->clv_source = calloc(nmacro, sizeof(cl_event));
-  for(int ie = 0; ie < nmacro; ++ie) {
-    f->clv_source[ie] = clCreateUserEvent(f->cli.context, &status);
-  }
-    
-  // Set timers to zero
-  f->zbuf_time = 0;
-  f->mass_time = 0;
-  f->vol_time = 0;
-  f->flux_time = 0;
-  f->minter_time = 0;
-  f->boundary_time = 0;
-  f->source_time = 0;
-  f->rk_time = 0;
-
-  // Set roofline counts to zero
-  f->flops_vol = 0;
-  f->flops_flux = 0;
-  f->flops_mass = 0; 
-  f->reads_vol = 0;
-  f->reads_flux = 0;
-  f->reads_mass = 0; 
 }
 #endif
 
@@ -495,15 +290,6 @@ void Initfield(field *f, Model model,
   //printf("hmin=%f\n", f->hmin);
 
 
-#ifdef _WITH_OPENCL
-  // opencl inits
-  if(!cldevice_is_acceptable(nplatform_cl, ndevice_cl)) {
-    printf("OpenCL device not acceptable; OpenCL initialization disabled.\n");
-  } else {
-
-    init_field_cl(f);
-  }
-#endif // _WITH_OPENCL
   
   //printf("field init done\n");
 }
@@ -515,10 +301,10 @@ void free_field(field *f)
 #ifdef _WITH_OPENCL
   cl_int status;
 
-  status = clReleaseMemObject(f->physnode_cl);
-  if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
-  assert(status >= CL_SUCCESS);
-  free(f->physnode);
+  //status = clReleaseMemObject(f->physnode_cl);
+  //if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
+  //assert(status >= CL_SUCCESS);
+  //free(f->physnode);
 #endif
 }
 

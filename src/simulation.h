@@ -23,6 +23,9 @@ typedef struct Simulation {
   //! sum of sizes of field data
   int wsize;
 
+  //!
+  int interp_param[7];
+
   //! Current time
   real tnow;
   //! CFL parameter min_i (vol_i / surf_i)
@@ -54,6 +57,73 @@ typedef struct Simulation {
 
   //! vmax
   real vmax;
+
+#ifdef _WITH_OPENCL
+  //! \brief opencl data
+  CLInfo cli;
+  //! \brief copy of the dtwn array
+  cl_mem w_cl;
+  cl_mem dtw_cl;
+  //! \brief copy of the params
+  cl_mem param_cl;
+  //! \brief copy physnode
+  cl_mem physnode_cl;
+  cl_mem physnodes_cl; // The physnodes for all the macrocells
+
+  cl_mem physnodeR_cl;
+  real *physnodeR;
+
+  bool use_source_cl;
+  char *sourcename_cl;
+
+  //! opencl kernels
+  cl_kernel dgmass;
+  cl_kernel dgflux;
+  cl_kernel dgvolume;
+  cl_kernel dgsource;
+  cl_kernel dginterface;
+  cl_kernel dgboundary;
+  cl_kernel RK_out_CL;
+  cl_kernel RK_in_CL;
+  cl_kernel RK4_final_stage;
+  cl_kernel zero_buf;
+
+  // OpenCL events
+
+  // set_buf_to_zero event
+  cl_event clv_zbuf; 
+  
+  // Subcell mass events
+  cl_event *clv_mass; 
+
+  // Subcell flux events
+  cl_event *clv_flux0, *clv_flux1, *clv_flux2;
+
+  // Subcell volume events
+  cl_event *clv_volume; 
+
+  // Subcell volume events
+  cl_event *clv_source; 
+
+  // Macrocell interface events
+  cl_event *clv_mci;
+  // Boundary term events
+  cl_event *clv_boundary;
+
+  // OpenCL timing
+  cl_ulong zbuf_time;
+  cl_ulong mass_time;
+  cl_ulong vol_time;
+  cl_ulong flux_time;
+  cl_ulong minter_time;
+  cl_ulong boundary_time;
+  cl_ulong source_time;
+  cl_ulong rk_time;
+
+  // OpenCL roofline measurements
+  unsigned long int flops_vol, flops_flux, flops_mass; 
+  unsigned long int reads_vol, reads_flux, reads_mass; 
+#endif
 
 
 } Simulation;
@@ -138,7 +208,7 @@ void RK4(Simulation *simu, real tmax);
 //! \param[in] fieldname name of the plotted data
 //! \param[in] filename the path to the gmsh visualization file.
 void PlotFields(int typplot, int compare, Simulation *simu, char *fieldname, 
-	       char *filename);
+		char *filename);
 
 //! \brief  list the valeus of the simulation
 //! \param[in] simu a simulation.

@@ -5,7 +5,7 @@
 #include <math.h>
 #include <float.h>
 
-
+#include "field_cl.h"
 
 
 void InitSimulation(Simulation *simu, MacroMesh *mesh,
@@ -57,6 +57,28 @@ void InitSimulation(Simulation *simu, MacroMesh *mesh,
 
   simu->pre_dtfields = NULL;
   simu->nb_diags = 0;
+
+
+  // to do remove the legacy interp_param array
+  field *f = simu->fd;
+  simu->interp_param[0] = f->model.m;
+  simu->interp_param[1] = f->deg[0];
+  simu->interp_param[2] = f->deg[1];
+  simu->interp_param[3] = f->deg[2];
+  simu->interp_param[4] = f->raf[0];
+  simu->interp_param[5] = f->raf[1];
+  simu->interp_param[6] = f->raf[2];
+
+
+  #ifdef _WITH_OPENCL
+  // opencl inits
+  if(!cldevice_is_acceptable(nplatform_cl, ndevice_cl)) {
+    printf("OpenCL device not acceptable; OpenCL initialization disabled.\n");
+  } else {
+
+    init_field_cl(simu);
+  }
+#endif // _WITH_OPENCL
 
 }
 

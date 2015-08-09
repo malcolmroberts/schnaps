@@ -79,73 +79,6 @@ typedef struct field {
   int (*varindex)(int* deg, int *ref, int m, int ipg, int iv);
 
 
-#ifdef _WITH_OPENCL
-  //! \brief opencl data
-  CLInfo cli;
-  //! \brief copy of the dtwn array
-  cl_mem wn_cl;
-  cl_mem dtwn_cl;
-  //! \brief copy of the params
-  cl_mem param_cl;
-  //! \brief copy physnode
-  cl_mem physnode_cl;
-  cl_mem physnodes_cl; // The physnodes for all the macrocells
-  real *physnode;
-
-  cl_mem physnodeR_cl;
-  real *physnodeR;
-
-  bool use_source_cl;
-  char *sourcename_cl;
-
-  //! opencl kernels
-  cl_kernel dgmass;
-  cl_kernel dgflux;
-  cl_kernel dgvolume;
-  cl_kernel dgsource;
-  cl_kernel dginterface;
-  cl_kernel dgboundary;
-  cl_kernel RK_out_CL;
-  cl_kernel RK_in_CL;
-  cl_kernel RK4_final_stage;
-  cl_kernel zero_buf;
-
-  // OpenCL events
-
-  // set_buf_to_zero event
-  cl_event clv_zbuf; 
-  
-  // Subcell mass events
-  cl_event *clv_mass; 
-
-  // Subcell flux events
-  cl_event *clv_flux0, *clv_flux1, *clv_flux2;
-
-  // Subcell volume events
-  cl_event *clv_volume; 
-
-  // Subcell volume events
-  cl_event *clv_source; 
-
-  // Macrocell interface events
-  cl_event *clv_mci;
-  // Boundary term events
-  cl_event *clv_boundary;
-
-  // OpenCL timing
-  cl_ulong zbuf_time;
-  cl_ulong mass_time;
-  cl_ulong vol_time;
-  cl_ulong flux_time;
-  cl_ulong minter_time;
-  cl_ulong boundary_time;
-  cl_ulong source_time;
-  cl_ulong rk_time;
-
-  // OpenCL roofline measurements
-  unsigned long int flops_vol, flops_flux, flops_mass; 
-  unsigned long int reads_vol, reads_flux, reads_mass; 
-#endif
 } field;
 
 //! \brief memory arrangement of field components.
@@ -220,17 +153,6 @@ void DGMass(field *f, real *w, real *dtw);
 void DGSource(field *f, real *w, real *dtw);
 
 
-
-#ifdef _WITH_OPENCL
-//! \brief OpenCL version of RK2
-//! time integration by a second order Runge-Kutta algorithm
-//! \param[inout] f a field
-//! \param[in] tmax physical duration of the simulation
-void RK2_CL(field *f, real tmax, real dt,
-	    cl_uint nwait, cl_event *wait, cl_event *done);
-void RK4_CL(field *f, real tmax, real dt,
-	    cl_uint nwait, cl_event *wait, cl_event *done);
-#endif
 
 /* //! \brief save the results in the gmsh format */
 /* //! \param[in] typplot index of the field variable to plot. */

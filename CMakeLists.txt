@@ -20,7 +20,7 @@ MESSAGE(Compil. options: ${CMAKE_C_FLAGS})
 
 #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_DOUBLE_PRECISION")
 
-OPTION(USE_OPENCL "Activate OpenCL library" OFF)
+OPTION(USE_OPENCL "Activate OpenCL library" ON)
 
 IF(USE_OPENCL) # set with: cmake . -DUSE_OPENCL:BOOL=ON
   MESSAGE(STATUS "Try to find OpenCL Library")
@@ -166,13 +166,13 @@ if(FLANN_FOUND)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -D_WITH_FLANN")
 endif()
 
-#set(SuiteSparse_VERBOSE ON)
-#find_package(suitesparse)
-#    if(SuiteSparse_FOUND)
-#       MESSAGE(STATUS "umfpack libs ok")
-#       list(APPEND INCLUDE_DIRECTORIES ${SuiteSparse_INCLUDE_DIRS})
-#       list(APPEND LIBS ${SuiteSparse_LIBRARIES})
-#endif()
+set(SuiteSparse_VERBOSE ON)
+find_package(suitesparse)
+    if(SuiteSparse_FOUND)
+       MESSAGE(STATUS "umfpack libs ok")
+       list(APPEND INCLUDE_DIRECTORIES ${SuiteSparse_INCLUDE_DIRS})
+       list(APPEND LIBS ${SuiteSparse_LIBRARIES})
+endif()
 
 
 # list of tests
