@@ -240,6 +240,9 @@ void InterpField(field *f,real* xref,real* w);
 //! \param[in] f the field.
 void Displayfield(field *f);
 
+//! \brief frees a Field object
+//! \param[inout] f: a Field object
+void freeField(field *f);
 
 
 

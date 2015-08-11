@@ -99,5 +99,7 @@ int TestDoubleTearing(int argc, char *argv[]);
 
 int Test_Wave_Periodic(void);
 
+int TestPreconditioner(void);
+
 
 #endif

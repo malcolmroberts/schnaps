@@ -29,8 +29,6 @@
 #pragma start_opencl
 int GenericVarindex(__constant int *deg, __constant int *raf, int m,
 		    int ipg, int iv) {
-  int npg = (deg[0] + 1) * (deg[1] + 1) * (deg[2] + 1)
-    * raf[0] * raf[1] * raf[2];
   return iv + m * ipg;
   //return ipg + npg * iv;
 }
@@ -437,7 +435,6 @@ void Initfield(field *f, Model model,
 
   int nmem = f->model.m * NPG(f->deg, f->raf);
   f->wsize = nmem;
-  real g_memsize = nmem * sizeof(real) * 1e-9;
   /* if(sizeof(real) == sizeof(real)) */
   /*   printf("Allocating %d doubles per array (%f GB).\n", nmem, g_memsize); */
   /* else */
@@ -487,6 +484,7 @@ void Initfield(field *f, Model model,
   //printf("field init done\n");
 }
 
+
 // This is the destructor for a field
 void free_field(field *f) 
 {
@@ -499,6 +497,18 @@ void free_field(field *f)
   assert(status >= CL_SUCCESS);
   free(f->physnode);
 #endif
+}
+
+// This is the destructor for a field
+void freeField(field *f){
+  free(f->wn);
+  free(f->dtwn);
+  free(f->pre_dtfield);
+  free(f->post_dtfield);
+  free(f->update_after_rk);
+  free(f->varindex);
+  free_field(f);
+  
 }
 
 // Display the field on screen
@@ -524,7 +534,7 @@ void Displayfield(field *f) {
       printf("\n");
     
   }
-};
+}
 
 // Save the results in a text file
 // in order plot it with Gnuplot
@@ -564,7 +574,7 @@ void Gnuplot(Simulation *simu,int dir, real fixval, char* filename) {
 }
   
   fclose(gmshfile);
-};
+}
 
 
 
@@ -835,8 +845,6 @@ void DGMacroCellInterface(int locfaL,
 void DGMass(field *f, real *w, real *dtw) 
 {
 
-  int m = f->model.m;
-
   for(int ipg = 0; ipg < NPG(f->deg, f->raf); ipg++) {
     real dtau[3][3], codtau[3][3], xpgref[3], xphy[3], wpg;
     ref_pg_vol(f->deg, f->raf, ipg, xpgref, &wpg, NULL);
@@ -871,7 +879,6 @@ void DGSource(field *f, real *w, real *dtw)
 	    NULL, -1, // dpsiref, ifa
 	    xphy, dtau, // xphy, dtau
 	    codtau, NULL, NULL); // codtau, dpsi, vnds
-    real det = dot_product(dtau[0], codtau[0]);  //// temp !!!!!!!!!!!!!!!
     real wL[m], source[m];
     for(int iv = 0; iv < m; ++iv){
       int imem = f->varindex(f->deg, f->raf, f->model.m, ipg, iv);
@@ -1072,9 +1079,6 @@ real L2error_onefield(Simulation *simu, int nbfield) {
 
 
 void InterpField(field *f, real *xref, real *w){
-  const int deg[3] = {f->deg[0],
-		      f->deg[1],
-		      f->deg[2]};
 
   const int nraf[3] = {f->raf[0],
 		       f->raf[1],

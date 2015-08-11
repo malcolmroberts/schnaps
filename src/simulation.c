@@ -89,9 +89,6 @@ void PlotFields(int typplot, int compare, Simulation* simu, char *fieldname,
   for(int i = 0; i < 3 * 64; ++i)
     hexa64ref[i] /= 3.0;
 
-  int *elem2nodes = simu->macromesh.elem2node;
-  real *node = simu->macromesh.node;
-
   FILE * gmshfile;
   gmshfile = fopen(filename, "w" );
 
@@ -118,8 +115,6 @@ void PlotFields(int typplot, int compare, Simulation* simu, char *fieldname,
   // Nodes
   int npgv = NPG(deg, nraf);
   for(int i = 0; i < simu->macromesh.nbelems; i++) {
-    // Get the nodes of element L
-    int nnodes = 20;
 
     field *f = simu->fd + i;
     // Loop on the macro elem subcells
@@ -296,6 +291,16 @@ void PlotFields(int typplot, int compare, Simulation* simu, char *fieldname,
   fclose(gmshfile);
   free(value);
 }
+
+void freeSimulation(Simulation* simu){
+  freeField(simu->fd);
+  free(simu->w);
+  free(simu->dtw);
+  free(simu->pic);
+  free(simu->Diagnostics);
+  free(simu->pre_dtfields);
+}
+
 
 // Apply the Discontinuous Galerkin approximation to compute the
 // time derivative of the field
