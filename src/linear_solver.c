@@ -61,6 +61,8 @@ void InitLinearSolver(LinearSolver* lsol,int n,
 void FreeLinearSolver(LinearSolver* lsol){
 
   assert(lsol->is_alloc);
+  assert(lsol->rhs);
+  assert(lsol->sol);
 
   switch(lsol->storage_type) {
 
@@ -73,7 +75,8 @@ void FreeLinearSolver(LinearSolver* lsol){
     assert(1==2);
    
   }
-
+  //free(lsol->rhs);
+  //free(lsol->sol);
   lsol->is_alloc= false;
     
 
