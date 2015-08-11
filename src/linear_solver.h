@@ -103,14 +103,14 @@ typedef struct JFLinearSolver{
   //! \param[in] f the field
   //! \param[in] x a vector
   //! \param[out] prod Ax
-  void (*MatVecProduct)(void* lsol,field * f,real x[],real prod[]);
+  void (*MatVecProduct)(Simulation * simu,void* lsol,real x[],real prod[]);
 
   //! \brief compute the
+  //! \param[in] simu the simulatio,n
   //! \param[in] lsol the LinearSolver object containing matrix A
-  //! \param[in] f the field
   //! \param[in] solvector the solution at the time n
   //! \param[out] given the nonlinear vector for the free jacobian
-  void (*NonlinearVector_computation)(void* lsol,field * f,real * solvector,real *nlvector);
+  void (*NonlinearVector_computation)(Simulation * simu,void* lsol,real * solvector,real *nlvector);
 
 } JFLinearSolver;
 
@@ -202,12 +202,12 @@ void FreeJFLinearSolver(JFLinearSolver* lsol);
 //! \param[in] f a field
 //! \param[in] x a vector
 //! \param[out] prod Ax
-void MatVecJacobianFree(void * system,field * f,real x[],real prod[]);
+void MatVecJacobianFree(Simulation * simu,void * system,real x[],real prod[]);
 
 //! \brief solve the linear system
 //! \param[inout] lsol the JFLinearSolver object
 //! \param[in] f field asscoiated
-void SolveJFLinearSolver(JFLinearSolver* lsol,field *f);
+void SolveJFLinearSolver(JFLinearSolver* lsol,Simulation * simu);
 
 
 

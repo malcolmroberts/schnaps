@@ -22,7 +22,7 @@ int main(void) {
 
 
 
-void JFNonlinearVector_GX(void* system,field * f,real * solvector,real *nlvector){
+void JFNonlinearVector_GX(Simulation *simu,void* system,real * solvector,real *nlvector){
   JFLinearSolver* lsol=system;
 
   nlvector[0] = 9*solvector[0]*solvector[0]+36*solvector[1]*solvector[1]+4*solvector[2]*solvector[2];
@@ -31,7 +31,7 @@ void JFNonlinearVector_GX(void* system,field * f,real * solvector,real *nlvector
 
 }
 
-void NonlinearVector_GX(void* system,field * f,real * solvector,real *nlvector){
+void NonlinearVector_GX(Simulation *simu,void* system,real * solvector,real *nlvector){
   LinearSolver* lsol=system;
 
   nlvector[0] = 9*solvector[0]*solvector[0]+36*solvector[1]*solvector[1]+4*solvector[2]*solvector[2];
@@ -112,7 +112,7 @@ int TestNonLinearSolver(void){
   
   for(int i=1;i<5;i++){
 
-    NonlinearVector_GX(&sky,NULL,soln,fsoln);
+    NonlinearVector_GX(NULL,&sky,soln,fsoln);
     rhs[0] = b[0]-fsoln[0];
     rhs[1] = b[1]-fsoln[1];
     rhs[2] = b[2]-fsoln[2];
@@ -227,7 +227,7 @@ int TestNonLinearSolver(void){
   
   for(int i=1;i<5;i++){
 
-    NonlinearVector_GX(&sky,NULL,soln,fsoln);
+    NonlinearVector_GX(NULL,&sky,soln,fsoln);
     rhs[0] = b[0]-fsoln[0];
     rhs[1] = b[1]-fsoln[1];
     rhs[2] = b[2]-fsoln[2];
@@ -325,7 +325,7 @@ int TestNonLinearSolver(void){
   skyJF.rhs=rhs;
   
   for(int i=1;i<5;i++){
-    JFNonlinearVector_GX(&skyJF,NULL,soln,fsoln);
+    JFNonlinearVector_GX(NULL,&skyJF,soln,fsoln);
     
     rhs[0] = b[0]-fsoln[0];
     rhs[1] = b[1]-fsoln[1];

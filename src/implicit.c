@@ -40,6 +40,19 @@ void InitImplicitLinearSolver(Simulation *simu, LinearSolver *solver){
 
 }
 
+void InitImplicitJFLinearSolver(Simulation *simu, JFLinearSolver *solver){
+
+  int neq = simu->wsize;
+
+  Solver st = LU; 
+  InitJFLinearSolver(solver,neq,&st);
+  solver->tol=1.e-8;
+
+  int itest = 1;
+
+}
+
+
 void AssemblyImplicitLinearSolver(Simulation *simu, LinearSolver *solver,real theta, real dt){
 
   if(solver->mat_is_assembly == false){
@@ -57,6 +70,33 @@ void AssemblyImplicitLinearSolver(Simulation *simu, LinearSolver *solver,real th
       
   }
   //DisplayLinearSolver(solver);
+
+}
+
+void ImplicitNonlinearVector_computation(Simulation * simu,void* lsol,real * solvector,real *nlvector){
+
+  NonlinearThetaVector_assembly(simu,solvector,nlvector,simu->theta,simu->dt);
+  
+}
+
+
+void AssemblyImplicitJFLinearSolver(Simulation *simu, JFLinearSolver *solver, real dt){
+  real * rhs_implicit;
+  real * rhs_explicit;
+
+  rhs_implicit = calloc(simu->wsize, sizeof(real));
+  rhs_explicit = calloc(simu->wsize, sizeof(real));
+  
+  solver->NonlinearVector_computation=ImplicitNonlinearVector_computation;
+
+
+  NonlinearThetaVector_assembly(simu,simu->w,rhs_explicit,-(1.0-simu->theta),simu->dt); 
+  NonlinearThetaVector_assembly(simu,simu->w,rhs_implicit,simu->theta,simu->dt);
+  for(int i=0;i<solver->neq;i++){
+    solver->rhs[i]=-rhs_implicit[i]+rhs_explicit[i];
+  }
+
+ 
 
 }
 
@@ -125,6 +165,63 @@ void ThetaTimeScheme(Simulation *simu, real tmax, real dt){
 
 }
 
+
+void ThetaTimeScheme_WithJF(Simulation *simu, real tmax, real dt){
+
+  JFLinearSolver solver_implicit;
+
+  real theta=0.5;
+  simu->dt=dt;
+  
+  int itermax=tmax/simu->dt+1;
+  simu->itermax_rk=itermax;
+  InitImplicitJFLinearSolver(simu, &solver_implicit);
+  real *res = calloc(simu->wsize, sizeof(real));
+  //solver_implicit.solver_type=GMRES;
+
+  simu->tnow=0;
+  for(int ie=0; ie < simu->macromesh.nbelems; ++ie){
+    simu->fd[ie].tnow=simu->tnow;
+  } 
+
+  for(int tstep=0;tstep<simu->itermax_rk;tstep++){
+ 
+    
+    /*AssemblyImplicitJFLinearSolver(simu, &solver_explicit,-(1.0-theta),simu->dt);
+
+    simu->tnow=simu->tnow+simu->dt;
+    for(int ie=0; ie < simu->macromesh.nbelems; ++ie){
+      simu->fd[ie].tnow=simu->tnow;
+    } 
+    AssemblyImplicitLinearSolver(simu, &solver_implicit,theta,simu->dt);
+  
+
+    MatVect(&solver_explicit, simu->w, res);
+
+    for(int i=0;i<solver_implicit.neq;i++){
+      solver_implicit.rhs[i]=-solver_explicit.rhs[i]+solver_implicit.rhs[i]+res[i];
+    }
+  
+    SolveLinearSolver(&solver_implicit,simu);
+
+    for(int i=0;i<solver_implicit.neq;i++){
+      simu->w[i]=solver_implicit.sol[i];
+      }*/
+    int freq = (1 >= simu->itermax_rk / 10)? 1 : simu->itermax_rk / 10;
+    if (tstep % freq == 0)
+      printf("t=%f iter=%d/%d dt=%f\n", simu->tnow, tstep, simu->itermax_rk, dt);
+  }
+ 
+
+}
+
+void NonlinearThetaVector_assembly(Simulation * simu,real * solvector,real *nlvector,real theta, real dt){
+
+  }
+
+
+
+ 
 void InternalCoupling(Simulation *simu,  LinearSolver *solver, int isky){
 
   //for(int isky = 0; isky < itest; isky++){

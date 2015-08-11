@@ -85,6 +85,8 @@ int Test_Transport_ExImp(void);
 
 int Test_SH_equilibrium(void);
 
+int Test_SH_equilibrium_Implicit(void);
+
 int Test_SH_periodic(void);
 
 int TestOrszagTang(int argc, char *argv[]);

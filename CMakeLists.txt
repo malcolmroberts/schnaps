@@ -382,6 +382,14 @@ target_link_libraries(testshequilibrium2d ${LIBS})
 add_test(testshequilibrium2d testshequilibrium2d)
 
 add_executable(
+  testshequilibriumimplicit
+  test/test.h
+  test/testshequilibriumimplicit.c
+)
+target_link_libraries(testshequilibriumimplicit ${LIBS})
+add_test(testshequilibriumimplicit testshequilibriumimplicit)
+
+add_executable(
   testshperiodic2d
   test/test.h
   test/testshperiodic2d.c
