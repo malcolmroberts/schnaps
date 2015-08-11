@@ -31,6 +31,8 @@
 \renewcommand{\thefootnote}{\arabic{footnote}}
 
 \begin{document}
+
+
 \title{Shallow Water : $\theta$-implicit scheme \\ WITHOUT DIVIDED BY H}
 \date{August 10, 2015}
 \author{}
@@ -116,7 +118,7 @@ hv-\Delta t(1-\theta)h\left(u\partial_xv+v\partial_yv\right)-\Delta t(1-\theta)h
 
 
 However, 
-a linearisation of $G$ gives
+a linearization of $G$ gives
 \begin{equation*}
 G\begin{pmatrix}h^{n+1}\\u_1^{n+1}\\u_2^{n+1}\end{pmatrix}=G\begin{pmatrix}h^{n}\\u_1^{n}\\u_2^{n}\end{pmatrix}+J_{ac_G}\begin{pmatrix}h^n\\u_1^n\\u_2^n\end{pmatrix}\underbrace{\left(\begin{pmatrix}h^{n+1}\\u_1^{n+1}\\u_2^{n+1}\end{pmatrix}-\begin{pmatrix}h^n\\u_1^n\\u_2^n\end{pmatrix}\right)}_{\begin{pmatrix}\delta h^n\\\delta u_1^n\\\delta u_2^n\end{pmatrix}}+\mathcal{O}\left(\begin{pmatrix}(\delta h^n)^2\\(\delta u_1^n)^2\\(\delta u_2^n)^2\end{pmatrix}\right),
 \end{equation*}
@@ -129,45 +131,78 @@ So
 \begin{equation*}
 J_{ac_G}\begin{pmatrix}h^n\\u_1^n\\u_2^n\end{pmatrix}\left(\begin{pmatrix}\delta h^n\\\delta u_1^n\\\delta u_2^n\end{pmatrix}\right)=B\begin{pmatrix}h^n\\u_1^n\\u_2^n\end{pmatrix}-G\begin{pmatrix}h^{n}\\u_1^{n}\\u_2^{n}\end{pmatrix}.
 \end{equation*}
-\begin{landscape}
+
 \subsection{Calculus of the Jacobian}
 We eventually find
 \begin{equation*}
 \begin{split}
 &\hspace*{-3cm}J_{ac_G}\left(\begin{pmatrix}h\\u\\v\end{pmatrix}\right)\\&\hspace*{-3cm}=
 \begin{pmatrix}
-I_1+\theta\Delta t\boldsymbol{u}\cdot\left(\nabla I_1\right)+\theta\Delta t\text{div}\left(\boldsymbol{u}\right)I_1& \theta\Delta t(\partial_xh)I_1+h\theta\Delta t(\partial_xI_1)&\theta\Delta t(\partial_yh)I_1+h\theta\Delta t(\partial_yI_1)\\
-\theta\Delta tgh(\partial_xI_1)+\theta\Delta tg\left(\partial_xh\right)I_1+\theta\Delta t\left(u\partial_xu+v\partial_yu\right)I_1+uI_1 & hI_1+\theta\Delta thu(\partial_xI_1)+\theta\Delta thI_1(\partial_xu)+\theta\Delta thv(\partial_yI_1)&h\theta\Delta tI_1\partial_y u\\
-\theta\Delta thg(\partial_yI_1)+\theta\Delta tg\left(\partial_yh\right)I_1+\theta\Delta tI_1(u\partial_xv+v\partial_yv)+vI_1&h\theta\Delta tI_1\partial_x v&hI_1+\theta\Delta thu(\partial_xI_1)+\theta\Delta thv(\partial_yI_1)+\theta\Delta thI_1\partial_yv
+J_{11} & J_{12} & J_{13} \\
+J_{21}& J_{22}& J_{23}\\
+J_{31}& J_{32}& J_{33}
 \end{pmatrix}
 \end{split}
 \end{equation*}
+with 
+\begin{align*}
+J_{11} &= I_1+\theta\Delta t\boldsymbol{u}\cdot\left(\nabla I_1\right)+\theta\Delta t\text{div}\left(\boldsymbol{u}\right)I_1 \\
+J_{12} & =\theta\Delta t(\partial_xh)I_1+h\theta\Delta t(\partial_xI_1) \\
+J_{13} & =\theta\Delta t(\partial_yh)I_1+h\theta\Delta t(\partial_yI_1)\\
+J_{21} &= \theta\Delta tgh(\partial_xI_1)+\theta\Delta tg\left(\partial_xh\right)I_1+\theta\Delta t\left(u\partial_xu+v\partial_yu\right)I_1+uI_1 \\
+J_{22} &= hI_1+\theta\Delta thu(\partial_xI_1)+\theta\Delta thI_1(\partial_xu)+\theta\Delta thv(\partial_yI_1)\\
+J_{23} &= h\theta\Delta tI_1\partial_y u\\
+J_{31} &= \theta\Delta thg(\partial_yI_1)+\theta\Delta tg\left(\partial_yh\right)I_1+\theta\Delta tI_1(u\partial_xv+v\partial_yv)+vI_1\\
+J_{32} &= h\theta\Delta tI_1\partial_x v \\
+J_{33} &= hI_1+\theta\Delta thu(\partial_xI_1)+\theta\Delta thv(\partial_yI_1)+\theta\Delta thI_1\partial_yv
+\end{align*}
 when $I_d$ is the $d\times d$-Identity matrix.
 The RHS term becomes
 \begin{equation*}
 \begin{split}
 &B\begin{pmatrix}h^n\\u_1^n\\u_2^n\end{pmatrix}-G\begin{pmatrix}h^{n}\\u_1^{n}\\u_2^{n}\end{pmatrix}\\
-&=\begin{pmatrix}h^n-\Delta t(1-\theta)\text{div}(h^n\boldsymbol{u}^n)-h^n-\theta\Delta t\text{div}(h^n\boldsymbol{u}^n)\\
-h^nu_1^n-\Delta th^n(1-\theta)(u_1^n\partial_xu_1^n+u_2^n\partial_yu_1^n)-\Delta t(1-\theta)gh^n\partial_xh^n-h^nu_1^n-\theta h^n\Delta t(u_1^n\partial_xu_1^n+u_2^n\partial_yu_1^n)-\theta\Delta th^ng\partial_xh^n\\
-h^nu_2^n-\Delta t(1-\theta)h^n(u_1^n\partial_xu_2^n+u_2^n\partial_yu_2^n)-\Delta t(1-\theta)h^ng\partial_yh^n-h^nu_2^n-\Delta t\theta h^n(u_1^n\partial_xu_2^n+u_2^n\partial_yu_2^n)-\theta g\Delta th^n\partial_yh^n\end{pmatrix}
+&=\begin{pmatrix} R_{1}\\
+ R_{2}\\
+ R_{3}\end{pmatrix}
 \end{split}
 \end{equation*}
-
-The linearised system becomes
+with
+\begin{align*}
+B_{1} &= h^n-\Delta t(1-\theta)\text{div}(h^n\boldsymbol{u}^n)\\
+B_{1} & = h^nu_1^n-\Delta th^n(1-\theta)(u_1^n\partial_xu_1^n+u_2^n\partial_yu_1^n)-\Delta t(1-\theta)gh^n\partial_xh^n\\
+B_{3} & = h^nu_2^n-\Delta t(1-\theta)h^n(u_1^n\partial_xu_2^n+u_2^n\partial_yu_2^n)-\Delta t(1-\theta)h^ng\partial_yh^n
+\end{align*}
+and
+\begin{align*}
+G_{1} &= h^n+\theta\Delta t\text{div}(h^n\boldsymbol{u}^n) \\
+G_{1} & = h^nu_1^n+\theta h^n\Delta t(u_1^n\partial_xu_1^n+u_2^n\partial_yu_1^n)+\theta\Delta th^ng\partial_xh^n\\
+G_{3} & = h^nu_2^n+\Delta t\theta h^n(u_1^n\partial_xu_2^n+u_2^n\partial_yu_2^n)+\theta g\Delta th^n\partial_yh^n
+\end{align*}
+The linearized system becomes
 \begin{equation*}
 \begin{split}
-&\begin{pmatrix}
-I_1+\theta\Delta t\text{div}\left(\boldsymbol{u}^nI_1\right)&\theta\Delta t\partial_x\left(h^nI_1\right)&\theta\Delta t\partial_y\left(h^nI_1\right)\\
-u^n_1I_1+\theta\Delta t g\partial_x\left(h^nI_1\right)+\theta\Delta tI_1\left(\boldsymbol{u}^n\cdot\nabla\right)u_1^n&h^nI_1+\theta\Delta th^n\left(\boldsymbol{u}^n\cdot \nabla\right)I_1+\theta\Delta th^n(\partial_xu_1^n)I_1&\theta\Delta th^n(\partial_yu_1^n)I_1\\
-u_2^nI_1+\theta\Delta tg\partial_y\left(h^nI_1\right)+\theta\Delta tI_1\left(\boldsymbol{u}^n\cdot\nabla\right)u_2^n&\theta\Delta tI_1h^n\partial_xu_2^n&h^nI_1+\theta\Delta th^n\left(\boldsymbol{u}^n\cdot\nabla\right)I_1+\theta\Delta th^n(\partial_yu_2^n)I_1
-\end{pmatrix}
 \begin{pmatrix}
-\delta h^n\\\delta u_1^n\\\delta u_2^n\end{pmatrix}\\
-&=\begin{pmatrix}-\Delta t\text{div}(h^n\boldsymbol{u}^n)\\-\Delta th^n\left(\boldsymbol{u}^n\cdot\nabla\right)u_1^n-\Delta tgh^n\partial_xh^n\\-\Delta th^n\left(\boldsymbol{u}^n\cdot\nabla\right)u_2^n-\Delta tgh^n\partial_y h^n\end{pmatrix}
+J_{11} & J_{12} & J_{13} \\
+J_{21}& J_{22}& J_{23}\\
+J_{31}& J_{32}& J_{33}
+\end{pmatrix}\begin{pmatrix}
+\delta h^n\\\delta u_1^n\\\delta u_2^n\end{pmatrix}
+=\begin{pmatrix}-\Delta t\text{div}(h^n\boldsymbol{u}^n)\\-\Delta th^n\left(\boldsymbol{u}^n\cdot\nabla\right)u_1^n-\Delta tgh^n\partial_xh^n\\-\Delta th^n\left(\boldsymbol{u}^n\cdot\nabla\right)u_2^n-\Delta tgh^n\partial_y h^n\end{pmatrix}
 \end{split}
 \end{equation*}
+with
+\begin{align*}
+J_{11} &=  I_1+\theta\Delta t\text{div}\left(\boldsymbol{u}^nI_1\right)\\
+J_{12} & = \theta\Delta t\partial_x\left(h^nI_1\right)\\
+J_{13} & =\theta\Delta t\partial_y\left(h^nI_1\right)\\\
+J_{21} &= u^n_1I_1+\theta\Delta t g\partial_x\left(h^nI_1\right)+\theta\Delta tI_1\left(\boldsymbol{u}^n\cdot\nabla\right)u_1^n\\
+J_{22} &= h^nI_1+\theta\Delta th^n\left(\boldsymbol{u}^n\cdot \nabla\right)I_1+\theta\Delta th^n(\partial_xu_1^n)I_1\\
+J_{23} &= \theta\Delta th^n(\partial_yu_1^n)I_1\\
+J_{31} &= u_2^nI_1+\theta\Delta tg\partial_y\left(h^nI_1\right)+\theta\Delta tI_1\left(\boldsymbol{u}^n\cdot\nabla\right)u_2^n\\
+J_{32} &= \theta\Delta tI_1h^n\partial_xu_2^n \\
+J_{33} &= h^nI_1+\theta\Delta th^n\left(\boldsymbol{u}^n\cdot\nabla\right)I_1+\theta\Delta th^n(\partial_yu_2^n)I_1
+\end{align*}
 
-\end{landscape}
 
 \subsection{Schur decomposition}
 
@@ -184,8 +219,8 @@ U=\begin{pmatrix}\theta\Delta t\partial_x\left(h^nI_1\right)&\theta\Delta t\part
 \end{equation*}
 \begin{equation*}
 L=\begin{pmatrix}
-u_1^nI_1+\theta\Delta t g\partial_x(h^nI_1)+\theta\Delta tI_1\left(\boldsymbol{u}^n\cdot\nabla\right)u_1^n\\
-u_2^nI_1+\theta\Delta tg\partial_y(h^nI_1)+\theta\Delta tI_1\left(\boldsymbol{u}^n\cdot\nabla\right)u_2^n
+u_1^nI_1+\theta\Delta t (g \partial_x (h^n I_1) )+\theta\Delta tI_1\left(\boldsymbol{u}^n\cdot\nabla\right)u_1^n\\
+u_2^nI_1+\theta\Delta t (g \partial_y (h^n I_1) )+\theta\Delta tI_1\left(\boldsymbol{u}^n\cdot\nabla\right)u_2^n
 \end{pmatrix}
 \end{equation*}
 and
@@ -197,31 +232,31 @@ D_2=\begin{pmatrix}h^nI_1+\theta\Delta th^n\left(\boldsymbol{u}^n\cdot \nabla\ri
 The Schur decomposition of the Jacobian matrix is $P_{schur}=D_2-LD_1^{-1}U$.\\
 \textbf{Hypothesis} We assume that $D_1=I_1$.\\
 
-We need to compute the product $LU$ to find the $P_{schur}$.
-We find
-\begin{tiny}
-\begin{equation*}
-\begin{split}
-&\hspace*{-2cm}LU=\\
-&\hspace*{-2cm}\begin{pmatrix}
-u_1^n\theta\Delta t\partial_x\left(h^nI_1\right)+\theta\Delta tg\partial_x(h^n\theta\Delta t\partial_x(h^nI_1))+\theta\Delta t\theta\Delta t\partial_x(h^nI_1)(\boldsymbol{u}^n\cdot\nabla)u_1^n&u_1^n\theta\Delta t\partial_y\left(h^nI_1\right)+\theta\Delta tg\partial_x(h^n\theta\Delta t\partial_y(h^nI_1))+\theta\Delta t\theta\Delta t\partial_y\left(h^nI_1\right)(\boldsymbol{u}^n\cdot\nabla)u_1^n\\
-u_2^n\theta\Delta t\partial_x\left(h^nI_1\right)+\theta\Delta tg\partial_y(h^n\theta\Delta t\partial_x(h^nI_1))+\theta\Delta t\theta\Delta t\partial_x(h^nI_1)(\boldsymbol{u}^n\cdot\nabla)u_2^n&u_2^n\theta\Delta t\partial_y\left(h^nI_1\right)+\theta\Delta tg\partial_y(h^n\theta\Delta t\partial_y(h^nI_1))+\theta\Delta t\theta\Delta t\partial_y(h^nI_1)(\boldsymbol{u}^n\cdot\nabla)u_2^n
-\end{pmatrix}\\
-&\hspace*{-2cm}=\begin{pmatrix}u_1^n\theta\Delta t\partial_x\left(h^nI_1\right)+\theta^2\Delta t^2g\partial_x\left(h^n\partial_x(h^nI_1)\right)+\theta^2\Delta t^2\partial_x(h^nI_1)(\boldsymbol{u}^n\cdot\nabla)u_1^n&u_1^n\theta\Delta t\partial_y\left(h^nI_1\right)+\theta^2\Delta t^2g\partial_{x}\left(h^n\partial_y((h^nI_1)\right)+\theta^2\Delta t^2\partial_y(h^nI_1)(\boldsymbol{u}^n\cdot\nabla)u_1^n\\
-u_2^n\theta\Delta t\partial_x\left(h^nI_1\right)+\theta^2\Delta t^2g\partial_y\left(h^n\partial_x(h^nI_1)\right)+\theta^2\Delta t^2\partial_x(h^nI_1)(\boldsymbol{u}^n\cdot \nabla)u_2^n&u_2^n\theta\Delta t\partial_y\left(h^nI_1\right)+\theta^2\Delta t^2g\partial_{y}\left(h^n\partial_y(h^nI_1)\right)+\theta^2\Delta t^2\partial_y(h^nI_1)(\boldsymbol{u}^n\cdot\nabla)u_2^n\end{pmatrix}
-\end{split}
-\end{equation*}
-\end{tiny}
-We eventually find
+The operator $L \delta h$ is given by
+$$
+L \delta h =(\boldsymbol{u}^n+\theta \Delta t \boldsymbol{u}^n\cdot \nabla \boldsymbol{u}^n )\delta h+\theta \Delta t g \nabla( h^n\delta h)
+$$
+To compute the $LU$ operator we take $\delta h=U\delta \boldsymbol{u}$ in $L \delta h$. The operator $U\delta \boldsymbol{u}=\theta \delta t \operatorname{div}(h^n \delta \boldsymbol{u})$.
 
 \begin{equation*}
-LU(\delta \boldsymbol{u})=\theta\Delta t\nabla\cdot\left(h^n\delta \boldsymbol{u}\right)\boldsymbol{u}^n+\theta^2\Delta t^2g\nabla\left(h^n\nabla\cdot\left(h^n\delta\boldsymbol{u}\right)\right)+\theta^2\Delta t^2\left(\boldsymbol{u}^n\cdot\nabla\right)\boldsymbol{u}^n\text{div}(h^n\delta \boldsymbol{u}).
+LU(\delta \boldsymbol{u})=\underbrace{\left(\boldsymbol{u}^n+\theta \Delta t \boldsymbol{u}^n\cdot \nabla \boldsymbol{u}^n \right)\left(\theta \delta t \operatorname{div}(h^n \delta \boldsymbol{u})\right)}_\textrm{probably neglect}
++\underbrace{\theta^2 \Delta t^2 g\nabla\left( h^n\left(\operatorname{div}(h^n\delta  \boldsymbol{u})\right)\right)}_\textrm{the term which gives the wave}
+\end{equation*}
+which is equal to
+\begin{equation*}
+LU(\delta \boldsymbol{u})=\underbrace{\left(\boldsymbol{u}^n+\theta \Delta t \boldsymbol{u}^n\cdot \nabla \boldsymbol{u}^n \right)\left(\theta \delta t \operatorname{div}(h^n \delta \boldsymbol{u})\right)}_\textrm{probably neglect}
++\underbrace{\theta^2 \Delta t^2 g\nabla\left[ h^n \delta \boldsymbol{u}\cdot \nabla h^n + h^n \operatorname{div}(\delta \boldsymbol{u})h^n \right]}_\textrm{the term which gives the wave}
+\end{equation*}
+At the end we obtain
+\begin{equation*}
+LU(\delta \boldsymbol{u})=\underbrace{\left(\boldsymbol{u}^n+\theta \Delta t \boldsymbol{u}^n\cdot \nabla \boldsymbol{u}^n \right)\left(\theta \delta t \operatorname{div}(h^n \delta \boldsymbol{u})\right)}_\textrm{probably neglect}
++\underbrace{\theta^2 \Delta t^2 g\nabla\left[ \delta \boldsymbol{u}\cdot \nabla p^n + 2p^n \operatorname{div}(\delta \boldsymbol{u}) \right]}_\textrm{the term which gives the wave}
 \end{equation*}
 
 To conclude, one has the Schur matrix 
 \begin{small}
 \begin{equation*}
-\hspace*{-3cm}P_{schur}=h^nI_2+\theta\Delta th^n\left(\boldsymbol{u}^n\cdot\nabla\right)I_2+\theta\Delta th^n\nabla\boldsymbol{u}^nI_2-\theta\Delta t\nabla\cdot\left(h^nI_2\right)\boldsymbol{u}^n-\theta^2\Delta t^2g\nabla\left(h^n\nabla\cdot\left(h^nI_2\right)\right)-\theta^2\Delta t^2\left(\boldsymbol{u}^n\cdot\nabla\right)\boldsymbol{u}^n\text{div}(h^nI_2),
+P_{schur}\delta \boldsymbol{u}=h^n \delta \boldsymbol{u}+\theta\Delta th^n\left(\boldsymbol{u}^n\cdot\nabla\right)\delta \boldsymbol{u}+\theta\Delta th^n\left(\boldsymbol{u} \cdot\nabla\right)\delta \boldsymbol{u}^n-\theta\Delta t\nabla\cdot\left(h^n \delta \boldsymbol{u}\right)\boldsymbol{u}^n-(LU)\delta \boldsymbol{u}
 \end{equation*}
 \end{small}
 with $\nabla\boldsymbol{u}^n$ the Jacobian matrix of $\boldsymbol{u}^n$, ie
@@ -263,173 +298,6 @@ Hence it yields
 &(D_2-LU)\delta \boldsymbol{u}^{n+1}=-L\delta h^*-\Delta th^n(\boldsymbol{u}^n\cdot\nabla)\boldsymbol{u}^n-\Delta tg\nabla h^n,\\
 &\delta h^{n+1}=\delta h^*-U\delta \boldsymbol{u}^{n+1}.
 \end{split}\right.
-\end{equation*}
-\section{Essay 2}
-For the application $G$ we choose here
-\begin{equation*}
-G:\begin{pmatrix}h\\u\\v\end{pmatrix}\mapsto\begin{pmatrix}h+\theta\Delta t\text{div}\left(h(u,v)\right)\\
-\textcolor{red}{h^n}u+\theta\Delta t h\left(u\partial_xu+v\partial_yu\right)+\theta \Delta thg\partial_x h\\
-\textcolor{red}{h^n}v+\theta\Delta t h\left(u\partial_xv+v\partial_yv\right)+\theta \Delta thg\partial_y h
-\end{pmatrix}.
-\end{equation*}
-
-So the Jacobian matrix is
-\begin{landscape}
-\begin{equation*}
-\begin{split}
-&\hspace*{-3cm}J_{ac_G}\left(\begin{pmatrix}h\\u\\v\end{pmatrix}\right)\\&\hspace*{-3cm}=
-\begin{pmatrix}
-I_1+\theta\Delta t\boldsymbol{u}\cdot\left(\nabla I_1\right)+\theta\Delta t\text{div}\left(\boldsymbol{u}\right)I_1& \theta\Delta t(\partial_xh)I_1+h\theta\Delta t(\partial_xI_1)&\theta\Delta t(\partial_yh)I_1+h\theta\Delta t(\partial_yI_1)\\
-\theta\Delta tgh(\partial_xI_1)+\theta\Delta tg\left(\partial_xh\right)I_1+\theta\Delta t\left(u\partial_xu+v\partial_yu\right)I_1 & h^nI_1+\theta\Delta thu(\partial_xI_1)+\theta\Delta thI_1(\partial_xu)+\theta\Delta thv(\partial_yI_1)&h\theta\Delta tI_1\partial_y u\\
-\theta\Delta thg(\partial_yI_1)+\theta\Delta tg\left(\partial_yh\right)I_1+\theta\Delta tI_1(u\partial_xv+v\partial_yv)&h\theta\Delta tI_1\partial_x v&h^nI_1+\theta\Delta thu(\partial_xI_1)+\theta\Delta thv(\partial_yI_1)+\theta\Delta thI_1\partial_yv
-\end{pmatrix}
-\end{split}
-\end{equation*}
-when $I_d$ is the $d\times d$-Identity matrix.
-The RHS term becomes
-\begin{equation*}
-\begin{split}
-&B\begin{pmatrix}h^n\\u_1^n\\u_2^n\end{pmatrix}-G\begin{pmatrix}h^{n}\\u_1^{n}\\u_2^{n}\end{pmatrix}\\
-&=\begin{pmatrix}h^n-\Delta t(1-\theta)\text{div}(h^n\boldsymbol{u}^n)-h^n-\theta\Delta t\text{div}(h^n\boldsymbol{u}^n)\\
-h^nu_1^n-\Delta th^n(1-\theta)(u_1^n\partial_xu_1^n+u_2^n\partial_yu_1^n)-\Delta t(1-\theta)gh^n\partial_xh^n-h^nu_1^n-\theta h^n\Delta t(u_1^n\partial_xu_1^n+u_2^n\partial_yu_1^n)-\theta\Delta th^ng\partial_xh^n\\
-h^nu_2^n-\Delta t(1-\theta)h^n(u_1^n\partial_xu_2^n+u_2^n\partial_yu_2^n)-\Delta t(1-\theta)h^ng\partial_yh^n-h^nu_2^n-\Delta t\theta h^n(u_1^n\partial_xu_2^n+u_2^n\partial_yu_2^n)-\theta g\Delta th^n\partial_yh^n\end{pmatrix}
-\end{split}
-\end{equation*}
-
-The linearised system becomes
-\begin{equation*}
-\begin{split}
-&\begin{pmatrix}
-I_1+\theta\Delta t\text{div}\left(\boldsymbol{u}^nI_1\right)&\theta\Delta t\partial_x\left(h^nI_1\right)&\theta\Delta t\partial_y\left(h^nI_1\right)\\
-\theta\Delta t g\partial_x\left(h^nI_1\right)+\theta\Delta tI_1\left(\boldsymbol{u}^n\cdot\nabla\right)u_1^n&h^nI_1+\theta\Delta th^n\left(\boldsymbol{u}^n\cdot \nabla\right)I_1+\theta\Delta th^n(\partial_xu_1^n)I_1&\theta\Delta th^n(\partial_yu_1^n)I_1\\
-\theta\Delta tg\partial_y\left(h^nI_1\right)+\theta\Delta tI_1\left(\boldsymbol{u}^n\cdot\nabla\right)u_2^n&\theta\Delta tI_1h^n\partial_xu_2^n&h^nI_1+\theta\Delta th^n\left(\boldsymbol{u}^n\cdot\nabla\right)I_1+\theta\Delta th^n(\partial_yu_2^n)I_1
-\end{pmatrix}
-\begin{pmatrix}
-\delta h^n\\\delta u_1^n\\\delta u_2^n\end{pmatrix}\\
-&=\begin{pmatrix}-\Delta t\text{div}(h^n\boldsymbol{u}^n)\\-\Delta th^n\left(\boldsymbol{u}^n\cdot\nabla\right)u_1^n-\Delta tgh^n\partial_xh^n\\-\Delta th^n\left(\boldsymbol{u}^n\cdot\nabla\right)u_2^n-\Delta tgh^n\partial_y h^n\end{pmatrix}
-\end{split}
-\end{equation*}
-
-\end{landscape}
-Here one has the same $U$,
-but 
-\begin{equation*}
-L=\begin{pmatrix}
-\theta\Delta t g\partial_x(h^nI_1)+\theta\Delta tI_1\left(\boldsymbol{u}^n\cdot\nabla\right)u_1^n\\
-\theta\Delta tg\partial_y(h^nI_1)+\theta\Delta tI_1\left(\boldsymbol{u}^n\cdot\nabla\right)u_2^n
-\end{pmatrix}
-\end{equation*}
-and the same $D_2$.
-We always assume that $D_1=I_1$.\\
-
-In that case, the product $LU$ is equal to
-\begin{tiny}
-\begin{equation*}
-\begin{split}
-&\hspace*{-2cm}LU=\\
-&\hspace*{-2cm}\begin{pmatrix}
-\theta\Delta tg\partial_x(h^n\theta\Delta t\partial_x(h^nI_1))+\theta\Delta t\theta\Delta t\partial_x(h^nI_1)(\boldsymbol{u}^n\cdot\nabla)u_1^n&\theta\Delta tg\partial_x(h^n\theta\Delta t\partial_y(h^nI_1))+\theta\Delta t\theta\Delta t\partial_y\left(h^nI_1\right)(\boldsymbol{u}^n\cdot\nabla)u_1^n\\
-\theta\Delta tg\partial_y(h^n\theta\Delta t\partial_x(h^nI_1))+\theta\Delta t\theta\Delta t\partial_x(h^nI_1)(\boldsymbol{u}^n\cdot\nabla)u_2^n&\theta\Delta tg\partial_y(h^n\theta\Delta t\partial_y(h^nI_1))+\theta\Delta t\theta\Delta t\partial_y(h^nI_1)(\boldsymbol{u}^n\cdot\nabla)u_2^n
-\end{pmatrix}\\
-&\hspace*{-2cm}=\begin{pmatrix}\theta^2\Delta t^2g\partial_x\left(h^n\partial_x(h^nI_1)\right)+\theta^2\Delta t^2\partial_x(h^nI_1)(\boldsymbol{u}^n\cdot\nabla)u_1^n&\theta^2\Delta t^2g\partial_{x}\left(h^n\partial_y((h^nI_1)\right)+\theta^2\Delta t^2\partial_y(h^nI_1)(\boldsymbol{u}^n\cdot\nabla)u_1^n\\
-\theta^2\Delta t^2g\partial_y\left(h^n\partial_x(h^nI_1)\right)+\theta^2\Delta t^2\partial_x(h^nI_1)(\boldsymbol{u}^n\cdot \nabla)u_2^n&\theta^2\Delta t^2g\partial_{y}\left(h^n\partial_y(h^nI_1)\right)+\theta^2\Delta t^2\partial_y(h^nI_1)(\boldsymbol{u}^n\cdot\nabla)u_2^n\end{pmatrix}
-\end{split}
-\end{equation*}
-\end{tiny}
-We eventually find
-
-\begin{equation*}
-LU(\delta \boldsymbol{u})=\theta^2\Delta t^2g\nabla\left(h^n\nabla\cdot\left(h^n\delta\boldsymbol{u}\right)\right)+\theta^2\Delta t^2\left(\boldsymbol{u}^n\cdot\nabla\right)\boldsymbol{u}^n\text{div}(h^n\delta \boldsymbol{u}).
-\end{equation*}
-
-To conclude, one has the Schur matrix 
-\begin{small}
-\begin{equation*}
-\hspace*{-1cm}P_{schur}=h^nI_2+\theta\Delta th^n\left(\boldsymbol{u}^n\cdot\nabla\right)I_2+\theta\Delta th^n\nabla\boldsymbol{u}^nI_2-\theta^2\Delta t^2g\nabla\left(h^n\nabla\cdot\left(h^nI_2\right)\right)-\theta^2\Delta t^2\left(\boldsymbol{u}^n\cdot\nabla\right)\boldsymbol{u}^n\text{div}(h^nI_2),
-\end{equation*}
-\end{small}
-with $\nabla\boldsymbol{u}^n$ the Jacobian matrix of $\boldsymbol{u}^n$, ie
-\begin{equation*}
-\nabla\boldsymbol{u}^n=
-\begin{pmatrix}
-\partial_x u_1^n &\partial_y u_1^n\\ \partial_x u_2^n &\partial_y u_2^n
-\end{pmatrix}.
-\end{equation*}
-
-
-\section{Essay 3}
-For the red terms we denote $\textcolor{red}{h=h^n+\delta h}$, so
-\begin{equation*}
-G:\begin{pmatrix}h\\u\\v\end{pmatrix}\mapsto\begin{pmatrix}h+\theta\Delta t\text{div}\left(h(u,v)\right)\\
-\textcolor{red}{h}u-u\textcolor{red}{\delta h}+\theta\Delta t h\left(u\partial_xu+v\partial_yu\right)+\theta \Delta thg\partial_x h\\
-\textcolor{red}{h}v-v\textcolor{red}{\delta h}+\theta\Delta t h\left(u\partial_xv+v\partial_yv\right)+\theta \Delta thg\partial_y h
-\end{pmatrix}.
-\end{equation*}
-
-In that case, the Jacobian matrix is
-\begin{landscape}
-\begin{equation*}
-\begin{split}
-&\hspace*{-3cm}J_{ac_G}\left(\begin{pmatrix}h\\u\\v\end{pmatrix}\right)\\&\hspace*{-3cm}=
-\begin{pmatrix}
-I_1+\theta\Delta t\boldsymbol{u}\cdot\left(\nabla I_1\right)+\theta\Delta t\text{div}\left(\boldsymbol{u}\right)I_1& \theta\Delta t(\partial_xh)I_1+h\theta\Delta t(\partial_xI_1)&\theta\Delta t(\partial_yh)I_1+h\theta\Delta t(\partial_yI_1)\\
-\theta\Delta tgh(\partial_xI_1)+\theta\Delta tg\left(\partial_xh\right)I_1+\theta\Delta t\left(u\partial_xu+v\partial_yu\right)I_1 & (h-\delta h)I_1+\theta\Delta thu(\partial_xI_1)+\theta\Delta thI_1(\partial_xu)+\theta\Delta thv(\partial_yI_1)&h\theta\Delta tI_1\partial_y u\\
-\theta\Delta thg(\partial_yI_1)+\theta\Delta tg\left(\partial_yh\right)I_1+\theta\Delta tI_1(u\partial_xv+v\partial_yv)&h\theta\Delta tI_1\partial_x v&(h-\delta h)I_1+\theta\Delta thu(\partial_xI_1)+\theta\Delta thv(\partial_yI_1)+\theta\Delta thI_1\partial_yv
-\end{pmatrix}
-\end{split}
-\end{equation*}
-when $I_d$ is the $d\times d$-Identity matrix.
-
-
-
-So we have the same $D_1=I_1$ (by hypothesis), the same $U$,
-
-\begin{equation*}
-L=\begin{pmatrix}
-\theta\Delta t g\partial_x(h^nI_1)+\theta\Delta tI_1\left(\boldsymbol{u}^n\cdot\nabla\right)u_1^n\\
-\theta\Delta tg\partial_y(h^nI_1)+\theta\Delta tI_1\left(\boldsymbol{u}^n\cdot\nabla\right)u_2^n
-\end{pmatrix}
-\end{equation*}
-and
-\begin{equation*}
-D_2=\begin{pmatrix}(h^n-\delta h)I_1+\theta\Delta th^n\left(\boldsymbol{u}^n\cdot \nabla\right)I_1+\theta\Delta th^n(\partial_xu_1^n)I_1&\theta\Delta th^n(\partial_yu_1^n)I_1\\
-\theta\Delta tI_1h^n\partial_xu_2^n&(h^n-\delta h)I_1+\theta\Delta th^n\left(\boldsymbol{u}^n\cdot\nabla\right)I_1+\theta\Delta th^n(\partial_yu_2^n)I_1
-\end{pmatrix}
-\end{equation*}
-
-We find
-\begin{small}
-\begin{equation*}
-\begin{split}
-&\hspace*{-2cm}LU=\\
-&\hspace*{-2cm}\begin{pmatrix}
-\theta\Delta tg\partial_x(h^n\theta\Delta t\partial_x(h^nI_1))+\theta\Delta t\theta\Delta t\partial_x(h^nI_1)(\boldsymbol{u}^n\cdot\nabla)u_1^n&\theta\Delta tg\partial_x(h^n\theta\Delta t\partial_y(h^nI_1))+\theta\Delta t\theta\Delta t\partial_y\left(h^nI_1\right)(\boldsymbol{u}^n\cdot\nabla)u_1^n\\
-\theta\Delta tg\partial_y(h^n\theta\Delta t\partial_x(h^nI_1))+\theta\Delta t\theta\Delta t\partial_x(h^nI_1)(\boldsymbol{u}^n\cdot\nabla)u_2^n&\theta\Delta tg\partial_y(h^n\theta\Delta t\partial_y(h^nI_1))+\theta\Delta t\theta\Delta t\partial_y(h^nI_1)(\boldsymbol{u}^n\cdot\nabla)u_2^n
-\end{pmatrix}\\
-&\hspace*{-2cm}=\begin{pmatrix}u_1^n\theta\Delta t\partial_x\left(h^nI_1\right)+\theta^2\Delta t^2g\partial_x\left(h^n\partial_x(h^nI_1)\right)+\theta^2\Delta t^2\partial_x(h^nI_1)(\boldsymbol{u}^n\cdot\nabla)u_1^n&u_1^n\theta\Delta t\partial_y\left(h^nI_1\right)+\theta^2\Delta t^2g\partial_{x}\left(h^n\partial_y((h^nI_1)\right)+\theta^2\Delta t^2\partial_y(h^nI_1)(\boldsymbol{u}^n\cdot\nabla)u_1^n\\
-u_2^n\theta\Delta t\partial_x\left(h^nI_1\right)+\theta^2\Delta t^2g\partial_y\left(h^n\partial_x(h^nI_1)\right)+\theta^2\Delta t^2\partial_x(h^nI_1)(\boldsymbol{u}^n\cdot \nabla)u_2^n&u_2^n\theta\Delta t\partial_y\left(h^nI_1\right)+\theta^2\Delta t^2g\partial_{y}\left(h^n\partial_y(h^nI_1)\right)+\theta^2\Delta t^2\partial_y(h^nI_1)(\boldsymbol{u}^n\cdot\nabla)u_2^n\end{pmatrix}
-\end{split}
-\end{equation*}
-\end{small}
-\end{landscape}
-Hence
-
-\begin{equation*}
-LU(\delta \boldsymbol{u})=\theta^2\Delta t^2g\nabla\left(h^n\nabla\cdot\left(h^n\delta\boldsymbol{u}\right)\right)+\theta^2\Delta t^2\left(\boldsymbol{u}^n\cdot\nabla\right)\boldsymbol{u}^n\text{div}(h^n\delta \boldsymbol{u}).
-\end{equation*}
-
-To conclude, one has the Schur matrix 
-\begin{small}
-\begin{equation*}
-\hspace*{-2cm}P_{schur}=(h^n-\delta h)I_2+\theta\Delta th^n\left(\boldsymbol{u}^n\cdot\nabla\right)I_2+\theta\Delta th^n\nabla\boldsymbol{u}^nI_2-\theta^2\Delta t^2g\nabla\left(h^n\nabla\cdot\left(h^nI_2\right)\right)-\theta^2\Delta t^2\left(\boldsymbol{u}^n\cdot\nabla\right)\boldsymbol{u}^n\text{div}(h^nI_2),
-\end{equation*}
-\end{small}
-with $\nabla\boldsymbol{u}^n$ the Jacobian matrix of $\boldsymbol{u}^n$, ie
-\begin{equation*}
-\nabla\boldsymbol{u}^n=
-\begin{pmatrix}
-\partial_x u_1^n &\partial_y u_1^n\\ \partial_x u_2^n &\partial_y u_2^n
-\end{pmatrix}.
 \end{equation*}
 
 \end{document}
