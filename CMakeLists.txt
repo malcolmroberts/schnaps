@@ -13,7 +13,7 @@ SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 #set(CMAKE_C_FLAGS "-std=gnu99 -D_REENTRANT -O3 -g")
 
 #set(CMAKE_C_FLAGS " -std=c99 -D_REENTRANT -O3 ")
-set(CMAKE_C_FLAGS " -std=c99 -D_DOUBLE_PRECISION -D_SCHNAPS_DIR=${PROJECT_SOURCE_DIR} -g  ")
+set(CMAKE_C_FLAGS " -std=c99 -D_DOUBLE_PRECISION -D_SCHNAPS_DIR=${PROJECT_SOURCE_DIR} -O3  ")
 
 MESSAGE(${CMAKE_C_FLAGS})
 
@@ -372,14 +372,6 @@ add_executable(
 )
 target_link_libraries(testPCWave ${LIBS})
 add_test(testPCWave testPCWave)
-
-add_executable(
-  testpreconditioner
-  test/test.h
-  test/testpreconditioner.c
-)
-target_link_libraries(testpreconditioner ${LIBS})
-add_test(testpreconditioner testpreconditioner)
 
 add_executable(
   testshequilibrium2d
