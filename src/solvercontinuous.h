@@ -177,5 +177,6 @@ void MatrixPoisson_Continuous(void * cs,LinearSolver* lsol);
 
 //! \brief frees a ContinuousSolver object
 //! \param[in] cs: a ContinuousSolver object
-void freeContinuousSolver(ContinuousSolver* cs);
+//! \param[in] free_simu: an integer whose purpose is to decide whether we free the Simulation object.
+void freeContinuousSolver(ContinuousSolver* cs, int free_simu);
 #endif

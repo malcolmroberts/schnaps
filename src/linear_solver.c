@@ -68,6 +68,8 @@ void FreeLinearSolver(LinearSolver* lsol){
 
   case SKYLINE :
     FreeSkyline((Skyline*)lsol->matrix);
+    free(lsol->rhs);
+    free(lsol->sol);
     free(lsol->matrix);
     break;
 
@@ -75,8 +77,6 @@ void FreeLinearSolver(LinearSolver* lsol){
     assert(1==2);
    
   }
-  //free(lsol->rhs);
-  //free(lsol->sol);
   lsol->is_alloc= false;
     
 

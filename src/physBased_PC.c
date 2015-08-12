@@ -216,7 +216,7 @@ void solvePhy_wave(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*globalR
   VectorCgToDg(&waveSolver,waveSolver.lsol.sol,globalSol);
 
   // TODO: implement free for solvercontinuous, linear_solver...
-  //free(full);
+  freeContinuousSolver(&waveSolver,0);
   free(globalRHS_CG);
   free(solU1);
   free(solU2);
@@ -653,12 +653,12 @@ void GenericOperator(PB_PC* pb_pc){
 
 void freePB_PC(PB_PC* pb_pc){
   free(pb_pc->list_mat2assemble);
-  freeContinuousSolver(&pb_pc->D);
-  freeContinuousSolver(&pb_pc->L1);
-  freeContinuousSolver(&pb_pc->L2);
-  freeContinuousSolver(&pb_pc->U1);
-  freeContinuousSolver(&pb_pc->U2);
-  freeContinuousSolver(&pb_pc->Schur);
+  freeContinuousSolver(&pb_pc->D,1);
+  freeContinuousSolver(&pb_pc->L1,0);
+  freeContinuousSolver(&pb_pc->L2,0);
+  freeContinuousSolver(&pb_pc->U1,0);
+  freeContinuousSolver(&pb_pc->U2,0);
+  freeContinuousSolver(&pb_pc->Schur,0);
   free(pb_pc->rhs_prediction);
   free(pb_pc->rhs_propagation);
   free(pb_pc->rhs_correction);

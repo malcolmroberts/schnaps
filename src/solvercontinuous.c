@@ -718,16 +718,17 @@ void MatrixPoisson_Continuous(void * cs,LinearSolver* lsol){
   
  }
 
-void freeContinuousSolver(ContinuousSolver* cs){
+void freeContinuousSolver(ContinuousSolver* cs, int free_simu){
 
-  freeSimulation(cs->simu);
+  FreeLinearSolver(&cs->lsol);
+  if (free_simu) freeSimulation(cs->simu);
   free(cs->fn_list);
   free(cs->is_boundary_node);
   free(cs->list_of_var);
-  free(cs->rhs_assembly);
-  free(cs->matrix_assembly);
-  free(cs->postcomputation_assembly);
-  free(cs->bc_assembly);
+  //free(cs->rhs_assembly);
+  //free(cs->matrix_assembly);
+  //free(cs->postcomputation_assembly);
+  //free(cs->bc_assembly);
   
 }
 

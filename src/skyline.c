@@ -324,6 +324,11 @@ void FreeSkyline(Skyline* sky){
   free(sky->prof);
   free(sky->kld);
 
+  if (sky->is_lu){
+    free(sky->copy_vkgs);
+    free(sky->copy_vkgd);
+  if (! sky->is_sym)  free(sky->copy_vkgi);
+  }
   sky->is_alloc=false;
   //InitSkyline(sky,sky->neq);
 

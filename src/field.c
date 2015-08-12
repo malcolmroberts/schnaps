@@ -499,7 +499,7 @@ void free_field(field *f)
 void freeField(field *f){
   free(f->wn);
   free(f->dtwn);
-  free(f->varindex);
+  //free(f->varindex);
   free_field(f);
   
 }

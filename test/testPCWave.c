@@ -136,6 +136,7 @@ int TestPCWave(void) {
   printf("erreur L2=%.12e\n", dd);
 
   test = test && (dd<2.e-2);
+  freePB_PC(&pb_pc);
 
   ///////////////////////////////// Test TWO: Splitting error
   printf("//////////////////////////////////////\n");
@@ -223,6 +224,7 @@ int TestPCWave(void) {
   printf("erreur L2=%.12e\n", dd);
 
   test = test && (dd<1.e-2);
+  freePB_PC(&pb_pc2);
 
   ///////////////////////////////// Test THREE: Time-dependent problem
   printf("//////////////////////////////////////\n");
@@ -239,7 +241,7 @@ int TestPCWave(void) {
   model3.Source = NULL;
 
   int deg3[]={4, 4, 0};
-  int raf3[]={4, 4, 1};
+  int raf3[]={32, 32, 1};
 
 
   CheckMacroMesh(&mesh, deg3, raf3);
@@ -253,9 +255,9 @@ int TestPCWave(void) {
 
   real theta3=0.5;
   simu3.theta=theta3;
-  simu3.dt=0.001;
+  simu3.dt=0.1;
   simu3.vmax=_SPEED_WAVE;
-  real tmax3 = 0.008;
+  real tmax3 = 1.0;
   
   real itermax3=tmax3/simu3.dt;
   simu3.itermax_rk=itermax3;
@@ -312,7 +314,7 @@ int TestPCWave(void) {
 
   test = test && (dd<8.e-2);
 
-  //freePB_PC(&pb_pc);
+  freePB_PC(&pb_pc3);
 
 #ifdef PARALUTION 
   paralution_end();

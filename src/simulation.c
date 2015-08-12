@@ -296,13 +296,13 @@ void PlotFields(int typplot, int compare, Simulation* simu, char *fieldname,
 
 void freeSimulation(Simulation* simu){
   freeField(simu->fd);
-  free(simu->w);
-  free(simu->dtw);
+  //free(simu->w);   Already freed in field.
+  //free(simu->dtw); Already freed in field.
   free(simu->pic);
   free(simu->Diagnostics);
-  free(simu->pre_dtfields);
-  free(simu->post_dtfields);
-  free(simu->update_after_rk);
+  //free(simu->pre_dtfields);
+  //free(simu->post_dtfields);
+  //free(simu->update_after_rk);
 }
 
 
