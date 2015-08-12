@@ -46,10 +46,23 @@ typedef struct Simulation {
   int nb_diags;
   //! table for diagnostics
   real *Diagnostics;
+ 
 
-  //! \brief Pointer to a generic function called before computing dtfields. 
-  //! \param[inout] simu a simulation (to be converted from void*)
-  void (*pre_dtfields)(void *simu, real *w);
+  //! \brief Pointer to a generic function called before computing dtfield. 
+  //! \param[inout] si a simulation (to be converted from void*)
+  void (*pre_dtfields)(void *si, real *w);
+
+  //! \brief Pointer to a generic function called after computing dtfield. 
+  //! \param[inout] si a simulation (to be converted from void*)
+  void (*post_dtfields)(void *si, real *w);
+
+  //! \brief generic update function called 
+  //! \brief called at each runge-kutta sustep
+  //! \param[inout] si a simulation (to be converted from void*)
+  //! \param[in] elem macro element index
+  //! \param[in] ipg glop index
+  //! \param[in] iv field component index
+  void (*update_after_rk)(void *si, real *w);
 
 
   //! vmax

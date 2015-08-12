@@ -454,10 +454,6 @@ void Initfield(field *f, Model model,
   }
   assert(f->dtwn);
 
-  f->pre_dtfield = NULL;
-  f->post_dtfield = NULL;
-  f->update_after_rk = NULL;
-  //f->model.Source = NULL;
   //f->pic = NULL;
 
   // TODO: move this to the integrator code
@@ -503,9 +499,6 @@ void free_field(field *f)
 void freeField(field *f){
   free(f->wn);
   free(f->dtwn);
-  free(f->pre_dtfield);
-  free(f->post_dtfield);
-  free(f->update_after_rk);
   free(f->varindex);
   free_field(f);
   

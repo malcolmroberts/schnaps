@@ -52,25 +52,6 @@ typedef struct field {
   //! Time derivative of the field
   real *dtwn;
 
-
-  
-
-  //! \brief Pointer to a generic function called before computing dtfield. 
-  //! \param[inout] f a field (to be converted from void*)
-  void (*pre_dtfield)(void *f, real *w);
-
-  //! \brief Pointer to a generic function called after computing dtfield. 
-  //! \param[inout] f a field (to be converted from void*)
-  void (*post_dtfield)(void *f, real *w);
-
-  //! \brief generic update function called 
-  //! \brief called at each runge-kutta sustep
-  //! \param[inout] f a field (to be converted from void*)
-  //! \param[in] elem macro element index
-  //! \param[in] ipg glop index
-  //! \param[in] iv field component index
-  void (*update_after_rk)(void *f, real *w);
-
   //! \brief Memory arrangement of field components
   //! \param[in] param interpolation parameters
   //! \param[in] elem macro element index

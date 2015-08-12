@@ -253,7 +253,8 @@ void SolveContinuous2D(void* cs){
   }
 
 
-  //printf("End SolvePoisson2D.\n");
+  //
+  printf("End Solve2D.\n");
 
 }
 
@@ -279,6 +280,7 @@ void ContinuousToDiscontinuous_Copy(ContinuousSolver * cs,LinearSolver* lsol){
   }
 
 }
+
 
 
 void ExactDirichletContinuousMatrix(void * cs,LinearSolver* lsol){
