@@ -147,7 +147,6 @@ void solvePhy_wave(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*globalR
   real * globalRHS_CG = calloc(waveSolver.lsol.neq,sizeof(real));
   VectorDgToCg(&waveSolver, globalRHS_DG, globalRHS_CG);
 
-
   // 1) PREDICTION STEP
 
   pb_pc->D.lsol.solver_type=LU;
@@ -196,6 +195,7 @@ void solvePhy_wave(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*globalR
 
   pb_pc->L1.lsol.MatVecProduct(&pb_pc->L1.lsol,solU1,pb_pc->L1.lsol.sol);
   pb_pc->L2.lsol.MatVecProduct(&pb_pc->L2.lsol,solU2,pb_pc->L2.lsol.sol);
+  pb_pc->D.lsol.MatVecProduct(&pb_pc->D.lsol,pb_pc->D.lsol.sol,pb_pc->D.lsol.rhs);
   //pb_pc->U1.lsol.MatVecProduct(&pb_pc->U1.lsol,solU1,pb_pc->U1.lsol.sol);
   //pb_pc->U2.lsol.MatVecProduct(&pb_pc->U2.lsol,solU2,pb_pc->U2.lsol.sol);
 

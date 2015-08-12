@@ -28,12 +28,15 @@ void InitSkyline(Skyline* sky, int n){
   sky->nmem=0;
 
   sky->vkgs=NULL;
+  sky->copy_vkgs=NULL;
 
   sky->vkgd=malloc(n*sizeof(real));
   assert(sky->vkgd);
   for(int i=0;i<n;i++) sky->vkgd[i]=0;
+  sky->copy_vkgd=NULL;
 
   sky->vkgi=NULL;
+  sky->copy_vkgi=NULL;
 
   sky->prof=malloc(n*sizeof(int));
   assert(sky->prof);
@@ -56,7 +59,7 @@ void SwitchOn(Skyline* sky,int i,int j){
 
 void AllocateSkyline(Skyline* sky){
 
-  assert(! sky->is_alloc);
+  assert(!sky->is_alloc);
 
   sky->kld[0]=0;
   for(int i=0;i<sky->neq;i++){
@@ -83,6 +86,44 @@ void AllocateSkyline(Skyline* sky){
      if (! sky->is_sym) sky->vkgi[k]=0;
   }
 
+
+}
+
+void AllocateCopySkyline(Skyline* sky){
+
+  assert(!sky->copy_is_alloc);
+
+  sky->copy_vkgs=malloc(sky->nmem * sizeof(real));
+  assert(sky->copy_vkgs);
+
+  if (! sky->is_sym){
+    sky->copy_vkgi=malloc(sky->nmem * sizeof(real));
+    assert(sky->copy_vkgi);
+  }
+  else{
+    sky->copy_vkgi=sky->copy_vkgs;
+  }
+
+  sky->copy_vkgd=malloc(sky->neq*sizeof(real));
+  assert(sky->copy_vkgd);
+  for(int i=0;i<sky->neq;i++) sky->copy_vkgd[i]=0;
+
+  sky->copy_is_alloc=true;
+
+  // fill with zeros
+  for(int k=0;k<sky->nmem;k++){
+    sky->copy_vkgs[k]=0;
+     if (! sky->is_sym) sky->copy_vkgi[k]=0;
+  }
+
+  // Copying right after allocating.
+  for (int i=0; i<sky->nmem; i++){
+    sky->copy_vkgs[i] = sky->vkgs[i];
+    if (!sky->is_sym) sky->copy_vkgi[i] = sky->vkgi[i];
+  }
+  for (int i=0; i<sky->neq; i++){
+    sky->copy_vkgd[i] = sky->vkgd[i];
+  }
 
 }
 
@@ -213,6 +254,9 @@ void FactoLU(Skyline* sky){
   int isol=0;
   int nsym=1;
   if (sky->is_sym) nsym=0;
+  // Allocating and storing old matrix inside copies.
+  if (!sky->copy_is_alloc) AllocateCopySkyline(sky);
+  printf("LU factorization in progress...\n");
 
   sol_(sky->vkgs,sky->vkgd, sky->vkgi,
        vfg, sky->kld, vu, sky->neq, 
@@ -225,24 +269,23 @@ void FactoLU(Skyline* sky){
 
 void MatVectSkyline(Skyline * sky, real * x, real * prod) {
 
-  assert(!sky->is_lu);
+  //assert(!sky->is_lu);
 
   int nsym=1;
   if (sky->is_sym) nsym=0;
 
   for(int i=0; i < sky->neq; i++) prod[i]=0;
-
-  
-  /* sol_(sky->vkgs,sky->vkgd, sky->vkgi, */
-  /*      vfg, sky->kld, vu, sky->neq,  */
-  /*       ifac, isol, nsym, */
-  /*      &energ, &ier); */
- 
-  mulku_(sky->vkgs, sky->vkgd, sky->vkgi,
-	 sky->kld, x, sky->neq, nsym, 
-	   prod, sky->nmem);
-
-
+  if (!sky->is_lu){
+    mulku_(sky->vkgs, sky->vkgd, sky->vkgi,
+     sky->kld, x, sky->neq, nsym, 
+       prod, sky->nmem);
+  }
+  else
+  {
+    mulku_(sky->copy_vkgs, sky->copy_vkgd, sky->copy_vkgi,
+     sky->kld, x, sky->neq, nsym, 
+       prod, sky->nmem);
+  }
 }
 
 

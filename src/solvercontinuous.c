@@ -293,7 +293,6 @@ void ExactDirichletContinuousMatrix(void * cs,LinearSolver* lsol){
     if (ps->is_boundary_node[ino]){
       for (int iv=0; iv<ps->nb_phy_vars;iv++){
         SetLinearSolver(&ps->lsol,ps->nb_phy_vars*ino+iv,ps->nb_phy_vars*ino+iv,bigval);
-        //printf("i de aii : %d\n", ps->nb_phy_vars*ino+iv);
       }
     }
   }

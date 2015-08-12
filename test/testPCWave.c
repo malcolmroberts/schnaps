@@ -79,7 +79,7 @@ int TestPCWave(void) {
 
   real theta=0.5;
   simu.theta=theta;
-  simu.dt=0.01;
+  simu.dt=0.1;
   simu.vmax=_SPEED_WAVE;
   real tmax=0.5;
   
@@ -176,6 +176,10 @@ int TestPCWave(void) {
   InitImplicitLinearSolver(&simu2, &solver_explicit2);
   real *res2 = calloc(simu2.wsize, sizeof(real));
 
+  PB_PC pb_pc2;
+  int mat2assemble2[6] = {1, 1, 1, 1, 1, 1};
+  InitPhy_Wave(&simu2, &pb_pc2, mat2assemble2);
+
   simu2.tnow=0;
   for(int ie=0; ie < simu2.macromesh.nbelems; ++ie){
     simu2.fd[ie].tnow=simu2.tnow;
@@ -211,7 +215,7 @@ int TestPCWave(void) {
     for(int i=0;i<solver_implicit2.neq;i++){
       solver_implicit2.rhs[i]=solver_implicit2.rhs[i]+res2[i]-solver_explicit2.rhs[i];
     }
-    solvePhy_wave(&pb_pc,&simu,simu.fd[0].wn,solver_implicit.rhs);
+    solvePhy_wave(&pb_pc2,&simu2,simu2.fd[0].wn,solver_implicit2.rhs);
     printf("t=%f iter=%d/%d dt=%f\n", simu2.tnow, tstep, simu2.itermax_rk, simu2.dt);
   }
   dd = L2error(&simu2);
@@ -259,6 +263,10 @@ int TestPCWave(void) {
   InitImplicitLinearSolver(&simu3, &solver_explicit3);
   real *res3 = calloc(simu3.wsize, sizeof(real));
 
+  PB_PC pb_pc3;
+  int mat2assemble3[6] = {1, 1, 1, 1, 1, 1};
+  InitPhy_Wave(&simu3, &pb_pc3, mat2assemble3);
+
   simu3.tnow=0;
   for(int ie=0; ie < simu3.macromesh.nbelems; ++ie){
     simu3.fd[ie].tnow=simu3.tnow;
@@ -294,7 +302,7 @@ int TestPCWave(void) {
     for(int i=0;i<solver_implicit3.neq;i++){
       solver_implicit3.rhs[i]=solver_implicit3.rhs[i]+res3[i]-solver_explicit3.rhs[i];
     }
-    solvePhy_wave(&pb_pc,&simu,simu.fd[0].wn,solver_implicit.rhs);
+    solvePhy_wave(&pb_pc3,&simu3,simu3.fd[0].wn,solver_implicit3.rhs);
 
     printf("t=%f iter=%d/%d dt=%f\n", simu3.tnow, tstep, simu3.itermax_rk, simu3.dt);
   }
