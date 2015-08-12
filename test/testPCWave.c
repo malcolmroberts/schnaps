@@ -12,11 +12,13 @@
 void SteadyStateOne_ImposedData(const real *x, const real t, real *w);
 void SteadyStateOne_InitData(real *x, real *w);
 void SteadyStateOne_Source(const real *xy, const real t, const real *w, real *S);
-void SteadyStateOne_BoundaryFlux(real *x, real t, real *wL, real *vnorm,real *flux);
+void SteadyStateOne_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
+				                                                        real *flux);
 void SteadyStateTwo_ImposedData(const real *x, const real t, real *w);
 void SteadyStateTwo_InitData(real *x, real *w);
 void SteadyStateTwo_Source(const real *xy, const real t, const real *w, real *S);
-void SteadyStateTwo_BoundaryFlux(real *x, real t, real *wL, real *vnorm,real *flux);
+void SteadyStateTwo_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
+				                                                        real *flux);
 
 int main(void) {
   
@@ -77,7 +79,7 @@ int TestPCWave(void) {
 
   real theta=0.5;
   simu.theta=theta;
-  simu.dt=0.01;
+  simu.dt=0.1;
   simu.vmax=_SPEED_WAVE;
   real tmax=0.5;
   
@@ -86,10 +88,6 @@ int TestPCWave(void) {
   InitImplicitLinearSolver(&simu, &solver_implicit);
   InitImplicitLinearSolver(&simu, &solver_explicit);
   real *res = calloc(simu.wsize, sizeof(real));
-
-  PB_PC pb_pc;
-  int mat2assemble[6] = {1, 1, 1, 1, 1, 1};
-  InitPhy_Wave(&simu, &pb_pc, mat2assemble);
 
   simu.tnow=0;
   for(int ie=0; ie < simu.macromesh.nbelems; ++ie){
@@ -126,14 +124,14 @@ int TestPCWave(void) {
     for(int i=0;i<solver_implicit.neq;i++){
       solver_implicit.rhs[i]=solver_implicit.rhs[i]+res[i]-solver_explicit.rhs[i];
     }
-    solvePhy_wave(&pb_pc,&simu,simu.w,solver_implicit.rhs);
+    physicPC_wave(&simu,simu.fd[0].wn,solver_implicit.rhs);
     printf("t=%f iter=%d/%d dt=%f\n", simu.tnow, tstep, simu.itermax_rk, simu.dt);
   }
   dd = L2error(&simu);
 
   printf("erreur L2=%.12e\n", dd);
 
-  test = test && (dd<2.e-2);
+  test = test && (dd<1.e-10);
 
   ///////////////////////////////// Test TWO: Splitting error
   printf("//////////////////////////////////////\n");
@@ -209,7 +207,7 @@ int TestPCWave(void) {
     for(int i=0;i<solver_implicit2.neq;i++){
       solver_implicit2.rhs[i]=solver_implicit2.rhs[i]+res2[i]-solver_explicit2.rhs[i];
     }
-    solvePhy_wave(&pb_pc,&simu2,simu2.fd[0].wn,solver_implicit.rhs);
+    physicPC_wave(&simu2,simu2.fd[0].wn,solver_implicit2.rhs);
     printf("t=%f iter=%d/%d dt=%f\n", simu2.tnow, tstep, simu2.itermax_rk, simu2.dt);
   }
   dd = L2error(&simu2);
@@ -270,10 +268,10 @@ int TestPCWave(void) {
       solver_explicit3.mat_is_assembly=false;
     } 
     else 
-    { 
+      { 
       solver_implicit3.mat_is_assembly=true;
       solver_explicit3.mat_is_assembly=true;
-    }
+    } 
 
     solver_implicit3.rhs_is_assembly=false;
     solver_explicit3.rhs_is_assembly=false;
@@ -292,18 +290,15 @@ int TestPCWave(void) {
     for(int i=0;i<solver_implicit3.neq;i++){
       solver_implicit3.rhs[i]=solver_implicit3.rhs[i]+res3[i]-solver_explicit3.rhs[i];
     }
-    //physicPC_wave(&simu3,simu3.fd[0].wn,solver_implicit3.rhs);
-    solvePhy_wave(&pb_pc,&simu3,simu3.fd[0].wn,solver_implicit.rhs);
-
+    physicPC_wave(&simu3,simu3.fd[0].wn,solver_implicit3.rhs);
     printf("t=%f iter=%d/%d dt=%f\n", simu3.tnow, tstep, simu3.itermax_rk, simu3.dt);
   }
   dd = L2error(&simu3);
 
   printf("erreur L2=%.13e\n", dd);
 
-  test = test && (dd<8.e-2);
+  test = test && (dd<1.e-2);
 
-  //freePB_PC(&pb_pc);
 
 #ifdef PARALUTION 
   paralution_end();

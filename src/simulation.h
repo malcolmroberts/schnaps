@@ -163,7 +163,4 @@ real L2error(Simulation *simu);
 //! \returns the error.
 real L2error_onefield(Simulation *simu, int nbvar);
 
-//! \brief frees any Simulation object
-//! \param[inout] simu: a Simulation object
-void freeSimulation(Simulation* simu);
 #endif

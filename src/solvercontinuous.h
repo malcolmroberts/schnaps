@@ -145,7 +145,7 @@ void ContinuousToDiscontinuous_Copy(ContinuousSolver * cs,LinearSolver* lsol);
 //! \param[in] a continuous solver
 void AllocateContinuousMatrix(void * cs,LinearSolver* lsol);
 
-//! \brief apply dirichlet homogeneous bc for continuous solver
+//! \brief pply dirichlet homogeneous bc for continuous solver
 //! \param[inout] lsol a linear solver allocate
 //! \param[in] a continuous solver
 void ExactDirichletContinuousMatrix(void * cs,LinearSolver* lsol);
@@ -174,8 +174,4 @@ void extract2CGVectors(ContinuousSolver* L1Solver,ContinuousSolver* L2Solver, re
 
 //! TODOODODODODOOD
 void MatrixPoisson_Continuous(void * cs,LinearSolver* lsol);
-
-//! \brief frees a ContinuousSolver object
-//! \param[in] cs: a ContinuousSolver object
-void freeContinuousSolver(ContinuousSolver* cs);
 #endif

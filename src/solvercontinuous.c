@@ -290,7 +290,7 @@ void ExactDirichletContinuousMatrix(void * cs,LinearSolver* lsol){
     real bigval = 1e16;
     if (ps->is_boundary_node[ino]){
       for (int iv=0; iv<ps->nb_phy_vars;iv++){
-        SetLinearSolver(&ps->lsol,ps->nb_phy_vars*ino+iv,ps->nb_phy_vars*ino+iv,bigval);
+        AddLinearSolver(&ps->lsol,ps->nb_phy_vars*ino+iv,ps->nb_phy_vars*ino+iv,bigval);
         //printf("i de aii : %d\n", ps->nb_phy_vars*ino+iv);
       }
     }
@@ -716,17 +716,3 @@ void MatrixPoisson_Continuous(void * cs,LinearSolver* lsol){
   } 
   
  }
-
-void freeContinuousSolver(ContinuousSolver* cs){
-
-  freeSimulation(cs->simu);
-  free(cs->fn_list);
-  free(cs->is_boundary_node);
-  free(cs->list_of_var);
-  free(cs->rhs_assembly);
-  free(cs->matrix_assembly);
-  free(cs->postcomputation_assembly);
-  free(cs->bc_assembly);
-  
-}
-
