@@ -10,18 +10,16 @@
 
 
 
-/*void distribution_to_physic_entropy(field* f,real w,real *tw){
+void distribution_to_physic_entropy(field* f,real w,real *tw){
   *tw=log(w+1);
 }
 
 void physic_entropy_to_distribution(field* f,real w,real *tw){
   *tw=exp(w)-1;
-  }*/
+}
 
 
-void Computation_charge_density(Simulation *simu, real * w){
-
-  field * f=&simu->fd[0];
+void Computation_charge_density(field *f, real * w){
   
     for(int ipg=0;ipg<NPG(f->deg, f-> raf);ipg++){
       int imemc=f->varindex(f->deg, f->raf, f->model.m,ipg,_INDEX_RHO);
@@ -43,11 +41,8 @@ void Computation_charge_density(Simulation *simu, real * w){
 }
 
 
-real Computation_charge_average(Simulation *simu,real * w) {
+real Computation_charge_average(field *f,real * w) {
   //int param[8] = {f->model.m, _DEGX, _DEGY, _DEGZ, _RAFX, _RAFY, _RAFZ, 0};
-
-  field * f=&simu->fd[0];
-  
   real average = 0;
   real rho_imem = 0;
   real size_domain = 0;
@@ -75,9 +70,12 @@ real Computation_charge_average(Simulation *simu,real * w) {
 	det = dot_product(dtau[0], codtau[0]);
       }
 
+
         average += rho_imem * wpg * det;
 	size_domain +=  wpg * det;
 
+      
+    
     }
     return average/size_domain;
 }

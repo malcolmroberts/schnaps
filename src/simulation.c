@@ -24,7 +24,7 @@ void InitSimulation(Simulation *simu, MacroMesh *mesh,
   simu->wsize = field_size * mesh->nbelems;
 
   printf("field_size = %d simusize = %d\n",field_size,simu->wsize);
-  
+
   simu->w = calloc(simu->wsize, sizeof(real));
   simu->dtw = calloc(simu->wsize, sizeof(real));
 
@@ -56,8 +56,6 @@ void InitSimulation(Simulation *simu, MacroMesh *mesh,
   }
 
   simu->pre_dtfields = NULL;
-  simu->post_dtfields = NULL;
-  simu->update_after_rk = NULL;
   simu->nb_diags = 0;
 
 }
@@ -301,8 +299,6 @@ void freeSimulation(Simulation* simu){
   free(simu->pic);
   free(simu->Diagnostics);
   free(simu->pre_dtfields);
-  free(simu->post_dtfields);
-  free(simu->update_after_rk);
 }
 
 
@@ -364,10 +360,8 @@ void DtFields(Simulation *simu, real *w, real *dtw) {
 
   }
 
-  if(simu->post_dtfields != NULL) {
-    simu->post_dtfields(simu, w);
-    //assert(1==2);
-  }
+  //if(f->post_dtfield != NULL) // FIXME: rename to after dtfield
+    //f->post_dtfield(f, w);
 }
 
 real L2error(Simulation *simu) {
@@ -424,7 +418,6 @@ real L2error(Simulation *simu) {
 void RK2(Simulation *simu, real tmax){
 
   simu->dt = Get_Dt_RK(simu);
-    printf("mmmm %f %f %f ",simu->dt,simu->hmin,simu->vmax);
 
 
   real dt = simu->dt;
@@ -443,9 +436,8 @@ void RK2(Simulation *simu, real tmax){
   size_diags = simu->nb_diags * simu->itermax_rk;
   simu->iter_time_rk = iter;
 
-   if(simu->nb_diags != 0) {
-     simu->Diagnostics = malloc(size_diags * sizeof(real));
-   }
+  /* if(simu->nb_diags != 0) */
+  /*   simu->Diagnostics = malloc(size_diags * sizeof(real)); */
 
   while(simu->tnow < tmax) {
     if (iter % freq == 0)
@@ -461,10 +453,9 @@ void RK2(Simulation *simu, real tmax){
 
     simu->tnow += 0.5 * dt;
 
-    if(simu->update_after_rk != NULL){ 
-      simu->update_after_rk(simu, simu->w); 
-    }
-    
+    /* if(simu->update_after_rk != NULL) */
+    /*   simu->update_after_rk(f, simu->wn); */
+
     iter++;
     simu->iter_time_rk = iter;
   }
@@ -479,7 +470,6 @@ void RK4(Simulation *simu, real tmax)
 {
 
   simu->dt = Get_Dt_RK(simu);
-
 
   real dt = simu->dt;
 
@@ -527,9 +517,8 @@ void RK4(Simulation *simu, real tmax)
     RK4_final_inplace(simu->w, l1, l2, l3, simu->dtw, dt, simu->wsize);
 
     
-     if(simu->update_after_rk != NULL){ 
-      simu->update_after_rk(simu, simu->w); 
-    }
+    /* if(f->update_after_rk != NULL) */
+    /*   f->update_after_rk(f, f->wn); */
     
     iter++;
      simu->iter_time_rk=iter;

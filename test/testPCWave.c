@@ -12,13 +12,11 @@
 void SteadyStateOne_ImposedData(const real *x, const real t, real *w);
 void SteadyStateOne_InitData(real *x, real *w);
 void SteadyStateOne_Source(const real *xy, const real t, const real *w, real *S);
-void SteadyStateOne_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
-				                                                        real *flux);
+void SteadyStateOne_BoundaryFlux(real *x, real t, real *wL, real *vnorm,real *flux);
 void SteadyStateTwo_ImposedData(const real *x, const real t, real *w);
 void SteadyStateTwo_InitData(real *x, real *w);
 void SteadyStateTwo_Source(const real *xy, const real t, const real *w, real *S);
-void SteadyStateTwo_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
-				                                                        real *flux);
+void SteadyStateTwo_BoundaryFlux(real *x, real t, real *wL, real *vnorm,real *flux);
 
 int main(void) {
   
@@ -128,7 +126,7 @@ int TestPCWave(void) {
     for(int i=0;i<solver_implicit.neq;i++){
       solver_implicit.rhs[i]=solver_implicit.rhs[i]+res[i]-solver_explicit.rhs[i];
     }
-    solvePhy_wave(&pb_pc,&simu,simu.fd[0].wn,solver_implicit.rhs);
+    solvePhy_wave(&pb_pc,&simu,simu.w,solver_implicit.rhs);
     printf("t=%f iter=%d/%d dt=%f\n", simu.tnow, tstep, simu.itermax_rk, simu.dt);
   }
   dd = L2error(&simu);
@@ -211,7 +209,7 @@ int TestPCWave(void) {
     for(int i=0;i<solver_implicit2.neq;i++){
       solver_implicit2.rhs[i]=solver_implicit2.rhs[i]+res2[i]-solver_explicit2.rhs[i];
     }
-    solvePhy_wave(&pb_pc,&simu,simu.fd[0].wn,solver_implicit.rhs);
+    solvePhy_wave(&pb_pc,&simu2,simu2.fd[0].wn,solver_implicit.rhs);
     printf("t=%f iter=%d/%d dt=%f\n", simu2.tnow, tstep, simu2.itermax_rk, simu2.dt);
   }
   dd = L2error(&simu2);
@@ -294,7 +292,8 @@ int TestPCWave(void) {
     for(int i=0;i<solver_implicit3.neq;i++){
       solver_implicit3.rhs[i]=solver_implicit3.rhs[i]+res3[i]-solver_explicit3.rhs[i];
     }
-    solvePhy_wave(&pb_pc,&simu,simu.fd[0].wn,solver_implicit.rhs);
+    //physicPC_wave(&simu3,simu3.fd[0].wn,solver_implicit3.rhs);
+    solvePhy_wave(&pb_pc,&simu3,simu3.fd[0].wn,solver_implicit.rhs);
 
     printf("t=%f iter=%d/%d dt=%f\n", simu3.tnow, tstep, simu3.itermax_rk, simu3.dt);
   }

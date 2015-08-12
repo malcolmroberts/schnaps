@@ -30,16 +30,27 @@ void InitPhy_Wave(Simulation *simu, PB_PC* pb_pc, int* list_mat2assemble){
 
   // Initializing all solvers 
   InitContinuousSolver(&pb_pc->D,simu,1,nb_varD,listvarD);
+  pb_pc->D.lsol.solver_type=LU;
+  pb_pc->D.lsol.MatVecProduct=MatVect;
   free(listvarD);
+  
   InitContinuousSolver(&pb_pc->L1,simu,1,nb_varL1,listvarL1);
+  pb_pc->L1.lsol.MatVecProduct=MatVect;
   free(listvarL1);
   InitContinuousSolver(&pb_pc->L2,simu,1,nb_varL2,listvarL2);
+  pb_pc->L2.lsol.MatVecProduct=MatVect;
   free(listvarL2);
+  
   InitContinuousSolver(&pb_pc->U1,simu,1,nb_varU1,listvarU1);
+  pb_pc->U1.lsol.MatVecProduct=MatVect;
   free(listvarU1);
   InitContinuousSolver(&pb_pc->U2,simu,1,nb_varU2,listvarU2);
+  pb_pc->U2.lsol.MatVecProduct=MatVect;
   free(listvarU2);
+  
   InitContinuousSolver(&pb_pc->Schur,simu,1,nb_varSchur,listvarSchur);
+  pb_pc->Schur.lsol.solver_type=LU;
+  pb_pc->Schur.lsol.MatVecProduct=MatVect;
   free(listvarSchur);
 
   // Local operator matrices to build global Differential operators (Schur, Laplacian...)
@@ -150,9 +161,6 @@ void solvePhy_wave(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*globalR
 
   // 1) PREDICTION STEP
 
-  pb_pc->D.lsol.solver_type=LU;
-  pb_pc->D.lsol.MatVecProduct=MatVect;
-
   //printf("RHS assembly.....\n");
   for (int i=0;i<pb_pc->D.nb_fe_nodes;i++){
     pb_pc->D.lsol.rhs[i] = pb_pc->rhs_prediction[i] + globalRHS_CG[i*3];
@@ -162,10 +170,6 @@ void solvePhy_wave(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*globalR
 
   // 2) PROPAGATION STEP
 
-  pb_pc->Schur.lsol.solver_type=LU;
-  pb_pc->Schur.lsol.MatVecProduct=MatVect;
-  pb_pc->L1.lsol.MatVecProduct=MatVect;
-  pb_pc->L2.lsol.MatVecProduct=MatVect;
   // Parsing L1P, L2P into the "sol" of L1 and L2 (since it is unused).
   pb_pc->L1.lsol.MatVecProduct(&pb_pc->L1.lsol,pb_pc->D.lsol.sol,pb_pc->L1.lsol.sol);
   pb_pc->L2.lsol.MatVecProduct(&pb_pc->L2.lsol,pb_pc->D.lsol.sol,pb_pc->L2.lsol.sol);
@@ -270,7 +274,7 @@ void physicPC_wave(Simulation *simu, real* globalSol, real* globalRHS){
   //printf("Solution...\n");
   SolveLinearSolver(&pressionSolver.lsol,simu);
 
-  pressionSolver.lsol.solver_type=LU;
+  pressionSolver.lsol.solver_type=GMRES;
   pressionSolver.lsol.tol=1.e-11;
 
 

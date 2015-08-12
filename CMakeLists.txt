@@ -397,14 +397,6 @@ add_executable(
 target_link_libraries(testshperiodic2d ${LIBS})
 add_test(testshperiodic2d testshperiodic2d)
 
-add_executable(
-  test_transportvp
-  test/test.h
-  test/test_transportvp.c
-)
-target_link_libraries(test_transportvp ${LIBS})
-add_test(test_transportvp test_transportvp)
-
 IF(BUILD_PARALUTION)
 
 

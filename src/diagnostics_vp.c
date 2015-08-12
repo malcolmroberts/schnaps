@@ -29,10 +29,8 @@ real L2VelError(field *f, real *x, real *w){
   return err2;
 }
 
-real L2_Kinetic_error(Simulation* simu){
+real L2_Kinetic_error(field* f){
   real error = 0;
-
-  field *f =&simu->fd[0];
 
     // get the physical nodes of element ie
 
@@ -85,13 +83,11 @@ real local_kinetic_energy(field *f,real *x, real *w) {
 
 // TODO: do not store all diagnotics for all time, but instead just
 // append to the output file.
-void Energies(Simulation *simu, real *w, real k_energy, real e_energy, real t_energy,int first_diag) {
+void Energies(field *f, real *w, real k_energy, real e_energy, real t_energy,int first_diag) {
   
   k_energy = 0;
   e_energy = 0;
   t_energy = 0;
-
-  field * f=&simu->fd[0];
 
 
     // loop on the glops (for numerical integration)
@@ -128,10 +124,10 @@ void Energies(Simulation *simu, real *w, real k_energy, real e_energy, real t_en
   /* f->Diagnostics[f->iter_time + (first_diag+1) * f->itermax] = t_energy; */
 }
 
-void Charge_total(Simulation *simu, real *w, real t_charge,int first_diag) {
+void Charge_total(field *f, real *w, real t_charge,int first_diag) {
   
   t_charge=0;
-  field *f=&simu->fd[0];
+
 
     // loop on the glops (for numerical integration)
   for(int ipg = 0; ipg < NPG(f->deg,f->raf); ipg++){
@@ -161,18 +157,19 @@ void Charge_total(Simulation *simu, real *w, real t_charge,int first_diag) {
 }
 
 
-void Plot_Energies(Simulation *simu, real dt) { 
-  int nb_diag = 0; 
-  real e_energy = 0, k_energy = 0, t_energy = 0,t_charge=0; 
-  FILE *Plot;
-  Plot = fopen("Diagnostics.dat","w");
+/* void Plot_Energies(field *f, real dt) { */
+/*   int nb_diag = 0; */
+/*   real e_energy = 0, k_energy = 0, t_energy = 0,t_charge=0; */
+/*   FILE *Plot; */
+/*   Plot = fopen("Diagnostics.dat","w"); */
 
-  for(int i = 1; i < simu->itermax_rk + 1; i++){ 
-    k_energy = simu->Diagnostics[i]; 
-    e_energy = simu->Diagnostics[i + simu->itermax_rk]; 
-    t_energy = simu->Diagnostics[i + 2 * simu->itermax_rk]; 
-    t_charge= simu->Diagnostics[i + 3 * simu->itermax_rk]; 
-    fprintf(Plot, "%.11e %.11e %.11e %.11e %.15e\n", simu->tnow, k_energy, e_energy, t_energy,t_charge); 
-  } 
-  fclose(Plot); 
-} 
+/*   for(int i = 1; i < f->itermax + 1; i++){ */
+/*     f->tnow = i * dt; // FIXME: this will break with adaptive time-stepping */
+/*     k_energy = f->Diagnostics[i]; */
+/*     e_energy = f->Diagnostics[i + f->itermax]; */
+/*     t_energy = f->Diagnostics[i + 2 * f->itermax]; */
+/*     t_charge= f->Diagnostics[i + 3 * f->itermax]; */
+/*     fprintf(Plot, "%.11e %.11e %.11e %.11e %.15e\n", f->tnow, k_energy, e_energy, t_energy,t_charge); */
+/*   } */
+/*   fclose(Plot); */
+/* } */

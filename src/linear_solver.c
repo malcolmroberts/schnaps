@@ -338,12 +338,8 @@ void InitJFLinearSolver(JFLinearSolver* lsol,int n,
   lsol->tol=1.e-6;
   lsol->restart_gmres=1;
   lsol->iter_max=10000;
-  lsol->eps=0.000001;
 
   if (solvtyp != NULL) lsol->solver_type = *solvtyp;
-
-  lsol->rhs=calloc(n,sizeof(real));
-  lsol->sol=calloc(n,sizeof(real));
 
 }
 
@@ -363,7 +359,6 @@ void MatVecJacobianFree(Simulation *simu,void * system,real x[],real prod[]){
   solnp=calloc(lsol->neq,sizeof(real));
   U=calloc(lsol->neq,sizeof(real));
   Up=calloc(lsol->neq,sizeof(real));
-
   
   for(i=0;i<lsol->neq;i++)
     {
@@ -377,10 +372,7 @@ void MatVecJacobianFree(Simulation *simu,void * system,real x[],real prod[]){
     {
       prod[i]=(Up[i]-U[i])/lsol->eps;
     }  
-
-  free(solnp);
-  free(U);
-  free(Up);
+  
 
   
 }
