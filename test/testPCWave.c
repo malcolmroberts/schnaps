@@ -129,7 +129,9 @@ int TestPCWave(void) {
       solver_implicit.rhs[i]=solver_implicit.rhs[i]+res[i]-solver_explicit.rhs[i];
     }
     solvePhy_wave(&pb_pc,&simu,simu.fd[0].wn,solver_implicit.rhs);
-    printf("t=%f iter=%d/%d dt=%f\n", simu.tnow, tstep, simu.itermax_rk, simu.dt);
+    int freq = (1 >= simu.itermax_rk / 10)? 1 : simu.itermax_rk / 10;
+    if (tstep % freq == 0)
+      printf("t=%f iter=%d/%d dt=%f\n", simu.tnow, tstep, simu.itermax_rk, simu.dt);
   }
   dd = L2error(&simu);
 
@@ -217,7 +219,9 @@ int TestPCWave(void) {
       solver_implicit2.rhs[i]=solver_implicit2.rhs[i]+res2[i]-solver_explicit2.rhs[i];
     }
     solvePhy_wave(&pb_pc2,&simu2,simu2.fd[0].wn,solver_implicit2.rhs);
-    printf("t=%f iter=%d/%d dt=%f\n", simu2.tnow, tstep, simu2.itermax_rk, simu2.dt);
+    int freq = (1 >= simu2.itermax_rk / 10)? 1 : simu2.itermax_rk / 10;
+    if (tstep % freq == 0)
+      printf("t=%f iter=%d/%d dt=%f\n", simu2.tnow, tstep, simu2.itermax_rk, simu2.dt);
   }
   dd = L2error(&simu2);
 
@@ -241,7 +245,7 @@ int TestPCWave(void) {
   model3.Source = NULL;
 
   int deg3[]={4, 4, 0};
-  int raf3[]={32, 32, 1};
+  int raf3[]={4, 4, 1};
 
 
   CheckMacroMesh(&mesh, deg3, raf3);
@@ -255,7 +259,7 @@ int TestPCWave(void) {
 
   real theta3=0.5;
   simu3.theta=theta3;
-  simu3.dt=0.1;
+  simu3.dt=0.01;
   simu3.vmax=_SPEED_WAVE;
   real tmax3 = 1.0;
   
@@ -306,7 +310,9 @@ int TestPCWave(void) {
     }
     solvePhy_wave(&pb_pc3,&simu3,simu3.fd[0].wn,solver_implicit3.rhs);
 
-    printf("t=%f iter=%d/%d dt=%f\n", simu3.tnow, tstep, simu3.itermax_rk, simu3.dt);
+    int freq = (1 >= simu3.itermax_rk / 10)? 1 : simu3.itermax_rk / 10;
+    if (tstep % freq == 0)
+      printf("t=%f iter=%d/%d dt=%f\n", simu3.tnow, tstep, simu3.itermax_rk, simu3.dt);
   }
   dd = L2error(&simu3);
 

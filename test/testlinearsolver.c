@@ -132,7 +132,7 @@ int TestLinearSolver(void){
   printf("\n");
   printf("\n");
   // deallocate memory
-  FreeLinearSolver(&sky);
+  FreeLinearSolver(&sky,0);
   
 
   test1= (verr<1e-10);
@@ -310,7 +310,7 @@ int TestLinearSolver(void){
   printf("\n");
 
   // deallocate memory
-  FreeLinearSolver(&sky);
+  FreeLinearSolver(&sky,0);
 
   test3 =  (verr<1e-6);
 
@@ -380,7 +380,7 @@ int TestLinearSolver(void){
   printf("\n");
 
   // deallocate memory
-  FreeLinearSolver(&sky);
+  FreeLinearSolver(&sky,0);
 
   test4 =  (verr<1e-5);
 

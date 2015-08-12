@@ -720,7 +720,7 @@ void MatrixPoisson_Continuous(void * cs,LinearSolver* lsol){
 
 void freeContinuousSolver(ContinuousSolver* cs, int free_simu){
 
-  FreeLinearSolver(&cs->lsol);
+  FreeLinearSolver(&cs->lsol,1);
   if (free_simu) freeSimulation(cs->simu);
   free(cs->fn_list);
   free(cs->is_boundary_node);
