@@ -61,8 +61,8 @@ int Test_SH_equilibrium(void) {
   
   tmax = 0.01;
   simu.vmax = _SPEED_WAVE;
-  simu.cfl = 0.2;
-  RK2(&simu, tmax);
+  simu.cfl = 0.05;
+  RK4(&simu, tmax);
 
   dd = L2error(&simu);
   tolerance = 1e-3;
@@ -86,8 +86,8 @@ int Test_SH_equilibrium(void) {
   
   tmax = 0.01;
   simu2.vmax = _SPEED_WAVE;
-  simu2.cfl = 0.2;
-  RK2(&simu2, tmax);
+  simu2.cfl = 0.1;
+  RK4(&simu2, tmax);
 
   dd = L2error(&simu2);
   tolerance = 1e-3;
@@ -111,8 +111,8 @@ int Test_SH_equilibrium(void) {
   
   tmax = 0.01;
   simu3.vmax = _SPEED_WAVE;
-  simu3.cfl = 0.2;
-  RK2(&simu3, tmax);
+  simu3.cfl = 0.1;
+  RK4(&simu3, tmax);
 
   dd = L2error(&simu3);
   tolerance = 1e-3;

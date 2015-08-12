@@ -24,7 +24,7 @@ void InitSimulation(Simulation *simu, MacroMesh *mesh,
   simu->wsize = field_size * mesh->nbelems;
 
   printf("field_size = %d simusize = %d\n",field_size,simu->wsize);
-
+  
   simu->w = calloc(simu->wsize, sizeof(real));
   simu->dtw = calloc(simu->wsize, sizeof(real));
 

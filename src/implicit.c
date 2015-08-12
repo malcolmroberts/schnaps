@@ -46,9 +46,13 @@ void InitImplicitJFLinearSolver(Simulation *simu, JFLinearSolver *solver){
 
   Solver st = LU; 
   InitJFLinearSolver(solver,neq,&st);
-  solver->tol=1.e-8;
-
-  int itest = 1;
+  solver->MatVecProduct=MatVecJacobianFree;
+  solver->NonlinearVector_computation=ImplicitNonlinearVector_computation;
+  solver->soln=simu->w;
+  solver->iter_max=100;
+  
+  solver->tol=1.e-9;
+  solver->eps=0.00001;
 
 }
 
@@ -75,6 +79,7 @@ void AssemblyImplicitLinearSolver(Simulation *simu, LinearSolver *solver,real th
 
 void ImplicitNonlinearVector_computation(Simulation * simu,void* lsol,real * solvector,real *nlvector){
 
+  
   NonlinearThetaVector_assembly(simu,solvector,nlvector,simu->theta,simu->dt);
   
 }
@@ -83,20 +88,27 @@ void ImplicitNonlinearVector_computation(Simulation * simu,void* lsol,real * sol
 void AssemblyImplicitJFLinearSolver(Simulation *simu, JFLinearSolver *solver, real dt){
   real * rhs_implicit;
   real * rhs_explicit;
-
+  
   rhs_implicit = calloc(simu->wsize, sizeof(real));
   rhs_explicit = calloc(simu->wsize, sizeof(real));
+
+  NonlinearThetaVector_assembly(simu,simu->w,rhs_explicit,-(1.0-simu->theta),simu->dt);
   
-  solver->NonlinearVector_computation=ImplicitNonlinearVector_computation;
-
-
-  NonlinearThetaVector_assembly(simu,simu->w,rhs_explicit,-(1.0-simu->theta),simu->dt); 
+  simu->tnow=simu->tnow+simu->dt;
+  for(int ie=0; ie < simu->macromesh.nbelems; ++ie){
+    simu->fd[ie].tnow=simu->tnow;
+  }
+  
   NonlinearThetaVector_assembly(simu,simu->w,rhs_implicit,simu->theta,simu->dt);
+
+  DtFields(simu, simu->w, simu->dtw);
+  
   for(int i=0;i<solver->neq;i++){
     solver->rhs[i]=-rhs_implicit[i]+rhs_explicit[i];
   }
 
- 
+  free(rhs_implicit);
+  free(rhs_explicit);
 
 }
 
@@ -172,13 +184,12 @@ void ThetaTimeScheme_WithJF(Simulation *simu, real tmax, real dt){
 
   real theta=0.5;
   simu->dt=dt;
+  simu->theta=theta;
   
-  int itermax=tmax/simu->dt+1;
+  int itermax=tmax/simu->dt;
   simu->itermax_rk=itermax;
+  
   InitImplicitJFLinearSolver(simu, &solver_implicit);
-  real *res = calloc(simu->wsize, sizeof(real));
-  //solver_implicit.solver_type=GMRES;
-
   simu->tnow=0;
   for(int ie=0; ie < simu->macromesh.nbelems; ++ie){
     simu->fd[ie].tnow=simu->tnow;
@@ -186,32 +197,20 @@ void ThetaTimeScheme_WithJF(Simulation *simu, real tmax, real dt){
 
   for(int tstep=0;tstep<simu->itermax_rk;tstep++){
  
-    
-    /*AssemblyImplicitJFLinearSolver(simu, &solver_explicit,-(1.0-theta),simu->dt);
+    AssemblyImplicitJFLinearSolver(simu,&solver_implicit,simu->dt);
 
-    simu->tnow=simu->tnow+simu->dt;
-    for(int ie=0; ie < simu->macromesh.nbelems; ++ie){
-      simu->fd[ie].tnow=simu->tnow;
-    } 
-    AssemblyImplicitLinearSolver(simu, &solver_implicit,theta,simu->dt);
   
-
-    MatVect(&solver_explicit, simu->w, res);
+    SolveJFLinearSolver(&solver_implicit,simu);
 
     for(int i=0;i<solver_implicit.neq;i++){
-      solver_implicit.rhs[i]=-solver_explicit.rhs[i]+solver_implicit.rhs[i]+res[i];
+     simu->w[i]=simu->w[i]+solver_implicit.sol[i];
     }
-  
-    SolveLinearSolver(&solver_implicit,simu);
-
-    for(int i=0;i<solver_implicit.neq;i++){
-      simu->w[i]=solver_implicit.sol[i];
-      }*/
+    
     int freq = (1 >= simu->itermax_rk / 10)? 1 : simu->itermax_rk / 10;
     if (tstep % freq == 0)
       printf("t=%f iter=%d/%d dt=%f\n", simu->tnow, tstep, simu->itermax_rk, dt);
   }
- 
+  
 
 }
 
@@ -1117,7 +1116,10 @@ void NonlinearThetaVector_assembly(Simulation * simu,real * solvector,real *nlve
   const unsigned int m = simu->fd[0].model.m;
     int fsize =  simu->wsize / simu->macromesh.nbelems;
 
-  
+    ///// Compute the nonlinear vecteur M uL - coef*dt F(uL) +  coef*dt F(uL,uR) - coef*dt M B(uL)
+    ///// which correspond to thediscretization of dt u + div(F(u))=B(u)
+
+    /////////// We compute the fllux + F(uL,uR) between the macro cell interface//////  
   for(int ifa = 0; ifa < simu->macromesh.nbfaces; ifa++){
     int ieL = simu->macromesh.face2elem[4 * ifa + 0];
     int locfaL = simu->macromesh.face2elem[4 * ifa + 1];
@@ -1191,8 +1193,10 @@ void NonlinearThetaVector_assembly(Simulation * simu,real * solvector,real *nlve
 	  // The basis functions is also the gauss point index
 	  int imemL = fL->varindex(fL->deg, fL->raf,fL->model.m, ipgL, iv);
 	  int imemR = fR->varindex(fR->deg, fR->raf,fR->model.m, ipgR, iv);
-	  nlvL[imemL] -= flux[iv] * wpg;
-	  nlvR[imemR] += flux[iv] * wpg;
+	  nlvL[imemL] += theta * dt * flux[iv] * wpg;
+	  nlvR[imemR] -= theta * dt * flux[iv] * wpg;
+	  //nlvL[imemL] -= theta * dt * flux[iv] * wpg;
+	  //nlvR[imemR] += theta * dt * flux[iv] * wpg;
 	}
 	
       }
@@ -1209,7 +1213,8 @@ void NonlinearThetaVector_assembly(Simulation * simu,real * solvector,real *nlve
 	  for(int iv = 0; iv < m; iv++) {
 	// The basis functions is also the gauss point index
 	    int imemL = fL->varindex(fL->deg, fL->raf,fL->model.m, ipgL, iv);
-	    nlvL[imemL] -= flux[iv] * wpg;
+	    nlvL[imemL] += theta * dt * flux[iv] * wpg;
+	    //nlvL[imemL] -= theta * dt * flux[iv] * wpg;
 	  }
 	}
 
@@ -1247,7 +1252,7 @@ void NonlinearThetaVector_assembly(Simulation * simu,real * solvector,real *nlve
 	  // First glop index in the subcell
 	  int offsetL = npg[0] * npg[1] * npg[2] * ncL;
 
-          ///////////// Subcellinterface part //////////////////////
+        /////////// We compute the fllux + F(uL,uR) between the sub-cell interface//////  
 	// Sweeping subcell faces in the three directions
 	  for(int dim0 = 0; dim0 < 3; dim0++) { 
 	    
@@ -1340,8 +1345,10 @@ void NonlinearThetaVector_assembly(Simulation * simu,real * solvector,real *nlve
 		    int imemL = f->varindex(f->deg, f->raf, f->model.m, ipgL, iv);
 		    int imemR = f->varindex(f->deg, f->raf, f->model.m, ipgR, iv);
 		    // end TO DO
-		    nlv[imemL] -= flux[iv] * wpg;
-		    nlv[imemR] += flux[iv] * wpg;
+		     nlv[imemL] += theta * dt * flux[iv] * wpg;
+		    nlv[imemR] -= theta * dt * flux[iv] * wpg;
+		    //nlv[imemL] -= theta * dt * flux[iv] * wpg;
+		    //nlv[imemR] += theta * dt * flux[iv] * wpg;
 		  }
 		  
 		}  // face yhat loop
@@ -1349,7 +1356,7 @@ void NonlinearThetaVector_assembly(Simulation * simu,real * solvector,real *nlve
 	    } // endif internal face
 	  } // dim loop
 
-	///////////// Volume part //////////////////////
+          /////////// We compute the volume term - F(uL) in the subs-cell//////  
 	real *xref0 = malloc(sc_npg * sizeof(real));
 	real *xref1 = malloc(sc_npg * sizeof(real));
 	real *xref2 = malloc(sc_npg * sizeof(real));
@@ -1421,7 +1428,8 @@ void NonlinearThetaVector_assembly(Simulation * simu,real * solvector,real *nlve
 		    int imemR = f->varindex(f->deg,f->raf,f->model.m, ipgR, iv);
 		    int temp = m * (ipgR - offsetL) + iv;  
 		    assert(imemR == imems[temp]);
-		    nlv[imems[temp]] += flux[iv] * wpgL;
+		    nlv[imems[temp]] -= theta * dt * flux[iv] * wpgL;
+		    //nlv[imems[temp]] += theta * dt * flux[iv] * wpgL;
 		  }
 		} // iq
 	      } // p2
@@ -1440,7 +1448,7 @@ void NonlinearThetaVector_assembly(Simulation * simu,real * solvector,real *nlve
       } // subcell icl1 loop
     } // subcell icl0 loop
 
-    //////////////////// source and mass
+     /////////// We compute the source term - B(uL) in the subs-cell and the mass term + M uL//////  
     for(int ipg = 0; ipg < NPG(f->deg, f->raf); ipg++) {
       real dtau[3][3], codtau[3][3], xpgref[3], xphy[3], wpg;
       ref_pg_vol(f->deg, f->raf, ipg, xpgref, &wpg, NULL);
@@ -1461,8 +1469,9 @@ void NonlinearThetaVector_assembly(Simulation * simu,real * solvector,real *nlve
 
       for(int iv = 0; iv < m; ++iv) {
 	int imem = f->varindex(f->deg, f->raf, f->model.m, ipg, iv);
-	nlv[imem] += source[iv] * det * wpg;
-	nlv[imem] /=(wpg * det); //+=wL[iv] * (wpg * det);	
+	nlv[imem] -= theta * dt *source[iv] * det * wpg; //nlv[imem] += theta * dt *source[iv] * det * wpg;
+	nlv[imem] += wL[iv] * (wpg * det);
+	//nlv[imem] /=(wpg * det); //+=wL[iv] * (wpg * det);	
       }
     }
     
