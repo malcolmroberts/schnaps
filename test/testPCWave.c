@@ -259,9 +259,9 @@ int TestPCWave(void) {
 
   real theta3=0.5;
   simu3.theta=theta3;
-  simu3.dt=0.01;
+  simu3.dt=0.005;
   simu3.vmax=_SPEED_WAVE;
-  real tmax3 = 1.0;
+  real tmax3 = 0.1;
   
   real itermax3=tmax3/simu3.dt;
   simu3.itermax_rk=itermax3;
@@ -318,7 +318,7 @@ int TestPCWave(void) {
 
   printf("erreur L2=%.13e\n", dd);
 
-  test = test && (dd<8.e-2);
+  test = test && (dd<1.e-2);
 
   freePB_PC(&pb_pc3);
 
