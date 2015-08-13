@@ -204,7 +204,7 @@ void DisplaySkyline(Skyline* sky){
   int n=sky->neq;
 
 
-  printf("profil=");
+    printf("profil=");
   for(int i=0;i<n;i++){
     printf("%d ",sky->prof[i]);
   }
@@ -218,28 +218,28 @@ void DisplaySkyline(Skyline* sky){
 
   printf("vkgd=");
   for(int i=0;i<n;i++){
-    printf("%f ",sky->vkgd[i]);
+    printf("%.5e ",sky->vkgd[i]);
   }
   printf("\n");
 
   printf("vkgs=");
   for(int i=0;i<sky->nmem;i++){
-    printf("%f ",sky->vkgs[i]);
+    printf("%.5e ",sky->vkgs[i]);
   }
   printf("\n");
 
   printf("vkgi=");
   for(int i=0;i<sky->nmem;i++){
-    printf("%f ",sky->vkgi[i]);
+    printf("%.5e ",sky->vkgi[i]);
   }
   printf("\n");
 
   for(int i=0;i<n;i++){
     for(int j=0;j<n;j++){
-      printf("%f ", GetSkyline(sky,i,j));
+      printf("%.5e ", GetSkyline(sky,i,j));
     }   
     printf("\n");
-  }
+    }
 }
 
 

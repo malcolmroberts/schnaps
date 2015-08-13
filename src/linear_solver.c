@@ -63,15 +63,17 @@ void FreeLinearSolver(LinearSolver* lsol, int freeAll){
   assert(lsol->is_alloc);
   assert(lsol->rhs);
   assert(lsol->sol);
-
+  free(lsol->rhs);
+  free(lsol->sol);
+  
   switch(lsol->storage_type) {
 
   case SKYLINE :
     FreeSkyline((Skyline*)lsol->matrix);
-    if (freeAll){
+    /*if (freeAll){
       free(lsol->rhs);
       free(lsol->sol);
-    }
+      }*/
     free(lsol->matrix);
     break;
 
@@ -697,7 +699,12 @@ void GMRESSolver(LinearSolver* lsol, Simulation* simu){
     lsol->sol[ivec] = work[ivec+1];                    
   }
   
+  free(work);
+  free(loc_x);
+  free(loc_y);
+  free(loc_z);
 
+  
 }
 
 
@@ -836,6 +843,12 @@ void SolveJFLinearSolver(JFLinearSolver* lsol,Simulation * simu){
   for(int ivec = 0; ivec < N; ivec++) {
     lsol->sol[ivec] = work[ivec+1];                    
   }
-  
+
+
+  free(work);
+  free(loc_x);
+  free(loc_y);
+  free(loc_z);
+
 
 }

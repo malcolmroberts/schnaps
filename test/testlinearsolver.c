@@ -88,7 +88,6 @@ int TestLinearSolver(void){
   for(int i=0;i<_NN;i++){
     for(int j=0;j<_NN;j++){
       if (A[i][j] != 0) IsNonZero(&sky,i,j);
-      //if (i==j) SwitchOn(&sky,i,j);
     }
   }
 
@@ -101,24 +100,21 @@ int TestLinearSolver(void){
       if (A[i][j] != 0){
       	AddLinearSolver(&sky,i,j,A[i][j]);
       }
-      /* if (i==j){ */
-      /* 	SetLinearSolver(&sky,i,j,2); */
-      /* } */
     }
   }
 
-
-
   // printf for checking...
   DisplayLinearSolver(&sky);
-
 
   // solve from a decomposed matrix
   // vf: rhs
   // sol: solution
 
-  sky.rhs=vf;
-  sky.sol=sol;
+  for(int i=0;i<_NN;i++){
+    sky.rhs[i]=vf[i];
+    sky.sol[i]=sol[i];
+  }
+    
   SolveLinearSolver(&sky,&simu);
 
 
@@ -136,8 +132,7 @@ int TestLinearSolver(void){
   
 
   test1= (verr<1e-10);
-
-
+  
 #ifdef PARALUTION
   // preliminary work on the skyline struct
   // _NN is the size of the linear system to be solved
@@ -208,8 +203,11 @@ int TestLinearSolver(void){
     }
   }
 
-  sky.rhs=vf;
-  sky.sol=sol;
+  for(int i=0;i<_NN;i++){
+    sky.rhs[i]=vf[i];
+    sky.sol[i]=sol[i];
+  }
+
   SolveLinearSolver(&sky,&simu);
 
 
@@ -294,8 +292,11 @@ int TestLinearSolver(void){
     }
   }
 
-  sky.rhs=vf;
-  sky.sol=sol;
+  for(int i=0;i<_NN;i++){
+    sky.rhs[i]=vf[i];
+    sky.sol[i]=sol[i];
+  }
+    
   SolveLinearSolver(&sky,&simu);
 
 
@@ -373,7 +374,7 @@ int TestLinearSolver(void){
   verr=0;
   printf("sol of laplacien with gmres=");
   for(int i=0;i<NPoisson;i++){
-    printf("%f ",sky.sol[i]);
+    printf("%.5e ",sky.sol[i]);
     verr+=fabs(sky.sol[i]-(i*h)*(1-i*h));
   }
   printf("\n");
@@ -387,6 +388,7 @@ int TestLinearSolver(void){
 
 
   if(test1==1 &&  test2==1 && test3==1 && test4==1) test=1;
+
 
 #ifdef PARALUTION 
   paralution_end();

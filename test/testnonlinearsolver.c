@@ -97,9 +97,12 @@ int TestNonLinearSolver(void){
   fsoln[0] = 0;
   fsoln[1] = 0;
   fsoln[2] = 0;
-  
-  sky.sol=sold;
-  sky.rhs=rhs;
+
+  for(int i=0;i<_NN;i++){
+    sky.rhs[i]=rhs[i];
+    sky.sol[i]=sold[i];
+  }
+ 
 
   for(int i=0;i<_NN;i++){
     for(int j=0;j<_NN;j++){
@@ -213,8 +216,10 @@ int TestNonLinearSolver(void){
   fsoln[1] = 0;
   fsoln[2] = 0;
   
-  sky.sol=sold;
-  sky.rhs=rhs;
+  for(int i=0;i<_NN;i++){
+    sky.rhs[i]=rhs[i];
+    sky.sol[i]=sold[i];
+  }
 
   for(int i=0;i<_NN;i++){
     for(int j=0;j<_NN;j++){
