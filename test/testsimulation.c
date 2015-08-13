@@ -58,6 +58,8 @@ int TestSimulation(void){
   //PlotFields(0, false, &simu, "trans", "visu.msh");
   //PlotFields(0, true, &simu, "error", "error.msh");
 
+
+  FreeMacroMesh(&mesh);
   
   return test;
 }

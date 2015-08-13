@@ -55,7 +55,7 @@ int Testfield(void){
   f.model.InitData(xphy,wtest);
   test = fabs(f.wn[imem] - wtest[0]) < _SMALL;
  
-  
+  FreeMacroMesh(&mesh);
   
   return test;
 }

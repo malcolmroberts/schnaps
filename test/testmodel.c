@@ -36,13 +36,15 @@ int TestModel(void){
   real x[3] = {1, 1, 2};
   real t = 0;
   real vn[3] = {sqrt(1.0 / 3.0), sqrt(1.0 / 3.0), sqrt(1.0 / 3.0)};
-
   real vmax = 1.0;
+
+  wL[0]=0;
+      
   tr.InitData(x, wR);
   tr.NumFlux(wL, wR, vn, flux1);
-  printf("NumFlux %f \n", flux1[0]);
+  printf("NumFlux %.6e \n", flux1[0]);
   tr.BoundaryFlux(x, t, wL, vn, flux2);
-  printf("BoundaryFlux %f \n", flux2[0]);
+  printf("BoundaryFlux %.6e \n", flux2[0]);
 
   real err = fabs(flux2[0] - flux1[0]);
   test = (err < 1e-8);

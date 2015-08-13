@@ -157,6 +157,8 @@ int TestCoil2D(void)
   test = test && (dd < tolerance);
   printf("L2 error: %f\n", dd);
 
+  FreeMacroMesh(&mesh);
+
   return test;
 }
 
