@@ -39,6 +39,9 @@ typedef struct PB_PC{
   // \brief Right-hand side for the correction step of the preconditioner
   real *rhs_correction;
 
+  // \brief 0 if the system is linear and 1 if not
+  int nonlinear;
+
 } PB_PC;
 
 // \brief Takes a vector in Discontinuous Galerkin, and returns the 
@@ -86,7 +89,7 @@ void InitMat_ContinuousSolver(PB_PC* pb_pc, real Dmat[4][4], real L1Mat[4][4], r
 // \param[in] pb_pc: Physics-based preconditioner (contains all the Schur decomposition)
 // \param[out] globalSol: Stores the solution of the preconditioner.
 // \param[in] globalRHS: Right-hand-side containing all explicit and source terms.
-void solvePhy_wave(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*globalRHS);
+void solvePhy(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*globalRHS);
 
 // \brief Frees any PB_PC object
 // \param[inout] pb_pc a PhysicsBased_PreConditioner 

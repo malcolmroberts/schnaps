@@ -6,6 +6,10 @@
 #include "physBased_PC.h"
 
 void InitPhy_Wave(Simulation *simu, PB_PC* pb_pc, int* list_mat2assemble){
+
+  // system is linear
+  pb_pc->nonlinear=0;
+  
   
   // Initialization variables. Modify at will.
   int nb_varD = 1;
@@ -85,7 +89,9 @@ void InitPhy_Wave(Simulation *simu, PB_PC* pb_pc, int* list_mat2assemble){
   InitMat_ContinuousSolver(pb_pc,DMat,L1Mat,L2Mat,U1Mat,U2Mat,SchurMat);
 
   // Assembling all operators' matrices
-  GenericOperator(pb_pc);
+  if(pb_pc->nonlinear == 0){
+    GenericOperator(pb_pc);
+  }
 
   //// Allocating all sub-equations right-hand sides
   pb_pc->rhs_prediction = malloc(pb_pc->D.lsol.neq*sizeof(real));
@@ -112,10 +118,15 @@ void InitMat_ContinuousSolver(PB_PC* pb_pc, real DMat[4][4], real L1Mat[4][4], r
   }
 }
 
-void solvePhy_wave(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*globalRHS_DG){
+void solvePhy(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*globalRHS_DG){
   
   // 0)1) Reset everything (needed for time evolution)
   reset(pb_pc);
+
+  // Assembling all operators' matrices
+  if(pb_pc->nonlinear == 1){
+    GenericOperator(pb_pc);
+  }
 
   // 0)2) Second, initialize all penalization right-hand-sides
   pb_pc->D.bc_assembly=ExactDirichletContinuousMatrix;

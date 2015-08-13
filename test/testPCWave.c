@@ -128,7 +128,7 @@ int TestPCWave(void) {
     for(int i=0;i<solver_implicit.neq;i++){
       solver_implicit.rhs[i]=solver_implicit.rhs[i]+res[i]-solver_explicit.rhs[i];
     }
-    solvePhy_wave(&pb_pc,&simu,simu.fd[0].wn,solver_implicit.rhs);
+    solvePhy(&pb_pc,&simu,simu.fd[0].wn,solver_implicit.rhs);
     int freq = (1 >= simu.itermax_rk / 10)? 1 : simu.itermax_rk / 10;
     if (tstep % freq == 0)
       printf("t=%f iter=%d/%d dt=%f\n", simu.tnow, tstep, simu.itermax_rk, simu.dt);
@@ -218,7 +218,7 @@ int TestPCWave(void) {
     for(int i=0;i<solver_implicit2.neq;i++){
       solver_implicit2.rhs[i]=solver_implicit2.rhs[i]+res2[i]-solver_explicit2.rhs[i];
     }
-    solvePhy_wave(&pb_pc2,&simu2,simu2.fd[0].wn,solver_implicit2.rhs);
+    solvePhy(&pb_pc2,&simu2,simu2.fd[0].wn,solver_implicit2.rhs);
     int freq = (1 >= simu2.itermax_rk / 10)? 1 : simu2.itermax_rk / 10;
     if (tstep % freq == 0)
       printf("t=%f iter=%d/%d dt=%f\n", simu2.tnow, tstep, simu2.itermax_rk, simu2.dt);
@@ -308,7 +308,7 @@ int TestPCWave(void) {
     for(int i=0;i<solver_implicit3.neq;i++){
       solver_implicit3.rhs[i]=solver_implicit3.rhs[i]+res3[i]-solver_explicit3.rhs[i];
     }
-    solvePhy_wave(&pb_pc3,&simu3,simu3.fd[0].wn,solver_implicit3.rhs);
+    solvePhy(&pb_pc3,&simu3,simu3.fd[0].wn,solver_implicit3.rhs);
 
     int freq = (1 >= simu3.itermax_rk / 10)? 1 : simu3.itermax_rk / 10;
     if (tstep % freq == 0)
