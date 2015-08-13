@@ -54,7 +54,8 @@ int Testfield(void){
   int imem = f.varindex(f.deg, f.raf, f.model.m,ipg,0);
   f.model.InitData(xphy,wtest);
   test = fabs(f.wn[imem] - wtest[0]) < _SMALL;
- 
+
+  freeField(&f);
   FreeMacroMesh(&mesh);
   
   return test;

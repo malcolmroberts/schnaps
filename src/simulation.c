@@ -58,9 +58,11 @@ void InitSimulation(Simulation *simu, MacroMesh *mesh,
   simu->pre_dtfields = NULL;
   simu->post_dtfields = NULL;
   simu->update_after_rk = NULL;
+  simu->Diagnostics = NULL;
+  simu->pic =NULL;
   simu->nb_diags = 0;
-  simu->pic = NULL;
-  simu->Diagnostics=NULL;
+
+
 
 }
 
@@ -297,14 +299,26 @@ void PlotFields(int typplot, int compare, Simulation* simu, char *fieldname,
 }
 
 void freeSimulation(Simulation* simu){
-  freeField(simu->fd);
-  //free(simu->w);   Already freed in field.
-  //free(simu->dtw); Already freed in field.
-  free(simu->pic);
-  free(simu->Diagnostics);
-  //free(simu->pre_dtfields);
-  //free(simu->post_dtfields);
-  //free(simu->update_after_rk);
+  
+  for(int i=0;i<simu->macromesh.nbelems;i++){
+    simu->fd[i].wn=NULL;
+    simu->fd[i].dtwn=NULL;
+  }
+  
+  
+  free(simu->w);   //Already freed in field.
+  free(simu->dtw); //Already freed in field.
+  free(simu->fd);
+
+  if(simu->Diagnostics != NULL){
+    free(simu->Diagnostics);
+  }
+  if(simu->pic != NULL){
+    free(simu->pic);
+  }
+  
+  
+
 }
 
 

@@ -497,8 +497,13 @@ void free_field(field *f)
 
 // This is the destructor for a field
 void freeField(field *f){
-  free(f->wn);
-  free(f->dtwn);
+  
+  if (f->wn != NULL){
+    free(f->wn);
+  }
+  if (f->dtwn != NULL){
+    free(f->dtwn);
+  }
   //free(f->varindex);
   free_field(f);
   
