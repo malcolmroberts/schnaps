@@ -106,7 +106,7 @@ int Test_SH_equilibrium_Implicit(void) {
   InitSimulation(&simu2, &mesh, deg2, raf2, &model);
 
   
-  tmax = 0.01;
+  tmax=0.01;
   simu2.vmax = 1;
   simu2.cfl = 0.025;
   simu2.dt = Get_Dt_RK(&simu2);

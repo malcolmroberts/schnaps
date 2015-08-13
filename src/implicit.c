@@ -49,7 +49,7 @@ void InitImplicitJFLinearSolver(Simulation *simu, JFLinearSolver *solver){
   solver->MatVecProduct=MatVecJacobianFree;
   solver->NonlinearVector_computation=ImplicitNonlinearVector_computation;
   solver->soln=simu->w;
-  solver->iter_max=100;
+  solver->iter_max=10000;
   
   solver->tol=1.e-9;
   solver->eps=0.00001;
