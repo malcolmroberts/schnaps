@@ -204,9 +204,7 @@ J_{32} &= \theta\Delta tI_1h^n\partial_xu_2^n \\
 J_{33} &= h^nI_1+\theta\Delta th^n\left(\boldsymbol{u}^n\cdot\nabla\right)I_1+\theta\Delta th^n(\partial_yu_2^n)I_1
 \end{align*}
 
-
-\section{Schur decomposition}
-
+\section{Solving  by Schur decomposition and splitting}
 We denote 
 \begin{equation*}
 J_{ac_G}=\begin{pmatrix}D_1&U\\L&D_2\end{pmatrix}
@@ -230,46 +228,8 @@ D_2=\begin{pmatrix}h^nI_1+\theta\Delta th^n\left(\boldsymbol{u}^n\cdot \nabla\ri
 \theta\Delta tI_1h^n\partial_xu_2^n&h^nI_1+\theta\Delta th^n\left(\boldsymbol{u}^n\cdot\nabla\right)I_1+\theta\Delta th^n(\partial_yu_2^n)I_1
 \end{pmatrix}
 \end{equation*}
-The Schur decomposition of the Jacobian matrix is $P_{schur}=D_2-LD_1^{-1}U$.\\
-\textbf{Hypothesis} We assume \textcolor{red}{only in $P_{schur}$} that $D_1=I_1$.\\
+The Schur decomposition gives the following algorithm
 
-The operator $L \delta h$ is given by
-$$
-L \delta h =(\boldsymbol{u}^n+\theta \Delta t \boldsymbol{u}^n\cdot \nabla \boldsymbol{u}^n )\delta h+\theta \Delta t g \nabla( h^n\delta h)
-$$
-To compute the $LU$ operator we take $\delta h=U\delta \boldsymbol{u}$ in $L \delta h$. The operator $U\delta \boldsymbol{u}=\theta \Delta t \operatorname{div}(h^n \delta \boldsymbol{u})$.
-
-\begin{equation*}
-LU(\delta \boldsymbol{u})=\underbrace{\left(\boldsymbol{u}^n+\theta \Delta t \boldsymbol{u}^n\cdot \nabla \boldsymbol{u}^n \right)\left(\theta \Delta t \operatorname{div}(h^n \delta \boldsymbol{u})\right)}_\textrm{probably neglect}
-+\underbrace{\theta^2 \Delta t^2 g\nabla\left( h^n\left(\operatorname{div}(h^n\delta  \boldsymbol{u})\right)\right)}_\textrm{the term which gives the wave}
-\end{equation*}
-which is equal to
-\begin{equation*}
-LU(\delta \boldsymbol{u})=\underbrace{\left(\boldsymbol{u}^n+\theta \Delta t \boldsymbol{u}^n\cdot \nabla \boldsymbol{u}^n \right)\left(\theta \Delta t \operatorname{div}(h^n \delta \boldsymbol{u})\right)}_\textrm{probably neglect}
-+\underbrace{\theta^2 \Delta t^2 g\nabla\left[ h^n \delta \boldsymbol{u}\cdot \nabla h^n + h^n \operatorname{div}(\delta \boldsymbol{u})h^n \right]}_\textrm{the term which gives the wave}
-\end{equation*}
-At the end we obtain
-\begin{equation*}
-LU(\delta \boldsymbol{u})=\underbrace{\left(\boldsymbol{u}^n+\theta \Delta t \boldsymbol{u}^n\cdot \nabla \boldsymbol{u}^n \right)\left(\theta \Delta t \operatorname{div}(h^n \delta \boldsymbol{u})\right)}_\textrm{probably neglect}
-+\underbrace{\theta^2 \Delta t^2 \nabla\left[ \delta \boldsymbol{u}\cdot \nabla p^n + 2p^n \operatorname{div}(\delta \boldsymbol{u}) \right]}_\textrm{the term which gives the wave}
-\end{equation*}
-
-To conclude, one has the Schur matrix 
-\begin{small}
-\begin{equation*}
-P_{schur}\delta \boldsymbol{u}=h^n \delta \boldsymbol{u}+\theta\Delta th^n\left(\boldsymbol{u}^n\cdot\nabla\right)\delta \boldsymbol{u}+\theta\Delta th^n\left(\delta \boldsymbol{u} \cdot\nabla\right)\boldsymbol{u}^n-(LU)\delta \boldsymbol{u}
-\end{equation*}
-\end{small}
-with $\nabla\boldsymbol{u}^n$ the Jacobian matrix of $\boldsymbol{u}^n$, ie
-\begin{equation*}
-\nabla\boldsymbol{u}^n=
-\begin{pmatrix}
-\partial_x u_1^n &\partial_y u_1^n\\ \partial_x u_2^n &\partial_y u_2^n
-\end{pmatrix}.
-\end{equation*}
-
-\section{The three sub-equations}
-Thanks to the Schur decomposition one has the three systems (see also the document du 31 juillet)
 \begin{equation*}
 (Syst_1)\left\{\begin{split}
 &\overline{\delta h}^*=-\Delta t\text{div}(h^n\boldsymbol{u}^n)+\theta\Delta tS_h^{n+1}+(1-\theta)\Delta tS_h^{n},\\
@@ -279,10 +239,11 @@ Thanks to the Schur decomposition one has the three systems (see also the docume
 \begin{equation*}
 (Syst_2)\left\{\begin{split}
 &D_1\delta h^{**}=\overline{\delta h}^*,\\
-&(D_2-LU)\delta \boldsymbol{u}^{**}=\delta \boldsymbol{u}^{*},
+&P_{schur}\delta \boldsymbol{u}^{**}=\delta \boldsymbol{u}^{*},
 \end{split}
 \right.
 \end{equation*}
+with  $P_{schur}=D_2-LD_1^{-1}U$
 and
 
 \begin{equation*}
@@ -300,5 +261,72 @@ Hence it yields (we define $\delta h^*$ such as $\overline{\delta h}^*=D_1\delta
 &D_1\delta h^{n+1}=D_1\delta h^*-U\delta \boldsymbol{u}^{n+1}.
 \end{split}\right.
 \end{equation*}
+
+
+\section{Computation and study of the Schur complement}
+In this section we propose to compute the Schur complement. After this computation we propose to study this operator.
+
+\subsection{Computation of the Schur}
+To begin we propose to use an assumption on the flow we assuma that the flow are small consequently $\Delta t \mid \boldsymbol{u}^n\mid <<1$ Consequently we obtain that $D_1\approx I_1$ is this regime. Using this we can compute the operator $LU$.
+
+The operator $L \delta h$ is given by
+$$
+L \delta h =(\boldsymbol{u}^n+\theta \Delta t \boldsymbol{u}^n\cdot \nabla \boldsymbol{u}^n )\delta h+\theta \Delta t g \nabla( h^n\delta h)
+$$
+To compute the $LU$ operator we take $\delta h=U\delta \boldsymbol{u}$ in $L \delta h$. The operator $U\delta \boldsymbol{u}=\theta \Delta t \operatorname{div}(h^n \delta \boldsymbol{u})$.
+
+\begin{equation*}
+LU(\delta \boldsymbol{u})=\left(\boldsymbol{u}^n+\theta \Delta t \boldsymbol{u}^n\cdot \nabla \boldsymbol{u}^n \right)\left(\theta \Delta t \operatorname{div}(h^n \delta \boldsymbol{u})\right)
++\theta^2 \Delta t^2 g\nabla\left( h^n\left(\operatorname{div}(h^n\delta  \boldsymbol{u})\right)\right)\end{equation*}
+which is equal to
+\begin{equation*}
+LU(\delta \boldsymbol{u})=\left(\boldsymbol{u}^n+\theta \Delta t \boldsymbol{u}^n\cdot \nabla \boldsymbol{u}^n \right)\left(\theta \Delta t \operatorname{div}(h^n \delta \boldsymbol{u})\right)
++\theta^2 \Delta t^2 g\nabla\left[ h^n \delta \boldsymbol{u}\cdot \nabla h^n + h^n \operatorname{div}(\delta \boldsymbol{u})h^n \right]\end{equation*}
+At the end we obtain
+\begin{equation*}
+LU(\delta \boldsymbol{u})=\left(\boldsymbol{u}^n+\theta \Delta t \boldsymbol{u}^n\cdot \nabla \boldsymbol{u}^n \right)\left(\theta \Delta t \operatorname{div}(h^n \delta \boldsymbol{u})\right)
++\theta^2 \Delta t^2 \nabla\left[ \delta \boldsymbol{u}\cdot \nabla p^n + 2p^n \operatorname{div}(\delta \boldsymbol{u}) \right]
+\end{equation*}
+
+To conclude, one has the Schur matrix 
+\begin{small}
+\begin{equation*}
+P_{schur}\delta \boldsymbol{u}=h^n \delta \boldsymbol{u}+\theta\Delta th^n\left(\boldsymbol{u}^n\cdot\nabla\right)\delta \boldsymbol{u}+\theta\Delta th^n\left(\delta \boldsymbol{u} \cdot\nabla\right)\boldsymbol{u}^n-(LU)\delta \boldsymbol{u}
+\end{equation*}
+\end{small}
+with $\nabla\boldsymbol{u}^n$ the Jacobian matrix of $\boldsymbol{u}^n$, ie
+\begin{equation*}
+\nabla\boldsymbol{u}^n=
+\begin{pmatrix}
+\partial_x u_1^n &\partial_y u_1^n\\ \partial_x u_2^n &\partial_y u_2^n
+\end{pmatrix}.
+\end{equation*}
+
+\subsection{Writing of the wave operator associated to the schur}
+Now we propose to show that the Schur operator is a discretization to a wave operator apply at the perturbation of the position $\boldsymbol{\xi} $.
+For this we rewrite the operator we obtain
+$$
+P_{schur}\delta \boldsymbol{u}= \frac{\delta \boldsymbol{u}}{\Delta t}+\theta h^n\left(\boldsymbol{u}^n\cdot\nabla\right)\delta \boldsymbol{u}+\theta h^n\left(\delta \boldsymbol{u} \cdot\nabla\right)\boldsymbol{u}^n-\Delta t \overline{LU}\delta \boldsymbol{u}
+$$
+with
+$$
+\overline{LU}\delta \boldsymbol{u}=\left(\frac{\boldsymbol{u}^n}{\Delta t}+\theta \boldsymbol{u}^n\cdot \nabla \boldsymbol{u}^n \right)\left(\theta \operatorname{div}(h^n \delta \boldsymbol{u})\right)
++\theta^2 \nabla\left[ \delta \boldsymbol{u}\cdot \nabla p^n + 2p^n \operatorname{div}(\delta \boldsymbol{u}) \right]
+$$
+Firstly $\Delta t I_1 \delta  \boldsymbol{u}=(\frac{I_1}{\Delta t})^{-1} \delta \boldsymbol{u}$.  This is the discretization of the $(\partial_t )^{-1} \boldsymbol{u}$ since $\delta u=u^{n+1}-u^n$. At the end the operator $P_{schur}$ is the time discretization of the operator
+$$
+\partial_t \boldsymbol{u}+\theta h^n\left(\boldsymbol{u}^n\cdot\nabla\right) \boldsymbol{u}+\theta h^n\left( \boldsymbol{u} \cdot\nabla\right)\boldsymbol{u}^n- \overline{LU} (\partial_t )^{-1}  \boldsymbol{u}
+$$
+To finish we consider the position $\boldsymbol{\xi} $ and $\partial_t \boldsymbol{\xi} = \boldsymbol{u}$ we obtain at the end
+$$
+\partial_{tt} \boldsymbol{\xi}+\theta h^n\left(\boldsymbol{u}^n\cdot\nabla\right) \partial_t\boldsymbol{\xi}+\theta h^n\left( \partial_t \boldsymbol{\xi} \cdot\nabla\right)\boldsymbol{u}^n- \overline{LU}  \boldsymbol{\xi}
+$$
+with
+$$
+\overline{LU} \boldsymbol{\xi}=\left(\partial_t \boldsymbol{u}^n+\theta \boldsymbol{u}^n\cdot \nabla \boldsymbol{u}^n \right)\left(\theta \operatorname{div}(h^n \boldsymbol{\xi})\right)
++\theta^2 \nabla\left[ \delta \boldsymbol{\xi}\cdot \nabla p^n + 2p^n \operatorname{div}( \boldsymbol{\xi}) \right]
+$$
+
+\subsection{Wave study of the wave operator }
 
 \end{document}
