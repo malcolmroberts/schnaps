@@ -204,7 +204,7 @@ void DisplaySkyline(Skyline* sky){
   int n=sky->neq;
 
 
-    printf("profil=");
+  printf("profil=");
   for(int i=0;i<n;i++){
     printf("%d ",sky->prof[i]);
   }

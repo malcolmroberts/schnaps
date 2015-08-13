@@ -348,11 +348,15 @@ void InitJFLinearSolver(JFLinearSolver* lsol,int n,
 
   lsol->rhs=calloc(n,sizeof(real));
   lsol->sol=calloc(n,sizeof(real));
+  lsol->soln=calloc(n,sizeof(real));
 
 }
 
 void FreeJFLinearSolver(JFLinearSolver* lsol){
 
+  free(lsol->rhs);
+  free(lsol->sol);
+  free(lsol->soln);
 
 }
 

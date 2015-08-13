@@ -324,10 +324,12 @@ int TestNonLinearSolver(void){
   fsoln[0] = 0;
   fsoln[1] = 0;
   fsoln[2] = 0;
-  
-  skyJF.sol=sold;
-  skyJF.soln=soln;
-  skyJF.rhs=rhs;
+
+   for(int i=0;i<_NN;i++){
+    skyJF.rhs[i]=rhs[i];
+    skyJF.sol[i]=sold[i];
+    skyJF.soln[i]=soln[i];
+  }
   
   for(int i=1;i<5;i++){
     JFNonlinearVector_GX(NULL,&skyJF,soln,fsoln);
