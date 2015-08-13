@@ -20,6 +20,7 @@ real scal_(real *x, real *y, int *n);
 void InitSkyline(Skyline* sky, int n){
 
   sky->is_alloc=false;
+  sky->copy_is_alloc=false;
   sky->is_sym=false;
   sky->is_lu=false;
 

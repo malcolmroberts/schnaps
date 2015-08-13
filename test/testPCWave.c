@@ -139,6 +139,7 @@ int TestPCWave(void) {
 
   test = test && (dd<2.e-2);
   freePB_PC(&pb_pc);
+  freeSimulation(&simu);
 
   ///////////////////////////////// Test TWO: Splitting error
   printf("//////////////////////////////////////\n");
@@ -229,6 +230,7 @@ int TestPCWave(void) {
 
   test = test && (dd<1.e-2);
   freePB_PC(&pb_pc2);
+  freeSimulation(&simu2);
 
   ///////////////////////////////// Test THREE: Time-dependent problem
   printf("//////////////////////////////////////\n");
@@ -321,6 +323,7 @@ int TestPCWave(void) {
   test = test && (dd<1.e-2);
 
   freePB_PC(&pb_pc3);
+  freeSimulation(&simu3);
 
 #ifdef PARALUTION 
   paralution_end();

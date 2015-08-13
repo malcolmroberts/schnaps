@@ -9,7 +9,10 @@ void InitPhy_Wave(Simulation *simu, PB_PC* pb_pc, int* list_mat2assemble){
 
   // system is linear
   pb_pc->nonlinear=0;
-  
+
+
+  pb_pc->list_mat2assemble = calloc(6, sizeof(int));
+  for (int i=0; i<6; i++) pb_pc->list_mat2assemble[i] = list_mat2assemble[i];
   
   // Initialization variables. Modify at will.
   int nb_varD = 1;

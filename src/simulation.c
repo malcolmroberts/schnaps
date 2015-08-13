@@ -59,6 +59,8 @@ void InitSimulation(Simulation *simu, MacroMesh *mesh,
   simu->post_dtfields = NULL;
   simu->update_after_rk = NULL;
   simu->nb_diags = 0;
+  simu->pic = NULL;
+  simu->Diagnostics=NULL;
 
 }
 

@@ -644,14 +644,8 @@ void extract2CGVectors(ContinuousSolver* L1Solver,ContinuousSolver* L2Solver, re
 void freeContinuousSolver(ContinuousSolver* cs, int free_simu){
 
   FreeLinearSolver(&cs->lsol,1);
-  if (free_simu) freeSimulation(cs->simu);
   free(cs->fn_list);
   free(cs->is_boundary_node);
   free(cs->list_of_var);
-  //free(cs->rhs_assembly);
-  //free(cs->matrix_assembly);
-  //free(cs->postcomputation_assembly);
-  //free(cs->bc_assembly);
-  
 }
 
