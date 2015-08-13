@@ -123,6 +123,17 @@ int Test_SH_periodic(void) {
   dd2 = L2error_onefield(&simu3,1);
   dd3 = L2error_onefield(&simu3,2);
   tolerance = 5e-3;
+
+  real dd4 = L2error_onefield(&simu2,3);
+  real dd5 = L2error_onefield(&simu2,4);
+  real dd6 = L2error_onefield(&simu2,5);
+
+  printf("erreur h L2=%.12e\n", dd);
+  printf("erreur u1 L2=%.12e\n", dd2);
+  printf("erreur u2 L2=%.12e\n", dd3);
+  printf("erreur b L2=%.12e\n", dd4);
+  printf("erreur bx L2=%.12e\n", dd5);
+  printf("erreur by L2=%.12e\n", dd6);
   
   if(dd+dd2+dd3 < tolerance){
     test3=1;     

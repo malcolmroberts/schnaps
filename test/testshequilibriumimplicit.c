@@ -27,7 +27,7 @@ int main(void) {
 
 int Test_SH_equilibrium_Implicit(void) {
 
-  int test1 = 0,test2 = 0,test3=0,test = 0;
+  int test1 = 0,test2 = 0,test = 0;
   real tmax=0.0,dt=0.0,tolerance=0.0,dd=0.0;
 
   MacroMesh mesh;
@@ -66,14 +66,14 @@ int Test_SH_equilibrium_Implicit(void) {
 
   
   tmax = 0.01;
-  simu.vmax = _SPEED_WAVE;
+  simu.vmax = 1;
   simu.cfl = 0.2;
   simu.dt = Get_Dt_RK(&simu);
   
   ThetaTimeScheme_WithJF(&simu,tmax,simu.dt);
   
   dd = L2error(&simu);
-  printf("erreur implicit L2=%.12e\n", dd);
+  printf("erreur equilibirum L2=%.12e\n", dd);
 
   PlotFields(0,false, &simu, "h", "dgvisu_h.msh");
   PlotFields(1,false, &simu, "u1", "dgvisu_u1.msh");
@@ -88,9 +88,49 @@ int Test_SH_equilibrium_Implicit(void) {
   if(dd < tolerance){
     test1=1;     
   }
+
+
+  /******* Test periodic  ******/
+  model.m=6; 
+  model.NumFlux=ShallowWater_Rusanov_NumFlux;
+  model.InitData = TestSH_periodic_InitData;
+  model.ImposedData = TestSH_periodic_ImposedData;
+  model.BoundaryFlux = ShallowWater_Rusanov_periodic_BoundaryFlux;
+  model.Source = ShallowWater_periodic_SourceTerm;
+
+  int deg2[]={2, 2, 0};
+  int raf2[]={8, 8, 1};
+
+  Simulation simu2;
+
+  InitSimulation(&simu2, &mesh, deg2, raf2, &model);
+
+  
+  tmax = 0.01;
+  simu2.vmax = 1;
+  simu2.cfl = 0.025;
+  simu2.dt = Get_Dt_RK(&simu2);
+  
+  ThetaTimeScheme_WithJF(&simu2,tmax,simu2.dt);
+  
+  real dd1 = L2error_onefield(&simu2,0);
+  real dd2 = L2error_onefield(&simu2,1);
+  real dd3 = L2error_onefield(&simu2,2);
+  
+  printf("erreur periodic L2=%.12e\n", dd1+dd2+dd3);
+
+  PlotFields(0,false, &simu2, "h", "dgvisu_periodic_h.msh");
+  PlotFields(1,false, &simu2, "u1", "dgvisu_periodic_u1.msh");
+  PlotFields(2,false, &simu2, "u2", "dgvisu_periodic_u2.msh");
+
+  tolerance = 5e-3;
+  
+  if(dd1+dd2+dd3 < tolerance){
+    test2=1;     
+  }
  
 
-  if(test1 > 0){
+  if(test1 + test2 > 1){
     test=1;     
   }
 
@@ -176,4 +216,7 @@ void ShallowWater_Rusanov_periodic_BoundaryFlux(real *x, real t, real *wL, real 
   TestSH_periodic_ImposedData(x , t, wR);
   ShallowWater_Rusanov_NumFlux(wL, wR, vnorm, flux);
 }
+
+
+
 
