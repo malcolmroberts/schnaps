@@ -92,7 +92,9 @@ int Test_Transport_Steady(void) {
    
 #ifdef PARALUTION 
   paralution_end();
-#endif 
+#endif
+
+    FreeMacroMesh(&mesh);
 
   return test;
 }

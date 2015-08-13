@@ -109,6 +109,8 @@ int Test_Wave_Steady(void) {
   paralution_end();
 #endif 
 
+  FreeMacroMesh(&mesh);
+  
   return test;
 }
 

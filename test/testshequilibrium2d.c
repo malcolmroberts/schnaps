@@ -154,6 +154,8 @@ int Test_SH_equilibrium(void) {
     test=1;     
   }
 
+    FreeMacroMesh(&mesh);
+  
   return test;
 }
 

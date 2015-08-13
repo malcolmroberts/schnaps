@@ -105,5 +105,10 @@ int TestPICAccumulate(void)
 
   Displayfield(f);
 
+  FreeMacroMesh(&mesh);
+
+
+
+
   return test;
 }

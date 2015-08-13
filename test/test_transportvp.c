@@ -91,6 +91,8 @@ int Test_TransportVP(void) {
   printf("erreur kinetic L2=%lf\n", dd_Kinetic);
   test= test && (dd_Kinetic < 1e-2);
 
+  FreeMacroMesh(&mesh);
+
   return test;
 }
 

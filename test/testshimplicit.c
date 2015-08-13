@@ -134,6 +134,8 @@ int Test_SH_equilibrium_Implicit(void) {
     test=1;     
   }
 
+  FreeMacroMesh(&mesh);
+
   return test;
 }
 

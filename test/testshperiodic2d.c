@@ -171,6 +171,8 @@ int Test_SH_periodic(void) {
     test=1;     
   }
 
+    FreeMacroMesh(&mesh);
+
   return test;
 }
 

@@ -101,5 +101,10 @@ int TestPIC(void)
 
   AccumulateParticles(&simu, simu.w);
 
+  FreeMacroMesh(&mesh);
+
+
+
+
   return test;
 }

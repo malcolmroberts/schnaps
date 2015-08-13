@@ -126,7 +126,12 @@ int TestPoisson(void)
 
 #ifdef PARALUTION 
   paralution_end();
-#endif 
+#endif
+
+  FreeMacroMesh(&mesh);
+
+
+
 
   return test;
 }
