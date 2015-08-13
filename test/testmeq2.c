@@ -69,6 +69,8 @@ int TestmEq2(void){
   real tolerance = 0.015;
 
   test = dd < tolerance;
+
+  FreeMacroMesh(&mesh);
   
   return test;
 }

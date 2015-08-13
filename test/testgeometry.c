@@ -63,7 +63,7 @@ int TestGeometry(void){
   d = sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
   test = test && (d < _SMALL);
 
-
+  FreeMacroMesh(&mc);
 
 
   return test;

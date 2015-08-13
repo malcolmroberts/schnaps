@@ -60,6 +60,9 @@ int TestfieldDG(void){
   }
 
   printf("error=%f\n",sqrt(test2/ (mesh.nbelems * NPG(deg,raf)) ));
+
+  FreeMacroMesh(&mesh);
+  
   return test;
 };
 

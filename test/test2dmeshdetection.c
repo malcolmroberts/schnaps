@@ -36,6 +36,8 @@ int Test2DMeshDetection(void) {
 
   test = test && mm1.is2d;
 
+  FreeMacroMesh(&mm1);
+
  
   MacroMesh mm2;
   ReadMacroMesh(&mm2, "../test/disque2d.msh");
@@ -45,6 +47,8 @@ int Test2DMeshDetection(void) {
 
   test = test && mm2.is2d;
 
+  FreeMacroMesh(&mm2);
+
   MacroMesh mm3;
   ReadMacroMesh(&mm3, "../test/unit-cube.msh");
   Detect2DMacroMesh(&mm3);
@@ -52,6 +56,8 @@ int Test2DMeshDetection(void) {
   CheckMacroMesh(&mm3, deg,raf);
   
   test = test && mm3.is2d;
+
+  FreeMacroMesh(&mm3);
 
 
   MacroMesh mm4;
@@ -61,6 +67,10 @@ int Test2DMeshDetection(void) {
   CheckMacroMesh(&mm4, deg,raf);
     
   test = test && !mm4.is2d;
+
+  FreeMacroMesh(&mm4);
+
+  
 
   return test;
 };

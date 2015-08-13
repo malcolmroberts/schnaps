@@ -81,7 +81,7 @@ int TestPeriodic(void) {
   printf("erreur L2: %lf\n", dd);
   test = test && (dd<2e-1);
 
-  //SolvePoisson(&f);
+  FreeMacroMesh(&mesh);
 
   return test;
 }

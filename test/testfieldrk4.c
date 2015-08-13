@@ -84,6 +84,8 @@ int TestfieldRK4(void){
   real tolerance = 0.007;
 
   test = dd < tolerance;
+
+  FreeMacroMesh(&mesh);
   
   return test;
 }
