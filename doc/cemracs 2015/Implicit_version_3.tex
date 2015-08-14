@@ -257,7 +257,7 @@ Hence it yields (we define $\delta h^*$ such as $\overline{\delta h}^*=D_1\delta
 \left\{
 \begin{split}
 &D_1\delta h^{*}=-\Delta t\text{div}(h^n\boldsymbol{u}^n)+\theta \Delta tS_h^{n+1}+(1-\theta)\Delta t S_{h}^n,\\
-&(D_2-LU)\delta \boldsymbol{u}^{n+1}=-L\delta h^*-\Delta th^n(\boldsymbol{u}^n\cdot\nabla)\boldsymbol{u}^n-\Delta tg\nabla h^n+\theta\Delta tS_{\boldsymbol{u}}^{n+1}+\theta\Delta tS_{\boldsymbol{u}}^n,\\
+&(D_2-LD_1^{-1}U)\delta \boldsymbol{u}^{n+1}=-L\delta h^*-\Delta th^n(\boldsymbol{u}^n\cdot\nabla)\boldsymbol{u}^n-\Delta tg\nabla h^n+\theta\Delta tS_{\boldsymbol{u}}^{n+1}+\theta\Delta tS_{\boldsymbol{u}}^n,\\
 &D_1\delta h^{n+1}=D_1\delta h^*-U\delta \boldsymbol{u}^{n+1}.
 \end{split}\right.
 \end{equation*}
@@ -306,7 +306,7 @@ with $\nabla\boldsymbol{u}^n$ the Jacobian matrix of $\boldsymbol{u}^n$, ie
 Now we propose to show that the Schur operator is a discretization to a wave operator apply at the perturbation of the position $\boldsymbol{\xi} $.
 For this we rewrite the operator we obtain
 $$
-P_{schur}\delta \boldsymbol{u}= \frac{\delta \boldsymbol{u}}{\Delta t}+\theta h^n\left(\boldsymbol{u}^n\cdot\nabla\right)\delta \boldsymbol{u}+\theta h^n\left(\delta \boldsymbol{u} \cdot\nabla\right)\boldsymbol{u}^n-\Delta t \overline{LU}\delta \boldsymbol{u}
+P_{schur}\delta \boldsymbol{u}= h^n\frac{\delta \boldsymbol{u}}{\Delta t}+\theta h^n\left(\boldsymbol{u}^n\cdot\nabla\right)\delta \boldsymbol{u}+\theta h^n\left(\delta \boldsymbol{u} \cdot\nabla\right)\boldsymbol{u}^n-\Delta t \overline{LU}\delta \boldsymbol{u}
 $$
 with
 $$
@@ -315,18 +315,93 @@ $$
 $$
 Firstly $\Delta t I_1 \delta  \boldsymbol{u}=(\frac{I_1}{\Delta t})^{-1} \delta \boldsymbol{u}$.  This is the discretization of the $(\partial_t )^{-1} \boldsymbol{u}$ since $\delta u=u^{n+1}-u^n$. At the end the operator $P_{schur}$ is the time discretization of the operator
 $$
-\partial_t \boldsymbol{u}+\theta h^n\left(\boldsymbol{u}^n\cdot\nabla\right) \boldsymbol{u}+\theta h^n\left( \boldsymbol{u} \cdot\nabla\right)\boldsymbol{u}^n- \overline{LU} (\partial_t )^{-1}  \boldsymbol{u}
+h^n\partial_t \boldsymbol{u}+\theta h^n\left(\boldsymbol{u}^n\cdot\nabla\right) \boldsymbol{u}+\theta h^n\left( \boldsymbol{u} \cdot\nabla\right)\boldsymbol{u}^n- \overline{LU} (\partial_t )^{-1}  \boldsymbol{u}
 $$
 To finish we consider the position $\boldsymbol{\xi} $ and $\partial_t \boldsymbol{\xi} = \boldsymbol{u}$ we obtain at the end
 $$
-\partial_{tt} \boldsymbol{\xi}+\theta h^n\left(\boldsymbol{u}^n\cdot\nabla\right) \partial_t\boldsymbol{\xi}+\theta h^n\left( \partial_t \boldsymbol{\xi} \cdot\nabla\right)\boldsymbol{u}^n- \overline{LU}  \boldsymbol{\xi}
+h^n\partial_{tt} \boldsymbol{\xi}+\theta h^n\left(\boldsymbol{u}^n\cdot\nabla\right) \partial_t\boldsymbol{\xi}+\theta h^n\left( \partial_t \boldsymbol{\xi} \cdot\nabla\right)\boldsymbol{u}^n- \overline{LU}  \boldsymbol{\xi}
 $$
 with
 $$
 \overline{LU} \boldsymbol{\xi}=\left(\partial_t \boldsymbol{u}^n+\theta \boldsymbol{u}^n\cdot \nabla \boldsymbol{u}^n \right)\left(\theta \operatorname{div}(h^n \boldsymbol{\xi})\right)
-+\theta^2 \nabla\left[ \delta \boldsymbol{\xi}\cdot \nabla p^n + 2p^n \operatorname{div}( \boldsymbol{\xi}) \right]
++\theta^2 \nabla\left[ \boldsymbol{\xi}\cdot \nabla p^n + 2p^n \operatorname{div}( \boldsymbol{\xi}) \right]
 $$
 
 \subsection{Wave study of the wave operator }
+\subsection{Case $\boldsymbol{u}=\boldsymbol{0}$}
+In this subsection, we study the dispersive relation for plane waves \begin{equation}
+\boldsymbol{\xi}=\boldsymbol{\xi}_0e^{i(\omega t-\boldsymbol{k}\cdot \boldsymbol{x})}
+\label{EQ_FORME_ONDE}
+\end{equation}
+associated to a velocities field corresponding to a compressible ($\text{div}(\partial_t\boldsymbol{\xi})\neq 0$) and irrotationnel ($\text{\textbf{rot}}(\partial_t\boldsymbol{\xi})=0$) flow. \\
+The motion equation associated to $P_{schur}$ matrix becomes
+\begin{equation*}
+h^n\partial_{tt} \boldsymbol{\xi}-\theta^2 \nabla\left[ \boldsymbol{\xi}\cdot \nabla p^n + 2p^n \operatorname{div}( \boldsymbol{\xi}) \right]=0.
+\end{equation*}
+However, thanks to the second equation of the initial system one has $\nabla p=0$ when $\boldsymbol{u}=0$, so pressure is constant in space.
+The previous relation becomes
+\begin{equation*}
+h^n\partial_{tt} \boldsymbol{\xi}-2\theta^2 p^n \nabla\left[\operatorname{div}( \boldsymbol{\xi}) \right]=0.
+\end{equation*}
+Let us push the form \eqref{EQ_FORME_ONDE} in the previous equation to obtain
+\begin{equation*}
+\begin{split}
+h^n(i\omega)^2\boldsymbol{\xi}&=2\theta^2 p^n \nabla \left[(-ik_1)(\xi_0)_1e^{i(\omega t-\boldsymbol{k}\cdot \boldsymbol{x})}+(-ik_2)(\xi_0)_2e^{i(\omega t-\boldsymbol{k}\cdot \boldsymbol{x})}\right]\\
+&=2\theta^2p^n\begin{pmatrix}(\xi_0)_1(-ik_1)(-ik_1)+(\xi_0)_2(-ik_2)(-ik_1)\\(\xi_0)_1(-ik_1)(-ik_2)+(\xi_0)_2(-ik_2)(-ik_1)\end{pmatrix}e^{i(\omega t-\boldsymbol{k}\cdot \boldsymbol{x})}.
+\end{split}
+\end{equation*}
 
+Thus
+\begin{equation*}
+\omega^2\boldsymbol{\xi}=\theta^2 g h^n\begin{pmatrix}k_1^2&k_1k_2\\ k_1k_2 &k_2^2\end{pmatrix}\boldsymbol{\xi}.
+\end{equation*}
+We diagonalise the matrix $\begin{pmatrix}k_1^2&k_1k_2\\ k_1k_2 &k_2^2\end{pmatrix}$ to get
+\begin{equation*}
+\begin{pmatrix}k_1^2&k_1k_2\\ k_1k_2 &k_2^2\end{pmatrix}=\underbrace{\begin{pmatrix}\frac{k_1}{||\boldsymbol{k}||^2}&-\frac{k_2}{||\boldsymbol{k}||^2}\\ \frac{k_2}{||\boldsymbol{k}||^2} &\frac{k_1}{||\boldsymbol{k}||^2}\end{pmatrix}}_{=P}
+\begin{pmatrix}||\boldsymbol{k}||^2&0\\ 0 &0\end{pmatrix}
+\underbrace{\begin{pmatrix}\frac{k_1}{||\boldsymbol{k}||^2}&\frac{k_2}{||\boldsymbol{k}||^2}\\ -\frac{k_2}{||\boldsymbol{k}||^2} &\frac{k_1}{||\boldsymbol{k}||^2}\end{pmatrix}}_{=P^{-1}}
+\end{equation*}
+
+Hence, one has
+\begin{equation*}
+\omega^2P^{-1}\boldsymbol{\xi}=\theta^2 gh^n\begin{pmatrix}||\boldsymbol{k}||^2&0\\ 0 &0\end{pmatrix}P^{-1}\boldsymbol{\xi}.
+\end{equation*}
+In the new coordinates 
+\begin{equation*}
+\boldsymbol{\eta}=P^{-1}\boldsymbol{\xi},
+\end{equation*}
+we obtain the two relations
+\begin{equation*}
+\left\{\begin{split}
+&\omega^2\eta_1=\theta^2 gh^n||\boldsymbol{k}||^2\eta_1,\\
+&\omega^2\eta_2=0.
+\end{split}\right.
+\end{equation*}
+However, \begin{equation*}
+\eta_2=(P^{-1}\boldsymbol{\xi})_2=\frac{\xi_2k_1-k_2\xi_1}{||\boldsymbol{k}||}e^{i(\omega t-\boldsymbol{k}\cdot \boldsymbol{x})}=\boldsymbol{k}\wedge\boldsymbol{\xi}.
+\end{equation*}
+On the other hand, the hypothesis on the irrotationnel of the flow rewrites
+\begin{equation*}
+\begin{split}
+\partial_t\left(\text{\textbf{rot}}\boldsymbol{\xi}\right)&=\partial_t\left((\xi_0)_2(-ik_1)e^{i(\omega t-\boldsymbol{k}\cdot \boldsymbol{x})}-(\xi_0)_1(-ik_2)e^{i(\omega t-\boldsymbol{k}\cdot \boldsymbol{x})}\right)\\
+&=\left(k_1(\xi_0)_2\omega-(\xi_0)_1k_2\omega\right)e^{i(\omega t-\boldsymbol{k}\cdot \boldsymbol{x})}\\
+&=0.
+\end{split}
+\end{equation*}
+Then
+\begin{equation*}
+\boldsymbol{k}\wedge\boldsymbol{\xi}=0, 
+\end{equation*}
+thus the second equation is automatically respected. The dispersion relation holds
+\begin{equation*}
+\omega=\pm \theta||\boldsymbol{k}||\sqrt{gh^n}.
+\end{equation*}
+
+\subsection{Case $\boldsymbol{u}=\boldsymbol{cst}$}
+In this subsection we consider a constant velocity. Thanks to the second equation of the initial system, the pressure is still constant in space.
+The motion equation becomes here
+\begin{equation*}
+h^n\partial_{tt} \boldsymbol{\xi}+\theta h^n\left(\boldsymbol{u}^n\cdot\nabla\right) \partial_t\boldsymbol{\xi}- \left(\partial_t \boldsymbol{u}^n+\theta \boldsymbol{u}^n\cdot \nabla \boldsymbol{u}^n \right)\left(\theta \operatorname{div}(h^n \boldsymbol{\xi})\right)
++\theta^2 \nabla\left[ \boldsymbol{\xi}\cdot \nabla p^n + 2p^n \operatorname{div}( \boldsymbol{\xi}) \right]=0.
+\end{equation*}
 \end{document}
