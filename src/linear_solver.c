@@ -6,7 +6,7 @@
 #include "skyline.h"
 #include "paralution_c.h"
 #include "dpackfgmres.h"
-
+#include "physBased_PC.h"
 
 void InitLinearSolver(LinearSolver* lsol,int n,
 		      MatrixStorage* matstor,
@@ -209,20 +209,20 @@ void MatVect(void * system,real x[],real prod[]){
 
   case SKYLINE :
 
-     //if (!((Skyline*)lsol->matrix)->is_lu){
-      MatVectSkyline((Skyline*) lsol->matrix, x, prod);
-     // }
-     //else
-     //  {
-     // for(i=0;i<lsol->neq;i++)
-     // { 
-     //   prod[i]=0; 
-     //   for(j=0;j<lsol->neq;j++) { 
-     //     aij=GetLinearSolver(lsol,i,j); 
-     //     prod[i] += aij*x[j]; 
-     //   } 
-     // } 
-     // }
+    //if (!((Skyline*)lsol->matrix)->is_lu){
+     MatVectSkyline((Skyline*) lsol->matrix, x, prod);
+     //}
+     /*else
+       {
+	 for(i=0;i<lsol->neq;i++)
+	   { 
+	     prod[i]=0; 
+	     for(j=0;j<lsol->neq;j++) { 
+	  aij=GetLinearSolver(lsol,i,j); 
+	  prod[i] += aij*x[j]; 
+        } 
+	} 
+	}*/
     
     break;
 
@@ -590,7 +590,6 @@ void GMRESSolver(LinearSolver* lsol, Simulation* simu){
   int res=0;
   int matvec=1, precondLeft=2, precondRight=3, dotProd=4;
 
-
   lsol->MatVecProduct=MatVect;
   
   res=init_dgmres(icntl,cntl);
@@ -600,7 +599,14 @@ void GMRESSolver(LinearSolver* lsol, Simulation* simu){
   icntl[4]  = 0; //!1            // preconditioner (1) = left preconditioner
   icntl[5]  = 1; ////3            // orthogonalization scheme
   icntl[6]  = 1; //1            // initial guess  (1) = user supplied guess
-  icntl[8]  = 1; //1            
+  icntl[8]  = 1; //1
+
+  PB_PC pb_pc;
+  if(lsol->pc_type == PHY_BASED){
+     int mat2assemble[6] = {1, 1, 1, 1, 1, 1};
+     InitPhy_Wave(simu, &pb_pc, mat2assemble);
+     icntl[4]  = 2;
+  }
    
      
   cntl[1]  = lsol->tol; //       ! stopping tolerance
@@ -622,7 +628,7 @@ void GMRESSolver(LinearSolver* lsol, Simulation* simu){
   else {
       m = lsol->restart_gmres;
     }
-  lwork = m*m + m*(N+5) + 5*N + m + 1 +1; //(+ one because  ) ??
+  lwork = m*m + m*(N+5) + 5*N + m +1; //(+ one because  ) ??
 
   pt_m = &m;
   pt_Size = &N;
@@ -667,7 +673,7 @@ void GMRESSolver(LinearSolver* lsol, Simulation* simu){
      goto L10;
   }
   else if(revcom == precondLeft)  {                 // perform the matrix vector product
-    // work(colz) <-- M-1 * work(colx)  
+    // work(colz) <-- M-1 * work(colx)
     Vector_copy(loc_x,loc_z,N);
     for(int ivec = 0; ivec < N; ivec++) {
       work[colz+ivec]= loc_z[ivec];                    
@@ -676,9 +682,14 @@ void GMRESSolver(LinearSolver* lsol, Simulation* simu){
      goto L10;
   }
 
-  else if(revcom == precondRight)  {                 // perform the matrix vector product
-    // work(colz) <-- M-1 * work(colx)  
-    Vector_copy(loc_x,loc_z,N);
+  else if(revcom == precondRight)  {
+    if(lsol->pc_type == PHY_BASED){
+      solvePhy(&pb_pc,simu,loc_z,loc_x);
+    }
+    else {
+      // work(colz) <-- M-1 * work(colx)  
+      Vector_copy(loc_x,loc_z,N);
+    }
     for(int ivec = 0; ivec < N; ivec++) {
       work[colz+ivec]= loc_z[ivec];                    
       work[colx+ivec]= loc_x[ivec]; 
@@ -698,17 +709,30 @@ void GMRESSolver(LinearSolver* lsol, Simulation* simu){
   }
 
   //******************************** end of GMRES reverse communication
+
+  
   
   for(int ivec = 0; ivec < N; ivec++) {
     lsol->sol[ivec] = work[ivec+1];                    
   }
+
+  real * Ax=calloc(lsol->neq,sizeof(real));
+  lsol->MatVecProduct(lsol,lsol->sol,Ax);
+  real error=0;
+   for(int i = 0; i < N; i++) {
+     error=error+(Ax[i]-lsol->rhs[i]);                    
+  }
+   printf(" error gmres %.5e \n",sqrt(error)); 
+  
   
   free(work);
   free(loc_x);
   free(loc_y);
   free(loc_z);
+    if(lsol->pc_type == PHY_BASED){
+      freePB_PC(&pb_pc);
+    }
 
-  
 }
 
 

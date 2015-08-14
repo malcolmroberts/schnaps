@@ -126,7 +126,8 @@ void ThetaTimeScheme(Simulation *simu, real tmax, real dt){
   InitImplicitLinearSolver(simu, &solver_implicit);
   InitImplicitLinearSolver(simu, &solver_explicit);
   real *res = calloc(simu->wsize, sizeof(real));
-  //solver_implicit.solver_type=GMRES;
+  solver_implicit.solver_type=GMRES;
+  //solver_implicit.pc_type=PHY_BASED;
 
   simu->tnow=0;
   for(int ie=0; ie < simu->macromesh.nbelems; ++ie){

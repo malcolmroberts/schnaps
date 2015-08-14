@@ -1,5 +1,5 @@
-#ifndef _CONTINUOUSPC_H
-#define _CONTINUOUSPC_H
+#ifndef _PHYBASED_PC_H
+#define _PHYBASED_PC_H
 
 
 #include "collision.h"

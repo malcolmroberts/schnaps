@@ -405,6 +405,14 @@ add_executable(
 target_link_libraries(test_transportvp ${LIBS})
 add_test(test_transportvp test_transportvp)
 
+add_executable(
+  testrealpc
+  test/test.h
+  test/testrealpc.c
+)
+target_link_libraries(testrealpc ${LIBS})
+
+
 IF(BUILD_PARALUTION)
 
 

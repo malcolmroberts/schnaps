@@ -2306,7 +2306,6 @@ L46:
 L48:
     if (bea <= cntl[1] || iterout * *m + jh >= itermax) {
 	dnormres = sqrt(dot[1]);
-
 	be = dnormres / (spa * dnormx + spb);
 /* Save the backward error on a file if convergence history requested */
 	if (ihist != 0) {

@@ -222,7 +222,7 @@ void DisplaySkyline(Skyline* sky){
     printf("%.5e ",sky->vkgd[i]);
   }
   printf("\n");
-
+  
   printf("vkgs=");
   for(int i=0;i<sky->nmem;i++){
     printf("%.5e ",sky->vkgs[i]);
@@ -241,6 +241,7 @@ void DisplaySkyline(Skyline* sky){
     }   
     printf("\n");
     }
+  
 }
 
 
