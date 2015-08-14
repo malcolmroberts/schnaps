@@ -523,10 +523,9 @@ The solution of the equation $P_{schur}\delta u=0$ is given by
 (DM-LU)\delta \boldsymbol{u}^* & =0\\
 \delta \boldsymbol{u} = M \delta \boldsymbol{u}^*
 \end{align*}
-with
+with the new where we have negletec the term dependent of $u^n$
 \begin{equation*}
-LU(\delta \boldsymbol{u})=\left(\boldsymbol{u}^n+\theta \Delta t \boldsymbol{u}^n\cdot \nabla \boldsymbol{u}^n \right)\left(\theta \Delta t \operatorname{div}(h^n \delta \boldsymbol{u})\right)
-+\theta^2 \Delta t^2 \nabla\left[ \delta \boldsymbol{u}\cdot \nabla p^n + 2p^n \operatorname{div}(\delta \boldsymbol{u}) \right]
+LU(\delta \boldsymbol{u})=\theta^2 \Delta t^2 \nabla\left[ \delta \boldsymbol{u}\cdot \nabla p^n + 2p^n \operatorname{div}(\delta \boldsymbol{u}) \right]
 \end{equation*}
 To finish we need to compute $DM$ operator. To begin we construct the operator $M \delta \boldsymbol{u}$ and quick computation show that  it is given by
 $$
