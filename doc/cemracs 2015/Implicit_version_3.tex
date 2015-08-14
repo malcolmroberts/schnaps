@@ -323,12 +323,12 @@ h^n\partial_{tt} \boldsymbol{\xi}+\theta h^n\left(\boldsymbol{u}^n\cdot\nabla\ri
 $$
 with
 $$
-\overline{LU} \boldsymbol{\xi}=\left(\partial_t \boldsymbol{u}^n+\theta \boldsymbol{u}^n\cdot \nabla \boldsymbol{u}^n \right)\left(\theta \operatorname{div}(h^n \boldsymbol{\xi})\right)
+\overline{LU} \boldsymbol{\xi}=\left(\boldsymbol{u}^n+\theta \boldsymbol{u}^n\cdot \nabla \boldsymbol{u}^n \right)\left(\theta \operatorname{div}(h^n \partial_t \boldsymbol{\xi})\right)
 +\theta^2 \nabla\left[ \boldsymbol{\xi}\cdot \nabla p^n + 2p^n \operatorname{div}( \boldsymbol{\xi}) \right]
 $$
 
 \subsection{Wave study of the wave operator }
-\subsection{Case $\boldsymbol{u}=\boldsymbol{0}$}
+\subsubsection{Case $\boldsymbol{u}=\boldsymbol{0}$}
 In this subsection, we study the dispersive relation for plane waves \begin{equation}
 \boldsymbol{\xi}=\boldsymbol{\xi}_0e^{i(\omega t-\boldsymbol{k}\cdot \boldsymbol{x})}
 \label{EQ_FORME_ONDE}
@@ -397,11 +397,11 @@ thus the second equation is automatically respected. The dispersion relation hol
 \omega=\pm \theta||\boldsymbol{k}||\sqrt{gh^n}.
 \end{equation*}
 
-\subsection{Case $\boldsymbol{u}=\boldsymbol{cst}$}
+\subsubsection{Case $\boldsymbol{u}=\boldsymbol{cst}$}
 In this subsection we consider a constant velocity. Thanks to the second equation of the initial system, the pressure is still constant in space.
 The motion equation becomes here
 \begin{equation*}
-h^n\partial_{tt} \boldsymbol{\xi}+\theta h^n\left(\boldsymbol{u}^n\cdot\nabla\right) \partial_t\boldsymbol{\xi}- \left(\partial_t \boldsymbol{u}^n+\theta \boldsymbol{u}^n\cdot \nabla \boldsymbol{u}^n \right)\left(\theta \operatorname{div}(h^n \boldsymbol{\xi})\right)
+h^n\partial_{tt} \boldsymbol{\xi}+\theta h^n\left(\boldsymbol{u}^n\cdot\nabla\right) \partial_t\boldsymbol{\xi}- \left(\boldsymbol{u}^n+\theta \boldsymbol{u}^n\cdot \nabla \boldsymbol{u}^n \right)\left(\theta \operatorname{div}(h^n \partial_t \boldsymbol{\xi})\right)
 +\theta^2 \nabla\left[ \boldsymbol{\xi}\cdot \nabla p^n + 2p^n \operatorname{div}( \boldsymbol{\xi}) \right]=0.
 \end{equation*}
 \end{document}
