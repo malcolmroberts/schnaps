@@ -144,7 +144,8 @@ void compute_gradphi(const real x, const real y, const real z,
   gradphi[19][3] = -4 * t38 * t57;
 }
 
-void compute_codtau(const real dtau[3][3], real codtau[3][3])
+//void compute_codtau(const real dtau[3][3], real codtau[3][3]) FIXME why a warning ?
+void compute_codtau(real dtau[3][3], real codtau[3][3])
 {
   codtau[0][0] =  dtau[1][1] * dtau[2][2] - dtau[1][2] * dtau[2][1];
   codtau[0][1] = -dtau[1][0] * dtau[2][2] + dtau[1][2] * dtau[2][0];
@@ -505,7 +506,7 @@ int ipg(const int npg[], const int p[], const int icell)
 // Compute the surface terms inside one macrocell
 __kernel
 void DGFlux(__constant int *param,       // 0: interp param
-	    int ie,                      // 1: macrocel index
+	    int ie,                      // 1: macrocell index
 	    int dim0,                    // 2: face direction
 	    __constant real *physnodes, // 3: macrocell nodes
 	    __global   real *wn,       // 4: field values
@@ -519,9 +520,9 @@ void DGFlux(__constant int *param,       // 0: interp param
   __constant real *physnode = physnodes + ie * 60;
 
   const int m = param[0];
-  const int deg[3] = {param[1], param[2], param[3]};
+  int deg[3] = {param[1], param[2], param[3]};
   const int npg[3] = {deg[0] + 1, deg[1] + 1, deg[2] + 1};
-  const int nraf[3] = {param[4], param[5], param[6]};
+  int nraf[3] = {param[4], param[5], param[6]};
 
   int dim1 = (dim0 + 1) % 3;
   int dim2 = (dim1 + 1) % 3;
@@ -530,6 +531,8 @@ void DGFlux(__constant int *param,       // 0: interp param
   int icL[3], icR[3];
   int icell = get_group_id(0);
 
+  int woffset = ie * m * NPG(deg, nraf); 
+  
   icL[dim0] = icell % (nraf[dim0] - 1);
   icL[dim1] = (icell / (nraf[dim0]-1)) % nraf[dim1];
   icL[dim2] = icell / (nraf[dim0]-1) / nraf[dim1];
@@ -560,7 +563,7 @@ void DGFlux(__constant int *param,       // 0: interp param
     p[dim0] = deg[dim0];
     int ipgL;
     xyz_to_ipg(nraf, deg, icL, p, &ipgL);
-    int imemL = VARINDEX(param, ie, ipgL, iv);
+    int imemL = VARINDEX(param + 1, param + 4, m, ipgL, iv) + woffset;
     // wnlocL[iread] = wn[imemL];
     wnlocL[ipg * m + iv] = wn[imemL];
 
@@ -568,7 +571,8 @@ void DGFlux(__constant int *param,       // 0: interp param
     p[dim0] = 0;
     int ipgR;
     xyz_to_ipg(nraf, deg, icR, p, &ipgR);
-    int imemR = VARINDEX(param, ie, ipgR, iv);
+    int imemR =  VARINDEX(param + 1, param + 4, m, ipgR, iv) + woffset;
+    // VARINDEX(param, ie, ipgR, iv);
     // wnlocR[iread] = wn[imemR];
     wnlocR[ipg * m + iv] = wn[imemR];
   }
@@ -595,9 +599,11 @@ void DGFlux(__constant int *param,       // 0: interp param
   xyz_to_ipg(nraf, deg, icL, pL, &ipgL);
   xyz_to_ipg(nraf, deg, icR, pR, &ipgR);
   for(int iv = 0; iv < m; iv++) {
-    int imemL = VARINDEX(param, ie, ipgL, iv);
+    int imemL =  VARINDEX(param + 1, param + 4, m, ipgL, iv) + woffset;
+    //VARINDEX(param, ie, ipgL, iv);
     wL[iv] = wn[imemL];
-    int imemR = VARINDEX(param, ie, ipgR, iv);
+    int imemR =  VARINDEX(param + 1, param + 4, m, ipgR, iv) + woffset;
+    //VARINDEX(param, ie, ipgR, iv);
     wR[iv] = wn[imemR];
   }
 #endif
@@ -671,9 +677,11 @@ void DGFlux(__constant int *param,       // 0: interp param
   xyz_to_ipg(nraf, deg, icR, pR, &ipgR);
 
   for(int iv = 0; iv < m; iv++) {
-    int imemL = VARINDEX(param, ie, ipgL, iv);
+    int imemL =  VARINDEX(param + 1, param + 4, m, ipgL, iv) + woffset;
+    //VARINDEX(param, ie, ipgL, iv);
     wL[iv] = wn[imemL];
-    int imemR = VARINDEX(param, ie, ipgR, iv);
+    int imemR =  VARINDEX(param + 1, param + 4, m, ipgR, iv) + woffset;
+    //VARINDEX(param, ie, ipgR, iv);
     wR[iv] = wn[imemR];
   }
 #endif
@@ -711,7 +719,8 @@ void DGFlux(__constant int *param,       // 0: interp param
     p[dim0] = deg[dim0];
     int ipgL;
     xyz_to_ipg(nraf, deg, icL, p, &ipgL);
-    int imemL = VARINDEX(param, ie, ipgL, iv);
+    int imemL =  VARINDEX(param + 1, param + 4, m, ipgL, iv) + woffset;
+    //VARINDEX(param, ie, ipgL, iv);
     // wnlocL[iread] = wn[imemL];
     dtwn[imemL] += dtwnlocL[ipg * m + iv];
     
@@ -719,7 +728,8 @@ void DGFlux(__constant int *param,       // 0: interp param
     p[dim0] = 0;
     int ipgR;
     xyz_to_ipg(nraf, deg, icR, p, &ipgR);
-    int imemR = VARINDEX(param, ie, ipgR, iv);
+    int imemR =  VARINDEX(param + 1, param + 4, m, ipgR, iv) + woffset;
+    //VARINDEX(param, ie, ipgR, iv);
     // wnlocR[iread] = wn[imemR];
     dtwn[imemR] += dtwnlocR[ipg * m + iv];
   }
@@ -728,10 +738,12 @@ void DGFlux(__constant int *param,       // 0: interp param
     //int ipgL = ipg(npg, p, icell);
     //int imemL = VARINDEX(param, ie, ipgL, iv);
 
-    int imemL = VARINDEX(param, ie, ipgL, iv);
+    int imemL =  VARINDEX(param + 1, param + 4, m, ipgL, iv) + woffset;
+    //VARINDEX(param, ie, ipgL, iv);
     dtwn[imemL] -= flux[iv] * wpgs;
 
-    int imemR = VARINDEX(param, ie, ipgR, iv);
+    int imemR =  VARINDEX(param + 1, param + 4, m, ipgR, iv) + woffset;
+    //VARINDEX(param, ie, ipgR, iv);
     dtwn[imemR] += flux[iv] * wpgs;
   }
 #endif
@@ -769,6 +781,8 @@ void DGVolume(__constant int *param,     // 0: interp param
 
   int icell = get_group_id(0);
 
+  int woffset = ie * m * NPG(deg, nraf); 
+  
   __local real *dtwnloc = wnloc  + m * npg[0] * npg[1] * npg[2];
 #if DGVolume_LOCAL
   // Prefetch: m reads of wn
@@ -777,7 +791,8 @@ void DGVolume(__constant int *param,     // 0: interp param
     int iv = iread % m;
     int ipgloc = iread / m;
     int ipg = ipgloc + icell * get_local_size(0);
-    int imem = VARINDEX(param, ie, ipg, iv);
+    int imem =  VARINDEX(param + 1, param + 4, m, ipg, iv) + woffset;
+    //VARINDEX(param, ie, ipg, iv);
     int imemloc = iv + ipgloc * m;
     
     wnloc[imemloc] = wn[imem];
@@ -855,7 +870,8 @@ void DGVolume(__constant int *param,     // 0: interp param
 #else
     // gauss point id in the macrocell
     int ipgL = ipg(npg, p, icell);
-    int imemL = VARINDEX(param, ie, ipgL, iv);
+    int imemL =  VARINDEX(param + 1, param + 4, m, ipgL, iv) + woffset;
+    //VARINDEX(param, ie, ipgL, iv);
     wL[iv] = wn[imemL];
 #endif
   }
@@ -901,7 +917,8 @@ void DGVolume(__constant int *param,     // 0: interp param
       }
 #else
       int ipgR = ipg(npg, q, icell);
-      int imemR0 = VARINDEX(param, ie, ipgR, 0);
+      int imemR0 =  VARINDEX(param + 1, param + 4, m, ipgR, iv) + woffset;
+      //VARINDEX(param, ie, ipgR, 0);
       __global double *dtwn0 = dtwn + imemR0; 
       for(int iv = 0; iv < m; iv++) {
      	dtwn0[iv] += flux[iv] * wpg;
@@ -922,7 +939,8 @@ void DGVolume(__constant int *param,     // 0: interp param
     int iv = iread % m;
     int ipgloc = iread / m ;
     int ipg = ipgloc + icell * get_local_size(0);
-    int imem = VARINDEX(param, ie, ipg, iv);
+    int imem =  VARINDEX(param + 1, param + 4, m, ipg, iv) + woffset;
+    //VARINDEX(param, ie, ipg, iv);
     int imemloc = ipgloc * m + iv;
     dtwn[imem] += dtwnloc[imemloc];
   }
@@ -943,8 +961,12 @@ void DGMass(__constant int *param,       // 0: interp param
   int ipg = get_global_id(0);
   int m = param[0];
   int npg[3] = {param[1] + 1, param[2] + 1, param[3] + 1};
+  int deg[3] = {param[1] , param[2] , param[3] };
   int nraf[3] = {param[4], param[5], param[6]};
 
+  int woffset = ie * m * NPG(deg, nraf); 
+
+  
   int npgie = npg[0] * npg[1] * npg[2] * nraf[0] * nraf[1] * nraf[2];
 
   //ref_pg_vol(param+1, ipg,xpgref,&wpg,NULL);
@@ -1024,6 +1046,10 @@ void DGMacroCellInterface(__constant int *param,        // 0: interp param
   const int ndeg[3] = {param[1], param[2], param[3]};
   const int nraf[3] = {param[4], param[5], param[6]};
 
+
+  int woffsetL = ieL * m * NPG(ndeg, nraf); 
+  int woffsetR = ieR * m * NPG(ndeg, nraf); 
+
   real xpgref[3], xpgref_in[3], wpg;
   // Get the coordinates of the Gauss point and coordinates of a
   // point slightly inside the opposite element in xref_in
@@ -1071,8 +1097,10 @@ void DGMacroCellInterface(__constant int *param,        // 0: interp param
   /*   assert(Dist(xpgR, xpg) < 1e-10); */
   /* }	 */
 
-  int imemL0 = VARINDEX(param, ieL, ipgL, 0);
-  int imemR0 = VARINDEX(param, ieR, ipgR, 0);
+  int imemL0 =  VARINDEX(param + 1, param + 4, m, ipgL, 0) + woffsetL;
+  //VARINDEX(param, ieL, ipgL, 0);
+  int imemR0 =  VARINDEX(param + 1, param + 4, m, ipgR, 0) + woffsetR;
+  //VARINDEX(param, ieR, ipgR, 0);
   __global real *wnL0 = wn + imemL0;
   __global real *wnR0 = wn + imemR0;
   for(int iv = 0; iv < m; iv++) {
@@ -1114,6 +1142,10 @@ void DGBoundary(__constant int *param,      // 0: interp param
   const int ndeg[3] = {param[1], param[2], param[3]};
   const int nraf[3] = {param[4], param[5], param[6]};
 
+  int woffset = ieL * m * NPG(ndeg, nraf); 
+  //int woffsetR = ieR * m * NPG(ndeg, nraf); 
+
+  
   real xpgref[3], xpgref_in[3], wpg;
   // Get the coordinates of the Gauss point and coordinates of a
   // point slightly inside the opposite element in xref_in
@@ -1133,7 +1165,8 @@ void DGBoundary(__constant int *param,      // 0: interp param
   real wL[_M];
   real flux[_M];
   
-  int imemL0 = VARINDEX(param, ieL, ipgL, 0);
+  int imemL0 =  VARINDEX(param + 1, param + 4, m, ipgL, 0) + woffset;
+  //VARINDEX(param, ieL, ipgL, 0);
   __global real *wn0 = wn + imemL0;
   for(int iv = 0; iv < m; ++iv) {
     wL[iv] = wn0[iv];
@@ -1351,6 +1384,9 @@ void DGSource(__constant int *param,     // 0: interp param
   const int npg[3] = {deg[0] + 1, deg[1] + 1, deg[2] + 1};
   const int nraf[3] = {param[4], param[5], param[6]};
 
+  int woffset = ie * m * NPG(deg, nraf); 
+
+  
   __local real *dtwnloc = wnloc  + m * npg[0] * npg[1] * npg[2];
 
   // Prefetch: m reads of wn, m reads of dtwn
@@ -1361,7 +1397,8 @@ void DGSource(__constant int *param,     // 0: interp param
     int iv = iread % m;
     int ipgloc = iread / m;
     int ipgL = ipgloc + icell * get_local_size(0);
-    int imem = VARINDEX(param, ie, ipgL, iv);
+    int imem =  VARINDEX(param + 1, param + 4, m, ipgL, iv) + woffset;
+    //VARINDEX(param, ie, ipgL, iv);
     int imemloc = iv + ipgloc * m;
     
     wnloc[imemloc] = wn[imem];
@@ -1415,7 +1452,8 @@ void DGSource(__constant int *param,     // 0: interp param
     int iv = iread % m;
     int ipgloc = iread / m ;
     int ipgL = ipgloc + icell * get_local_size(0);
-    int imem = VARINDEX(param, ie, ipgL, iv);
+    int imem =  VARINDEX(param + 1, param + 4, m, ipgL, iv) + woffset;
+    //VARINDEX(param, ie, ipgL, iv);
     int imemloc = ipgloc * m + iv;
     dtwn[imem] += dtwnloc[imemloc];
   }

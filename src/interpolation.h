@@ -77,7 +77,9 @@ typedef struct Interpolation{
 //! \brief number of Gauss-LObatto Points (GLOPs) on the macro cell
 //! \param[in] deg degrees list
 //! \param[in] raf refinements list
+#pragma start_opencl
 int NPG(int deg[], int raf[]);
+#pragma end_opencl
 
 //! \brief number of Gauss-LObatto Points (GLOPs) on the continuous macrocell
 //! \param[in] deg degrees list
@@ -123,9 +125,7 @@ void ref_pg_vol_CG(int* deg,int *raf,int ipg,
 //! \param[in] raf refinements list
 //! \param[in] xref  reference Gauss point coordinates
 //! \return Gauss point index
-#pragma start_opencl
 int ref_ipg(__constant int* deg, __constant int* raf,real* xref);
-#pragma end_opencl
 
 //! \brief from a reference point find the nearest
 //! gauss point in the continuous macrocell

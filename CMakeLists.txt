@@ -397,6 +397,19 @@ add_executable(
 target_link_libraries(testshperiodic2d ${LIBS})
 add_test(testshperiodic2d testshperiodic2d)
 
+
+if(OPENCL_FOUND)
+  add_test(testclinfo testclinfo)
+  add_executable(
+    testclinfo
+    test/test.h
+    test/testclinfo.c
+    )
+  target_link_libraries(testclinfo ${LIBS})
+
+
+endif(OPENCL_FOUND)
+
 IF(BUILD_PARALUTION)
 
 
