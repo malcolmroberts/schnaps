@@ -726,4 +726,102 @@ At the end we obtain
 \begin{align*}
 \bar{\omega} &=\pm\theta\sqrt{gh^n}||\boldsymbol{k}||.
 \end{align*}
+
+
+\subsection{Schur complement : good choice}
+To finish this work, we propose to resume the discussion on the Schur complement.
+We cam write the Schur complement on the following form
+\begin{align*}
+&\left(h^n I_2 + T(\boldsymbol{u}^n) I_2 - A(h^n\boldsymbol{u}^n)I_2\right)\delta \boldsymbol{u}^* =0\\
+&\delta \boldsymbol{u} = M \delta \boldsymbol{u}^*
+\end{align*}
+with $T$ the transport part and $A$ the acoustic part.
+\begin{table}
+\begin{tabular}{|l|l|}
+  \hline
+  Schur SFE &  \\
+  \hline
+  ~ & ~\\
+  T &  $\theta\Delta th^n\left(\boldsymbol{u}^n\cdot\nabla\right)\delta \boldsymbol{u}+\theta\Delta th^n\left(\delta \boldsymbol{u} \cdot\nabla\right)\boldsymbol{u}^n$ \\ 
+  ~ & ~\\
+    \hline
+   ~& ~\\ 
+  A= &$\left(\boldsymbol{u}^n+\theta \Delta t \boldsymbol{u}^n\cdot \nabla \boldsymbol{u}^n \right)\left(\theta \Delta t \operatorname{div}(h^n \delta \boldsymbol{u})\right) $\\
+  ~&$+\theta^2 \Delta t^2 \nabla\left[ \delta \boldsymbol{u}\cdot \nabla p^n + 2p^n \operatorname{div}(\delta \boldsymbol{u}) \right] $\\
+  ~ & ~\\
+    \hline
+     ~ &~ \\
+   Correction &  $M=I_2$ \\ 
+   ~ & ~\\
+    \hline
+     ~ &~ \\
+  speed & $\omega=\left(\pm\theta\sqrt{gh^n}\right)||\boldsymbol{k}||$ \\ 
+   ~ & ~\\
+    \hline
+    ~& ~\\
+  regime & $M= \frac{\parallel \boldsymbol{u}^n \parallel }{c}<< 1$\\
+   ~& ~\\
+    \hline
+\end{tabular}
+\end{table}
+
+\begin{table}
+\begin{tabular}{|l|l|}
+  \hline
+  Schur SFA &  \\
+  \hline
+  ~ & ~\\
+  T &  $\theta\Delta th^n\left(\boldsymbol{u}^n\cdot\nabla\right)\delta \boldsymbol{u}+\theta\Delta th^n\left(\delta \boldsymbol{u} \cdot\nabla\right)\boldsymbol{u}^n$ \\ 
+  ~ & ~\\
+    \hline
+   ~& ~\\ 
+  A= & $\theta^2 \Delta t^2 \nabla\left[ \delta \boldsymbol{u}\cdot \nabla p^n + 2p^n \operatorname{div}(\delta \boldsymbol{u}) \right] $\\
+  ~ & ~\\
+      \hline
+     ~ &~ \\
+   Correction &  $M=I_2$ \\ 
+   ~ & ~\\
+    \hline
+     ~ &~ \\
+  speed & $\omega =\left(\theta\frac{\boldsymbol{u}\cdot \boldsymbol{n}}{2}\pm\theta\sqrt{h^ng-\frac{(\boldsymbol{u}\cdot \boldsymbol{n})^2}{4}}\right) \parallel \boldsymbol{k} \parallel$ \\ 
+   ~ & ~\\
+    \hline
+    ~& ~\\
+  regime & $M= \frac{\parallel \boldsymbol{u}^n \parallel }{c}<< 1$\\
+   ~& ~\\
+    \hline
+\end{tabular}
+\end{table}
+
+\begin{table}
+\begin{tabular}{|l|l|}
+  \hline
+  Schur AFA &  \\
+  \hline
+  ~ & ~\\
+  T &  $h^n\theta\Delta t\boldsymbol{u}^n\nabla \cdot \delta \boldsymbol{u}+\theta\Delta th^n\left(\boldsymbol{u}^n\cdot \nabla \right)\delta \boldsymbol{u}+\theta\Delta th^n\left(\delta \boldsymbol{u}\cdot \nabla\right)\boldsymbol{u}^n$\\
+&$+\theta^2\Delta t^2 \left( h^n\left(\text{div}(\delta \boldsymbol{u})\boldsymbol{u}^n\cdot \nabla\right)\boldsymbol{u}^n+h^n\left(\boldsymbol{u}^n\cdot \nabla\right)\left[\boldsymbol{u}^n\nabla \cdot \delta \boldsymbol{u}\right]\right)$ \\ 
+  ~ & ~\\
+    \hline
+   ~& ~\\ 
+  A= & $\theta^2 \Delta t^2 \nabla\left[ \delta \boldsymbol{u}\cdot \nabla p^n + 2p^n \operatorname{div}(\delta \boldsymbol{u}) \right] $\\
+  ~ & ~\\
+      \hline
+     ~ &~ \\
+   Correction &  $M=I_2+\theta\Delta t\boldsymbol{u}^n(\nabla\cdot I_2)$ \\ 
+   ~ & ~\\
+    \hline
+     ~ &~ \\
+  speed & $\omega=\left(\pm\theta\sqrt{gh^n}\right)||\boldsymbol{k}||.$ \\ 
+   ~ & ~\\
+    \hline
+    ~& ~\\
+  regime & $M= \frac{\parallel \boldsymbol{u}^n \parallel }{c}<< 1$\\
+   ~& ~\\
+    \hline
+\end{tabular}
+\end{table}
+
+The SFE operator is the Exact Slow Flow operator and SFA the Approximate Slow Flow. This is the same for Arbitrary Flow.
+
 \end{document}
