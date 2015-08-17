@@ -529,14 +529,7 @@ with the new where we have negletec the term dependent of $u^n$
 \begin{equation*}
 LU(\delta \boldsymbol{u})=\theta^2 \Delta t^2 \nabla\left[ \delta \boldsymbol{u}\cdot \nabla p^n + 2p^n \operatorname{div}(\delta \boldsymbol{u}) \right]
 \end{equation*}
-To finish we need to compute $DM$ operator. To begin we construct the operator $M \delta \boldsymbol{u}$ and quick computation show that  it is given by
-$$
-M \delta \boldsymbol{u} = \delta \boldsymbol{u} + \Delta t \theta \boldsymbol{u}^n \cdot \nabla \delta \boldsymbol{u}
-$$
-
-
-------------------------------------------\\
-One has 
+To finish we need to compute $DM$ operator. One has 
 \begin{equation*}
 U\delta \boldsymbol{u}=\theta\Delta t\text{div}(h^n\delta \boldsymbol{u}),
 \end{equation*}
@@ -567,7 +560,7 @@ Let us calculate $D_2M$ to find $D_2M-LU$.
 \begin{equation*}
 \begin{split}
 D_2M\delta \boldsymbol{u}=h^n\left[\delta \boldsymbol{u}+\theta\Delta t\boldsymbol{u}^n\nabla\cdot \delta \boldsymbol{u}\right]+\theta\Delta th^n\left(\boldsymbol{u}^n\cdot\nabla\right)\left[\delta \boldsymbol{u}+\theta\Delta t\boldsymbol{u}^n\nabla \cdot \delta \boldsymbol{u}\right]\\
-+\theta\Delta th^n\left(\left[\delta \boldsymbol{u}+\theta\Delta t\boldsymbol{u}^n\nabla \cdot \delta \boldsymbol{u}\right]\right)\boldsymbol{u}^n.
++\theta\Delta th^n\left(\left[\delta \boldsymbol{u}+\theta\Delta t\boldsymbol{u}^n\nabla \cdot \delta \boldsymbol{u}\right]\right)\textcolor{red}{\cdot \nabla }\boldsymbol{u}^n.
 \end{split}
 \end{equation*}
 Then
@@ -590,7 +583,16 @@ The equation of the motion is so
 &+\theta h^n\left(\partial_t \boldsymbol{\xi}^*\cdot \nabla\right)\boldsymbol{u}^n+\theta^2h^n\left(\text{div}( \boldsymbol{\xi}^*)\boldsymbol{u}^n\cdot \nabla \right)\boldsymbol{u}^n-\theta^2g\nabla \left[h^n\boldsymbol{\xi}^*\cdot \nabla h^n+(h^n)^2\nabla \cdot \boldsymbol{\xi}^*\right]=0
 \end{split}
 \end{equation*}
-We assume that $\boldsymbol{u}^n=\boldsymbol{cst}$ so is $h^n$ and by pushing a plane wave 
+We assume that $\boldsymbol{u}^n=\boldsymbol{cst}$ so is $h^n$. We obtain
+\textcolor{red}{
+\begin{equation*}
+\begin{split}
+&h^n\partial_{tt}\boldsymbol{\xi}^*+h^n\theta(\nabla \cdot \partial_t \boldsymbol{\xi}^*)\boldsymbol{u}^n+\theta h^n\left(\boldsymbol{u}^n\cdot \nabla \right)\partial_t \boldsymbol{\xi}^*+\theta^2h^n\boldsymbol{u}^n \left(\boldsymbol{u}^n\cdot \nabla \text{div}(\boldsymbol{\xi}^*)\right) \\
+&-\theta^2g\nabla \left[h^n\boldsymbol{\xi}^*\cdot \nabla h^n+(h^n)^2\nabla \cdot \boldsymbol{\xi}^*\right]=0
+\end{split}
+\end{equation*}
+}
+Now we pushing a plane wave 
 \begin{equation*}
 \boldsymbol{\xi}^*=\boldsymbol{\xi}_0^*e^{i(\omega t-\boldsymbol{k}\cdot \boldsymbol{x})}
 \end{equation*}

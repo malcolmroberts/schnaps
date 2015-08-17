@@ -36,7 +36,7 @@ int Testrealpc(void) {
 
   bool test = true;
   real dd;
-  int test1_ok=0,test2_ok=1,test3_ok=0;
+  int test1_ok=1,test2_ok=0,test3_ok=0;
 
 
 #ifdef PARALUTION 
@@ -64,8 +64,10 @@ int Testrealpc(void) {
   model.BoundaryFlux = SteadyStateOne_BoundaryFlux;
   model.Source = SteadyStateOne_Source;
 
-  int deg[]={2, 2, 0};
-  int raf[]={10, 10, 1};
+  real k=1;
+  
+  int deg[]={4, 4, 0};
+  int raf[]={4*k, 4*k, 1};
 
 
   assert(mesh.is2d);
@@ -94,7 +96,7 @@ int Testrealpc(void) {
   solver_implicit.solver_type=GMRES;//LU;//GMRES;
   solver_implicit.tol=1.e-10;
   solver_implicit.pc_type=PHY_BASED;
-  solver_implicit.iter_max=200;
+  solver_implicit.iter_max=1500;
 
 
   simu.tnow=0;
@@ -168,7 +170,7 @@ int Testrealpc(void) {
   model2.Source = SteadyStateTwo_Source;
 
   int deg2[]={4, 4, 0};
-  int raf2[]={8, 8, 1};
+  int raf2[]={2, 2, 1};
 
 
   CheckMacroMesh(&mesh, deg2, raf2);
@@ -184,7 +186,7 @@ int Testrealpc(void) {
   simu2.theta=theta2;
   simu2.dt=0.02;
   simu2.vmax=_SPEED_WAVE;
-  real tmax2 = 0.08;
+  real tmax2 = 0.02;//0.08;
   
   real itermax2=tmax2/simu2.dt;
   simu2.itermax_rk=itermax2;
@@ -294,7 +296,7 @@ if(test3_ok==1){
   real *res3 = calloc(simu3.wsize, sizeof(real));
 
   solver_implicit3.solver_type=GMRES;//LU;//GMRES;
-  solver_implicit3.tol=1.e-15;
+  solver_implicit3.tol=1.e-10;
   solver_implicit3.pc_type=PHY_BASED;
   solver_implicit3.iter_max=1000;
   
@@ -372,7 +374,7 @@ void SteadyStateOne_ImposedData(const real *xy, const real t, real *w) {
   real x=xy[0];
   real y=xy[1];
 
-  w[0] = 10+x*x+y*y*y;
+  w[0] = 10+exp(x)+exp(2*y); // 10+x*x+y*y*y
   w[1] = x*y-y+2;
   w[2] = x-y*y*0.5+5.6;
 }
@@ -383,7 +385,7 @@ void SteadyStateTwo_ImposedData(const real *xy, const real t, real *w) {
   real y=xy[1];
 
 
-  w[0] = x*(1-x)*y*(1-y)+1;
+  w[0] = x*(1-x)*y*(1-y);
   w[1] = 2*x*(1-x)*y*(1-y);
   w[2] = 3*x*(1-x)*y*(1-y);
 
@@ -395,8 +397,8 @@ void SteadyStateOne_Source(const real *xy, const real t, const real *w, real *S)
   real y=xy[1];
 
   S[0] = 0;
-  S[1] = 2*y;
-  S[2] = 3*y*y;
+  S[1] = exp(x);//2*x;
+  S[2] = 2*exp(2*y);//3*y*y;
 
   S[0] *= _SPEED_WAVE;
   S[1] *= _SPEED_WAVE;

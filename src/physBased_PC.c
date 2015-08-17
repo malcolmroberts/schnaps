@@ -138,21 +138,27 @@ void solveIdentity(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*globalR
   InitContinuousSolver(&waveSolver,simu,1,nb_var,listvarGlobal);
   free(listvarGlobal);
   real * globalRHS_CG = calloc(waveSolver.lsol.neq,sizeof(real));
-  VectorDgToCg(&waveSolver, globalRHS_DG, globalRHS_CG);
 
+  //for(int i=0;i<simu->wsize;i++){
+  // globalSol[i]=globalRHS_DG[i];
+  //}
+  
+  VectorDgToCg(&waveSolver, globalRHS_DG, globalRHS_CG);
   // Back from CG to DG
   VectorCgToDg(&waveSolver,globalRHS_CG,globalSol);
 
-  real error=0;
+  /*real error=0;
   real norm=0;
+  real normnum=0;
   for(int i=0;i<simu->wsize;i++){
     //printf("  i, dg, sol, diff %d %.7e %.7e %.7e \n",i,globalRHS_DG[i],globalSol[i],globalSol[i]-globalRHS_DG[i]);
     error=error+fabs(globalSol[i]-globalRHS_DG[i]);
     norm=norm+fabs(globalRHS_DG[i]);
+    normnum=normnum+fabs(globalSol[i]);
     }
-  //printf(" error cg to dg:%f %f \n",error,error/(norm+1.0));
+  //printf(" error cg to dg:%f %f %f %f\n",error,error/(norm+1.0),norm,normnum);
   //sleep(100);
-
+  */
   // TODO: implement free for solvercontinuous, linear_solver...
   freeContinuousSolver(&waveSolver,0);
   free(globalRHS_CG);
