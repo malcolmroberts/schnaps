@@ -4,6 +4,8 @@
 #include "quantities_vp.h"
 #include "linear_solver.h"
 #include "physBased_PC.h"
+#include <unistd.h>
+
 
 void InitPhy_Wave(Simulation *simu, PB_PC* pb_pc, int* list_mat2assemble){
 
@@ -118,6 +120,42 @@ void InitMat_ContinuousSolver(PB_PC* pb_pc, real DMat[4][4], real L1Mat[4][4], r
       if (U2Mat != NULL) pb_pc->U2.diff_op[i][j] = U2Mat[i][j];
     }
   }
+}
+
+void solveIdentity(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*globalRHS_DG){
+  
+  // 0)1) Reset everything (needed for time evolution)
+  reset(pb_pc);
+
+
+  // Parsing globalRHS (in DG) into a CG vector
+  ContinuousSolver waveSolver;
+  int nb_var = 3;
+  int * listvarGlobal = calloc(nb_var, sizeof(int));
+  listvarGlobal[0]=0;
+  listvarGlobal[1]=1;
+  listvarGlobal[2]=2;
+  InitContinuousSolver(&waveSolver,simu,1,nb_var,listvarGlobal);
+  free(listvarGlobal);
+  real * globalRHS_CG = calloc(waveSolver.lsol.neq,sizeof(real));
+  VectorDgToCg(&waveSolver, globalRHS_DG, globalRHS_CG);
+
+  // Back from CG to DG
+  VectorCgToDg(&waveSolver,globalRHS_CG,globalSol);
+
+  real error=0;
+  real norm=0;
+  for(int i=0;i<simu->wsize;i++){
+    //printf("  i, dg, sol, diff %d %.7e %.7e %.7e \n",i,globalRHS_DG[i],globalSol[i],globalSol[i]-globalRHS_DG[i]);
+    error=error+fabs(globalSol[i]-globalRHS_DG[i]);
+    norm=norm+fabs(globalRHS_DG[i]);
+    }
+  //printf(" error cg to dg:%f %f \n",error,error/(norm+1.0));
+  //sleep(100);
+
+  // TODO: implement free for solvercontinuous, linear_solver...
+  freeContinuousSolver(&waveSolver,0);
+  free(globalRHS_CG);
 }
 
 void solvePhy(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*globalRHS_DG){

@@ -36,7 +36,7 @@ int Testrealpc(void) {
 
   bool test = true;
   real dd;
-  int test1_ok=1,test2_ok=0,test3_ok=0;
+  int test1_ok=0,test2_ok=1,test3_ok=0;
 
 
 #ifdef PARALUTION 
@@ -64,8 +64,8 @@ int Testrealpc(void) {
   model.BoundaryFlux = SteadyStateOne_BoundaryFlux;
   model.Source = SteadyStateOne_Source;
 
-  int deg[]={3, 3, 0};
-  int raf[]={4, 4, 1};
+  int deg[]={2, 2, 0};
+  int raf[]={10, 10, 1};
 
 
   assert(mesh.is2d);
@@ -94,7 +94,7 @@ int Testrealpc(void) {
   solver_implicit.solver_type=GMRES;//LU;//GMRES;
   solver_implicit.tol=1.e-10;
   solver_implicit.pc_type=PHY_BASED;
-  solver_implicit.iter_max=40;
+  solver_implicit.iter_max=200;
 
 
   simu.tnow=0;
@@ -193,9 +193,9 @@ int Testrealpc(void) {
   real *res2 = calloc(simu2.wsize, sizeof(real));
  
   solver_implicit2.solver_type=GMRES;//LU;//GMRES;
-  solver_implicit2.tol=1.e-15;
+  solver_implicit2.tol=1.e-12;
   solver_implicit2.pc_type=PHY_BASED;
-  solver_implicit2.iter_max=1000;
+  solver_implicit2.iter_max=500;
 
   simu2.tnow=0;
   for(int ie=0; ie < simu2.macromesh.nbelems; ++ie){
@@ -395,7 +395,7 @@ void SteadyStateOne_Source(const real *xy, const real t, const real *w, real *S)
   real y=xy[1];
 
   S[0] = 0;
-  S[1] = 2*x;
+  S[1] = 2*y;
   S[2] = 3*y*y;
 
   S[0] *= _SPEED_WAVE;

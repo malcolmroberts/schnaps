@@ -85,11 +85,17 @@ void InitPhy_Wave(Simulation *simu, PB_PC* pb_pc, int* list_mat2assemble);
 // \param[in] Schurmat: SchurMatrix
 void InitMat_ContinuousSolver(PB_PC* pb_pc, real Dmat[4][4], real L1Mat[4][4], real L2Mat[4][4], real U1Mat[4][4], real U2Mat[4][4], real Schurmat[4][4][4]);
 
-// \brief Solves problem using physics-based preconditioner.
+// \brief Solves problem using physics-based CG preconditioner.
 // \param[in] pb_pc: Physics-based preconditioner (contains all the Schur decomposition)
 // \param[out] globalSol: Stores the solution of the preconditioner.
 // \param[in] globalRHS: Right-hand-side containing all explicit and source terms.
 void solvePhy(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*globalRHS);
+
+// \brief Solves problem using identity CG preconditioner.
+// \param[in] pb_pc: Physics-based preconditioner (contains all the Schur decomposition)
+// \param[out] globalSol: Stores the solution of the preconditioner.
+// \param[in] globalRHS: Right-hand-side containing all explicit and source terms.
+void solveIdentity(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*globalRHS);
 
 // \brief Frees any PB_PC object
 // \param[inout] pb_pc a PhysicsBased_PreConditioner 

@@ -684,7 +684,8 @@ void GMRESSolver(LinearSolver* lsol, Simulation* simu){
 
   else if(revcom == precondRight)  {
     if(lsol->pc_type == PHY_BASED){
-      solvePhy(&pb_pc,simu,loc_z,loc_x);
+      solveIdentity(&pb_pc,simu,loc_z,loc_x);
+      //solvePhy(&pb_pc,simu,loc_z,loc_x);
     }
     else {
       // work(colz) <-- M-1 * work(colx)  
