@@ -176,12 +176,12 @@ void solvePhy(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*globalRHS_DG
 
   // 0)2) Second, initialize all penalization right-hand-sides
   pb_pc->D.bc_assembly=ExactDirichletContinuousMatrix;
-  pb_pc->U1.bc_assembly=ExactDirichletContinuousMatrix;
-  pb_pc->U2.bc_assembly=ExactDirichletContinuousMatrix;
+  //pb_pc->U1.bc_assembly=ExactDirichletContinuousMatrix;
+  //pb_pc->U2.bc_assembly=ExactDirichletContinuousMatrix;
   pb_pc->Schur.bc_assembly=ExactDirichletContinuousMatrix;
   pb_pc->D.bc_assembly(&pb_pc->D,&pb_pc->D.lsol);
-  pb_pc->U1.bc_assembly(&pb_pc->U1,&pb_pc->U1.lsol);
-  pb_pc->U2.bc_assembly(&pb_pc->U2,&pb_pc->U2.lsol);
+  //pb_pc->U1.bc_assembly(&pb_pc->U1,&pb_pc->U1.lsol);
+  //pb_pc->U2.bc_assembly(&pb_pc->U2,&pb_pc->U2.lsol);
   pb_pc->Schur.bc_assembly(&pb_pc->Schur,&pb_pc->Schur.lsol);
   
   // Applying these right-hand-sides to the preconditioner's own right-hand-sides
