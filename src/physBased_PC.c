@@ -206,10 +206,14 @@ void solvePhy(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*globalRHS_DG
 
   // 1) PREDICTION STEP
 
-  pb_pc->D.lsol.solver_type=LU;
+  pb_pc->D.lsol.solver_type=LU;//GMRES;
+  pb_pc->D.lsol.tol=1.e-9;
   pb_pc->D.lsol.pc_type=NONE;
-  pb_pc->D.lsol.iter_max=20;
+  pb_pc->D.lsol.iter_max=50;
   pb_pc->D.lsol.MatVecProduct=MatVect;
+
+  //DisplayLinearSolver(&pb_pc->D.lsol);
+  //exit(0);
 
   //printf("RHS assembly.....\n");
   for (int i=0;i<pb_pc->D.nb_fe_nodes;i++){
@@ -221,8 +225,9 @@ void solvePhy(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*globalRHS_DG
   // 2) PROPAGATION STEP
 
   pb_pc->Schur.lsol.pc_type=NONE;
-  pb_pc->Schur.lsol.iter_max=25;
+  pb_pc->Schur.lsol.iter_max=100;
   pb_pc->Schur.lsol.solver_type=LU;
+  pb_pc->Schur.lsol.tol=1.e-9;
   pb_pc->Schur.lsol.MatVecProduct=MatVect;
   pb_pc->L1.lsol.MatVecProduct=MatVect;
   pb_pc->L2.lsol.MatVecProduct=MatVect;
@@ -250,7 +255,8 @@ void solvePhy(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*globalRHS_DG
 
   pb_pc->D.lsol.solver_type=LU;
   pb_pc->D.lsol.pc_type=NONE;
-  pb_pc->D.lsol.iter_max=30;
+  pb_pc->D.lsol.iter_max=50;
+  pb_pc->D.lsol.tol=1.e-9;
   pb_pc->D.lsol.MatVecProduct=MatVect;
   pb_pc->U1.lsol.MatVecProduct=MatVect;
   pb_pc->U2.lsol.MatVecProduct=MatVect;

@@ -170,7 +170,7 @@ int Testrealpc(void) {
   model2.Source = SteadyStateTwo_Source;
 
   int deg2[]={4, 4, 0};
-  int raf2[]={4, 4, 1};
+  int raf2[]={8, 8, 1};
 
 
   CheckMacroMesh(&mesh, deg2, raf2);
@@ -184,9 +184,9 @@ int Testrealpc(void) {
 
   real theta2=0.5;
   simu2.theta=theta2;
-  simu2.dt=0.02;
+  simu2.dt=0.0001;
   simu2.vmax=_SPEED_WAVE;
-  real tmax2 = 0.02;//0.08;
+  real tmax2 = 0.0005;//0.08;
   
   real itermax2=tmax2/simu2.dt;
   simu2.itermax_rk=itermax2;
@@ -195,9 +195,9 @@ int Testrealpc(void) {
   real *res2 = calloc(simu2.wsize, sizeof(real));
  
   solver_implicit2.solver_type=GMRES;//LU;//GMRES;
-  solver_implicit2.tol=1.e-12;
-  //solver_implicit2.pc_type=PHY_BASED;
-  solver_implicit2.iter_max=500;
+  solver_implicit2.tol=1.e-10;
+  solver_implicit2.pc_type=PHY_BASED;
+  solver_implicit2.iter_max=5000;
 
   simu2.tnow=0;
   for(int ie=0; ie < simu2.macromesh.nbelems; ++ie){
@@ -394,7 +394,7 @@ void SteadyStateTwo_ImposedData(const real *xy, const real t, real *w) {
 
   w[0] = x5*(1-x5)*y5*(1-y5);
   w[1] = 2.0*x5*(1-x5)*y5*(1-y5);
-  w[2] = 3.0*x5*(1-x5)*y5*(1-y5);
+  w[2] = 2.0*x5*(1-x5)*y5*(1-y5);
 
 }
 
@@ -428,7 +428,7 @@ void SteadyStateTwo_Source(const real *xy, const real t, const real *w, real *S)
   real y5=y*y*y;
   real y4=3.0*y*y;
 
-  S[0] = 2.0*(x5*(-x4)+x4*(1.0-x5))*y5*(1.0-y5)+3.0*(y5*(-y4)+y4*(1.0-y5))*x5*(1.0-x5);
+  S[0] = 2.0*(x5*(-x4)+x4*(1.0-x5))*y5*(1.0-y5)+2.0*(y5*(-y4)+y4*(1.0-y5))*x5*(1.0-x5);
   S[1] = (x5*(-x4)+x4*(1.0-x5))*y5*(1.0-y5);
   S[2] = (y5*(-y4)+y4*(1.0-y5))*x5*(1.0-x5);
 

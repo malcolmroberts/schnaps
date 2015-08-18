@@ -62,8 +62,8 @@ int TestPCWave(void) {
   model.BoundaryFlux = SteadyStateOne_BoundaryFlux;
   model.Source = SteadyStateOne_Source;
 
-  int deg[]={4, 4, 0};
-  int raf[]={4, 4, 1};
+  int deg[]={3, 3, 0};
+  int raf[]={2, 2, 1};
 
 
   assert(mesh.is2d);
@@ -158,7 +158,7 @@ int TestPCWave(void) {
   model2.Source = SteadyStateTwo_Source;
 
   int deg2[]={4, 4, 0};
-  int raf2[]={4, 4, 1};
+  int raf2[]={2, 2, 1};
 
 
   CheckMacroMesh(&mesh, deg2, raf2);
@@ -251,7 +251,7 @@ int TestPCWave(void) {
   model3.Source = NULL;
 
   int deg3[]={4, 4, 0};
-  int raf3[]={4, 4, 1};
+  int raf3[]={2, 2, 1};
 
 
   CheckMacroMesh(&mesh, deg3, raf3);
