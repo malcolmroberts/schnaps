@@ -406,7 +406,23 @@ if(OPENCL_FOUND)
     test/testclinfo.c
     )
   target_link_libraries(testclinfo ${LIBS})
+  
+  add_test(testdtfield_cl testdtfield_cl)
+  add_executable(
+    testdtfield_cl
+    test/test.h
+    test/testdtfield_cl.c
+    )
+  target_link_libraries(testdtfield_cl ${LIBS})
 
+  add_test(testkernelvolume testkernelvolume)
+  add_executable(
+    testkernelvolume
+    test/test.h
+    test/testkernelvolume.c
+    )
+  target_link_libraries(testkernelvolume ${LIBS})
+  
 
 endif(OPENCL_FOUND)
 

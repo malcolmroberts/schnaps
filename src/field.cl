@@ -775,13 +775,17 @@ void DGVolume(__constant int *param,     // 0: interp param
   __constant real *physnode = physnodes + ie * 60;
 
   const int m = param[0];
+  printf("m=%d\n",m);
   const int deg[3] = {param[1],param[2], param[3]};
   const int npg[3] = {deg[0] + 1, deg[1] + 1, deg[2] + 1};
   const int nraf[3] = {param[4], param[5], param[6]};
 
   int icell = get_group_id(0);
+  
 
-  int woffset = ie * m * NPG(deg, nraf); 
+  int woffset = ie * m * NPG(deg, nraf);
+
+  //printf("ie=%d m=%d woffset=%d\n",ie,m,woffset);
   
   __local real *dtwnloc = wnloc  + m * npg[0] * npg[1] * npg[2];
 #if DGVolume_LOCAL
@@ -794,7 +798,6 @@ void DGVolume(__constant int *param,     // 0: interp param
     int imem =  VARINDEX(param + 1, param + 4, m, ipg, iv) + woffset;
     //VARINDEX(param, ie, ipg, iv);
     int imemloc = iv + ipgloc * m;
-    
     wnloc[imemloc] = wn[imem];
     dtwnloc[imemloc] = 0;
     
@@ -858,6 +861,9 @@ void DGVolume(__constant int *param,     // 0: interp param
 
   real wL[_M];
   int ipgL = ipg(npg, p, 0);
+  printf("local_id=%d, glob_id=%d, ipgL=%d\n",get_local_id(0),get_global_id(0),
+	 ipgL);
+
   //int imemL0 = VARINDEX(param, ie, ipgL, 0);
   //int imemL0loc = ipgL * m;
   __local real *wnloc0 = wnloc + ipgL * m;

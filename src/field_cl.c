@@ -613,7 +613,7 @@ void DGVolume_CL(int ie, Simulation *simu, cl_mem *w_cl,
   /* // The total work items number is the number of glops in a subcell */
   /* // * number of subcells */
   /* size_t numworkitems = param[4] * param[5] * param[6] * groupsize; */
-  /* //printf("groupsize=%zd numworkitems=%zd\n", groupsize, numworkitems); */
+  printf("groupsize=%zd numworkitems=%zd\n", groupsize, numworkitems);
   status = clEnqueueNDRangeKernel(simu->cli.commandqueue,
 				  kernel,
 				  1,
@@ -1444,14 +1444,15 @@ void init_field_cl(Simulation *simu)
   assert(status >= CL_SUCCESS);
 
   field *f = simu->fd;
-  int interp_param[7]={f->model.m,
-		       f->deg[0], f->deg[1], f->deg[2],
-		       f->raf[0], f->raf[1], f->raf[2] };
+  /* simu->interp_param[0]=f->model.m; */
+  
+  /* 		       f->deg[0], f->deg[1], f->deg[2], */
+  /* 		       f->raf[0], f->raf[1], f->raf[2] }; */
   
   simu->param_cl = clCreateBuffer(simu->cli.context,
 			       CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
 			       sizeof(int) * 7,
-			       interp_param,
+			       simu->interp_param,
 			       &status);
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
   assert(status >= CL_SUCCESS);

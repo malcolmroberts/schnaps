@@ -140,9 +140,6 @@ real min_grid_spacing(field *f)
 
 void init_empty_field(field *f)
 {
-  //#ifdef _WITH_OPENCL
-  //f->use_source_cl = false;
-  //#endif
 
   f->period[0] = -1;
   f->period[1] = -1;

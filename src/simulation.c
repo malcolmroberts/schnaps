@@ -35,6 +35,11 @@ void InitSimulation(Simulation *simu, MacroMesh *mesh,
   
   simu->hmin = FLT_MAX;
 
+#ifdef _WITH_OPENCL
+  simu->use_source_cl = false;
+#endif
+
+
   for(int ie=0; ie < mesh->nbelems; ++ie){
     for(int inoloc = 0; inoloc < 20; ++inoloc){
       int ino = mesh->elem2node[20 * ie + inoloc];
