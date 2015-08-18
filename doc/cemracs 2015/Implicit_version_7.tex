@@ -821,7 +821,7 @@ We cam write the Schur complement on the following form
 &\left(h^n I_2 + T(\boldsymbol{u}^n) I_2 - A(h^n\boldsymbol{u}^n)I_2\right)\delta \boldsymbol{u}^* =0\\
 &\delta \boldsymbol{u} = M \delta \boldsymbol{u}^*
 \end{align*}
-with $T$ the transport part and $A$ the acoustic part.
+with $T$ the transport part and $A$ the acoustic part. We call $S_{ref}=\theta(\boldsymbol{u},\boldsymbol{n})\pm \theta c$ with $c=\sqrt{h^n g}$ the reference speed waves. To finish we define the Mach number $M= \frac{\parallel \boldsymbol{u}^n \parallel }{c}$
 \begin{table}
 \begin{tabular}{|l|l|}
   \hline
@@ -845,7 +845,7 @@ with $T$ the transport part and $A$ the acoustic part.
    ~ & ~\\
     \hline
     ~& ~\\
-  regime & $M= \frac{\parallel \boldsymbol{u}^n \parallel }{c}<< 1$\\
+  regime & $\omega=S_{ref}+O(cM)$ consequently the regime is $M<< 1$\\
    ~& ~\\
     \hline
 \end{tabular}
@@ -873,7 +873,7 @@ with $T$ the transport part and $A$ the acoustic part.
    ~ & ~\\
     \hline
     ~& ~\\
-  regime & $M= \frac{\parallel \boldsymbol{u}^n \parallel }{c}<< 1$\\
+  regime & $\omega=S_{ref}+O(cM)$ consequently the regime is $M<< 1$\\
    ~& ~\\
     \hline
 \end{tabular}
@@ -902,13 +902,43 @@ with $T$ the transport part and $A$ the acoustic part.
    ~ & ~\\
     \hline
     ~& ~\\
-  regime & $M= \frac{\parallel \boldsymbol{u}^n \parallel }{c}<< 1$\\
+  regime & $\omega=S_{ref}+O(cM)$ consequently the regime is $M<< 1$\\
    ~& ~\\
     \hline
 \end{tabular}
 \end{table}
 
-The SFE operator is the Exact Slow Flow operator and SFA the Approximate Slow Flow. This is the same for Arbitrary Flow.
+\begin{table}
+\begin{tabular}{|l|l|}
+  \hline
+  Schur AFE &  \\
+  \hline
+  ~ & ~\\
+  T &  $h^n\theta\Delta t\boldsymbol{u}^n\nabla \cdot \delta \boldsymbol{u}+\theta\Delta th^n\left(\boldsymbol{u}^n\cdot \nabla \right)\delta \boldsymbol{u}+\theta\Delta th^n\left(\delta \boldsymbol{u}\cdot \nabla\right)\boldsymbol{u}^n$\\
+&$+\theta^2\Delta t^2 \left( h^n\left(\text{div}(\delta \boldsymbol{u})\boldsymbol{u}^n\cdot \nabla\right)\boldsymbol{u}^n+\textcolor{red}{\theta^2\Delta t^2}h^n\left(\boldsymbol{u}^n\cdot \nabla\right)\left[\boldsymbol{u}^n\nabla \cdot \delta \boldsymbol{u}\right]\right)$ \\ 
+  ~ & ~\\
+    \hline
+      ~& ~\\ 
+  A= &$\left(\boldsymbol{u}^n+\theta \Delta t \boldsymbol{u}^n\cdot \nabla \boldsymbol{u}^n \right)\left(\theta \Delta t \operatorname{div}(h^n \delta \boldsymbol{u})\right) $\\
+  ~&$+\theta^2 \Delta t^2 \nabla\left[ \delta \boldsymbol{u}\cdot \nabla p^n + 2p^n \operatorname{div}(\delta \boldsymbol{u}) \right] $\\
+  ~ & ~\\
+      \hline
+     ~ &~ \\
+   Correction &  $M=I_2+\theta\Delta t\boldsymbol{u}^n(\nabla\cdot I_2)$ \\ 
+   ~ & ~\\
+    \hline
+     ~ &~ \\
+  speed & $\omega=\left(-\theta\frac{\boldsymbol{u}^n\cdot \boldsymbol{n}}{2}\pm\theta\sqrt{h^n g-\frac{3}{4}(\boldsymbol{u}^n\cdot\boldsymbol{n})^2}\right)||\boldsymbol{k}||$  \\ 
+   ~ & ~\\
+    \hline
+    ~& ~\\
+  regime & $\omega=S_{ref}+O(cM)$ consequently the regime is $M<< 1$\\
+   ~& ~\\
+    \hline
+\end{tabular}
+\end{table}
+
+The SFE operator is the Exact Slow Flow operator and SFA the Approximate Slow Flow. This is the same for Arbitrary Flow. \textcolor{We assume that we can modify the AFA operator to obtain good wave}. First possibility to obtain the good wave is to neglect the second correction step with the operator. The second possibility is to neglect the term which depend go $\Delta 2 t$ in the operator $D_2 M$. Using this we must obtain $\pm \left((\boldsymbol{u}^n,\boldsymbol{k})+c\right)$. Second work we propose to write approximate operator with the same wave and symmetric and positive. 
 
 
 
