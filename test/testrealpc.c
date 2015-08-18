@@ -36,7 +36,7 @@ int Testrealpc(void) {
 
   bool test = true;
   real dd;
-  int test1_ok=1,test2_ok=0,test3_ok=0;
+  int test1_ok=0,test2_ok=1,test3_ok=0;
 
 
 #ifdef PARALUTION 
@@ -170,7 +170,7 @@ int Testrealpc(void) {
   model2.Source = SteadyStateTwo_Source;
 
   int deg2[]={4, 4, 0};
-  int raf2[]={2, 2, 1};
+  int raf2[]={4, 4, 1};
 
 
   CheckMacroMesh(&mesh, deg2, raf2);
@@ -196,7 +196,7 @@ int Testrealpc(void) {
  
   solver_implicit2.solver_type=GMRES;//LU;//GMRES;
   solver_implicit2.tol=1.e-12;
-  solver_implicit2.pc_type=PHY_BASED;
+  //solver_implicit2.pc_type=PHY_BASED;
   solver_implicit2.iter_max=500;
 
   simu2.tnow=0;
@@ -384,10 +384,17 @@ void SteadyStateTwo_ImposedData(const real *xy, const real t, real *w) {
   real x=xy[0];
   real y=xy[1];
 
-
-  w[0] = x*(1-x)*y*(1-y);
+  
+  /*w[0] = x*(1-x)*y*(1-y);
   w[1] = 2*x*(1-x)*y*(1-y);
-  w[2] = 3*x*(1-x)*y*(1-y);
+  w[2] = 3*x*(1-x)*y*(1-y);*/
+
+  real x5=x*x*x;
+  real y5=y*y*y;
+
+  w[0] = x5*(1-x5)*y5*(1-y5);
+  w[1] = 2.0*x5*(1-x5)*y5*(1-y5);
+  w[2] = 3.0*x5*(1-x5)*y5*(1-y5);
 
 }
 
@@ -411,9 +418,19 @@ void SteadyStateTwo_Source(const real *xy, const real t, const real *w, real *S)
   real x=xy[0];
   real y=xy[1];
 
-  S[0] = 2*(1-2*x)*(y*(1-y))+3*(1-2*y)*(x*(1-x));
+  /*S[0] = 2*(1-2*x)*(y*(1-y))+3*(1-2*y)*(x*(1-x));
   S[1] = (1-2*x)*(y*(1-y));
-  S[2] = (1-2*y)*(x*(1-x));
+  S[2] = (1-2*y)*(x*(1-x));*/
+
+  
+  real x5=x*x*x;
+  real x4=3.0*x*x;
+  real y5=y*y*y;
+  real y4=3.0*y*y;
+
+  S[0] = 2.0*(x5*(-x4)+x4*(1.0-x5))*y5*(1.0-y5)+3.0*(y5*(-y4)+y4*(1.0-y5))*x5*(1.0-x5);
+  S[1] = (x5*(-x4)+x4*(1.0-x5))*y5*(1.0-y5);
+  S[2] = (y5*(-y4)+y4*(1.0-y5))*x5*(1.0-x5);
 
   S[0] *= _SPEED_WAVE;
   S[1] *= _SPEED_WAVE;
