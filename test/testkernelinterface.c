@@ -58,8 +58,8 @@ int TestKernelInterface(void){
 
   MacroMesh mesh;
 
-  ReadMacroMesh(&mesh, "../test/testmacromesh.msh");
-  //ReadMacroMesh(&(f.macromesh),"../test/testcube.msh");
+  //ReadMacroMesh(&mesh, "../test/testmacromesh.msh");
+  ReadMacroMesh(&mesh,"../test/testcube.msh");
   Detect2DMacroMesh(&mesh);
   assert(mesh.is2d);
   BuildConnectivity(&mesh);
