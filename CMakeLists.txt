@@ -422,6 +422,14 @@ if(OPENCL_FOUND)
     test/testkernelvolume.c
     )
   target_link_libraries(testkernelvolume ${LIBS})
+
+  add_test(testkernelflux testkernelflux)
+  add_executable(
+    testkernelflux
+    test/test.h
+    test/testkernelflux.c
+    )
+  target_link_libraries(testkernelflux ${LIBS})
   
 
 endif(OPENCL_FOUND)
