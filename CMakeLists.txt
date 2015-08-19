@@ -430,6 +430,14 @@ if(OPENCL_FOUND)
     test/testkernelflux.c
     )
   target_link_libraries(testkernelflux ${LIBS})
+
+  add_test(testkernelinterface testkernelinterface)
+  add_executable(
+    testkernelinterface
+    test/test.h
+    test/testkernelinterface.c
+    )
+  target_link_libraries(testkernelinterface ${LIBS})
   
 
 endif(OPENCL_FOUND)
