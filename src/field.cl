@@ -775,7 +775,6 @@ void DGVolume(__constant int *param,     // 0: interp param
   __constant real *physnode = physnodes + ie * 60;
 
   const int m = param[0];
-  printf("m=%d\n",m);
   const int deg[3] = {param[1],param[2], param[3]};
   const int npg[3] = {deg[0] + 1, deg[1] + 1, deg[2] + 1};
   const int nraf[3] = {param[4], param[5], param[6]};
@@ -861,8 +860,6 @@ void DGVolume(__constant int *param,     // 0: interp param
 
   real wL[_M];
   int ipgL = ipg(npg, p, 0);
-  printf("local_id=%d, glob_id=%d, ipgL=%d\n",get_local_id(0),get_global_id(0),
-	 ipgL);
 
   //int imemL0 = VARINDEX(param, ie, ipgL, 0);
   //int imemL0loc = ipgL * m;
@@ -1179,8 +1176,6 @@ void DGBoundary(__constant int *param,      // 0: interp param
   }
 
   BOUNDARYFLUX(xpg, tnow, wL, vnds, flux);
-  printf("ifa=%d ipgfL=%d w=%f flux=%f %f %f\n",locfaL,ipgfL,wL[0],flux[0],flux[1],flux[2]);
-  printf("xpg=%f %f %f \n\n",xpg[0],xpg[1],xpg[2]);
   
   // The basis functions is also the gauss point index
   __global real *dtwn0 = dtwn + imemL0; 

@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <math.h>
+#include <string.h>
 
 int TestDtfield_CL(void);
 
@@ -54,6 +55,16 @@ int TestDtfield_CL(void){
   int deg[]={2, 2, 0};
   int raf[]={4, 4, 1};
 
+  char buf[1000];
+  sprintf(buf, "-D _M=%d", model.m);
+  strcat(cl_buildoptions, buf);
+
+  sprintf(buf," -D NUMFLUX=%s", "TransNumFlux2d");
+  strcat(cl_buildoptions, buf);
+
+  sprintf(buf, " -D BOUNDARYFLUX=%s", "TransBoundaryFlux2d");
+  strcat(cl_buildoptions, buf);
+
 
 #else
   // 3D version
@@ -75,8 +86,9 @@ int TestDtfield_CL(void){
 
   Simulation simu;
 
-  set_source_CL(&simu, "OneSource");
-  model.Source = OneSource;
+  //set_source_CL(&simu, "OneSource");
+  model.Source = NULL;
+  //model.Source = OneSource;
   
   InitSimulation(&simu, &mesh, deg, raf, &model);
   
