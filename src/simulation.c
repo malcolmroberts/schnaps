@@ -4,8 +4,21 @@
 #include <assert.h>
 #include <math.h>
 #include <float.h>
+#include <string.h>
 
 #include "field_cl.h"
+
+void EmptySimulation(Simulation *simu){
+
+#ifdef _WITH_OPENCL
+  sprintf(numflux_cl_name,"%s",""); // FIXME: move to field struct.
+  sprintf(cl_buildoptions,"%s",""); // FIXME: move to field struct.
+  simu->sourcename_cl = malloc(1024 * sizeof(char));
+  sprintf(simu->sourcename_cl,"%s"," "); // FIXME: move to field struct.  
+#endif
+
+
+}
 
 
 void InitSimulation(Simulation *simu, MacroMesh *mesh,
@@ -36,7 +49,8 @@ void InitSimulation(Simulation *simu, MacroMesh *mesh,
   simu->hmin = FLT_MAX;
 
 #ifdef _WITH_OPENCL
-  simu->use_source_cl = true;
+  simu->use_source_cl = false;
+  if (model->Source != NULL) simu->use_source_cl = true;
 #endif
 
 

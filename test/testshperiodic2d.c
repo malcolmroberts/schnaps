@@ -58,6 +58,7 @@ int Test_SH_periodic(void) {
 
   Simulation simu;
 
+  EmptySimulation(&simu);
   InitSimulation(&simu, &mesh, deg, raf, &model);
   
   tmax = 0.01;
@@ -84,6 +85,7 @@ int Test_SH_periodic(void) {
   model.Source = ShallowWater_periodic_SourceTerm;
 
   Simulation simu2;
+  EmptySimulation(&simu2);
 
   InitSimulation(&simu2, &mesh, deg, raf, &model);
   
@@ -103,7 +105,7 @@ int Test_SH_periodic(void) {
   printf("L2 HLL error %.8e\n", dd+dd2+dd3);
 
   /******* Test for Roe ******/
-   model.m=6; 
+  model.m=6; 
   model.NumFlux=ShallowWater_Roe_NumFlux;
   model.InitData = TestSH_periodic_InitData;
   model.ImposedData = TestSH_periodic_ImposedData;
@@ -111,6 +113,7 @@ int Test_SH_periodic(void) {
   model.Source = ShallowWater_periodic_SourceTerm;
 
   Simulation simu3;
+  EmptySimulation(&simu3);
 
   InitSimulation(&simu3, &mesh, deg, raf, &model);
   

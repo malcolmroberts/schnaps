@@ -86,9 +86,9 @@ int TestDtfield_CL(void){
 
   Simulation simu;
 
+  model.Source = OneSource;
   set_source_CL(&simu, "OneSource");
   //model.Source = NULL;
-  model.Source = OneSource;
 
 
   assert(simu.use_source_cl);

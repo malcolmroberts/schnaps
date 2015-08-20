@@ -129,6 +129,10 @@ typedef struct Simulation {
 } Simulation;
 
 
+//! \brief create an empty simulation in a coherent state 
+//! \param[inout] simu a simulation
+void EmptySimulation(Simulation *simu);
+
 //! \brief simulation initialization.
 //! Computation of the initial data at each glop.
 //! \param[inout] simu a simulation

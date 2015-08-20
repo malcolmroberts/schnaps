@@ -53,6 +53,7 @@ int TestKernelInterface(void){
   model.BoundaryFlux = TransBoundaryFlux2d;
   model.InitData = TransInitData2d;
   model.ImposedData = TransImposedData2d;
+  model.Source = NULL;
 
   char buf[1000];
   sprintf(buf, "-D _M=%d", model.m);

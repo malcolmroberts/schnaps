@@ -23,7 +23,8 @@ int TestKernelVolume(void){
   model.BoundaryFlux = TransBoundaryFlux2d;
   model.InitData = TransInitData2d;
   model.ImposedData = TransImposedData2d;
-
+  model.Source = NULL;
+  
   int deg[]={2, 2, 0};
   int raf[]={3, 3, 1};
 
