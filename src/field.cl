@@ -1356,7 +1356,8 @@ int ref_ipg(__constant int *param, real *xref)
 }
 
 #ifndef _SOURCE_FUNC
-#define _SOURCE_FUNC ZeroSource
+#define _SOURCE_FUNC OneSource
+//ZeroSource
 #endif
 
 void ZeroSource(const real *x, const real t, const real *w, real *source) {

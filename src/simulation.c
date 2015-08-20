@@ -36,7 +36,7 @@ void InitSimulation(Simulation *simu, MacroMesh *mesh,
   simu->hmin = FLT_MAX;
 
 #ifdef _WITH_OPENCL
-  simu->use_source_cl = false;
+  simu->use_source_cl = true;
 #endif
 
 
