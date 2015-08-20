@@ -1179,7 +1179,9 @@ void DGBoundary(__constant int *param,      // 0: interp param
   }
 
   BOUNDARYFLUX(xpg, tnow, wL, vnds, flux);
-
+  printf("ifa=%d ipgfL=%d w=%f flux=%f %f %f\n",locfaL,ipgfL,wL[0],flux[0],flux[1],flux[2]);
+  printf("xpg=%f %f %f \n\n",xpg[0],xpg[1],xpg[2]);
+  
   // The basis functions is also the gauss point index
   __global real *dtwn0 = dtwn + imemL0; 
   for(int iv = 0; iv < m; ++iv) {

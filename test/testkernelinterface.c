@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <math.h>
+#include <string.h>
 
 int TestKernelInterface(void){
   bool test = true;
@@ -53,13 +54,23 @@ int TestKernelInterface(void){
   model.InitData = TransInitData2d;
   model.ImposedData = TransImposedData2d;
 
-  int deg[]={1, 1, 0};
-  int raf[]={1, 1, 1};
+  char buf[1000];
+  sprintf(buf, "-D _M=%d", model.m);
+  strcat(cl_buildoptions, buf);
+
+  sprintf(buf," -D NUMFLUX=%s", "TransNumFlux2d");
+  strcat(cl_buildoptions, buf);
+
+  sprintf(buf, " -D BOUNDARYFLUX=%s", "TransBoundaryFlux2d");
+  strcat(cl_buildoptions, buf);
+
+  int deg[]={3, 3, 0};
+  int raf[]={2, 2, 2};
 
   MacroMesh mesh;
 
-  //ReadMacroMesh(&mesh, "../test/testmacromesh.msh");
-  ReadMacroMesh(&mesh,"../test/testcube.msh");
+  ReadMacroMesh(&mesh, "../test/testmacromesh.msh");
+  //ReadMacroMesh(&mesh,"../test/testcube.msh");
   Detect2DMacroMesh(&mesh);
   assert(mesh.is2d);
   BuildConnectivity(&mesh);
@@ -101,13 +112,14 @@ int TestKernelInterface(void){
   for(int i = 0; i < ninterfaces; ++i) {
     int ifa = simu.macromesh.macrointerface[i];
     DGMacroCellInterface_CL(ifa, &simu, &(simu.w_cl), 
-			    0, NULL, NULL);
+    			    0, NULL, NULL);
     clFinish(simu.cli.commandqueue);
   }
   
   const int nboundaryfaces = simu.macromesh.nboundaryfaces;
   for(int i = 0; i < nboundaryfaces; ++i) {
     int ifa = simu.macromesh.boundaryface[i];
+    printf("ocl ifa=%d\n",ifa);
     DGBoundary_CL(ifa, &simu, &(simu.w_cl),
 			    0, NULL, NULL);
     clFinish(simu.cli.commandqueue);
@@ -119,8 +131,8 @@ int TestKernelInterface(void){
 
   // OpenMP version
   simu.dtw = calloc(simu.wsize, sizeof(real));
-  for(int iw = 0; iw < simu.wsize; iw++)
-    simu.dtw[iw] = 0;
+  for(int iw = 0; iw < simu.wsize; iw++) simu.dtw[iw] = 0;
+  
   for(int ifa = 0; ifa < simu.macromesh.nbfaces; ifa++){
     int fsize =  simu.wsize / simu.macromesh.nbelems;
     int ieL = simu.macromesh.face2elem[4 * ifa + 0];
@@ -136,6 +148,7 @@ int TestKernelInterface(void){
       offsetR = fsize * ieR;
     }
     
+    printf("cpu ifa=%d\n",ifa);
     DGMacroCellInterface(locfaL, fL, offsetL,
 			 fR, offsetR, simu.w, simu.dtw);
   }

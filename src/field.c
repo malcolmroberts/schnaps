@@ -623,6 +623,9 @@ void DGMacroCellInterface(int locfaL,
 
       fL->model.BoundaryFlux(xpg, fL->tnow, wL, vnds, flux);
 
+      printf("cpu ipgfL=%d wL=%f flux=%f %f %f\n",ipgfL,wL[0],flux[0],flux[1],flux[2]);
+      printf("xpg=%f %f %f vnds=%f %f %f\n \n",xpg[0],xpg[1],xpg[2],vnds[0],vnds[1],vnds[2]);
+
       for(int iv = 0; iv < m; iv++) {
 	// The basis functions is also the gauss point index
 	int imemL = fL->varindex(fL->deg, fL->raf,fL->model.m, ipgL, iv);

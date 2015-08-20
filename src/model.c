@@ -124,6 +124,7 @@ void TransBoundaryFlux2d(real *x, real t, real *wL, real *vnorm, real *flux)
   real wR[1];
   TransImposedData2d(x, t, wR);
   TransNumFlux2d(wL, wR, vnorm, flux);
+  printf("imposed trans wR=%f x=%f %f %f\n",wR[0],x[0],x[1],x[2]);
 }
 #pragma end_opencl
 
