@@ -452,7 +452,6 @@ void RK2(Simulation *simu, real tmax){
 
   simu->dt = Get_Dt_RK(simu);
 
-
   real dt = simu->dt;
 
   simu->tmax = tmax;
@@ -607,6 +606,8 @@ void RK4_final_inplace(real *w, real *l1, real *l2, real *l3,
 
 real Get_Dt_RK(Simulation *simu)
 {
+
+  //printf("hmin=%f cfl=%f vmax=%f\n",simu->hmin,simu->cfl,simu->vmax);
   return simu->cfl * simu->hmin / simu->vmax; 
   
 }

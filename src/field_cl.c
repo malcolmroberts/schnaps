@@ -613,7 +613,7 @@ void DGVolume_CL(int ie, Simulation *simu, cl_mem *w_cl,
   /* // The total work items number is the number of glops in a subcell */
   /* // * number of subcells */
   /* size_t numworkitems = param[4] * param[5] * param[6] * groupsize; */
-  printf("groupsize=%zd numworkitems=%zd\n", groupsize, numworkitems);
+  //printf("groupsize=%zd numworkitems=%zd\n", groupsize, numworkitems);
   status = clEnqueueNDRangeKernel(simu->cli.commandqueue,
 				  kernel,
 				  1,
@@ -1239,8 +1239,14 @@ void RK4_CL(Simulation *simu, real tmax, real dt,
 void RK2_CL(Simulation *simu, real tmax, real dt,
 	    cl_uint nwait, cl_event *wait, cl_event *done) 
 {
+
+
+  simu->dt = Get_Dt_RK(simu);
+
   if(dt <= 0)
     dt = simu->dt;
+
+  assert(simu->tnow == 0);
 
   simu->itermax_rk = tmax / dt;
   int freq = (1 >= simu->itermax_rk / 10)? 1 : simu->itermax_rk / 10;

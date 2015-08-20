@@ -1356,7 +1356,7 @@ int ref_ipg(__constant int *param, real *xref)
 }
 
 #ifndef _SOURCE_FUNC
-#define _SOURCE_FUNC OneSource
+#define _SOURCE_FUNC ZeroSource
 //ZeroSource
 #endif
 
