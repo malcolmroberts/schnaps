@@ -10,15 +10,15 @@ SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 
 #set(CMAKE_C_FLAGS "-std=c99 -D_REENTRANT -O3 -g -D_POSIX_C_SOURCE=200112L")
-#set(CMAKE_C_FLAGS "-std=gnu99 -D_REENTRANT -O3 -g")
 
-#set(CMAKE_C_FLAGS " -std=c99 -D_REENTRANT -O3 ")
-set(CMAKE_C_FLAGS " -std=c99 -lumfpack -lamd -lblas -lsuitesparseconfig -lcholmod -lcolamd -D_DOUBLE_PRECISION -D_SCHNAPS_DIR=${PROJECT_SOURCE_DIR} -O3 -g  ")
+#set(CMAKE_C_FLAGS " -std=c99 -lumfpack -lamd -lblas -lsuitesparseconfig -lcholmod -lcolamd
+#-D_DOUBLE_PRECISION -D_SCHNAPS_DIR=${PROJECT_SOURCE_DIR} -O3 -g  ")
 #set(CMAKE_C_FLAGS " -std=c99 -D_DOUBLE_PRECISION -D_SCHNAPS_DIR=${PROJECT_SOURCE_DIR} -O3 -g  ")
+set(CMAKE_C_FLAGS " -std=c99 -D_SCHNAPS_DIR=${PROJECT_SOURCE_DIR} -O3")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_DOUBLE_PRECISION")
 
 MESSAGE(Compil. options: ${CMAKE_C_FLAGS})
 
-#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_DOUBLE_PRECISION")
 
 OPTION(USE_OPENCL "Activate OpenCL library" ON)
 
@@ -60,11 +60,11 @@ IF(BUILD_PARALUTION)
   INCLUDE(ExternalProject)
   SET(PARALUTION_VERSION 1.0.0 CACHE STRING "Paralution version number")
   EXTERNALPROJECT_ADD( paralution-${PARALUTION_VERSION}
-     URL  http://www.paralution.com/downloads/paralution-${PARALUTION_VERSION}.tar.gz
-     CMAKE_ARGS -DSUPPORT_CUDA=OFF -DSUPPORT_OMP=OFF
-   -DBUILD_EXAMPLES=OFF -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER} -O3
-     INSTALL_COMMAND ""
-  )
+    URL  http://www.paralution.com/downloads/paralution-${PARALUTION_VERSION}.tar.gz
+    CMAKE_ARGS -DSUPPORT_CUDA=OFF -DSUPPORT_OMP=OFF
+    -DBUILD_EXAMPLES=OFF -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER} -O3
+    INSTALL_COMMAND ""
+    )
 
   INCLUDE_DIRECTORIES(${CMAKE_BINARY_DIR}/paralution-${PARALUTION_VERSION}-prefix/src/paralution-${PARALUTION_VERSION}/src/)
   LINK_DIRECTORIES(${CMAKE_BINARY_DIR}/paralution-${PARALUTION_VERSION}-prefix/src/paralution-${PARALUTION_VERSION}-build/lib)
@@ -152,13 +152,13 @@ ENDIF(BUILD_PARALUTION)
 set(LIBS "")
 
 if (OPENCL_FOUND)
-  list(APPEND LIBS _schnaps pthread ${OPENCL_LIBRARIES} m)
+  list(APPEND LIBS _schnaps ${OPENCL_LIBRARIES} m)
 else()
-  list(APPEND LIBS _schnaps pthread m)
+  list(APPEND LIBS _schnaps  m)
 endif (OPENCL_FOUND)
 
 # nearest neighbour fast search library
-#find_package(flann)
+find_package(flann)
 if(FLANN_FOUND)
   MESSAGE(STATUS "Delicious!")
   list(APPEND LIBS ${FLANN_LIBRARY})
@@ -166,12 +166,12 @@ if(FLANN_FOUND)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -D_WITH_FLANN")
 endif()
 
-set(SuiteSparse_VERBOSE ON)
+set(SuiteSparse_VERBOSE OFF)
 find_package(suitesparse)
-    if(SuiteSparse_FOUND)
-       MESSAGE(STATUS "umfpack libs ok")
-       list(APPEND INCLUDE_DIRECTORIES ${SuiteSparse_INCLUDE_DIRS})
-       list(APPEND LIBS ${SuiteSparse_LIBRARIES})
+if(SuiteSparse_FOUND)
+  MESSAGE(STATUS "umfpack libs ok")
+  list(APPEND INCLUDE_DIRECTORIES ${SuiteSparse_INCLUDE_DIRS})
+  list(APPEND LIBS ${SuiteSparse_LIBRARIES})
 endif()
 
 
@@ -245,7 +245,7 @@ add_executable(
   testperiodic
   test/test.h
   test/testperiodic.c
-)
+  )
 target_link_libraries(testperiodic ${LIBS})
 add_test(testperiodic testperiodic)
 
@@ -274,13 +274,13 @@ add_executable(
 target_link_libraries(testmeq2 ${LIBS})
 add_test(testmeq2 testmeq2)
 
-  add_executable(
-    testmaxwell2d
-    test/test.h
-    test/testmaxwell2d.c
-    )
-  target_link_libraries(testmaxwell2d ${LIBS})
-  add_test(testmaxwell2d testmaxwell2d)
+add_executable(
+  testmaxwell2d
+  test/test.h
+  test/testmaxwell2d.c
+  )
+target_link_libraries(testmaxwell2d ${LIBS})
+add_test(testmaxwell2d testmaxwell2d)
 
 add_executable(
   testfieldrk4
@@ -344,7 +344,7 @@ add_executable(
   testpoisson
   test/test.h
   test/testpoisson.c
-)
+  )
 target_link_libraries(testpoisson ${LIBS})
 add_test(testpoisson testpoisson)
 
@@ -352,7 +352,7 @@ add_executable(
   testpoisson2d
   test/test.h
   test/testpoisson2d.c
-)
+  )
 target_link_libraries(testpoisson2d ${LIBS})
 add_test(testpoisson2d testpoisson2d)
 
@@ -360,7 +360,7 @@ add_executable(
   testwave2d
   test/test.h
   test/testwave2d.c
-)
+  )
 target_link_libraries(testwave2d ${LIBS})
 add_test(testwave2d testwave2d)
 
@@ -369,7 +369,7 @@ add_executable(
   testwave2d-steady
   test/test.h
   test/testwave2d-steady.c
-)
+  )
 target_link_libraries(testwave2d-steady ${LIBS})
 add_test(testwave2d-steady testwave2d-steady)
 
@@ -377,7 +377,7 @@ add_executable(
   testtransport_steady
   test/test.h
   test/testtransport_steady.c
-)
+  )
 target_link_libraries(testtransport_steady ${LIBS})
 add_test(testtransport_steady testtransport_steady)
 
@@ -385,7 +385,7 @@ add_executable(
   testshequilibrium2d
   test/test.h
   test/testshequilibrium2d.c
-)
+  )
 target_link_libraries(testshequilibrium2d ${LIBS})
 add_test(testshequilibrium2d testshequilibrium2d)
 
@@ -393,7 +393,7 @@ add_executable(
   testshperiodic2d
   test/test.h
   test/testshperiodic2d.c
-)
+  )
 target_link_libraries(testshperiodic2d ${LIBS})
 add_test(testshperiodic2d testshperiodic2d)
 
@@ -469,20 +469,19 @@ endif(OPENCL_FOUND)
 
 IF(BUILD_PARALUTION)
 
-
   SET(MATRIX_FILE gr_30_30.mtx)
 
   IF(EXISTS ${MATRIX_FILE})
   ELSE()
     FILE(DOWNLOAD "ftp://math.nist.gov/pub/MatrixMarket2/Harwell-Boeing/laplace/${MATRIX_FILE}.gz" 
-                  ${CMAKE_BINARY_DIR}/${MATRIX_FILE}.gz)
+      ${CMAKE_BINARY_DIR}/${MATRIX_FILE}.gz)
 
     FIND_PROGRAM(GZIP_TOOL
-               NAMES gzip
-               PATHS /bin /usr/bin /usr/local/bin /opt/local/bin)
+      NAMES gzip
+      PATHS /bin /usr/bin /usr/local/bin /opt/local/bin)
 
     EXECUTE_PROCESS( COMMAND ${GZIP_TOOL} -d ${MATRIX_FILE}.gz
-                     WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+      WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
   ENDIF()
 
   ADD_EXECUTABLE(paralution_cg test/cg.cpp)
@@ -490,25 +489,23 @@ IF(BUILD_PARALUTION)
 
   ADD_TEST(NAME testparalution COMMAND paralution_cg ${MATRIX_FILE} 4)
 
- add_executable(
-  testlinearsolver
-  test/test.h
-  test/testlinearsolver.c
-  )
-target_link_libraries(testlinearsolver paralution_c ${LIBS})
-add_test(testlinearsolver testlinearsolver)
-
-
+  add_executable(
+    testlinearsolver
+    test/test.h
+    test/testlinearsolver.c
+    )
+  target_link_libraries(testlinearsolver paralution_c ${LIBS})
+  add_test(testlinearsolver testlinearsolver)
 
 ELSE()
 
- add_executable(
-  testlinearsolver
-  test/test.h
-  test/testlinearsolver.c
-  )
-target_link_libraries(testlinearsolver ${LIBS})
-add_test(testlinearsolver testlinearsolver)
+  add_executable(
+    testlinearsolver
+    test/test.h
+    test/testlinearsolver.c
+    )
+  target_link_libraries(testlinearsolver ${LIBS})
+  add_test(testlinearsolver testlinearsolver)
 
 ENDIF()
 

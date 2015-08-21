@@ -67,6 +67,7 @@ if(SuiteSparse_DIR)
 endif()
 
 ## set default verbosity
+#set(SuiteSparse_FIND_QUIETLY ON)
 ## Process the CMake automatically-generated var: SuiteSparse_FIND_QUIETLY: supersedes *_VERBOSE.
 if(NOT SuiteSparse_VERBOSE OR SuiteSparse_FIND_QUIETLY)
 	set(SuiteSparse_VERBOSE OFF)
