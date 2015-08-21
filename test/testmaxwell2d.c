@@ -56,6 +56,8 @@ int TestMaxwell2D(void) {
   Simulation simu;
   EmptySimulation(&simu);
 
+#ifdef _WITH_OPENCL
+
   char buf[1000];
   sprintf(buf, "-D _M=%d", model.m);
   strcat(cl_buildoptions, buf);
@@ -68,7 +70,7 @@ int TestMaxwell2D(void) {
 
   sprintf(buf, " -D BOUNDARYFLUX=%s", "Maxwell2DBoundaryFlux_upwind");
   strcat(cl_buildoptions, buf);
-
+#endif
 
 
   InitSimulation(&simu, &mesh, deg, raf, &model);
