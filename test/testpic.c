@@ -63,6 +63,7 @@ int TestPIC(void)
   /* f.model.ImposedData = Maxwell2DImposedData; */
     
   Simulation simu;
+  EmptySimulation(&simu);
 
   InitSimulation(&simu, &mesh, deg, raf, &model);
 

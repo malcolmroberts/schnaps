@@ -26,6 +26,7 @@ int TestSimulation(void){
   CheckMacroMesh(&mesh, deg, raf);
 
   Simulation simu;
+  EmptySimulation(&simu);
 
   InitSimulation(&simu, &mesh, deg, raf, &model);
 

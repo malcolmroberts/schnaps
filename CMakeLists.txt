@@ -74,6 +74,17 @@ IF(BUILD_PARALUTION)
 
 ENDIF()
 
+set(SuiteSparse_VERBOSE OFF)
+#find_package(suitesparse)
+if(SuiteSparse_FOUND)
+  MESSAGE(STATUS "umfpack libs ok")
+  list(APPEND INCLUDE_DIRECTORIES ${SuiteSparse_INCLUDE_DIRS})
+  list(APPEND LIBS ${SuiteSparse_LIBRARIES})
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_WITH_UMFPACK")
+else()
+  MESSAGE(STATUS "umfpack not found: deactivated")
+ endif()
+
 
 include_directories(src)
 
@@ -111,8 +122,6 @@ list(APPEND
   src/pic.c
   src/skyline.h
   src/skyline.c
-  src/solverumfpack.h
-  src/solverumfpack.c
   src/dpackfgmres.h
   src/dpackfgmres.c
   src/linear_solver.h
@@ -128,6 +137,14 @@ list(APPEND
   src/collision.h
   src/collision.c
   )
+
+if(SuiteSparse_FOUND)
+list(APPEND
+  source_files
+ src/solverumfpack.h
+  src/solverumfpack.c
+  )
+ endif(SuiteSparse_FOUND)
 
 
 if (OPENCL_FOUND)
@@ -166,13 +183,6 @@ if(FLANN_FOUND)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -D_WITH_FLANN")
 endif()
 
-set(SuiteSparse_VERBOSE OFF)
-find_package(suitesparse)
-if(SuiteSparse_FOUND)
-  MESSAGE(STATUS "umfpack libs ok")
-  list(APPEND INCLUDE_DIRECTORIES ${SuiteSparse_INCLUDE_DIRS})
-  list(APPEND LIBS ${SuiteSparse_LIBRARIES})
-endif()
 
 
 # list of tests
@@ -325,14 +335,6 @@ target_link_libraries(testskyline ${LIBS})
 add_test(testskyline testskyline)
 
 add_executable(
-  testumfpack
-  test/test.h
-  test/testumfpack.c
-  )
-target_link_libraries(testumfpack ${LIBS})
-add_test(testumfpack testumfpack)
-
-add_executable(
   testnonlinearsolver
   test/test.h
   test/testnonlinearsolver.c
@@ -396,6 +398,18 @@ add_executable(
   )
 target_link_libraries(testshperiodic2d ${LIBS})
 add_test(testshperiodic2d testshperiodic2d)
+
+if(SuiteSparse_FOUND)
+
+add_executable(
+  testumfpack
+  test/test.h
+  test/testumfpack.c
+  )
+target_link_libraries(testumfpack ${LIBS})
+add_test(testumfpack testumfpack)
+
+endif(SuiteSparse_FOUND)
 
 
 if(OPENCL_FOUND)

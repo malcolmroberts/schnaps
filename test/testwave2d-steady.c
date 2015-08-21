@@ -86,7 +86,7 @@ int Test_Wave_Steady(void) {
   PlotFields(1,false, &simu, "u", "dgvisu_exu.msh");
   PlotFields(2,false, &simu, "v", "dgvisu_exv.msh");
 
-  real tolerance = 0.0000001;
+  real tolerance = _SMALL;
 
   test = test && (dd < tolerance);
 

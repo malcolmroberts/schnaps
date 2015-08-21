@@ -66,6 +66,7 @@ int TestPICAccumulate(void)
   int raf[]={1, 1, 1};
 
   Simulation simu;
+  EmptySimulation(&simu);
 
   InitSimulation(&simu, &mesh, deg, raf, &model);
 

@@ -101,6 +101,7 @@ int TestCoil2D(void)
 
   
   Simulation simu;
+  EmptySimulation(&simu);
 
   InitSimulation(&simu, &mesh, deg, raf, &model);
   simu.pre_dtfields = coil_pre_dtfields; // must be DEFINED after init
