@@ -455,6 +455,14 @@ if(OPENCL_FOUND)
     test/testfieldrk4_cl.c
     )
   target_link_libraries(testfieldrk4_cl ${LIBS})
+
+  add_executable(
+    testmaxwell2d_cl
+    test/test.h
+    test/testmaxwell2d_cl.c
+    )
+  target_link_libraries(testmaxwell2d_cl ${LIBS})
+  add_test(testmaxwell2d_cl testmaxwell2d_cl)
   
 
 endif(OPENCL_FOUND)

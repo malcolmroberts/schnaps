@@ -77,7 +77,7 @@ int TestMaxwell2D(void) {
   simu.cfl=0.2;
   simu.vmax=1;
 
-#if 1
+#if 0
   // C version
   RK2(&simu, tmax);
 #else
