@@ -1122,7 +1122,11 @@ void RK4_final_inplace_CL(Simulation *simu,
 void RK4_CL(Simulation *simu, real tmax, real dt,
 	    cl_uint nwait, cl_event *wait, cl_event *done) 
 {
+  simu->dt = Get_Dt_RK(simu);
+
   if(dt <= 0) dt = simu->dt;
+
+  assert(simu->tnow == 0);
 
   simu->itermax_rk = tmax / dt;
   int freq = (1 >= simu->itermax_rk / 10)? 1 : simu->itermax_rk / 10;

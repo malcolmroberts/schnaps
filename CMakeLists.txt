@@ -448,6 +448,14 @@ if(OPENCL_FOUND)
     )
   target_link_libraries(testfieldrk2_cl ${LIBS})
   
+  add_test(testfieldrk4_cl testfieldrk4_cl)
+  add_executable(
+    testfieldrk4_cl
+    test/test.h
+    test/testfieldrk4_cl.c
+    )
+  target_link_libraries(testfieldrk4_cl ${LIBS})
+  
 
 endif(OPENCL_FOUND)
 
