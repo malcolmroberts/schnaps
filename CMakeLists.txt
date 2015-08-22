@@ -11,8 +11,8 @@ SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 #set(CMAKE_C_FLAGS "-std=c99 -D_REENTRANT -O3 -g -D_POSIX_C_SOURCE=200112L")
 
-#set(CMAKE_C_FLAGS " -std=c99 -lumfpack -lamd -lblas -lsuitesparseconfig -lcholmod -lcolamd
-#-D_DOUBLE_PRECISION -D_SCHNAPS_DIR=${PROJECT_SOURCE_DIR} -O3 -g  ")
+#set(CMAKE_C_FLAGS " -std=c99 -lumfpack -lamd -lblas -lsuitesparseconfig -lcholmod -lcolamd -D_DOUBLE_PRECISION
+# -D_SCHNAPS_DIR=${PROJECT_SOURCE_DIR} -O3 -g  ")
 #set(CMAKE_C_FLAGS " -std=c99 -D_DOUBLE_PRECISION -D_SCHNAPS_DIR=${PROJECT_SOURCE_DIR} -O3 -g  ")
 set(CMAKE_C_FLAGS " -std=c99 -D_SCHNAPS_DIR=${PROJECT_SOURCE_DIR} -O3")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_DOUBLE_PRECISION")
@@ -74,16 +74,19 @@ IF(BUILD_PARALUTION)
 
 ENDIF()
 
-set(SuiteSparse_VERBOSE OFF)
-#find_package(suitesparse)
+set(SuiteSparse_VERBOSE ON)
+set(SuiteSparse_USE_LAPACK_BLAS ON)
+find_package(suitesparse)
 if(SuiteSparse_FOUND)
   MESSAGE(STATUS "umfpack libs ok")
   list(APPEND INCLUDE_DIRECTORIES ${SuiteSparse_INCLUDE_DIRS})
   list(APPEND LIBS ${SuiteSparse_LIBRARIES})
+  list(APPEND LIBS ${SuiteSparse_LAPACK_BLAS_LIBRARIES})
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_WITH_UMFPACK")
+  MESSAGE("libs: " ${LIBS})
 else()
   MESSAGE(STATUS "umfpack not found: deactivated")
- endif()
+endif()
 
 
 include_directories(src)
@@ -139,12 +142,12 @@ list(APPEND
   )
 
 if(SuiteSparse_FOUND)
-list(APPEND
-  source_files
- src/solverumfpack.h
-  src/solverumfpack.c
-  )
- endif(SuiteSparse_FOUND)
+  list(APPEND
+    source_files
+    src/solverumfpack.h
+    src/solverumfpack.c
+    )
+endif(SuiteSparse_FOUND)
 
 
 if (OPENCL_FOUND)
@@ -181,6 +184,11 @@ if(FLANN_FOUND)
   list(APPEND LIBS ${FLANN_LIBRARY})
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_WITH_FLANN")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -D_WITH_FLANN")
+endif()
+
+if(SuiteSparse_FOUND)
+  list(APPEND LIBS ${SuiteSparse_LIBRARIES})
+  list(APPEND LIBS ${SuiteSparse_LAPACK_BLAS_LIBRARIES})
 endif()
 
 
@@ -399,19 +407,18 @@ add_executable(
 target_link_libraries(testshperiodic2d ${LIBS})
 add_test(testshperiodic2d testshperiodic2d)
 
+# umfpack tests
 if(SuiteSparse_FOUND)
-
-add_executable(
-  testumfpack
-  test/test.h
-  test/testumfpack.c
-  )
-target_link_libraries(testumfpack ${LIBS})
-add_test(testumfpack testumfpack)
-
+  add_executable(
+    testumfpack
+    test/test.h
+    test/testumfpack.c
+    )
+  target_link_libraries(testumfpack ${LIBS})
+  add_test(testumfpack testumfpack)
 endif(SuiteSparse_FOUND)
 
-
+#opencl tests
 if(OPENCL_FOUND)
   add_test(testclinfo testclinfo)
   add_executable(
