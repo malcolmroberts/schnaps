@@ -50,7 +50,7 @@ typedef struct Interpolation{
   /* real dphi[3]; */
 
   //! \brief pointer to NPG function computation
-  int (*NPG)(int deg[], int raf[]);
+  int (*NPG)(const int *deg, const int *raf);
 
   //! \brief pointer to NPGF function computation
   int (*NPGF)(int deg[], int raf[],int ifa);
@@ -78,13 +78,13 @@ typedef struct Interpolation{
 //! \param[in] deg degrees list
 //! \param[in] raf refinements list
 #pragma start_opencl
-int NPG(int deg[], int raf[]);
+int NPG(const int *deg, const int *raf);
 #pragma end_opencl
 
 //! \brief number of Gauss-LObatto Points (GLOPs) on the continuous macrocell
 //! \param[in] deg degrees list
 //! \param[in] raf refinements list
-int NPG_CG(int deg[], int raf[]);
+int NPG_CG(const int *deg, const int *raf);
 
 //! \brief number of GLOPs on the face ifa of the macrocell
 //! \param[in] param the param list
@@ -167,7 +167,7 @@ int ref_pg_face(int* deg, int *raf,int ifa,int ipgf,real* xpg,real* wpg,
 //! that the resulting point is in the interior of the ref. element
 //! returns the volume index of the face gauss point
 int ref_pg_face_CG(int* deg, int *raf,int ifa,int ipgf,real* xpg,real* wpg,
-		 real* xpgin);
+		   real* xpgin);
 
 //! \brief return the value and the gradient of the basis
 //! functions.

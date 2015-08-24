@@ -157,7 +157,8 @@ void dlagrange_polynomial(real* dp, const real* subdiv,
 
 // Number of Gauss Lobatto Points (GLOPS) in a macrocell
 #pragma start_opencl
-int NPG(int deg[], int raf[]) {
+int NPG(const int *deg, const int *raf) 
+{
   return 
     (deg[0] + 1) * (deg[1] + 1) * (deg[2] + 1) 
     * raf[0] * raf[1] * raf[2];
@@ -165,7 +166,8 @@ int NPG(int deg[], int raf[]) {
 #pragma end_opencl
 
 // Number of Gauss Lobatto Points (GLOPS) in a continous macrocell
-int NPG_CG(int deg[], int raf[]) {
+int NPG_CG(const int *deg, const int *raf) 
+{
   return  (deg[0] * raf[0] + 1) * (deg[1] * raf[1] + 1)
     * (deg[2] * raf[2] + 1); 
 }
