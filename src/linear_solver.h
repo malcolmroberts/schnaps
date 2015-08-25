@@ -128,7 +128,7 @@ void InitLinearSolver(LinearSolver* lsol,int n,
 //! \brief free the allocated arrays
 //! \param[inout] lsol the LinearSolver object
 //! \param[in] freeAll: an integer whose purpose is to choose whether we free everything. (testing purposes)
-void FreeLinearSolver(LinearSolver* lsol, int freeAll);
+void FreeLinearSolver(LinearSolver* lsol);
 
 
 //! \brief indicates that elem (i,j) is nonzero

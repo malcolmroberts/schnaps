@@ -168,7 +168,7 @@ int TestNonLinearSolver(void){
   printf("\n");
 
   // deallocate memory
-  FreeLinearSolver(&sky,0);
+  FreeLinearSolver(&sky);
 
   test1 =  (verr<1e-6);
 
@@ -285,7 +285,7 @@ int TestNonLinearSolver(void){
   printf("\n");
 
   // deallocate memory
-  FreeLinearSolver(&sky,0);
+  FreeLinearSolver(&sky);
 
   test2 =  (verr<1e-6);
 

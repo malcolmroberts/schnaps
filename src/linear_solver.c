@@ -58,7 +58,7 @@ void InitLinearSolver(LinearSolver* lsol,int n,
 
 }
 
-void FreeLinearSolver(LinearSolver* lsol, int freeAll){
+void FreeLinearSolver(LinearSolver* lsol){
 
   assert(lsol->is_alloc);
   assert(lsol->rhs);
@@ -70,10 +70,6 @@ void FreeLinearSolver(LinearSolver* lsol, int freeAll){
 
   case SKYLINE :
     FreeSkyline((Skyline*)lsol->matrix);
-    /*if (freeAll){
-      free(lsol->rhs);
-      free(lsol->sol);
-      }*/
     free(lsol->matrix);
     break;
 

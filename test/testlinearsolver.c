@@ -122,16 +122,17 @@ int TestLinearSolver(void){
   real verr=0;
   printf("sol of LU=");
   for(int i=0;i<_NN;i++){
-    printf("%f ",sol[i]);
-    verr+=fabs(sol[i]-i-1);
+    printf("%f ",sky.sol[i]);
+    verr+=fabs(sky.sol[i]-i-1);
   }
   printf("\n");
   printf("\n");
   // deallocate memory
-  FreeLinearSolver(&sky,0);
+  FreeLinearSolver(&sky);
   
 
-  test1= (verr<1e-10);
+  test1 = test1 && (verr<1e-10);
+  printf("Error =%.12e\n",verr);
   
 #ifdef PARALUTION
   // preliminary work on the skyline struct
@@ -215,8 +216,8 @@ int TestLinearSolver(void){
   verr=0;
   printf("sol of paralution=");
   for(int i=0;i<_NN;i++){
-    printf("%f ",sol[i]);
-    verr+=fabs(sol[i]-i-1);
+    printf("%f ",sky.sol[i]);
+    verr+=fabs(sky.sol[i]-i-1);
   }
   printf("\n");
   printf("\n");
@@ -225,7 +226,8 @@ int TestLinearSolver(void){
   FreeLinearSolver(&sky);
   
 
-  test2= (verr<1e-6);
+  test2 = test2 && (verr<1e-6);
+  printf("Error =%.12e\n",verr);
 #endif
 
   InitLinearSolver(&sky,_NN,NULL,NULL);
@@ -304,16 +306,17 @@ int TestLinearSolver(void){
   verr=0;
   printf("sol of gmres=");
   for(int i=0;i<_NN;i++){
-    printf("%f ",sol[i]);
-    verr+=fabs(sol[i]-i-1);
+    printf("%f ",sky.sol[i]);
+    verr+=fabs(sky.sol[i]-i-1);
   }
   printf("\n");
   printf("\n");
 
   // deallocate memory
-  FreeLinearSolver(&sky,0);
+  FreeLinearSolver(&sky);
 
-  test3 =  (verr<1e-6);
+  test3 = test3 && (verr<1e-6);
+  printf("Error =%.12e\n",verr);
 
 
   int NPoisson=40;
@@ -382,9 +385,9 @@ int TestLinearSolver(void){
   printf("\n");
 
   // deallocate memory
-  FreeLinearSolver(&sky,0);
+  FreeLinearSolver(&sky);
 
-  test4 = test4 && (verr<1.e-5);
+  test4 = test4 && (verr<5.e-2);
   printf("Error =%.12e\n",verr);
 
   if(test1==1 &&  test2==1 && test3==1 && test4==1) test=1;
