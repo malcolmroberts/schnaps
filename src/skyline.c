@@ -133,7 +133,10 @@ void AddSkyline(Skyline* sky,int i,int j,real val){
   assert(sky->is_alloc);
 
 
-  if (i==j){
+  if (j-i > sky->prof[j] || i-j > sky->prof[i]){
+    ;
+  }
+  else if (i==j){
     sky->vkgd[i]+=val;
   }
   else if (j>i){
@@ -156,7 +159,10 @@ void SetSkyline(Skyline* sky,int i,int j,real val){
   assert(sky->is_alloc);
 
 
-  if (i==j){
+  if (j-i > sky->prof[j] || i-j > sky->prof[i]){
+    ;
+  }
+  else if (i==j){
     sky->vkgd[i]=val;
   }
   else if (j>i){
@@ -190,6 +196,7 @@ real GetSkyline(Skyline* sky,int i,int j){
   }
   else if ( j>i){
     int k=sky->kld[j+1]-j+i;
+    //if (i==6 && j==7) printf("k=%d\n",k);
     return sky->vkgs[k];
   }
   else {

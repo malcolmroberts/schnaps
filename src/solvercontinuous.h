@@ -150,6 +150,10 @@ void AllocateContinuousMatrix(void * cs,LinearSolver* lsol);
 //! \param[in] a continuous solver
 void ExactDirichletContinuousMatrix(void * cs,LinearSolver* lsol);
 
+//! \brief apply dirichlet homogeneous bc for continuous solver
+//! \param[inout] lsol a linear solver allocate
+//! \param[in] a continuous solver
+void PenalizedDirichletContinuousMatrix(void * cs,LinearSolver* lsol);
 
 //! \brief solve a 2D poisson problem
 //! \param[inout] ps a Poisson solver (field + linear solver + other parameters)

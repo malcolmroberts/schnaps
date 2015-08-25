@@ -25,7 +25,7 @@ int main(void) {
 
 int TestLinearSolver(void){
 
-  int test=1,test1=1,test2=1,test3=1,test4=1;
+  int test=0,test1=1,test2=1,test3=1,test4=1;
   Simulation simu;
 
   LinearSolver sky;
@@ -375,17 +375,17 @@ int TestLinearSolver(void){
   printf("sol of laplacien with gmres=");
   for(int i=0;i<NPoisson;i++){
     printf("%.5e ",sky.sol[i]);
-    verr+=fabs(sky.sol[i]-(i*h)*(1-i*h));
+    verr+=h*fabs(sky.sol[i]-(i*h)*(1-i*h))*fabs(sky.sol[i]-(i*h)*(1-i*h));
   }
+  verr=sqrt(verr);
   printf("\n");
   printf("\n");
 
   // deallocate memory
   FreeLinearSolver(&sky,0);
 
-  test4 =  (verr<1e-5);
-
-
+  test4 = test4 && (verr<1.e-5);
+  printf("Error =%.12e\n",verr);
 
   if(test1==1 &&  test2==1 && test3==1 && test4==1) test=1;
 

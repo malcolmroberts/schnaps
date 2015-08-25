@@ -158,7 +158,7 @@ int TestPCWave(void) {
   model2.Source = SteadyStateTwo_Source;
 
   int deg2[]={4, 4, 0};
-  int raf2[]={2, 2, 1};
+  int raf2[]={4, 4, 1};
 
 
   CheckMacroMesh(&mesh, deg2, raf2);
@@ -251,7 +251,7 @@ int TestPCWave(void) {
   model3.Source = NULL;
 
   int deg3[]={4, 4, 0};
-  int raf3[]={2, 2, 1};
+  int raf3[]={4, 4, 1};
 
 
   CheckMacroMesh(&mesh, deg3, raf3);
@@ -265,9 +265,9 @@ int TestPCWave(void) {
 
   real theta3=0.5;
   simu3.theta=theta3;
-  simu3.dt=0.001667;//0.005;
+  simu3.dt=0.01;//0.001667;//0.005;
   simu3.vmax=_SPEED_WAVE;
-  real tmax3 = 0.1;
+  real tmax3 = 5*simu3.dt;
   
   real itermax3=tmax3/simu3.dt;
   simu3.itermax_rk=itermax3;
@@ -345,8 +345,8 @@ void SteadyStateOne_ImposedData(const real *xy, const real t, real *w) {
   real x=xy[0];
   real y=xy[1];
 
-  w[0] = 10+x*x+y*y*y;
-  w[1] = x*y-y+2;
+  w[0] = 10.+x*x+y*y*y;
+  w[1] = x*y-y+2.;
   w[2] = x-y*y*0.5+5.6;
 }
 
@@ -367,7 +367,7 @@ void SteadyStateOne_Source(const real *xy, const real t, const real *w, real *S)
   real x=xy[0];
   real y=xy[1];
 
-  S[0] = 0;
+  S[0] = 0.;
   S[1] = 2*x;
   S[2] = 3*y*y;
 

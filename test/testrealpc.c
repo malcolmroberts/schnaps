@@ -170,7 +170,7 @@ int Testrealpc(void) {
   model2.Source = SteadyStateTwo_Source;
 
   int deg2[]={4, 4, 0};
-  int raf2[]={40, 40, 1};
+  int raf2[]={10, 10, 1};
 
 
   CheckMacroMesh(&mesh, deg2, raf2);
@@ -197,7 +197,7 @@ int Testrealpc(void) {
   solver_implicit2.solver_type=GMRES;//LU;//GMRES;
   solver_implicit2.tol=1.e-8;
   solver_implicit2.pc_type=PHY_BASED;
-  solver_implicit2.iter_max=5000;
+  solver_implicit2.iter_max=500;
 
   simu2.tnow=0;
   for(int ie=0; ie < simu2.macromesh.nbelems; ++ie){
@@ -271,7 +271,7 @@ if(test3_ok==1){
   model3.Source = NULL;
 
   int deg3[]={4, 4, 0};
-  int raf3[]={4, 4, 1};
+  int raf3[]={40, 40, 1};
 
 
   CheckMacroMesh(&mesh, deg3, raf3);
@@ -285,9 +285,9 @@ if(test3_ok==1){
 
   real theta3=0.5;
   simu3.theta=theta3;
-  simu3.dt=0.005;
+  simu3.dt=0.01;
   simu3.vmax=_SPEED_WAVE;
-  real tmax3 = 0.1;
+  real tmax3 = 5*simu3.dt;
   
   real itermax3=tmax3/simu3.dt;
   simu3.itermax_rk=itermax3;
@@ -296,7 +296,7 @@ if(test3_ok==1){
   real *res3 = calloc(simu3.wsize, sizeof(real));
 
   solver_implicit3.solver_type=GMRES;//LU;//GMRES;
-  solver_implicit3.tol=1.e-10;
+  solver_implicit3.tol=1.e-8;
   solver_implicit3.pc_type=PHY_BASED;
   solver_implicit3.iter_max=1000;
   

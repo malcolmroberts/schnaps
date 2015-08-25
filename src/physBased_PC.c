@@ -176,21 +176,7 @@ void solvePhy(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*globalRHS_DG
 
   // 0)2) Second, initialize all penalization right-hand-sides
   pb_pc->D.bc_assembly=ExactDirichletContinuousMatrix;
-  //pb_pc->U1.bc_assembly=ExactDirichletContinuousMatrix;
-  //pb_pc->U2.bc_assembly=ExactDirichletContinuousMatrix;
   pb_pc->Schur.bc_assembly=ExactDirichletContinuousMatrix;
-  pb_pc->D.bc_assembly(&pb_pc->D,&pb_pc->D.lsol);
-  //pb_pc->U1.bc_assembly(&pb_pc->U1,&pb_pc->U1.lsol);
-  //pb_pc->U2.bc_assembly(&pb_pc->U2,&pb_pc->U2.lsol);
-  pb_pc->Schur.bc_assembly(&pb_pc->Schur,&pb_pc->Schur.lsol);
-  
-  // Applying these right-hand-sides to the preconditioner's own right-hand-sides
-  for (int i=0; i<pb_pc->D.nb_fe_nodes; i++){
-    pb_pc->rhs_prediction[i]      = pb_pc->D.lsol.rhs[i];
-    pb_pc->rhs_propagation[i*2]   = pb_pc->Schur.lsol.rhs[i*2];
-    pb_pc->rhs_propagation[i*2+1] = pb_pc->Schur.lsol.rhs[i*2+1];
-    pb_pc->rhs_correction[i]      = pb_pc->D.lsol.rhs[i];
-  }
 
   // Parsing globalRHS (in DG) into a CG vector
   ContinuousSolver waveSolver;
@@ -206,26 +192,24 @@ void solvePhy(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*globalRHS_DG
 
   // 1) PREDICTION STEP
 
-  pb_pc->D.lsol.solver_type=LU;//GMRES;
+  pb_pc->D.lsol.solver_type=LU;
   pb_pc->D.lsol.tol=1.e-9;
   pb_pc->D.lsol.pc_type=NONE;
   pb_pc->D.lsol.iter_max=50;
   pb_pc->D.lsol.MatVecProduct=MatVect;
 
-  //DisplayLinearSolver(&pb_pc->D.lsol);
-  //exit(0);
-
   //printf("RHS assembly.....\n");
   for (int i=0;i<pb_pc->D.nb_fe_nodes;i++){
-    pb_pc->D.lsol.rhs[i] = pb_pc->rhs_prediction[i] + globalRHS_CG[i*3];
+    pb_pc->D.lsol.rhs[i] = globalRHS_CG[i*3];
   }
   //printf("Solution...\n");
+  pb_pc->D.bc_assembly(&pb_pc->D,&pb_pc->D.lsol);
   SolveLinearSolver(&pb_pc->D.lsol,simu);
 
   // 2) PROPAGATION STEP
 
   pb_pc->Schur.lsol.pc_type=NONE;
-  pb_pc->Schur.lsol.iter_max=100;
+  pb_pc->Schur.lsol.iter_max=2000;
   pb_pc->Schur.lsol.solver_type=LU;
   pb_pc->Schur.lsol.tol=1.e-9;
   pb_pc->Schur.lsol.MatVecProduct=MatVect;
@@ -238,12 +222,18 @@ void solvePhy(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*globalRHS_DG
 
   //printf("RHS assembly.....\n");
   for (int i=0;i<pb_pc->D.nb_fe_nodes;i++){
-    pb_pc->Schur.lsol.rhs[i*2]   = pb_pc->rhs_propagation[i*2] + globalRHS_CG[i*3+1] - pb_pc->L1.lsol.sol[i];
-    pb_pc->Schur.lsol.rhs[i*2+1] = pb_pc->rhs_propagation[i*2+1] + globalRHS_CG[i*3+2] - pb_pc->L2.lsol.sol[i];
+    pb_pc->Schur.lsol.rhs[i*2]   = globalRHS_CG[i*3+1] - pb_pc->L1.lsol.sol[i];
+    pb_pc->Schur.lsol.rhs[i*2+1] = globalRHS_CG[i*3+2] - pb_pc->L2.lsol.sol[i];
+    pb_pc->Schur.lsol.sol[i*2] = 0.;
+    pb_pc->Schur.lsol.sol[i*2+1] = 0.;
   }
 
   //printf("Solution...\n");
+  pb_pc->Schur.bc_assembly(&pb_pc->Schur,&pb_pc->Schur.lsol);
   SolveLinearSolver(&pb_pc->Schur.lsol,simu);
+  //for (int i=0; i<pb_pc->D.nb_fe_nodes; i++){
+  //  printf("i=%d, U=%f, V=%f\n",i,pb_pc->Schur.lsol.sol[i*2],pb_pc->Schur.lsol.sol[i*2+1]);
+  //}
 
 
   // 3) CORRECTION STEP
@@ -274,6 +264,7 @@ void solvePhy(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*globalRHS_DG
   }
 
   //printf("Solution...\n");
+  pb_pc->D.bc_assembly(&pb_pc->D,&pb_pc->D.lsol);
   SolveLinearSolver(&pb_pc->D.lsol,simu);
 
   // 4) OUTPUT STEP

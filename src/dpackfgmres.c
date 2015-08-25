@@ -2389,7 +2389,7 @@ L51:
 /* Save the backward error on a file if convergence history requested */
 	if (ihist != 0) {	 
 	    i__1 = iterout * *m + jh;
-	    printf("   %d      %.3e      --  \n",i__1,bea);
+	    printf("   %d      %.6e      --  \n",i__1,bea);
 	}
     }
 

@@ -720,10 +720,12 @@ void GMRESSolver(LinearSolver* lsol, Simulation* simu){
   real * Ax=calloc(lsol->neq,sizeof(real));
   lsol->MatVecProduct(lsol,lsol->sol,Ax);
   real error=0;
+  real error2=0;
    for(int i = 0; i < N; i++) {
-     error=error+fabs(Ax[i]-lsol->rhs[i]);                    
+     error=error+fabs((Ax[i]-lsol->rhs[i])*(Ax[i]-lsol->rhs[i]));                    
+     error2=error2+fabs(lsol->sol[i]*lsol->sol[i]);                    
   }
-   printf(" error gmres %.5e \n",sqrt(error)); 
+   printf(" error gmres %.5e, X^2 %.5e \n",sqrt(error),sqrt(error2)); 
   
   
   free(work);
