@@ -40,8 +40,8 @@ int Test_Transport_Steady(void) {
   bool test = true;
 
   MacroMesh mesh;
-  //ReadMacroMesh(&mesh,"../test/testcube.msh");
-  ReadMacroMesh(&mesh,"../test/testdisque2d.msh");
+  ReadMacroMesh(&mesh,"../test/testcube.msh");
+  //ReadMacroMesh(&mesh,"../test/testdisque2d.msh");
   //ReadMacroMesh(&mesh,"../test/testmacromesh.msh");
   Detect2DMacroMesh(&mesh);
   
@@ -53,7 +53,7 @@ int Test_Transport_Steady(void) {
 
   Model model;
 
-   model.m=1;
+  model.m=1;
   model.NumFlux = TransNumFlux2d;
   model.BoundaryFlux = Transport_Upwind_BoundaryFlux;
   model.InitData = TestSteady_Transport_InitData;
