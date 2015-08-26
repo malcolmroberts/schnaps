@@ -87,6 +87,9 @@ typedef struct ContinuousSolver{
   //! \brief Differential operator for 2d vectorial problems
   real diff_op2vec[4][4][4];
 
+  //! \brief Differential operator for 2d vectorial (3 scalars) problems
+  real diff_op3vec[9][4][4];
+
   //! \brief pointer on the function which assembles the rhs
   //! \param[inout] lsol a linear solver allocate
   //! \param[in] a continuous solver
@@ -181,6 +184,5 @@ void MatrixPoisson_Continuous(void * cs,LinearSolver* lsol);
 
 //! \brief frees a ContinuousSolver object
 //! \param[in] cs: a ContinuousSolver object
-//! \param[in] free_simu: an integer whose purpose is to decide whether we free the Simulation object.
-void freeContinuousSolver(ContinuousSolver* cs, int free_simu);
+void freeContinuousSolver(ContinuousSolver* cs);
 #endif

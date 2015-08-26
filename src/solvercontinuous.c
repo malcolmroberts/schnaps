@@ -700,11 +700,25 @@ void extract2CGVectors(ContinuousSolver* L1Solver,ContinuousSolver* L2Solver, re
 
 
 
-void freeContinuousSolver(ContinuousSolver* cs, int free_simu){
+void freeContinuousSolver(ContinuousSolver* cs){
 
-  FreeLinearSolver(&cs->lsol);
-  free(cs->fn_list);
-  free(cs->is_boundary_node);
-  free(cs->list_of_var);
+  LinearSolver* lsol = &(cs->lsol);
+  FreeLinearSolver(lsol);
+  if (cs->fn_list!=NULL){
+    free(cs->fn_list);
+  }
+  if (cs->is_boundary_node!=NULL){
+    free(cs->is_boundary_node);
+  }
+  if (cs->list_of_var!=NULL){
+    free(cs->list_of_var);
+  }
+  if (cs->dg_to_fe_index!=NULL){
+    free(cs->dg_to_fe_index);
+  }
+  cs->bc_assembly=NULL;
+  cs->matrix_assembly=NULL;
+  cs->rhs_assembly=NULL;
+  cs->postcomputation_assembly=NULL;
 }
 

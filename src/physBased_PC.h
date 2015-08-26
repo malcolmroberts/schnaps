@@ -15,32 +15,58 @@
 //! \brief Struct managing Physics Based Preconditioners
 typedef struct PB_PC{
 
-  // \brief list containing integers (0 or 1).
+  //! \brief list containing integers (0 or 1).
   // Describes which matrices should be assembled (ordered as in the structure)
   int *list_mat2assemble;
 
-  // \brief D ContinuousSolver (matrix from Schur decomposition)
+  //! \brief D ContinuousSolver (matrix from Schur decomposition)
   ContinuousSolver D;
-  // \brief L1 ContinuousSolver (matrix from Schur decomposition)
+  //! \brief L1 ContinuousSolver (matrix from Schur decomposition)
   ContinuousSolver L1;
-  // \brief L2 ContinuousSolver (matrix from Schur decomposition)
+  //! \brief L2 ContinuousSolver (matrix from Schur decomposition)
   ContinuousSolver L2;
-  // \brief U1 ContinuousSolver (matrix from Schur decomposition)
+  //! \brief U1 ContinuousSolver (matrix from Schur decomposition)
   ContinuousSolver U1;
-  // \brief U2 ContinuousSolver (matrix from Schur decomposition)
+  //! \brief U2 ContinuousSolver (matrix from Schur decomposition)
   ContinuousSolver U2;
-  // \brief Schur ContinuousSolver (matrix from Schur decomposition)
+  //! \brief Schur ContinuousSolver (matrix from Schur decomposition)
   ContinuousSolver Schur;
 
-  // \brief Right-hand side for the prediciton step of the preconditioner
+  //! \brief Right-hand side for the prediciton step of the preconditioner
   real *rhs_prediction;
-  // \brief Right-hand side for the propagation (middle) step of the preconditioner
+  //! \brief Right-hand side for the propagation (middle) step of the preconditioner
   real *rhs_propagation;
-  // \brief Right-hand side for the correction step of the preconditioner
+  //! \brief Right-hand side for the correction step of the preconditioner
   real *rhs_correction;
+
+  Solver solver_prediction;
+  Solver solver_propagation;
+  Solver solver_correction;
+
+  PC pc_prediction;
+  PC pc_propagation;
+  PC pc_correction;
+
+  real tol_prediction;
+  real tol_propagation;
+  real tol_correction;
+
+  int itermax_prediction;
+  int itermax_propagation;
+  int itermax_correction;
+  
+  int restart_prediction;
+  int restart_propagation;
+  int restart_correction;
 
   // \brief 0 if the system is linear and 1 if not
   int nonlinear;
+
+  //! \brief provides the implementation of each operator of the corresponding system's Schur decomposition.
+  //! \param[inout] pb_pc: a PB_PC object.
+  //! \param[in] offset: An integer pointing to the "j" component of the variables.
+  void (*mat_assembly)(void* pb_pc, int offset);
+
 
 } PB_PC;
 
@@ -50,6 +76,14 @@ typedef struct PB_PC{
 // \param[in] rhsIn: Vector in DG.
 // \param[out] rhsOut: Vector in CG.
 void VectorDgToCg (ContinuousSolver * ps,real * rhsIn, real * rhsOut);
+void PiDgToCg(ContinuousSolver * cs,real * rhsIn, real * rhsOut);
+
+// \brief Takes a vector in Discontinuous Galerkin, and returns the 
+// same vector projected on the Continuous Galerkin discrete space without the application of the mass matrix.
+// \param[in] cs: ContinuousSolver object.
+// \param[in] rhsIn: Vector in DG.
+// \param[out] rhsOut: Vector in CG.
+void NewVectorDgToCg (ContinuousSolver * ps,real * rhsIn, real * rhsOut);
 
 // \brief Takes a vector in Continuous Galerkin, and returns the 
 // same vector projected on the Discontinuous Galerkin discrete space.
@@ -57,7 +91,9 @@ void VectorDgToCg (ContinuousSolver * ps,real * rhsIn, real * rhsOut);
 // \param[in] rhsIn: Vector in CG.
 // \param[out] rhsOut: Vector in DG.
 void VectorCgToDg(ContinuousSolver * cs, real * rhsIn, real * rhsOut);
+void PiInvertCgToDg(ContinuousSolver * cs,real * rhsIn, real * rhsOut);
 
+void Wave_test(ContinuousSolver* cs, real theta, real dt);
 // \brief TODOOOOOO
 void physicPC_wave(Simulation *simu, real* globalSol, real* globalRHS);
 
@@ -90,6 +126,7 @@ void InitMat_ContinuousSolver(PB_PC* pb_pc, real Dmat[4][4], real L1Mat[4][4], r
 // \param[out] globalSol: Stores the solution of the preconditioner.
 // \param[in] globalRHS: Right-hand-side containing all explicit and source terms.
 void solvePhy(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*globalRHS);
+void solvePhy_CG(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*globalRHS);
 
 // \brief Solves problem using identity CG preconditioner.
 // \param[in] pb_pc: Physics-based preconditioner (contains all the Schur decomposition)

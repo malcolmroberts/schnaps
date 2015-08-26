@@ -63,14 +63,26 @@ void FreeLinearSolver(LinearSolver* lsol){
   assert(lsol->is_alloc);
   assert(lsol->rhs);
   assert(lsol->sol);
-  free(lsol->rhs);
-  free(lsol->sol);
+  // Free rhs
+  if (lsol->rhs != NULL)
+  {
+    free(lsol->rhs);
+  }
+  // Free sol
+  if (lsol->sol != NULL)
+  {
+    free(lsol->sol);
+  }
   
   switch(lsol->storage_type) {
 
   case SKYLINE :
     FreeSkyline((Skyline*)lsol->matrix);
-    free(lsol->matrix);
+    // Free matrix
+    if (lsol->matrix != NULL)
+    {
+      free(lsol->matrix);
+    }
     break;
 
   default : 
