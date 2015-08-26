@@ -633,10 +633,10 @@ void solvePhy_CG(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*globalRHS
   //pb_pc->Schur.lsol.pc_type=pb_pc->pc_propagation;
   //pb_pc->Schur.lsol.iter_max=pb_pc->itermax_propagation;
   //pb_pc->Schur.lsol.restart_gmres=pb_pc->restart_propagation;
-  pb_pc->Schur.lsol.pc_type=NONE;
-  pb_pc->Schur.lsol.iter_max=2000;
   pb_pc->Schur.lsol.solver_type=LU;
   pb_pc->Schur.lsol.tol=1.e-9;
+  pb_pc->Schur.lsol.pc_type=NONE;
+  pb_pc->Schur.lsol.iter_max=2000;
 
   pb_pc->Schur.lsol.MatVecProduct=MatVect;
   pb_pc->L1.lsol.MatVecProduct=MatVect;
@@ -686,9 +686,9 @@ void solvePhy_CG(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*globalRHS
   //pb_pc->U2.lsol.MatVecProduct(&pb_pc->U2.lsol,solU2,pb_pc->U2.lsol.sol);
 
   //printf("RHS assembly.....\n");
-  //for (int i=0;i<pb_pc->D.nb_fe_nodes;i++){
-  //  pb_pc->D.lsol.rhs[i] += - pb_pc->L1.lsol.sol[i] - pb_pc->L2.lsol.sol[i];
-  //}
+  for (int i=0;i<pb_pc->D.nb_fe_nodes;i++){
+    pb_pc->D.lsol.rhs[i] += - pb_pc->L1.lsol.sol[i] - pb_pc->L2.lsol.sol[i];
+  }
 
   //printf("Solution...\n");
   pb_pc->D.bc_assembly(&pb_pc->D,&pb_pc->D.lsol);

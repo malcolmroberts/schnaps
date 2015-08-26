@@ -615,6 +615,10 @@ void GMRESSolver(LinearSolver* lsol, Simulation* simu){
      InitPhy_Wave(simu, &pb_pc, mat2assemble);
      icntl[4]  = 2;
   }
+  else if (lsol->pc_type == JACOBI){
+    icntl[4] = 2;
+  }
+  bool is_CG = true;
    
      
   cntl[1]  = lsol->tol; //       ! stopping tolerance
@@ -693,7 +697,15 @@ void GMRESSolver(LinearSolver* lsol, Simulation* simu){
   else if(revcom == precondRight)  {
     if(lsol->pc_type == PHY_BASED){
       //solveIdentity(&pb_pc,simu,loc_z,loc_x);
-      solvePhy(&pb_pc,simu,loc_z,loc_x);
+      if (is_CG){
+        solvePhy_CG(&pb_pc,simu,loc_z,loc_x);
+      }
+      else {
+        solvePhy(&pb_pc,simu,loc_z,loc_x);
+      }
+    }
+    else if (lsol->pc_type == JACOBI){
+      solveJacobi(lsol,simu,loc_z,loc_x);
     }
     else {
       // work(colz) <-- M-1 * work(colx)  
@@ -733,7 +745,7 @@ void GMRESSolver(LinearSolver* lsol, Simulation* simu){
      error=error+fabs((Ax[i]-lsol->rhs[i])*(Ax[i]-lsol->rhs[i]));                    
      error2=error2+fabs(lsol->sol[i]*lsol->sol[i]);                    
   }
-   printf(" error gmres %.5e, X^2 %.5e \n",sqrt(error),sqrt(error2)); 
+   printf(" error gmres %.5e, X^2 %.5e, %5.e \n",sqrt(error),sqrt(error2),sqrt(error/error2)); 
   
   
   free(work);
@@ -890,4 +902,12 @@ void SolveJFLinearSolver(JFLinearSolver* lsol,Simulation * simu){
   free(loc_z);
 
 
+}
+
+void solveJacobi(LinearSolver *lsol, Simulation* simu, real* sol, real* rhs){
+
+  for (int i=0;i<lsol->neq; i++){
+    assert(GetLinearSolver(lsol,i,i)!=0);
+    sol[i]=rhs[i]/GetLinearSolver(lsol,i,i);
+  }
 }
