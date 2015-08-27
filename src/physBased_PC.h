@@ -146,4 +146,5 @@ void GenericOperator(PB_PC* pb_pc);
 // \param[in] pb_pc: The working preconditioner.
 void reset(PB_PC* pb_pc);
 
+void solveIdentity_CG(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*globalRHS);
 #endif

@@ -618,7 +618,7 @@ void GMRESSolver(LinearSolver* lsol, Simulation* simu){
   else if (lsol->pc_type == JACOBI){
     icntl[4] = 2;
   }
-  bool is_CG = true;
+  bool is_CG = false;
    
      
   cntl[1]  = lsol->tol; //       ! stopping tolerance
@@ -656,6 +656,15 @@ void GMRESSolver(LinearSolver* lsol, Simulation* simu){
     work[N+ivec+1]    = lsol->rhs[ivec];
   }
 
+  real * Ax0=calloc(lsol->neq,sizeof(real));
+  lsol->MatVecProduct(lsol,lsol->sol,Ax0);
+  real error0=0;
+  real error02=0;
+   for(int i = 0; i < N; i++) {
+     error0=error0+fabs((Ax0[i]-lsol->rhs[i])*(Ax0[i]-lsol->rhs[i]));                    
+     error02=error02+fabs(lsol->sol[i]*lsol->sol[i]);                    
+  }
+   printf(" error gmres %.5e, X^2 %.5e, %5.e \n",sqrt(error0),sqrt(error02),sqrt(error0/error02)); 
   
   //*****************************************
   //** Reverse communication implementation
@@ -696,12 +705,13 @@ void GMRESSolver(LinearSolver* lsol, Simulation* simu){
 
   else if(revcom == precondRight)  {
     if(lsol->pc_type == PHY_BASED){
-      //solveIdentity(&pb_pc,simu,loc_z,loc_x);
       if (is_CG){
         solvePhy_CG(&pb_pc,simu,loc_z,loc_x);
+        //solveIdentity_CG(&pb_pc,simu,loc_z,loc_x);
       }
       else {
         solvePhy(&pb_pc,simu,loc_z,loc_x);
+        //solveIdentity(&pb_pc,simu,loc_z,loc_x);
       }
     }
     else if (lsol->pc_type == JACOBI){

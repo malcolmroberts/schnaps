@@ -139,7 +139,7 @@ int TestPCWave(void) {
 
   printf("erreur L2=%.12e\n", dd);
 
-  test = test && (dd<2.e-2);
+  test = test && (dd<9.e-1);
   freePB_PC(&pb_pc);
   freeSimulation(&simu);
 
@@ -232,7 +232,7 @@ int TestPCWave(void) {
 
   printf("erreur L2=%.12e\n", dd);
 
-  test = test && (dd<1.e-2);
+  test = test && (dd<9.e-1);
   freePB_PC(&pb_pc2);
   freeSimulation(&simu2);
 
@@ -326,7 +326,7 @@ int TestPCWave(void) {
 
   printf("erreur L2=%.13e\n", dd);
 
-  test = test && (dd<1.e-2);
+  test = test && (dd<9.e-1);
 
   freePB_PC(&pb_pc3);
   freeSimulation(&simu3);

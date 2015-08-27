@@ -74,10 +74,10 @@
 //  pb_pc->U1.lsol.MatVecProduct=MatVect;
 //  pb_pc->U2.lsol.MatVecProduct=MatVect;
 //  pb_pc->Schur.lsol.MatVecProduct=MatVect;
-//  pb_pc->D.bc_assembly=ExactDirichletContinuousMatrix;
-//  pb_pc->U1.bc_assembly=ExactDirichletContinuousMatrix;
-//  pb_pc->U2.bc_assembly=ExactDirichletContinuousMatrix;
-//  pb_pc->Schur.bc_assembly=ExactDirichletContinuousMatrix;
+//  pb_pc->D.bc_assembly=ExactDirichletContinuousMatrix_PC;
+//  pb_pc->U1.bc_assembly=ExactDirichletContinuousMatrix_PC;
+//  pb_pc->U2.bc_assembly=ExactDirichletContinuousMatrix_PC;
+//  pb_pc->Schur.bc_assembly=ExactDirichletContinuousMatrix_PC;
 //
 //  pb_pc->solver_prediction=LU;
 //  pb_pc->solver_propagation=LU;
@@ -162,10 +162,10 @@
 //  pb_pc->U1.lsol.MatVecProduct=MatVect;
 //  pb_pc->U2.lsol.MatVecProduct=MatVect;
 //  pb_pc->Schur.lsol.MatVecProduct=MatVect;
-//  pb_pc->D.bc_assembly=ExactDirichletContinuousMatrix;
-//  pb_pc->U1.bc_assembly=ExactDirichletContinuousMatrix;
-//  pb_pc->U2.bc_assembly=ExactDirichletContinuousMatrix;
-//  pb_pc->Schur.bc_assembly=ExactDirichletContinuousMatrix;
+//  pb_pc->D.bc_assembly=ExactDirichletContinuousMatrix_PC;
+//  pb_pc->U1.bc_assembly=ExactDirichletContinuousMatrix_PC;
+//  pb_pc->U2.bc_assembly=ExactDirichletContinuousMatrix_PC;
+//  pb_pc->Schur.bc_assembly=ExactDirichletContinuousMatrix_PC;
 //  // Allocating all sub-equations right-hand sides
 //  pb_pc->rhs_prediction = malloc(pb_pc->D.lsol.neq*sizeof(real));
 //  pb_pc->rhs_propagation = malloc(pb_pc->Schur.lsol.neq*sizeof(real));
@@ -463,8 +463,8 @@ void solvePhy(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*globalRHS_DG
   }
 
   // 0)2) Second, initialize all penalization right-hand-sides
-  pb_pc->D.bc_assembly=ExactDirichletContinuousMatrix;
-  pb_pc->Schur.bc_assembly=ExactDirichletContinuousMatrix;
+  pb_pc->D.bc_assembly=ExactDirichletContinuousMatrix_PC;
+  pb_pc->Schur.bc_assembly=ExactDirichletContinuousMatrix_PC;
 
   // Parsing globalRHS (in DG) into a CG vector
   ContinuousSolver waveSolver;
@@ -592,8 +592,8 @@ void solvePhy_CG(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*globalRHS
   }
 
   // 0)2) Second, initialize all penalization right-hand-sides
-  pb_pc->D.bc_assembly=ExactDirichletContinuousMatrix;
-  pb_pc->Schur.bc_assembly=ExactDirichletContinuousMatrix;
+  pb_pc->D.bc_assembly=ExactDirichletContinuousMatrix_PC;
+  pb_pc->Schur.bc_assembly=ExactDirichletContinuousMatrix_PC;
 
   // Parsing globalRHS (in DG) into a CG vector
   ContinuousSolver waveSolver;
@@ -708,55 +708,6 @@ void solvePhy_CG(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*globalRHS
   free(solU1);
   free(solU2);
 }
-
-//void NewVectorDgToCg(ContinuousSolver * cs,real * rhsIn, real * rhsOut){
-//  
-//  field* f = &cs->simu->fd[0];
-//  real* coeff = calloc(cs->nb_fe_nodes, sizeof(real));
-//  real* rhsCopy = calloc(cs->nb_dg_nodes*f->model.m, sizeof(real));
-//
-//  for (int i=0;i<cs->nb_dg_nodes*f->model.m; i++) rhsCopy[i]=rhsIn[i];
-//  
-//  // right hand side assembly
-//  for(int ino = 0; ino < cs->nb_fe_dof; ino++){
-//    rhsOut[ino] = 0;
-//  }
-//
-//  for(int ie = 0; ie < cs->nbel; ie++){  
-//
-//    int iemacro  = ie / (f->raf[0] * f->raf[1] * f->raf[2]);
-//    int isubcell = ie % (f->raf[0] * f->raf[1] * f->raf[2]);
-//    
-// 
-//    for(int iloc = 0; iloc < cs->nnodes; iloc++){
-//      real wpg;
-//      real xref[3];
-//      int ilocmacro = iloc + isubcell * cs->nnodes;
-//      ref_pg_vol(f->deg,f->raf,ilocmacro,xref,&wpg,NULL);
-//      real dtau[3][3],codtau[3][3];
-//      Ref2Phy(cs->simu->fd[iemacro].physnode,
-//	      xref,NULL,0,NULL,
-//	      dtau,codtau,NULL,NULL);
-//      real det = dot_product(dtau[0], codtau[0]);	
-//      int ino_dg = iloc + ie * cs->nnodes;
-//      int ino_fe = cs->dg_to_fe_index[ino_dg];
-//      coeff[ino_fe] += wpg * det; // We need to multiply by the member of dg node for 1 fe node.
-//      for (int iv=0; iv<cs->nb_phy_vars;iv++){ 
-//        int imem = f->varindex(f->deg,f->raf,f->model.m,
-//		          ilocmacro,cs->list_of_var[iv]) ;
-//
-//        rhsOut[iv + cs->nb_phy_vars * ino_fe] += rhsCopy[imem] * wpg * det;//rhs[imem] * wpg * det; 
-//      }
-//    }
-//  }
-//  for (int i=0; i<cs->nb_fe_nodes;i++){
-//    for (int iv=0; iv<cs->nb_phy_vars;iv++){
-//      rhsOut[iv+cs->nb_phy_vars*i]/=coeff[i];//*coeff[i];
-//    }
-//  }
-//  free(coeff);
-//  free(rhsCopy);
-//}
 
 void VectorDgToCg(ContinuousSolver * cs,real * rhsIn, real * rhsOut){
   
@@ -1347,3 +1298,4 @@ for (int i=0;i<cs->nb_dg_nodes;i++){
  free(coeff);
 
 }
+

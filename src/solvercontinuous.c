@@ -341,6 +341,25 @@ void ExactDirichletContinuousMatrix(void * cs,LinearSolver* lsol){
   }
 }
 
+void ExactDirichletContinuousMatrix_PC(void * cs,LinearSolver* lsol){
+  ContinuousSolver * ps=cs;
+  
+  field* f0 = &ps->simu->fd[0];
+
+  for(int ino=0; ino<ps->nb_fe_nodes; ino++){
+    if (ps->is_boundary_node[ino]){
+      for (int iv=0; iv<ps->nb_phy_vars;iv++){
+        int iBord = ps->nb_phy_vars*ino+iv;
+        for(int i=0; i<ps->nb_fe_dof; i++){
+          SetLinearSolver(&ps->lsol,iBord,i,0.);
+          //SetLinearSolver(&ps->lsol,i,iBord,0.);
+        }
+        SetLinearSolver(&ps->lsol,iBord,iBord,1.);
+      }
+    }
+  }
+  ps->lsol.mat_is_assembly=true;
+}
 
 void PenalizedDirichletContinuousMatrix(void * cs,LinearSolver* lsol){
   ContinuousSolver * ps=cs;

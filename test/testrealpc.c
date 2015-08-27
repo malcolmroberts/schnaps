@@ -38,7 +38,7 @@ int Testrealpc(void) {
 
   bool test = true;
   real dd;
-  int test1_ok=0,test2_ok=0,test3_ok=0,test4_ok=0,test5_ok=1;
+  int test1_ok=0,test2_ok=0,test3_ok=1,test4_ok=0,test5_ok=0;
 
 
 #ifdef PARALUTION 
@@ -274,7 +274,7 @@ int Testrealpc(void) {
     model3.Source = NULL;
 
     int deg3[]={4, 4, 0};
-    int raf3[]={30, 30, 1};
+    int raf3[]={4, 4, 1};
 
 
     CheckMacroMesh(&mesh, deg3, raf3);
@@ -513,9 +513,9 @@ int Testrealpc(void) {
 
     real theta5=0.5;
     simu5.theta=theta5;
-    simu5.dt=0.05;//0.001667;
+    simu5.dt=0.01;//0.001667;
     simu5.vmax=_SPEED_WAVE;
-    real tmax5=4*simu5.dt;//;0.5;
+    real tmax5=0.2;//*simu5.dt;//;0.5;
 
     int itermax5=tmax5/simu5.dt;
     simu5.itermax_rk=itermax5;
@@ -524,9 +524,9 @@ int Testrealpc(void) {
     real *wCG = calloc(size, sizeof(real));
 
     csSolve.lsol.solver_type=GMRES;
-    csSolve.lsol.tol=1.e-8;
+    csSolve.lsol.tol=1.e-10;
     csSolve.lsol.pc_type=PHY_BASED;
-    csSolve.lsol.iter_max=53;
+    csSolve.lsol.iter_max=2000;
     csSolve.lsol.restart_gmres=30;
     csSolve.bc_assembly=ExactDirichletContinuousMatrix;
     cs.bc_assembly=ExactDirichletContinuousMatrix;
@@ -565,7 +565,7 @@ int Testrealpc(void) {
       //solvePhy_CG(&pb_pc5,&simu5, csSolve.lsol.sol, csSolve.lsol.rhs);
       for (int i=0; i<size; i++){
         wCG[i] = csSolve.lsol.sol[i];
-        csSolve.lsol.sol[i]=0.;
+        //csSolve.lsol.sol[i]=0.;
       }
       int freq = (1 >= simu5.itermax_rk / 10)? 1 : simu5.itermax_rk / 10;
       if (tstep % freq == 0)
