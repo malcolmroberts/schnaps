@@ -36,13 +36,6 @@
 doc/html/
 doc/latex/
 
-dgerror.msh
-dgvisu*.msh
-error.msh
-geo/disque.msh
-visu.msh
-
-
 
 #output files
 *.csv
@@ -55,9 +48,6 @@ testfieldrk2_cl
 /build/
 
 
-wisdom3.txt
-
-paralution-1.0.0-prefix
 
 *.dat
 *.pdf
