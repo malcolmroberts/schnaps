@@ -38,7 +38,7 @@ int Testrealpc(void) {
 
   bool test = true;
   real dd;
-  int test1_ok=0,test2_ok=0,test3_ok=0,test4_ok=0,test5_ok=1;
+  int test1_ok=0,test2_ok=0,test3_ok=0,test4_ok=1,test5_ok=0;
 
 
 #ifdef PARALUTION 
@@ -369,27 +369,15 @@ int Testrealpc(void) {
   if(test4_ok==1){
     Model model4;
 
-    //model4.m = 3; 
-    //model4.NumFlux=Wave_Upwind_NumFlux;
-    //model4.InitData = TestPeriodic_Wave_InitData;
-    //model4.ImposedData = TestPeriodic_Wave_ImposedData;
-    //model4.BoundaryFlux = Wave_Upwind_BoundaryFlux;
-    //model4.Source = NULL;
-    //model4.m = 3; 
-    //model4.NumFlux=Wave_Upwind_NumFlux;
-    //model4.InitData = SteadyStateTwo_InitData;
-    //model4.ImposedData = SteadyStateTwo_ImposedData;
-    //model4.BoundaryFlux = SteadyStateTwo_BoundaryFlux;
-    //model4.Source = SteadyStateTwo_Source;
     model4.m = 3; 
     model4.NumFlux=Wave_Upwind_NumFlux;
-    model4.InitData = SteadyStateOne_InitData;
-    model4.ImposedData = SteadyStateOne_ImposedData;
-    model4.BoundaryFlux = SteadyStateOne_BoundaryFlux;
-    model4.Source = SteadyStateOne_Source;
+    model4.InitData = SteadyStateTwo_InitData;
+    model4.ImposedData = SteadyStateTwo_ImposedData;
+    model4.BoundaryFlux = SteadyStateTwo_BoundaryFlux;
+    model4.Source = SteadyStateTwo_Source;
 
     int deg4[]={4, 4, 0};
-    int raf4[]={4, 4, 1};
+    int raf4[]={8, 8, 1};
 
 
     assert(mesh.is2d);
@@ -412,7 +400,7 @@ int Testrealpc(void) {
 
     real theta4=0.5;
     simu4.theta=theta4;
-    simu4.dt=0.5;//0.001667;
+    simu4.dt=115;//0.001667;
     simu4.vmax=_SPEED_WAVE;
     real tmax4=5*simu4.dt;//10*simu.dt;//;0.5;
 
@@ -425,7 +413,7 @@ int Testrealpc(void) {
     csSolve.lsol.solver_type=GMRES;
     csSolve.lsol.tol=1.e-8;
     csSolve.lsol.pc_type=PHY_BASED;
-    csSolve.lsol.iter_max=200;
+    csSolve.lsol.iter_max=2000;
     csSolve.lsol.restart_gmres=30;
     csSolve.lsol.is_CG=true;
     csSolve.bc_assembly=ExactDirichletContinuousMatrix;
@@ -457,7 +445,6 @@ int Testrealpc(void) {
       SolveLinearSolver(&csSolve.lsol,&simu4);
       for (int i=0; i<size; i++){
         wCG[i] = csSolve.lsol.sol[i];
-        csSolve.lsol.sol[i]=0.;
       }
       int freq = (1 >= simu4.itermax_rk / 10)? 1 : simu4.itermax_rk / 10;
       if (tstep % freq == 0)
@@ -485,7 +472,7 @@ int Testrealpc(void) {
     model5.Source = NULL;
 
     int deg5[]={4, 4, 0};
-    int raf5[]={8, 8, 1};
+    int raf5[]={10, 10, 1};
 
     assert(mesh.is2d);
 
@@ -507,9 +494,9 @@ int Testrealpc(void) {
 
     real theta5=0.5;
     simu5.theta=theta5;
-    simu5.dt=0.01;//0.001667;
+    simu5.dt=150;//0.001667;
     simu5.vmax=_SPEED_WAVE;
-    real tmax5=0.2;//*simu5.dt;//;0.5;
+    real tmax5=2*simu5.dt;//;0.5;
 
     int itermax5=tmax5/simu5.dt;
     simu5.itermax_rk=itermax5;
@@ -518,9 +505,9 @@ int Testrealpc(void) {
     real *wCG = calloc(size, sizeof(real));
 
     csSolve.lsol.solver_type=GMRES;
-    csSolve.lsol.tol=1.e-10;
+    csSolve.lsol.tol=1.e-8;
     csSolve.lsol.pc_type=PHY_BASED;
-    csSolve.lsol.iter_max=2000;
+    csSolve.lsol.iter_max=50000;
     csSolve.lsol.restart_gmres=30;
     csSolve.lsol.is_CG=true;
     csSolve.bc_assembly=ExactDirichletContinuousMatrix;
@@ -580,9 +567,10 @@ void SteadyStateOne_ImposedData(const real *xy, const real t, real *w) {
   real x=xy[0];
   real y=xy[1];
 
-  w[0] = 10.+exp(x)+exp(2*y); // 10+x*x+y*y*y
-  w[1] = 0.2*x*x*x*x*x*y-y*y*y+2;
-  w[2] = x-y*y*x*x*x*x*0.5+5.6;
+  w[0] = 10.;//+exp(x)+exp(2*y); // 10+x*x+y*y*y
+  w[1] = 0.2*x*x*x*x*x*y-exp(y)+2;
+  w[2] = exp(x)-x*x*x*x*y*y*0.5+5.6;
+
 }
 
 void SteadyStateTwo_ImposedData(const real *xy, const real t, real *w) {
@@ -610,8 +598,8 @@ void SteadyStateOne_Source(const real *xy, const real t, const real *w, real *S)
   real y=xy[1];
 
   S[0] = 0;
-  S[1] = exp(x);//2*x;
-  S[2] = 2*exp(2*y);//3*y*y;
+  S[1] = 0;//exp(x);//2*x;
+  S[2] = 0;//2*exp(2*y);//3*y*y;
 
   S[0] *= _SPEED_WAVE;
   S[1] *= _SPEED_WAVE;

@@ -435,6 +435,7 @@ void Init_PhyBasedPC_SchurPressure_Wave(Simulation *simu, PB_PC* pb_pc, int* lis
   int * listvarD = calloc(nb_varD,sizeof(int));
   listvarD[0]=1;
   listvarD[1]=2;
+  
   int nb_varL1 = 1;
   int * listvarL1 = calloc(nb_varL1,sizeof(int));
   listvarL1[0]=0;
@@ -442,11 +443,12 @@ void Init_PhyBasedPC_SchurPressure_Wave(Simulation *simu, PB_PC* pb_pc, int* lis
   int * listvarL2 = calloc(nb_varL2,sizeof(int));
   listvarL2[0]=1;
   int nb_varU1 = 1;
+  
   int * listvarU1 = calloc(nb_varU1,sizeof(int));
   listvarU1[0]=0;
   int nb_varU2 = 1;
   int * listvarU2 = calloc(nb_varU2,sizeof(int));
-  listvarU2[0]=0;
+  listvarU2[0]=1;
   int nb_varSchur = 1;
   int * listvarSchur = calloc(nb_varSchur,sizeof(int));
   listvarSchur[0]=0;
@@ -522,7 +524,7 @@ void Init_PhyBasedPC_SchurPressure_Wave(Simulation *simu, PB_PC* pb_pc, int* lis
   // Assembling all operators' matrices
   GenericOperator_PBPC_Pressure(pb_pc);
 
-  // 0)2) Second, initialize all penalization right-hand-sides
+  // For the Schur the the condition is Neumann
   pb_pc->D.bc_assembly=ExactDirichletContinuousMatrix_PC;
   pb_pc->Schur.bc_assembly=ExactDirichletContinuousMatrix_PC;
 
@@ -537,9 +539,9 @@ void Init_PhyBasedPC_SchurPressure_Wave(Simulation *simu, PB_PC* pb_pc, int* lis
   pb_pc->U2.lsol.MatVecProduct=MatVect;
 
   //// Allocating all sub-equations right-hand sides
-  pb_pc->rhs_prediction = malloc(pb_pc->D.lsol.neq*sizeof(real));
-  pb_pc->rhs_propagation = malloc(pb_pc->Schur.lsol.neq*sizeof(real));
-  pb_pc->rhs_correction = malloc(pb_pc->D.lsol.neq*sizeof(real));
+  pb_pc->rhs_prediction = calloc(pb_pc->D.lsol.neq,sizeof(real));
+  pb_pc->rhs_propagation = calloc(pb_pc->Schur.lsol.neq,sizeof(real));
+  pb_pc->rhs_correction = calloc(pb_pc->D.lsol.neq,sizeof(real));
 
 }
 
@@ -885,13 +887,16 @@ void PhyBased_PC_InvertSchur_CG(PB_PC* pb_pc, Simulation *simu, real* globalSol,
 
   //printf("RHS assembly.....\n");
   for (int i=0;i<pb_pc->D.nb_fe_nodes;i++){
-    pb_pc->D.lsol.rhs[i*2] = pb_pc->D.lsol.rhs[i*2] - pb_pc->L1.lsol.sol[i];
+    pb_pc->D.lsol.rhs[i*2] = pb_pc->D.lsol.rhs[i*2]- pb_pc->L1.lsol.sol[i];
     pb_pc->D.lsol.rhs[i*2+1] =  pb_pc->D.lsol.rhs[i*2+1] - pb_pc->L2.lsol.sol[i];
   }
 
   //printf("Solution...\n");
-  SolveLinearSolver(&pb_pc->D.lsol,simu);
+   SolveLinearSolver(&pb_pc->D.lsol,simu);
 
+
+
+  
   // 4) OUTPUT STEP
 
   // Final concatenation
@@ -900,6 +905,71 @@ void PhyBased_PC_InvertSchur_CG(PB_PC* pb_pc, Simulation *simu, real* globalSol,
   freeContinuousSolver(&waveSolver);
   free(solU1);
   free(solU2);
+}
+
+
+void PhyBased_PC_InvertSchur2_CG(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*globalRHS){
+  
+  // 0)1) Reset everything (needed for time evolution)
+  reset(pb_pc);
+
+  // Assembling all operators' matrices
+  if(pb_pc->nonlinear == 1){
+    GenericOperator_PBPC_Pressure(pb_pc);
+  }
+
+  // Parsing globalRHS (in DG) into a CG vector
+  ContinuousSolver waveSolver;
+  int nb_var = 3;
+  int * listvarGlobal = calloc(nb_var, sizeof(int));
+  listvarGlobal[0]=0;
+  listvarGlobal[1]=1;
+  listvarGlobal[2]=2;
+  InitContinuousSolver(&waveSolver,simu,1,nb_var,listvarGlobal);
+  free(listvarGlobal);
+
+  // 2) PROPAGATION STEP
+
+  pb_pc->Schur.lsol.solver_type=pb_pc->solver_propagation;
+  pb_pc->Schur.lsol.tol=pb_pc->tol_propagation;
+  pb_pc->Schur.lsol.pc_type=pb_pc->pc_propagation;
+  pb_pc->Schur.lsol.iter_max=pb_pc->itermax_propagation;
+  pb_pc->Schur.lsol.restart_gmres=pb_pc->restart_propagation;
+ 
+  //printf("RHS assembly.....\n");
+  for (int i=0;i<pb_pc->D.nb_fe_nodes;i++){
+    pb_pc->Schur.lsol.rhs[i]   = globalRHS[i*3];
+  }
+
+  //printf("Solution...\n");
+  SolveLinearSolver(&pb_pc->Schur.lsol,simu);
+
+  // 3) CORRECTION STEP
+
+  pb_pc->D.lsol.solver_type=pb_pc->solver_correction;
+  pb_pc->D.lsol.tol=pb_pc->tol_correction;
+  pb_pc->D.lsol.pc_type=pb_pc->pc_correction;
+  pb_pc->D.lsol.iter_max=pb_pc->itermax_correction;
+  pb_pc->D.lsol.restart_gmres=pb_pc->restart_correction;
+  
+  pb_pc->L1.lsol.MatVecProduct(&pb_pc->L1.lsol,pb_pc->Schur.lsol.sol,pb_pc->L1.lsol.sol);
+  pb_pc->L2.lsol.MatVecProduct(&pb_pc->L2.lsol,pb_pc->Schur.lsol.sol,pb_pc->L2.lsol.sol);
+
+  //printf("RHS assembly.....\n");
+  for (int i=0;i<pb_pc->D.nb_fe_nodes;i++){
+    pb_pc->D.lsol.rhs[i*2] = globalRHS[i*3+1] - pb_pc->L1.lsol.sol[i];
+    pb_pc->D.lsol.rhs[i*2+1] =  globalRHS[i*3+2] - pb_pc->L2.lsol.sol[i];
+  }
+
+  //printf("Solution...\n");
+  SolveLinearSolver(&pb_pc->D.lsol,simu);
+
+
+
+  // Final concatenation
+  cat2CGVectors(&pb_pc->D,&pb_pc->Schur,pb_pc->D.lsol.sol,pb_pc->Schur.lsol.sol,globalSol);
+
+  freeContinuousSolver(&waveSolver);
 }
 
 void VectorDgToCg(ContinuousSolver * cs,real * rhsIn, real * rhsOut){

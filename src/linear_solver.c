@@ -613,8 +613,8 @@ void GMRESSolver(LinearSolver* lsol, Simulation* simu){
   PB_PC pb_pc;
   if(lsol->pc_type == PHY_BASED){
      int mat2assemble[6] = {1, 1, 1, 1, 1, 1};
-     Init_PhyBasedPC_SchurVelocity_Wave(simu, &pb_pc, mat2assemble);
-     //Init_PhyBasedPC_SchurPressure_Wave(simu, &pb_pc, mat2assemble);
+     //Init_PhyBasedPC_SchurVelocity_Wave(simu, &pb_pc, mat2assemble);
+     Init_PhyBasedPC_SchurPressure_Wave(simu, &pb_pc, mat2assemble);
      Init_Parameters_PhyBasedPC(&pb_pc);
      icntl[4]  = 2;
   }
@@ -699,8 +699,8 @@ void GMRESSolver(LinearSolver* lsol, Simulation* simu){
   else if(revcom == precondRight)  {
     if(lsol->pc_type == PHY_BASED){
       if (lsol->is_CG){
-        PhyBased_PC_CG(&pb_pc,simu,loc_z,loc_x);
-	//PhyBased_PC_InvertSchur_CG(&pb_pc,simu,loc_z,loc_x);
+        //PhyBased_PC_CG(&pb_pc,simu,loc_z,loc_x);
+	PhyBased_PC_InvertSchur2_CG(&pb_pc,simu,loc_z,loc_x);
       }
       else {
         PhyBased_PC_DG(&pb_pc,simu,loc_z,loc_x);
