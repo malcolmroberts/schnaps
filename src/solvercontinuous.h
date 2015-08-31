@@ -181,10 +181,14 @@ void catGradients(ContinuousSolver* L1Solver,ContinuousSolver* L2Solver, real *L
 //! TODOODODODODOOD
 void extract2CGVectors(ContinuousSolver* L1Solver,ContinuousSolver* L2Solver, real *L, real *L1, real *L2);
 
-//! TODOODODODODOOD
-void MatrixPoisson_Continuous(void * cs,LinearSolver* lsol);
 
 //! \brief frees a ContinuousSolver object
 //! \param[in] cs: a ContinuousSolver object
 void freeContinuousSolver(ContinuousSolver* cs);
+
+//! \brief compute the local operator fo the wave weak form
+//! \param[in] cs: a ContinuousSolver object
+//! \param[in] theta: a coeffcient
+//! \param[in] dt: a time step
+void Wave_test(ContinuousSolver* cs, real theta, real dt);
 #endif

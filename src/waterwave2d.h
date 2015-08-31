@@ -4,7 +4,7 @@
 #include "model.h"
 
 
-#define _SPEED_WAVE (10)
+#define _SPEED_WAVE (1)
 
 #define _LENGTH_DOMAIN (1.0)
 

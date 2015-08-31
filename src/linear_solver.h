@@ -44,6 +44,9 @@ typedef struct LinearSolver{
   //! solver type;
   Solver solver_type;
 
+  //! solver type;
+  bool is_CG;
+
   //! name of the storage method;
   PC pc_type; 
 

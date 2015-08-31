@@ -38,7 +38,7 @@ int Testrealpc(void) {
 
   bool test = true;
   real dd;
-  int test1_ok=0,test2_ok=0,test3_ok=1,test4_ok=0,test5_ok=0;
+  int test1_ok=0,test2_ok=0,test3_ok=0,test4_ok=0,test5_ok=1;
 
 
 #ifdef PARALUTION 
@@ -427,13 +427,9 @@ int Testrealpc(void) {
     csSolve.lsol.pc_type=PHY_BASED;
     csSolve.lsol.iter_max=200;
     csSolve.lsol.restart_gmres=30;
+    csSolve.lsol.is_CG=true;
     csSolve.bc_assembly=ExactDirichletContinuousMatrix;
-    //csSolve.lsol.mat_is_CG=true;
 
-    PB_PC pb_pc4;
-    int mat2assemble4[6] = {1, 1, 1, 1, 1, 1};
-    InitPhy_Wave(&simu4, &pb_pc4, mat2assemble4);
-    //InitParameters_PC(&simu, &pb_pc);
 
     Wave_test(&cs,-(1.0-simu4.theta),simu4.dt);
     Generic(&cs);
@@ -459,7 +455,6 @@ int Testrealpc(void) {
       }
       csSolve.bc_assembly(&csSolve, &csSolve.lsol);
       SolveLinearSolver(&csSolve.lsol,&simu4);
-      //solvePhy_CG(&pb_pc4,&simu4, csSolve.lsol.sol, csSolve.lsol.rhs);
       for (int i=0; i<size; i++){
         wCG[i] = csSolve.lsol.sol[i];
         csSolve.lsol.sol[i]=0.;
@@ -474,7 +469,6 @@ int Testrealpc(void) {
     printf("erreur L2=%.12e\n", dd);
 
     test = test && (dd<2.e-2);
-    freePB_PC(&pb_pc4);
     freeSimulation(&simu4);
   }
   printf("//////////////////////////////////////\n");
@@ -528,14 +522,9 @@ int Testrealpc(void) {
     csSolve.lsol.pc_type=PHY_BASED;
     csSolve.lsol.iter_max=2000;
     csSolve.lsol.restart_gmres=30;
+    csSolve.lsol.is_CG=true;
     csSolve.bc_assembly=ExactDirichletContinuousMatrix;
     cs.bc_assembly=ExactDirichletContinuousMatrix;
-    //csSolve.lsol.mat_is_CG=true;
-
-    PB_PC pb_pc5;
-    int mat2assemble5[6] = {1, 1, 1, 1, 1, 1};
-    InitPhy_Wave(&simu5, &pb_pc5, mat2assemble5);
-    //InitParameters_PC(&simu, &pb_pc);
 
     Wave_test(&cs,-(1.0-simu5.theta),simu5.dt);
     Generic(&cs);
@@ -551,7 +540,6 @@ int Testrealpc(void) {
 
     for(int tstep=0;tstep<simu5.itermax_rk;tstep++){
 
-      //cs.bc_assembly(&cs, &cs.lsol);
       MatVect(&cs.lsol,wCG,resCG);
       simu5.tnow=simu5.tnow+simu5.dt;
       for(int ie=0; ie < simu5.macromesh.nbelems; ++ie){
@@ -562,10 +550,8 @@ int Testrealpc(void) {
       }
       csSolve.bc_assembly(&csSolve, &csSolve.lsol);
       SolveLinearSolver(&csSolve.lsol,&simu5);
-      //solvePhy_CG(&pb_pc5,&simu5, csSolve.lsol.sol, csSolve.lsol.rhs);
       for (int i=0; i<size; i++){
         wCG[i] = csSolve.lsol.sol[i];
-        //csSolve.lsol.sol[i]=0.;
       }
       int freq = (1 >= simu5.itermax_rk / 10)? 1 : simu5.itermax_rk / 10;
       if (tstep % freq == 0)
@@ -577,7 +563,6 @@ int Testrealpc(void) {
     printf("erreur L2=%.12e\n", dd);
 
     test = test && (dd<5.e-2);
-    freePB_PC(&pb_pc5);
     freeSimulation(&simu5);
   }
 
@@ -595,7 +580,7 @@ void SteadyStateOne_ImposedData(const real *xy, const real t, real *w) {
   real x=xy[0];
   real y=xy[1];
 
-  w[0] = 10.;//+exp(x)+exp(2*y); // 10+x*x+y*y*y
+  w[0] = 10.+exp(x)+exp(2*y); // 10+x*x+y*y*y
   w[1] = 0.2*x*x*x*x*x*y-y*y*y+2;
   w[2] = x-y*y*x*x*x*x*0.5+5.6;
 }
@@ -625,8 +610,8 @@ void SteadyStateOne_Source(const real *xy, const real t, const real *w, real *S)
   real y=xy[1];
 
   S[0] = 0;
-  S[1] = 0.;//exp(x);//2*x;
-  S[2] = 0.;//2*exp(2*y);//3*y*y;
+  S[1] = exp(x);//2*x;
+  S[2] = 2*exp(2*y);//3*y*y;
 
   S[0] *= _SPEED_WAVE;
   S[1] *= _SPEED_WAVE;
@@ -799,95 +784,4 @@ void Generic(ContinuousSolver *cs){
   } // end for ie
 }
 
-/* void DGMacroCellInterface(int locfaL, */
-/* 			  field *fL, int offsetL, field *fR, int offsetR, */
-/* 			  real *w, real *dtw)  */
-void Interface(ContinuousSolver *cs,LinearSolver *solver,real theta, real dt)
-{
 
-  Simulation *simu = cs->simu;
-  int fsize =  simu->wsize / simu->macromesh.nbelems;
-
-  int dg_to_fe_index[cs->nb_dg_nodes];
-  for (int i=0; i<cs->nb_dg_nodes; i++){
-    dg_to_fe_index[i]=cs->dg_to_fe_index[i];
-  }
-  for(int ifa = 0; ifa < simu->macromesh.nbfaces; ifa++){
-    int ieL = simu->macromesh.face2elem[4 * ifa + 0];
-    int locfaL = simu->macromesh.face2elem[4 * ifa + 1];
-    int ieR = simu->macromesh.face2elem[4 * ifa + 2];
-    field *fL = simu->fd + ieL;
-    field *fR = NULL;
-    int offsetR = -1;
-    //printf("iel=%d ier=%d\n",ieL,ieR);
-    int offsetL = fsize * ieL;
-    if (ieR >= 0) {
-      fR = simu->fd + ieR;
-      offsetR = fsize * ieR;
-    }
-
-
-    const unsigned int m = fL->model.m;
-
-
-    // Loop over the points on a single macro cell interface.
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
-    for(int ipgfL = 0; ipgfL < NPGF(fL->deg, fL->raf, locfaL); ipgfL++) {
-
-      real xpgref[3], xpgref_in[3], wpg;
-
-      // Get the coordinates of the Gauss point and coordinates of a
-      // point slightly inside the opposite element in xref_in
-      int ipgL = ref_pg_face(fL->deg, fL->raf, locfaL, ipgfL, xpgref, &wpg, xpgref_in);
-
-      // Normal vector at gauss point ipgL
-      real vnds[3], xpg[3];
-      {
-        real dtau[3][3], codtau[3][3];
-        Ref2Phy(fL->physnode,
-            xpgref,
-            NULL, locfaL, // dpsiref, ifa
-            xpg, dtau,
-            codtau, NULL, vnds); // codtau, dpsi, vnds
-      }
-
-
-      // the boundary flux is an affine function
-      real flux0[m], wL[m];
-      for(int iv = 0; iv < m; iv++) {
-        wL[iv] = 0;
-      }
-      fL->model.BoundaryFlux(xpg, fL->tnow, wL, vnds, flux0);
-
-      /* for(int iv2 = 0; iv2 < m; iv2++) { */
-      /*   int imem2 = fL->varindex(fL->deg, fL->raf,fL->model.m, ipgL, iv2); */
-      /*   real val = theta *dt * flux0[iv2] * wpg; */
-      /*   solver->rhs[imem2] -= val; */
-      /* } */
-
-      for(int iv1 = 0; iv1 < m; iv1++) {
-        int ino_fe = dg_to_fe_index[ipgL];
-        int imem1 = fL->varindex(fL->deg, fL->raf, fL->model.m, ino_fe, iv1) + offsetL;
-        //int imem1 = fL->varindex(fL->deg, fL->raf,fL->model.m, ipgL, iv1) + offsetL;
-
-        for(int iv = 0; iv < m; iv++) {
-          wL[iv] = (iv == iv1);
-        }
-
-        real flux[m];
-        fL->model.BoundaryFlux(xpg, fL->tnow, wL, vnds, flux);
-
-        for(int iv2 = 0; iv2 < m; iv2++) {
-          // The basis functions is also the gauss point index
-          //int imem2 = fL->varindex(fL->deg, fL->raf,fL->model.m, ipgL, iv2) + offsetL;
-          int jno_fe = dg_to_fe_index[ipgL];
-          int imem2 = fL->varindex(fL->deg, fL->raf, fL->model.m, jno_fe, iv2) + offsetL;
-          real val = theta *dt * (flux[iv2]-flux0[iv2]) * wpg;		    
-          AddLinearSolver(solver, imem2, imem1, val);
-        }
-      } // iv1
-    }
-  }
-}

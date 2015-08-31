@@ -27,6 +27,7 @@ void InitLinearSolver(LinearSolver* lsol,int n,
   lsol->tol=1.e-9;
   lsol->restart_gmres=1;
   lsol->iter_max=10000;
+  lsol->is_CG=false;
 
   if (matstor != NULL) lsol->storage_type = *matstor;
   if (solvtyp != NULL) lsol->solver_type = *solvtyp;
@@ -612,13 +613,14 @@ void GMRESSolver(LinearSolver* lsol, Simulation* simu){
   PB_PC pb_pc;
   if(lsol->pc_type == PHY_BASED){
      int mat2assemble[6] = {1, 1, 1, 1, 1, 1};
-     InitPhy_Wave(simu, &pb_pc, mat2assemble);
+     Init_PhyBasedPC_SchurVelocity_Wave(simu, &pb_pc, mat2assemble);
+     //Init_PhyBasedPC_SchurPressure_Wave(simu, &pb_pc, mat2assemble);
+     Init_Parameters_PhyBasedPC(&pb_pc);
      icntl[4]  = 2;
   }
   else if (lsol->pc_type == JACOBI){
     icntl[4] = 2;
   }
-  bool is_CG = false;
    
      
   cntl[1]  = lsol->tol; //       ! stopping tolerance
@@ -656,15 +658,6 @@ void GMRESSolver(LinearSolver* lsol, Simulation* simu){
     work[N+ivec+1]    = lsol->rhs[ivec];
   }
 
-  real * Ax0=calloc(lsol->neq,sizeof(real));
-  lsol->MatVecProduct(lsol,lsol->sol,Ax0);
-  real error0=0;
-  real error02=0;
-   for(int i = 0; i < N; i++) {
-     error0=error0+fabs((Ax0[i]-lsol->rhs[i])*(Ax0[i]-lsol->rhs[i]));                    
-     error02=error02+fabs(lsol->sol[i]*lsol->sol[i]);                    
-  }
-   printf(" error gmres %.5e, X^2 %.5e, %5.e \n",sqrt(error0),sqrt(error02),sqrt(error0/error02)); 
   
   //*****************************************
   //** Reverse communication implementation
@@ -705,12 +698,12 @@ void GMRESSolver(LinearSolver* lsol, Simulation* simu){
 
   else if(revcom == precondRight)  {
     if(lsol->pc_type == PHY_BASED){
-      if (is_CG){
-        solvePhy_CG(&pb_pc,simu,loc_z,loc_x);
-        //solveIdentity_CG(&pb_pc,simu,loc_z,loc_x);
+      if (lsol->is_CG){
+        PhyBased_PC_CG(&pb_pc,simu,loc_z,loc_x);
+	//PhyBased_PC_InvertSchur_CG(&pb_pc,simu,loc_z,loc_x);
       }
       else {
-        solvePhy(&pb_pc,simu,loc_z,loc_x);
+        PhyBased_PC_DG(&pb_pc,simu,loc_z,loc_x);
         //solveIdentity(&pb_pc,simu,loc_z,loc_x);
       }
     }

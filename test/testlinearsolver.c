@@ -319,15 +319,15 @@ int TestLinearSolver(void){
   printf("Error =%.12e\n",verr);
 
 
-  int NPoisson=40;
+  int NPoisson=60;
   real h=1.0/NPoisson;
   
 
   InitLinearSolver(&sky,NPoisson,NULL,NULL);
 
   sky.solver_type = GMRES;
-  sky.pc_type=NONE;
-  sky.iter_max=80;
+  sky.pc_type=JACOBI;
+  sky.iter_max=20000;
   sky.tol=1.e-7;
   
   for(int i=0;i<NPoisson;i++){

@@ -78,13 +78,6 @@ typedef struct PB_PC{
 void VectorDgToCg (ContinuousSolver * ps,real * rhsIn, real * rhsOut);
 void PiDgToCg(ContinuousSolver * cs,real * rhsIn, real * rhsOut);
 
-// \brief Takes a vector in Discontinuous Galerkin, and returns the 
-// same vector projected on the Continuous Galerkin discrete space without the application of the mass matrix.
-// \param[in] cs: ContinuousSolver object.
-// \param[in] rhsIn: Vector in DG.
-// \param[out] rhsOut: Vector in CG.
-void NewVectorDgToCg (ContinuousSolver * ps,real * rhsIn, real * rhsOut);
-
 // \brief Takes a vector in Continuous Galerkin, and returns the 
 // same vector projected on the Discontinuous Galerkin discrete space.
 // \param[in] cs: ContinuousSolver object.
@@ -93,15 +86,22 @@ void NewVectorDgToCg (ContinuousSolver * ps,real * rhsIn, real * rhsOut);
 void VectorCgToDg(ContinuousSolver * cs, real * rhsIn, real * rhsOut);
 void PiInvertCgToDg(ContinuousSolver * cs,real * rhsIn, real * rhsOut);
 
-void Wave_test(ContinuousSolver* cs, real theta, real dt);
-// \brief TODOOOOOO
-void physicPC_wave(Simulation *simu, real* globalSol, real* globalRHS);
 
-// \brief Initialize the physics-based preconditioner.
+// \brief Initialize the data of the solvers.
+// \param[inout] pb_pc: Physics-based Preconditioner object.
+void Init_Parameters_PhyBasedPC(PB_PC* pb_pc);
+
+// \brief Initialize the physics-based preconditioner with schur on the velocity
 // \param[in] simu: Simulation object containing some run-related variables
 // \param[inout] pb_pc: Physics-based Preconditioner object.
 // \param[in] list_mat2assembly: Integer array. Tells which matrices shall be assembled.
-void InitPhy_Wave(Simulation *simu, PB_PC* pb_pc, int* list_mat2assemble);
+void Init_PhyBasedPC_SchurVelocity_Wave(Simulation *simu, PB_PC* pb_pc, int* list_mat2assemble);
+
+// \brief Initialize the physics-based preconditioner with schur on the pressure
+// \param[in] simu: Simulation object containing some run-related variables
+// \param[inout] pb_pc: Physics-based Preconditioner object.
+// \param[in] list_mat2assembly: Integer array. Tells which matrices shall be assembled.
+void Init_PhyBasedPC_SchurPressure_Wave(Simulation *simu, PB_PC* pb_pc, int* list_mat2assemble);
 
 // \brief Initialize Generic matrices for differential opertors -> Has to be tuned to the considered problem.
 // Schur decomposition is given by the following definition of the matrices:
@@ -121,12 +121,23 @@ void InitPhy_Wave(Simulation *simu, PB_PC* pb_pc, int* list_mat2assemble);
 // \param[in] Schurmat: SchurMatrix
 void InitMat_ContinuousSolver(PB_PC* pb_pc, real Dmat[4][4], real L1Mat[4][4], real L2Mat[4][4], real U1Mat[4][4], real U2Mat[4][4], real Schurmat[4][4][4]);
 
-// \brief Solves problem using physics-based CG preconditioner.
+// \brief Physics-based CG preconditioner for DG problem
 // \param[in] pb_pc: Physics-based preconditioner (contains all the Schur decomposition)
 // \param[out] globalSol: Stores the solution of the preconditioner.
 // \param[in] globalRHS: Right-hand-side containing all explicit and source terms.
-void solvePhy(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*globalRHS);
-void solvePhy_CG(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*globalRHS);
+void PhyBased_PC_DG(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*globalRHS);
+
+// \brief Physics-based CG preconditioner for CG problem
+// \param[in] pb_pc: Physics-based preconditioner (contains all the Schur decomposition)
+// \param[out] globalSol: Stores the solution of the preconditioner.
+// \param[in] globalRHS: Right-hand-side containing all explicit and source terms.
+void PhyBased_PC_CG(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*globalRHS);
+
+// \brief Physics-based CG preconditioner for CG problem
+// \param[in] pb_pc: Physics-based preconditioner (contains all the Schur decomposition)
+// \param[out] globalSol: Stores the solution of the preconditioner.
+// \param[in] globalRHS: Right-hand-side containing all explicit and source terms.
+void PhyBased_PC_InvertSchur_CG(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*globalRHS);
 
 // \brief Solves problem using identity CG preconditioner.
 // \param[in] pb_pc: Physics-based preconditioner (contains all the Schur decomposition)
@@ -138,13 +149,16 @@ void solveIdentity(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*globalR
 // \param[inout] pb_pc a PhysicsBased_PreConditioner 
 void freePB_PC(PB_PC* pb_pc);
 
-// \brief Function assembling all differential operator matrices
+// \brief Function assembling all differential operator matrices (schur of the velocity)
 // \param[in] pb_pc: The working preconditioner.
-void GenericOperator(PB_PC* pb_pc);
+void GenericOperator_PBPC_Velocity(PB_PC* pb_pc);
+
+// \brief Function assembling all differential operator matrices (schur of the pressure)
+// \param[in] pb_pc: The working preconditioner.
+void GenericOperator_PBPC_Pressure(PB_PC* pb_pc);
 
 // \brief Function resetting all but problem matrices.
 // \param[in] pb_pc: The working preconditioner.
 void reset(PB_PC* pb_pc);
 
-void solveIdentity_CG(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*globalRHS);
 #endif

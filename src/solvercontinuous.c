@@ -352,7 +352,6 @@ void ExactDirichletContinuousMatrix_PC(void * cs,LinearSolver* lsol){
         int iBord = ps->nb_phy_vars*ino+iv;
         for(int i=0; i<ps->nb_fe_dof; i++){
           SetLinearSolver(&ps->lsol,iBord,i,0.);
-          //SetLinearSolver(&ps->lsol,i,iBord,0.);
         }
         SetLinearSolver(&ps->lsol,iBord,iBord,1.);
       }
@@ -741,3 +740,52 @@ void freeContinuousSolver(ContinuousSolver* cs){
   cs->postcomputation_assembly=NULL;
 }
 
+void Wave_test(ContinuousSolver* cs,real theta, real dt){
+
+  real h=cs->simu->vmax*dt*theta;
+  real waveMat[9][4][4] ={{{1.0,0,0,0},
+                           {0,0,0,0},
+                           {0,0,0,0},
+                           {0,0,0,0}},
+                          {{0,0,0,0},
+                           {-h,0,0,0},
+                           {0,0,0,0},
+                           {0,0,0,0}},
+                          {{0,0,0,0},
+                           {0,0,0,0},
+                           {-h,0,0,0},
+                           {0,0,0,0}},
+                          {{0,0,0,0},
+                           {-h,0,0,0},
+                           {0,0,0,0},
+                           {0,0,0,0}},
+                          {{1.0,0,0,0}, 
+                           {0,0,0,0},
+                           {0,0,0,0},
+                           {0,0,0,0}},
+                          {{0,0,0,0},
+                           {0,0,0,0},
+                           {0,0,0,0},
+                           {0,0,0,0}},
+                          {{0,0,0,0},
+                           {0,0,0,0},
+                           {-h,0,0,0},
+                           {0,0,0,0}},
+                          {{0,0,0,0},
+                           {0,0,0,0},
+                           {0,0,0,0},
+                           {0,0,0,0}},
+                          {{1.0,0,0,0},
+                           {0,0,0,0},
+                           {0,0,0,0},
+                           {0,0,0,0}}};
+  for (int i=0; i<9; i++){
+    for (int j=0; j<4; j++){
+      for (int k=0; k<4; k++){
+        cs->diff_op3vec[i][j][k]=waveMat[i][j][k];
+      }
+    }
+  }
+
+
+}

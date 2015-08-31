@@ -91,7 +91,7 @@ int TestPCWave(void) {
 
   PB_PC pb_pc;
   int mat2assemble[6] = {1, 1, 1, 1, 1, 1};
-  InitPhy_Wave(&simu, &pb_pc, mat2assemble);
+  Init_PhyBasedPC_SchurVelocity_Wave(&simu, &pb_pc, mat2assemble);
 
   simu.tnow=0;
   for(int ie=0; ie < simu.macromesh.nbelems; ++ie){
@@ -128,7 +128,7 @@ int TestPCWave(void) {
     for(int i=0;i<solver_implicit.neq;i++){
       solver_implicit.rhs[i]=solver_implicit.rhs[i]+res[i]-solver_explicit.rhs[i];
     }
-    solvePhy(&pb_pc,&simu,simu.w,solver_implicit.rhs);
+    PhyBased_PC_DG(&pb_pc,&simu,simu.w,solver_implicit.rhs);
 
     
     int freq = (1 >= simu.itermax_rk / 10)? 1 : simu.itermax_rk / 10;
@@ -184,7 +184,7 @@ int TestPCWave(void) {
 
   PB_PC pb_pc2;
   int mat2assemble2[6] = {1, 1, 1, 1, 1, 1};
-  InitPhy_Wave(&simu2, &pb_pc2, mat2assemble2);
+  Init_PhyBasedPC_SchurVelocity_Wave(&simu2, &pb_pc2, mat2assemble2);
 
   simu2.tnow=0;
   for(int ie=0; ie < simu2.macromesh.nbelems; ++ie){
@@ -221,7 +221,7 @@ int TestPCWave(void) {
     for(int i=0;i<solver_implicit2.neq;i++){
       solver_implicit2.rhs[i]=solver_implicit2.rhs[i]+res2[i]-solver_explicit2.rhs[i];
     }
-    solvePhy(&pb_pc2,&simu2,simu2.fd[0].wn,solver_implicit2.rhs);
+    PhyBased_PC_DG(&pb_pc2,&simu2,simu2.fd[0].wn,solver_implicit2.rhs);
 
     
     int freq = (1 >= simu2.itermax_rk / 10)? 1 : simu2.itermax_rk / 10;
@@ -277,7 +277,7 @@ int TestPCWave(void) {
 
   PB_PC pb_pc3;
   int mat2assemble3[6] = {1, 1, 1, 1, 1, 1};
-  InitPhy_Wave(&simu3, &pb_pc3, mat2assemble3);
+  Init_PhyBasedPC_SchurVelocity_Wave(&simu3, &pb_pc3, mat2assemble3);
 
   simu3.tnow=0;
   for(int ie=0; ie < simu3.macromesh.nbelems; ++ie){
@@ -315,7 +315,7 @@ int TestPCWave(void) {
       solver_implicit3.rhs[i]=solver_implicit3.rhs[i]+res3[i]-solver_explicit3.rhs[i];
     }
     
-    solvePhy(&pb_pc3,&simu3,simu3.fd[0].wn,solver_implicit3.rhs);
+    PhyBased_PC_DG(&pb_pc3,&simu3,simu3.fd[0].wn,solver_implicit3.rhs);
 
     //
     int freq = (1 >= simu3.itermax_rk / 10)? 1 : simu3.itermax_rk / 10;
