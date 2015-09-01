@@ -382,9 +382,9 @@ void PenalizedDirichletContinuousMatrix(void * cs,LinearSolver* lsol){
   ContinuousSolver * ps=cs;
   
   field* f0 = &ps->simu->fd[0];
-
+   real bigval = 1.e20;//.e16;
   for(int ino=0; ino<ps->nb_fe_nodes; ino++){
-    real bigval = 1.e20;//.e16;
+   
     if (ps->is_boundary_node[ino]){
       for (int iv=0; iv<ps->nb_phy_vars;iv++){
         SetLinearSolver(&ps->lsol,ps->nb_phy_vars*ino+iv,ps->nb_phy_vars*ino+iv,bigval);
@@ -405,7 +405,6 @@ void PenalizedDirichletContinuousMatrix(void * cs,LinearSolver* lsol){
         field *f = &ps->simu->fd[ie];
 
         for(int ipglf = 0;ipglf < NPGF(f->deg,f->raf,locfaL); ipglf++){
-          real bigval = 1.e20;//.e16;
           real xpgref[3], xpgref_in[3], wpg;
           
           // Get the coordinates of the Gauss point and coordinates of a

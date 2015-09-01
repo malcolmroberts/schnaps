@@ -140,7 +140,7 @@ int TestLinearSolver(void){
   InitLinearSolver(&sky,_NN,NULL,NULL);
 
   sky.solver_type = PAR_GMRES;
-  sky.pc_type=PAR_JACOBI;
+  sky.pc_type=NONE;//PAR_JACOBI;
 
   A[0][0] = 0.2e1;
   A[0][1] = -0.1e1;

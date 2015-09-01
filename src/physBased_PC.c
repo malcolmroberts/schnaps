@@ -26,93 +26,6 @@
 //  }
 //}
 //
-//void InitPhy_Wave(Simulation *simu, PB_PC* pb_pc, int* list_mat2assemble){
-//
-//  // system is linear
-//  pb_pc->nonlinear=0;
-//  pb_pc->list_mat2assemble = calloc(6, sizeof(int));
-//  for (int i=0; i<6; i++) pb_pc->list_mat2assemble[i] = list_mat2assemble[i];
-//  
-//  // Initialization variables. Modify at will.
-//  int nb_varD = 1;
-//  int * listvarD = calloc(nb_varD,sizeof(int));
-//  listvarD[0]=0;
-//  int nb_varL1 = 1;
-//  int * listvarL1 = calloc(nb_varL1,sizeof(int));
-//  listvarL1[0]=0;
-//  int nb_varL2 = 1;
-//  int * listvarL2 = calloc(nb_varL2,sizeof(int));
-//  listvarL2[0]=0;
-//  int nb_varU1 = 1;
-//  int * listvarU1 = calloc(nb_varU1,sizeof(int));
-//  listvarU1[0]=1;
-//  int nb_varU2 = 1;
-//  int * listvarU2 = calloc(nb_varU2,sizeof(int));
-//  listvarU2[0]=2;
-//  int nb_varSchur = 2;
-//  int * listvarSchur = calloc(nb_varSchur,sizeof(int));
-//  listvarSchur[0]=1;
-//  listvarSchur[1]=2;
-//
-//  // Initializing all solvers 
-//  InitContinuousSolver(&pb_pc->D,simu,1,nb_varD,listvarD);
-//  free(listvarD);
-//  InitContinuousSolver(&pb_pc->L1,simu,1,nb_varL1,listvarL1);
-//  free(listvarL1);
-//  InitContinuousSolver(&pb_pc->L2,simu,1,nb_varL2,listvarL2);
-//  free(listvarL2);
-//  InitContinuousSolver(&pb_pc->U1,simu,1,nb_varU1,listvarU1);
-//  free(listvarU1);
-//  InitContinuousSolver(&pb_pc->U2,simu,1,nb_varU2,listvarU2);
-//  free(listvarU2);
-//  InitContinuousSolver(&pb_pc->Schur,simu,1,nb_varSchur,listvarSchur);
-//  free(listvarSchur);
-//
-//  pb_pc->D.lsol.MatVecProduct=MatVect;
-//  pb_pc->L1.lsol.MatVecProduct=MatVect;
-//  pb_pc->L2.lsol.MatVecProduct=MatVect;
-//  pb_pc->U1.lsol.MatVecProduct=MatVect;
-//  pb_pc->U2.lsol.MatVecProduct=MatVect;
-//  pb_pc->Schur.lsol.MatVecProduct=MatVect;
-//  pb_pc->D.bc_assembly=ExactDirichletContinuousMatrix_PC;
-//  pb_pc->U1.bc_assembly=ExactDirichletContinuousMatrix_PC;
-//  pb_pc->U2.bc_assembly=ExactDirichletContinuousMatrix_PC;
-//  pb_pc->Schur.bc_assembly=ExactDirichletContinuousMatrix_PC;
-//
-//  pb_pc->solver_prediction=LU;
-//  pb_pc->solver_propagation=LU;
-//  pb_pc->solver_correction=LU;
-//
-//  pb_pc->pc_prediction=NONE;
-//  pb_pc->pc_propagation=NONE;
-//  pb_pc->pc_correction=NONE;
-//
-//  pb_pc->tol_prediction=1.e-9;
-//  pb_pc->tol_propagation=1.e-9;
-//  pb_pc->tol_correction=1.e-9;
-//
-//  pb_pc->itermax_prediction=1000;
-//  pb_pc->itermax_propagation=1000;
-//  pb_pc->itermax_correction=1000;
-//
-//  pb_pc->restart_prediction=10;
-//  pb_pc->restart_propagation=10;
-//  pb_pc->restart_correction=10;
-//
-//  // Allocating all sub-equations' right-hand sides
-//  pb_pc->rhs_prediction = calloc(pb_pc->D.lsol.neq,sizeof(real));
-//  pb_pc->rhs_propagation = calloc(pb_pc->Schur.lsol.neq,sizeof(real));
-//  pb_pc->rhs_correction = calloc(pb_pc->D.lsol.neq,sizeof(real));
-//
-//  // Associating problem matrices
-//  pb_pc->mat_assembly = Wave_operators;
-//  
-//  // Since the problem is linear, problem's matrices are all independent on time.
-//  // Thus, we build them immediately in the initialization
-//  pb_pc->mat_assembly(pb_pc,0);
-//  GenericOperator(pb_pc);
-//
-//}
 //
 //void InitPhy_SW(Simulation *simu, PB_PC* pb_pc, int* list_mat2assemble){
 //
@@ -181,74 +94,7 @@
 //
 //}
 //
-//void InitParameters_PC(Simulation *simu, PB_PC* pb_pc){
-//
-//  pb_pc->solver_prediction=LU;//PAR_CG;
-//  pb_pc->solver_propagation=LU;//PAR_CG;
-//  pb_pc->solver_correction=LU;//LU;//PAR_CG;
-//
-//  pb_pc->pc_prediction=NONE;
-//  pb_pc->pc_propagation=NONE;
-//  pb_pc->pc_correction=NONE;
-//
-//  pb_pc->tol_prediction=1.e-9;
-//  pb_pc->tol_propagation=1.e-9;
-//  pb_pc->tol_correction=1.e-9;
-//
-//  pb_pc->itermax_prediction=100;
-//  pb_pc->itermax_propagation=100;
-//  pb_pc->itermax_correction=100;
-//
-//  pb_pc->restart_prediction=10;
-//  pb_pc->restart_propagation=10;
-//  pb_pc->restart_correction=10;
-//
-//}
-//
-//void Wave_operators(void* pb_pc, int offset){
-//
-//  PB_PC* PC = pb_pc;
-//  real h=PC->D.simu->dt*PC->D.simu->theta*PC->D.simu->vmax;
-//  real DMat[4][4]  = {{1,0,0,0},
-//                      {0,0,0,0},
-//                      {0,0,0,0},
-//                      {0,0,0,0}};
-//  real L1Mat[4][4] = {{0,h,0,0},
-//                      {0,0,0,0},
-//                      {0,0,0,0},
-//                      {0,0,0,0}};
-//  real L2Mat[4][4] = {{0,0,h,0},
-//                      {0,0,0,0},
-//                      {0,0,0,0},
-//                      {0,0,0,0}};
-//  real U1Mat[4][4] = {{0,h,0,0},
-//                      {0,0,0,0},
-//                      {0,0,0,0},
-//                      {0,0,0,0}};
-//  real U2Mat[4][4] = {{0,0,h,0},
-//                      {0,0,0,0},
-//                      {0,0,0,0},
-//                      {0,0,0,0}};
-//  real SchurMat[4][4][4] ={{{1.0,0,0,0},
-//                            {0,h*h,0,0},
-//                            {0,0,0,0},
-//                            {0,0,0,0}},
-//                           {{0,0,0,0},
-//                            {0,0,h*h,0},
-//                            {0,0,0,0},
-//                            {0,0,0,0}},
-//                           {{0,0,0,0},
-//                            {0,0,0,0},
-//                            {0,h*h,0,0},
-//                            {0,0,0,0}},
-//                           {{1.0,0,0,0},
-//                            {0,0,0,0},
-//                            {0,0,h*h,0},
-//                            {0,0,0,0}}};
-//
-//  // Applying these matrices inside the different ContinuousSolver
-//  mat_assembly_PC(PC,DMat,L1Mat,L2Mat,U1Mat,U2Mat,SchurMat);
-//
+
 //}
 //
 //
@@ -575,7 +421,7 @@ void Init_PhyBasedPC_SchurPressure_Wave(Simulation *simu, PB_PC* pb_pc, int* lis
 	LMU_1+=GetLinearSolver(&pb_pc->L1.lsol,i,k)*A1[k][j];
 	LMU_2+=GetLinearSolver(&pb_pc->L2.lsol,i,k)*A2[k][j];
       }     
-      SetLinearSolver(&pb_pc->Schur2,i,j,GetLinearSolver(&pb_pc->D.lsol,2*i,2*j)-LMU_1*LMU_2);
+      SetLinearSolver(&pb_pc->Schur2,i,j,GetLinearSolver(&pb_pc->D.lsol,2*i,2*j)-LMU_1-LMU_2);
     }
   }
   
@@ -584,17 +430,17 @@ void Init_PhyBasedPC_SchurPressure_Wave(Simulation *simu, PB_PC* pb_pc, int* lis
 
 void Init_Parameters_PhyBasedPC(PB_PC* pb_pc){
 
-  pb_pc->solver_prediction=LU;
-  pb_pc->solver_propagation=LU;
-  pb_pc->solver_correction=LU;
+  pb_pc->solver_prediction=PAR_LU;
+  pb_pc->solver_propagation=PAR_LU;
+  pb_pc->solver_correction=PAR_LU;
 
   pb_pc->pc_prediction=NONE;
   pb_pc->pc_propagation=NONE;
   pb_pc->pc_correction=NONE;
 
-  pb_pc->tol_prediction=1.e-9;
-  pb_pc->tol_propagation=1.e-9;
-  pb_pc->tol_correction=1.e-9;
+  pb_pc->tol_prediction=1.e-13;
+  pb_pc->tol_propagation=1.e-13;
+  pb_pc->tol_correction=1.e-13;
 
   pb_pc->itermax_prediction=1000;
   pb_pc->itermax_propagation=1000;
@@ -929,9 +775,6 @@ void PhyBased_PC_InvertSchur_CG(PB_PC* pb_pc, Simulation *simu, real* globalSol,
 
   //printf("Solution...\n");
    SolveLinearSolver(&pb_pc->D.lsol,simu);
-
-
-
   
   // 4) OUTPUT STEP
 
@@ -971,6 +814,7 @@ void PhyBased_PC_Full(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*glob
   pb_pc->D.lsol.solver_type=pb_pc->solver_prediction;
   pb_pc->D.lsol.tol=pb_pc->tol_prediction;
   pb_pc->D.lsol.pc_type=pb_pc->pc_prediction;
+  
   pb_pc->D.lsol.iter_max=pb_pc->itermax_prediction;
   pb_pc->D.lsol.restart_gmres=pb_pc->restart_prediction;
 
@@ -982,11 +826,7 @@ void PhyBased_PC_Full(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*glob
   //printf("Solution...\n");
   SolveLinearSolver(&pb_pc->D.lsol,simu);
 
-  for (int i=0;i<pb_pc->D.nb_fe_nodes;i++){
-    printf("kkkkkk %d %.12e \n",i,pb_pc->D.lsol.sol[i]);
-  }
   
-  // 2) PROPAGATION STEP
 
   pb_pc->Schur.lsol.solver_type=pb_pc->solver_propagation;
   pb_pc->Schur.lsol.tol=pb_pc->tol_propagation;
@@ -1009,7 +849,8 @@ void PhyBased_PC_Full(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*glob
     pb_pc->Schur.lsol.rhs[i]   = globalRHS[i*3] - pb_pc->L1.lsol.sol[i] - pb_pc->L2.lsol.sol[i];
   }
 
-  //printf("Solution...\n");
+  pb_pc->Schur2.solver_type=pb_pc->Schur.lsol.solver_type;
+  printf("Solution propagation\n");
    for (int i=0;i<pb_pc->D.nb_fe_nodes;i++){
      pb_pc->Schur2.rhs[i]=pb_pc->Schur.lsol.rhs[i];
   }
@@ -1018,13 +859,6 @@ void PhyBased_PC_Full(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*glob
      pb_pc->Schur.lsol.sol[i]=pb_pc->Schur2.sol[i];
   }
   // SolveLinearSolver(&pb_pc->Schur.lsol,simu);
-  for (int i=0;i<2*pb_pc->D.nb_fe_nodes;i++){
-    printf("kkkkkk  u %d %.12e \n",i,pb_pc->D.lsol.sol[i]);
-  }
- for (int i=0;i<pb_pc->D.nb_fe_nodes;i++){
-    printf("kkkkkk p %d %.12e \n",i,pb_pc->Schur.lsol.sol[i]);
-  }
-  
 
   // 3) CORRECTION STEP
 
@@ -1044,7 +878,7 @@ void PhyBased_PC_Full(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*glob
     pb_pc->D.lsol.rhs[i*2+1] =  pb_pc->D.lsol.rhs[i*2+1] - pb_pc->U2.lsol.sol[i];
   }
 
-  //printf("Solution...\n");
+  printf("Solution correction\n");
   SolveLinearSolver(&pb_pc->D.lsol,simu);
 
   

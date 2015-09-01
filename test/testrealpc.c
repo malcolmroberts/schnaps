@@ -377,7 +377,7 @@ int Testrealpc(void) {
     model4.Source = SteadyStateOne_Source;
 
     int deg4[]={4, 4, 0};
-    int raf4[]={4, 4, 1};
+    int raf4[]={8, 8, 1};
 
 
     assert(mesh.is2d);
@@ -400,7 +400,7 @@ int Testrealpc(void) {
 
     real theta4=0.5;
     simu4.theta=theta4;
-    simu4.dt=0.2;//0.001667;
+    simu4.dt=10000;//0.001667;
     simu4.vmax=_SPEED_WAVE;
     real tmax4=simu4.dt;//10*simu.dt;//;0.5;
 
@@ -409,10 +409,11 @@ int Testrealpc(void) {
     int size = cs.nb_fe_dof;
     real *resCG = calloc(size, sizeof(real));
     real *wCG = calloc(size, sizeof(real));
+    real *solpc = calloc(size, sizeof(real));
 
-    csSolve.lsol.solver_type=LU;//GMRES;
-    csSolve.lsol.tol=1.e-9;
-    csSolve.lsol.pc_type=PHY_BASED;
+    csSolve.lsol.solver_type=PAR_LU;//GMRES;
+    csSolve.lsol.tol=1.e-13;
+    csSolve.lsol.pc_type=NONE;//PHY_BASED;
     csSolve.lsol.iter_max=1000;
     csSolve.lsol.restart_gmres=30;
     csSolve.lsol.is_CG=true;
@@ -450,13 +451,13 @@ int Testrealpc(void) {
       csSolve.bc_assembly(&csSolve, &csSolve.lsol);
       SolveLinearSolver(&csSolve.lsol,&simu4);
       ///////////////////////////////////////
+       PhyBased_PC_Full(&pb_pc,&simu4,solpc,csSolve.lsol.rhs);
+       real error=0;
        for (int i=0; i<size; i++){
-        wCG[i] =0;
-      }
-       PhyBased_PC_Full(&pb_pc,&simu4,wCG,csSolve.lsol.rhs);
-       for (int i=0; i<size; i++){
-	 printf("pppp %d %.4e %.4e %.12e\n",i,wCG[i],csSolve.lsol.sol[i],wCG[i]-csSolve.lsol.sol[i]);
-	 }
+	 error=error+fabs((solpc[i]-csSolve.lsol.sol[i])*(solpc[i]-csSolve.lsol.sol[i]));
+	 printf("pppp %d %.12e %.12e %.12e\n",i,solpc[i],csSolve.lsol.sol[i],wCG[i]-csSolve.lsol.sol[i]);
+       }
+       printf("pppp %.12e\n",sqrt(error));
 	 /////////////////////////////////// */
       for (int i=0; i<size; i++){
         wCG[i] = csSolve.lsol.sol[i];
@@ -582,9 +583,9 @@ void SteadyStateOne_ImposedData(const real *xy, const real t, real *w) {
   real x=xy[0];
   real y=xy[1];
 
-  w[0] = 10.;//+exp(x)+exp(2*y); // 10+x*x+y*y*y
-  w[1] = 2;//0.2*x*x*x*x*x*y-exp(y)+2;
-  w[2] = 4;//exp(x)-x*x*x*x*y*y*0.5+5.6;
+  w[0] = 100.0;//+exp(x)+exp(2*y); // 10+x*x+y*y*y
+  w[1] = 20.0;//0.2*x*x*x*x*x*y-exp(y)+2;
+  w[2] = 30.0;//xp(x)-x*x*x*x*y*y*0.5+5.6;
 
 }
 

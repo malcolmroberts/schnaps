@@ -437,7 +437,6 @@ void Solver_Paralution(LinearSolver* lsol, Simulation* simu){
       basis_size_gmres = 30;
     }
 
-
   switch(lsol->solver_type){
   case PAR_CG :
     solver="CG";
@@ -465,7 +464,6 @@ void Solver_Paralution(LinearSolver* lsol, Simulation* simu){
   default : 
     assert(1==2);   
   }
-
 
   switch(lsol->pc_type){
   case NONE :
