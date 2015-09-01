@@ -144,8 +144,6 @@ void PhyBased_PC_InvertSchur_CG(PB_PC* pb_pc, Simulation *simu, real* globalSol,
 // \param[in] pb_pc: Physics-based preconditioner (contains all the Schur decomposition)
 // \param[out] globalSol: Stores the solution of the preconditioner.
 // \param[in] globalRHS: Right-hand-side containing all explicit and source terms.
-void PhyBased_PC_InvertSchur2_CG(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*globalRHS);
-
 void PhyBased_PC_Full(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*globalRHS);
 
 // \brief Solves problem using identity CG preconditioner.

@@ -455,8 +455,8 @@ int Testrealpc(void) {
       }
       PhyBased_PC_Full(&pb_pc,&simu4,wCG,csSolve.lsol.rhs);
        for (int i=0; i<size; i++){
-	 printf("pppp %d %f \n",i,wCG[i]-csSolve.lsol.sol[i]);
-      }
+	 printf("pppp %d %.12e \n",i,wCG[i]-csSolve.lsol.sol[i]);
+	 }
        ///////////////////////////////////
       for (int i=0; i<size; i++){
         wCG[i] = csSolve.lsol.sol[i];
