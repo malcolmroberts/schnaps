@@ -418,7 +418,7 @@ int Testrealpc(void) {
     csSolve.lsol.is_CG=true;
     csSolve.bc_assembly=ExactDirichletContinuousMatrix;
 
-    ////////////////////
+    //////////////////////////////////
     PB_PC pb_pc;
      int mat2assemble[6] = {1, 1, 1, 1, 1, 1};
      Init_PhyBasedPC_SchurPressure_Wave(&simu4, &pb_pc, mat2assemble);
@@ -449,12 +449,15 @@ int Testrealpc(void) {
       }
       csSolve.bc_assembly(&csSolve, &csSolve.lsol);
       SolveLinearSolver(&csSolve.lsol,&simu4);
-      //////////////
+      ///////////////////////////////////////
+       for (int i=0; i<size; i++){
+        wCG[i] =0;
+      }
       PhyBased_PC_Full(&pb_pc,&simu4,wCG,csSolve.lsol.rhs);
        for (int i=0; i<size; i++){
 	 printf("pppp %d %f \n",i,wCG[i]-csSolve.lsol.sol[i]);
       }
-       //////////
+       ///////////////////////////////////
       for (int i=0; i<size; i++){
         wCG[i] = csSolve.lsol.sol[i];
       }
