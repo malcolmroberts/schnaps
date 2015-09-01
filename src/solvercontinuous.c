@@ -360,6 +360,24 @@ void ExactDirichletContinuousMatrix_PC(void * cs,LinearSolver* lsol){
   ps->lsol.mat_is_assembly=true;
 }
 
+void PenalizedDirichletContinuousMatrix_PC(void * cs,LinearSolver* lsol){
+  ContinuousSolver * ps=cs;
+  
+  field* f0 = &ps->simu->fd[0];
+
+  for(int ino=0; ino<ps->nb_fe_nodes; ino++){
+    real bigval = 1.e20;//.e16;
+    if (ps->is_boundary_node[ino]){
+      for (int iv=0; iv<ps->nb_phy_vars;iv++){
+        SetLinearSolver(&ps->lsol,ps->nb_phy_vars*ino+iv,ps->nb_phy_vars*ino+iv,bigval);
+      }
+    }
+  }
+
+}
+
+
+
 void PenalizedDirichletContinuousMatrix(void * cs,LinearSolver* lsol){
   ContinuousSolver * ps=cs;
   
@@ -789,3 +807,5 @@ void Wave_test(ContinuousSolver* cs,real theta, real dt){
 
 
 }
+
+

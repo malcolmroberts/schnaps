@@ -652,13 +652,16 @@ void GMRESSolver(LinearSolver* lsol, Simulation* simu){
   loc_x = calloc(N, sizeof(real));
   loc_y = calloc(N, sizeof(real));
   loc_z = calloc(N, sizeof(real));
+
+   
+   
   
   for(int ivec = 0; ivec < N; ivec++) {
     work[ivec+1]     = lsol->sol[ivec];                    
     work[N+ivec+1]    = lsol->rhs[ivec];
   }
 
-  
+
   //*****************************************
   //** Reverse communication implementation
   //*****************************************
@@ -700,7 +703,8 @@ void GMRESSolver(LinearSolver* lsol, Simulation* simu){
     if(lsol->pc_type == PHY_BASED){
       if (lsol->is_CG){
         //PhyBased_PC_CG(&pb_pc,simu,loc_z,loc_x);
-	PhyBased_PC_InvertSchur2_CG(&pb_pc,simu,loc_z,loc_x);
+	//PhyBased_PC_InvertSchur_CG(&pb_pc,simu,loc_z,loc_x);
+	PhyBased_PC_Full(&pb_pc,simu,loc_z,loc_x);
       }
       else {
         PhyBased_PC_DG(&pb_pc,simu,loc_z,loc_x);

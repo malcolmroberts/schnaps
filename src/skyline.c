@@ -159,8 +159,8 @@ void SetSkyline(Skyline* sky,int i,int j,real val){
   assert(sky->is_alloc);
 
 
-  if (j-i > sky->prof[j] || i-j > sky->prof[i]){
-    ;
+  if ((j-i > sky->prof[j] || i-j > sky->prof[i]) && (val>0)){
+    printf("problem of profil");
   }
   else if (i==j){
     sky->vkgd[i]=val;
