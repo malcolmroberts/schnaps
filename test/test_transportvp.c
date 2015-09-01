@@ -170,7 +170,7 @@ void UpdateVlasovPoisson(void *si, real *w) {
   ps.postcomputation_assembly=Computation_ElectricField_Poisson;
 
 #ifdef PARALUTION
-  ps.lsol.solver_type = PAR_GMRES;
+  ps.lsol.solver_type = PAR_LU;
   ps.lsol.pc_type=NONE;
 #else
   ps.lsol.solver_type = LU;

@@ -428,7 +428,7 @@ void Solver_Paralution(LinearSolver* lsol, Simulation* simu){
 
   storage="CSR";
   norm_rhs=Vector_norm2(lsol->rhs,lsol->neq);
-  a_tol=1.e-9*(1.0+1.e-20*norm_rhs);
+  a_tol=lsol->tol*(1.0+1.e-20*norm_rhs);
 
   if(lsol->neq<61) {
     basis_size_gmres = (int) (lsol->neq/2);

@@ -372,7 +372,7 @@ void Init_PhyBasedPC_SchurPressure_Wave(Simulation *simu, PB_PC* pb_pc, int* lis
   GenericOperator_PBPC_Pressure(pb_pc);
 
   // For the Schur the the condition is Neumann
-  pb_pc->D.bc_assembly=PenalizedDirichletContinuousMatrix_PC;//ExactDirichletContinuousMatrix_PC;
+  pb_pc->D.bc_assembly=PenalizedDirichletContinuousMatrix_PC;//;
   pb_pc->Schur.bc_assembly=PenalizedDirichletContinuousMatrix_PC;//ExactDirichletContinuousMatrix_PC;
 
   pb_pc->D.bc_assembly(&pb_pc->D,&pb_pc->D.lsol);
@@ -850,7 +850,7 @@ void PhyBased_PC_Full(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*glob
   }
 
   pb_pc->Schur2.solver_type=pb_pc->Schur.lsol.solver_type;
-  printf("Solution propagation\n");
+  // printf("Solution propagation\n");
    for (int i=0;i<pb_pc->D.nb_fe_nodes;i++){
      pb_pc->Schur2.rhs[i]=pb_pc->Schur.lsol.rhs[i];
   }
@@ -878,7 +878,7 @@ void PhyBased_PC_Full(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*glob
     pb_pc->D.lsol.rhs[i*2+1] =  pb_pc->D.lsol.rhs[i*2+1] - pb_pc->U2.lsol.sol[i];
   }
 
-  printf("Solution correction\n");
+  //printf("Solution correction\n");
   SolveLinearSolver(&pb_pc->D.lsol,simu);
 
   
