@@ -470,7 +470,7 @@ void Init_PhyBasedPC_SchurPressure_Wave(Simulation *simu, PB_PC* pb_pc, int* lis
   free(listvarSchur);
 
   // Local operator matrices to build global Differential operators (Schur, Laplacian...)
-  real h=0;//simu->dt*simu->theta*simu->vmax;
+  real h=simu->dt*simu->theta*simu->vmax;
   real SchurMat[4][4]  = {{1.0,0,0,0},
 			  {0,h*h,0,0},
 			  {0,0,h*h,0},
@@ -492,22 +492,22 @@ void Init_PhyBasedPC_SchurPressure_Wave(Simulation *simu, PB_PC* pb_pc, int* lis
                       {-h,0,0,0},
                       {0,0,0,0}};
   real DMat[4][4][4] ={{{1.0,0,0,0},
-                            {0,0,0,0},
-                            {0,0,0,0},
-                            {0,0,0,0}},
-                           {{0,0,0,0},
-                            {0,0,0,0},
-                            {0,0,0,0},
-                            {0,0,0,0}},
-                           {{0,0,0,0},
-                            {0,0,0,0},
-                            {0,0,0,0},
-                            {0,0,0,0}},
-                           {{1.0,0,0,0},
-                            {0,0,0,0},
-                            {0,0,0,0},
-                            {0,0,0,0}}};
-
+			{0,0,0,0},
+			{0,0,0,0},
+			{0,0,0,0}},
+		       {{0.0,0,0,0},
+			{0,0,0,0},
+			{0,0,0,0},
+			{0,0,0,0}},
+		       {{0.0,0,0,0},
+			{0,0,0,0},
+			{0,0,0,0},
+			{0,0,0,0}},
+		       {{1.0,0,0,0},
+			{0,0,0,0},
+			{0,0,0,0},
+			{0,0,0,0}}};
+  
   // Applying these matrices inside the different ContinuousSolver
   for (int i=0; i<4; i++){
     for (int j=0; j<4; j++){
@@ -982,6 +982,10 @@ void PhyBased_PC_Full(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*glob
   //printf("Solution...\n");
   SolveLinearSolver(&pb_pc->D.lsol,simu);
 
+  for (int i=0;i<pb_pc->D.nb_fe_nodes;i++){
+    printf("kkkkkk %d %.12e \n",i,pb_pc->D.lsol.sol[i]);
+  }
+  
   // 2) PROPAGATION STEP
 
   pb_pc->Schur.lsol.solver_type=pb_pc->solver_propagation;
@@ -1006,7 +1010,7 @@ void PhyBased_PC_Full(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*glob
   }
 
   //printf("Solution...\n");
-  for (int i=0;i<pb_pc->D.nb_fe_nodes;i++){
+   for (int i=0;i<pb_pc->D.nb_fe_nodes;i++){
      pb_pc->Schur2.rhs[i]=pb_pc->Schur.lsol.rhs[i];
   }
   SolveLinearSolver(&pb_pc->Schur2,simu);
@@ -1014,7 +1018,12 @@ void PhyBased_PC_Full(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*glob
      pb_pc->Schur.lsol.sol[i]=pb_pc->Schur2.sol[i];
   }
   // SolveLinearSolver(&pb_pc->Schur.lsol,simu);
-
+  for (int i=0;i<2*pb_pc->D.nb_fe_nodes;i++){
+    printf("kkkkkk  u %d %.12e \n",i,pb_pc->D.lsol.sol[i]);
+  }
+ for (int i=0;i<pb_pc->D.nb_fe_nodes;i++){
+    printf("kkkkkk p %d %.12e \n",i,pb_pc->Schur.lsol.sol[i]);
+  }
   
 
   // 3) CORRECTION STEP
@@ -1036,7 +1045,7 @@ void PhyBased_PC_Full(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*glob
   }
 
   //printf("Solution...\n");
-   SolveLinearSolver(&pb_pc->D.lsol,simu);
+  SolveLinearSolver(&pb_pc->D.lsol,simu);
 
   
   // 4) OUTPUT STEP

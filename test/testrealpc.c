@@ -371,10 +371,10 @@ int Testrealpc(void) {
 
     model4.m = 3; 
     model4.NumFlux=Wave_Upwind_NumFlux;
-    model4.InitData = SteadyStateTwo_InitData;
-    model4.ImposedData = SteadyStateTwo_ImposedData;
-    model4.BoundaryFlux = SteadyStateTwo_BoundaryFlux;
-    model4.Source = SteadyStateTwo_Source;
+    model4.InitData = SteadyStateOne_InitData;
+    model4.ImposedData = SteadyStateOne_ImposedData;
+    model4.BoundaryFlux = SteadyStateOne_BoundaryFlux;
+    model4.Source = SteadyStateOne_Source;
 
     int deg4[]={4, 4, 0};
     int raf4[]={4, 4, 1};
@@ -400,7 +400,7 @@ int Testrealpc(void) {
 
     real theta4=0.5;
     simu4.theta=theta4;
-    simu4.dt=0.1;//0.001667;
+    simu4.dt=0.2;//0.001667;
     simu4.vmax=_SPEED_WAVE;
     real tmax4=simu4.dt;//10*simu.dt;//;0.5;
 
@@ -416,7 +416,7 @@ int Testrealpc(void) {
     csSolve.lsol.iter_max=1000;
     csSolve.lsol.restart_gmres=30;
     csSolve.lsol.is_CG=true;
-    csSolve.bc_assembly=ExactDirichletContinuousMatrix;
+    csSolve.bc_assembly=PenalizedDirichletContinuousMatrix;//ExactDirichletContinuousMatrix;
 
     //////////////////////////////////
     PB_PC pb_pc;
@@ -453,14 +453,14 @@ int Testrealpc(void) {
        for (int i=0; i<size; i++){
         wCG[i] =0;
       }
-      PhyBased_PC_Full(&pb_pc,&simu4,wCG,csSolve.lsol.rhs);
+       PhyBased_PC_Full(&pb_pc,&simu4,wCG,csSolve.lsol.rhs);
        for (int i=0; i<size; i++){
-	 printf("pppp %d %.12e \n",i,wCG[i]-csSolve.lsol.sol[i]);
+	 printf("pppp %d %.4e %.4e %.12e\n",i,wCG[i],csSolve.lsol.sol[i],wCG[i]-csSolve.lsol.sol[i]);
 	 }
-       ///////////////////////////////////
+	 /////////////////////////////////// */
       for (int i=0; i<size; i++){
         wCG[i] = csSolve.lsol.sol[i];
-      }
+	}
       int freq = (1 >= simu4.itermax_rk / 10)? 1 : simu4.itermax_rk / 10;
       if (tstep % freq == 0)
         printf("t=%f iter=%d/%d dt=%f\n", simu4.tnow, tstep, simu4.itermax_rk, simu4.dt);
