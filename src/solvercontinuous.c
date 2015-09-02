@@ -210,7 +210,7 @@ void SolveContinuous2D(void* cs){
   
   // number of equation of the Poisson solver
   int neq=ps->nb_fe_dof; //(nodes)
-
+ 
   //printf("Matrix assembly.....\n");
   if(ps->matrix_assembly != NULL){
     ps->matrix_assembly(ps,&ps->lsol);
@@ -220,6 +220,7 @@ void SolveContinuous2D(void* cs){
       printf("no matrix assembly ");
       exit(1);
     }
+
   
   //printf("RHS assembly.....\n");
   if(ps->rhs_assembly != NULL){
@@ -240,7 +241,7 @@ void SolveContinuous2D(void* cs){
       printf("no bc assembly ");
       exit(1);
     }
-  
+
   //printf("Solution...\n");
 
   SolveLinearSolver(&ps->lsol,ps->simu);
@@ -290,10 +291,9 @@ void ExactDirichletContinuousMatrix(void * cs,LinearSolver* lsol){
       for (int iv=0; iv<ps->nb_phy_vars;iv++){
         int iBord = ps->nb_phy_vars*ino+iv;
         for(int i=0; i<ps->nb_fe_dof; i++){
-          SetLinearSolver(&ps->lsol,iBord,i,0.);
-          //SetLinearSolver(&ps->lsol,i,iBord,0.);
+          SetLinearSolver(&ps->lsol,iBord,i,0.0);
         }
-        SetLinearSolver(&ps->lsol,iBord,iBord,1.);
+       SetLinearSolver(&ps->lsol,iBord,iBord,1.0);
       }
     }
   }

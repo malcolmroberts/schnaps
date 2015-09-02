@@ -131,11 +131,15 @@ void AllocateCopySkyline(Skyline* sky){
 void AddSkyline(Skyline* sky,int i,int j,real val){
 
   assert(sky->is_alloc);
-
-
-  if (j-i > sky->prof[j] || i-j > sky->prof[i]){
-    ;
+  
+  if ((j-i > sky->prof[j] || i-j > sky->prof[i]) && (val>0.0)){
+    printf("problem of profil with add \n");
   }
+  
+  if ((j-i > sky->prof[j] || i-j > sky->prof[i]) && val==0.0)
+    {
+      ;
+    }
   else if (i==j){
     sky->vkgd[i]+=val;
   }
@@ -150,6 +154,7 @@ void AddSkyline(Skyline* sky,int i,int j,real val){
     //printf("i=%d j=%d k=%d nmem=%d\n",i,j,k,sky->nmem);
     //printf("i=%d j=%d k=%d v=%f\n",i,j,k,sky->vkgi[k]);
   }
+  
 
 
 }
@@ -158,10 +163,14 @@ void SetSkyline(Skyline* sky,int i,int j,real val){
 
   assert(sky->is_alloc);
 
-
-  if ((j-i > sky->prof[j] || i-j > sky->prof[i]) && (val>0)){
-    printf("problem of profil");
-  }
+   if ((j-i > sky->prof[j] || i-j > sky->prof[i]) && (val>0.0)){
+    printf("problem of profil with set \n");
+    }
+  
+  if ((j-i > sky->prof[j] || i-j > sky->prof[i]) && val==0.0)
+    {
+      ;
+    }
   else if (i==j){
     sky->vkgd[i]=val;
   }
@@ -176,8 +185,8 @@ void SetSkyline(Skyline* sky,int i,int j,real val){
     //printf("i=%d j=%d k=%d nmem=%d\n",i,j,k,sky->nmem);
     //printf("i=%d j=%d k=%d v=%f\n",i,j,k,sky->vkgi[k]);
   }
-
-
+  
+  
 } 
 
 real GetSkyline(Skyline* sky,int i,int j){
@@ -242,12 +251,12 @@ void DisplaySkyline(Skyline* sky){
   }
   printf("\n");
 
-  /*for(int i=0;i<n;i++){
+  for(int i=0;i<n;i++){
     for(int j=0;j<n;j++){
       printf("%.5e ", GetSkyline(sky,i,j));
     }   
     printf("\n");
-    }*/
+    }
   
 }
 

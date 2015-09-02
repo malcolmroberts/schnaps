@@ -88,8 +88,8 @@ int TestPoisson(void)
 
   real D[4][4] = {{0,0,0,0},
                  {0,1,0,0},
-                 {0,0,1,0},
-                 {0,0,0,1}};
+                 {0,0,0,0},
+                 {0,0,0,0}};
   for (int i=0;i<4;i++){
     for (int j=0;j<4;j++){
       ps.diff_op[i][j]=D[i][j];
@@ -103,7 +103,7 @@ int TestPoisson(void)
   ps.postcomputation_assembly=Computation_ElectricField_Poisson;
 
 #ifdef PARALUTION
-  ps.lsol.solver_type =PAR_LU;
+  ps.lsol.solver_type =LU;
   ps.lsol.pc_type=NONE;
 #else
   ps.lsol.solver_type = LU;
@@ -111,6 +111,7 @@ int TestPoisson(void)
 #endif
 
   SolveContinuous2D(&ps);
+
 
   real errl2 = L2error(&simu);
 
@@ -136,34 +137,6 @@ int TestPoisson(void)
   return test;
 }
 
-/* void TestPoisson_ImposedData(const real x[3], const real t, real w[]) */
-/* { */
-/*   for(int i = 0; i < _INDEX_MAX; i++){ */
-/*     w[i] = 0; */
-/*   } */
-/*   // exact value of the potential */
-/*   // and electric field */
-/*   w[_INDEX_PHI] = (x[0] * x[0] + x[1] * x[1])/4; */
-/*   w[_INDEX_EX] =  -x[0]/2; */
-/*   w[_INDEX_RHO] = -1; //rho init */
-/*   /\* w[_INDEX_PHI] = x[0] ; *\/ */
-/*   /\* w[_INDEX_EX] =  -1; *\/ */
-/*   /\* w[_INDEX_RHO] = 0; //rho init *\/ */
-/* } */
-
-/* void TestPoisson_InitData(real x[3], real w[]) */
-/* { */
-/*   real t = 0; */
-/*   TestPoisson_ImposedData(x, t, w); */
-/* } */
-
-/* void TestPoisson_BoundaryFlux(real x[3], real t, real wL[], real *vnorm,  */
-/* 			      real *flux) */
-/* { */
-/*   real wR[_INDEX_MAX]; */
-/*   TestPoisson_ImposedData(x, t, wR); */
-/*   VlasovP_Lagrangian_NumFlux(wL, wR, vnorm, flux); */
-/* } */
 void TestPoisson_ImposedData(const real x[3], const real t,real w[]){
   for(int i = 0; i < _INDEX_MAX_KIN + 1; i++){
     int j = i%_DEG_V; // local connectivity put in function
