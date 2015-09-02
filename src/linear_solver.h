@@ -11,7 +11,7 @@
 
 typedef enum MatrixStorage{SKYLINE,CSR} MatrixStorage;
 typedef enum Solver{LU,GMRES,PAR_GMRES,PAR_FGMRES,PAR_CG,PAR_BICGSTAB,PAR_AMG,PAR_LU,PAR_QR} Solver;
-typedef enum PC{NONE,JACOBI,PAR_JACOBI,PAR_ILU,PAR_MULTICOLOREDSGS,PAR_MULTICOLOREDGS,PAR_MULTICOLOREDILU,PAR_AMG_PC,PAR_ELIMI,PHY_BASED} PC;
+typedef enum PC{NONE,JACOBI,PAR_JACOBI,PAR_ILU,PAR_MULTICOLOREDSGS,PAR_MULTICOLOREDGS,PAR_MULTICOLOREDILU,PAR_AMG_PC,PAR_ELIMI,PHY_BASED,PHY_BASED_EXACT,EXACT} PC;
 
 //! class for managing linear solvers
 typedef struct LinearSolver{
@@ -245,6 +245,10 @@ void GMRESSolver(LinearSolver* lsol, Simulation* simu);
 
 //! \brief Jacobi preconditioner
 //! \param[in] lsol contains the matrices rhs and sol
-void solveJacobi(LinearSolver* lsol, Simulation* simu, real* sol, real* rhs);
+void Jacobi_PC(LinearSolver* lsol, Simulation* simu, real* sol, real* rhs);
+
+//! \brief Exact LU preconditioner
+//! \param[in] lsol contains the matrices rhs and sol
+void Exact_PC(LinearSolver* lsol, Simulation* simu, real* sol, real* rhs);
 
 #endif

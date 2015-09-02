@@ -31,7 +31,7 @@ void InitSkyline(Skyline* sky, int n){
   sky->vkgs=NULL;
   sky->copy_vkgs=NULL;
 
-  sky->vkgd=malloc(n*sizeof(real));
+  sky->vkgd=calloc(n,sizeof(real));
   assert(sky->vkgd);
   for(int i=0;i<n;i++) sky->vkgd[i]=0;
   sky->copy_vkgd=NULL;
@@ -39,11 +39,11 @@ void InitSkyline(Skyline* sky, int n){
   sky->vkgi=NULL;
   sky->copy_vkgi=NULL;
 
-  sky->prof=malloc(n*sizeof(int));
+  sky->prof=calloc(n,sizeof(int));
   assert(sky->prof);
   for(int i=0;i<n;i++) sky->prof[i]=0;
 
-  sky->kld=malloc((n+1)*sizeof(int));
+  sky->kld=calloc((n+1),sizeof(int));
   assert(sky->kld);
   for(int i=0;i<n+1;i++) sky->kld[i]=0;
 
@@ -68,11 +68,11 @@ void AllocateSkyline(Skyline* sky){
   }
   sky->nmem=sky->kld[sky->neq];
 
-  sky->vkgs=malloc(sky->nmem * sizeof(real));
+  sky->vkgs=calloc(sky->nmem,sizeof(real));
   assert(sky->vkgs);
 
   if (! sky->is_sym){
-    sky->vkgi=malloc(sky->nmem * sizeof(real));
+    sky->vkgi=calloc(sky->nmem,sizeof(real));
     assert(sky->vkgi);
   }
   else{
@@ -94,18 +94,18 @@ void AllocateCopySkyline(Skyline* sky){
 
   assert(!sky->copy_is_alloc);
 
-  sky->copy_vkgs=malloc(sky->nmem * sizeof(real));
+  sky->copy_vkgs=calloc(sky->nmem,sizeof(real));
   assert(sky->copy_vkgs);
 
   if (! sky->is_sym){
-    sky->copy_vkgi=malloc(sky->nmem * sizeof(real));
+    sky->copy_vkgi=calloc(sky->nmem,sizeof(real));
     assert(sky->copy_vkgi);
   }
   else{
     sky->copy_vkgi=sky->copy_vkgs;
   }
 
-  sky->copy_vkgd=malloc(sky->neq*sizeof(real));
+  sky->copy_vkgd=calloc(sky->neq,sizeof(real));
   assert(sky->copy_vkgd);
   for(int i=0;i<sky->neq;i++) sky->copy_vkgd[i]=0;
 
@@ -198,14 +198,13 @@ real GetSkyline(Skyline* sky,int i,int j){
   }
 
   if (j-i > sky->prof[j] || i-j > sky->prof[i]){
-    return 0;
+    return 0.0;
   }
   else if (i==j){
     return sky->vkgd[i];
   }
   else if ( j>i){
     int k=sky->kld[j+1]-j+i;
-    //if (i==6 && j==7) printf("k=%d\n",k);
     return sky->vkgs[k];
   }
   else {

@@ -25,7 +25,7 @@ int main(void) {
 
 int TestLinearSolver(void){
 
-  int test=0,test1=1,test2=1,test3=1,test4=1,test5=1;
+  int test=0,test1=1,test2=1,test3=1,test4=1;
   Simulation simu;
 
   LinearSolver sky;
@@ -388,124 +388,6 @@ int TestLinearSolver(void){
   FreeLinearSolver(&sky);
 
   test4 = test4 && (verr<5.e-2);
-  printf("Error =%.12e\n",verr);
-
-  
-  int Nwave=60;
-  real hw=1.0/Nwave;
-  real c=1;
-  
-
-  InitLinearSolver(&sky,2*Nwave,NULL,NULL);
-
-  sky.solver_type = LU;
-  sky.pc_type=NONE;
-  sky.iter_max=20000;
-  sky.tol=1.e-7;
-  
-  for(int i=0;i<Nwave;i++){
-    if (i==0){ 
-      IsNonZero(&sky,0,0);
-      IsNonZero(&sky,0,1);
-      IsNonZero(&sky,0,2);
-      IsNonZero(&sky,0,3);
-    } 
-    else if (i==2*NPoisson-1){ 
-      IsNonZero(&sky,2*Nwave-1,NPoisson-1);
-      IsNonZero(&sky,2*Nwave-1,NPoisson-2);
-      IsNonZero(&sky,2*Nwave-1,NPoisson-3);
-      IsNonZero(&sky,2*Nwave-1,NPoisson-4);
-    } 
-    else if (i % 2 ==0) { 
-      IsNonZero(&sky,i,i);
-      IsNonZero(&sky,i,i+1);
-    
-      IsNonZero(&sky,i,i-1);
-      IsNonZero(&sky,i,i-2);
-    
-      IsNonZero(&sky,i,i+2);
-      IsNonZero(&sky,i,i+3);
-    }
-    else { 
-      IsNonZero(&sky,i,i);
-      IsNonZero(&sky,i,i-1);
-    
-      IsNonZero(&sky,i,i-2);
-      IsNonZero(&sky,i,i-3);
-    
-      IsNonZero(&sky,i,i+1);
-      IsNonZero(&sky,i,i+2);
-    } 
-  }
-  // once the nonzero positions are known allocate memory
-  AllocateLinearSolver(&sky);
-
-  for(int i=0;i<Nwave;i++){
-    if (i==0){ 
-      AddLinearSolver(&sky,0,0,1);
-      AddLinearSolver(&sky,0,1,1);
-      AddLinearSolver(&sky,0,2,1);
-      AddLinearSolver(&sky,0,3,1);
-    } 
-    else if (i==2*NPoisson-1){ 
-      AddLinearSolver(&sky,2*Nwave-1,NPoisson-1,1);
-      AddLinearSolver(&sky,2*Nwave-1,NPoisson-2,1);
-      AddLinearSolver(&sky,2*Nwave-1,NPoisson-3,1);
-      AddLinearSolver(&sky,2*Nwave-1,NPoisson-4,1);
-    } 
-    else if (i % 2 ==0) { 
-      AddLinearSolver(&sky,i,i,1);
-      AddLinearSolver(&sky,i,i+1,1);
-    
-      AddLinearSolver(&sky,i,i-1,1);
-      AddLinearSolver(&sky,i,i-2,1);
-    
-      AddLinearSolver(&sky,i,i+2,1);
-      AddLinearSolver(&sky,i,i+3,1);
-    }
-    else { 
-      AddLinearSolver(&sky,i,i,1);
-      AddLinearSolver(&sky,i,i-1,1);
-    
-      AddLinearSolver(&sky,i,i-2,1);
-      AddLinearSolver(&sky,i,i-3,1);
-
-      AddLinearSolver(&sky,i,i+1,1);
-      AddLinearSolver(&sky,i,i+2,1);
-    }
-    sky.sol[i]=0.0;
-     if (i % 2 ==0) {
-       sky.rhs[i]=2.0;
-    } else {
-       sky.rhs[i]=4.0;
-    }
-    
-  }
-
-  real bigvalw=1.e+15;
-  SetLinearSolver(&sky,2*Nwave-1,2*Nwave-1,bigvalw);
-  SetLinearSolver(&sky,2*Nwave-2,2*Nwave-2,bigvalw);
-  SetLinearSolver(&sky,0,0,bigvalw);
-  SetLinearSolver(&sky,1,1,bigvalw);
-  sky.rhs[0]=bigvalw*sky.rhs[0];
-  sky.rhs[1]=bigvalw*sky.rhs[1];
-  sky.rhs[2*Nwave-1]=bigvalw*sky.rhs[2*Nwave-1];
-  sky.rhs[2*Nwave-2]=bigvalw*sky.rhs[2*Nwave-2];
- 
-  SolveLinearSolver(&sky,&simu);
-
-
-  // checking
-  verr=0;
-  printf("sol of laplacien with gmres=");
-  verr=sqrt(verr);
-  printf("\n");
-  printf("\n");
-
-  // deallocate memory
-  FreeLinearSolver(&sky);
-
-  test5 = test5 && (verr<5.e-2);
   printf("Error =%.12e\n",verr);
 
   if(test1==1 &&  test2==1 && test3==1 && test4==1) test=1;

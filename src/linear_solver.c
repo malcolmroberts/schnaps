@@ -609,14 +609,14 @@ void GMRESSolver(LinearSolver* lsol, Simulation* simu){
   icntl[8]  = 1; //1
 
   PB_PC pb_pc;
-  if(lsol->pc_type == PHY_BASED){
+  if((lsol->pc_type == PHY_BASED) || (lsol->pc_type == PHY_BASED_EXACT)){
      int mat2assemble[6] = {1, 1, 1, 1, 1, 1};
      //Init_PhyBasedPC_SchurVelocity_Wave(simu, &pb_pc, mat2assemble);
      Init_PhyBasedPC_SchurPressure_Wave(simu, &pb_pc, mat2assemble);
      Init_Parameters_PhyBasedPC(&pb_pc);
      icntl[4]  = 2;
   }
-  else if (lsol->pc_type == JACOBI){
+  else if ((lsol->pc_type == JACOBI) ||(lsol->pc_type == EXACT)){
     icntl[4] = 2;
   }
    
@@ -698,24 +698,36 @@ void GMRESSolver(LinearSolver* lsol, Simulation* simu){
   }
 
   else if(revcom == precondRight)  {
-    if(lsol->pc_type == PHY_BASED){
-      if (lsol->is_CG){
-        //PhyBased_PC_CG(&pb_pc,simu,loc_z,loc_x);
-	//PhyBased_PC_InvertSchur_CG(&pb_pc,simu,loc_z,loc_x);
-	PhyBased_PC_Full(&pb_pc,simu,loc_z,loc_x);
-      }
-      else {
+    if(lsol->pc_type == PHY_BASED){    
+       if (lsol->is_CG){
+	 //PhyBased_PC_CG(&pb_pc,simu,loc_z,loc_x);
+	 PhyBased_PC_InvertSchur_CG(&pb_pc,simu,loc_z,loc_x);
+       }
+       else {
         PhyBased_PC_DG(&pb_pc,simu,loc_z,loc_x);
         //solveIdentity(&pb_pc,simu,loc_z,loc_x);
       }
     }
+    else if(lsol->pc_type == PHY_BASED_EXACT){
+      if (lsol->is_CG){
+	PhyBased_PC_Full(&pb_pc,simu,loc_z,loc_x);
+      }
+       else {
+	 Vector_copy(loc_x,loc_z,N);
+       }
+    }
+    else if(lsol->pc_type == EXACT){
+      Exact_PC(lsol,simu,loc_z,loc_x);
+    }
     else if (lsol->pc_type == JACOBI){
-      solveJacobi(lsol,simu,loc_z,loc_x);
+      Jacobi_PC(lsol,simu,loc_z,loc_x);
     }
     else {
       // work(colz) <-- M-1 * work(colx)  
       Vector_copy(loc_x,loc_z,N);
     }
+
+    
     for(int ivec = 0; ivec < N; ivec++) {
       work[colz+ivec]= loc_z[ivec];                    
       work[colx+ivec]= loc_x[ivec]; 
@@ -909,10 +921,53 @@ void SolveJFLinearSolver(JFLinearSolver* lsol,Simulation * simu){
 
 }
 
-void solveJacobi(LinearSolver *lsol, Simulation* simu, real* sol, real* rhs){
+void Jacobi_PC(LinearSolver *lsol, Simulation* simu, real* sol, real* rhs){
 
   for (int i=0;i<lsol->neq; i++){
     assert(GetLinearSolver(lsol,i,i)!=0);
     sol[i]=rhs[i]/GetLinearSolver(lsol,i,i);
   }
+}
+
+void Exact_PC(LinearSolver *lsol, Simulation* simu, real* sol, real* rhs){
+
+  Skyline * mat;
+  Skyline mat_copy;
+
+  mat=(Skyline*)lsol->matrix; 
+  
+  mat_copy.is_alloc= mat->is_alloc;
+  mat_copy.copy_is_alloc=mat->copy_is_alloc;
+  mat_copy.is_sym=mat->is_sym;
+  mat_copy.is_lu=mat->is_lu;
+
+  mat_copy.neq=mat->neq;
+  mat_copy.nmem=mat->nmem;
+
+  mat_copy.vkgd=malloc(mat_copy.neq*sizeof(real));
+  mat_copy.vkgi=malloc(mat_copy.nmem*sizeof(real));
+  mat_copy.vkgs=malloc(mat_copy.nmem*sizeof(real));
+  
+
+  mat_copy.prof=malloc(mat_copy.neq*sizeof(int));
+  mat_copy.kld=malloc((mat_copy.neq+1)*sizeof(int));
+
+  for (int i=0;i<mat->neq; i++){
+    mat_copy.vkgd[i]=mat->vkgd[i];
+  }
+  for (int i=0;i<mat->nmem; i++){
+    mat_copy.vkgi[i]=mat->vkgi[i];
+    mat_copy.vkgs[i]=mat->vkgs[i];
+  }
+
+  for (int i=0;i<mat->neq+1; i++){
+    mat_copy.kld[i]=mat->kld[i];
+  }
+  for (int i=0;i<mat->neq; i++){
+    mat_copy.prof[i]=mat->prof[i];
+  }
+
+  FactoLU(&mat_copy);
+  SolveSkyline(&mat_copy,rhs,sol);
+  
 }

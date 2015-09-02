@@ -372,8 +372,8 @@ void Init_PhyBasedPC_SchurPressure_Wave(Simulation *simu, PB_PC* pb_pc, int* lis
   GenericOperator_PBPC_Pressure(pb_pc);
 
   // For the Schur the the condition is Neumann
-  pb_pc->D.bc_assembly=PenalizedDirichletContinuousMatrix_PC;//;
-  pb_pc->Schur.bc_assembly=PenalizedDirichletContinuousMatrix_PC;//ExactDirichletContinuousMatrix_PC;
+  pb_pc->D.bc_assembly=ExactDirichletContinuousMatrix_PC;
+  pb_pc->Schur.bc_assembly=ExactDirichletContinuousMatrix_PC;
 
   pb_pc->D.bc_assembly(&pb_pc->D,&pb_pc->D.lsol);
   pb_pc->Schur.bc_assembly(&pb_pc->Schur,&pb_pc->Schur.lsol);
@@ -393,35 +393,46 @@ void Init_PhyBasedPC_SchurPressure_Wave(Simulation *simu, PB_PC* pb_pc, int* lis
 
   real LMU_1,LMU_2;
   InitLinearSolver(&pb_pc->Schur2,pb_pc->D.nb_fe_nodes,NULL,NULL); 
-  
+   
   for (int i=0;i<pb_pc->D.nb_fe_nodes;i++){
     for (int j=0;j<pb_pc->D.nb_fe_nodes;j++){
       IsNonZero(&pb_pc->Schur2,i,j);
     }
   }
 
+  
   AllocateLinearSolver(&pb_pc->Schur2);
 
-  real A1[pb_pc->Schur2.neq][pb_pc->Schur2.neq];
-  real A2[pb_pc->Schur2.neq][pb_pc->Schur2.neq];
-  for (int i=0;i<pb_pc->D.nb_fe_nodes;i++){
+  real ** A1;
+  real ** A2;
+  A1=calloc(pb_pc->Schur2.neq,sizeof(real));
+  A2=calloc(pb_pc->Schur2.neq,sizeof(real));
+
+  for (int i=0;i<pb_pc->Schur2.neq;i++){
+    A1[i]=calloc(pb_pc->Schur2.neq,sizeof(real));
+    A2[i]=calloc(pb_pc->Schur2.neq,sizeof(real));
+  }
+  
+  for (int i=0;i<pb_pc->Schur2.neq;i++){ 
     real InvertMii=1.0/GetLinearSolver(&pb_pc->D.lsol,2*i,2*i);
     real InvertMii2=1.0/GetLinearSolver(&pb_pc->D.lsol,2*i+1,2*i+1);
-    for (int j=0;j<pb_pc->D.nb_fe_nodes;j++){
+    for (int j=0;j<pb_pc->Schur2.neq;j++){
       A1[i][j]=InvertMii*GetLinearSolver(&pb_pc->U1.lsol,i,j);
       A2[i][j]=InvertMii2*GetLinearSolver(&pb_pc->U2.lsol,i,j);
+
     }
   }
   
-  for (int i=0;i<pb_pc->D.nb_fe_nodes;i++){
-    for (int j=0;j<pb_pc->D.nb_fe_nodes;j++){
+  for (int i=0;i<pb_pc->Schur2.neq;i++){
+    for (int j=0;j<pb_pc->Schur2.neq;j++){
       LMU_1=0.0;
       LMU_2=0.0;
-      for (int k=0;k<pb_pc->D.nb_fe_nodes;k++){
+      for (int k=0;k<pb_pc->Schur2.neq;k++){
 	LMU_1+=GetLinearSolver(&pb_pc->L1.lsol,i,k)*A1[k][j];
 	LMU_2+=GetLinearSolver(&pb_pc->L2.lsol,i,k)*A2[k][j];
-      }     
-      SetLinearSolver(&pb_pc->Schur2,i,j,GetLinearSolver(&pb_pc->D.lsol,2*i,2*j)-LMU_1-LMU_2);
+      }
+      real val=GetLinearSolver(&pb_pc->D.lsol,2*i,2*j)-LMU_1-LMU_2;
+      SetLinearSolver(&pb_pc->Schur2,i,j,val);
     }
   }
   
@@ -430,9 +441,9 @@ void Init_PhyBasedPC_SchurPressure_Wave(Simulation *simu, PB_PC* pb_pc, int* lis
 
 void Init_Parameters_PhyBasedPC(PB_PC* pb_pc){
 
-  pb_pc->solver_prediction=PAR_LU;
-  pb_pc->solver_propagation=PAR_LU;
-  pb_pc->solver_correction=PAR_LU;
+  pb_pc->solver_prediction=LU;
+  pb_pc->solver_propagation=LU;
+  pb_pc->solver_correction=LU;
 
   pb_pc->pc_prediction=NONE;
   pb_pc->pc_propagation=NONE;

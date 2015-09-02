@@ -377,7 +377,7 @@ int Testrealpc(void) {
     model4.Source = SteadyStateOne_Source;
 
     int deg4[]={4, 4, 0};
-    int raf4[]={4, 4, 1};
+    int raf4[]={8, 8, 1};
 
 
     assert(mesh.is2d);
@@ -400,7 +400,7 @@ int Testrealpc(void) {
 
     real theta4=0.5;
     simu4.theta=theta4;
-    simu4.dt=1000;//0.001667;
+    simu4.dt=1;//0.001667;
     simu4.vmax=_SPEED_WAVE;
     real tmax4=simu4.dt;//10*simu.dt;//;0.5;
 
@@ -411,19 +411,19 @@ int Testrealpc(void) {
     real *wCG = calloc(size, sizeof(real));
     real *solpc = calloc(size, sizeof(real));
 
-    csSolve.lsol.solver_type=PAR_LU;
-    csSolve.lsol.tol=1.e-15;
-    csSolve.lsol.pc_type=NONE;//PAR_JACOBI;//PHY_BASED;
+    csSolve.lsol.solver_type=GMRES;
+    csSolve.lsol.tol=1.e-10;
+    csSolve.lsol.pc_type=PHY_BASED_EXACT;//PHY_BASED;
     csSolve.lsol.iter_max=1000;
     csSolve.lsol.restart_gmres=30;
     csSolve.lsol.is_CG=true;
-    csSolve.bc_assembly=PenalizedDirichletContinuousMatrix;//ExactDirichletContinuousMatrix;
+    csSolve.bc_assembly=ExactDirichletContinuousMatrix;
 
     //////////////////////////////////
-    PB_PC pb_pc;
+    /*PB_PC pb_pc;
      int mat2assemble[6] = {1, 1, 1, 1, 1, 1};
      Init_PhyBasedPC_SchurPressure_Wave(&simu4, &pb_pc, mat2assemble);
-     Init_Parameters_PhyBasedPC(&pb_pc);
+     Init_Parameters_PhyBasedPC(&pb_pc);*/
      ////////////////////////////
 
     Wave_test(&cs,-(1.0-simu4.theta),simu4.dt);
@@ -451,13 +451,13 @@ int Testrealpc(void) {
       csSolve.bc_assembly(&csSolve, &csSolve.lsol);
       SolveLinearSolver(&csSolve.lsol,&simu4);
       ///////////////////////////////////////
-      PhyBased_PC_Full(&pb_pc,&simu4,solpc,csSolve.lsol.rhs);
+      /*PhyBased_PC_Full(&pb_pc,&simu4,solpc,csSolve.lsol.rhs);
        real error=0;
        for (int i=0; i<size; i++){
 	 error=error+fabs((solpc[i]-csSolve.lsol.sol[i])*(solpc[i]-csSolve.lsol.sol[i]));
 	 //printf("pppp %d %.12e %.12e %.12e\n",i,solpc[i],csSolve.lsol.sol[i],wCG[i]-csSolve.lsol.sol[i]);
        }
-       printf("pppp %.12e\n",sqrt(error));
+       printf("pppp %.12e\n",sqrt(error));*/
 	 /////////////////////////////////// */
       for (int i=0; i<size; i++){
         wCG[i] = csSolve.lsol.sol[i];
