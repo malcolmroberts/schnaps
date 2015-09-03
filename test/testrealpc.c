@@ -412,8 +412,8 @@ int Testrealpc(void) {
 
     csSolve.lsol.solver_type=GMRES;//LU;
     csSolve.lsol.tol=1.e-9;
-    csSolve.lsol.pc_type=PHY_BASED;//;NONE;//EXACT;//PHY_BASED;
-    csSolve.lsol.iter_max=1000;
+    csSolve.lsol.pc_type=PHY_BASED;//PHY_BASED;//;NONE;//EXACT;//PHY_BASED;
+    csSolve.lsol.iter_max=10000;
     csSolve.lsol.restart_gmres=30;
     csSolve.lsol.is_CG=true;
     csSolve.bc_assembly=ExactDirichletContinuousMatrix;
@@ -452,13 +452,13 @@ int Testrealpc(void) {
       printf("pouet");
       
       ///////////////////////////////////////
-      PhyBased_PC_Full(&pb_pc,&simu4,solpc,csSolve.lsol.rhs);
+      /*PhyBased_PC_Full(&pb_pc,&simu4,solpc,csSolve.lsol.rhs);
        real error=0;
        for (int i=0; i<size; i++){
 	 error=error+fabs((solpc[i]-csSolve.lsol.sol[i])*(solpc[i]-csSolve.lsol.sol[i]));
 	 //printf("pppp %d %.12e %.12e %.12e\n",i,solpc[i],csSolve.lsol.sol[i],wCG[i]-csSolve.lsol.sol[i]);
        }
-       printf("pppp %.12e\n",sqrt(error));
+       printf("pppp %.12e\n",sqrt(error));*/
 	 /////////////////////////////////// */
       for (int i=0; i<size; i++){
         wCG[i] = csSolve.lsol.sol[i];
@@ -532,9 +532,9 @@ int Testrealpc(void) {
     real *wCG = calloc(size, sizeof(real));
 
     csSolve.lsol.solver_type=GMRES;
-    csSolve.lsol.tol=1.e-8;
+    csSolve.lsol.tol=1.e-11;
     csSolve.lsol.pc_type=PHY_BASED;
-    csSolve.lsol.iter_max=50000;
+    csSolve.lsol.iter_max=500;
     csSolve.lsol.restart_gmres=30;
     csSolve.lsol.is_CG=true;
     csSolve.bc_assembly=ExactDirichletContinuousMatrix;
@@ -595,8 +595,8 @@ void SteadyStateOne_ImposedData(const real *xy, const real t, real *w) {
   real y=xy[1];
 
   w[0] = 10.0;//+exp(x)+exp(2*y); // 10+x*x+y*y*y
-  w[1] = 2.0;//0.2*x*x*x*x*x*y-exp(y)+2;
-  w[2] = 3.0;//xp(x)-x*x*x*x*y*y*0.5+5.6;
+  w[1] = 0.2*x*x*x*x*x*y-exp(y)+2;
+  w[2] = exp(x)-x*x*x*x*y*y*0.5+5.6;
 
 }
 

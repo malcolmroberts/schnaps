@@ -754,7 +754,7 @@ void PhyBased_PC_InvertSchur_CG(PB_PC* pb_pc, Simulation *simu, real* globalSol,
     pb_pc->D.lsol.rhs[i*2]   = globalRHS[i*3+1];
     pb_pc->D.lsol.rhs[i*2+1] = globalRHS[i*3+2];
   }
-  //printf("Solution...\n");
+  printf("Solution prediction\n");
   SolveLinearSolver(&pb_pc->D.lsol,simu);
 
   // 2) PROPAGATION STEP
@@ -779,7 +779,7 @@ void PhyBased_PC_InvertSchur_CG(PB_PC* pb_pc, Simulation *simu, real* globalSol,
     pb_pc->Schur.lsol.rhs[i]   = globalRHS[i*3] - pb_pc->L1.lsol.sol[i] - pb_pc->L2.lsol.sol[i];
   }
 
-  //printf("Solution...\n");
+  printf("Solution propagation\n");
   SolveLinearSolver(&pb_pc->Schur.lsol,simu);
 
 
@@ -801,7 +801,7 @@ void PhyBased_PC_InvertSchur_CG(PB_PC* pb_pc, Simulation *simu, real* globalSol,
     pb_pc->D.lsol.rhs[i*2+1] =  pb_pc->D.lsol.rhs[i*2+1] - pb_pc->U2.lsol.sol[i];
   }
 
-  //printf("Solution...\n");
+  printf("Solution correction\n");
    SolveLinearSolver(&pb_pc->D.lsol,simu);
   
   // 4) OUTPUT STEP

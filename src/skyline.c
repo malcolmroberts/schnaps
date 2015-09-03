@@ -355,13 +355,13 @@ void SolveSkyline(Skyline* sky,real* vfg,real* vu){
     for(int i=0; i < sky->neq; i++){
       error=error+fabs(sol_temp2[i]);
     }
-    //printf("llllU %.13e %d \n",error,iter);
+    printf("llllU %.13e %d \n",error,iter);
     
     for(int i=0; i < sky->neq; i++){
       sol_temp2[i]=sol_temp[i]-sol_temp2[i];
     }
    
-    if(error <1.e-14 || iter==nb_iterations){
+    if(error <1.e-12 || iter==nb_iterations){
       break;
     }
   }
