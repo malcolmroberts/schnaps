@@ -4,8 +4,7 @@
 
 #include "test.h"
 #include "schnaps.h"
-
-#define _NN 5
+#include <stdlib.h>
 
 int main(void) {
   
@@ -25,10 +24,12 @@ int main(void) {
 
 int TestWaveDF(void){
 
-  int test=0,test1=1,test2=1,test3=1,test4=1,test5=1;
+  int test=0;
   Simulation simu;
 
   LinearSolver sky;
+  real * solution=NULL;
+  
 
 #ifdef PARALUTION 
   paralution_begin();
@@ -36,37 +37,56 @@ int TestWaveDF(void){
 
 
   
-  int Nwave=60;
+  int Nwave=20;
+  int neq=2*Nwave;
   real hw=1.0/Nwave;
-  real c=1,dt=1;
-  for(int i=0;i<Nwave;i++){
-    if(i % 2 ==0){
-      solution[i]=10; // presssure
-    }
-    else {
-      solution[i]=2; //velocity
-    }
-  }
-  
-  InitLinearSolver(&sky,2*Nwave,NULL,NULL);
+  real time=0;
+  real dt=0,c=0;
+  real pi=4.0*atan(1.0);
+  real Coef=2.0*pi;
+  real itermax=5;
 
-  sky.solver_type = LU;
-  sky.pc_type=NONE;
-  sky.iter_max=20000;
-  sky.tol=1.e-7;
+  simu.dt=0.1;
+  simu.vmax=1;
+  dt=simu.dt;
+  c=simu.vmax;
   
-  for(int i=0;i<Nwave;i++){
+
+  solution=malloc(neq*sizeof(real));
+ 
+  
+  InitLinearSolver(&sky,neq,NULL,NULL);
+
+  sky.solver_type=LU;
+  sky.pc_type=NONE;//PHDF;//;JACOBI;
+  sky.iter_max=50;
+  sky.tol=1.e-11;
+  sky.restart_gmres=20;
+  
+  for(int i=0;i<neq;i++){
     if (i==0){ 
       IsNonZero(&sky,0,0);
       IsNonZero(&sky,0,1);
       IsNonZero(&sky,0,2);
       IsNonZero(&sky,0,3);
+    }
+    else if (i==1){
+      IsNonZero(&sky,1,0);
+      IsNonZero(&sky,1,1);
+      IsNonZero(&sky,1,2);
+      IsNonZero(&sky,1,3);
     } 
-    else if (i==2*NPoisson-1){ 
-      IsNonZero(&sky,2*Nwave-1,NPoisson-1);
-      IsNonZero(&sky,2*Nwave-1,NPoisson-2);
-      IsNonZero(&sky,2*Nwave-1,NPoisson-3);
-      IsNonZero(&sky,2*Nwave-1,NPoisson-4);
+    else if (i==neq-1){ 
+      IsNonZero(&sky,neq-1,neq-1);
+      IsNonZero(&sky,neq-1,neq-2);
+      IsNonZero(&sky,neq-1,neq-3);
+      IsNonZero(&sky,neq-1,neq-4);
+    } 
+    else if (i==neq-2){ 
+      IsNonZero(&sky,neq-2,neq-1);
+      IsNonZero(&sky,neq-2,neq-2);
+      IsNonZero(&sky,neq-2,neq-3);
+      IsNonZero(&sky,neq-2,neq-4);
     } 
     else if (i % 2 ==0) { 
       IsNonZero(&sky,i,i);
@@ -92,77 +112,115 @@ int TestWaveDF(void){
   // once the nonzero positions are known allocate memory
   AllocateLinearSolver(&sky);
 
-  for(int i=0;i<Nwave;i++){
+  for(int i=0;i<neq;i++){
     if (i==0){ 
-      AddLinearSolver(&sky,0,0,1);
-      AddLinearSolver(&sky,0,1,1);
-      AddLinearSolver(&sky,0,2,1);
-      AddLinearSolver(&sky,0,3,1);
+      AddLinearSolver(&sky,0,0,1.0+(c*dt)/(hw)); //pj
+      AddLinearSolver(&sky,0,2,-(c*dt)/(2.0*hw)); //pj+1
+	    
+      AddLinearSolver(&sky,0,1,0.0); //uj
+      AddLinearSolver(&sky,0,3,+(c*dt)/(2.0*hw)); //uj+1
+    }
+    else if (i==1){ 
+      AddLinearSolver(&sky,1,1,1.0+(c*dt)/(hw)); //uj
+      AddLinearSolver(&sky,1,3,-(c*dt)/(2.0*hw)); //uj+1
+	    
+      AddLinearSolver(&sky,1,0,0.0); //pj
+      AddLinearSolver(&sky,1,2,+(c*dt)/(2.0*hw)); //pj+1
     } 
-    else if (i==2*NPoisson-1){ 
-      AddLinearSolver(&sky,2*Nwave-1,NPoisson-1,1);
-      AddLinearSolver(&sky,2*Nwave-1,NPoisson-2,1);
-      AddLinearSolver(&sky,2*Nwave-1,NPoisson-3,1);
-      AddLinearSolver(&sky,2*Nwave-1,NPoisson-4,1);
+    else if (i==neq-1){ 
+      AddLinearSolver(&sky,neq-1,neq-1,1.0+(c*dt)/(hw)); //uj
+      AddLinearSolver(&sky,neq-1,neq-3,-(c*dt)/(2.0*hw)); //uj-1
+       
+      AddLinearSolver(&sky,neq-1,neq-2,0.0); //pj
+      AddLinearSolver(&sky,neq-1,neq-4,-(c*dt)/(2.0*hw));//pj-1
+    }
+    else if (i==neq-2){ 
+      AddLinearSolver(&sky,neq-2,neq-2,1.0+(c*dt)/(hw)); //pj
+      AddLinearSolver(&sky,neq-2,neq-4,-(c*dt)/(2.0*hw)); //pj-1
+       
+      AddLinearSolver(&sky,neq-2,neq-1,0.0); //uj
+      AddLinearSolver(&sky,neq-2,neq-3,-(c*dt)/(2.0*hw));//uj-1
     } 
-    else if (i % 2 ==0) { 
-      AddLinearSolver(&sky,i,i,1);
-      AddLinearSolver(&sky,i,i+1,1);
-    
-      AddLinearSolver(&sky,i,i-1,1);
-      AddLinearSolver(&sky,i,i-2,1);
-    
-      AddLinearSolver(&sky,i,i+2,1);
-      AddLinearSolver(&sky,i,i+3,1);
+    else if (i % 2 ==0) {
+      AddLinearSolver(&sky,i,i-2,-(c*dt)/(2.0*hw)); //pj-1
+      AddLinearSolver(&sky,i,i,1.0+(c*dt)/(hw)); //pj
+      AddLinearSolver(&sky,i,i+2,-(c*dt)/(2.0*hw)); //pj+1
+      
+      AddLinearSolver(&sky,i,i-1,-(c*dt)/(2.0*hw)); //uj-1
+      AddLinearSolver(&sky,i,i+1,0.0); //uj
+      AddLinearSolver(&sky,i,i+3,+(c*dt)/(2.0*hw)); //uj+1
+      
     }
     else { 
-      AddLinearSolver(&sky,i,i,1);
-      AddLinearSolver(&sky,i,i-1,1);
-    
-      AddLinearSolver(&sky,i,i-2,1);
-      AddLinearSolver(&sky,i,i-3,1);
-
-      AddLinearSolver(&sky,i,i+1,1);
-      AddLinearSolver(&sky,i,i+2,1);
+      AddLinearSolver(&sky,i,i-2,-(c*dt)/(2.0*hw)); //uj-1
+      AddLinearSolver(&sky,i,i,1.0+(c*dt)/(hw)); //uj
+      AddLinearSolver(&sky,i,i+2,-(c*dt)/(2.0*hw)); //uj+1
+      
+      AddLinearSolver(&sky,i,i-3,-(c*dt)/(2.0*hw)); //pj-1
+      AddLinearSolver(&sky,i,i-1,0.0); //pj
+      AddLinearSolver(&sky,i,i+1,+(c*dt)/(2.0*hw)); //pj+1
     }
     sky.sol[i]=0.0;
-    sky.rhs[i]=solution[i];
+    sky.rhs[i]=0.0;
     
   }
 
-  real bigvalw=1.e+15;
-  SetLinearSolver(&sky,2*Nwave-1,2*Nwave-1,bigvalw);
-  SetLinearSolver(&sky,2*Nwave-2,2*Nwave-2,bigvalw);
-  SetLinearSolver(&sky,0,0,bigvalw);
-  SetLinearSolver(&sky,1,1,bigvalw);
-  sky.rhs[0]=bigvalw*sky.rhs[0];
-  sky.rhs[1]=bigvalw*sky.rhs[1];
-  sky.rhs[2*Nwave-1]=bigvalw*sky.rhs[2*Nwave-1];
-  sky.rhs[2*Nwave-2]=bigvalw*sky.rhs[2*Nwave-2];
 
-  for(int tstep=0;tstep<2*dt;tstep++){
-    time=tstep*dt;
-    SolveLinearSolver(&sky,&simu);
-    
+  for(int i=0;i<neq;i++){
+    SetLinearSolver(&sky,neq-1,i,0.0);
+    SetLinearSolver(&sky,neq-2,i,0.0);
+    SetLinearSolver(&sky,0,i,0.0);
+    SetLinearSolver(&sky,1,i,0.0);
+  }
+  SetLinearSolver(&sky,neq-1,neq-1,1.0);
+  SetLinearSolver(&sky,neq-2,neq-2,1.0);
+  SetLinearSolver(&sky,0,0,1.0);
+  SetLinearSolver(&sky,1,1,1.0);
+
+
+   //DisplayLinearSolver(&sky);
+  time=0; 
+  for(int tstep=0;tstep<itermax;tstep++){
+
     for(int i=0;i<Nwave;i++){
-      sky.rhs[i]=sky.sol[i];
+      solution[2*i]=10;//-c*Coef*sqrt(2.0)*sin(c*Coef*sqrt(2.0)*time)*cos(Coef*(i+0.5*hw)); // presssure
+      solution[2*i+1]=2;//c*Coef*cos(Coef*c*sqrt(2.0)*time)*sin(Coef*(i+0.5*hw)); //velocity
     }
 
-    real error=0;
-    for(int i=0;i<2*Nwave;i++){
+    if(tstep==0){
+      for(int i=0;i<neq;i++){
+	sky.rhs[i]=solution[i];
+      }
+    }
+    else
+      {
+	for(int i=0;i<neq;i++){
+	  sky.rhs[i]=sky.sol[i];
+	}
+      }
+    
+    
+    sky.rhs[0]=1.0*solution[0];
+    sky.rhs[1]=1.0*solution[1];
+    sky.rhs[neq-1]=1.0*solution[neq-1];
+    sky.rhs[neq-2]=1.0*solution[neq-2];
+     
+    SolveLinearSolver(&sky,&simu);
+
+     //PhyBasedPC_waveDF(&sky,&simu,sky.sol,sky.rhs);
+
+    real error=0,norm=0;
+    time=time+dt;
+    for(int i=0;i<neq;i++){
       error=error+(sky.sol[i]-solution[i])*(sky.sol[i]-solution[i]);
+      norm=norm+(solution[i])*(solution[i]);
     }
-    prtintf("error time \n",time,sqrt(error));
+    printf("error time %.13e %.13e \n",time,sqrt(error/norm));
   }
-
 
   // deallocate memory
   FreeLinearSolver(&sky);
 
-  test5 = test5 && (verr<5.e-2);
-  printf("Error =%.12e\n",verr);
-
-  if(test1==1 &&  test2==1 && test3==1 && test4==1) test=1;
 
 
 #ifdef PARALUTION 
@@ -172,3 +230,6 @@ int TestWaveDF(void){
   return test;
 
 }
+
+
+

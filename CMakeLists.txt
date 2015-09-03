@@ -366,14 +366,6 @@ target_link_libraries(testtransport_steady ${LIBS})
 add_test(testtransport_steady testtransport_steady)
 
 add_executable(
-  testPCWave
-  test/test.h
-  test/testPCWave.c
-)
-target_link_libraries(testPCWave ${LIBS})
-add_test(testPCWave testPCWave)
-
-add_executable(
   testshequilibrium2d
   test/test.h
   test/testshequilibrium2d.c
@@ -411,6 +403,13 @@ add_executable(
   test/testrealpc.c
 )
 target_link_libraries(testrealpc ${LIBS})
+
+add_executable(
+  testwavedf
+  test/test.h
+  test/testwavedf.c
+)
+target_link_libraries(testwavedf ${LIBS})
 
 
 IF(BUILD_PARALUTION)

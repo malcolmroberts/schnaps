@@ -390,7 +390,17 @@ void Init_PhyBasedPC_SchurPressure_Wave(Simulation *simu, PB_PC* pb_pc, int* lis
   pb_pc->rhs_propagation = calloc(pb_pc->Schur.lsol.neq,sizeof(real));
   pb_pc->rhs_correction = calloc(pb_pc->D.lsol.neq,sizeof(real));
 
-
+  for (int i=0;i<pb_pc->D.nb_fe_nodes;i++){
+    if (pb_pc->L1.is_boundary_node[i]){
+      for (int j=0;j<pb_pc->D.nb_fe_nodes;j++){
+	SetLinearSolver(&pb_pc->L1.lsol,i,j,0.0);
+	SetLinearSolver(&pb_pc->L2.lsol,i,j,0.0);
+	SetLinearSolver(&pb_pc->U1.lsol,i,j,0.0);
+	SetLinearSolver(&pb_pc->U2.lsol,i,j,0.0);
+      } 
+    } 
+    }
+  /* 
   real LMU_1,LMU_2;
   InitLinearSolver(&pb_pc->Schur2,pb_pc->D.nb_fe_nodes,NULL,NULL); 
    
@@ -427,14 +437,21 @@ void Init_PhyBasedPC_SchurPressure_Wave(Simulation *simu, PB_PC* pb_pc, int* lis
     for (int j=0;j<pb_pc->Schur2.neq;j++){
       LMU_1=0.0;
       LMU_2=0.0;
-      for (int k=0;k<pb_pc->Schur2.neq;k++){
-	LMU_1+=GetLinearSolver(&pb_pc->L1.lsol,i,k)*A1[k][j];
-	LMU_2+=GetLinearSolver(&pb_pc->L2.lsol,i,k)*A2[k][j];
+      if(pb_pc->L1.is_boundary_node[i]){
+	  LMU_1=0.0;
+	  LMU_2=0.0;
       }
+      else
+	{
+	  for (int k=0;k<pb_pc->Schur2.neq;k++){
+	  LMU_1+=GetLinearSolver(&pb_pc->L1.lsol,i,k)*A1[k][j];
+	  LMU_2+=GetLinearSolver(&pb_pc->L2.lsol,i,k)*A2[k][j];
+	  }
+	}
       real val=GetLinearSolver(&pb_pc->D.lsol,2*i,2*j)-LMU_1-LMU_2;
       SetLinearSolver(&pb_pc->Schur2,i,j,val);
     }
-  }
+    }*/
   
 }
 
@@ -834,10 +851,9 @@ void PhyBased_PC_Full(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*glob
     pb_pc->D.lsol.rhs[i*2]   = globalRHS[i*3+1];
     pb_pc->D.lsol.rhs[i*2+1] = globalRHS[i*3+2];
   }
+
   //printf("Solution...\n");
   SolveLinearSolver(&pb_pc->D.lsol,simu);
-
-  
 
   pb_pc->Schur.lsol.solver_type=pb_pc->solver_propagation;
   pb_pc->Schur.lsol.tol=pb_pc->tol_propagation;
@@ -853,14 +869,14 @@ void PhyBased_PC_Full(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*glob
   // Parsing L1P, L2P into the "sol" of L1 and L2 (since it is unused).
   pb_pc->L1.lsol.MatVecProduct(&pb_pc->L1.lsol,solU1,pb_pc->L1.lsol.sol);
   pb_pc->L2.lsol.MatVecProduct(&pb_pc->L2.lsol,solU2,pb_pc->L2.lsol.sol);
-
   
   //printf("RHS assembly.....\n");
   for (int i=0;i<pb_pc->D.nb_fe_nodes;i++){
-    pb_pc->Schur.lsol.rhs[i]   = globalRHS[i*3] - pb_pc->L1.lsol.sol[i] - pb_pc->L2.lsol.sol[i];
+    pb_pc->Schur.lsol.rhs[i]   = globalRHS[i*3]- pb_pc->L1.lsol.sol[i] - pb_pc->L2.lsol.sol[i];
   }
 
   pb_pc->Schur2.solver_type=pb_pc->Schur.lsol.solver_type;
+  
   // printf("Solution propagation\n");
    for (int i=0;i<pb_pc->D.nb_fe_nodes;i++){
      pb_pc->Schur2.rhs[i]=pb_pc->Schur.lsol.rhs[i];
@@ -869,6 +885,11 @@ void PhyBased_PC_Full(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*glob
   for (int i=0;i<pb_pc->D.nb_fe_nodes;i++){
      pb_pc->Schur.lsol.sol[i]=pb_pc->Schur2.sol[i];
   }
+
+  /*for (int i=0;i<pb_pc->D.nb_fe_nodes;i++){
+    printf(" sol p %d %.12e\n",i,pb_pc->Schur.lsol.sol[i]);   
+    }*/
+  
   // SolveLinearSolver(&pb_pc->Schur.lsol,simu);
 
   // 3) CORRECTION STEP

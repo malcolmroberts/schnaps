@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include "skyline.h"
+#include "math.h"
 
 
 int sol_(real *vkgs, real *vkgd, real *
@@ -133,7 +134,7 @@ void AddSkyline(Skyline* sky,int i,int j,real val){
   assert(sky->is_alloc);
   
   if ((j-i > sky->prof[j] || i-j > sky->prof[i]) && (val>0.0)){
-    printf("problem of profil with add \n");
+    printf("problem of profil with add %d %d\n",i,j);
   }
   
   if ((j-i > sky->prof[j] || i-j > sky->prof[i]) && val==0.0)
@@ -164,7 +165,7 @@ void SetSkyline(Skyline* sky,int i,int j,real val){
   assert(sky->is_alloc);
 
    if ((j-i > sky->prof[j] || i-j > sky->prof[i]) && (val>0.0)){
-    printf("problem of profil with set \n");
+     printf("problem of profil with set %d %d\n",i,j);
     }
   
   if ((j-i > sky->prof[j] || i-j > sky->prof[i]) && val==0.0)
@@ -252,7 +253,7 @@ void DisplaySkyline(Skyline* sky){
 
   for(int i=0;i<n;i++){
     for(int j=0;j<n;j++){
-      printf("%.5e ", GetSkyline(sky,i,j));
+      printf("%.16e ", GetSkyline(sky,i,j));
     }   
     printf("\n");
     }
@@ -311,19 +312,71 @@ void SolveSkyline(Skyline* sky,real* vfg,real* vu){
   assert(sky->is_lu);
 
   real energ;
-  int ier;
+  int ier,iter;
   int ifac=0;
   int isol=1;
   int nsym=1;
+  real * vec_temp;
+  real * sol_temp;
+  real * sol_temp2;
+  int nb_iterations=10;
+
+  sol_temp=calloc(sky->neq,sizeof(real));
+  sol_temp2=calloc(sky->neq,sizeof(real));  
+  vec_temp=calloc(sky->neq,sizeof(real));
+  
   if (sky->is_sym) nsym=0;
 
   sol_(sky->vkgs,sky->vkgd, sky->vkgi,
-       vfg, sky->kld, vu, sky->neq, 
-        ifac, isol, nsym,
-       &energ, &ier);
+       vfg, sky->kld, sol_temp, sky->neq, 
+        ifac, isol, nsym,&energ, &ier);
+
+  /////////// Post treatment ////////////
+  for(iter=0;iter<nb_iterations;iter++) {
+
+    if(iter>0){
+      for(int i=0; i < sky->neq; i++){
+	sol_temp[i]=sol_temp2[i];
+      }
+    }
+       
+    MatVectSkyline(sky,sol_temp,vec_temp);
 
 
+    for(int i=0; i < sky->neq; i++){
+      vec_temp[i]=vec_temp[i]-vfg[i];
+    }
+      
+    sol_(sky->vkgs,sky->vkgd, sky->vkgi,
+	 vec_temp, sky->kld, sol_temp2, sky->neq, 
+	 ifac, isol, nsym,&energ, &ier);
+    
+    real error=0.0;
+    for(int i=0; i < sky->neq; i++){
+      error=error+fabs(sol_temp2[i]);
+    }
+    //printf("llllU %.13e %d \n",error,iter);
+    
+    for(int i=0; i < sky->neq; i++){
+      sol_temp2[i]=sol_temp[i]-sol_temp2[i];
+    }
+   
+    if(error <1.e-14 || iter==nb_iterations){
+      break;
+    }
+  }
 
+  if(iter>0){
+    for(int i=0; i < sky->neq; i++){
+      vu[i]=sol_temp2[i];
+    }
+  }
+  else
+    {
+      for(int i=0; i < sky->neq; i++){
+	vu[i]=sol_temp[i];
+      }
+   }
 }
 
 
@@ -362,7 +415,7 @@ static int c__1 = 1;
 {
     /* Initialized data */
 
-    static real vzero = 0.;
+    static real vzero = 0.0;
 
     /* Format strings */
     static char fmt_8000[] = "sol pivot nul equation";
@@ -375,12 +428,12 @@ static int c__1 = 1;
 
     /* Local variables */
     static int i__;
-    static real c1, c2;
+    static real c1=0.0, c2=0.0;
     static int j1, j2, ic, ij, ik, jbk, jck, jhj, jhk, lhk, jhj1, jhk1, 
 	    lhk1;
     extern real scal_(real *, real *, int *);
     static int imin, imax, imin1;
-    static real cdiag;
+    static real cdiag=0.0;
 
 /*   resolution d'un systeme lineaire symetrique ou non. la matrice est */
 /*   stockee par ligne de ciel,en memoire dans les tables vkgs,vkgd,vkgi */
@@ -628,11 +681,11 @@ real scal_(real *x, real *y, int *n)
 {
     /* Initialized data */
 
-    static real zero = 0.;
+    static real zero = 0.0;
 
     /* System generated locals */
     int i__1;
-    real ret_val;
+    real ret_val=0.0;
 
     /* Local variables */
     static int i__;

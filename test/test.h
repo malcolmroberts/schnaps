@@ -101,5 +101,7 @@ int Test_Wave_Periodic(void);
 
 int Testrealpc(void);
 
+int TestWaveDF(void);
+
 
 #endif
