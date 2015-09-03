@@ -378,7 +378,7 @@ void InitCLInfo(CLInfo *cli, int platform_num, int device_num)
 #if 0
   //#ifdef CL_VERSION_2_0
   cl_queue_properties queue_properties = CL_QUEUE_PROFILING_ENABLE
-    || CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
+    | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
   cli->commandqueue 
     = clCreateCommandQueueWithProperties(cli->context,
 					 cli->device,
