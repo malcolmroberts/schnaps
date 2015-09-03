@@ -77,6 +77,7 @@ typedef struct Simulation {
   char *sourcename_cl;
 
   //! opencl kernels
+  cl_kernel dummykernel;
   cl_kernel dgmass;
   cl_kernel dgflux;
   cl_kernel dgvolume;

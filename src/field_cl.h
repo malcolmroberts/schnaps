@@ -3,12 +3,13 @@
 
 #ifdef _WITH_OPENCL
 
-#ifdef _WITH_OPENCL
 #include "clinfo.h"
-#endif
 
 #include "simulation.h"
 #include "clinfo.h"
+
+void complete_event(Simulation *simu,
+		    cl_uint nwait, cl_event *wait,  cl_event *done);
 
 //! copy back the field to host memory
 //! \param[inout] f a field

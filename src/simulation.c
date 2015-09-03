@@ -5,25 +5,22 @@
 #include <math.h>
 #include <float.h>
 #include <string.h>
-
 #include "field_cl.h"
 
-void EmptySimulation(Simulation *simu){
-
+void EmptySimulation(Simulation *simu)
+{
+  printf("%p\n", (void *) simu);
 #ifdef _WITH_OPENCL
   sprintf(numflux_cl_name,"%s",""); // FIXME: move to field struct.
   sprintf(cl_buildoptions,"%s",""); // FIXME: move to field struct.
   simu->sourcename_cl = malloc(1024 * sizeof(char));
   sprintf(simu->sourcename_cl,"%s"," "); // FIXME: move to field struct.  
 #endif
-
-
 }
 
-
 void InitSimulation(Simulation *simu, MacroMesh *mesh,
-		    int *deg, int *raf, Model *model){
-
+		    int *deg, int *raf, Model *model)
+{
   simu->macromesh = *mesh;
 
   simu->tnow = 0;
@@ -53,7 +50,6 @@ void InitSimulation(Simulation *simu, MacroMesh *mesh,
   if (model->Source != NULL) simu->use_source_cl = true;
 #endif
 
-
   for(int ie=0; ie < mesh->nbelems; ++ie){
     for(int inoloc = 0; inoloc < 20; ++inoloc){
       int ino = mesh->elem2node[20 * ie + inoloc];
@@ -77,7 +73,6 @@ void InitSimulation(Simulation *simu, MacroMesh *mesh,
   simu->pre_dtfields = NULL;
   simu->nb_diags = 0;
 
-
   // to do remove the legacy interp_param array
   field *f = simu->fd;
   simu->interp_param[0] = f->model.m;
@@ -88,13 +83,12 @@ void InitSimulation(Simulation *simu, MacroMesh *mesh,
   simu->interp_param[5] = f->raf[1];
   simu->interp_param[6] = f->raf[2];
 
-
   #ifdef _WITH_OPENCL
   // opencl inits
   if(!cldevice_is_acceptable(nplatform_cl, ndevice_cl)) {
     printf("OpenCL device not acceptable; OpenCL initialization disabled.\n");
   } else {
-
+    printf("%p\n", (void *) simu);
     init_field_cl(simu);
   }
 #endif // _WITH_OPENCL

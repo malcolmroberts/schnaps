@@ -95,10 +95,12 @@ int TestDtfield_CL(void){
   InitSimulation(&simu, &mesh, deg, raf, &model);
   
   cl_int status;
-  cl_event clv_dtfield = clCreateUserEvent(simu.cli.context, &status);
-  
+  cl_event clv_dtfield;// = clCreateUserEvent(simu.cli.context, &status);
+  printf("dtfield_CL...\n");
   dtfield_CL(&simu, &simu.w_cl, 0, NULL, &clv_dtfield);
-  clWaitForEvents(1, &clv_dtfield);
+  printf("\t...dtfield_CL done\n");
+  
+  //clWaitForEvents(1, &clv_dtfield);
   CopyfieldtoCPU(&simu);
 
   // Displayfield(&f);

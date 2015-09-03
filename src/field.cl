@@ -10,6 +10,11 @@
 #define _PERIODZ -1
 #endif
 
+__kernel
+void dummy()
+{
+  
+}
 
 real dlag(int deg, int ib, int ipg) {
   return gauss_lob_dpsi[gauss_lob_dpsi_offset[deg] + ib * (deg + 1) + ipg];
@@ -144,7 +149,8 @@ void compute_gradphi(const real x, const real y, const real z,
   gradphi[19][3] = -4 * t38 * t57;
 }
 
-//void compute_codtau(const real dtau[3][3], real codtau[3][3]) FIXME why a warning ?
+// void compute_codtau(const real dtau[3][3], real codtau[3][3])
+// FIXME why a warning ?
 void compute_codtau(real dtau[3][3], real codtau[3][3])
 {
   codtau[0][0] =  dtau[1][1] * dtau[2][2] - dtau[1][2] * dtau[2][1];

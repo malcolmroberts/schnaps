@@ -181,7 +181,7 @@ void init_DGMacroCellInterface_CL(Simulation *simu,
 
   //__constant int *param,        // 0: interp param
   status = clSetKernelArg(kernel,
-			 argnum++,
+			  argnum++,
                           sizeof(cl_mem),
                           &simu->param_cl);
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
@@ -302,8 +302,9 @@ void DGMacroCellInterface_CL(int ifa, Simulation *simu, cl_mem *w_cl,
     assert(status >= CL_SUCCESS);
   } else {
     // Set the event to completed status.
-    if(done != NULL)
-      clSetUserEventStatus(*done, CL_COMPLETE);
+    /* if(done != NULL) */
+    /*   clSetUserEventStatus(*done, CL_COMPLETE); */
+    complete_event(simu, 0, 0, done);
   }
   
 }
@@ -512,8 +513,9 @@ void DGFlux_CL(Simulation *simu, int dim0, int ie, cl_mem *w_cl,
     if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
     assert(status >= CL_SUCCESS);
   } else {
-    if(done != NULL)
-      clSetUserEventStatus(*done, CL_COMPLETE);
+    //if(done != NULL)
+    //  clSetUserEventStatus(*done, CL_COMPLETE);
+    complete_event(simu, 0, 0, done);
   }
 
 }
@@ -763,12 +765,24 @@ void set_buf_to_zero_cl(cl_mem *buf, int size, Simulation *simu,
   assert(status >= CL_SUCCESS);
 }
 
+void complete_event(Simulation *simu,
+		    cl_uint nwait, cl_event *wait,  cl_event *done)
+{
+  // Set the event *done to completed by calling the dummy kernel
+  // Yes, this is an ugly hack.  SOCL doesn't like clSetUserEventStatus.
+  cl_int status;
+  status = clEnqueueTask(simu->cli.commandqueue,
+			 simu->dummykernel,
+			 nwait, wait, done);
+}
+
 // Apply the Discontinuous Galerkin approximation for computing the
 // time derivative of the field. OpenCL version.
 void dtfield_CL(Simulation *simu, cl_mem *w_cl,
 		cl_uint nwait, cl_event *wait, cl_event *done)
 {
-
+  // printf("dtfield_CL...\n");
+  
   set_buf_to_zero_cl(&simu->dtw_cl, simu->wsize, simu,
   		     nwait, wait, &simu->clv_zbuf);
   
@@ -819,7 +833,8 @@ void dtfield_CL(Simulation *simu, cl_mem *w_cl,
     fluxdone = simu->clv_flux0;
   }
   
-  cl_event *dtfielddone = simu->use_source_cl ? simu->clv_source : simu->clv_mass;
+  cl_event *dtfielddone = simu->use_source_cl ?
+    simu->clv_source :  simu->clv_mass;
   
   // The kernels for the intra-macrocell computations can be launched
   // in parallel between macrocells.
@@ -858,7 +873,7 @@ void dtfield_CL(Simulation *simu, cl_mem *w_cl,
 		  1,
 		  simu->clv_mass + ie,
 		  simu->clv_source + ie);
-     }
+    }
   }
   clWaitForEvents(nmacro, dtfielddone);
 
@@ -883,8 +898,8 @@ void dtfield_CL(Simulation *simu, cl_mem *w_cl,
     simu->mass_time += clv_duration(simu->clv_mass[ie]);
   }
 
-  if(done != NULL)
-    clSetUserEventStatus(*done, CL_COMPLETE);
+  // Set the event *done to complete.
+  complete_event(simu, nmacro, dtfielddone, done);
 }
 
 // Set kernel arguments for first stage of RK2
@@ -1167,16 +1182,17 @@ void RK4_CL(Simulation *simu, real tmax, real dt,
   cl_event source[nstages];
   cl_event stage[nstages];
   for(int i = 0; i < nstages; ++i) {
-    source[i] = clCreateUserEvent(simu->cli.context, &status);
-    stage[i] = clCreateUserEvent(simu->cli.context, &status);
+    //source[i] = clCreateUserEvent(simu->cli.context, &status);
+    //stage[i] = clCreateUserEvent(simu->cli.context, &status);
   }
 
   clWaitForEvents(nwait, wait);
 
   printf("Starting RK4_CL\n");
   
-  status = clSetUserEventStatus(stage[3], CL_COMPLETE);
-
+  //status = clSetUserEventStatus(stage[3], CL_COMPLETE);
+  complete_event(simu, 0, 0, stage + 3);
+  
   struct timeval t_start;
   struct timeval t_end;
   gettimeofday(&t_start, NULL);
@@ -1220,10 +1236,11 @@ void RK4_CL(Simulation *simu, real tmax, real dt,
   }
   gettimeofday(&t_end, NULL); 
 
-  if(done != NULL)
-    status = clSetUserEventStatus(*done, CL_COMPLETE);
-
- real rkseconds = (t_end.tv_sec - t_start.tv_sec) * 1.0 // seconds
+  //if(done != NULL)
+  //  status = clSetUserEventStatus(*done, CL_COMPLETE);
+  complete_event(simu, 1, stage + 3, done);
+  
+  real rkseconds = (t_end.tv_sec - t_start.tv_sec) * 1.0 // seconds
     + (t_end.tv_usec - t_start.tv_usec) * 1e-6; // microseconds
   printf("\nTotal RK time (s):\n%f\n", rkseconds);
   printf("\nTotal RK time per time-step (s):\n%f\n", rkseconds / iter );
@@ -1243,8 +1260,6 @@ void RK4_CL(Simulation *simu, real tmax, real dt,
 void RK2_CL(Simulation *simu, real tmax, real dt,
 	    cl_uint nwait, cl_event *wait, cl_event *done) 
 {
-
-
   simu->dt = Get_Dt_RK(simu);
 
   if(dt <= 0)
@@ -1258,10 +1273,10 @@ void RK2_CL(Simulation *simu, real tmax, real dt,
 
   cl_int status;
   cl_mem wp1_cl = clCreateBuffer(simu->cli.context,
-				  0, // no flags
-				  sizeof(real) * simu->wsize,
-				  NULL, // do not use a host pointer
-				  &status);
+				 0, // no flags
+				 sizeof(real) * simu->wsize,
+				 NULL, // do not use a host pointer
+				 &status);
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
   assert(status >= CL_SUCCESS);
 
@@ -1269,15 +1284,16 @@ void RK2_CL(Simulation *simu, real tmax, real dt,
   init_RK2_CL_stage1(simu, dt, &wp1_cl);
   init_RK2_CL_stage2(simu, dt);
 
-  cl_event source1 = clCreateUserEvent(simu->cli.context, &status);
-  cl_event stage1 =  clCreateUserEvent(simu->cli.context, &status);
-  cl_event source2 = clCreateUserEvent(simu->cli.context, &status);
-  cl_event stage2 =  clCreateUserEvent(simu->cli.context, &status);
+  cl_event source1; // = clCreateUserEvent(simu->cli.context, &status);
+  cl_event stage1; // =  clCreateUserEvent(simu->cli.context, &status);
+  cl_event source2; // = clCreateUserEvent(simu->cli.context, &status);
+  cl_event stage2; // =  clCreateUserEvent(simu->cli.context, &status);
 
-  status = clSetUserEventStatus(stage2, CL_COMPLETE);
+  //status = clSetUserEventStatus(stage2, CL_COMPLETE);
+  complete_event(simu, nwait, wait, &stage2);
 
-  if(nwait > 0)
-    clWaitForEvents(nwait, wait);
+  //if(nwait > 0)
+  //  clWaitForEvents(nwait, wait);
 
   printf("Starting RK2_CL\n");
   
@@ -1305,9 +1321,10 @@ void RK2_CL(Simulation *simu, real tmax, real dt,
     iter++;
   }
   gettimeofday(&t_end, NULL);
-  if(done != NULL) 
-    status = clSetUserEventStatus(*done, CL_COMPLETE);
-
+  /* if(done != NULL)  */
+  /*   status = clSetUserEventStatus(*done, CL_COMPLETE); */
+  complete_event(simu, 0, 0, done);
+  
   clReleaseEvent(stage2);
   clReleaseEvent(stage1);
   
@@ -1331,8 +1348,10 @@ void show_cl_timing(Simulation *simu)
 
   printf("\n");
   printf("Roofline counts:\n");
-  unsigned long int flops_total = simu->flops_vol + simu->flops_flux + simu->flops_mass;
-  unsigned long int reads_total = simu->reads_vol + simu->reads_flux + simu->reads_mass;
+  unsigned long int flops_total = simu->flops_vol + simu->flops_flux
+    + simu->flops_mass;
+  unsigned long int reads_total = simu->reads_vol + simu->reads_flux
+    + simu->reads_mass;
   printf("Number of real multiplies in kernels:               %lu\n", 
 	 flops_total);
   printf("Number of reads/writes of reals from global memory: %lu\n", 
@@ -1340,7 +1359,8 @@ void show_cl_timing(Simulation *simu)
   //printf("NB: real multiplies assumes the flux involved 3m multiplies.\n");
   printf("Terms included in roofline: volume, flux, and mass.\n");
 
-  cl_ulong roofline_time_ns = simu->vol_time + simu->flux_time + simu->mass_time;
+  cl_ulong roofline_time_ns = simu->vol_time + simu->flux_time
+    + simu->mass_time;
   real roofline_time_s = 1e-9 * roofline_time_ns;
   real roofline_flops = flops_total / roofline_time_s;
   real roofline_bw = sizeof(real) * reads_total / roofline_time_s;
@@ -1434,22 +1454,25 @@ void show_cl_timing(Simulation *simu)
 
 void init_field_cl(Simulation *simu)
 {
+  printf("%p\n", (void *) simu);
+
+  printf("init_field_cl\n");
   InitCLInfo(&simu->cli, nplatform_cl, ndevice_cl);
   cl_int status;
 
   simu->w_cl = clCreateBuffer(simu->cli.context,
-			    CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR,
-			    sizeof(real) * simu->wsize,
-			    simu->w,
-			    &status);
+			      CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR,
+			      sizeof(real) * simu->wsize,
+			      simu->w,
+			      &status);
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
   assert(status >= CL_SUCCESS);
 
   simu->dtw_cl = clCreateBuffer(simu->cli.context,
-			      CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR,
-			      sizeof(real) * simu->wsize,
-			      simu->dtw,
-			      &status);
+				CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR,
+				sizeof(real) * simu->wsize,
+				simu->dtw,
+				&status);
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
   assert(status >= CL_SUCCESS);
 
@@ -1458,22 +1481,22 @@ void init_field_cl(Simulation *simu)
   
   /* 		       f->deg[0], f->deg[1], f->deg[2], */
   /* 		       f->raf[0], f->raf[1], f->raf[2] }; */
-  
+
   simu->param_cl = clCreateBuffer(simu->cli.context,
-			       CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
-			       sizeof(int) * 7,
-			       simu->interp_param,
-			       &status);
+				  CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
+				  sizeof(int) * 7,
+				  simu->interp_param,
+				  &status);
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
   assert(status >= CL_SUCCESS);
 
   // Allocate one physnode buffer
   //f->physnode = calloc(60, sizeof(real));
   simu->physnode_cl = clCreateBuffer(simu->cli.context,
-				  CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
-				  sizeof(real) * 60,
-				  f->physnode,
-				  &status);
+				     CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
+				     sizeof(real) * 60,
+				     f->physnode,
+				     &status);
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
   assert(status >= CL_SUCCESS);
 
@@ -1481,10 +1504,10 @@ void init_field_cl(Simulation *simu)
   const int nmacro = simu->macromesh.nbelems;
   const size_t buf_size = sizeof(real) * 60 * nmacro;
   simu->physnodes_cl = clCreateBuffer(simu->cli.context,
-				   CL_MEM_READ_ONLY,
-				   buf_size,
-				   NULL,
-				   &status);
+				      CL_MEM_READ_ONLY,
+				      buf_size,
+				      NULL,
+				      &status);
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
   assert(status >= CL_SUCCESS);
   set_physnodes_cl(simu);
@@ -1492,10 +1515,10 @@ void init_field_cl(Simulation *simu)
   // Allocate one physnode buffer for R macrocell
   simu->physnodeR = calloc(60, sizeof(real));
   simu->physnodeR_cl = clCreateBuffer(simu->cli.context,
-				   CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
-				   sizeof(real) * 60,
-				   f->physnode,
-				   &status);
+				      CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
+				      sizeof(real) * 60,
+				      f->physnode,
+				      &status);
 
   // Program compilation
   char *strprog;
@@ -1525,104 +1548,117 @@ void init_field_cl(Simulation *simu)
     BuildKernels(&simu->cli, strprog, cl_buildoptions);
   }
 
+  simu->dummykernel = clCreateKernel(simu->cli.program,
+				     "dummy",
+				     &status);
+  if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
+  assert(status >= CL_SUCCESS);
+  
+  
   simu->dgmass = clCreateKernel(simu->cli.program,
-			     "DGMass",
-			     &status);
+				"DGMass",
+				&status);
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
   assert(status >= CL_SUCCESS);
-
+  
   simu->dgflux = clCreateKernel(simu->cli.program,
-			     "DGFlux",
-			     &status);
-  if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
-  assert(status >= CL_SUCCESS);
-
-  simu->dgvolume = clCreateKernel(simu->cli.program,
-			       "DGVolume",
-			       &status);
-  if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
-  assert(status >= CL_SUCCESS);
-
-  simu->dgsource = clCreateKernel(simu->cli.program,
-			       "DGSource",
-			       &status);
-  if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
-  assert(status >= CL_SUCCESS);
-
-  simu->dginterface = clCreateKernel(simu->cli.program,
-				  "DGMacroCellInterface",
-				  &status);
-  if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
-  assert(status >= CL_SUCCESS);
-
-  simu->dgboundary = clCreateKernel(simu->cli.program,
-				 "DGBoundary",
-				 &status);
-  if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
-  assert(status >= CL_SUCCESS);
-
-  simu->RK_out_CL = clCreateKernel(simu->cli.program,
-				"RK_out_CL",
+				"DGFlux",
 				&status);
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
   assert(status >= CL_SUCCESS);
 
+  simu->dgvolume = clCreateKernel(simu->cli.program,
+				  "DGVolume",
+				  &status);
+  if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
+  assert(status >= CL_SUCCESS);
+
+  simu->dgsource = clCreateKernel(simu->cli.program,
+				  "DGSource",
+				  &status);
+  if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
+  assert(status >= CL_SUCCESS);
+
+  simu->dginterface = clCreateKernel(simu->cli.program,
+				     "DGMacroCellInterface",
+				     &status);
+  if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
+  assert(status >= CL_SUCCESS);
+
+  simu->dgboundary = clCreateKernel(simu->cli.program,
+				    "DGBoundary",
+				    &status);
+  if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
+  assert(status >= CL_SUCCESS);
+
+  simu->RK_out_CL = clCreateKernel(simu->cli.program,
+				   "RK_out_CL",
+				   &status);
+  if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
+  assert(status >= CL_SUCCESS);
+
   simu->RK4_final_stage = clCreateKernel(simu->cli.program,
-				      "RK4_final_stage",
-				      &status);
+					 "RK4_final_stage",
+					 &status);
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
   assert(status >= CL_SUCCESS);
 
   simu->RK_in_CL = clCreateKernel(simu->cli.program,
-			       "RK_in_CL",
-			       &status);
+				  "RK_in_CL",
+				  &status);
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
   assert(status >= CL_SUCCESS);
 
   simu->zero_buf = clCreateKernel(simu->cli.program,
-			       "set_buffer_to_zero",
-			       &status);
+				  "set_buffer_to_zero",
+				  &status);
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
   assert(status >= CL_SUCCESS);
 
+  
+  printf("...asdf\n");
   // Initialize events. // FIXME: free on exit
-  simu->clv_zbuf = clCreateUserEvent(simu->cli.context, &status);
-
+  //simu->clv_zbuf = clCreateUserEvent(simu->cli.context, &status);
+  printf("...asdf\n");
+  
   const int ninterfaces = simu->macromesh.nmacrointerfaces;
   if(ninterfaces > 0) {
     simu->clv_mci = calloc(ninterfaces, sizeof(cl_event));
-    for(int ifa = 0; ifa < ninterfaces; ++ifa)
-      simu->clv_mci[ifa] = clCreateUserEvent(simu->cli.context, &status);
+    for(int ifa = 0; ifa < ninterfaces; ++ifa) {
+      //simu->clv_mci[ifa] = clCreateUserEvent(simu->cli.context, &status);
+    }
   }
     
   const int nbound = simu->macromesh.nboundaryfaces;
   if(nbound > 0) {
     simu->clv_boundary = calloc(nbound, sizeof(cl_event));
-    for(int ifa = 0; ifa < nbound; ++ifa)
-      simu->clv_boundary[ifa] = clCreateUserEvent(simu->cli.context, &status);
+    for(int ifa = 0; ifa < nbound; ++ifa) {
+      //simu->clv_boundary[ifa] = clCreateUserEvent(simu->cli.context, &status);
+    }
   }
   
   simu->clv_mass = calloc(nmacro, sizeof(cl_event));
-  for(int ie = 0; ie < nmacro; ++ie)
-    simu->clv_mass[ie] = clCreateUserEvent(simu->cli.context, &status);
-
+  for(int ie = 0; ie < nmacro; ++ie) {
+    //simu->clv_mass[ie] = clCreateUserEvent(simu->cli.context, &status);
+  }
+    
   simu->clv_flux0 = calloc(nmacro, sizeof(cl_event));
   simu->clv_flux1 = calloc(nmacro, sizeof(cl_event));
   simu->clv_flux2 = calloc(nmacro, sizeof(cl_event));
   for(int ie = 0; ie < nmacro; ++ie) {
-    simu->clv_flux0[ie] = clCreateUserEvent(simu->cli.context, &status);
-    simu->clv_flux1[ie] = clCreateUserEvent(simu->cli.context, &status);
-    simu->clv_flux2[ie] = clCreateUserEvent(simu->cli.context, &status);
+    /* simu->clv_flux0[ie] = clCreateUserEvent(simu->cli.context, &status); */
+    /* simu->clv_flux1[ie] = clCreateUserEvent(simu->cli.context, &status); */
+    /* simu->clv_flux2[ie] = clCreateUserEvent(simu->cli.context, &status); */
   }
   
   simu->clv_volume = calloc(nmacro, sizeof(cl_event));
   for(int ie = 0; ie < nmacro; ++ie) {
-    simu->clv_volume[ie] = clCreateUserEvent(simu->cli.context, &status);
+    //simu->clv_volume[ie] = clCreateUserEvent(simu->cli.context, &status);
   }
 
   simu->clv_source = calloc(nmacro, sizeof(cl_event));
   for(int ie = 0; ie < nmacro; ++ie) {
-    simu->clv_source[ie] = clCreateUserEvent(simu->cli.context, &status);
+    //simu->clv_source[ie] = clCreateUserEvent(simu->cli.context, &status);
   }
     
   // Set timers to zero
@@ -1642,6 +1678,8 @@ void init_field_cl(Simulation *simu)
   simu->reads_vol = 0;
   simu->reads_flux = 0;
   simu->reads_mass = 0; 
+
+  printf("... init_field_cl done\n");
 }
 
 #endif // _WITH_OPENCL
