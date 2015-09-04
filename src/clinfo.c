@@ -232,13 +232,13 @@ void InitCLInfo(CLInfo *cli, int platform_num, int device_num)
   printf("of platform %d/%d\n", platform_num, cli->nbplatforms - 1);
 
   cli->device = get_device_id(platform, device_num);
-  
+
   // device name
   status = clGetDeviceInfo(cli->device,
-			   CL_DEVICE_NAME,
-			   sizeof(cli->devicename),
-			   cli->devicename,
-			   NULL);
+  			   CL_DEVICE_NAME,
+  			   sizeof(cli->devicename),
+  			   cli->devicename,
+  			   NULL);
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
   assert(status >= CL_SUCCESS);
   printf("%s\n", cli->devicename);
@@ -377,7 +377,8 @@ void InitCLInfo(CLInfo *cli, int platform_num, int device_num)
 
 #if 0
   //#ifdef CL_VERSION_2_0
-  cl_queue_properties queue_properties = CL_QUEUE_PROFILING_ENABLE;
+  cl_queue_properties queue_properties = CL_QUEUE_PROFILING_ENABLE
+    | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
   cli->commandqueue 
     = clCreateCommandQueueWithProperties(cli->context,
 					 cli->device,
@@ -413,6 +414,7 @@ void PrintCLInfo(CLInfo *cli){
 
 void BuildKernels(CLInfo *cli, char *strprog, char *buildoptions)
 {
+  //printf("BuildKernels\n");
   cl_int status;
 
   cli->program = clCreateProgramWithSource(cli->context,
@@ -456,6 +458,8 @@ void BuildKernels(CLInfo *cli, char *strprog, char *buildoptions)
   	   print_build_debug(&(cli->program), &cli->device));
   }
   assert(status >= CL_SUCCESS);
+
+  //printf("\t...BuildKernels done.\n");
 }
 
 void ReadFile(char filename[], char **s){
@@ -482,7 +486,7 @@ void ReadFile(char filename[], char **s){
 // \#pragma end_opencl
 void GetOpenCLCode(void){
   int status;
-  status = system("sh get_opencl_code.sh");
+  status = system("sh ../get_opencl_code.sh");
   assert(status == 0);
 }
 

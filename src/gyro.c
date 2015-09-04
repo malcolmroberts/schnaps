@@ -139,23 +139,14 @@ real GyroL2_Kinetic_error(field* f)
   real moy=0; // mean value
   real moy_space=0;
 
-  for (int ie=0;ie<f->macromesh.nbelems;ie++){
-    // get the physical nodes of element ie
-    real physnode[20][3];
-    for(int inoloc=0;inoloc<20;inoloc++){
-      int ino=f->macromesh.elem2node[20*ie+inoloc];
-      physnode[inoloc][0]=f->macromesh.node[3*ino+0];
-      physnode[inoloc][1]=f->macromesh.node[3*ino+1];
-      physnode[inoloc][2]=f->macromesh.node[3*ino+2];
-    }
 
     // loop on the glops (for numerical integration)
-    for(int ipg=0;ipg<NPG(f->interp_param+1);ipg++){
+  for(int ipg=0;ipg<NPG(f->deg, f->raf);ipg++){
       real xpgref[3],xphy[3],wpg;
       real dtau[3][3],codtau[3][3];//,xpg[3];
       // get the coordinates of the Gauss point
-      ref_pg_vol(f->interp_param+1,ipg,xpgref,&wpg,NULL);
-      Ref2Phy(physnode, // phys. nodes
+      ref_pg_vol(f->deg, f->raf, ipg, xpgref, &wpg, NULL);
+      Ref2Phy(f->physnode, // phys. nodes
 	      xpgref,  // xref
 	      NULL,-1, // dpsiref,ifa
 	      xphy,dtau,  // xphy,dtau
@@ -166,13 +157,13 @@ real GyroL2_Kinetic_error(field* f)
 	+ dtau[0][2] * codtau[0][2]; 
       real w[f->model.m];
       for(int iv=0;iv<f->model.m;iv++){
-	int imem=f->varindex(f->interp_param,ie,ipg,iv);
+	int imem=f->varindex(f->deg, f->raf, f->model.m,ipg,iv);
 	w[iv]=f->wn[imem];
       }
       // get the exact value
       error+=GyroL2VelError(xphy,f->tnow,w)*wpg*det;
     }
-  }
+  
   //moy=moy+weight*moy_space;
 
   return sqrt(error);

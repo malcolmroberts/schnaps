@@ -19,7 +19,8 @@ void InitLinearSolver(LinearSolver* lsol,int n,
   lsol->is_sym = false;
   lsol->is_init = false;
   lsol->is_alloc = false;
-  lsol->is_assembly = false;
+  lsol->rhs_is_assembly = false;
+  lsol->mat_is_assembly = false;
   lsol->rhs=NULL;
   lsol->sol=NULL;
   lsol->MatVecProduct=NULL;
@@ -29,6 +30,9 @@ void InitLinearSolver(LinearSolver* lsol,int n,
 
   if (matstor != NULL) lsol->storage_type = *matstor;
   if (solvtyp != NULL) lsol->solver_type = *solvtyp;
+
+  lsol->rhs=calloc(n,sizeof(real));
+  lsol->sol=calloc(n,sizeof(real));
 
   switch(lsol->storage_type) {
 
@@ -197,15 +201,17 @@ void MatVect(void * system,real x[],real prod[]){
   switch(lsol->storage_type) {
 
   case SKYLINE :
-  
-    for(i=0;i<lsol->neq;i++)
-      {
-	prod[i]=0;
-	for(j=0;j<lsol->neq;j++) {
-	  aij=GetLinearSolver(lsol,i,j);
-	  prod[i] += aij*x[j];
-	}
-      }
+
+    MatVectSkyline((Skyline*) lsol->matrix, x, prod);
+ 
+    /* for(i=0;i<lsol->neq;i++) */
+    /*   { */
+    /* 	prod[i]=0; */
+    /* 	for(j=0;j<lsol->neq;j++) { */
+    /* 	  aij=GetLinearSolver(lsol,i,j); */
+    /* 	  prod[i] += aij*x[j]; */
+    /* 	} */
+    /*   } */
     
     break;
 

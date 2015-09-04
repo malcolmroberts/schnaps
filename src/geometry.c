@@ -98,16 +98,16 @@ void PrintPoint(real x[3])
   printf("%f %f %f\n", x[0], x[1], x[2]);
 }
 
-void GeomRef2Phy(Geom* g) 
-{
-  Ref2Phy(g->physnode, g->xref, g->dphiref,
-          g->ifa, g->xphy, g->dtau, g->codtau,
-          g->dphi, g->vnds);
-  g->det 
-    = g->codtau[0][0] * g->dtau[0][0] 
-    + g->codtau[0][1] * g->dtau[0][1]
-    + g->codtau[0][2] * g->dtau[0][2];
-}
+/* void GeomRef2Phy(Geom* g)  */
+/* { */
+/*   Ref2Phy(g->physnode, g->xref, g->dphiref, */
+/*           g->ifa, g->xphy, g->dtau, g->codtau, */
+/*           g->dphi, g->vnds); */
+/*   g->det  */
+/*     = g->codtau[0][0] * g->dtau[0][0]  */
+/*     + g->codtau[0][1] * g->dtau[0][1] */
+/*     + g->codtau[0][2] * g->dtau[0][2]; */
+/* } */
 
 void Ref2Phy(real physnode[20][3],
              real xref[3],
@@ -197,14 +197,14 @@ void Ref2Phy(real physnode[20][3],
 
 }
 
-void GeomPhy2Ref(Geom* g) 
-{
-  Phy2Ref(g->physnode,g->xphy,g->xref);
-}
+/* void GeomPhy2Ref(Geom* g)  */
+/* { */
+/*   Phy2Ref(g->physnode,g->xphy,g->xref); */
+/* } */
 
 void Phy2Ref(real physnode[20][3], real xphy[3], real xref[3]) 
 {
-#define ITERNEWTON 10
+#define ITERNEWTON 20
 
   real dtau[3][3], codtau[3][3];
   real dxref[3], dxphy[3];

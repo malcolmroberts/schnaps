@@ -13,6 +13,8 @@ int TestModel(void);
 
 int TestField(void);
 
+int TestSimulation(void);
+
 int TestCache(void);
 
 int TestFieldDG(void);
@@ -45,6 +47,8 @@ int TestPeriodic(void);
 
 int TestSkyline(void);
 
+int TestUmfPack(void);
+
 int TestLinearSolver(void);
 
 int TestNonLinearSolver(void);
@@ -72,6 +76,12 @@ int TestLandau_Damping_1D(void);
 int TestLandauCollision_1D(void);
 
 int Test_Wave_Periodic(void);
+
+int Test_Wave_Steady(void);
+
+int Test_Transport_Steady(void);
+
+int Test_Transport_ExImp(void);
 
 int Test_SH_equilibrium(void);
 

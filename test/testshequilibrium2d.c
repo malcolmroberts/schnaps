@@ -23,68 +23,49 @@ int main(void) {
 
 int Test_SH_equilibrium(void) {
 
-  int test1 = 1,test2 = 1,test3=1,test4=1,test = 1;
+  int test1 = 0,test2 = 0,test3=0,test = 0;
   real tmax=0.0,dt=0.0,tolerance=0.0,dd=0.0;
 
-  field f;
-  init_empty_field(&f);
-
-  int vec=1;
-  f.model.m=6; 
-  f.model.NumFlux=ShallowWater_Rusanov_NumFlux;
- 
-  //f.model.Source = NULL;
- 
-  f.model.InitData = TestSH_equilibrium_InitData;
-  f.model.ImposedData = TestSH_equilibrium_ImposedData;
-  f.model.BoundaryFlux = ShallowWater_Rusanov_BoundaryFlux;
-
-  f.varindex = GenericVarindex;
-    
-  f.interp.interp_param[0] = f.model.m;  // _M
-  f.interp.interp_param[1] = 2;  // x direction degree
-  f.interp.interp_param[2] = 2;  // y direction degree
-  f.interp.interp_param[3] = 0;  // z direction degree
-  f.interp.interp_param[4] = 8;  // x direction refinement
-  f.interp.interp_param[5] = 8;  // y direction refinement
-  f.interp.interp_param[6] = 1;  // z direction refinement
- // read the gmsh file
-
-  ReadMacroMesh(&(f.macromesh), "test/testcube.msh");
-
-  Detect2DMacroMesh(&(f.macromesh));
-  assert(f.macromesh.is2d);
+  MacroMesh mesh;
+  ReadMacroMesh(&mesh,"../test/testcube.msh");
+  Detect2DMacroMesh(&mesh);
+  
   real A[3][3] = {{_LENGTH_DOMAIN, 0, 0}, {0, _LENGTH_DOMAIN, 0}, {0, 0,1}};
   real x0[3] = {0, 0, 0};
-  AffineMapMacroMesh(&(f.macromesh),A,x0);
+  AffineMapMacroMesh(&mesh,A,x0);
 
-  f.macromesh.period[0]=_LENGTH_DOMAIN;
-  f.macromesh.period[1]=_LENGTH_DOMAIN;
-  BuildConnectivity(&(f.macromesh));
+  BuildConnectivity(&mesh);
+
+  Model model;
+
+  int deg[]={2, 2, 0};
+  int raf[]={8, 8, 1};
 
 
-   CheckMacroMesh(&(f.macromesh), f.interp.interp_param + 1);
+  assert(mesh.is2d);
 
-  printf("cfl param =%f\n", f.hmin);
-
-  // prepare the initial fields
-  f.vmax = _SPEED_WAVE;
-  f.model.cfl = 0.2;
-
+  CheckMacroMesh(&mesh, deg, raf);
+  
 
   /******* Test for Rusanov ******/
-  Initfield(&f);
-   // maximal wave speed
-  f.nb_diags = 0;
-  f.pre_dtfield = NULL;
-  f.update_after_rk = NULL;
-  f.model.Source = ShallowWater_classical_SourceTerm;
+  model.m=6; 
+  model.NumFlux=ShallowWater_Rusanov_NumFlux;
+  model.InitData = TestSH_equilibrium_InitData;
+  model.ImposedData = TestSH_equilibrium_ImposedData;
+  model.BoundaryFlux = ShallowWater_Rusanov_BoundaryFlux;
+  model.Source = ShallowWater_classical_SourceTerm;
+
+  Simulation simu;
+  EmptySimulation(&simu);
+
+  InitSimulation(&simu, &mesh, deg, raf, &model);
   
   tmax = 0.01;
-  dt = set_dt(&f);
-  RK2(&f, tmax, dt);
+  simu.vmax = _SPEED_WAVE;
+  simu.cfl = 0.2;
+  RK2(&simu, tmax);
 
-  dd = L2error(&f);
+  dd = L2error(&simu);
   tolerance = 1e-3;
   
   if(dd < tolerance){
@@ -93,20 +74,24 @@ int Test_SH_equilibrium(void) {
   printf("L2 Rusanov error %.8e\n", dd);
   
   /******* Test for hLL ******/
-  f.model.NumFlux=ShallowWater_HLL_NumFlux;
-  f.model.BoundaryFlux = ShallowWater_HLL_BoundaryFlux;
-  Initfield(&f);
-   // maximal wave speed
-  f.nb_diags = 0;
-  f.pre_dtfield = NULL;
-  f.update_after_rk = NULL;
-  f.model.Source = ShallowWater_classical_SourceTerm;
+  model.m=6; 
+  model.NumFlux=ShallowWater_HLL_NumFlux;
+  model.InitData = TestSH_equilibrium_InitData;
+  model.ImposedData = TestSH_equilibrium_ImposedData;
+  model.BoundaryFlux = ShallowWater_HLL_BoundaryFlux;
+  model.Source = ShallowWater_classical_SourceTerm;
+
+  Simulation simu2;
+  EmptySimulation(&simu2);
+
+  InitSimulation(&simu2, &mesh, deg, raf, &model);
   
   tmax = 0.01;
-  dt = set_dt(&f);
-  RK2(&f, tmax, dt);
+  simu2.vmax = _SPEED_WAVE;
+  simu2.cfl = 0.2;
+  RK2(&simu2, tmax);
 
-  dd = L2error(&f);
+  dd = L2error(&simu2);
   tolerance = 1e-3;
   
   if(dd < tolerance){
@@ -115,20 +100,24 @@ int Test_SH_equilibrium(void) {
   printf("L2 HLL error %.8e\n", dd);
 
   /******* Test for Roe ******/
-   f.model.NumFlux=ShallowWater_Roe_NumFlux;
-  f.model.BoundaryFlux = ShallowWater_Roe_BoundaryFlux;
-  Initfield(&f);
-   // maximal wave speed
-  f.nb_diags = 0;
-  f.pre_dtfield = NULL;
-  f.update_after_rk = NULL;
-  f.model.Source = ShallowWater_classical_SourceTerm;
+   model.m=6; 
+  model.NumFlux=ShallowWater_Roe_NumFlux;
+  model.InitData = TestSH_equilibrium_InitData;
+  model.ImposedData = TestSH_equilibrium_ImposedData;
+  model.BoundaryFlux = ShallowWater_Roe_BoundaryFlux;
+  model.Source = ShallowWater_classical_SourceTerm;
+
+  Simulation simu3;
+  EmptySimulation(&simu3);
+
+  InitSimulation(&simu3, &mesh, deg, raf, &model);
   
   tmax = 0.01;
-  dt = set_dt(&f);
-  RK2(&f, tmax, dt);
+  simu3.vmax = _SPEED_WAVE;
+  simu3.cfl = 0.2;
+  RK2(&simu3, tmax);
 
-  dd = L2error(&f);
+  dd = L2error(&simu3);
   tolerance = 1e-3;
   
   if(dd < tolerance){
@@ -159,9 +148,9 @@ int Test_SH_equilibrium(void) {
   printf("L2 HLL WB error %.8e\n", dd); */
 
   // Save the results and the error
-  Plotfield(0,false, &f, "h", "dgvisu_h.msh");
-  Plotfield(1,false, &f, "u1", "dgvisu_u1.msh");
-  Plotfield(2,false, &f, "u2", "dgvisu_u2.msh");
+  PlotFields(0,false, &simu3, "h", "dgvisu_h.msh");
+  PlotFields(1,false, &simu3, "u1", "dgvisu_u1.msh");
+  PlotFields(2,false, &simu3, "u2", "dgvisu_u2.msh");
 
 
   if(test1 +test2+test3 > 2){
@@ -193,14 +182,14 @@ void TestSH_equilibrium_InitData(real *x, real *w) {
 
 void ShallowWater_Rusanov_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
 				       real *flux) {
-  real wR[3];
+  real wR[6];
   TestSH_equilibrium_ImposedData(x , t, wR);
   ShallowWater_Rusanov_NumFlux(wL, wR, vnorm, flux);
 }
 
 void ShallowWater_HLL_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
 				       real *flux) {
-  real wR[3];
+  real wR[6];
   TestSH_equilibrium_ImposedData(x , t, wR);
   ShallowWater_HLL_NumFlux(wL, wR, vnorm, flux);
 }
@@ -208,7 +197,7 @@ void ShallowWater_HLL_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
 
 void ShallowWater_Roe_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
 				       real *flux) {
-  real wR[3];
+  real wR[6];
   TestSH_equilibrium_ImposedData(x , t, wR);
   ShallowWater_Roe_NumFlux(wL, wR, vnorm, flux);
 }
@@ -216,7 +205,7 @@ void ShallowWater_Roe_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
 
 void ShallowWater_HLLWB_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
 				       real *flux) {
-  real wR[3];
+  real wR[6];
   TestSH_equilibrium_ImposedData(x , t, wR);
   ShallowWater_HLLWB_NumFlux(wL, wR, vnorm, flux);
 }

@@ -21,7 +21,38 @@ void Wave_Upwind_NumFlux(real wL[],real wR[],real* vnorm,real* flux){
 };
 
 
+void Wave_Centered_NumFlux(real wL[],real wR[],real* vnorm,real* flux){
+  real flux_temp=0;
+  
+  flux[0]=0.5*((wL[1]+wR[1])*vnorm[0] + (wL[2]+wR[2])*vnorm[1]);
+  
+  flux_temp=0.5*(wL[0]+wR[0]);
+  flux[1]=flux_temp*vnorm[0];
+  flux[2]=flux_temp*vnorm[1];
+ 
 
+  flux[0]=_SPEED_WAVE*flux[0];
+  flux[1]=_SPEED_WAVE*flux[1];
+  flux[2]=_SPEED_WAVE*flux[2];
+  
+};
+
+
+void Wave_Rusanov_NumFlux(real wL[],real wR[],real* vnorm,real* flux){
+  real flux_temp=0;
+  
+  flux[0]=0.5*((wL[1]+wR[1])*vnorm[0] + (wL[2]+wR[2])*vnorm[1]);
+  
+  flux_temp=0.5*(wL[0]+wR[0]);
+  flux[1]=flux_temp*vnorm[0];
+  flux[2]=flux_temp*vnorm[1];
+ 
+
+  flux[0]=_SPEED_WAVE*flux[0]-_SPEED_WAVE/2.0 * (wR[0]-wL[0]);
+  flux[1]=_SPEED_WAVE*flux[1]-_SPEED_WAVE/2.0 * (wR[1]-wL[1]);
+  flux[2]=_SPEED_WAVE*flux[2]-_SPEED_WAVE/2.0 * (wR[2]-wL[2]);
+  
+};
 
 void ShallowWater_Roe_NumFlux(real wL[],real wR[],real* vnorm,real* flux){
   real centered_flux[3];
@@ -308,3 +339,7 @@ void ShallowWater_HLLWB_SourceTerm(const real *x, const real t, const real *w, r
  
 
 };
+
+
+
+

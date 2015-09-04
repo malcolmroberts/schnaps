@@ -30,63 +30,57 @@ int TestPoisson2d(void)
 {
   bool test = true;
 
-  field f;
-  init_empty_field(&f);
+  // 2D meshes:
+  // test/disque2d.msh
+  // test/testdisque2d.msh
+  // test/testmacromesh.msh
+  // test/unit-cube.msh
 
-  int vec=1;
+  // 3D meshes"
+  // test/testdisque.msh
+
+  
+  MacroMesh mesh;
+  ReadMacroMesh(&mesh,"../test/testdisque2d.msh");
+  Detect2DMacroMesh(&mesh);
+  bool is2d=mesh.is2d;
+  assert(is2d);
+  BuildConnectivity(&mesh);
+
+  Model model;
+
 
   // num of conservative variables f(vi) for each vi, phi, E, rho, u,
   // p, e (ou T)
-  f.model.m=_INDEX_MAX; 
-  f.vmax = _VMAX; // maximal wave speed
-  f.model.NumFlux = VlasovP_Lagrangian_NumFlux;
-  f.model.Source = VlasovP_Lagrangian_Source;
-   //f.model.Source = NULL;
+  model.m=_INDEX_MAX; 
+  model.NumFlux = VlasovP_Lagrangian_NumFlux;
+  model.Source = VlasovP_Lagrangian_Source;
   
-  f.model.BoundaryFlux = TestPoisson_BoundaryFlux;
-  f.model.InitData = TestPoisson_InitData;
-  f.model.ImposedData = TestPoisson_ImposedData;
-  f.model.Source = NULL;
+  model.BoundaryFlux = TestPoisson_BoundaryFlux;
+  model.InitData = TestPoisson_InitData;
+  model.ImposedData = TestPoisson_ImposedData;
+  model.Source = NULL;
  
-  f.varindex = GenericVarindex;
-  f.pre_dtfield = NULL;
-  f.update_after_rk = NULL; 
+  int deg[]={2, 2, 0};
+  int raf[]={2, 2, 1};
    
-    
-  f.interp.interp_param[0] = f.model.m;  // _M
-  f.interp.interp_param[1] = 3;  // x direction degree
-  f.interp.interp_param[2] = 3;  // y direction degree
-  f.interp.interp_param[3] = 0;  // z direction degree
-  f.interp.interp_param[4] = 2;  // x direction refinement
-  f.interp.interp_param[5] = 2;  // y direction refinement
-  f.interp.interp_param[6] = 1;  // z direction refinement
-  // read the gmsh file
-  ReadMacroMesh(&(f.macromesh),"test/testdisque2d.msh");
-  //ReadMacroMesh(&(f.macromesh),"geo/square.msh");
-  // try to detect a 2d mesh
-  //bool is1d=Detect1DMacroMesh(&(f.macromesh));
-  Detect2DMacroMesh(&(f.macromesh));
-  bool is2d=f.macromesh.is2d;
-  assert(is2d);
-
-  // mesh preparation
-  BuildConnectivity(&(f.macromesh));
-
-  PrintMacroMesh(&(f.macromesh));
-  //assert(1==2);
-  //AffineMapMacroMesh(&(f.macromesh));
  
-  // prepare the initial fields
-  Initfield(&f);
-  f.nb_diags=0;
+  CheckMacroMesh(&mesh, deg, raf);
+  Simulation simu;
+
+  InitSimulation(&simu, &mesh, deg, raf, &model);
+
+  ContinuousSolver ps;
   
-  // prudence...
-  CheckMacroMesh(&(f.macromesh),f.interp.interp_param+1);
-
-  printf("cfl param =%f\n",f.hmin);
-
-  PoissonSolver ps;
-  InitPoissonSolver(&ps,&f,_INDEX_PHI);
+  int nb_var=1;
+  int * listvar= malloc(nb_var * sizeof(int));
+  listvar[0]=_INDEX_PHI;
+  
+  InitContinuousSolver(&ps,&simu,1,nb_var,listvar);
+  ps.matrix_assembly=MatrixPoisson_Continuous;
+  ps.rhs_assembly=RHSPoisson_Continuous;
+  ps.bc_assembly= ExactDirichletContinuousMatrix;
+  ps.postcomputation_assembly=Computation_ElectricField_Poisson;
 
 #ifdef PARALUTION
   ps.lsol.solver_type = PAR_AMG;
@@ -96,9 +90,9 @@ int TestPoisson2d(void)
   ps.lsol.pc_type=NONE;
 #endif
 
-  SolvePoisson2D(&ps,_Dirichlet_Poisson_BC);
+  SolveContinuous2D(&ps);
 
-  real errl2 = L2error(&f);
+  real errl2 = L2error(&simu);
 
   printf("Erreur L2=%f\n",errl2);
 
@@ -107,8 +101,8 @@ int TestPoisson2d(void)
   printf("Plot...\n");
 
 
-  Plotfield(_INDEX_PHI, false, &f, NULL, "dgvisu.msh");
-  Plotfield(_INDEX_EX, false, &f, NULL, "dgex.msh");
+  PlotFields(_INDEX_PHI, false, &simu, NULL, "dgvisu.msh");
+  PlotFields(_INDEX_EX, false, &simu, NULL, "dgex.msh");
 
 
   return test;

@@ -14,8 +14,8 @@ fluxptr numflux(const char *name)
   if(strcmp(name, "TransNumFlux2d") == 0)
     return &TransNumFlux2d;
 
-  if(strcmp(name, "Maxwell3DNumFluxClean_uncentered") == 0)
-    return &Maxwell3DNumFluxClean_uncentered;
+  if(strcmp(name, "Maxwell3DNumFluxClean_upwind") == 0)
+    return &Maxwell3DNumFluxClean_upwind;
 
   printf("Numerical flux %s not found!\n", name);
   assert(false);
@@ -27,8 +27,8 @@ bfluxptr bflux(const char *name)
   if(strcmp(name, "TransBoundaryFlux2d") == 0)
     return &TransBoundaryFlux2d;
 
-  if(strcmp(name, "Maxwell3DBoundaryFlux_uncentered") == 0)
-    return &Maxwell3DBoundaryFlux_uncentered;
+  if(strcmp(name, "Maxwell3DBoundaryFlux_upwind") == 0)
+    return &Maxwell3DBoundaryFlux_upwind;
 
   printf("Boundary flux %s not found!\n", name);
   assert(false);
@@ -104,6 +104,9 @@ void VecTransNumFlux2d(__private real *wL, real *wR, real *vnorm, real *flux)
   real vnp = vn > 0.0 ? vn : 0.0;
   real vnm = vn - vnp;
   flux[0] = vnp * wL[0] + vnm * wR[0];
+  vn = -vn;
+  vnp = vn > 0.0 ? vn : 0.0;
+  vnm = vn - vnp;
   flux[1] = vnp * wL[1] + vnm * wR[1];
 }
 #pragma end_opencl
@@ -121,6 +124,7 @@ void TransBoundaryFlux2d(real *x, real t, real *wL, real *vnorm, real *flux)
   real wR[1];
   TransImposedData2d(x, t, wR);
   TransNumFlux2d(wL, wR, vnorm, flux);
+  //printf("imposed trans wR=%f x=%f %f %f\n",wR[0],x[0],x[1],x[2]);
 }
 #pragma end_opencl
 
@@ -131,7 +135,10 @@ void VecTransImposedData2d(const real *x, const real t, real* w)
   real vx = sqrt(0.5) * x[0] + sqrt(0.5) * x[1];
   real xx = vx - t;
   w[0] = xx * xx;
+  w[0] = sin(xx);
+  xx = vx + t;
   w[1] = xx * xx;
+  w[1] = sin(xx);
   /* w[0] = 1000; */
   /* w[1] = 2000; */
 }
@@ -180,7 +187,7 @@ void TransImposedData2d(const real *x, const real t, real *w)
 {
   real vx  = sqrt(0.5) * x[0] + sqrt(0.5) * x[1];
   real xx = vx - t;
-  w[0] = cos(xx);
+  w[0] = sin(3*xx);
 }
 #pragma end_opencl
 
@@ -214,11 +221,14 @@ void TestTransInitData2d(real *x, real *w)
 void TestTransImposedData(const real *x, const real t, real *w) {
   const real sqrt_third =  sqrt(1.0/3.0);
   const real transport_v[] = {sqrt_third, sqrt_third, sqrt_third};
+  //const real transport_v[] = {1,0,0};
   real vx 
     = transport_v[0] * x[0] 
     + transport_v[1] * x[1] 
     + transport_v[2] * x[2];
   real xx = vx - t;
+  //w[0] = 1;
+  w[0] = sin(3*xx);
   w[0] = xx * xx;
   //w[0]=0;
 }
@@ -231,6 +241,7 @@ void TestTransImposedData2d(const real *x, const real t, real *w) {
     + transport_v2d[2] * x[2];
   real xx = vx - t;
   w[0] = xx * xx;
+  w[0] = sin(3*xx);
 }
 
 void set_global_m(int m0)
@@ -323,9 +334,9 @@ real compact_poly6(real r)
 
 void vlaTransImposedData2d(const real *x, const real t, real *w) 
 {
-  real PI = 4.0 * atan(1.0);
-  real s2pi = sqrt(2.0 * PI);
-  real xval = 1.0;
+  //real PI = 4.0 * atan(1.0);
+  //real s2pi = sqrt(2.0 * PI);
+  //real xval = 1.0;
   real sigma = 0.1;
 
   for(int ix = 0; ix < vlasov_mx; ++ix) {
@@ -337,7 +348,7 @@ void vlaTransImposedData2d(const real *x, const real t, real *w)
       real py = x[1] - vy * t;
 
       real r = sqrt(px * px + py * py);
-      real pi = 4.0 * atan(1.0);
+      //real pi = 4.0 * atan(1.0);
       real pr = icgaussian(r, sigma);
 
       real vr = sqrt(vx * vx + vy * vy);

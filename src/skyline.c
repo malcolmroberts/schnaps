@@ -10,6 +10,13 @@ int sol_(real *vkgs, real *vkgd, real *
 	 int ifac, int isol, int nsym, real *
 	 energ, int *ier);
 
+int mulku_(real *vkgs, real *vkgd, real *
+	vkgi, int *kld, real *vfg, int neq, int nsym, 
+	   real *vres, int nsky);
+
+real scal_(real *x, real *y, int *n);
+
+
 void InitSkyline(Skyline* sky, int n){
 
   sky->is_alloc=false;
@@ -188,7 +195,7 @@ void DisplaySkyline(Skyline* sky){
 
   for(int i=0;i<n;i++){
     for(int j=0;j<n;j++){
-      printf("%f ",GetSkyline(sky,i,j));
+      printf("%f ", GetSkyline(sky,i,j));
     }   
     printf("\n");
   }
@@ -215,6 +222,30 @@ void FactoLU(Skyline* sky){
   sky->is_lu=true;
 
 }
+
+void MatVectSkyline(Skyline * sky, real * x, real * prod) {
+
+  assert(!sky->is_lu);
+
+  int nsym=1;
+  if (sky->is_sym) nsym=0;
+
+  for(int i=0; i < sky->neq; i++) prod[i]=0;
+
+  
+  /* sol_(sky->vkgs,sky->vkgd, sky->vkgi, */
+  /*      vfg, sky->kld, vu, sky->neq,  */
+  /*       ifac, isol, nsym, */
+  /*      &energ, &ier); */
+ 
+  mulku_(sky->vkgs, sky->vkgd, sky->vkgi,
+	 sky->kld, x, sky->neq, nsym, 
+	   prod, sky->nmem);
+
+
+}
+
+
 
 void SolveSkyline(Skyline* sky,real* vfg,real* vu){
   assert(sky->is_lu);
@@ -558,4 +589,88 @@ real scal_(real *x, real *y, int *n)
     return ret_val;
 } /* scal_ */
 
+
+/* muls.f -- translated by f2c (version 20100827).
+   You must link the resulting object file with libf2c:
+	on Microsoft Windows system, link with libf2c.lib;
+	on Linux or Unix systems, link with .../path/to/libf2c.a -lm
+	or, if you install libf2c.a in a standard place, with -lf2c -lm
+	-- in that order, at the end of the command line, as in
+		cc *.o -lf2c -lm
+	Source for libf2c is in /netlib/f2c/libf2c.zip, e.g.,
+
+		http://www.netlib.org/f2c/libf2c.zip
+*/
+
+//#include "f2c.h"
+
+/* Subroutine */ int mulku_(real *vkgs, real *vkgd, real *
+	vkgi, int *kld, real *vfg, int neq, int nsym, 
+	real *vres, int nsky)
+{
+    /* System generated locals */
+    int i__1, i__2;
+
+    /* Local variables */
+    static real c__;
+    static int j, i0, i1, ij, ik, jhk, lhk, jhk1;
+    //extern real scal_(real *, real *, int *);
+
+/* =======================================================================MULK   2 */
+/*     CE SOUS-PROGRAMME AJOUTE AU VECTEUR RES LE PRODUIT DE LA          MULK   3 */
+/*     MATRICE KG PAR LE VECTEUR FG                                      MULK   4 */
+/*       ENTREES                                                         MULK   5 */
+/*          VKGS,VKGD,VKGI  MATRICE KG STOCKEE PAR LIGNE DE CIEL (SYM.   MULK   6 */
+/*                          OU NON SYM.)                                 MULK   7 */
+/*          KLD     TABLE DES POINTEURS DES HAUTS DE COLONNES DE KG      MULK   8 */
+/*          VFG     VECTEUR FG                                           MULK   9 */
+/*          NEQ     DIMENSION DES VECTEURS FG ET RES                     MULK  10 */
+/*          NSYM    .EQ.1 SI LE PROBLEME N'EST PAS SYMETRIQUE            MULK  11 */
+/*          VRES    VECTEUR RES                                          MULK  12 */
+/*       SORTIE                                                          MULK  13 */
+/*          VRES    VECTEUR RES                                          MULK  14 */
+/* =======================================================================MULK  15 */
+/* -----------------------------------------------------------------------MULK  18 */
+/* -------  POUR CHAQUE COLONNE DE LA MATRICE KG                          MULK  19 */
+    /* Parameter adjustments */
+    --vres;
+    --vfg;
+    --kld;
+    --vkgd;
+    --vkgi;
+    --vkgs;
+
+    /* Function Body */
+    i__1 = neq;
+    for (ik = 1; ik <= i__1; ++ik) {
+	jhk = kld[ik]+_Z;
+	jhk1 = kld[ik + 1]+_Z;
+	lhk = jhk1 - jhk;
+/* -------  TERME DIAGONAL                                                MULK  24 */
+	c__ = vkgd[ik] * vfg[ik];
+	if (lhk <= 0) {
+	    goto L20;
+	}
+	i0 = ik - lhk;
+/* -------  TERMES DE LIGNE                                               MULK  28 */
+	if (nsym != 1) {
+	    c__ += scal_(&vkgs[jhk], &vfg[i0], &lhk);
+	}
+	if (nsym == 1) {
+	    c__ += scal_(&vkgi[jhk], &vfg[i0], &lhk);
+	}
+/* -------  TERMES DE COLONNE                                             MULK  31 */
+	j = jhk;
+	i1 = ik - 1;
+	i__2 = i1;
+	for (ij = i0; ij <= i__2; ++ij) {
+	    vres[ij] += vkgs[j] * vfg[ik];
+/* L10: */
+	    ++j;
+	}
+L20:
+	vres[ik] += c__;
+    }
+    return 0;
+} /* mulku_ */
 

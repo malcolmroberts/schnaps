@@ -94,7 +94,7 @@ firefox html/index.html
 
 #include "global.h"
 #include "geometry.h"
-#include "field.h"
+#include "simulation.h"
 #include "pic.h"
 #include "skyline.h"
 #include "linear_solver.h"

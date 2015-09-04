@@ -33,17 +33,8 @@
 
 #schnaps files
 .DS_Store
-CMakeCache.txt
-CMakeFiles/
-CTestTestfile.cmake
-Makefile
-Testing/
-cmake_install.cmake
 doc/html/
 doc/latex/
-doc/toto
-toto
-*.cl
 
 dgerror.msh
 dgvisu*.msh
@@ -51,55 +42,6 @@ error.msh
 geo/disque.msh
 visu.msh
 
-schnaps
-test2dmeshdetection
-testfield
-testfielddg
-testfieldrk2
-testfieldrk2-2d
-testfieldrk2-2d-subcell
-testgeometry
-testinterpolation
-testmacromesh
-testmodel
-testsubcelldgvol
-testvisufield.msh
-testvisufield.msh.opt
-testclinfo
-testkernel
-testkernelinterface
-testkernelvolume
-testmanyv
-testmeq2
-testdtfield_cl
-testdtfield3d_cl
-testfieldrk4
-testfieldrk4_cl
-testmacrocellinterface
-test_transportvp
-testcache_cl
-testcoil2d
-testgyro
-testkernelflux
-testlandau_damping_1D
-testlinearsolver
-testmaxwell2d
-testmeq2_cl
-testmhd
-testmhd1d
-testperiodic
-testpic
-testpic_accumulate
-testpoisson
-testpoisson2d
-testskyline
-testgmres
-testmaxwell3d
-testwave2d
-testdoubletearing
-testkelvinhelmotz
-testorszagtang
-testreconnexion
 
 
 #output files
@@ -108,7 +50,6 @@ testreconnexion
 *.msh
 testfieldrk2_cl
 
-toto.c
 #PN
 *.swp
 /build/
@@ -120,53 +61,4 @@ paralution-1.0.0-prefix
 
 *.dat
 *.pdf
-
-gmres
-paralution_cg
-
-testskyline
-
-testpoisson2d
-
-testpoisson
-
-testpic_accumulate
-
-testpic
-
-testperiodic
-
-testmhd1d
-
-testmhd
-
-testmeq2_cl
-
-testmaxwell2d
-
-testlinearsolver
-
-testlandau_damping_1D
-
-testkernelflux
-
-testgyro
-
-testcache_cl
-
-test_transportvp
-
-partplot.dat
-
-gr_30_30.mtx
-
-testnonlinearsolver
-
-testshequilibrium2d
-
-testshperiodic2d
-
-testwave2d
-
-gr_30_30.mtx
 
