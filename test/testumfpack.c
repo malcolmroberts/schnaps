@@ -1,4 +1,6 @@
+#ifdef _WITH_UMFPACK
 #include "solverumfpack.h"
+#endif
 #include <stdio.h>
 #include <math.h>
 #include <assert.h>
@@ -12,9 +14,12 @@ int main(void) {
   return !resu;
 } 
 
-int TestUmfPack(void){
-  int test = true;
+int TestUmfPack()
+{
+  int test = 1;
+#ifdef _WITH_UMFPACK
   // reference element
   smalltestumfpack();
+#endif
   return test;
 }

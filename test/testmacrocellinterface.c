@@ -6,197 +6,200 @@
 #include <math.h>
 #include "clutils.h"
 
-int TestMacroFace(void){
-  bool test = true;
-
-  if(!cldevice_is_acceptable(nplatform_cl, ndevice_cl)) {
-    printf("OpenCL device not acceptable.\n");
-    return true;
-  }
-
-  field f;
-  init_empty_field(&f);
+int TestMacroFace()
+{
+  return false; // FIXME!!!
   
-  // 2D meshes:
-  // test/disque2d.msh
-  // test/testdisque2d.msh
-  // test/testmacromesh.msh
-  // test/unit-cube.msh
+/*   bool test = true; */
 
-  // 3D meshes"
-  // test/testdisque.msh
+/*   if(!cldevice_is_acceptable(nplatform_cl, ndevice_cl)) { */
+/*     printf("OpenCL device not acceptable.\n"); */
+/*     return true; */
+/*   } */
 
-  char *mshname =  "../test/disque2d.msh";
+/*   field f; */
+/*   init_empty_field(&f); */
   
-  ReadMacroMesh(&(f.macromesh), mshname);
+/*   // 2D meshes: */
+/*   // test/disque2d.msh */
+/*   // test/testdisque2d.msh */
+/*   // test/testmacromesh.msh */
+/*   // test/unit-cube.msh */
 
-  Detect2DMacroMesh(&(f.macromesh));
-  BuildConnectivity(&(f.macromesh));
+/*   // 3D meshes" */
+/*   // test/testdisque.msh */
 
-#if 1
-  // 2D version
-  f.model.cfl = 0.05;
-  f.model.m = 1;
-
-  f.model.NumFlux = TransNumFlux2d;
-  f.model.BoundaryFlux = TransBoundaryFlux2d;
-  f.model.InitData = TransInitData2d;
-  f.model.ImposedData = TransImposedData2d;
-  f.varindex = GenericVarindex;
-
-  f.interp.interp_param[0] = f.model.m;
-  f.interp.interp_param[1] = 2; // x direction degree
-  f.interp.interp_param[2] = 2; // y direction degree
-  f.interp.interp_param[3] = 0; // z direction degree
-  f.interp.interp_param[4] = 4; // x direction refinement
-  f.interp.interp_param[5] = 4; // y direction refinement
-  f.interp.interp_param[6] = 1; // z direction refinement
-
-  assert(f.macromesh.is2d);
-#else
-  // 3D version
-  f.model.cfl = 0.05;
-  f.model.m = 1;
-  f.model.NumFlux = TransNumFlux;
-  f.model.BoundaryFlux = TestTransBoundaryFlux;
-  f.model.InitData = TestTransInitData;
-  f.model.ImposedData = TestTransImposedData;
-  f.varindex = GenericVarindex;
-
-  f.interp.interp_param[0] = f.model.m;
-  f.interp.interp_param[1] = 2; // x direction degree
-  f.interp.interp_param[2] = 2; // y direction degree
-  f.interp.interp_param[3] = 2; // z direction degree
-  f.interp.interp_param[4] = 3; // x direction refinement
-  f.interp.interp_param[5] = 3; // y direction refinement
-  f.interp.interp_param[6] = 3; // z direction refinement
+/*   char *mshname =  "../test/disque2d.msh"; */
   
-  printf("is2d: %d\n", f.macromesh.is2d);
-#endif
+/*   ReadMacroMesh(&(f.macromesh), mshname); */
 
-  // From testfieldrk2:
-  
-  //char *mshname =  "../test/testdisque.msh";
-  /* f.model.cfl = 0.05; */
-  /* f.model.m = 1; */
-  /* f.model.NumFlux = TransNumFlux; */
-  /* f.model.BoundaryFlux = TestTransBoundaryFlux; */
-  /* f.model.InitData = TestTransInitData; */
-  /* f.model.ImposedData = TestTransImposedData; */
-  /* f.varindex = GenericVarindex; */
+/*   Detect2DMacroMesh(&(f.macromesh)); */
+/*   BuildConnectivity(&(f.macromesh)); */
 
-  /* f.interp.interp_param[0] = f.model.m; */
-  /* f.interp.interp_param[1] = 3; // x direction degree */
-  /* f.interp.interp_param[2] = 3; // y direction degree */
-  /* f.interp.interp_param[3] = 3; // z direction degree */
-  /* f.interp.interp_param[4] = 1; // x direction refinement */
-  /* f.interp.interp_param[5] = 1; // y direction refinement */
-  /* f.interp.interp_param[6] = 1; // z direction refinement */
+/* #if 1 */
+/*   // 2D version */
+/*   f.model.cfl = 0.05; */
+/*   f.model.m = 1; */
+
+/*   f.model.NumFlux = TransNumFlux2d; */
+/*   f.model.BoundaryFlux = TransBoundaryFlux2d; */
+/*   f.model.InitData = TransInitData2d; */
+/*   f.model.ImposedData = TransImposedData2d; */
+/*   f.varindex = GenericVarindex; */
+
+/*   f.interp.interp_param[0] = f.model.m; */
+/*   f.interp.interp_param[1] = 2; // x direction degree */
+/*   f.interp.interp_param[2] = 2; // y direction degree */
+/*   f.interp.interp_param[3] = 0; // z direction degree */
+/*   f.interp.interp_param[4] = 4; // x direction refinement */
+/*   f.interp.interp_param[5] = 4; // y direction refinement */
+/*   f.interp.interp_param[6] = 1; // z direction refinement */
+
+/*   assert(f.macromesh.is2d); */
+/* #else */
+/*   // 3D version */
+/*   f.model.cfl = 0.05; */
+/*   f.model.m = 1; */
+/*   f.model.NumFlux = TransNumFlux; */
+/*   f.model.BoundaryFlux = TestTransBoundaryFlux; */
+/*   f.model.InitData = TestTransInitData; */
+/*   f.model.ImposedData = TestTransImposedData; */
+/*   f.varindex = GenericVarindex; */
+
+/*   f.interp.interp_param[0] = f.model.m; */
+/*   f.interp.interp_param[1] = 2; // x direction degree */
+/*   f.interp.interp_param[2] = 2; // y direction degree */
+/*   f.interp.interp_param[3] = 2; // z direction degree */
+/*   f.interp.interp_param[4] = 3; // x direction refinement */
+/*   f.interp.interp_param[5] = 3; // y direction refinement */
+/*   f.interp.interp_param[6] = 3; // z direction refinement */
   
-  Initfield(&f);
+/*   printf("is2d: %d\n", f.macromesh.is2d); */
+/* #endif */
+
+/*   // From testfieldrk2: */
+  
+/*   //char *mshname =  "../test/testdisque.msh"; */
+/*   /\* f.model.cfl = 0.05; *\/ */
+/*   /\* f.model.m = 1; *\/ */
+/*   /\* f.model.NumFlux = TransNumFlux; *\/ */
+/*   /\* f.model.BoundaryFlux = TestTransBoundaryFlux; *\/ */
+/*   /\* f.model.InitData = TestTransInitData; *\/ */
+/*   /\* f.model.ImposedData = TestTransImposedData; *\/ */
+/*   /\* f.varindex = GenericVarindex; *\/ */
+
+/*   /\* f.interp.interp_param[0] = f.model.m; *\/ */
+/*   /\* f.interp.interp_param[1] = 3; // x direction degree *\/ */
+/*   /\* f.interp.interp_param[2] = 3; // y direction degree *\/ */
+/*   /\* f.interp.interp_param[3] = 3; // z direction degree *\/ */
+/*   /\* f.interp.interp_param[4] = 1; // x direction refinement *\/ */
+/*   /\* f.interp.interp_param[5] = 1; // y direction refinement *\/ */
+/*   /\* f.interp.interp_param[6] = 1; // z direction refinement *\/ */
+  
+/*   Initfield(&f); */
 
  
-  //f.is2d = true;
+/*   //f.is2d = true; */
 
-  // OpenCL method
-  // NB: Initfield expects a certain address for dtwn, so the OpenCL
-  // version must come before the other versions.
-  cl_int status;
-  void* chkptr = clEnqueueMapBuffer(f.cli.commandqueue,
-  				    f.dtwn_cl,
-  				    CL_TRUE,
-  				    CL_MAP_WRITE,
-  				    0, // offset
-  				    sizeof(real) * 60,
-  				    0, NULL, NULL,
-  				    &status);
-  if(status != CL_SUCCESS) printf("%s\n", clErrorString(status));
-  assert(status == CL_SUCCESS);
-  assert(chkptr == f.dtwn);
+/*   // OpenCL method */
+/*   // NB: Initfield expects a certain address for dtwn, so the OpenCL */
+/*   // version must come before the other versions. */
+/*   cl_int status; */
+/*   void* chkptr = clEnqueueMapBuffer(f.cli.commandqueue, */
+/*   				    f.dtwn_cl, */
+/*   				    CL_TRUE, */
+/*   				    CL_MAP_WRITE, */
+/*   				    0, // offset */
+/*   				    sizeof(real) * 60, */
+/*   				    0, NULL, NULL, */
+/*   				    &status); */
+/*   if(status != CL_SUCCESS) printf("%s\n", clErrorString(status)); */
+/*   assert(status == CL_SUCCESS); */
+/*   assert(chkptr == f.dtwn); */
 
-  for(int iw = 0; iw < f.wsize; iw++)
-    f.dtwn[iw] = 0;
+/*   for(int iw = 0; iw < f.wsize; iw++) */
+/*     f.dtwn[iw] = 0; */
 
-  status = clEnqueueUnmapMemObject(f.cli.commandqueue,
-  				   f.dtwn_cl,
-  				   f.dtwn,
-  				   0, NULL, NULL);
-  if(status != CL_SUCCESS) printf("%s\n", clErrorString(status));
-  assert(status == CL_SUCCESS);
+/*   status = clEnqueueUnmapMemObject(f.cli.commandqueue, */
+/*   				   f.dtwn_cl, */
+/*   				   f.dtwn, */
+/*   				   0, NULL, NULL); */
+/*   if(status != CL_SUCCESS) printf("%s\n", clErrorString(status)); */
+/*   assert(status == CL_SUCCESS); */
 
-  clFinish(f.cli.commandqueue);
+/*   clFinish(f.cli.commandqueue); */
 
-  const int ninterfaces = f.macromesh.nmacrointerfaces;
-  for(int i = 0; i < ninterfaces; ++i) {
-    int ifa = f.macromesh.macrointerface[i];
-    DGMacroCellInterface_CL(ifa, &f, &(f.wn_cl),
-			    0, NULL, NULL);
-    clFinish(f.cli.commandqueue);
-  }
+/*   const int ninterfaces = f.macromesh.nmacrointerfaces; */
+/*   for(int i = 0; i < ninterfaces; ++i) { */
+/*     int ifa = f.macromesh.macrointerface[i]; */
+/*     DGMacroCellInterface_CL(ifa, &f, &(f.wn_cl), */
+/* 			    0, NULL, NULL); */
+/*     clFinish(f.cli.commandqueue); */
+/*   } */
   
-  const int nboundaryfaces = f.macromesh.nboundaryfaces;
-  for(int i = 0; i < nboundaryfaces; ++i) {
-    int ifa = f.macromesh.boundaryface[i];
-    DGBoundary_CL(ifa, &f, &(f.wn_cl),
-			    0, NULL, NULL);
-    clFinish(f.cli.commandqueue);
-  }
+/*   const int nboundaryfaces = f.macromesh.nboundaryfaces; */
+/*   for(int i = 0; i < nboundaryfaces; ++i) { */
+/*     int ifa = f.macromesh.boundaryface[i]; */
+/*     DGBoundary_CL(ifa, &f, &(f.wn_cl), */
+/* 			    0, NULL, NULL); */
+/*     clFinish(f.cli.commandqueue); */
+/*   } */
 
-  CopyfieldtoCPU(&f);
-  real *fdtwn_opencl = f.dtwn;
+/*   CopyfieldtoCPU(&f); */
+/*   real *fdtwn_opencl = f.dtwn; */
 
-  // OpenMP, new method
-  f.dtwn = calloc(f.wsize, sizeof(real));
-  for(int iw = 0; iw < f.wsize; iw++)
-    f.dtwn[iw] = 0;
-  for(int ifa = 0; ifa < f.macromesh.nbfaces; ifa++)
-    DGMacroCellInterface(ifa, &f, f.wn, f.dtwn);
-  real *fdtwn_openmp = f.dtwn;
+/*   // OpenMP, new method */
+/*   f.dtwn = calloc(f.wsize, sizeof(real)); */
+/*   for(int iw = 0; iw < f.wsize; iw++) */
+/*     f.dtwn[iw] = 0; */
+/*   for(int ifa = 0; ifa < f.macromesh.nbfaces; ifa++) */
+/*     DGMacroCellInterface(ifa, &f, f.wn, f.dtwn); */
+/*   real *fdtwn_openmp = f.dtwn; */
 
-  // Check that the results are the same
-  test = true;
-  real tolerance = _SMALL;
+/*   // Check that the results are the same */
+/*   test = true; */
+/*   real tolerance = _SMALL; */
 
-  real maxerr = 0.0;
-  for(int i = 0; i < f.wsize; i++) {
-    real error = fabs(fdtwn_openmp[i] - fdtwn_opencl[i]);
-    //printf("error: %f \t%f \t%f\n", error, fdtwn_openmp[i], fdtwn_opencl[i]);
-    maxerr = fmax(error, maxerr);
-  }
-  printf("Max difference between OpenCL and OpenMP: %f\n", maxerr);
-  test = test && (maxerr < tolerance);
+/*   real maxerr = 0.0; */
+/*   for(int i = 0; i < f.wsize; i++) { */
+/*     real error = fabs(fdtwn_openmp[i] - fdtwn_opencl[i]); */
+/*     //printf("error: %f \t%f \t%f\n", error, fdtwn_openmp[i], fdtwn_opencl[i]); */
+/*     maxerr = fmax(error, maxerr); */
+/*   } */
+/*   printf("Max difference between OpenCL and OpenMP: %f\n", maxerr); */
+/*   test = test && (maxerr < tolerance); */
 
-  // OpenMP, slow method
-  /* MacroCell mcell[f.macromesh.nbelems]; */
-  /* for(int ie = 0; ie < f.macromesh.nbelems; ie++) { */
-  /*   mcell[ie].field = &f; */
-  /*   mcell[ie].first = ie; */
-  /*   mcell[ie].last_p1 = ie + 1; */
-  /* } */
-  /* f.dtwn = calloc(f.wsize, sizeof(real)); */
-  /* for(int iw = 0; iw < f.wsize; iw++) */
-  /*   f.dtwn[iw] = 0; */
-  /* for(int ie = 0; ie < f.macromesh.nbelems; ++ie) { */
-  /*   MacroCell *mcelli = mcell + ie; */
-  /*   DGMacroCellInterfaceSlow(mcelli); */
-  /* } */
-  /* real *fdtwn_slow = f.dtwn; */
+/*   // OpenMP, slow method */
+/*   /\* MacroCell mcell[f.macromesh.nbelems]; *\/ */
+/*   /\* for(int ie = 0; ie < f.macromesh.nbelems; ie++) { *\/ */
+/*   /\*   mcell[ie].field = &f; *\/ */
+/*   /\*   mcell[ie].first = ie; *\/ */
+/*   /\*   mcell[ie].last_p1 = ie + 1; *\/ */
+/*   /\* } *\/ */
+/*   /\* f.dtwn = calloc(f.wsize, sizeof(real)); *\/ */
+/*   /\* for(int iw = 0; iw < f.wsize; iw++) *\/ */
+/*   /\*   f.dtwn[iw] = 0; *\/ */
+/*   /\* for(int ie = 0; ie < f.macromesh.nbelems; ++ie) { *\/ */
+/*   /\*   MacroCell *mcelli = mcell + ie; *\/ */
+/*   /\*   DGMacroCellInterfaceSlow(mcelli); *\/ */
+/*   /\* } *\/ */
+/*   /\* real *fdtwn_slow = f.dtwn; *\/ */
 
-  /* maxerr = 0.0; */
-  /* for(int i = 0; i < f.wsize; i++) { */
-  /*   maxerr = fmax(fabs(fdtwn_openmp[i] - fdtwn_slow[i]), maxerr); */
-  /* } */
-  /* printf("Max difference between OpenMP and OpenMP-slow: %f\n", maxerr); */
-  /* test = test && (maxerr < tolerance); */
+/*   /\* maxerr = 0.0; *\/ */
+/*   /\* for(int i = 0; i < f.wsize; i++) { *\/ */
+/*   /\*   maxerr = fmax(fabs(fdtwn_openmp[i] - fdtwn_slow[i]), maxerr); *\/ */
+/*   /\* } *\/ */
+/*   /\* printf("Max difference between OpenMP and OpenMP-slow: %f\n", maxerr); *\/ */
+/*   /\* test = test && (maxerr < tolerance); *\/ */
 
-  /* maxerr = 0.0; */
-  /* for(int i = 0; i < f.wsize; i++) { */
-  /*   maxerr = fmax(fabs(fdtwn_opencl[i] - fdtwn_slow[i]), maxerr); */
-  /* } */
-  /* printf("Max difference between OpenCL and OpenMP-slow: %f\n", maxerr); */
-  /* test = test && (maxerr < tolerance); */
+/*   /\* maxerr = 0.0; *\/ */
+/*   /\* for(int i = 0; i < f.wsize; i++) { *\/ */
+/*   /\*   maxerr = fmax(fabs(fdtwn_opencl[i] - fdtwn_slow[i]), maxerr); *\/ */
+/*   /\* } *\/ */
+/*   /\* printf("Max difference between OpenCL and OpenMP-slow: %f\n", maxerr); *\/ */
+/*   /\* test = test && (maxerr < tolerance); *\/ */
 
-  return test;
+/*   return test; */
 }
 
 int main(void) {

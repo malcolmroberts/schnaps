@@ -25,7 +25,7 @@ int main(int argc, char *argv[])
   char *bfluxdefault = "TransBoundaryFlux2d";
   char *initdatadefault = "TransInitData2d";
   char *imposeddatadefault = "TransImposedData2d";
-  char *mshdefault = "disque.msh";
+  char *mshdefault = "../disque.msh";
   int m = 1;
   bool writeout = true;
 
@@ -182,26 +182,19 @@ int main(int argc, char *argv[])
     raf[1] = 1;
   }
 
+  Model model;
+  model.m = m;
+  
   field f;
   init_empty_field(&f);
 
-  f.model.cfl = cfl;
-  f.model.m = m; // only one conservative variable
   if(!usegpu) {
-    f.model.NumFlux = numflux(fluxname);
-    f.model.BoundaryFlux = bflux(bfluxname);
+    model.NumFlux = numflux(fluxname);
+    model.BoundaryFlux = bflux(bfluxname);
   }
-  f.model.InitData = initdata(initdataname);
-  f.model.ImposedData = imposeddata(imposeddataname);
-  f.varindex = GenericVarindex;
-
-  f.interp.interp_param[0] = f.model.m; // _M
-  f.interp.interp_param[1] = deg[0]; // x direction degree
-  f.interp.interp_param[2] = deg[1]; // y direction degree
-  f.interp.interp_param[3] = deg[2]; // z direction degree
-  f.interp.interp_param[4] = raf[0]; // x direction refinement
-  f.interp.interp_param[5] = raf[1]; // y direction refinement
-  f.interp.interp_param[6] = raf[2]; // z direction refinement
+  model.InitData = initdata(initdataname);
+  model.ImposedData = imposeddata(imposeddataname);
+  //varindex = GenericVarindex;
 
 #ifdef _WITH_OPENCL
   char buf[1000];
@@ -218,34 +211,32 @@ int main(int argc, char *argv[])
   strcat(cl_buildoptions, buf);
 #endif
 
-  // Read the gmsh file
-  ReadMacroMesh(&f.macromesh, mshname);
-  //ReadMacroMesh(&(f.macromesh), "geo/cube.msh");
+  MacroMesh mesh;
+  ReadMacroMesh(&mesh,mshname);
 
   if(dimension == 2) {
-    Detect2DMacroMesh(&f.macromesh);
-    assert(f.macromesh.is2d);
+    Detect2DMacroMesh(&mesh);
+    assert(mesh.is2d);
   }
 
   if(dimension == 1) {
-    Detect1DMacroMesh(&f.macromesh);
-    assert(f.macromesh.is1d);
+    Detect1DMacroMesh(&mesh);
+    assert(mesh.is1d);
   }
 
+  BuildConnectivity(&mesh);
+  CheckMacroMesh(&mesh, deg, raf);
 
-  // Mesh preparation
-  BuildConnectivity(&f.macromesh);
-  //PrintMacroMesh(&f.macromesh);
-
-  // Prepare the initial fields
-  Initfield(&f);
-
-  // AffineMapMacroMesh(&f.macromesh);
-  CheckMacroMesh(&f.macromesh, f.interp.interp_param + 1);
-
-  f.vmax = 0.1;
-  if(dt <= 0.0)
-    dt = set_dt(&f);
+  Simulation simu;
+  EmptySimulation(&simu);
+  simu.cfl = cfl;
+  simu.dt = dt; // FIXME: what if zero?????
+  
+  InitSimulation(&simu, &mesh, deg, raf, &model);
+  
+  simu.vmax = 0.1;
+  /* if(dt <= 0.0) */
+  /*   dt = set_dt(&f); */
 
   printf("\n\n");
 
@@ -275,32 +266,32 @@ int main(int argc, char *argv[])
 
   if(usegpu) {
 #ifdef _WITH_OPENCL
-    RK2_CL(&f, tmax, dt, 0, NULL, NULL);
+    RK2_CL(&simu, tmax, dt, 0, NULL, NULL);
 
-    cl_int status = clFinish(f.cli.commandqueue);
+    cl_int status = clFinish(simu.cli.commandqueue);
     if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
     assert(status >= CL_SUCCESS);
     
-    CopyfieldtoCPU(&f);
+    CopyfieldtoCPU(&simu);
 
     printf("\nOpenCL Kernel time:\n");
-    show_cl_timing(&f);
+    show_cl_timing(&simu);
     printf("\n");
 #else
     printf("OpenCL not enabled!\n");
     exit(1);
 #endif
   } else {
-    RK2(&f, tmax, dt);
+    RK2(&simu, dt);
   }
 
   // Save the results and the error
   if(writeout) {
-    Plotfield(0, false, &f, NULL, "dgvisu.msh");
-    Plotfield(0, true, &f, "Error", "dgerror.msh");
+    /* Plotfield(0, false, &f, NULL, "dgvisu.msh"); */
+    /* Plotfield(0, true, &f, "Error", "dgerror.msh"); */
   }
 
-  real dd = L2error(&f);
+  real dd = L2error(&simu);
  
   printf("\n");
   printf("L2 error: %f\n", dd);

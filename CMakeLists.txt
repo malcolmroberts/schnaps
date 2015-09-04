@@ -148,7 +148,6 @@ if(SuiteSparse_FOUND)
     )
 endif(SuiteSparse_FOUND)
 
-
 if (OPENCL_FOUND)
   list(APPEND
     source_files
@@ -185,67 +184,17 @@ if(FLANN_FOUND)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -D_WITH_FLANN")
 endif()
 
-# list of tests
-#list(APPEND testlist schnaps)
-list(APPEND testlist test2dmeshdetection)
-#list(APPEND testlist test_transportvp)
-list(APPEND testlist testcoil2d)
-list(APPEND testlist testfield)
-list(APPEND testlist testfielddg)
-list(APPEND testlist testfieldrk2)
-#list(APPEND testlist testfieldrk2-2d)
-#list(APPEND testlist testfieldrk2-2d-subcell)
-list(APPEND testlist testfieldrk4)
-list(APPEND testlist testgeometry)
-#list(APPEND testlist testgyro)
-list(APPEND testlist testinterpolation)
-#list(APPEND testlist testlandau_damping_1D)
-#list(APPEND testlist testlandaucollision_1d)
-list(APPEND testlist testmacromesh)
-list(APPEND testlist testmaxwell2d)
-list(APPEND testlist testmeq2)
-list(APPEND testlist testmodel)
-list(APPEND testlist testnonlinearsolver)
-list(APPEND testlist testperiodic)
-list(APPEND testlist testpic)
-list(APPEND testlist testpic_accumulate)
-list(APPEND testlist testpoisson)
-list(APPEND testlist testpoisson2d)
-list(APPEND testlist testshequilibrium2d)
-list(APPEND testlist testshperiodic2d)
-list(APPEND testlist testsimulation)
-list(APPEND testlist testskyline)
-#list(APPEND testlist testsubcelldgvol)
-list(APPEND testlist testtransport_steady)
-list(APPEND testlist testwave2d)
-list(APPEND testlist testwave2d-steady)
 
-if(SuiteSparse_FOUND)
-  list(APPEND testlist testumfpack)
-endif(SuiteSparse_FOUND)
-
-if(OPENCL_FOUND)
-  #list(APPEND testlist testcache_cl)
-  list(APPEND testlist testclinfo)
-  #list(APPEND testlist testdoubletearing)
-  #list(APPEND testlist testdtfield3d_cl)
-  list(APPEND testlist testdtfield_cl)
-  list(APPEND testlist testfieldrk2_cl)
-  list(APPEND testlist testfieldrk4_cl)
-  #list(APPEND testlist testkelvinhelmotz)
-  #list(APPEND testlist testkernel)
-  list(APPEND testlist testkernelflux)
-  list(APPEND testlist testkernelinterface)
-  list(APPEND testlist testkernelvolume)
-  #list(APPEND testlist testmanyv)
-  list(APPEND testlist testmaxwell2d_cl)
-  #list(APPEND testlist testmaxwell3d)
-  #list(APPEND testlist testmeq2_cl)
-  #list(APPEND testlist testmhd)
-  #list(APPEND testlist testmhd1d)
-  #list(APPEND testlist testorszagtang)
-  #list(APPEND testlist testreconnexion)
-endif(OPENCL_FOUND)
+# Find all of the files ending in .c in the test directory
+file(GLOB globtest test/*.c test/*.pp)
+MESSAGE(STATUS "globtest")
+foreach(test IN LISTS globtest)
+  string(REPLACE  ".c"  ""  test  ${test})
+  string(REGEX REPLACE  "([^/]+$)"  ""  dir  ${test})
+  string(REPLACE  ${dir}  ""  test  ${test})
+  #MESSAGE(STATUS ${test})
+  list(APPEND testlist ${test})
+endforeach(test)
 
 IF(BUILD_PARALUTION)
   SET(MATRIX_FILE gr_30_30.mtx)
@@ -268,16 +217,7 @@ IF(BUILD_PARALUTION)
 
   ADD_TEST(NAME testparalution COMMAND paralution_cg ${MATRIX_FILE} 4)
 
-  add_executable(
-    testlinearsolver
-    test/test.h
-    test/testlinearsolver.c
-    )
-  target_link_libraries(testlinearsolver paralution_c ${LIBS})
-  add_test(testlinearsolver testlinearsolver)
-
-ELSE()
-  list(APPEND testlist testlinearsolver)
+  list(APPEND LIBS paralution_c)
 ENDIF()
 
 foreach(test IN LISTS testlist)
@@ -290,3 +230,11 @@ foreach(test IN LISTS testlist)
   target_link_libraries(${test} ${LIBS})
   add_test(${test} ${test})
 endforeach(test)
+
+add_executable(
+  schnaps
+  test/test.h
+  src/schnaps.c
+  )
+target_link_libraries(schnaps ${LIBS})
+add_test(schnaps schnaps)

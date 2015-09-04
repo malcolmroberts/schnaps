@@ -26,11 +26,9 @@ void coil_pre_dtfields(void *simu, real *w){
 void Coil2DSource(const real *x, const real t, const real *w, real *source)
 {
   // w: (Ex, Ey, Hz, Hz, \lambda, rho, Jx, Jy)
-  
   // FIXME add documentation
 
   static int icall = 0;
-  
   const real khi = 1.0;
   source[0] = -w[4];
   source[1] = -w[5];
@@ -42,13 +40,7 @@ void Coil2DSource(const real *x, const real t, const real *w, real *source)
 
   icall++;
   //printf("source call %d w=%f\n",icall,w[4]);
-
-
-  
 }
-
-
-
 
 void Coil2DBoundaryFlux(real x[3], real t, real wL[], real *vnorm,
 			real *flux)
@@ -75,7 +67,6 @@ int TestCoil2D(void)
   Detect2DMacroMesh(&mesh);
   BuildConnectivity(&mesh);
 
-
   // test gmsh file reading
   ReadMacroMesh(&mesh, "../test/testmacromesh.msh");
   Detect2DMacroMesh(&mesh);
@@ -86,7 +77,6 @@ int TestCoil2D(void)
   Model model;
 
   model.m = 7; // num of conservative variables
-
   model.NumFlux = Maxwell2DNumFlux_upwind;
   model.BoundaryFlux = Coil2DBoundaryFlux;
   model.InitData = Coil2DInitData;
@@ -98,7 +88,6 @@ int TestCoil2D(void)
   int raf[]={4, 4, 1};
 
   CheckMacroMesh(&mesh, deg, raf);
-
   
   Simulation simu;
   EmptySimulation(&simu);
@@ -107,7 +96,6 @@ int TestCoil2D(void)
   simu.pre_dtfields = coil_pre_dtfields; // must be DEFINED after init
 
   printf("cfl param=%f \n", simu.hmin);
-   
   
   PIC pic;
   simu.pic = &pic;
