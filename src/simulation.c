@@ -590,8 +590,3 @@ real Get_Dt_RK(Simulation *simu)
   //printf("hmin=%f cfl=%f vmax=%f\n",simu->hmin,simu->cfl,simu->vmax);
   return simu->cfl * simu->hmin / simu->vmax; 
 }
-
-
-
-
-

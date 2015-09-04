@@ -10,10 +10,10 @@ SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 
 #set(CMAKE_C_FLAGS "-std=c99 -D_REENTRANT -O3 -g -D_POSIX_C_SOURCE=200112L")
-
 #set(CMAKE_C_FLAGS " -std=c99 -lumfpack -lamd -lblas -lsuitesparseconfig -lcholmod -lcolamd
 #-D_DOUBLE_PRECISION -D_SCHNAPS_DIR=${PROJECT_SOURCE_DIR} -O3 -g  ")
 #set(CMAKE_C_FLAGS " -std=c99 -D_DOUBLE_PRECISION -D_SCHNAPS_DIR=${PROJECT_SOURCE_DIR} -O3 -g  ")
+
 set(CMAKE_C_FLAGS "")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 ")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_SCHNAPS_DIR=${PROJECT_SOURCE_DIR}")
@@ -22,7 +22,6 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_DOUBLE_PRECISION")
 
 MESSAGE(Compil. options: ${CMAKE_C_FLAGS})
-
 
 OPTION(USE_OPENCL "Activate OpenCL library" ON)
 
@@ -52,8 +51,8 @@ endif()
 
 find_package(OpenMP)
 if(OPENMP_FOUND)
- set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
- set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 endif()
 
 SET(BUILD_PARALUTION      OFF CACHE BOOL   "Build paralution library")
@@ -87,8 +86,7 @@ if(SuiteSparse_FOUND)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_WITH_UMFPACK")
 else()
   MESSAGE(STATUS "umfpack not found: deactivated")
- endif()
-
+endif()
 
 include_directories(src)
 
@@ -143,12 +141,12 @@ list(APPEND
   )
 
 if(SuiteSparse_FOUND)
-list(APPEND
-  source_files
- src/solverumfpack.h
-  src/solverumfpack.c
-  )
- endif(SuiteSparse_FOUND)
+  list(APPEND
+    source_files
+    src/solverumfpack.h
+    src/solverumfpack.c
+    )
+endif(SuiteSparse_FOUND)
 
 
 if (OPENCL_FOUND)
@@ -187,306 +185,69 @@ if(FLANN_FOUND)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -D_WITH_FLANN")
 endif()
 
-
-
 # list of tests
-add_executable(
-  testmacromesh
-  test/test.h
-  test/testmacromesh.c
-  )
-target_link_libraries(testmacromesh ${LIBS})
-add_test(testmacromesh testmacromesh)
-
-add_executable(
-  testgeometry
-  test/test.h
-  test/testgeometry.c
-  )
-target_link_libraries(testgeometry ${LIBS})
-add_test(testgeometry testgeometry)
-
-add_executable(
-  testinterpolation
-  test/test.h
-  test/testinterpolation.c
-  )
-target_link_libraries(testinterpolation ${LIBS})
-add_test(testinterpolation testinterpolation)
-
-add_executable(
-  testmodel
-  test/test.h
-  test/testmodel.c
-  )
-target_link_libraries(testmodel ${LIBS})
-add_test(testmodel testmodel)
-
-add_executable(
-  testfield
-  test/test.h
-  test/testfield.c
-  )
-target_link_libraries(testfield ${LIBS})
-add_test(testfield testfield)
-
-add_executable(
-  testsimulation
-  test/test.h
-  test/testsimulation.c
-  )
-target_link_libraries(testsimulation ${LIBS})
-add_test(testsimulation testsimulation)
-
-add_executable(
-  testfielddg
-  test/test.h
-  test/testfielddg.c
-  )
-target_link_libraries(testfielddg ${LIBS})
-add_test(testfielddg testfielddg)
-
-add_test(testfieldrk2 testfieldrk2)
-add_executable(
-  testfieldrk2
-  test/test.h
-  test/testfieldrk2.c
-  )
-target_link_libraries(testfieldrk2 ${LIBS})
-add_test(testfieldrk2 testfieldrk2)
-
-add_executable(
-  testperiodic
-  test/test.h
-  test/testperiodic.c
-  )
-target_link_libraries(testperiodic ${LIBS})
-add_test(testperiodic testperiodic)
-
-add_test(test2dmeshdetection test2dmeshdetection)
-add_executable(
-  test2dmeshdetection
-  test/test.h
-  test/test2dmeshdetection.c
-  )
-target_link_libraries(test2dmeshdetection ${LIBS})
-add_test(test2dmeshdetection test2dmeshdetection)
-
-add_executable(
-  testfieldrk2-2d
-  test/test.h
-  test/testfieldrk2-2d.c
-  )
-target_link_libraries(testfieldrk2-2d ${LIBS})
-add_test(testfieldrk2-2d testfieldrk2-2d)
-
-add_executable(
-  testmeq2
-  test/test.h
-  test/testmeq2.c
-  )
-target_link_libraries(testmeq2 ${LIBS})
-add_test(testmeq2 testmeq2)
-
-add_executable(
-  testmaxwell2d
-  test/test.h
-  test/testmaxwell2d.c
-  )
-target_link_libraries(testmaxwell2d ${LIBS})
-add_test(testmaxwell2d testmaxwell2d)
-
-add_executable(
-  testfieldrk4
-  test/test.h
-  test/testfieldrk4.c
-  )
-target_link_libraries(testfieldrk4 ${LIBS})
-add_test(testfieldrk4 testfieldrk4)
-
-
-add_executable(
-  testpic
-  test/test.h
-  test/testpic.c
-  )
-target_link_libraries(testpic ${LIBS})
-add_test(testpic testpic)
-
-add_executable(
-  testcoil2d
-  test/test.h
-  test/testcoil2d.c
-  )
-target_link_libraries(testcoil2d ${LIBS})
-add_test(testcoil2d testcoil2d)
-
-add_executable(
-  testpic_accumulate
-  test/test.h
-  test/testpic_accumulate.c
-  )
-target_link_libraries(testpic_accumulate ${LIBS})
-add_test(testpic_accumulate testpic_accumulate)
-
-
-add_executable(
-  testskyline
-  test/test.h
-  test/testskyline.c
-  )
-target_link_libraries(testskyline ${LIBS})
-add_test(testskyline testskyline)
-
-add_executable(
-  testnonlinearsolver
-  test/test.h
-  test/testnonlinearsolver.c
-  )
-target_link_libraries(testnonlinearsolver ${LIBS})
-add_test(testnonlinearsolver testnonlinearsolver)
-
-add_executable(
-  testpoisson
-  test/test.h
-  test/testpoisson.c
-  )
-target_link_libraries(testpoisson ${LIBS})
-add_test(testpoisson testpoisson)
-
-add_executable(
-  testpoisson2d
-  test/test.h
-  test/testpoisson2d.c
-  )
-target_link_libraries(testpoisson2d ${LIBS})
-add_test(testpoisson2d testpoisson2d)
-
-add_executable(
-  testwave2d
-  test/test.h
-  test/testwave2d.c
-  )
-target_link_libraries(testwave2d ${LIBS})
-add_test(testwave2d testwave2d)
-
-
-add_executable(
-  testwave2d-steady
-  test/test.h
-  test/testwave2d-steady.c
-  )
-target_link_libraries(testwave2d-steady ${LIBS})
-add_test(testwave2d-steady testwave2d-steady)
-
-add_executable(
-  testtransport_steady
-  test/test.h
-  test/testtransport_steady.c
-  )
-target_link_libraries(testtransport_steady ${LIBS})
-add_test(testtransport_steady testtransport_steady)
-
-add_executable(
-  testshequilibrium2d
-  test/test.h
-  test/testshequilibrium2d.c
-  )
-target_link_libraries(testshequilibrium2d ${LIBS})
-add_test(testshequilibrium2d testshequilibrium2d)
-
-add_executable(
-  testshperiodic2d
-  test/test.h
-  test/testshperiodic2d.c
-  )
-target_link_libraries(testshperiodic2d ${LIBS})
-add_test(testshperiodic2d testshperiodic2d)
+#list(APPEND testlist schnaps)
+list(APPEND testlist test2dmeshdetection)
+#list(APPEND testlist test_transportvp)
+list(APPEND testlist testcoil2d)
+list(APPEND testlist testfield)
+list(APPEND testlist testfielddg)
+list(APPEND testlist testfieldrk2)
+#list(APPEND testlist testfieldrk2-2d)
+#list(APPEND testlist testfieldrk2-2d-subcell)
+list(APPEND testlist testfieldrk4)
+list(APPEND testlist testgeometry)
+#list(APPEND testlist testgyro)
+list(APPEND testlist testinterpolation)
+#list(APPEND testlist testlandau_damping_1D)
+#list(APPEND testlist testlandaucollision_1d)
+list(APPEND testlist testmacromesh)
+list(APPEND testlist testmaxwell2d)
+list(APPEND testlist testmeq2)
+list(APPEND testlist testmodel)
+list(APPEND testlist testnonlinearsolver)
+list(APPEND testlist testperiodic)
+list(APPEND testlist testpic)
+list(APPEND testlist testpic_accumulate)
+list(APPEND testlist testpoisson)
+list(APPEND testlist testpoisson2d)
+list(APPEND testlist testshequilibrium2d)
+list(APPEND testlist testshperiodic2d)
+list(APPEND testlist testsimulation)
+list(APPEND testlist testskyline)
+#list(APPEND testlist testsubcelldgvol)
+list(APPEND testlist testtransport_steady)
+list(APPEND testlist testwave2d)
+list(APPEND testlist testwave2d-steady)
 
 if(SuiteSparse_FOUND)
-
-add_executable(
-  testumfpack
-  test/test.h
-  test/testumfpack.c
-  )
-target_link_libraries(testumfpack ${LIBS})
-add_test(testumfpack testumfpack)
-
+  list(APPEND testlist testumfpack)
 endif(SuiteSparse_FOUND)
 
-
 if(OPENCL_FOUND)
-  add_test(testclinfo testclinfo)
-  add_executable(
-    testclinfo
-    test/test.h
-    test/testclinfo.c
-    )
-  target_link_libraries(testclinfo ${LIBS})
-  
-  add_test(testkernelvolume testkernelvolume)
-  add_executable(
-    testkernelvolume
-    test/test.h
-    test/testkernelvolume.c
-    )
-  target_link_libraries(testkernelvolume ${LIBS})
-
-  add_test(testkernelflux testkernelflux)
-  add_executable(
-    testkernelflux
-    test/test.h
-    test/testkernelflux.c
-    )
-  target_link_libraries(testkernelflux ${LIBS})
-
-  add_test(testkernelinterface testkernelinterface)
-  add_executable(
-    testkernelinterface
-    test/test.h
-    test/testkernelinterface.c
-    )
-  target_link_libraries(testkernelinterface ${LIBS})
-
-  add_test(testdtfield_cl testdtfield_cl)
-  add_executable(
-    testdtfield_cl
-    test/test.h
-    test/testdtfield_cl.c
-    )
-  target_link_libraries(testdtfield_cl ${LIBS})
-
-
-  add_test(testfieldrk2_cl testfieldrk2_cl)
-  add_executable(
-    testfieldrk2_cl
-    test/test.h
-    test/testfieldrk2_cl.c
-    )
-  target_link_libraries(testfieldrk2_cl ${LIBS})
-  
-  add_test(testfieldrk4_cl testfieldrk4_cl)
-  add_executable(
-    testfieldrk4_cl
-    test/test.h
-    test/testfieldrk4_cl.c
-    )
-  target_link_libraries(testfieldrk4_cl ${LIBS})
-
-  add_executable(
-    testmaxwell2d_cl
-    test/test.h
-    test/testmaxwell2d_cl.c
-    )
-  target_link_libraries(testmaxwell2d_cl ${LIBS})
-  add_test(testmaxwell2d_cl testmaxwell2d_cl)
-  
-
+  #list(APPEND testlist testcache_cl)
+  list(APPEND testlist testclinfo)
+  #list(APPEND testlist testdoubletearing)
+  #list(APPEND testlist testdtfield3d_cl)
+  list(APPEND testlist testdtfield_cl)
+  list(APPEND testlist testfieldrk2_cl)
+  list(APPEND testlist testfieldrk4_cl)
+  #list(APPEND testlist testkelvinhelmotz)
+  #list(APPEND testlist testkernel)
+  list(APPEND testlist testkernelflux)
+  list(APPEND testlist testkernelinterface)
+  list(APPEND testlist testkernelvolume)
+  #list(APPEND testlist testmanyv)
+  list(APPEND testlist testmaxwell2d_cl)
+  #list(APPEND testlist testmaxwell3d)
+  #list(APPEND testlist testmeq2_cl)
+  #list(APPEND testlist testmhd)
+  #list(APPEND testlist testmhd1d)
+  #list(APPEND testlist testorszagtang)
+  #list(APPEND testlist testreconnexion)
 endif(OPENCL_FOUND)
 
 IF(BUILD_PARALUTION)
-
   SET(MATRIX_FILE gr_30_30.mtx)
 
   IF(EXISTS ${MATRIX_FILE})
@@ -516,16 +277,16 @@ IF(BUILD_PARALUTION)
   add_test(testlinearsolver testlinearsolver)
 
 ELSE()
-
-  add_executable(
-    testlinearsolver
-    test/test.h
-    test/testlinearsolver.c
-    )
-  target_link_libraries(testlinearsolver ${LIBS})
-  add_test(testlinearsolver testlinearsolver)
-
+  list(APPEND testlist testlinearsolver)
 ENDIF()
 
-
-
+foreach(test IN LISTS testlist)
+  MESSAGE(STATUS "Adding test " ${test})
+  add_executable(
+    ${test}
+    test/test.h
+    test/${test}.c
+    )
+  target_link_libraries(${test} ${LIBS})
+  add_test(${test} ${test})
+endforeach(test)
