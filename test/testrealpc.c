@@ -38,7 +38,7 @@ int Testrealpc(void) {
 
   bool test = true;
   real dd;
-  int test1_ok=0,test2_ok=0,test3_ok=0,test4_ok=1,test5_ok=0;
+  int test1_ok=0,test2_ok=0,test3_ok=0,test4_ok=0,test5_ok=1;
 
 
 #ifdef PARALUTION 
@@ -400,21 +400,21 @@ int Testrealpc(void) {
 
     real theta4=0.5;
     simu4.theta=theta4;
-    simu4.dt=100;//0.001667;
+    simu4.dt=10;//0.001667;
     simu4.vmax=_SPEED_WAVE;
-    real tmax4=simu4.dt;//10*simu.dt;//;0.5;
+    real tmax4=10*simu4.dt;//10*simu.dt;//;0.5;
     int itermax4=tmax4/simu4.dt;
     simu4.itermax_rk=itermax4;
     int size = cs.nb_fe_dof;
     real *resCG = calloc(size, sizeof(real));
     real *wCG = calloc(size, sizeof(real));
-    real *solpc = calloc(size, sizeof(real));
+  
 
     csSolve.lsol.solver_type=GMRES;//LU;
-    csSolve.lsol.tol=1.e-9;
+    csSolve.lsol.tol=1.e-10;
     csSolve.lsol.pc_type=PHY_BASED;//PHY_BASED;//;NONE;//EXACT;//PHY_BASED;
     csSolve.lsol.iter_max=10000;
-    csSolve.lsol.restart_gmres=30;
+    csSolve.lsol.restart_gmres=5;
     csSolve.lsol.is_CG=true;
     csSolve.bc_assembly=ExactDirichletContinuousMatrix;
 
@@ -423,6 +423,7 @@ int Testrealpc(void) {
      int mat2assemble[6] = {1, 1, 1, 1, 1, 1};
      Init_PhyBasedPC_SchurPressure_Wave(&simu4, &pb_pc, mat2assemble);
      Init_Parameters_PhyBasedPC(&pb_pc);
+       real *solpc = calloc(size, sizeof(real));
      ////////////////////////////
 
     Wave_test(&cs,-(1.0-simu4.theta),simu4.dt);
@@ -449,7 +450,6 @@ int Testrealpc(void) {
       }
       csSolve.bc_assembly(&csSolve, &csSolve.lsol);     
       SolveLinearSolver(&csSolve.lsol,&simu4);
-      printf("pouet");
       
       ///////////////////////////////////////
       /*PhyBased_PC_Full(&pb_pc,&simu4,solpc,csSolve.lsol.rhs);
@@ -499,7 +499,7 @@ int Testrealpc(void) {
     model5.Source = NULL;
 
     int deg5[]={4, 4, 0};
-    int raf5[]={10, 10, 1};
+    int raf5[]={8, 8, 1};
 
     assert(mesh.is2d);
 
@@ -521,9 +521,9 @@ int Testrealpc(void) {
 
     real theta5=0.5;
     simu5.theta=theta5;
-    simu5.dt=150;//0.001667;
+    simu5.dt=10000;//0.001667;
     simu5.vmax=_SPEED_WAVE;
-    real tmax5=2*simu5.dt;//;0.5;
+    real tmax5=1*simu5.dt;//;0.5;
 
     int itermax5=tmax5/simu5.dt;
     simu5.itermax_rk=itermax5;
@@ -532,13 +532,21 @@ int Testrealpc(void) {
     real *wCG = calloc(size, sizeof(real));
 
     csSolve.lsol.solver_type=GMRES;
-    csSolve.lsol.tol=1.e-11;
-    csSolve.lsol.pc_type=PHY_BASED;
+    csSolve.lsol.tol=1.e-10;
+    csSolve.lsol.pc_type=PHY_BASED_EXACT;//PHY_BASED;
     csSolve.lsol.iter_max=500;
     csSolve.lsol.restart_gmres=30;
     csSolve.lsol.is_CG=true;
     csSolve.bc_assembly=ExactDirichletContinuousMatrix;
-    cs.bc_assembly=ExactDirichletContinuousMatrix;
+
+     //////////////////////////////////
+    PB_PC pb_pc;
+     int mat2assemble[6] = {1, 1, 1, 1, 1, 1};
+     //Init_PhyBasedPC_SchurPressure_Wave(&simu5, &pb_pc, mat2assemble);
+     Init_PhyBasedPC_SchurFull_Wave(&simu5, &pb_pc, mat2assemble);
+     Init_Parameters_PhyBasedPC(&pb_pc);
+     real *solpc = calloc(size, sizeof(real));
+     ////////////////////////////
 
     Wave_test(&cs,-(1.0-simu5.theta),simu5.dt);
     Generic(&cs);
@@ -564,9 +572,32 @@ int Testrealpc(void) {
       }
       csSolve.bc_assembly(&csSolve, &csSolve.lsol);
       SolveLinearSolver(&csSolve.lsol,&simu5);
+      
       for (int i=0; i<size; i++){
         wCG[i] = csSolve.lsol.sol[i];
       }
+
+          ///////////////////////////////////////
+      PhyBased_PC_Full(&pb_pc,&simu5,solpc,csSolve.lsol.rhs);
+      //PhyBased_PC_InvertSchur_CG(&pb_pc,&simu5,solpc,csSolve.lsol.rhs);
+       real error=0;
+       for (int i=0; i<size; i++){
+	 error=error+fabs((solpc[i]-csSolve.lsol.sol[i])*(solpc[i]-csSolve.lsol.sol[i]));
+       }
+       printf("pppp %.12e\n",sqrt(error));
+	 /////////////////////////////////// */
+       /*for (int i=0; i<size/3; i++){
+	 printf("iter=%d p=%.12e %.12e %.12e\n",i,solpc[3*i],wCG[3*i],solpc[3*i]-wCG[3*i]);
+       }
+
+       for (int i=0; i<size/3; i++){
+	 printf("iter=%d u=%.12e %.12e %.12e\n",i,solpc[3*i+1],wCG[3*i+1],solpc[3*i+1]-wCG[3*i+1]);
+       }
+
+       for (int i=0; i<size/3; i++){
+	 printf("iter=%d v=%.12e %.12e %.12e\n",i,solpc[3*i+2],wCG[3*i+2],solpc[3*i+2]-wCG[3*i+2]);
+	 }*/
+       
       int freq = (1 >= simu5.itermax_rk / 10)? 1 : simu5.itermax_rk / 10;
       if (tstep % freq == 0)
         printf("t=%f iter=%d/%d dt=%f\n", simu5.tnow, tstep, simu5.itermax_rk, simu5.dt);
@@ -579,6 +610,8 @@ int Testrealpc(void) {
     test = test && (dd<5.e-2);
     freeSimulation(&simu5);
   }
+
+  
 
 #ifdef PARALUTION 
   paralution_end();

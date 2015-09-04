@@ -253,7 +253,7 @@ void DisplaySkyline(Skyline* sky){
 
   for(int i=0;i<n;i++){
     for(int j=0;j<n;j++){
-      printf("%.16e ", GetSkyline(sky,i,j));
+      printf("%.3e ", GetSkyline(sky,i,j));
     }   
     printf("\n");
     }
@@ -319,7 +319,7 @@ void SolveSkyline(Skyline* sky,real* vfg,real* vu){
   real * vec_temp;
   real * sol_temp;
   real * sol_temp2;
-  int nb_iterations=10;
+  int nb_iterations=2;
 
   sol_temp=calloc(sky->neq,sizeof(real));
   sol_temp2=calloc(sky->neq,sizeof(real));  
@@ -355,7 +355,7 @@ void SolveSkyline(Skyline* sky,real* vfg,real* vu){
     for(int i=0; i < sky->neq; i++){
       error=error+fabs(sol_temp2[i]);
     }
-    printf("llllU %.13e %d \n",error,iter);
+    //printf("llllU %.13e %d \n",error,iter);
     
     for(int i=0; i < sky->neq; i++){
       sol_temp2[i]=sol_temp[i]-sol_temp2[i];

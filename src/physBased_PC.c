@@ -242,6 +242,18 @@ void Init_PhyBasedPC_SchurVelocity_Wave(Simulation *simu, PB_PC* pb_pc, int* lis
     }
   }
 
+  
+  for (int i=0;i<pb_pc->D.nb_fe_nodes;i++){
+    if (pb_pc->L1.is_boundary_node[i]){
+      for (int j=0;j<pb_pc->D.nb_fe_nodes;j++){
+	SetLinearSolver(&pb_pc->L1.lsol,i,j,0.0);
+	SetLinearSolver(&pb_pc->L2.lsol,i,j,0.0);
+	SetLinearSolver(&pb_pc->U1.lsol,i,j,0.0);
+	SetLinearSolver(&pb_pc->U2.lsol,i,j,0.0);
+      } 
+    } 
+    }
+
   // Assembling all operators' matrices
   GenericOperator_PBPC_Velocity(pb_pc);
 
@@ -399,8 +411,144 @@ void Init_PhyBasedPC_SchurPressure_Wave(Simulation *simu, PB_PC* pb_pc, int* lis
 	SetLinearSolver(&pb_pc->U2.lsol,i,j,0.0);
       } 
     } 
+  } 
+  
+}
+
+void Init_PhyBasedPC_SchurFull_Wave(Simulation *simu, PB_PC* pb_pc, int* list_mat2assemble){
+
+  // system is linear
+  pb_pc->nonlinear=0;
+
+
+  pb_pc->list_mat2assemble = calloc(6, sizeof(int));
+  for (int i=0; i<6; i++) pb_pc->list_mat2assemble[i] = list_mat2assemble[i];
+  
+  // Initialization variables. Modify at will.
+  int nb_varD = 2;
+  int * listvarD = calloc(nb_varD,sizeof(int));
+  listvarD[0]=1;
+  listvarD[1]=2;
+  
+  int nb_varL1 = 1;
+  int * listvarL1 = calloc(nb_varL1,sizeof(int));
+  listvarL1[0]=0;
+  int nb_varL2 = 1;
+  int * listvarL2 = calloc(nb_varL2,sizeof(int));
+  listvarL2[0]=1;
+  
+  int nb_varU1 = 1;
+  int * listvarU1 = calloc(nb_varU1,sizeof(int));
+  listvarU1[0]=0;
+  int nb_varU2 = 1;
+  int * listvarU2 = calloc(nb_varU2,sizeof(int));
+  listvarU2[0]=1;
+  
+  int nb_varSchur = 1;
+  int * listvarSchur = calloc(nb_varSchur,sizeof(int));
+  listvarSchur[0]=0;
+
+
+  // Initializing all solvers 
+  InitContinuousSolver(&pb_pc->D,simu,1,nb_varD,listvarD);
+  free(listvarD);
+  InitContinuousSolver(&pb_pc->L1,simu,1,nb_varL1,listvarL1);
+  free(listvarL1);
+  InitContinuousSolver(&pb_pc->L2,simu,1,nb_varL2,listvarL2);
+  free(listvarL2);
+  InitContinuousSolver(&pb_pc->U1,simu,1,nb_varU1,listvarU1);
+  free(listvarU1);
+  InitContinuousSolver(&pb_pc->U2,simu,1,nb_varU2,listvarU2);
+  free(listvarU2);
+  InitContinuousSolver(&pb_pc->Schur,simu,1,nb_varSchur,listvarSchur);
+  free(listvarSchur);
+
+  // Local operator matrices to build global Differential operators (Schur, Laplacian...)
+  real h=simu->dt*simu->theta*simu->vmax;
+  real SchurMat[4][4]  = {{1.0,0,0,0},
+			  {0,h*h,0,0},
+			  {0,0,h*h,0},
+			  {0,0,0,0}};
+  real L1Mat[4][4] = {{0,0,0,0},
+                      {-h,0,0,0},
+                      {0,0,0,0},
+                      {0,0,0,0}};
+  real L2Mat[4][4] = {{0,0,0,0},
+                      {0,0,0,0},
+                      {-h,0,0,0},
+                      {0,0,0,0}};
+  real U1Mat[4][4] = {{0,0,0,0},
+                      {-h,0,0,0},
+                      {0,0,0,0},
+                      {0,0,0,0}};
+  real U2Mat[4][4] = {{0,0,0,0},
+                      {0,0,0,0},
+                      {-h,0,0,0},
+                      {0,0,0,0}};
+  real DMat[4][4][4] ={{{1.0,0,0,0},
+			{0,0,0,0},
+			{0,0,0,0},
+			{0,0,0,0}},
+		       {{0.0,0,0,0},
+			{0,0,0,0},
+			{0,0,0,0},
+			{0,0,0,0}},
+		       {{0.0,0,0,0},
+			{0,0,0,0},
+			{0,0,0,0},
+			{0,0,0,0}},
+		       {{1.0,0,0,0},
+			{0,0,0,0},
+			{0,0,0,0},
+			{0,0,0,0}}};
+  
+  // Applying these matrices inside the different ContinuousSolver
+  for (int i=0; i<4; i++){
+    for (int j=0; j<4; j++){
+      for (int k=0; k<4; k++){
+        if (DMat != NULL) pb_pc->D.diff_op2vec[k][i][j] = DMat[k][i][j];
+      }
+      if (SchurMat != NULL) pb_pc->Schur.diff_op[i][j]  = SchurMat[i][j];
+      if (L1Mat != NULL) pb_pc->L1.diff_op[i][j] = L1Mat[i][j];
+      if (L2Mat != NULL) pb_pc->L2.diff_op[i][j] = L2Mat[i][j];
+      if (U1Mat != NULL) pb_pc->U1.diff_op[i][j] = U1Mat[i][j];
+      if (U2Mat != NULL) pb_pc->U2.diff_op[i][j] = U2Mat[i][j];
     }
-  /* 
+  }
+
+  // Assembling all operators' matrices
+  GenericOperator_PBPC_Pressure(pb_pc);
+
+  // For the Schur the the condition is Neumann
+  pb_pc->D.bc_assembly=ExactDirichletContinuousMatrix_PC;
+  pb_pc->Schur.bc_assembly=ExactDirichletContinuousMatrix_PC;
+
+  pb_pc->D.bc_assembly(&pb_pc->D,&pb_pc->D.lsol);
+  pb_pc->Schur.bc_assembly(&pb_pc->Schur,&pb_pc->Schur.lsol);
+
+  pb_pc->Schur.lsol.MatVecProduct=MatVect;
+  pb_pc->L1.lsol.MatVecProduct=MatVect;
+  pb_pc->L2.lsol.MatVecProduct=MatVect;
+  pb_pc->D.lsol.MatVecProduct=MatVect;
+  pb_pc->U1.lsol.MatVecProduct=MatVect;
+  pb_pc->U2.lsol.MatVecProduct=MatVect;
+
+  //// Allocating all sub-equations right-hand sides
+  pb_pc->rhs_prediction = calloc(pb_pc->D.lsol.neq,sizeof(real));
+  pb_pc->rhs_propagation = calloc(pb_pc->Schur.lsol.neq,sizeof(real));
+  pb_pc->rhs_correction = calloc(pb_pc->D.lsol.neq,sizeof(real));
+
+  for (int i=0;i<pb_pc->D.nb_fe_nodes;i++){
+    if (pb_pc->L1.is_boundary_node[i]){
+      for (int j=0;j<pb_pc->D.nb_fe_nodes;j++){
+	SetLinearSolver(&pb_pc->L1.lsol,i,j,0.0);
+	SetLinearSolver(&pb_pc->L2.lsol,i,j,0.0);
+	SetLinearSolver(&pb_pc->U1.lsol,i,j,0.0);
+	SetLinearSolver(&pb_pc->U2.lsol,i,j,0.0);
+      } 
+    } 
+  }
+  
   real LMU_1,LMU_2;
   InitLinearSolver(&pb_pc->Schur2,pb_pc->D.nb_fe_nodes,NULL,NULL); 
    
@@ -451,9 +599,10 @@ void Init_PhyBasedPC_SchurPressure_Wave(Simulation *simu, PB_PC* pb_pc, int* lis
       real val=GetLinearSolver(&pb_pc->D.lsol,2*i,2*j)-LMU_1-LMU_2;
       SetLinearSolver(&pb_pc->Schur2,i,j,val);
     }
-    }*/
+    }
   
 }
+
 
 
 void Init_Parameters_PhyBasedPC(PB_PC* pb_pc){
@@ -754,8 +903,9 @@ void PhyBased_PC_InvertSchur_CG(PB_PC* pb_pc, Simulation *simu, real* globalSol,
     pb_pc->D.lsol.rhs[i*2]   = globalRHS[i*3+1];
     pb_pc->D.lsol.rhs[i*2+1] = globalRHS[i*3+2];
   }
-  printf("Solution prediction\n");
+  //printf("Solution prediction\n");
   SolveLinearSolver(&pb_pc->D.lsol,simu);
+
 
   // 2) PROPAGATION STEP
 
@@ -778,8 +928,13 @@ void PhyBased_PC_InvertSchur_CG(PB_PC* pb_pc, Simulation *simu, real* globalSol,
   for (int i=0;i<pb_pc->D.nb_fe_nodes;i++){
     pb_pc->Schur.lsol.rhs[i]   = globalRHS[i*3] - pb_pc->L1.lsol.sol[i] - pb_pc->L2.lsol.sol[i];
   }
+  
+  /*for (int i=0; i<pb_pc->D.nb_fe_nodes; i++){
+    printf("iter=%d p=%.12e \n",i,pb_pc->L1.lsol.sol[i] + pb_pc->L2.lsol.sol[i]);
+    }*/
+  //DisplayLinearSolver(&pb_pc->Schur.lsol);
 
-  printf("Solution propagation\n");
+  //printf("Solution propagation\n");
   SolveLinearSolver(&pb_pc->Schur.lsol,simu);
 
 
@@ -801,7 +956,7 @@ void PhyBased_PC_InvertSchur_CG(PB_PC* pb_pc, Simulation *simu, real* globalSol,
     pb_pc->D.lsol.rhs[i*2+1] =  pb_pc->D.lsol.rhs[i*2+1] - pb_pc->U2.lsol.sol[i];
   }
 
-  printf("Solution correction\n");
+  //printf("Solution correction\n");
    SolveLinearSolver(&pb_pc->D.lsol,simu);
   
   // 4) OUTPUT STEP
@@ -874,8 +1029,9 @@ void PhyBased_PC_Full(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*glob
   for (int i=0;i<pb_pc->D.nb_fe_nodes;i++){
     pb_pc->Schur.lsol.rhs[i]   = globalRHS[i*3]- pb_pc->L1.lsol.sol[i] - pb_pc->L2.lsol.sol[i];
   }
-
+ 
   pb_pc->Schur2.solver_type=pb_pc->Schur.lsol.solver_type;
+  //DisplayLinearSolver(&pb_pc->Schur2);
   
   // printf("Solution propagation\n");
    for (int i=0;i<pb_pc->D.nb_fe_nodes;i++){
@@ -924,92 +1080,6 @@ void PhyBased_PC_Full(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*glob
   free(solU2);
 }
 
-
-
-
-
-void VectorDgToCg(ContinuousSolver * cs,real * rhsIn, real * rhsOut){
-  
-  field* f = &cs->simu->fd[0];
-  real* coeff = calloc(cs->nb_fe_nodes, sizeof(real));
-  real* rhsCopy = calloc(cs->nb_dg_nodes*f->model.m, sizeof(real));
-
-  for (int i=0;i<cs->nb_dg_nodes*f->model.m; i++) rhsCopy[i]=rhsIn[i];
-  
-  // Apply division by the discontinuous Garlerkin mass matrix
-  int m = f->model.m;
-  
-  for(int ipg = 0; ipg < NPG(f->deg, f->raf); ipg++) {
-    real dtau[3][3], codtau[3][3], xpgref[3], xphy[3], wpg;
-    ref_pg_vol(f->deg, f->raf, ipg, xpgref, &wpg, NULL);
-    Ref2Phy(f->physnode, // phys. nodes
-      xpgref, // xref
-      NULL, -1, // dpsiref, ifa
-      xphy, dtau, // xphy, dtau
-      codtau, NULL, NULL); // codtau, dpsi, vnds
-    real det = dot_product(dtau[0], codtau[0]);
-    for(int iv = 0; iv < f->model.m; iv++) {
-      int imem = f->varindex(f->deg, f->raf, f->model.m, ipg, iv);
-      rhsCopy[imem] /= (wpg * det);
-    }
-  }
-  
-  // right hand side assembly
-  for(int ino = 0; ino < cs->nb_fe_dof; ino++){
-    rhsOut[ino] = 0;
-  }
-
-  for(int ie = 0; ie < cs->nbel; ie++){  
-
-    int iemacro  = ie / (f->raf[0] * f->raf[1] * f->raf[2]);
-    int isubcell = ie % (f->raf[0] * f->raf[1] * f->raf[2]);
-    
- 
-    for(int iloc = 0; iloc < cs->nnodes; iloc++){
-      real wpg;
-      real xref[3];
-      int ilocmacro = iloc + isubcell * cs->nnodes;
-      ref_pg_vol(f->deg,f->raf,ilocmacro,xref,&wpg,NULL);
-      real dtau[3][3],codtau[3][3];
-      Ref2Phy(cs->simu->fd[iemacro].physnode,
-	      xref,NULL,0,NULL,
-	      dtau,codtau,NULL,NULL);
-      real det = dot_product(dtau[0], codtau[0]);	
-      int ino_dg = iloc + ie * cs->nnodes;
-      int ino_fe = cs->dg_to_fe_index[ino_dg];
-      coeff[ino_fe] += wpg * det; // We need to multiply by the member of dg node for 1 fe node.
-      for (int iv=0; iv<cs->nb_phy_vars;iv++){ 
-        int imem = f->varindex(f->deg,f->raf,f->model.m,
-		          ilocmacro,cs->list_of_var[iv]) ;
-
-        rhsOut[iv + cs->nb_phy_vars * ino_fe] += rhsCopy[imem] * wpg * det;//rhs[imem] * wpg * det; 
-      }
-    }
-  }
-  free(coeff);
-  free(rhsCopy);
-}
-
-void VectorCgToDg(ContinuousSolver * cs, real * rhsIn, real * rhsOut){
-
-  field* f0 = &cs->simu->fd[0];
-
-  //printf("Cg to Dg Copy...\n");
-  
-  for(int ie = 0; ie < cs->simu->macromesh.nbelems; ie++){  
-    for(int ipg = 0;ipg < cs->npgmacrocell; ipg++){
-      int ino_dg = ipg + ie * cs->npgmacrocell;
-      int ino_fe = cs->dg_to_fe_index[ino_dg];
-      for(int var =0; var < cs->nb_phy_vars; var++){ 
-        int ipot_fe = cs->nb_phy_vars*ino_fe + cs->list_of_var[var];
-        int ipot = f0->varindex(f0->deg,f0->raf,f0->model.m,
-                                ipg,cs->list_of_var[var]);
-        rhsOut[ipot]=rhsIn[ipot_fe];
-      }
-    }
-  }
-
-}
 
 void GenericOperator_PBPC_Velocity(PB_PC* pb_pc){
 
@@ -1634,3 +1704,85 @@ for (int i=0;i<cs->nb_dg_nodes;i++){
 
 }
 
+void VectorDgToCg(ContinuousSolver * cs,real * rhsIn, real * rhsOut){
+  
+  field* f = &cs->simu->fd[0];
+  real* coeff = calloc(cs->nb_fe_nodes, sizeof(real));
+  real* rhsCopy = calloc(cs->nb_dg_nodes*f->model.m, sizeof(real));
+
+  for (int i=0;i<cs->nb_dg_nodes*f->model.m; i++) rhsCopy[i]=rhsIn[i];
+  
+  // Apply division by the discontinuous Garlerkin mass matrix
+  int m = f->model.m;
+  
+  for(int ipg = 0; ipg < NPG(f->deg, f->raf); ipg++) {
+    real dtau[3][3], codtau[3][3], xpgref[3], xphy[3], wpg;
+    ref_pg_vol(f->deg, f->raf, ipg, xpgref, &wpg, NULL);
+    Ref2Phy(f->physnode, // phys. nodes
+      xpgref, // xref
+      NULL, -1, // dpsiref, ifa
+      xphy, dtau, // xphy, dtau
+      codtau, NULL, NULL); // codtau, dpsi, vnds
+    real det = dot_product(dtau[0], codtau[0]);
+    for(int iv = 0; iv < f->model.m; iv++) {
+      int imem = f->varindex(f->deg, f->raf, f->model.m, ipg, iv);
+      rhsCopy[imem] /= (wpg * det);
+    }
+  }
+  
+  // right hand side assembly
+  for(int ino = 0; ino < cs->nb_fe_dof; ino++){
+    rhsOut[ino] = 0;
+  }
+
+  for(int ie = 0; ie < cs->nbel; ie++){  
+
+    int iemacro  = ie / (f->raf[0] * f->raf[1] * f->raf[2]);
+    int isubcell = ie % (f->raf[0] * f->raf[1] * f->raf[2]);
+    
+ 
+    for(int iloc = 0; iloc < cs->nnodes; iloc++){
+      real wpg;
+      real xref[3];
+      int ilocmacro = iloc + isubcell * cs->nnodes;
+      ref_pg_vol(f->deg,f->raf,ilocmacro,xref,&wpg,NULL);
+      real dtau[3][3],codtau[3][3];
+      Ref2Phy(cs->simu->fd[iemacro].physnode,
+	      xref,NULL,0,NULL,
+	      dtau,codtau,NULL,NULL);
+      real det = dot_product(dtau[0], codtau[0]);	
+      int ino_dg = iloc + ie * cs->nnodes;
+      int ino_fe = cs->dg_to_fe_index[ino_dg];
+      coeff[ino_fe] += wpg * det; // We need to multiply by the member of dg node for 1 fe node.
+      for (int iv=0; iv<cs->nb_phy_vars;iv++){ 
+        int imem = f->varindex(f->deg,f->raf,f->model.m,
+		          ilocmacro,cs->list_of_var[iv]) ;
+
+        rhsOut[iv + cs->nb_phy_vars * ino_fe] += rhsCopy[imem] * wpg * det;//rhs[imem] * wpg * det; 
+      }
+    }
+  }
+  free(coeff);
+  free(rhsCopy);
+}
+
+void VectorCgToDg(ContinuousSolver * cs, real * rhsIn, real * rhsOut){
+
+  field* f0 = &cs->simu->fd[0];
+
+  //printf("Cg to Dg Copy...\n");
+  
+  for(int ie = 0; ie < cs->simu->macromesh.nbelems; ie++){  
+    for(int ipg = 0;ipg < cs->npgmacrocell; ipg++){
+      int ino_dg = ipg + ie * cs->npgmacrocell;
+      int ino_fe = cs->dg_to_fe_index[ino_dg];
+      for(int var =0; var < cs->nb_phy_vars; var++){ 
+        int ipot_fe = cs->nb_phy_vars*ino_fe + cs->list_of_var[var];
+        int ipot = f0->varindex(f0->deg,f0->raf,f0->model.m,
+                                ipg,cs->list_of_var[var]);
+        rhsOut[ipot]=rhsIn[ipot_fe];
+      }
+    }
+  }
+
+}
