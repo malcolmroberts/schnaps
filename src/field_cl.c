@@ -1616,10 +1616,8 @@ void init_field_cl(Simulation *simu)
   assert(status >= CL_SUCCESS);
 
   
-  printf("...asdf\n");
   // Initialize events. // FIXME: free on exit
   //simu->clv_zbuf = clCreateUserEvent(simu->cli.context, &status);
-  printf("...asdf\n");
   
   const int ninterfaces = simu->macromesh.nmacrointerfaces;
   if(ninterfaces > 0) {

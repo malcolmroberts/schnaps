@@ -331,23 +331,21 @@ void PlotFields(int typplot, int compare, Simulation* simu, char *fieldname,
 
 // Apply the Discontinuous Galerkin approximation for computing the
 // time derivative of the field
-void DtFields(Simulation *simu, real *w, real *dtw) {
-
+void DtFields(Simulation *simu, real *w, real *dtw)
+{
   if(simu->pre_dtfields != NULL) {
     simu->pre_dtfields(simu, w);
     //assert(1==2);
   }
 
-
-#ifdef _OPENMP
-#pragma omp parallel
-#endif
-
   //real *w = simu->fd[0].wn;
   //real *dtw = simu->fd[0].dtwn;
 
   int fsize =  simu->wsize / simu->macromesh.nbelems;
-  
+
+#ifdef _OPENMP
+#pragma omp parallel
+#endif 
   for(int iw = 0; iw < simu->wsize; iw++)
     dtw[iw] = 0;
 
@@ -369,8 +367,6 @@ void DtFields(Simulation *simu, real *w, real *dtw) {
       offsetR = fsize * ieR;
     }
          
-    
- 
     DGMacroCellInterface(locfaL,
 			 fL, offsetL, fR, offsetR,
 			 w, dtw);
@@ -384,11 +380,12 @@ void DtFields(Simulation *simu, real *w, real *dtw) {
     DGVolume(simu->fd + ie, w + ie * fsize, dtw + ie * fsize);
     DGMass(simu->fd + ie, w + ie * fsize, dtw + ie * fsize);
     DGSource(simu->fd + ie, w + ie * fsize, dtw + ie * fsize);
-
   }
 
-  //if(f->post_dtfield != NULL) // FIXME: rename to after dtfield
-    //f->post_dtfield(f, w);
+  field *f = simu->fd;
+  
+  if(f->post_dtfield != NULL)
+    f->post_dtfield(f, w);
 }
 
 real L2error(Simulation *simu) {
