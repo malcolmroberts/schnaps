@@ -304,7 +304,7 @@ void DGMacroCellInterface_CL(int ifa, Simulation *simu, cl_mem *w_cl,
     // Set the event to completed status.
     /* if(done != NULL) */
     /*   clSetUserEventStatus(*done, CL_COMPLETE); */
-    complete_event(simu, 0, 0, done);
+    complete_event(simu, nwait, wait, done);
   }
   
 }
@@ -515,7 +515,7 @@ void DGFlux_CL(Simulation *simu, int dim0, int ie, cl_mem *w_cl,
   } else {
     //if(done != NULL)
     //  clSetUserEventStatus(*done, CL_COMPLETE);
-    complete_event(simu, 0, 0, done);
+    complete_event(simu, nwait, wait, done);
   }
 
 }
@@ -1186,12 +1186,12 @@ void RK4_CL(Simulation *simu, real tmax, real dt,
     //stage[i] = clCreateUserEvent(simu->cli.context, &status);
   }
 
-  clWaitForEvents(nwait, wait);
+  //clWaitForEvents(nwait, wait);
 
   printf("Starting RK4_CL\n");
   
   //status = clSetUserEventStatus(stage[3], CL_COMPLETE);
-  complete_event(simu, 0, 0, stage + 3);
+  complete_event(simu, nwait, wait, stage + 3);
   
   struct timeval t_start;
   struct timeval t_end;
@@ -1258,7 +1258,7 @@ void RK4_CL(Simulation *simu, real tmax, real dt,
 // Time integration by a second-order Runge-Kutta algorithm, OpenCL
 // version.
 void RK2_CL(Simulation *simu, real tmax, real dt,
-	    cl_uint nwait, cl_event *wait, cl_event *done) 
+	    cl_uint nwait, cl_event *wait, cl_event *done)
 {
   simu->dt = Get_Dt_RK(simu);
 
@@ -1323,7 +1323,7 @@ void RK2_CL(Simulation *simu, real tmax, real dt,
   gettimeofday(&t_end, NULL);
   /* if(done != NULL)  */
   /*   status = clSetUserEventStatus(*done, CL_COMPLETE); */
-  complete_event(simu, 0, 0, done);
+  complete_event(simu, 1, &stage2, done);
   
   clReleaseEvent(stage2);
   clReleaseEvent(stage1);
