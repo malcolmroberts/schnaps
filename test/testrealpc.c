@@ -499,7 +499,7 @@ int Testrealpc(void) {
     model5.Source = NULL;
 
     int deg5[]={4, 4, 0};
-    int raf5[]={8, 8, 1};
+    int raf5[]={16, 16, 1};
 
     assert(mesh.is2d);
 
@@ -521,7 +521,7 @@ int Testrealpc(void) {
 
     real theta5=0.5;
     simu5.theta=theta5;
-    simu5.dt=10000;//0.001667;
+    simu5.dt=10;//0.001667;
     simu5.vmax=_SPEED_WAVE;
     real tmax5=1*simu5.dt;//;0.5;
 
@@ -533,7 +533,7 @@ int Testrealpc(void) {
 
     csSolve.lsol.solver_type=GMRES;
     csSolve.lsol.tol=1.e-10;
-    csSolve.lsol.pc_type=PHY_BASED_EXACT;//PHY_BASED;
+    csSolve.lsol.pc_type=PHY_BASED;//PHY_BASED;
     csSolve.lsol.iter_max=500;
     csSolve.lsol.restart_gmres=30;
     csSolve.lsol.is_CG=true;
@@ -542,8 +542,8 @@ int Testrealpc(void) {
      //////////////////////////////////
     PB_PC pb_pc;
      int mat2assemble[6] = {1, 1, 1, 1, 1, 1};
-     //Init_PhyBasedPC_SchurPressure_Wave(&simu5, &pb_pc, mat2assemble);
-     Init_PhyBasedPC_SchurFull_Wave(&simu5, &pb_pc, mat2assemble);
+     Init_PhyBasedPC_SchurPressure_Wave(&simu5, &pb_pc, mat2assemble);
+     //Init_PhyBasedPC_SchurFull_Wave(&simu5, &pb_pc, mat2assemble);
      Init_Parameters_PhyBasedPC(&pb_pc);
      real *solpc = calloc(size, sizeof(real));
      ////////////////////////////
@@ -558,7 +558,11 @@ int Testrealpc(void) {
     simu5.tnow=0;
     for(int ie=0; ie < simu5.macromesh.nbelems; ++ie){
       simu5.fd[ie].tnow=simu5.tnow;
-    } 
+    }
+
+    for(int i=0;i<size;i++){
+      csSolve.lsol.sol[i]=wCG[i];
+    }
 
     for(int tstep=0;tstep<simu5.itermax_rk;tstep++){
 
@@ -578,8 +582,8 @@ int Testrealpc(void) {
       }
 
           ///////////////////////////////////////
-      PhyBased_PC_Full(&pb_pc,&simu5,solpc,csSolve.lsol.rhs);
-      //PhyBased_PC_InvertSchur_CG(&pb_pc,&simu5,solpc,csSolve.lsol.rhs);
+      //PhyBased_PC_Full(&pb_pc,&simu5,solpc,csSolve.lsol.rhs);
+      PhyBased_PC_InvertSchur_CG(&pb_pc,&simu5,solpc,csSolve.lsol.rhs);
        real error=0;
        for (int i=0; i<size; i++){
 	 error=error+fabs((solpc[i]-csSolve.lsol.sol[i])*(solpc[i]-csSolve.lsol.sol[i]));

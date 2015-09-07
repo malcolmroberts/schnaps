@@ -170,6 +170,8 @@ void GenericOperator_PBPC_Velocity(PB_PC* pb_pc);
 // \param[in] pb_pc: The working preconditioner.
 void GenericOperator_PBPC_Pressure(PB_PC* pb_pc);
 
+void ExactDerivateContinuousMatrix(void * ps,real * vector, int var,int derivate, real t);
+
 // \brief Function resetting all but problem matrices.
 // \param[in] pb_pc: The working preconditioner.
 void reset(PB_PC* pb_pc);

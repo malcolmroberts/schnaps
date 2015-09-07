@@ -242,8 +242,7 @@ void Init_PhyBasedPC_SchurVelocity_Wave(Simulation *simu, PB_PC* pb_pc, int* lis
     }
   }
 
-  
-  for (int i=0;i<pb_pc->D.nb_fe_nodes;i++){
+   for (int i=0;i<pb_pc->D.nb_fe_nodes;i++){
     if (pb_pc->L1.is_boundary_node[i]){
       for (int j=0;j<pb_pc->D.nb_fe_nodes;j++){
 	SetLinearSolver(&pb_pc->L1.lsol,i,j,0.0);
@@ -252,8 +251,9 @@ void Init_PhyBasedPC_SchurVelocity_Wave(Simulation *simu, PB_PC* pb_pc, int* lis
 	SetLinearSolver(&pb_pc->U2.lsol,i,j,0.0);
       } 
     } 
-    }
+  }
 
+ 
   // Assembling all operators' matrices
   GenericOperator_PBPC_Velocity(pb_pc);
 
@@ -410,8 +410,8 @@ void Init_PhyBasedPC_SchurPressure_Wave(Simulation *simu, PB_PC* pb_pc, int* lis
 	SetLinearSolver(&pb_pc->U1.lsol,i,j,0.0);
 	SetLinearSolver(&pb_pc->U2.lsol,i,j,0.0);
       } 
+    }
     } 
-  } 
   
 }
 
@@ -922,22 +922,22 @@ void PhyBased_PC_InvertSchur_CG(PB_PC* pb_pc, Simulation *simu, real* globalSol,
   // Parsing L1P, L2P into the "sol" of L1 and L2 (since it is unused).
   pb_pc->L1.lsol.MatVecProduct(&pb_pc->L1.lsol,solU1,pb_pc->L1.lsol.sol);
   pb_pc->L2.lsol.MatVecProduct(&pb_pc->L2.lsol,solU2,pb_pc->L2.lsol.sol);
- 
+
+  //ExactDerivateContinuousMatrix(&pb_pc->L1,pb_pc->L1.lsol.sol,1,0,0);
+  //ExactDerivateContinuousMatrix(&pb_pc->L2,pb_pc->L2.lsol.sol,2,1,0);
+
+  /*for (int i=0; i<pb_pc->D.nb_fe_nodes; i++){
+    printf("i===%d false div(U)=%.8e %.8e , rhs_p %.8e \n",i,pb_pc->L1.lsol.sol[i], pb_pc->L2.lsol.sol[i],globalRHS[i*3]);
+    }*/
 
   //printf("RHS assembly.....\n");
   for (int i=0;i<pb_pc->D.nb_fe_nodes;i++){
     pb_pc->Schur.lsol.rhs[i]   = globalRHS[i*3] - pb_pc->L1.lsol.sol[i] - pb_pc->L2.lsol.sol[i];
   }
   
-  /*for (int i=0; i<pb_pc->D.nb_fe_nodes; i++){
-    printf("iter=%d p=%.12e \n",i,pb_pc->L1.lsol.sol[i] + pb_pc->L2.lsol.sol[i]);
-    }*/
-  //DisplayLinearSolver(&pb_pc->Schur.lsol);
-
   //printf("Solution propagation\n");
   SolveLinearSolver(&pb_pc->Schur.lsol,simu);
-
-
+  
   // 3) CORRECTION STEP
 
   pb_pc->D.lsol.solver_type=pb_pc->solver_correction;
@@ -949,6 +949,9 @@ void PhyBased_PC_InvertSchur_CG(PB_PC* pb_pc, Simulation *simu, real* globalSol,
   pb_pc->L1.lsol.MatVecProduct(&pb_pc->U1.lsol,pb_pc->Schur.lsol.sol,pb_pc->U1.lsol.sol);
   pb_pc->L2.lsol.MatVecProduct(&pb_pc->U2.lsol,pb_pc->Schur.lsol.sol,pb_pc->U2.lsol.sol);
   pb_pc->D.lsol.MatVecProduct(&pb_pc->D.lsol,pb_pc->D.lsol.sol,pb_pc->D.lsol.rhs);
+
+  //ExactDerivateContinuousMatrix(&pb_pc->U1,pb_pc->U1.lsol.sol,0,0,0);
+  //ExactDerivateContinuousMatrix(&pb_pc->U2,pb_pc->U2.lsol.sol,0,1,0);
 
   //printf("RHS assembly.....\n");
   for (int i=0;i<pb_pc->D.nb_fe_nodes;i++){
@@ -1032,6 +1035,7 @@ void PhyBased_PC_Full(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*glob
  
   pb_pc->Schur2.solver_type=pb_pc->Schur.lsol.solver_type;
   //DisplayLinearSolver(&pb_pc->Schur2);
+
   
   // printf("Solution propagation\n");
    for (int i=0;i<pb_pc->D.nb_fe_nodes;i++){
@@ -1042,9 +1046,6 @@ void PhyBased_PC_Full(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*glob
      pb_pc->Schur.lsol.sol[i]=pb_pc->Schur2.sol[i];
   }
 
-  /*for (int i=0;i<pb_pc->D.nb_fe_nodes;i++){
-    printf(" sol p %d %.12e\n",i,pb_pc->Schur.lsol.sol[i]);   
-    }*/
   
   // SolveLinearSolver(&pb_pc->Schur.lsol,simu);
 
@@ -1785,4 +1786,73 @@ void VectorCgToDg(ContinuousSolver * cs, real * rhsIn, real * rhsOut){
     }
   }
 
+}
+
+
+
+void ExactDerivateContinuousMatrix(void * ps,real * vector, int var,int derivate, real t){
+  ContinuousSolver * cs=ps;
+  
+  field* f = &cs->simu->fd[0];
+
+  for(int i= 0; i < cs->nb_fe_nodes; i++){
+    vector[i]=0;
+  }
+
+  int nraf[3] = {f->raf[0],f->raf[1],f->raf[2]};
+
+  int deg[3] = {f->deg[0],f->deg[1],f->deg[2]};
+
+  int npg[3] = {f->npg[0],f->npg[1],f->npg[2]};
+
+
+  for(int ie = 0; ie < cs->nbel; ie++){  
+
+    int iemacro  = ie / (f->raf[0] * f->raf[1] * f->raf[2]);
+    int isubcell = ie % (f->raf[0] * f->raf[1] * f->raf[2]);
+    
+    for(int iloc = 0; iloc < cs->nnodes; iloc++){
+      real wpg;
+      real xref[3];
+      int ilocmacro = iloc + isubcell * cs->nnodes;
+      ref_pg_vol(f->deg,f->raf,ilocmacro,xref,&wpg,NULL);
+      real dtau[3][3],codtau[3][3];
+      Ref2Phy(cs->simu->fd[iemacro].physnode,
+	      xref,NULL,0,NULL,
+	      dtau,codtau,NULL,NULL);
+      real det = dot_product(dtau[0], codtau[0]);	
+      int ino_dg = iloc + ie * cs->nnodes;
+      int ino_fe = cs->dg_to_fe_index[ino_dg];
+      real pi=4.0*atan(1.0);
+      real L=1;
+      real Coef=(2.0*pi)/L;
+      real val=0;
+      if(var == 0 ){
+	 if(derivate ==0 ){
+	   val=Coef*Coef*sqrt(2.0)*sin(Coef*sqrt(2.0)*t)*sin(Coef*xref[0])*cos(Coef*xref[1]);
+	 }
+	 if(derivate ==1 ){
+	   val=Coef*Coef*sqrt(2.0)*sin(Coef*sqrt(2.0)*t)*sin(Coef*xref[0])*cos(Coef*xref[1]);
+	 }
+      }
+      if(var == 1 ){
+	if(derivate ==0 ){
+	  val=Coef*Coef*cos(Coef*sqrt(2.0)*t)*cos(Coef*xref[0])*cos(Coef*xref[1]);
+	}
+	if(derivate ==1 ){
+	  val=-Coef*Coef*cos(Coef*sqrt(2.0)*t)*sin(Coef*xref[0])*sin(Coef*xref[1]);
+	}
+      }
+      if(var == 2 ){
+	if(derivate ==0 ){
+	  val=-Coef*Coef*cos(Coef*sqrt(2.0)*t)*sin(Coef*xref[0])*sin(Coef*xref[1]);
+	}
+	if(derivate ==1 ){
+	  val=Coef*Coef*cos(Coef*sqrt(2.0)*t)*cos(Coef*xref[0])*cos(Coef*xref[1]);
+	}
+      }
+      vector[ino_fe]+= val * wpg * det ;
+    }
+ }
+ 
 }
