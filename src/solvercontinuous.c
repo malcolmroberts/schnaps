@@ -244,7 +244,7 @@ void SolveContinuous2D(void* cs){
 
   //printf("Solution...\n");
 
-  SolveLinearSolver(&ps->lsol,ps->simu);
+  Advanced_SolveLinearSolver(&ps->lsol,ps->simu);
 
   
   //printf("post computation assembly.....\n");
@@ -594,7 +594,7 @@ void GenericOperator2Vec_Continuous(void * cs,LinearSolver* lsol){
   field* f0 = &ps->simu->fd[0];
   if (ps->nb_phy_vars>2){
     printf("Not implemented for three variables.\n");
-    exit;
+    exit(1);
   }
 
   if(!ps->lsol.mat_is_assembly){

@@ -6,8 +6,7 @@
 #include <assert.h>
 #include "geometry.h"
 #include "interpolation.h"
-#include "linear_solver.h"
-#include "simulation.h"
+#include "advanced_linear_solver.h"
 
 #define _Dirichlet_Poisson_BC (1)
 #define _Periodic_Poisson_BC (2)

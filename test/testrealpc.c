@@ -138,7 +138,7 @@ int Testrealpc(void) {
         solver_implicit.rhs[i]=solver_implicit.rhs[i]+res[i]-solver_explicit.rhs[i];
       }
 
-      SolveLinearSolver(&solver_implicit,&simu);
+      Advanced_SolveLinearSolver(&solver_implicit,&simu);
 
       for(int i=0;i<simu.wsize;i++){ 
         simu.w[i]=solver_implicit.sol[i];
@@ -238,7 +238,7 @@ int Testrealpc(void) {
         solver_implicit2.rhs[i]=solver_implicit2.rhs[i]+res2[i]-solver_explicit2.rhs[i];
       }
 
-      SolveLinearSolver(&solver_implicit2,&simu2);
+      Advanced_SolveLinearSolver(&solver_implicit2,&simu2);
 
       for(int i=0;i<simu2.wsize;i++){ 
         simu2.fd[0].wn[i]=solver_implicit2.sol[i];
@@ -341,7 +341,7 @@ int Testrealpc(void) {
       }
 
 
-      SolveLinearSolver(&solver_implicit3,&simu3);
+      Advanced_SolveLinearSolver(&solver_implicit3,&simu3);
 
       for(int i=0;i<simu3.wsize;i++){ 
         simu3.fd[0].wn[i]=solver_implicit3.sol[i];
@@ -449,7 +449,7 @@ int Testrealpc(void) {
         csSolve.lsol.rhs[i]=resCG[i];
       }
       csSolve.bc_assembly(&csSolve, &csSolve.lsol);     
-      SolveLinearSolver(&csSolve.lsol,&simu4);
+      Advanced_SolveLinearSolver(&csSolve.lsol,&simu4);
       
       ///////////////////////////////////////
       /*PhyBased_PC_Full(&pb_pc,&simu4,solpc,csSolve.lsol.rhs);
@@ -575,7 +575,7 @@ int Testrealpc(void) {
         csSolve.lsol.rhs[i]=resCG[i];
       }
       csSolve.bc_assembly(&csSolve, &csSolve.lsol);
-      SolveLinearSolver(&csSolve.lsol,&simu5);
+      Advanced_SolveLinearSolver(&csSolve.lsol,&simu5);
       
       for (int i=0; i<size; i++){
         wCG[i] = csSolve.lsol.sol[i];

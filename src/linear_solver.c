@@ -315,7 +315,7 @@ void LUDecompLinearSolver(LinearSolver* lsol){
 
 }
 
-void SolveLinearSolver(LinearSolver* lsol, Simulation* simu){
+void SolveLinearSolver(LinearSolver* lsol){
   
   assert(lsol->is_init);
   assert(lsol->is_alloc);
@@ -339,11 +339,11 @@ void SolveLinearSolver(LinearSolver* lsol, Simulation* simu){
        }
   }
   else if(lsol->solver_type == GMRES) {
-    GMRESSolver(lsol,simu);
+    GMRESSolver(lsol);
   }
   else {
 #ifdef PARALUTION
-    Solver_Paralution(lsol,simu);
+    Solver_Paralution(lsol);
 #else
     printf("paralution is not build this solver is not accessible.");
     assert(1==2);
@@ -354,74 +354,7 @@ void SolveLinearSolver(LinearSolver* lsol, Simulation* simu){
 
 
 
-void InitJFLinearSolver(JFLinearSolver* lsol,int n,
-		      Solver* solvtyp){
-
-  lsol->neq=n;
-  lsol->solver_type = GMRES;
-  lsol->pc_type = NONE;
-  lsol->rhs=NULL;
-  lsol->sol=NULL;
-  lsol->soln=NULL;
-  lsol->MatVecProduct=NULL;
-  lsol->NonlinearVector_computation=NULL;
-  lsol->tol=1.e-6;
-  lsol->restart_gmres=1;
-  lsol->iter_max=10000;
-  lsol->eps=0.000001;
-
-  if (solvtyp != NULL) lsol->solver_type = *solvtyp;
-
-  lsol->rhs=calloc(n,sizeof(real));
-  lsol->sol=calloc(n,sizeof(real));
-  lsol->soln=calloc(n,sizeof(real));
-
-}
-
-void FreeJFLinearSolver(JFLinearSolver* lsol){
-
-  free(lsol->rhs);
-  free(lsol->sol);
-  free(lsol->soln);
-
-}
-
-void MatVecJacobianFree(Simulation *simu,void * system,real x[],real prod[]){
-  int i,j;
-  real aij;
-  JFLinearSolver* lsol=system;
-  real * U;
-  real * Up;
-  real * solnp;
-  
-  solnp=calloc(lsol->neq,sizeof(real));
-  U=calloc(lsol->neq,sizeof(real));
-  Up=calloc(lsol->neq,sizeof(real));
-
-  
-  for(i=0;i<lsol->neq;i++)
-    {
-	solnp[i]=lsol->soln[i]+lsol->eps*x[i];
-    }
-  
-  lsol->NonlinearVector_computation(simu,system,lsol->soln,U);
-  lsol->NonlinearVector_computation(simu,system,solnp,Up);
-  
-  for(i=0;i<lsol->neq;i++)
-    {
-      prod[i]=(Up[i]-U[i])/lsol->eps;
-    }  
-
-  free(solnp);
-  free(U);
-  free(Up);
-
-  
-}
-
-
-
-void Solver_Paralution(LinearSolver* lsol, Simulation* simu){
+void Solver_Paralution(LinearSolver* lsol){
   int * rows=NULL;
   int * cols=NULL;
   real * coefs=NULL;
@@ -511,7 +444,6 @@ void Solver_Paralution(LinearSolver* lsol, Simulation* simu){
     assert(1==2);   
   }
 
-
   
   n=lsol->neq;
   RHS = calloc(n,sizeof(real));
@@ -521,9 +453,6 @@ void Solver_Paralution(LinearSolver* lsol, Simulation* simu){
     RHS[i] = (real) lsol->rhs[i];
     Sol[i] = (real )lsol->sol[i];   
   }
-
-
-
   
  switch(lsol->storage_type) {
   case SKYLINE :
@@ -592,7 +521,7 @@ void Solver_Paralution(LinearSolver* lsol, Simulation* simu){
 
 
 
-void GMRESSolver(LinearSolver* lsol, Simulation* simu){
+void GMRESSolver(LinearSolver* lsol){
   int revcom, colx, coly, colz, nbscal;
   int li_maxiter;
   int m,lwork,N;
@@ -625,27 +554,10 @@ void GMRESSolver(LinearSolver* lsol, Simulation* simu){
   icntl[6]  = 1; //1            // initial guess  (1) = user supplied guess
   icntl[8]  = 1; //1
 
-  PB_PC pb_pc;
-  if(lsol->pc_type == PHY_BASED_EXACT){
-     int mat2assemble[6] = {1, 1, 1, 1, 1, 1};
-     //Init_PhyBasedPC_SchurVelocity_Wave(simu, &pb_pc, mat2assemble);
-     Init_PhyBasedPC_SchurFull_Wave(simu, &pb_pc, mat2assemble);
-     Init_Parameters_PhyBasedPC(&pb_pc);
-     icntl[4]  = 2;
-  }
-  if(lsol->pc_type == PHY_BASED){
-     int mat2assemble[6] = {1, 1, 1, 1, 1, 1};
-     //Init_PhyBasedPC_SchurVelocity_Wave(simu, &pb_pc, mat2assemble);
-     Init_PhyBasedPC_SchurPressure_Wave(simu, &pb_pc, mat2assemble);
-     Init_Parameters_PhyBasedPC(&pb_pc);
-     icntl[4]  = 2;
-  }
-  else if ((lsol->pc_type == JACOBI) ||(lsol->pc_type == EXACT)){
+  
+  if ((lsol->pc_type == JACOBI) ||(lsol->pc_type == EXACT)){
     icntl[4] = 2;
   }
-  if (lsol->pc_type == PHDF){
-    icntl[4] = 2;
-  } 
      
   cntl[1]  = lsol->tol; //       ! stopping tolerance
   cntl[2]  = 1.0;
@@ -732,32 +644,11 @@ void GMRESSolver(LinearSolver* lsol, Simulation* simu){
   }
 
   else if(revcom == precondRight)  {
-    if(lsol->pc_type == PHY_BASED){    
-       if (lsol->is_CG){
-	 //PhyBased_PC_CG(&pb_pc,simu,loc_z,loc_x);
-	 PhyBased_PC_InvertSchur_CG(&pb_pc,simu,loc_z,loc_x);
-       }
-       else {
-        PhyBased_PC_DG(&pb_pc,simu,loc_z,loc_x);
-        //solveIdentity(&pb_pc,simu,loc_z,loc_x);
-      }
-    }
-    else if(lsol->pc_type == PHY_BASED_EXACT){
-      if (lsol->is_CG){
-	PhyBased_PC_Full(&pb_pc,simu,loc_z,loc_x);
-      }
-       else {
-	 Vector_copy(loc_x,loc_z,N);
-       }
-    }
-    else if(lsol->pc_type == EXACT){
-      Exact_PC(lsol,simu,loc_z,loc_x);
+    if(lsol->pc_type == EXACT){
+      Exact_PC(lsol,loc_z,loc_x);
     }
     else if (lsol->pc_type == JACOBI){
-      Jacobi_PC(lsol,simu,loc_z,loc_x);
-    }
-    else if (lsol->pc_type == PHDF){
-      PhyBasedPC_waveDF(lsol,simu,loc_z,loc_x);
+      Jacobi_PC(lsol,loc_z,loc_x);
     }
     else {
       Vector_copy(loc_x,loc_z,N);
@@ -805,159 +696,12 @@ void GMRESSolver(LinearSolver* lsol, Simulation* simu){
   free(loc_x);
   free(loc_y);
   free(loc_z);
-    if(lsol->pc_type == PHY_BASED){
-      freePB_PC(&pb_pc);
-    }
 
 }
 
 
 
-
-void SolveJFLinearSolver(JFLinearSolver* lsol,Simulation * simu){
-  int revcom, colx, coly, colz, nbscal;
-  int li_maxiter;
-  int m,lwork,N;
-  int * pt_m;
-  int * pt_lwork;
-  int * pt_Size;
-
-  int irc[5+1];
-  int icntl[8+1];
-  int info[3+1];
-  real cntl[5+1];
-  real rinfo[2+1];
-  real sum,err,sum_rhs,lr_tol;
-  real * work;
-  real *loc_x;
-  real *loc_y;
-  real *loc_z;
-  real prodot=0.0;
-  int res=0;
-  int matvec=1, precondLeft=2, precondRight=3, dotProd=4;
-
-
-  lsol->MatVecProduct=MatVecJacobianFree;
-
-  res=init_dgmres(icntl,cntl);
-  
-  icntl[3]  = 6 ;           // output unit
-  icntl[7]  = lsol->iter_max; // Maximum number of iterations
-  icntl[4]  = 0; //!1            // preconditioner (1) = left preconditioner
-  icntl[5]  = 1; ////3            // orthogonalization scheme
-  icntl[6]  = 1; //1            // initial guess  (1) = user supplied guess
-  icntl[8]  = 1; //1            
-   
-     
-  cntl[1]  = lsol->tol; //       ! stopping tolerance
-  cntl[2]  = 1.0;
-  cntl[3]  = 1.0;
-  cntl[4]  = 1.0;         
-  cntl[5]  = 1.0;
-
-  N = lsol->neq;
-
-  if(lsol->restart_gmres == 1) {
-    if(N<61) {
-      m = (int) (N/2)+1;
-    }
-    else {
-      m = 30;
-    }
-  }
-  else {
-      m = lsol->restart_gmres;
-    }
-  lwork = m*m + m*(N+5) + 5*N + m + 1 +1; //(+ one because  ) ??
-
-  pt_m = &m;
-  pt_Size = &N;
-  pt_lwork = &lwork;
-
-  work = calloc(lwork, sizeof(real));
-  loc_x = calloc(N, sizeof(real));
-  loc_y = calloc(N, sizeof(real));
-  loc_z = calloc(N, sizeof(real));
-  
-  for(int ivec = 0; ivec < N; ivec++) {
-    work[ivec+1]     = lsol->sol[ivec];                    
-    work[N+ivec+1]    = lsol->rhs[ivec];
-  }
-
-  //*****************************************
-  //** Reverse communication implementation
-  //*****************************************
-  L10:    res=drive_dgmres(pt_Size,pt_Size,pt_m,pt_lwork,&work[1],&irc[1],&icntl[1],&cntl[1],&info[1],&rinfo[1]);
-
-  revcom = irc[1];
-  colx   = irc[2];
-  coly   = irc[3];
-  colz   = irc[4];
-  nbscal = irc[5];
-
-
-  for(int ivec = 0; ivec < N; ivec++) {
-  
-    loc_z[ivec]= work[colz+ivec];                    
-    loc_x[ivec]= work[colx+ivec];
-    loc_y[ivec]= work[coly+ivec];    
-  }
-
-  if (revcom == matvec) {                 // perform the matrix vector product
-    lsol->MatVecProduct(simu,lsol,loc_x,loc_z);
-    for(int ivec = 0; ivec < N; ivec++) {       
-      work[colz+ivec]= loc_z[ivec];                    
-      work[colx+ivec]= loc_x[ivec]; 
-    }
-     goto L10;
-  }
-  else if(revcom == precondLeft)  {                 // perform the matrix vector product
-    // work(colz) <-- M-1 * work(colx)  
-    Vector_copy(loc_x,loc_z,N);
-    for(int ivec = 0; ivec < N; ivec++) {
-      work[colz+ivec]= loc_z[ivec];                    
-      work[colx+ivec]= loc_x[ivec]; 
-    }
-     goto L10;
-  }
-
-  else if(revcom == precondRight)  {                 // perform the matrix vector product
-    // work(colz) <-- M-1 * work(colx)  
-    Vector_copy(loc_x,loc_z,N);
-    for(int ivec = 0; ivec < N; ivec++) {
-      work[colz+ivec]= loc_z[ivec];                    
-      work[colx+ivec]= loc_x[ivec]; 
-    }
-      goto L10;
-  }
-
-  else if(revcom == dotProd)  {// perform the matrix vector product
-    // work(colz) <-- work(colx) work(coly)
-    prodot=Vector_prodot(loc_x,loc_y,N);
-    for(int ivec = 0; ivec < N; ivec++) {
-      work[colx+ivec]= loc_x[ivec];
-      work[coly+ivec]= loc_y[ivec]; 
-    }
-    work[colz]= prodot;  
-    	 goto L10;
-  }
-
-  //******************************** end of GMRES reverse communication
-  
-  for(int ivec = 0; ivec < N; ivec++) {
-    lsol->sol[ivec] = work[ivec+1];                    
-  }
-
-
-  free(work);
-  free(loc_x);
-  free(loc_y);
-  free(loc_z);
-
-
-}
-
-void Jacobi_PC(LinearSolver *lsol, Simulation* simu, real* sol, real* rhs){
+void Jacobi_PC(LinearSolver *lsol, real* sol, real* rhs){
 
   for (int i=0;i<lsol->neq; i++){
     assert(GetLinearSolver(lsol,i,i)!=0);
@@ -965,7 +709,7 @@ void Jacobi_PC(LinearSolver *lsol, Simulation* simu, real* sol, real* rhs){
   }
 }
 
-void Exact_PC(LinearSolver *lsol, Simulation* simu, real* sol, real* rhs){
+void Exact_PC(LinearSolver *lsol, real* sol, real* rhs){
 
   Skyline * mat;
   Skyline mat_copy;
@@ -1010,274 +754,3 @@ void Exact_PC(LinearSolver *lsol, Simulation* simu, real* sol, real* rhs){
 
 
 
-void PhyBasedPC_waveDF(LinearSolver *lsol,Simulation * simu, real * Sol, real *RHS){
-
-
-  int nwave;
-  nwave=lsol->neq/2;
-  LinearSolver Identity, schur,schur_approx,LDx,UDx;
-
-  InitLinearSolver(&Identity,nwave,NULL,NULL);
-  InitLinearSolver(&schur,nwave,NULL,NULL);
-  InitLinearSolver(&schur_approx,nwave,NULL,NULL);
-  InitLinearSolver(&LDx,nwave,NULL,NULL);
-  InitLinearSolver(&UDx,nwave,NULL,NULL);
-
-  real h=1.0/nwave;
-  real dt=0,c=0;
-  dt=simu->dt;
-  c=simu->vmax;
-  int approx_schur=0;
-  
-  ////////////// begin Identity ///////////
-  for(int i=0;i<nwave;i++){   
-     IsNonZero(&Identity,i,i); 
-  }
-
-
-  AllocateLinearSolver(&Identity);
-
-  for(int i=0;i<nwave;i++){   
-    AddLinearSolver(&Identity,i,i,1.0); 
-  }
-  ////////////// fin Identity ///////////
-
-  ////////////// begin LDx ///////////
-  for(int i=0;i<nwave;i++){
-    if (i==0){ 
-      IsNonZero(&LDx,0,0);
-      IsNonZero(&LDx,0,1);
-    }
-    else if (i==nwave-1){ 
-      IsNonZero(&LDx,nwave-1,nwave-1);
-      IsNonZero(&LDx,nwave-1,nwave-2);
-    } 
-    else { 
-      IsNonZero(&LDx,i,i);
-      IsNonZero(&LDx,i,i-1);    
-      IsNonZero(&LDx,i,i+1);
-    } 
-  }
-  
-  AllocateLinearSolver(&LDx);
-  
-  for(int i=0;i<nwave;i++){
-    if (i==0){ 
-      AddLinearSolver(&LDx,0,0,0.0);
-      AddLinearSolver(&LDx,0,1,(c*dt)/(2.0*h));
-    }
-    else if (i==nwave-1){ 
-      AddLinearSolver(&LDx,nwave-1,nwave-1,0.0);
-      AddLinearSolver(&LDx,nwave-1,nwave-2,-(c*dt)/(2.0*h));
-    } 
-    else { 
-      AddLinearSolver(&LDx,i,i,0.0);
-      AddLinearSolver(&LDx,i,i-1,-(c*dt)/(2.0*h));    
-      AddLinearSolver(&LDx,i,i+1,+(c*dt)/(2.0*h));
-    } 
-  }
-  
-  for(int i=0;i<nwave;i++){
-    SetLinearSolver(&LDx,nwave-1,i,0.0);
-    SetLinearSolver(&LDx,0,i,0.0);
-  }
-  ////////////// fin LDx ///////////
-
-
-   ////////////// begin UDx ///////////
-  for(int i=0;i<nwave;i++){
-    if (i==0){ 
-      IsNonZero(&UDx,0,0);
-      IsNonZero(&UDx,0,1);
-    }
-    else if (i==nwave-1){ 
-      IsNonZero(&UDx,nwave-1,nwave-1);
-      IsNonZero(&UDx,nwave-1,nwave-2);
-    } 
-    else { 
-      IsNonZero(&UDx,i,i);
-      IsNonZero(&UDx,i,i-1);    
-      IsNonZero(&UDx,i,i+1);
-    } 
-  }
-  
-  AllocateLinearSolver(&UDx);
-  
-  for(int i=0;i<nwave;i++){
-    if (i==0){ 
-      AddLinearSolver(&UDx,0,0,0.0);
-      AddLinearSolver(&UDx,0,1,(c*dt)/(2.0*h));
-    }
-    else if (i==nwave-1){ 
-      AddLinearSolver(&UDx,nwave-1,nwave-1,0.0);
-      AddLinearSolver(&UDx,nwave-1,nwave-2,-(c*dt)/(2.0*h));
-    } 
-    else { 
-      AddLinearSolver(&UDx,i,i,0.0);
-      AddLinearSolver(&UDx,i,i-1,-(c*dt)/(2.0*h));    
-      AddLinearSolver(&UDx,i,i+1,+(c*dt)/(2.0*h));
-    } 
-  }
-
-  for(int i=0;i<nwave;i++){
-    SetLinearSolver(&UDx,nwave-1,i,0.0);
-    SetLinearSolver(&UDx,0,i,0.0);
-    }
-  ////////////// fin UDx ///////////
-  
-  
-  ////////////// begin Schur_approx ///////////
-  for(int i=0;i<nwave;i++){
-    if (i==0){ 
-      IsNonZero(&schur_approx,0,0);
-      IsNonZero(&schur_approx,0,1);
-    }
-    else if (i==nwave-1){ 
-      IsNonZero(&schur_approx,nwave-1,nwave-1);
-      IsNonZero(&schur_approx,nwave-1,nwave-2);
-    } 
-    else { 
-      IsNonZero(&schur_approx,i,i);
-      IsNonZero(&schur_approx,i,i-1);    
-      IsNonZero(&schur_approx,i,i+1);
-    } 
-  }
-  
-  AllocateLinearSolver(&schur_approx);
-  
-  for(int i=0;i<nwave;i++){
-    if (i==0){ 
-      AddLinearSolver(&schur_approx,0,0,0.0);
-      AddLinearSolver(&schur_approx,0,1,(c*dt)/(2.0*h));
-    }
-    else if (i==nwave-1){ 
-      AddLinearSolver(&schur_approx,nwave-1,nwave-1,0.0);
-      AddLinearSolver(&schur_approx,nwave-1,nwave-2,-(c*dt)/(2.0*h));
-    } 
-    else { 
-      AddLinearSolver(&schur_approx,i,i,1.0+2*((c*dt)/h)*((c*dt)/h));
-      AddLinearSolver(&schur_approx,i,i-1,-((c*dt)/h)*((c*dt)/h));    
-      AddLinearSolver(&schur_approx,i,i+1,-((c*dt)/h)*((c*dt)/h));
-    } 
-  }
-
-  for(int i=0;i<nwave;i++){
-    SetLinearSolver(&schur_approx,nwave-1,i,0.0);
-    SetLinearSolver(&schur_approx,0,i,0.0);
-  }
-  SetLinearSolver(&schur_approx,nwave-1,nwave-1,1.0);
-  SetLinearSolver(&schur_approx,0,0,1.0);
-
-
-  
-  ////////////// fin Schur_approx ///////////
-
-
-  
-   ////////////// begin Schur ///////////
-  for(int i=0;i<nwave;i++){
-    for(int j=0;j<nwave;j++){
-      IsNonZero(&schur,i,j);    
-    } 
-  }
-  
-  AllocateLinearSolver(&schur);
-
-  real ** A;
-  real LMU=0.0;
-  A=calloc(nwave,sizeof(real));
-  for (int i=0;i<nwave;i++){
-    A[i]=calloc(nwave,sizeof(real));
-  }
-  
-  for (int i=0;i<nwave;i++){ 
-    real InvertMii=1.0/GetLinearSolver(&Identity,i,i);
-    for (int j=0;j<nwave;j++){
-      A[i][j]=InvertMii*GetLinearSolver(&UDx,i,j);
-    }
-  }
-  
-  for (int i=0;i<nwave;i++){
-    for (int j=0;j<nwave;j++){
-      LMU=0.0;
-      if(i>0 && i<nwave-1){
-	for (int k=0;k<nwave;k++){
-	  LMU+=GetLinearSolver(&LDx,i,k)*A[k][j];
-	}
-      }
-      else { /// because by limit condition the last lign of Dx is equal to zero
-	LMU=0;
-      }
-      real val=GetLinearSolver(&Identity,i,j)-LMU;
-      SetLinearSolver(&schur,i,j,val);
-    }
-  }
-
-  ////////////// fin Schur_approx ///////////
-  
-
-  //1 ) prediction
-  for (int i=0;i<nwave;i++){
-    Identity.rhs[i]   = RHS[i*2+1];
-    schur.rhs[i] = RHS[i*2];
-  }
-  
-  Identity.solver_type = LU;
-  Identity.pc_type=JACOBI;
-  Identity.iter_max=20000;
-  Identity.tol=1.e-14;
-
-  
-   SolveLinearSolver(&Identity,simu);
-
-  
-  // 2) PROPAGATION STEP
-  
-  MatVect(&LDx,Identity.sol,LDx.sol); // Dx u 
-  
-  for (int i=0;i<nwave;i++){
-    schur.rhs[i]   =  schur.rhs[i]- LDx.sol[i];
-  }
-
-  schur.solver_type = LU;
-  schur.pc_type=NONE;//JACOBI;
-  schur.iter_max=20000;
-  schur.tol=1.e-14;
-
-  if(approx_schur==1){
-    for (int i=0;i<nwave;i++){
-      schur_approx.rhs[i]   =  schur.rhs[i];
-    }
-    SolveLinearSolver(&schur_approx,simu);
-    for (int i=0;i<nwave;i++){
-      schur.sol[i]   =  schur_approx.sol[i];
-    }
-  }
-  else {
-    
-    SolveLinearSolver(&schur,simu);
-
-  }
-  
-  
-  // 3) CORRECTION STEP
-  
-  MatVect(&UDx,schur.sol,UDx.sol); // Dx p
-
-  
-  //printf("RHS assembly.....\n");
-  for (int i=0;i<nwave;i++){
-    Identity.rhs[i] = Identity.sol[i]- UDx.sol[i];
-  }
-
-  //printf("Solution...\n");
-   SolveLinearSolver(&Identity,simu);
- 
-  
-  // 4) OUTPUT STEP
-   for (int i=0;i<nwave;i++){
-     Sol[2*i+1]   = Identity.rhs[i];
-     Sol[2*i] = schur.rhs[i];
-   }
- 
-}

@@ -115,7 +115,7 @@ int TestLinearSolver(void){
     sky.sol[i]=sol[i];
   }
     
-  SolveLinearSolver(&sky,&simu);
+  Advanced_SolveLinearSolver(&sky,&simu);
 
 
   // checking
@@ -209,7 +209,7 @@ int TestLinearSolver(void){
     sky.sol[i]=sol[i];
   }
 
-  SolveLinearSolver(&sky,&simu);
+  Advanced_SolveLinearSolver(&sky,&simu);
 
 
   // checking
@@ -299,7 +299,7 @@ int TestLinearSolver(void){
     sky.sol[i]=sol[i];
   }
     
-  SolveLinearSolver(&sky,&simu);
+  Advanced_SolveLinearSolver(&sky,&simu);
 
 
   // checking
@@ -370,7 +370,7 @@ int TestLinearSolver(void){
   AddLinearSolver(&sky,NPoisson-1,NPoisson-1,bigval);
   AddLinearSolver(&sky,0,0,bigval);
  
-  SolveLinearSolver(&sky,&simu);
+  Advanced_SolveLinearSolver(&sky,&simu);
 
 
   // checking

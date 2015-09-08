@@ -708,7 +708,7 @@ void PhyBased_PC_DG(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*global
   }
   
   //printf("Solution...\n");
-  SolveLinearSolver(&pb_pc->D.lsol,simu);
+  Advanced_SolveLinearSolver(&pb_pc->D.lsol,simu);
 
   // 2) PROPAGATION STEP
 
@@ -730,7 +730,7 @@ void PhyBased_PC_DG(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*global
   }
 
   //printf("Solution...\n");
-  SolveLinearSolver(&pb_pc->Schur.lsol,simu);
+  Advanced_SolveLinearSolver(&pb_pc->Schur.lsol,simu);
 
 
   // 3) CORRECTION STEP
@@ -758,7 +758,7 @@ void PhyBased_PC_DG(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*global
   }
 
   //printf("Solution...\n");
-  SolveLinearSolver(&pb_pc->D.lsol,simu);
+  Advanced_SolveLinearSolver(&pb_pc->D.lsol,simu);
 
   // 4) OUTPUT STEP
 
@@ -807,7 +807,7 @@ void PhyBased_PC_CG(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*global
     pb_pc->D.lsol.rhs[i] = globalRHS[i*3];
   }
   //printf("Solution...\n");
-  SolveLinearSolver(&pb_pc->D.lsol,simu);
+  Advanced_SolveLinearSolver(&pb_pc->D.lsol,simu);
 
   // 2) PROPAGATION STEP
 
@@ -829,7 +829,7 @@ void PhyBased_PC_CG(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*global
   }
 
   //printf("Solution...\n");
-  SolveLinearSolver(&pb_pc->Schur.lsol,simu);
+  Advanced_SolveLinearSolver(&pb_pc->Schur.lsol,simu);
 
 
   // 3) CORRECTION STEP
@@ -857,7 +857,7 @@ void PhyBased_PC_CG(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*global
   }
 
   //printf("Solution...\n");
-  SolveLinearSolver(&pb_pc->D.lsol,simu);
+  Advanced_SolveLinearSolver(&pb_pc->D.lsol,simu);
 
   // 4) OUTPUT STEP
 
@@ -904,7 +904,7 @@ void PhyBased_PC_InvertSchur_CG(PB_PC* pb_pc, Simulation *simu, real* globalSol,
     pb_pc->D.lsol.rhs[i*2+1] = globalRHS[i*3+2];
   }
   //printf("Solution prediction\n");
-  SolveLinearSolver(&pb_pc->D.lsol,simu);
+  Advanced_SolveLinearSolver(&pb_pc->D.lsol,simu);
 
 
   // 2) PROPAGATION STEP
@@ -936,7 +936,7 @@ void PhyBased_PC_InvertSchur_CG(PB_PC* pb_pc, Simulation *simu, real* globalSol,
   }
   
   //printf("Solution propagation\n");
-  SolveLinearSolver(&pb_pc->Schur.lsol,simu);
+  Advanced_SolveLinearSolver(&pb_pc->Schur.lsol,simu);
   
   // 3) CORRECTION STEP
 
@@ -960,7 +960,7 @@ void PhyBased_PC_InvertSchur_CG(PB_PC* pb_pc, Simulation *simu, real* globalSol,
   }
 
   //printf("Solution correction\n");
-   SolveLinearSolver(&pb_pc->D.lsol,simu);
+   Advanced_SolveLinearSolver(&pb_pc->D.lsol,simu);
   
   // 4) OUTPUT STEP
 
@@ -1011,7 +1011,7 @@ void PhyBased_PC_Full(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*glob
   }
 
   //printf("Solution...\n");
-  SolveLinearSolver(&pb_pc->D.lsol,simu);
+  Advanced_SolveLinearSolver(&pb_pc->D.lsol,simu);
 
   pb_pc->Schur.lsol.solver_type=pb_pc->solver_propagation;
   pb_pc->Schur.lsol.tol=pb_pc->tol_propagation;
@@ -1041,7 +1041,7 @@ void PhyBased_PC_Full(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*glob
    for (int i=0;i<pb_pc->D.nb_fe_nodes;i++){
      pb_pc->Schur2.rhs[i]=pb_pc->Schur.lsol.rhs[i];
   }
-  SolveLinearSolver(&pb_pc->Schur2,simu);
+  Advanced_SolveLinearSolver(&pb_pc->Schur2,simu);
   for (int i=0;i<pb_pc->D.nb_fe_nodes;i++){
      pb_pc->Schur.lsol.sol[i]=pb_pc->Schur2.sol[i];
   }
@@ -1068,7 +1068,7 @@ void PhyBased_PC_Full(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*glob
   }
 
   //printf("Solution correction\n");
-  SolveLinearSolver(&pb_pc->D.lsol,simu);
+  Advanced_SolveLinearSolver(&pb_pc->D.lsol,simu);
 
   
   // 4) OUTPUT STEP

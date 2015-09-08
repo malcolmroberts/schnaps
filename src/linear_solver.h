@@ -73,51 +73,6 @@ typedef struct LinearSolver{
 } LinearSolver;
 
 
-typedef struct JFLinearSolver{
-
-  //! \brief number of equations
-  int neq;
-
-  //! brief eps for free Jacobian matrix
-  real eps;
-
-  //! solver type;
-  Solver solver_type;
-
-  //! name of the storage method;
-  PC pc_type; 
-
-  //! \brief solution of the linear system
-  real* sol;
-  //! \brief rhs of the linear system
-  real* rhs;
-  //! \brief sol at the time n
-  real* soln;
-
-    //! tolerance iterative solver
-  real tol;
-
-  //! restart for gmres
-  int restart_gmres;
-  //! number max of iteration
-  int iter_max;
-
-  //! \brief compute a matrix vector product
-  //! \param[in] lsol the LinearSolver object containing matrix A
-  //! \param[in] f the field
-  //! \param[in] x a vector
-  //! \param[out] prod Ax
-  void (*MatVecProduct)(Simulation * simu,void* lsol,real x[],real prod[]);
-
-  //! \brief compute the
-  //! \param[in] simu the simulatio,n
-  //! \param[in] lsol the LinearSolver object containing matrix A
-  //! \param[in] solvector the solution at the time n
-  //! \param[out] given the nonlinear vector for the free jacobian
-  void (*NonlinearVector_computation)(Simulation * simu,void* lsol,real * solvector,real *nlvector);
-
-} JFLinearSolver;
-
 
 //! \brief init the LinearSolver structure with an empty matrix
 //! \param[inout] lsol the LinearSolver object
@@ -177,51 +132,13 @@ void DisplayLinearSolver(LinearSolver* lsol);
 //! \param[out] prod Ax
 void MatVect(void * system,real x[],real prod[]);
 
-//! \brief compute a matrix vector product
-//! \param[in] system the LinearSolver object containing matrix A
-//! \param[in] x a vector
-//! \param[out] prod Ax
-void MatVect_slow(void * system,real x[],real prod[]);
-
 //! \brief compute the inplace LU decomposition
 //! \param[inout] lsol the LinearSolver object
 void LUDecompLinearSolver(LinearSolver* lsol);
 
 //! \brief solve the linear system
-//! \param[in] lsol the LinearSolver object
-//! \param[in] simu the Simulation object
-void SolveLinearSolver(LinearSolver* lsol,Simulation* simu);
-
-
-
-
-//! \brief init the LinearSolver structure with an empty matrix
 //! \param[inout] lsol the LinearSolver object
-//! \param[in] n number of equations
-//! \param[in] solvtyp solver type (optional)
-void InitJFLinearSolver(JFLinearSolver* lsol,int n,
-		      Solver* solvtyp);
-
-//! \brief free the allocated arrays
-//! \param[inout] lsol the LinearSolver object
-void FreeJFLinearSolver(JFLinearSolver* lsol);
-
-
-
-//! \brief compute a matrix vector product
-//! \param[in] system the LinearSolver object containing matrix A
-//! \param[in] f a field
-//! \param[in] x a vector
-//! \param[out] prod Ax
-void MatVecJacobianFree(Simulation * simu,void * system,real x[],real prod[]);
-
-//! \brief solve the linear system
-//! \param[inout] lsol the JFLinearSolver object
-//! \param[in] f field asscoiated
-void SolveJFLinearSolver(JFLinearSolver* lsol,Simulation * simu);
-
-
-
+void SolveLinearSolver(LinearSolver* lsol);
 
 
 //! \brief copy vector
@@ -242,22 +159,19 @@ real Vector_prodot(real x[],real y[],int N);
 real Vector_norm2(real x[],int  N);
 
 //! \brief solve the linear system with paralution
-//! \param[in] lsol contains the matrices rhs and sol
-void Solver_Paralution(LinearSolver* lsol, Simulation* simu);
+//! \param[inout] lsol contains the matrices rhs and sol
+void Solver_Paralution(LinearSolver* lsol);
 
 //! \brief solve the linear system with the GMREs of the cerfacs
-//! \param[in] lsol contains the matrices rhs and sol
-void GMRESSolver(LinearSolver* lsol, Simulation* simu);
+//! \param[inout] lsol contains the matrices rhs and sol
+void GMRESSolver(LinearSolver* lsol);
 
 //! \brief Jacobi preconditioner
 //! \param[in] lsol contains the matrices rhs and sol
-void Jacobi_PC(LinearSolver* lsol, Simulation* simu, real* sol, real* rhs);
+void Jacobi_PC(LinearSolver* lsol, real* sol, real* rhs);
 
 //! \brief Exact LU preconditioner
 //! \param[in] lsol contains the matrices rhs and sol
-void Exact_PC(LinearSolver* lsol, Simulation* simu, real* sol, real* rhs);
-
-
-void PhyBasedPC_waveDF(LinearSolver *lsol,Simulation * simu, real * Sol, real *RHS);
+void Exact_PC(LinearSolver* lsol, real* sol, real* rhs);
 
 #endif

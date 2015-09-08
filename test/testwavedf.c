@@ -227,7 +227,7 @@ int TestWaveDF(void){
     sky.rhs[neq-2]=sky.rhs[neq-2]+(d.c*d.dt)/(2.0*m.h)*pr-(d.c*d.dt)/(2.0*m.h)*ur; // pressure right BC
     sky.rhs[neq-1]=sky.rhs[neq-1]+(d.c*d.dt)/(2.0*m.h)*ur-(d.c*d.dt)/(2.0*m.h)*pr; // velocity right BC
 
-    SolveLinearSolver(&sky,&simu);
+    Advanced_SolveLinearSolver(&sky,&simu);
 
     real error=0,norm=0;
     d.time=d.time+d.dt;

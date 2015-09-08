@@ -7,7 +7,7 @@
 #include <assert.h>
 #include "simulation.h"
 #include "linear_solver.h"
-
+#include "advanced_linear_solver.h"
 
 //! \brief Construct the profile of the linear solver
 //! for the generic implicit linear solver

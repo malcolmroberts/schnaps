@@ -144,7 +144,7 @@ int TestNonLinearSolver(void){
     skymat=(Skyline*)sky.matrix;
     skymat->is_lu=false;
   
-    SolveLinearSolver(&sky,&simu);
+    Advanced_SolveLinearSolver(&sky,&simu);
     
     soln[0] = soln[0]+sky.sol[0];
     soln[1] = soln[1]+sky.sol[1];
@@ -261,7 +261,7 @@ int TestNonLinearSolver(void){
     skymat=(Skyline*)sky.matrix;
     skymat->is_lu=false;
   
-    SolveLinearSolver(&sky,&simu);
+    Advanced_SolveLinearSolver(&sky,&simu);
     
     soln[0] = soln[0]+sky.sol[0];
     soln[1] = soln[1]+sky.sol[1];
