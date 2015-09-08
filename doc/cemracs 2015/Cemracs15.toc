@@ -1,7 +1,6 @@
 \select@language {english}
 \contentsline {section}{\numberline {1}Model study and Discretization}{1}{section.1}
-\contentsline {subsection}{\numberline {1.1}Finite element method and spatial discretization}{2}{subsection.1.1}
-\contentsline {section}{\numberline {2}Principle of the preconditioning for the wave equation}{2}{section.2}
-\contentsline {subsection}{\numberline {2.1}Result of the preconditioning in Django}{3}{subsection.2.1}
-\contentsline {section}{\numberline {3}Preconditioning in Schnaps}{3}{section.3}
+\contentsline {section}{\numberline {2}Time and spatial discretization}{2}{section.2}
+\contentsline {subsection}{\numberline {2.1}Finite element method and spatial discretization}{2}{subsection.2.1}
+\contentsline {section}{\numberline {3}Principle of the preconditioning for the wave equation}{3}{section.3}
 \contentsline {subsection}{\numberline {3.1}Schur on the pressure}{3}{subsection.3.1}
