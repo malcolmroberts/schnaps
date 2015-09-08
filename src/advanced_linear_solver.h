@@ -6,13 +6,7 @@
 #include "field.h"
 #include "paralution_c.h"
 #include "simulation.h"
-
-
-
-typedef enum MatrixStorage{SKYLINE,CSR} MatrixStorage;
-typedef enum Solver{LU,GMRES,PAR_GMRES,PAR_FGMRES,PAR_CG,PAR_BICGSTAB,PAR_AMG,PAR_LU,PAR_QR} Solver;
-typedef enum PC{NONE,JACOBI,PAR_JACOBI,PAR_ILU,PAR_MULTICOLOREDSGS,PAR_MULTICOLOREDGS,PAR_MULTICOLOREDILU,PAR_AMG_PC,PAR_ELIMI,PHY_BASED,PHY_BASED_EXACT,EXACT,PHDF} PC;
-
+#include "linear_solver.h"
 
 typedef struct JFLinearSolver{
 
@@ -55,7 +49,7 @@ typedef struct JFLinearSolver{
   //! \param[in] lsol the LinearSolver object containing matrix A
   //! \param[in] solvector the solution at the time n
   //! \param[out] given the nonlinear vector for the free jacobian
-  void (*NonlinearVector_computation)(Simulation * simu,void* lsol,real * solvector,real *nlvector);
+  void (*NonlinearVector_computation)(void* lsol,Simulation * simu,real * solvector,real *nlvector);
 
 } JFLinearSolver;
 

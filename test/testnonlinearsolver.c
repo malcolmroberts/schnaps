@@ -22,7 +22,7 @@ int main(void) {
 
 
 
-void JFNonlinearVector_GX(void* system,field * f,real * solvector,real *nlvector){
+void JFNonlinearVector_GX(void* system,Simulation  * simu,real * solvector,real *nlvector){
   JFLinearSolver* lsol=system;
 
   nlvector[0] = 9*solvector[0]*solvector[0]+36*solvector[1]*solvector[1]+4*solvector[2]*solvector[2];
@@ -31,7 +31,7 @@ void JFNonlinearVector_GX(void* system,field * f,real * solvector,real *nlvector
 
 }
 
-void NonlinearVector_GX(void* system,field * f,real * solvector,real *nlvector){
+void NonlinearVector_GX(void* system,Simulation * simu,real * solvector,real *nlvector){
   LinearSolver* lsol=system;
 
   nlvector[0] = 9*solvector[0]*solvector[0]+36*solvector[1]*solvector[1]+4*solvector[2]*solvector[2];

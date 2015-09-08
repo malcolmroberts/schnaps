@@ -98,6 +98,7 @@ firefox html/index.html
 #include "pic.h"
 #include "skyline.h"
 #include "linear_solver.h"
+#include "advanced_linear_solver.h"
 #ifdef _WITH_OPENCL
 #include "field_cl.h"
 #include "clinfo.h"

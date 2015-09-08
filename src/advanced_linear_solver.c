@@ -6,6 +6,7 @@
 #include "skyline.h"
 #include "paralution_c.h"
 #include "dpackfgmres.h"
+#include "advanced_linear_solver.h"
 
 void InitJFLinearSolver(JFLinearSolver* lsol,int n,
 		      Solver* solvtyp){
@@ -31,7 +32,7 @@ void FreeJFLinearSolver(JFLinearSolver* lsol){
 
 }
 
-void MatVecJacobianFree(void * system,field *f,real x[],real prod[]){
+void MatVecJacobianFree(Simulation *simu,void * system,real x[],real prod[]){
   int i,j;
   real aij;
   JFLinearSolver* lsol=system;
@@ -48,8 +49,8 @@ void MatVecJacobianFree(void * system,field *f,real x[],real prod[]){
 	solnp[i]=lsol->soln[i]+lsol->eps*x[i];
     }
   
-  lsol->NonlinearVector_computation(system,f,lsol->soln,U);
-  lsol->NonlinearVector_computation(system,f,solnp,Up);
+  lsol->NonlinearVector_computation(system,simu,lsol->soln,U);
+  lsol->NonlinearVector_computation(system,simu,solnp,Up);
   
   for(i=0;i<lsol->neq;i++)
     {
@@ -202,7 +203,7 @@ void Advanced_GMRESSolver(LinearSolver* lsol, Simulation * simu){
 
 
 
-void SolveJFLinearSolver(JFLinearSolver* lsol,field *f){
+void SolveJFLinearSolver(JFLinearSolver* lsol,Simulation * simu){
   int revcom, colx, coly, colz, nbscal;
   int li_maxiter;
   int m,lwork,N;
@@ -292,7 +293,7 @@ void SolveJFLinearSolver(JFLinearSolver* lsol,field *f){
   }
 
   if (revcom == matvec) {                 // perform the matrix vector product
-    lsol->MatVecProduct(lsol,f,loc_x,loc_z);
+    lsol->MatVecProduct(simu,lsol,loc_x,loc_z);
     for(int ivec = 0; ivec < N; ivec++) {       
       work[colz+ivec]= loc_z[ivec];                    
       work[colx+ivec]= loc_x[ivec]; 

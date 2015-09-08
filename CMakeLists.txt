@@ -133,6 +133,8 @@ list(APPEND
   src/dpackfgmres.c
   src/linear_solver.h
   src/linear_solver.c
+  src/advanced_linear_solver.h
+  src/advanced_linear_solver.c
   src/solvercontinuous.h
   src/solvercontinuous.c
   src/solverpoisson.h
@@ -143,6 +145,7 @@ list(APPEND
   src/diagnostics_vp.c
   src/collision.h
   src/collision.c
+  
   )
 
 if(SuiteSparse_FOUND)
