@@ -366,12 +366,20 @@ void InitCLInfo(CLInfo *cli, int platform_num, int device_num)
   printf("\tOpenCL extensions: %s\n", cli->clextensions);
   
   // First opencl context
-  cli->context = clCreateContext(NULL, // no context properties
-				 1,         // only one device in the list
-				 &cli->device, // device list
-				 NULL, // callback function
-				 NULL, // function arguments
-				 &status);
+  /* cli->context = clCreateContext(NULL, // no context properties */
+  /* 				 1,         // only one device in the list */
+  /* 				 &cli->device, // device list */
+  /* 				 NULL, // callback function */
+  /* 				 NULL, // function arguments */
+  /* 				 &status); */
+  //cl_context_properties properties[]= {CL_CONTEXT_SCHEDULER_SOCL, "heft", 0};
+  cl_context_properties properties[]= {CL_CONTEXT_PLATFORM,
+				       (cl_context_properties) platforms[nplatform_cl], 0};
+  cli->context = clCreateContextFromType (properties,
+					  CL_DEVICE_TYPE_CPU | CL_DEVICE_TYPE_CPU,
+					  NULL, // callback function
+					  NULL, // function arguments
+					  &status);
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
   assert(status >= CL_SUCCESS);
 
@@ -386,9 +394,16 @@ void InitCLInfo(CLInfo *cli, int platform_num, int device_num)
 					 &status);
 #else
   cli->commandqueue = clCreateCommandQueue(cli->context,
-					   cli->device,
+					   NULL,
 					   CL_QUEUE_PROFILING_ENABLE,
 					   &status);
+  printf("I use SOCL !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+
+/* #else */
+/*   cli->commandqueue = clCreateCommandQueue(cli->context, */
+/* 					   cli->device, */
+/* 					   CL_QUEUE_PROFILING_ENABLE, */
+/* 					   &status); */
 #endif
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
   assert(status >= CL_SUCCESS);

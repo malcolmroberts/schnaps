@@ -520,6 +520,12 @@ void DGFlux(__constant int *param,       // 0: interp param
 	    __local    real *wnloc     // 6: wn and dtwn in local memory
 	    )
 {
+ 
+#ifdef SOCL_DEVICE_TYPE_CPU
+  //printf("coucou CPU\n");
+#else
+  //printf("coucou GPU\n");
+#endif
   // Use __local memory in DGFlux kernel?
 #define DGFLUX_LOCAL 1
 
