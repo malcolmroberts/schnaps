@@ -118,7 +118,7 @@ $$
 \ds \dt p+c\nabla \cdot \bm{u}=0\\
 \ds \dt \bm{u}+c\nabla p = 0 \end{array}\right.
 $$
-Before we propose to add some admissible boundary condition. Defining $f=\dt p$ and $\bm{u}=- c\nabla f$ we obtain the solution
+Before we propose to add some admissible boundary condition. Defining $p=\dt f$ and $\bm{u}=- c\nabla f$ we obtain that $f$ is a solution of 
 $$
 \partial_{tt} f-c^2\Delta f=0
 $$
@@ -135,7 +135,11 @@ Firstly we propose a energy estimate for this problem. For this we multiply the 
 &=  \frac{1}{2}\dt \int_{\Omega}(p^2+(\bm{u},\bm{u}))+c\int_{\Omega}p\nabla \cdot \bm{u} - c\int_{\Omega}p\nabla \cdot \bm{u}+c\int_{\partial \Omega} p (\bm{u},\bm{n})\\
 &=  \frac{1}{2}\dt \int_{\Omega}(p^2+(\bm{u},\bm{u}))+\int_{\partial \Omega} \lambda c^2 (\bm{u},\bm{n})^2+ \int_{\partial \Omega} c g (\bm{u},\bm{n})
 \end{align*}
-To obtain dissipative problem we must have $(\bm{u},\bm{n})(\lambda c -g)\leq 0$.
+at the end we obtain
+$$
+\frac{1}{2}\dt \int_{\Omega}(p^2+(\bm{u},\bm{u}))=-\int_{\partial \Omega} \lambda c^2 (\bm{u},\bm{n})^2- \int_{\partial \Omega} c g (\bm{u},\bm{n})
+$$
+In the homogeneous case the boundary condition is dissipative. 
 \section{Time and spatial discretization}
 The classical explicit scheme for this problem are not useful is the velocity $c>>1$. Indeed the time step is constrained by this velocity. Consequently use an implicit scheme is an interesting way (there also a possibility to construct semi-implicit AP scheme with a CFL condition independent of $\eps$). Now we propose to write an implicit scheme based on a Cranck-Nicholson scheme :
 $$
@@ -143,7 +147,7 @@ $$
 \ds p^{n+1} + \theta c\Delta t \nabla \cdot \mathbf{u}^{n+1}=  p^n- (1-\theta) c \Delta t   \nabla \cdot \mathbf{u}^{n}\\
 \ds \mathbf{u}^{n+1}+\theta c \Delta t \nabla p^{n+1}= \mathbf{u}^n-(1-\theta ) c\Delta t \nabla p^{n}\end{array}\right.
 $$
-We add the boundary condition $p^{n+1}-c \lambda (\bm{u}^{n+1},\bm{n})=0$.
+We add the boundary condition $p^{n+1}-c \lambda (\bm{u}^{n+1},\bm{n})=g$.
 \subsection{Finite element method and spatial discretization}
 To discretize the previous semi discrete scheme with finite element method. To begin we define three test function $v_p$, $v_{\bm{u}}=(v_{u1},v_{u2})$. Firstly we consider the weak form multiplying the problem by thee basis function. We will begin by the first equation
 $$
@@ -160,8 +164,8 @@ Integrating by part we obtain
 \end{align*}
 Now we introduce the weak form for the other equations.
 \begin{align*}
-&\int_{\Omega}\bm{u}^{n+1}v_{\bm{u}} -c\theta \Delta t \int_{\Omega} p^{n+1}\nabla \cdot v_{\bm{u}}+ c\theta\Delta t  \int_{\partial \Omega} (v_{\bm{u}},\bm{n}) (c\lambda(v_{\bm{u}},\bm{n}) +g)\\
-& =  \int_{\Omega}\bm{u}^{n} v_{\bm{u}} +(1-\theta) c\Delta t  \int_{\Omega} p^n\nabla \cdot v_{\bm{u}} -c (1-\theta)\Delta t  \int_{\partial \Omega} (v_{\bm{u}},\bm{n}) (c\lambda(v_{\bm{u}},\bm{n}) +g)
+&\int_{\Omega}\bm{u}^{n+1}v_{\bm{u}} -c\theta \Delta t \int_{\Omega} p^{n+1}\nabla \cdot v_{\bm{u}}+ c\theta\Delta t  \int_{\partial \Omega} (v_{\bm{u}},\bm{n}) (c\lambda(\bm{u}^{n+1},\bm{n}) +g)\\
+& =  \int_{\Omega}\bm{u}^{n} v_{\bm{u}} +(1-\theta) c\Delta t  \int_{\Omega} p^n\nabla \cdot v_{\bm{u}} -c (1-\theta)\Delta t  \int_{\partial \Omega} (v_{\bm{u}},\bm{n}) (c\lambda(\bm{u}^{n},\bm{n}) +g)
 \end{align*}
 Now we define the basis function $\phi_i(\mathbf{x})$ associated at the degree of freedom $i$ (total of degree of freedom). To obtain the final system we define $v_p=v_{u1}=v_{u2}=\phi_i$ and $p^n=\sum_{j=1}^N p_j^n \phi_j(\mathbf{x})$ (same for other variables).
 We apply the same procedure to the other equation we obtain the system $A_I \mathbf{U}^{n+1}=A_E\mathbf{U}^{n}$ which is given by
@@ -189,8 +193,8 @@ To begin we write the same method but we compute the schur on the pressure. We o
 The system is given by 
 $$
 \left(\begin{array}{ll} 
-M  & U \\
- L & D\end{array}\right)\left(\begin{array}{l} 
+D  & U \\
+ L & M\end{array}\right)\left(\begin{array}{l} 
  \mathbf{u}^{n+1}\\
  p^{n+1} \end{array}\right)=\left(\begin{array}{l} 
  R_\mathbf{u}\\
@@ -202,7 +206,7 @@ with $M=I_d$,
 I_d  & 0 \\
  0 & I_d\end{array}\right),\quad
   L=\left(\begin{array}{ll} 
-\ds\theta c\Delta t  \dx  & \ds\theta c\Delta t  \dy \end{array}\right),\quazd
+\ds\theta c\Delta t  \dx  & \ds\theta c\Delta t  \dy \end{array}\right),\quad
   U=\left(\begin{array}{l} 
 \ds  \theta c \Delta t  \dx  \\
 \ds \theta c \Delta t\dy \end{array}\right)
@@ -212,12 +216,122 @@ u_1^{n+1}  & u_2^{n+1} \end{array}\right)$.
 Consequently we can write the solution on the following form
 $$
 \left(\begin{array}{l} 
- \mathbf{u^{n+1}}
+ \mathbf{u}^{n+1}
  p^{n+1} \end{array}\right) =\left(\begin{array}{ll}
-M & U  \\
-L & D\end{array}\right)^{-1}\left(\begin{array}{l} 
+D & U  \\
+L & M\end{array}\right)^{-1}\left(\begin{array}{l} 
  R_\mathbf{u}\\
  R_p \end{array}\right)
+$$
+$$
+=\left(\begin{array}{ll}
+I & D^{-1} U  \\
+0 & I\end{array}\right)\left(\begin{array}{ll}
+D^{-1} & 0  \\
+0 & P_{schur}^{-1}\end{array}\right)\left(\begin{array}{ll}
+I & 0  \\
+-LD^{-1} & I\end{array}\right)\left(\begin{array}{l} 
+ R_\mathbf{u}\\
+ R_p\end{array}\right)
+ $$
+with $\textcolor{red}{P_{schur}=M-LD^{-1}U}$. Solving the system with this decomposition is equivalent to solve the following algorithm 
+$$
+\left.\begin{array}{l}
+\mbox{Predictor :\quad} D \textcolor{red}{\mathbf{u}^*}=R_{\mathbf{u}}\\
+\mbox{Potential evolution :\quad} P_{schur}\textcolor{red}{p^{n+1}}=\left(-L\textcolor{red}{\mathbf{u}^*}+R_{p}\right)\\
+\mbox{Corrector :\quad}  D\textcolor{red}{\mathbf{u}^{n+1}}=D\textcolor{red}{\mathbf{u}^*}-U\textcolor{red}{p^{n+1}}\end{array}\right.
+$$
+Since in the Schnaps context the matrices $D$ and $M$ are exact we can compute exactly the Schur complement. Using this exact computation we obtain a preconditioning that call "Physic Based Exact" preconditioning.
+Now the good strategy is not to construct exactly the Schur decomposition. \textcolor{red}{The other solution is to construct a discretization of the schur operator given by}
+$$
+\displaystyle \textcolor{red}{P_{schur}=(I_d-c^2\theta^2 \Delta t^2 \Delta )}
+$$
+This algorithm can be also obtain using a reformulation of wave equation and a splitting. Firstly we discretize in time the model
+$$
+\left\{\begin{array}{l}
+\ds \frac{p^{n+1}-p^n}{\Delta t}+c\nabla \cdot \bm{u}^{n+1}= f_p \\
+\ds \frac{\bm{u}^{n+1}-\bm{u}^n}{\Delta t} +c\nabla p^{n+1} = f_u \end{array}\right.
+$$
+Now we applying a splitting to obtain
+$$
+\left\{\begin{array}{l}
+\ds \frac{\bm{u}^{*}-\bm{u}^n}{\Delta t}  = \mathbf{f}_u\\
+~\\
+\ds \frac{p^{n+1}-p^n}{\Delta t}+ c\nabla \cdot  \mathbf{u}^{n+1}= f_p\\
+~\\
+\ds \frac{\bm{u}^{n+1}-\bm{u}^*}{\Delta t} +c\nabla p^{n+1} = 0 \end{array}\right.
+$$
+Plugging the third equation in the second we obtain
+$$
+\left\{\begin{array}{l}
+\ds \frac{\bm{u}^{*}-\bm{u}^n}{\Delta t}  = \mathbf{f}_u\\
+~\\
+\ds \frac{p^{n+1}-p^n}{\Delta t}- \Delta t c^2\Delta p^{n+1} = f_p-c\nabla \cdot (\bm{u}^*) \\
+~\\
+\ds \frac{\bm{u}^{n+1}-\bm{u}^*}{\Delta t} +c\nabla p^{n+1} = 0 \end{array}\right.
+$$
+Now the question is what this the good boundary condition to assure that the solution of the algorithm and the solution of the real problem are closed ( error in $\Delta t$). We want obtain at the boundary condition
+$p^{n+1}-\lambda c (\bm{u}^{n+1},\bm{n})=g$. Using this $\bm{u}^{n+1}=-c \Delta t\nabla p^{n+1}$ we obtain $p^{n+1}+\lambda  \Delta t c^2 (\nabla p^{n+1},\bm{n})=g$. Consequently we obtain Robin boundary condition for $p$
+$$
+\nabla p\cdot \bm{n}+\frac{p}{\Delta t\lambda c^2}=\frac{g}{\Delta t\lambda c^2 }
+$$
+We will consider the implicit problem with $\mathbf{f}_u$ and $f_p$ generic RHS
+$$
+\left\{\begin{array}{l}
+\ds \bm{u}^{*}= \mathbf{f}_u\\
+~\\
+\ds p^{n+1}- \Delta t c^2\Delta p^{n+1} = f_p-c\Delta t\nabla \cdot (\bm{u}^*) \\
+~\\
+\ds \bm{u}^{n+1}+c\Delta t\nabla p^{n+1} = 0 \end{array}\right.
+$$
+
+
+At the end we introduce two test functions $v_p$ and $\mathbf{v}_u$. The weak form used in the preconditioning are given by
+$$\left\{\begin{array}{l}
+\ds \int_{\Omega} \bm{u}^{*} \mathbf{v}_u = \int_{\Omega}\mathbf{f}_u \mathbf{v}_u\\
+~\\
+\ds \int_{\Omega} p^{n+1} v_p+ \Delta t^2 c^2 \int_{\Omega}\nabla p^{n+1} \cdot \nabla v_p +\Delta t \int_{\delta \Omega} \frac{1}{\lambda }p^{n+1} v_p\\
+= \ds +c\Delta t\int_{\Omega} \bm{u}^* \cdot \nabla v_p -c\Delta t \int_{\delta \Omega} (\bm{u}\cdot\bm{n})v_p + \int_{\Omega}f_p+\Delta t \int_{\delta \Omega} \frac{1}{\lambda }g v_p\\
+~\\
+\ds \int_{\Omega} \bm{u}^{n+1} \mathbf{v}_u= c\Delta t \int_{\Omega} p^{n+1} \nabla \cdot (\mathbf{v}_u)-c\Delta t \int_{\delta \Omega} (\bm{v}_u\cdot\bm{n})p^{n+1}  \end{array}\right.
+$$
+We assume that the solution are regular. The first and third operators to invert are just the Identity consequently the two problem are well posed.The second one is a coercive problem with Robin Boundary condition. It is also known that this problem is well posed.
+
+\subsection{Schur on the velocity}
+To begin we write the same method but we compute the schur on the pressure. We obtain the following algorithm
+The system is given by 
+$$
+\left(\begin{array}{ll} 
+M  & U \\
+ L & D\end{array}\right)\left(\begin{array}{l} 
+  p^{n+1} \\
+ \mathbf{u}^{n+1}
+\end{array}\right)=\left(\begin{array}{l} 
+ R_p\\
+ R_{\mathbf{u}} \end{array}\right)
+ $$
+with $M=I_d$,
+ $$
+ D=\left(\begin{array}{ll} 
+I_d  & 0 \\
+ 0 & I_d\end{array}\right),\quad
+  U=\left(\begin{array}{ll} 
+\ds\theta c\Delta t  \dx  & \ds\theta c\Delta t  \dy \end{array}\right),\quad
+  L=\left(\begin{array}{l} 
+\ds  \theta c \Delta t  \dx  \\
+\ds \theta c \Delta t\dy \end{array}\right)
+ $$
+ and $\ds \mathbf{u}^{n+1}=\left(\begin{array}{ll} 
+u_1^{n+1}  & u_2^{n+1} \end{array}\right)$. 
+Consequently we can write the solution on the following form
+$$
+\left(\begin{array}{l} 
+ p^{n+1} \\
+  \mathbf{u}^{n+1}\end{array}\right) =\left(\begin{array}{ll}
+M & U  \\
+L & D\end{array}\right)^{-1}\left(\begin{array}{l} 
+ R_p\\
+ R_\mathbf{u} \end{array}\right)
 $$
 $$
 =\left(\begin{array}{ll}
@@ -227,45 +341,51 @@ M^{-1} & 0  \\
 0 & P_{schur}^{-1}\end{array}\right)\left(\begin{array}{ll}
 I & 0  \\
 -LM^{-1} & I\end{array}\right)\left(\begin{array}{l} 
-R_p \\
- R_\mathbf{u}\end{array}\right)
+ R_\mathbf{u}\\
+ R_p\end{array}\right)
  $$
 with $\textcolor{red}{P_{schur}=D-LM^{-1}U}$. Solving the system with this decomposition is equivalent to solve the following algorithm 
 $$
 \left.\begin{array}{l}
-\mbox{Predictor :\quad} M \textcolor{red}{\mathbf{u}^*}=R_{\mathbf{u}}\\
-\mbox{Potential evolution :\quad} P_{schur}\textcolor{red}{p^{n+1}}=\left(-L\textcolor{red}{\mathbf{u}^*}+R_{p}\right)\\
-\mbox{Corrector :\quad}  M\textcolor{red}{\mathbf{u}^{n+1}}=M\textcolor{red}{\mathbf{u}^*}-U\textcolor{red}{p^{n+1}}\end{array}\right.
+\mbox{Predictor :\quad} M \textcolor{red}{p^*}=R_{p}\\
+\mbox{Potential evolution :\quad} P_{schur}\textcolor{red}{\bm{u}^{n+1}}=\left(-L\textcolor{red}{p^*}+R_{\bm{u}}\right)\\
+\mbox{Corrector :\quad}  M\textcolor{red}{^{n+1}}=M\textcolor{red}{p^*}-U\textcolor{red}{\bm{u}^{n+1}}\end{array}\right.
 $$
-Since in the Schnaps context the matrices $D$ and $M$ are exact we can compute exactly the Schur complement. Using this exact computation we obtain a preconditioning that call "Physic Based Exact" preconditioning. Now we gives the result for this preconditioning . The degree of the polynomial is four.
+Since in the Schnaps context the matrices $D$ and $M$ are exact we can compute exactly the Schur complement. Using this exact computation we obtain a preconditioning that call "Physic Based Exact" preconditioning.
 Now the good strategy is not to construct exactly the Schur decomposition. \textcolor{red}{The other solution is to construct a discretization of the schur operator given by}
 $$
-\displaystyle \textcolor{red}{P_{schur}=(I_d-c^2\theta^2 \Delta t^2 \Delta )}
+\displaystyle \textcolor{red}{P_{schur}=(I_d-c^2\theta^2 \Delta t^2 \nabla \left( \nabla \cdot I_d \right))}
 $$
-This algorithm can be also obtain using a reformulation of wave equation and a splitting. Indeed we rewrite the equation on u to obtain
-$$
-\bm{u}+c\nabla p=\bm{u}-\dt \bm{u}
-$$
-Plugging this in the pressure equation we obtain
+This algorithm can be also obtain using a reformulation of wave equation and a splitting. Firstly we discretize in time the model
 $$
 \left\{\begin{array}{l}
-\ds \dt p- c^2\Delta  p=-c\nabla \cdot \bm{u}+ c\nabla \cdot \dt \bm{u}\\
-\ds \dt \bm{u}+c\nabla p = 0 \end{array}\right.
-$$
-When we discretize in time this operator we obtain
-$$
-\left\{\begin{array}{l}
-\ds \frac{p^{n+1}-p^n}{\Delta t}- c^2\Delta  p^{n+1}=-c\nabla \cdot \bm{u}^{n+1}+ c\nabla \cdot \left(\frac{\bm{u}^{n+1}-\bm{u}^n}{\Delta t}\right)\\\
-\ds \frac{\bm{u}^{n+1}-\bm{u}^n}{\Delta t} +c\nabla p^{n+1} = 0 \end{array}\right.
+\ds \frac{p^{n+1}-p^n}{\Delta t}+ c \nabla \cdot \bm{u}^{n+1}= f_p \\
+\ds \frac{\bm{u}^{n+1}-\bm{u}^n}{\Delta t} +c\nabla p^{n+1} = f_u \end{array}\right.
 $$
 Now we applying a splitting to obtain
 $$
 \left\{\begin{array}{l}
-\ds \frac{\bm{u}^{*}-\bm{u}^n}{\Delta t}  = 0\\
+\ds \frac{p^{n+1}-p^n}{\Delta t} = f_p\\
 ~\\
-\ds \frac{p^{n+1}-p^n}{\Delta t}- c^2\Delta  p^{n+1}=-c\nabla \cdot \bm{u}^{*}+ c\nabla \cdot \left(\frac{\bm{u}^{*}-\bm{u}^n}{\Delta t}\right)\\
+\ds \frac{\bm{u}^{n+1}-\bm{u}^*}{\Delta t} +c\nabla p^{n+1} = \mathbf{f}_u\\
 ~\\
-\ds \frac{\bm{u}^{n+1}-\bm{u}^n}{\Delta t} +c\nabla p^{n+1} = 0 \end{array}\right.
+ \ds \frac{p^{n+1}-p^n}{\Delta t}+ c\nabla \cdot  \mathbf{u}^{n+1}=0\end{array}\right.
 $$
-The algorithm propose previously correspond exactly to the implicit part of this splitting procedure. Now we want assure that the algorithm gives the same solution as the full problem. For this we need to compute the good boundary condition for step of the splitting algorithm. The question is what is the condition boundary condition on each operator to obtain $p^{n+1}=g+\lambda c (\bm{u}^n,\bm{n})$ for the second operator and $p^{n+1}=g+\lambda c (\bm{u}^{n+1},\bm{n})$ for the third one. 
+Plugging the third equation in the second we obtain
+$$
+\left\{\begin{array}{l}
+\ds \frac{p^{*}-p^n}{\Delta t}  = f_p\\
+~\\
+\ds \frac{\bm{u}^{n+1}-\bm{u}^n}{\Delta t}- \Delta t^2 c^2 \nabla (\nabla \cdot \bm{u}^{n+1}) = \mathf{f}_u-c\nabla (p^*) \\
+~\\
+\ds \frac{p^{n+1}-p^n}{\Delta t}+ c\nabla \cdot  \mathbf{u}^{n+1}= 0 \end{array}\right.
+$$
+Now there are some questions
+\begin{itemize}
+\item What is the weak for the operator $I_d-\alpha \nabla \left( \nabla \cdot I_d \right))$.
+\item What is the good boundary condition for the second step of the previous step
+\item $I_d-\alpha \nabla \left( \nabla \cdot I_d \right))$ is invertible ? coercive ? well posed ? try with the classical weak form of the mixte weak form.
+\item Well posed only for the irrotationnel velocity ?
+\end{itemize}
+
 \end{document}
