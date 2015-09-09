@@ -376,7 +376,7 @@ void InitCLInfo(CLInfo *cli, int platform_num, int device_num)
   cl_context_properties properties[]= {CL_CONTEXT_PLATFORM,
 				       (cl_context_properties) platforms[nplatform_cl], 0};
   cli->context = clCreateContextFromType (properties,
-					  CL_DEVICE_TYPE_CPU | CL_DEVICE_TYPE_CPU,
+					  CL_DEVICE_TYPE_GPU | CL_DEVICE_TYPE_CPU,
 					  NULL, // callback function
 					  NULL, // function arguments
 					  &status);
@@ -392,18 +392,18 @@ void InitCLInfo(CLInfo *cli, int platform_num, int device_num)
 					 cli->device,
 					 &queue_properties,
 					 &status);
+/* #else */
+  /* cli->commandqueue = clCreateCommandQueue(cli->context, */
+  /* 					   NULL, */
+  /* 					   CL_QUEUE_PROFILING_ENABLE, */
+  /* 					   &status); */
+  /* printf("I use SOCL !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"); */
+
 #else
   cli->commandqueue = clCreateCommandQueue(cli->context,
-					   NULL,
+					   cli->device,
 					   CL_QUEUE_PROFILING_ENABLE,
 					   &status);
-  printf("I use SOCL !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
-
-/* #else */
-/*   cli->commandqueue = clCreateCommandQueue(cli->context, */
-/* 					   cli->device, */
-/* 					   CL_QUEUE_PROFILING_ENABLE, */
-/* 					   &status); */
 #endif
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
   assert(status >= CL_SUCCESS);
