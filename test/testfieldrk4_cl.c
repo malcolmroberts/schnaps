@@ -82,7 +82,7 @@ int TestfieldRK4_CL(void){
   //AffineMapMacroMesh(&(simu.macromesh));
   InitSimulation(&simu, &mesh, deg, raf, &model);
  
-  real tmax = 1;
+  real tmax = .1;
   simu.vmax = 1;
   real dt = 0;
   RK4_CL(&simu, tmax, dt,  0, NULL, NULL);
