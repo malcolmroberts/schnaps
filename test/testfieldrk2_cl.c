@@ -13,8 +13,6 @@ int TestfieldRK2_CL(void){
     return true;
   }
 
-  Simulation simu;
-  EmptySimulation(&simu);
 
 
   MacroMesh mesh;
@@ -44,6 +42,10 @@ int TestfieldRK2_CL(void){
   /* f.interp.interp_param[6] = 1; // z direction refinement */
 
   Model model;
+
+  Simulation simu;
+  EmptySimulation(&simu);
+
 
 #if 1
   // 2D version

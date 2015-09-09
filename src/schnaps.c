@@ -185,8 +185,8 @@ int main(int argc, char *argv[])
   Model model;
   model.m = m;
   
-  field f;
-  init_empty_field(&f);
+  /* field f; */
+  /* init_empty_field(&f); */
 
   if(!usegpu) {
     model.NumFlux = numflux(fluxname);
@@ -194,12 +194,17 @@ int main(int argc, char *argv[])
   }
   model.InitData = initdata(initdataname);
   model.ImposedData = imposeddata(imposeddataname);
+  model.Source = NULL;
   //varindex = GenericVarindex;
+
+  Simulation simu;
+  EmptySimulation(&simu);
+
 
 #ifdef _WITH_OPENCL
   char buf[1000];
 
-  sprintf(buf, "-D _M=%d", f.model.m);
+  sprintf(buf, "-D _M=%d", model.m);
   strcat(cl_buildoptions, buf);
 
   sprintf(numflux_cl_name, "%s", fluxname);
@@ -227,14 +232,12 @@ int main(int argc, char *argv[])
   BuildConnectivity(&mesh);
   CheckMacroMesh(&mesh, deg, raf);
 
-  Simulation simu;
-  EmptySimulation(&simu);
   simu.cfl = cfl;
   simu.dt = dt; // FIXME: what if zero?????
   
   InitSimulation(&simu, &mesh, deg, raf, &model);
   
-  simu.vmax = 0.1;
+  simu.vmax = 1;
   /* if(dt <= 0.0) */
   /*   dt = set_dt(&f); */
 
@@ -257,16 +260,17 @@ int main(int argc, char *argv[])
   printf("gmsh file: %s\n", mshname);
   printf("Polynomial degree: %d, %d, %d\n", deg[0], deg[1], deg[2]);
   printf("Number of subcells: %d, %d, %d\n", raf[0], raf[1], raf[2]);
-  printf("cfl param: %f\n", f.hmin);
+  printf("cfl param: %f\n", simu.hmin);
   printf("dt: %f\n", dt);
   printf("tmax: %f\n", tmax);
-  printf("Buffer size (GB): %f\n", f.wsize * sizeof(real) * 1e-9);
+  printf("Buffer size (GB): %f\n", simu.wsize * sizeof(real) * 1e-9);
 
   printf("\n\n");
 
   if(usegpu) {
 #ifdef _WITH_OPENCL
     RK2_CL(&simu, tmax, dt, 0, NULL, NULL);
+    //RK2(&simu, tmax);
 
     cl_int status = clFinish(simu.cli.commandqueue);
     if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
@@ -282,7 +286,7 @@ int main(int argc, char *argv[])
     exit(1);
 #endif
   } else {
-    RK2(&simu, dt);
+    RK2(&simu, tmax);
   }
 
   // Save the results and the error
@@ -292,7 +296,8 @@ int main(int argc, char *argv[])
   }
 
   real dd = L2error(&simu);
- 
+   PlotFields(0, false, &simu, NULL, "dgvisu.msh");
+
   printf("\n");
   printf("L2 error: %f\n", dd);
   return 0;
