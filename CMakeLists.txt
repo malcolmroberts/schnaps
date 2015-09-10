@@ -104,6 +104,7 @@ list(APPEND
   src/simulation.h
   src/field.c
   src/field.h
+  src/interface.h
   src/implicit.h
   src/implicit.c
   src/geometry.c
