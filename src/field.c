@@ -633,13 +633,11 @@ void DGMacroCellInterface(int locfaL,
 
   }
 
-  
 }
 
 // Apply division by the mass matrix
 void DGMass(field *f, real *w, real *dtw) 
 {
-
   int m = f->model.m;
 
   for(int ipg = 0; ipg < NPG(f->deg, f->raf); ipg++) {
