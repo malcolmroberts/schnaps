@@ -25,8 +25,8 @@ int TestKernelVolume(void){
   model.ImposedData = TransImposedData2d;
   model.Source = NULL;
   
-  int deg[]={2, 2, 0};
-  int raf[]={3, 3, 1};
+  int deg[] = {2, 2, 0};
+  int raf[] = {3, 3, 1};
 
   MacroMesh mesh;
 
