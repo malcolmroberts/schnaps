@@ -28,6 +28,9 @@ typedef struct Data{
   real sigma;
   int test;
   int itermax;
+  int scheme;
+
+  
   
 
 } Data;
@@ -37,8 +40,9 @@ void Rhs_computation(int Nwave,real * centers, real * solution,Data * d);
 
 real SolutionBC(int Nwave,int var,real x,Data * d);
 
-void Profil_matrix(LinearSolver *sky, int n);
-void Assembly_matrix(LinearSolver *sky, int n);
+void Profil_matrix(LinearSolver *sky);
+void Assembly_matrix_upwind(LinearSolver *sky, MeshDF * m, Data * d);
+void Assembly_BC(LinearSolver *sky, MeshDF * m, Data * d);
 
 int main(void) {
   
@@ -118,12 +122,29 @@ int TestWaveDF(void){
   Data d;
   
   d.dt=0.0001;
-  d.eps=1.0;
-  d.c=1.0;
-  d.sigma=1.0;
   d.timefinal=0.1;
-  d.itermax=d.timefinal/d.dt;
+
   d.test=3;
+  d.scheme=1;
+
+  if(d.test == 1){
+    d.eps=1.0;
+    d.c=1.0;
+    d.sigma=0.0;
+  }
+  if(d.test == 2){
+    d.eps=1.0;
+    d.c=1.0;
+    d.sigma=0.0;
+  }
+  if(d.test == 3){
+    d.eps=1.0;
+    d.c=1.0;
+    d.sigma=0.0;
+  }
+
+
+  d.itermax=d.timefinal/d.dt;
   d.time=0;
 
   //------------- Parameters ------------//
@@ -138,68 +159,18 @@ int TestWaveDF(void){
   sky.tol=1.e-11;
   sky.restart_gmres=20;
 
-  Profil_matrix(&sky,neq);
+  Profil_matrix(&sky);
  
   // once the nonzero positions are known allocate memory
   AllocateLinearSolver(&sky);
 
-  for(int i=0;i<neq;i++){
-    if (i==0){ 
-      AddLinearSolver(&sky,0,0,1.0+(d.c*d.dt)/(m.volumes[0])); //pj
-      AddLinearSolver(&sky,0,2,-(d.c*d.dt)/(2.0*m.volumes[0])); //pj+1
-	    
-      AddLinearSolver(&sky,0,1,0.0); //uj
-      AddLinearSolver(&sky,0,3,+(d.c*d.dt)/(2.0*m.volumes[0])); //uj+1
-    }
-    else if (i==1){ 
-      AddLinearSolver(&sky,1,1,1.0+(d.c*d.dt)/(m.volumes[i])); //uj
-      AddLinearSolver(&sky,1,3,-(d.c*d.dt)/(2.0*m.volumes[i])); //uj+1
-	   
-      AddLinearSolver(&sky,1,0,0.0); //pj
-      AddLinearSolver(&sky,1,2,+(d.c*d.dt)/(2.0*m.volumes[i])); //pj+1
-    } 
-    else if (i==neq-1){ 
-      AddLinearSolver(&sky,neq-1,neq-1,1.0+(d.c*d.dt)/(m.volumes[neq-1-m.N])); //uj
-      AddLinearSolver(&sky,neq-1,neq-3,-(d.c*d.dt)/(2.0*m.volumes[neq-1-m.N])); //uj-1
-       
-      AddLinearSolver(&sky,neq-1,neq-2,0.0); //pj
-      AddLinearSolver(&sky,neq-1,neq-4,-(d.c*d.dt)/(2.0*m.volumes[neq-1-m.N]));//pj-1
-    }
-    else if (i==neq-2){ 
-      AddLinearSolver(&sky,neq-2,neq-2,1.0+(d.c*d.dt)/(m.volumes[neq-2-m.N])); //pj
-      AddLinearSolver(&sky,neq-2,neq-4,-(d.c*d.dt)/(2.0*m.volumes[neq-2-m.N])); //pj-1
-       
-      AddLinearSolver(&sky,neq-2,neq-1,0.0); //uj
-      AddLinearSolver(&sky,neq-2,neq-3,-(d.c*d.dt)/(2.0*m.volumes[neq-2-m.N]));//uj-1
-    } 
-    else if (i % 2 ==0) {
-      AddLinearSolver(&sky,i,i-2,-(d.c*d.dt)/(2.0*m.h)); //pj-1
-      AddLinearSolver(&sky,i,i,1.0+(d.c*d.dt)/(m.h)); //pj
-      AddLinearSolver(&sky,i,i+2,-(d.c*d.dt)/(2.0*m.h)); //pj+1
-      
-      AddLinearSolver(&sky,i,i-1,-(d.c*d.dt)/(2.0*m.h)); //uj-1
-      AddLinearSolver(&sky,i,i+1,0.0); //uj
-      AddLinearSolver(&sky,i,i+3,+(d.c*d.dt)/(2.0*m.h)); //uj+1
-      
-    }
-    else { 
-      AddLinearSolver(&sky,i,i-2,-(d.c*d.dt)/(2.0*m.h)); //uj-1
-      AddLinearSolver(&sky,i,i,1.0+(d.c*d.dt)/(m.h)); //uj
-      AddLinearSolver(&sky,i,i+2,-(d.c*d.dt)/(2.0*m.h)); //uj+1
-      
-      AddLinearSolver(&sky,i,i-3,-(d.c*d.dt)/(2.0*m.h)); //pj-1
-      AddLinearSolver(&sky,i,i-1,0.0); //pj
-      AddLinearSolver(&sky,i,i+1,+(d.c*d.dt)/(2.0*m.h)); //pj+1
-    }
-    sky.sol[i]=0.0;
-    
+  if(d.scheme == 1){
+     Assembly_matrix_upwind(&sky,&m,&d);  
   }
-
   
-   //DisplayLinearSolver(&sky);
   d.time=0; 
   for(int tstep=0;tstep<d.itermax;tstep++){
-
+    
     Solution_computation(m.N,m.centers,solution,&d);
     Rhs_computation(m.N,m.centers,rhs,&d);
 
@@ -216,17 +187,7 @@ int TestWaveDF(void){
 	}
       }
 
-    real pl=SolutionBC(m.N,0,m.centersBoundary[0],&d);
-    real pr=SolutionBC(m.N,0,m.centersBoundary[1],&d);
-    real ul=SolutionBC(m.N,1,m.centersBoundary[0],&d);
-    real ur=SolutionBC(m.N,1,m.centersBoundary[1],&d);
-    //printf("mmp %d %f %f %f %f\n ",numtest,pl,pr,ul,ur);
-    
-    sky.rhs[0]=sky.rhs[0]+(d.c*d.dt)/(2.0*m.h)*pl+(d.c*d.dt)/(2.0*m.h)*ul;
-    sky.rhs[1]=sky.rhs[1]+(d.c*d.dt)/(2.0*m.h)*ul+(d.c*d.dt)/(2.0*m.h)*pl;
-    sky.rhs[neq-2]=sky.rhs[neq-2]+(d.c*d.dt)/(2.0*m.h)*pr-(d.c*d.dt)/(2.0*m.h)*ur; // pressure right BC
-    sky.rhs[neq-1]=sky.rhs[neq-1]+(d.c*d.dt)/(2.0*m.h)*ur-(d.c*d.dt)/(2.0*m.h)*pr; // velocity right BC
-
+    Assembly_BC(&sky,&m,&d);
     Advanced_SolveLinearSolver(&sky,&simu);
 
     real error=0,norm=0;
@@ -327,10 +288,96 @@ void Rhs_computation(int Nwave,real * centers, real * rhs,Data *d){
   }
 }
 
+void Assembly_BC(LinearSolver *sky,MeshDF *m, Data *d){
 
-void Profil_matrix(LinearSolver *sky, int neq){
+  real pl=SolutionBC(m->N,0,m->centersBoundary[0],d);
+  real pr=SolutionBC(m->N,0,m->centersBoundary[1],d);
+  real ul=SolutionBC(m->N,1,m->centersBoundary[0],d);
+  real ur=SolutionBC(m->N,1,m->centersBoundary[1],d);
 
-  for(int i=0;i<neq;i++){
+  if(d->scheme == 1){
+    sky->rhs[0]=sky->rhs[0]+(d->c*d->dt)/(2.0*m->volumes[0]*d->eps)*pl+(d->c*d->dt)/(2.0*m->volumes[0]*d->eps)*ul;
+    sky->rhs[1]=sky->rhs[1]+(d->c*d->dt)/(2.0*m->volumes[0]*d->eps)*ul+(d->c*d->dt)/(2.0*m->volumes[0]*d->eps)*pl;
+    sky->rhs[sky->neq-2]=sky->rhs[sky->neq-2]+(d->c*d->dt)/(2.0*m->volumes[m->N-1]*d->eps)*pr;
+    sky->rhs[sky->neq-2]=sky->rhs[sky->neq-2]-(d->c*d->dt)/(2.0*m->volumes[m->N-1]*d->eps)*ur; // pressure right BC
+    sky->rhs[sky->neq-1]=sky->rhs[sky->neq-1]+(d->c*d->dt)/(2.0*m->volumes[m->N-1]*d->eps)*ur;
+    sky->rhs[sky->neq-1]=sky->rhs[sky->neq-1]-(d->c*d->dt)/(2.0*m->volumes[m->N-1]*d->eps)*pr; // velocity right BC
+  }
+
+}
+  
+void Assembly_matrix_upwind(LinearSolver *sky,MeshDF *m, Data *d){
+  int neq=sky->neq;
+  real Tc=0,Sc=0;
+  int cell=0;
+
+  Sc=(d->sigma*d->dt)/(d->eps*d->eps);
+  
+   for(int i=0;i<neq;i++){
+    if (i==0){
+      Tc=(d->c*d->dt)/(m->volumes[0]*d->eps);
+
+      
+      AddLinearSolver(sky,0,0,1.0+Tc); //pj
+      AddLinearSolver(sky,0,2,-0.5*Tc); //pj+1	    
+      AddLinearSolver(sky,0,1,Sc); //uj
+      AddLinearSolver(sky,0,3,+0.5*Tc); //uj+1
+    }
+    else if (i==1){
+      Tc=(d->c*d->dt)/(m->volumes[0]*d->eps);
+      
+      AddLinearSolver(sky,1,1,1.0+Sc+Tc); //uj
+      AddLinearSolver(sky,1,3,-0.5*Tc); //uj+1	   
+      AddLinearSolver(sky,1,0,0.0); //pj
+      AddLinearSolver(sky,1,2,+0.5*Tc); //pj+1
+    } 
+    else if (i==neq-1){
+      Tc=(d->c*d->dt)/(m->volumes[m->N-1]*d->eps);
+      
+      AddLinearSolver(sky,neq-1,neq-1,1.0+Sc+Tc); //uj
+      AddLinearSolver(sky,neq-1,neq-3,-0.5*Tc); //uj-1       
+      AddLinearSolver(sky,neq-1,neq-2,0.0); //pj
+      AddLinearSolver(sky,neq-1,neq-4,-0.5*Tc);//pj-1
+    }
+    else if (i==neq-2){
+      Tc=(d->c*d->dt)/(m->volumes[m->N-1]*d->eps);
+      
+      AddLinearSolver(sky,neq-2,neq-2,1.0+Tc); //pj
+      AddLinearSolver(sky,neq-2,neq-4,-0.5*Tc); //pj-1       
+      AddLinearSolver(sky,neq-2,neq-1,Sc); //uj
+      AddLinearSolver(sky,neq-2,neq-3,-0.5*Tc);//uj-1
+    } 
+    else if (i % 2 ==0) {
+      cell=i/2;
+      Tc=(d->c*d->dt)/(m->volumes[cell]*d->eps);
+      
+      AddLinearSolver(sky,i,i-2,-0.5*Tc); //pj-1
+      AddLinearSolver(sky,i,i,1.0+Tc); //pj
+      AddLinearSolver(sky,i,i+2,-0.5*Tc); //pj+1     
+      AddLinearSolver(sky,i,i-1,-0.5*Tc); //uj-1
+      AddLinearSolver(sky,i,i+1,Sc); //uj
+      AddLinearSolver(sky,i,i+3,+0.5*Tc); //uj+1
+      
+    }
+    else {
+      cell=i/2;
+      Tc=(d->c*d->dt)/(m->volumes[cell]*d->eps);    
+      
+      AddLinearSolver(sky,i,i-2,-0.5*Tc); //uj-1
+      AddLinearSolver(sky,i,i,1.0+Sc+Tc); //uj
+      AddLinearSolver(sky,i,i+2,-0.5*Tc); //uj+1     
+      AddLinearSolver(sky,i,i-3,-0.5*Tc); //pj-1
+      AddLinearSolver(sky,i,i-1,0.0); //pj
+      AddLinearSolver(sky,i,i+1,+0.5*Tc); //pj+1
+    }
+    sky->sol[i]=0.0;    
+  }
+}
+  
+void Profil_matrix(LinearSolver *sky){
+  int neq=sky->neq;
+
+  for(int i=0;i<sky->neq;i++){
     if (i==0){ 
       IsNonZero(sky,0,0);
       IsNonZero(sky,0,1);
