@@ -349,6 +349,49 @@ The discrete equivalent of the system \eqref{EQ_FINALES_SANS_ACCROISSEMENT} is t
 %                    SUBSECTION 2
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Speed of the Schur complement}
+In this section we propose to compare the propagation given by the full problem and by the schur decomposition.
+The hyperbolic system is given by
+$$
+\partial_t \mathbf{V}+A_x\partial_x \mathbf{V}+A_y\partial_y \mathbf{V}=0
+$$
+with 
+\begin{equation*}
+A_x=\begin{pmatrix}
+0 & c&0\\
+c & 0&0\\
+0 & 0 &0\\
+\end{pmatrix}
+\end{equation*}
+and 
+\begin{equation*}
+A_y=\begin{pmatrix}
+0 & 0&c\\
+0 & 0&0\\
+c & 0 &0\\
+\end{pmatrix}
+\end{equation*}
+Now we can diagonalize in the direction $\mathbf{n}\in S^1$ each matrices and after some computation we obtain three transport equations (TOOD DOO proof)
+$$
+\left\{
+\begin{split}
+&\left[\partial_t-c (\mathbf{n},\nabla)\right]\left(p-\frac{1}{c}(\boldsymbol{u},\boldsymbol{n})\right)=0\\
+&\partial_t \left(\boldsymbol{u}\times \boldsymbol{n}\right)=0 \\
+&\left[\partial_t+(\mathbf{n},\nabla)\right]\left(p+\frac{1}{c}(\boldsymbol{u},\boldsymbol{n})\right)=0
+\end{split}
+\right.
+$$
+Now we can obtain the following equation
+\begin{equation*}
+\left\{\begin{split}
+&\partial_t p+ \mathbf{n}\cdot\nabla (\boldsymbol{u},\boldsymbol{n})=0,\\
+&\partial_t  \frac{1}{c}(\boldsymbol{u},\boldsymbol{n}) +c \mathbf{n} \cdot \nabla p=0.
+\end{split}
+\right.
+\end{equation*}
+TOOO DOOO
+we obtain second order operator witch depend of $\mathbf{n}$ for $p$ and for $(\mathbf{u},\mathbf{n})$. If we take plane wave with 
+$\mathbf{k}$ collinear to the normal vector we obtain that this two quantities are propagate at the velocity $\pm c$.
+
 \begin{Proposition}
 The Schur complement of the jacobian matrix $J_{ac}$ has exactly the same two phase speeds $\pm \theta c$ that the wave operator.
 \end{Proposition}
