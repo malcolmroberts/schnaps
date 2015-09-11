@@ -1088,7 +1088,6 @@ void InterfaceAssembly(Simulation *simu,  LinearSolver *solver,real theta, real 
 	  for(int iv = 0; iv < m; iv++) {
 	    wL[iv] = (iv == iv1);
 	  }
-
 	  real flux[m];
 	  fL->model.BoundaryFlux(xpg, fL->tnow, wL, vnds, flux);
 

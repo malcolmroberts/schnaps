@@ -283,7 +283,7 @@ void ContinuousToDiscontinuous_Copy(ContinuousSolver * cs,LinearSolver* lsol){
 
 void ExactDirichletContinuousMatrix(void * cs,LinearSolver* lsol){
   ContinuousSolver * ps=cs;
-  
+
   field* f0 = &ps->simu->fd[0];
 
   for(int ino=0; ino<ps->nb_fe_nodes; ino++){
@@ -306,6 +306,7 @@ void ExactDirichletContinuousMatrix(void * cs,LinearSolver* lsol){
       int locfaL = ps->simu->macromesh.face2elem[4 * ifa + 1];
       int ie = ps->simu->macromesh.face2elem[4 * ifa ];
       int ieR = ps->simu->macromesh.face2elem[4 * ifa + 2];
+      assert(ieR < 0);
       if (ieR<0){
         field *f = &ps->simu->fd[ie];
 
@@ -337,6 +338,123 @@ void ExactDirichletContinuousMatrix(void * cs,LinearSolver* lsol){
           ps->lsol.rhs[ipot_fe] = flux0[ps->list_of_var[var]];
         }
       }
+    }
+  }
+}
+
+  
+void BoundaryConditionCGAssembly(void * cs,LinearSolver* lsol){
+  ContinuousSolver * ps=cs;
+  
+  field* f0 = &ps->simu->fd[0];
+
+  if (!ps->lsol.mat_is_assembly){  
+
+    for (int i=0; i<ps->simu->macromesh.nboundaryfaces;i++){
+      int ifa = ps->simu->macromesh.boundaryface[i];
+      int locfaL = ps->simu->macromesh.face2elem[4 * ifa + 1];
+      int ie = ps->simu->macromesh.face2elem[4 * ifa ];
+      int ieR = ps->simu->macromesh.face2elem[4 * ifa + 2];
+      assert(ieR < 0);
+      if (ieR<0){
+	field *f = &ps->simu->fd[ie];
+	
+	for(int ipglf = 0;ipglf < NPGF(f->deg,f->raf,locfaL); ipglf++){
+	  real xpgref[3], xpgref_in[3], wpg;
+          
+	  // Get the coordinates of the Gauss point and coordinates of a
+	  // point slightly inside the opposite element in xref_in
+	  int ipg = ref_pg_face(f->deg, f->raf, locfaL, ipglf, xpgref, &wpg, xpgref_in);
+	  int ino_dg = ipg + ie * ps->npgmacrocell;
+	  int ino_fe = ps->dg_to_fe_index[ino_dg];
+	  // Normal vector at gauss point ipgL
+	  real vnds[3], xpg[3];
+	  {
+	    real dtau[3][3], codtau[3][3];
+	    Ref2Phy(f->physnode,
+		    xpgref,
+		    NULL, locfaL, // dpsiref, ifa
+		    xpg, dtau,
+		    codtau, NULL, vnds); // codtau, dpsi, vnds
+	  }
+          
+	  // the boundary flux is an affine function
+	  real flux0[m], wL[m];
+	  for(int iv = 0; iv < m; iv++) {
+	    wL[iv] = 0;
+	  }
+	  
+	  f0->model.BoundaryFlux(xpg, f0->tnow, wL, vnds, flux0);
+	  for(int iv1 = 0; iv1 < m; iv1++) {
+	    //int imem1 = fL->varindex(fL->deg, fL->raf,fL->model.m, ipgL, iv1) + offsetL;
+	    int ipot_fe1 = ino_fe*ps->nb_phy_vars + iv1;
+	    for(int iv = 0; iv < m; iv++) {
+	      wL[iv] = (iv == iv1);
+	    }
+	    
+	    real flux[m];
+	    f0->model.BoundaryFlux(xpg, f0->tnow, wL, vnds, flux);
+	    
+	    for(int iv2 = 0; iv2 < m; iv2++) {
+	      // The basis functions is also the gauss point index
+	      //int imem2 = fL->varindex(fL->deg, fL->raf,fL->model.m, ipgL, iv2) + offsetL;
+	      int ipot_fe2 = ino_fe*ps->nb_phy_vars + iv2;
+	      real val =  (flux[iv2]-flux0[iv2]) * wpg;		    
+	      AddLinearSolver(lsol, ipot_fe2, ipot_fe1, val);
+	    }
+	  }	    
+	}
+      }
+    }
+
+
+
+  
+    ps->lsol.mat_is_assembly=true;
+  }
+  
+  //for(int var =0; var < ps->nb_phy_vars; var++){ 
+  //for(int ie = 0; ie < ps->simu->macromesh.nbelems; ie++){  
+  for (int i=0; i<ps->simu->macromesh.nboundaryfaces;i++){
+    int ifa = ps->simu->macromesh.boundaryface[i];
+    int locfaL = ps->simu->macromesh.face2elem[4 * ifa + 1];
+    int ie = ps->simu->macromesh.face2elem[4 * ifa ];
+    int ieR = ps->simu->macromesh.face2elem[4 * ifa + 2];
+    assert(ieR < 0);
+    if (ieR<0){
+      field *f = &ps->simu->fd[ie];
+
+      for(int ipglf = 0;ipglf < NPGF(f->deg,f->raf,locfaL); ipglf++){
+	real xpgref[3], xpgref_in[3], wpg;
+          
+	// Get the coordinates of the Gauss point and coordinates of a
+	// point slightly inside the opposite element in xref_in
+	int ipg = ref_pg_face(f->deg, f->raf, locfaL, ipglf, xpgref, &wpg, xpgref_in);
+	int ino_dg = ipg + ie * ps->npgmacrocell;
+	int ino_fe = ps->dg_to_fe_index[ino_dg];
+	// Normal vector at gauss point ipgL
+	real vnds[3], xpg[3];
+	{
+	  real dtau[3][3], codtau[3][3];
+	  Ref2Phy(f->physnode,
+		  xpgref,
+		  NULL, locfaL, // dpsiref, ifa
+		  xpg, dtau,
+		  codtau, NULL, vnds); // codtau, dpsi, vnds
+	}
+          
+	// the boundary flux is an affine function
+	real w0[f->model.m],flux0[f->model.m];
+	for(int ivv=0; ivv < f0->model.m; ivv++) w0[ivv]=0;
+	f->model.BoundaryFlux(xpg, f->tnow, w0, vnds, flux0);
+	for(int var=0; var < f0->model.m; var++){
+	  int ipot = f0->varindex(f0->deg,f0->raf,f0->model.m,
+				  ipg,ps->list_of_var[var]);
+	  int ipot_fe = ino_fe*ps->nb_phy_vars + var;
+	  real val = flux0[ps->list_of_var[var]] * wpg;
+	  ps->lsol.rhs[ipot_fe] -= val;
+	}
+      }	    
     }
   }
 }
