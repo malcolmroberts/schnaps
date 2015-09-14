@@ -19,7 +19,7 @@ real L2VelError(field * f,real* x,real *w);
 
 real local_kinetic_energy(field * f,real* x,real *w);
 
-void Energies(field* f,real * w,real k_energy, real e_energy, real t_energy,int first_diag);
+void Energies(field *f, real *w, real k_energy, real e_energy, real t_energy);
 
 void Charge_total(field* f,real * w, real t_charge,int first_diag);
 

@@ -3,44 +3,47 @@
 #include "quantities_vp.h"
 #include "linear_solver.h"
 
-
-int CompareFatNode(const void* a,const void* b){
-
+int CompareFatNode(const void* a, const void* b)
+{
   FatNode* fna = (FatNode*) a;
   FatNode* fnb = (FatNode*) b;
 
-  int r = fna->x_int[0]-fnb->x_int[0];
+  int r = fna->x_int[0] - fnb->x_int[0];
   if (r==0 || r==-1 || r==1)
-    r = fna->x_int[1]-fnb->x_int[1];
+    r = fna->x_int[1] - fnb->x_int[1];
   if (r==0 || r==-1 || r==1)
-    r = fna->x_int[2]-fnb->x_int[2];
+    r = fna->x_int[2] - fnb->x_int[2];
   if (r==0 || r==-1 || r==1)
     r=0;
   return r;
-
 }
 
-int BuildFatNodeList(Simulation *simu,FatNode* fn_list){
-
-
+int BuildFatNodeList(field *f, FatNode* fn_list)
+{
   int big_int = 1 << 28; // 2**28 = 268 435 456
 
   int ino=0;
-  real* xmin=simu->macromesh.xmin;
-  real* xmax=simu->macromesh.xmax;
+  real* xmin = f->macromesh.xmin;
+  real* xmax = f->macromesh.xmax;
   int nb_dg_nodes;
-  for(int ie = 0; ie < simu->macromesh.nbelems; ie++) {
+  for(int ie = 0; ie < f->macromesh.nbelems; ie++) {
     
-    field *f = &simu->fd[ie];
+    nb_dg_nodes =  NPG(f->deg, f->raf) * f->macromesh.nbelems;
 
-    nb_dg_nodes =  NPG(f->deg, f->raf) * simu->macromesh.nbelems;
-
-    
     for(int ipg = 0; ipg < NPG(f->deg, f->raf); ipg++) {
       real xpg[3];
       real xref[3];
       ref_pg_vol(f->deg, f->raf, ipg, xref, NULL, NULL);
-      Ref2Phy(f->physnode,
+
+      real physnode[20][3];
+      for(int inoloc = 0; inoloc < 20; inoloc++) {
+	int ino = f->macromesh.elem2node[20*ie+inoloc];
+	physnode[inoloc][0] = f->macromesh.node[3 * ino + 0];
+	physnode[inoloc][1] = f->macromesh.node[3 * ino + 1];
+	physnode[inoloc][2] = f->macromesh.node[3 * ino + 2];
+      }
+
+      Ref2Phy(physnode,
 	      xref,
 	      0, -1, // dphiref, ifa
               xpg, NULL,
@@ -52,12 +55,13 @@ int BuildFatNodeList(Simulation *simu,FatNode* fn_list){
 
       // convert points to "pixels" and round to nearest integer
 
-      fn_list[ino].x_int[0]=(int) ((xpg[0]-xmin[0])/(xmax[0]-xmin[0]) * big_int)  ;
-      fn_list[ino].x_int[1]=(int) ((xpg[1]-xmin[1])/(xmax[1]-xmin[1]) * big_int)  ;
-      fn_list[ino].x_int[2]=(int) ((xpg[2]-xmin[2])/(xmax[2]-xmin[2]) * big_int)  ;
-      
+      fn_list[ino].x_int[0] = (int) ((xpg[0] - xmin[0]) / (xmax[0] - xmin[0])
+				     * big_int);
+      fn_list[ino].x_int[1] =(int) ((xpg[1] - xmin[1]) / (xmax[1] - xmin[1])
+				    * big_int);
+      fn_list[ino].x_int[2]=(int) ((xpg[2] - xmin[2]) / (xmax[2] - xmin[2])
+				   * big_int);
       fn_list[ino].dg_index = ino;
-
       ino++;
     }
   }
@@ -73,7 +77,6 @@ int BuildFatNodeList(Simulation *simu,FatNode* fn_list){
     fn_list[ino].fe_index=fe_index;
   }
   
-
   /* for(int ino=0;ino<nb_dg_nodes;ino++){ */
   /*   printf("ino=%d xyz= %f %f %f i_xyz=%d %d %d dg_index=%d fe_index=%d\n",ino, */
   /* 	   fn_list[ino].x[0],fn_list[ino].x[1],fn_list[ino].x[2], */
@@ -82,38 +85,32 @@ int BuildFatNodeList(Simulation *simu,FatNode* fn_list){
   /* 	   fn_list[ino].fe_index); */
   /* } */
 
-  
-
   return fe_index+1;
-
 }
 
-void InitContinuousSolver(void * cs, Simulation* simu,int type_bc,int nb_phy_vars, int * listvar){
+void InitContinuousSolver(void *cs, field *f, int type_bc, int nb_phy_vars,
+			  int *listvar)
+{
+  ContinuousSolver *ps = cs;
 
-  ContinuousSolver * ps=cs;
+  ps->f = f;
 
-  ps->simu = simu;
+  ps->type_bc = type_bc;
+  ps->nb_phy_vars = nb_phy_vars;
+  ps->list_of_var = listvar;
 
-  ps->type_bc=type_bc;
-  ps->nb_phy_vars=nb_phy_vars;
-  ps->list_of_var=listvar;
-
-  ps->postcomputation_assembly=NULL;
-  ps->matrix_assembly=NULL;
-  ps->rhs_assembly=NULL;
+  ps->postcomputation_assembly = NULL;
+  ps->matrix_assembly = NULL;
+  ps->rhs_assembly = NULL;
  
-  field *f0 = &simu->fd[0];
-
-  ps->nb_dg_nodes = NPG(f0->deg, f0->raf)
-    * simu->macromesh.nbelems;
+  ps->nb_dg_nodes = NPG(f->deg, f->raf) * f->macromesh.nbelems;
 
   ps->nb_dg_dof= ps->nb_dg_nodes * ps->nb_phy_vars;
-
   
   ps->fn_list = malloc(ps->nb_dg_nodes * sizeof(FatNode));
   assert(ps->fn_list);
   // paste the nodes of the DG mesh
-  ps->nb_fe_nodes=BuildFatNodeList(simu,ps->fn_list);
+  ps->nb_fe_nodes=BuildFatNodeList(f, ps->fn_list);
   ps->nb_fe_dof= ps->nb_fe_nodes * ps->nb_phy_vars;
 
   printf("nb dg nodes=%d ; nb fe nodes=%d\n",ps->nb_dg_nodes,ps->nb_fe_nodes);
@@ -136,31 +133,31 @@ void InitContinuousSolver(void * cs, Simulation* simu,int type_bc,int nb_phy_var
     ps->is_boundary_node[ino] = 0;
   }
 
-  int nraf[3] = {f0->raf[0],f0->raf[1],f0->raf[2]};
+  int nraf[3] = {f->raf[0],f->raf[1],f->raf[2]};
   
-  int deg[3] = {f0->deg[0],f0->deg[1],f0->deg[2]};
+  int deg[3] = {f->deg[0],f->deg[1],f->deg[2]};
 
-  int npg[3] = {f0->npg[0],f0->npg[1],f0->npg[2]};
+  int npg[3] = {deg[0] + 1, deg[1] + 1, deg[2] + 1};
 
   ps->nnodes = npg[0] * npg[1] * npg[2];
   ps->npgmacrocell = ps->nnodes *  nraf[0] * nraf[1] * nraf[2];
 
   
-  ps->nbel = simu->macromesh.nbelems * nraf[0] * nraf[1] * nraf[2];
+  ps->nbel = f->macromesh.nbelems * nraf[0] * nraf[1] * nraf[2];
 
-  for (int ie = 0; ie < simu->macromesh.nbelems; ie++) {
+  for (int ie = 0; ie < f->macromesh.nbelems; ie++) {
     int nbfa = 6;
-    if (simu->macromesh.is2d)  nbfa = 4; 
-    if (simu->macromesh.is1d) nbfa = 2;
+    if (f->macromesh.is2d)  nbfa = 4; 
+    if (f->macromesh.is1d) nbfa = 2;
     for(int ii = 0; ii < nbfa; ii++) {
       int ifa = ii;
-      if (simu->macromesh.is1d) ifa = 2 * ii + 1;
-      int ieR = simu->macromesh.elem2elem[6*ie+ifa];
+      if (f->macromesh.is1d) ifa = 2 * ii + 1;
+      int ieR = f->macromesh.elem2elem[6*ie+ifa];
       if (ieR < 0) {
 	for(int ipgf = 0; ipgf < NPGF(deg,nraf, ifa); ipgf++) {
 	  printf("NPGF=%d ipgf=%d\n",NPGF(deg,nraf, ifa),ipgf);
 	  int ipg = ref_pg_face(deg,nraf, ifa, ipgf,
-		      NULL, NULL, NULL);
+				NULL, NULL, NULL);
 	  int ino_dg = ipg + ie * ps->npgmacrocell;
 	  int ino_fe = ps->dg_to_fe_index[ino_dg];
 	  ps->is_boundary_node[ino_fe] = 1;
@@ -190,21 +187,18 @@ void InitContinuousSolver(void * cs, Simulation* simu,int type_bc,int nb_phy_var
   assert(ps->lsol.sol);
 
   AllocateContinuousMatrix(ps,&ps->lsol);
-
-
 }
 
-
-void SolveContinuous2D(void* cs){
-
-  ContinuousSolver * ps=cs;
+void SolveContinuous2D(void *cs)
+{
+  ContinuousSolver *ps=cs;
   
-  field* f0 = &ps->simu->fd[0];
+  field *f = ps->f;
 
   printf("Init...\n");
   
-  int nraf[3] = {f0->raf[0],f0->raf[1],f0->raf[2]};
-  int deg[3] = {f0->deg[0],f0->deg[1],f0->deg[2]};
+  int nraf[3] = {f->raf[0],f->raf[1],f->raf[2]};
+  int deg[3] = {f->deg[0],f->deg[1],f->deg[2]};
 
   
   // number of equation of the Poisson solver
@@ -249,40 +243,36 @@ void SolveContinuous2D(void* cs){
   if(ps->postcomputation_assembly != NULL){
     ps->postcomputation_assembly(ps,&ps->lsol);
   }
-
-
   printf("End SolvePoisson2D.\n");
-
 }
 
-
-void ContinuousToDiscontinuous_Copy(ContinuousSolver * cs,LinearSolver* lsol){
-  
-  field* f0 = &cs->simu->fd[0];
+void ContinuousToDiscontinuous_Copy(ContinuousSolver * cs,LinearSolver* lsol)
+{
+  field *f = cs->f;
 
   printf("Copy...\n");
-
   
   // copy the potential at the right place
   for(int var =0; var < cs->nb_phy_vars; var++){ 
-    for(int ie = 0; ie < cs->simu->macromesh.nbelems; ie++){  
+    for(int ie = 0; ie < cs->f->macromesh.nbelems; ie++){  
       for(int ipg = 0;ipg < cs->npgmacrocell; ipg++){
 	int ino_dg = ipg + ie * cs->npgmacrocell;
 	int ino_fe = cs->dg_to_fe_index[ino_dg];
-	int ipot = f0->varindex(f0->deg,f0->raf,f0->model.m,
-				ipg,cs->list_of_var[var]);
-	cs->simu->fd[ie].wn[ipot]=cs->lsol.sol[ino_fe];
-	}
+	int ipot = f->varindex(f->deg, f->raf, f->model.m,
+			       ie, ipg, cs->list_of_var[var]);
+
+	// FIXME!!!!!!!!
+	//cs->f->wn[ipot]=cs->lsol.sol[ino_fe];
+      }
     }
   }
-
 }
 
-
-void ExactDirichletContinuousMatrix(void * cs,LinearSolver* lsol){
+void ExactDirichletContinuousMatrix(void * cs, LinearSolver* lsol)
+{
   ContinuousSolver * ps=cs;
   
-  field* f0 = &ps->simu->fd[0];
+  field *f = ps->f;
 
   for(int ino=0; ino<ps->nb_fe_dof; ino++){
     real bigval = 1e20;
@@ -291,30 +281,34 @@ void ExactDirichletContinuousMatrix(void * cs,LinearSolver* lsol){
   ps->lsol.mat_is_assembly=true;
   
   for(int var =0; var < ps->nb_phy_vars; var++){ 
-    for(int ie = 0; ie < ps->simu->macromesh.nbelems; ie++){  
+    for(int ie = 0; ie < ps->f->macromesh.nbelems; ie++){  
       for(int ipg = 0;ipg < ps->npgmacrocell; ipg++){
 	int ino_dg = ipg + ie * ps->npgmacrocell;
 	int ino_fe = ps->dg_to_fe_index[ino_dg];
-	int ipot = f0->varindex(f0->deg,f0->raf,f0->model.m,
-				ipg,ps->list_of_var[var]);
+	int ipot = f->varindex(f->deg, f->raf, f->model.m,
+			       ie, ipg, ps->list_of_var[var]);
 	if (ps->is_boundary_node[ino_fe]){
 	  real bigval = 1e20;
-	  ps->lsol.rhs[ino_fe] = ps->simu->fd[ie].wn[ipot] * bigval;
+
+	  // FIXME!!!!!!
+	  //ps->lsol.rhs[ino_fe] = ps->f->fd[ie].wn[ipot] * bigval;
+
+
 	  //printf("ino_dg=%d ino_fe=%d ipot=%d\n",ino_dg,ino_fe,ipot);
 	}
       }
     }
   }
 
-  
 }
 
-void AllocateContinuousMatrix(void *cs,LinearSolver* lsol){
-    ContinuousSolver * ps=cs;
+void AllocateContinuousMatrix(void *cs,LinearSolver* lsol)
+{
+  ContinuousSolver * ps=cs;
 
   //static bool is_lu = false;
 
-  field* f0 = &ps->simu->fd[0];
+  field *f = ps->f;
   printf("Init...\n");
 
   // number of equation of the Poisson solver
@@ -324,16 +318,16 @@ void AllocateContinuousMatrix(void *cs,LinearSolver* lsol){
   // = number of velocity glops + 1 (potential)
   int m = ps->nb_phy_vars;
 
-  int nraf[3] = {f0->raf[0],f0->raf[1],f0->raf[2]};
-  int deg[3] = {f0->deg[0],f0->deg[1],f0->deg[2]};
+  int nraf[3] = {f->raf[0],f->raf[1],f->raf[2]};
+  int deg[3] = {f->deg[0],f->deg[1],f->deg[2]};
   
-  if (ps->simu->macromesh.is2d) {
+  if (ps->f->macromesh.is2d) {
     assert( nraf[0] == nraf[1]);
     assert( nraf[2] == 1);
     assert(deg[2] == 0);
   }
   
-  if (ps->simu->macromesh.is1d) {
+  if (ps->f->macromesh.is1d) {
     assert( nraf[1] == 1);
     assert(deg[1] == 0);
     assert( nraf[2] == 1);
@@ -357,16 +351,8 @@ void AllocateContinuousMatrix(void *cs,LinearSolver* lsol){
 	}
       }
     }
-    
-    
     AllocateLinearSolver(&ps->lsol);
   } 
-   
-
 }
-
-
-
-
 
 

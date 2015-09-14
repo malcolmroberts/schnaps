@@ -3,13 +3,15 @@
 #ifndef _SCHNAPS_H
 #define _SCHNAPS_H
 
+/*! \mainpage 
+Solveur pour les lois de Conservation Hyperboliques Non-linéaires
+Appliqué aux PlasmaS
 
 
-/*! \mainpage  Solveur pour les lois de Conservation Hyperboliques Non-linéaires Appliqué aux PlasmaS
-
-
-\section quoi Quesaco ?
-C'est un solveur pour résoudre des systèmes hyperboliques de lois de conservations. Il est basé sur la méthode Galerkin Discontinu. SCHNAPS peut exploiter les accélérateurs type GPU via OpenCL.
+\section quoi Quesaco ?  
+C'est un solveur pour résoudre des systèmes hyperboliques de lois de
+conservations. Il est basé sur la méthode Galerkin Discontinu. SCHNAPS
+peut exploiter les accélérateurs type GPU via OpenCL.
 
 \section lic Licence
 
@@ -18,7 +20,6 @@ SCHNAPS est sous licence CeCILL:
 http://www.cecill.info/licences/Licence_CeCILL_V1.1-US.html
 
 (very similar to GPL)
-
 
 \section donload Téléchargement
 
@@ -81,23 +82,13 @@ firefox html/index.html
 
 */
 
-
-
-
-
-
-
-
-
-
-
-
 #include "global.h"
 #include "geometry.h"
-#include "simulation.h"
+//#include "simulation.h"
 #include "pic.h"
 #include "skyline.h"
 #include "linear_solver.h"
+
 #ifdef _WITH_OPENCL
 #include "field_cl.h"
 #include "clinfo.h"

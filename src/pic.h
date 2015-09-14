@@ -1,13 +1,16 @@
 #ifndef _PIC_H
 #define _PIC_H
 
+#include <assert.h>
+#include <time.h>
 #include "schnaps.h"
 #include <math.h>
+#include "macromesh.h"
+#include "field.h"
 
 //! \brief struct for managing a set of particles
 //! and the Particle-In-Cell (PIC) method
 typedef struct PIC {
-
   //!  number of particles
   int nbparts;
 
@@ -40,17 +43,14 @@ void InitPIC(PIC* pic,int n);
 //! \param[out] v a pseudo-random gaussian vector 
 void BoxMuller3d(real *v,int* k1, int* k2);
 
-
-
 //! \brief free the allocated arrays
 //! \param[inout] pic the PIC object
 void FreePIC(PIC* pic);
 
-
 //! \brief create particles with gaussian velocity 
 //! \param[inout] pic PIC object
 //! \param[in] m a macromesh on which the particles are created
-void CreateParticles(PIC* pic,MacroMesh *m);
+void CreateParticles(PIC* pic, MacroMesh *m);
 
 //! \brief create particles on a coil of radius one
 //! \param[inout] pic PIC object
@@ -59,16 +59,13 @@ void CreateCoil2DParticles(PIC* pic,MacroMesh *m);
 
 
 //! \brief compute charge and current associated to particles
-//! \param[in] simu a simulation (containing a PIC struct)
-void AccumulateParticles(void *simu, real *w);
-
+void AccumulateParticles(PIC* pic, field *f);
 
 //! brief pseudo-random van der corput number generator
 //! \param[in] n index of the number in the sequence
 //! \param[in] k1 a prime number
 //! \param[in] k2 a prime number k1 > k2 !!
-real corput(int n,int k1,int k2);
-
+real corput(int n, int k1, int k2);
 
 //! brief create a gmsh file for plotting the particles
 //! \param[in] pic a PIC struct
@@ -78,6 +75,6 @@ void PlotParticles(PIC* pic,MacroMesh *m);
 //! brief push particles with a given field
 //! \param[inout] pic a struct PIC describing the particles
 //! \param[in] f a field
-void PushParticles(Simulation *simu,PIC* pic);
+void PushParticles(field *f, PIC *pic);
 
 #endif

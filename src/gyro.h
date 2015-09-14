@@ -57,9 +57,9 @@ void GyroImposedData(const real* x, const real t,real* w);
 //! \returns value of the distribution function
 real Gyro_ImposedKinetic_Data(const real* x, const real t,real v);
 
-//! \brief compute gyro L2 error in x and v
-//! \param[in] f : a field
-real GyroL2_Kinetic_error(field* f);
+/* //! \brief compute gyro L2 error in x and v */
+/* //! \param[in] f : a field */
+/* real GyroL2_Kinetic_error(field* f); */
 
 //! \brief compute square of velocity L2 error
 //! \param[in] x,t : space and time position

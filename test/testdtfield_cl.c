@@ -6,21 +6,9 @@
 #include <math.h>
 #include <string.h>
 
-int TestDtfield_CL(void);
 
-int main(void) {
-  int resu = TestDtfield_CL();
-
-  if (resu) 
-    printf("Dtfield_CL test OK !\n");
-  else 
-    printf("Dtfield_CL test failed !\n");
-
-  return !resu;
-} 
-
-int TestDtfield_CL(void){
-
+int TestDtfield_CL()
+{
    bool test = true; 
 
   if(!cldevice_is_acceptable(nplatform_cl, ndevice_cl)) {
@@ -29,11 +17,10 @@ int TestDtfield_CL(void){
   }
   
   MacroMesh mesh;
-  char *mshname = "../test/disque2d.msh";
+  char *mshname = "../test/testmacromesh.msh";
   //char *mshname = "../test/unit-cube.msh";
   
-  ReadMacroMesh(&mesh,"../test/testmacromesh.msh");
-  //ReadMacroMesh(&mesh,"../test/testcube2.msh");
+  ReadMacroMesh(&mesh, mshname);
   Detect2DMacroMesh(&mesh);
   BuildConnectivity(&mesh);
 
@@ -52,8 +39,8 @@ int TestDtfield_CL(void){
   model.InitData = TransInitData2d;
   model.ImposedData = TransImposedData2d;
  
-  int deg[]={2, 2, 0};
-  int raf[]={4, 4, 1};
+  int deg[] = {2, 2, 0};
+  int raf[] = {4, 4, 1};
 
   char buf[1000];
   sprintf(buf, "-D _M=%d", model.m);
@@ -64,7 +51,6 @@ int TestDtfield_CL(void){
 
   sprintf(buf, " -D BOUNDARYFLUX=%s", "TransBoundaryFlux2d");
   strcat(cl_buildoptions, buf);
-
 
 #else
   // 3D version
@@ -77,8 +63,8 @@ int TestDtfield_CL(void){
   model.InitData = TestTransInitData;
   model.ImposedData = TestTransImposedData;
 
-  int deg[]={2, 2, 2};
-  int raf[]={3, 3, 3};
+  int deg[] = {2, 2, 2};
+  int raf[] = {3, 3, 3};
   
 #endif
 
@@ -122,4 +108,15 @@ int TestDtfield_CL(void){
   test = (maxerr < _SMALL * 10);
 
   return test;
+}
+
+int main(void) {
+  int resu = TestDtfield_CL();
+
+  if (resu) 
+    printf("Dtfield_CL test OK !\n");
+  else 
+    printf("Dtfield_CL test failed !\n");
+
+  return !resu;
 }

@@ -120,9 +120,7 @@ void GyroImposedData(const real x[3], const real t, real w[])
   w[_INDEX_EX]=0;//1;
   w[_INDEX_EY]=0;//1;
   w[_INDEX_EZ]=0;
-
 }
-
 
 real Gyro_ImposedKinetic_Data(const real x[3], const real t, real v)
 {
@@ -132,49 +130,57 @@ real Gyro_ImposedKinetic_Data(const real x[3], const real t, real v)
   return f;
 }
 
-real GyroL2_Kinetic_error(field* f)
-{
-  real error=0;
-  real error_space=0;
-  real moy=0; // mean value
-  real moy_space=0;
+/* real GyroL2_Kinetic_error(field *f) */
+/* { */
+/*   real error = 0; */
+/*   real error_space = 0; */
+/*   real moy = 0; // mean value */
+/*   real moy_space = 0; */
+/*   // loop on the glops (for numerical integration) */
+/*   for(int ipg = 0; ipg < NPG(f->deg, f->raf); ipg++) { */
+/*       real xpgref[3], xphy[3], wpg; */
+/*       real dtau[3][3], codtau[3][3]; */
 
-
-    // loop on the glops (for numerical integration)
-  for(int ipg=0;ipg<NPG(f->deg, f->raf);ipg++){
-      real xpgref[3],xphy[3],wpg;
-      real dtau[3][3],codtau[3][3];//,xpg[3];
-      // get the coordinates of the Gauss point
-      ref_pg_vol(f->deg, f->raf, ipg, xpgref, &wpg, NULL);
-      Ref2Phy(f->physnode, // phys. nodes
-	      xpgref,  // xref
-	      NULL,-1, // dpsiref,ifa
-	      xphy,dtau,  // xphy,dtau
-	      codtau,NULL,NULL); // codtau,dpsi,vnds
-      real det
-	= dtau[0][0] * codtau[0][0]
-	+ dtau[0][1] * codtau[0][1]
-	+ dtau[0][2] * codtau[0][2]; 
-      real w[f->model.m];
-      for(int iv=0;iv<f->model.m;iv++){
-	int imem=f->varindex(f->deg, f->raf, f->model.m,ipg,iv);
-	w[iv]=f->wn[imem];
-      }
-      // get the exact value
-      error+=GyroL2VelError(xphy,f->tnow,w)*wpg*det;
-    }
+/*       // get the coordinates of the Gauss point */
+/*       ref_pg_vol(f->deg, f->raf, ipg, xpgref, &wpg, NULL); */
+      
+/*       real physnode[20][3]; */
+/*       for(int inoloc = 0; inoloc < 20; inoloc++) { */
+/* 	int ino = f->macromesh.elem2node[20 * ie + inoloc]; */
+/* 	physnode[inoloc][0] = f->macromesh.node[3 * ino + 0]; */
+/* 	physnode[inoloc][1] = f->macromesh.node[3 * ino + 1]; */
+/* 	physnode[inoloc][2] = f->macromesh.node[3 * ino + 2]; */
+/*       } */
+      
+/*       Ref2Phy(physnode, // phys. nodes */
+/* 	      xpgref,  // xref */
+/* 	      NULL, -1, // dpsiref,ifa */
+/* 	      xphy, dtau,  // xphy,dtau */
+/* 	      codtau, NULL, NULL); // codtau,dpsi,vnds */
+/*       real det */
+/* 	= dtau[0][0] * codtau[0][0] */
+/* 	+ dtau[0][1] * codtau[0][1] */
+/* 	+ dtau[0][2] * codtau[0][2];  */
+/*       real w[f->model.m]; */
+/*       for(int iv=0;iv<f->model.m;iv++){ */
+/* 	int imem=f->varindex(f->deg, f->raf, f->model.m,ipg,iv); */
+/* 	w[iv]=f->wn[imem]; */
+/*       } */
+/*       // get the exact value */
+/*       error+=GyroL2VelError(xphy,f->tnow,w)*wpg*det; */
+/*     } */
   
-  //moy=moy+weight*moy_space;
+/*   //moy=moy+weight*moy_space; */
 
-  return sqrt(error);
-  //return sqrt(error)/sqrt(moy);
-}
+/*   return sqrt(error); */
+/*   //return sqrt(error)/sqrt(moy); */
+/* } */
 
 //! \brief compute compute the source term of the collision
 //! model: electric force + true collisions
 void GyroSource(const real *x, const real t, const real *w, real *source)
 {
-  real Ez=w[_INDEX_EZ]; // electric field
+  real Ez = w[_INDEX_EZ]; // electric field
   real Md[_MV];
   for(int iv=0;iv<_INDEX_MAX_KIN+1;iv++){
     Md[iv]=0;

@@ -5,15 +5,13 @@
 #include <math.h>
 #include <stdio.h>
 #include <assert.h>
-#include "simulation.h"
 #include "linear_solver.h"
-
 
 //! \brief Construct the profile of the linear solver
 //! for the generic implicit linear solver
 //! \param[inout] simu a simulation
 //! \param[inout] solver a linear solver
-void InitImplicitLinearSolver(Simulation *simu, LinearSolver *solver);
+void InitImplicitLinearSolver(field *f, LinearSolver *solver);
 
 //! \brief Assembly of the DG operator into a sparse matrix
 //! computations of all the terms
@@ -21,7 +19,8 @@ void InitImplicitLinearSolver(Simulation *simu, LinearSolver *solver);
 //! \param[inout] solver a linear solver
 //! \param[in] theta the crank nicholson parameter
 //!  \param[in] dt time step
-void AssemblyImplicitLinearSolver(Simulation *simu, LinearSolver *solver,real theta, real dt);
+void AssemblyImplicitLinearSolver(field *f, LinearSolver *solver,real theta,
+				  real tnow, real dt);
 
 
 //! \brief Assembly of the DG operator into a sparse matrix
@@ -29,7 +28,7 @@ void AssemblyImplicitLinearSolver(Simulation *simu, LinearSolver *solver,real th
 //! \param[inout] simu a simulation
 //! \param[inout] solver a linear solver
 //! \param[in] itest should be 0 (1 is used for debugging purposes)
-void InternalCoupling(Simulation *simu,  LinearSolver *solver, int itest);
+void InternalCoupling(field *f, LinearSolver *solver, int itest);
 
 //! \brief Assembly of the DG operator into a sparse matrix
 //! prepare the matrix structure of the fluxes inside the fields
@@ -37,7 +36,7 @@ void InternalCoupling(Simulation *simu,  LinearSolver *solver, int itest);
 //! \param[inout] solver a linear solver
 //! \param[in] theta the crank nicholson parameter
 //! \param[in] itest should be 0 (1 for debugging purposes)
-void FluxCoupling(Simulation *simu,  LinearSolver *solver,int itest);
+void FluxCoupling(field *f, LinearSolver *solver,int itest);
 
 //! \brief Assembly of the DG operator into a sparse matrix
 //! prepare the matrix structure of the interface fluxes between fields
@@ -45,7 +44,7 @@ void FluxCoupling(Simulation *simu,  LinearSolver *solver,int itest);
 //! \param[inout] solver a linear solver
 //! \param[in] theta the crank nicholson parameter
 //! \param[in] itest should be 0 (1 for debugging purposes)
-void InterfaceCoupling(Simulation *simu,  LinearSolver *solver,int itest);
+void InterfaceCoupling(field *f, LinearSolver *solver,int itest);
 
 //! \brief Assembly of the DG operator into a sparse matrix
 //! assembly of the differential terms
@@ -53,7 +52,7 @@ void InterfaceCoupling(Simulation *simu,  LinearSolver *solver,int itest);
 //! \param[inout] solver a linear solver
 //! \param[in] theta the crank nicholson parameter
 //!  \param[in] dt time step
-void InternalAssembly(Simulation *simu,  LinearSolver *solver,real theta, real dt);
+void InternalAssembly(field *f, LinearSolver *solver,real theta, real dt);
 
 //! \brief Assembly of the DG operator into a sparse matrix
 //! assembly of the internal flxes of the fields
@@ -61,10 +60,10 @@ void InternalAssembly(Simulation *simu,  LinearSolver *solver,real theta, real d
 //! \param[inout] solver a linear solver
 //! \param[in] theta the crank nicholson parameter
 //!  \param[in] dt time step
-void FluxAssembly(Simulation *simu,  LinearSolver *solver,real theta, real dt);
+void FluxAssembly(field *f, LinearSolver *solver,real theta, real dt);
 
 //! ADD DESCRIPTION
-void ThetaTimeScheme(Simulation *simu, real tmax, real dt);
+void ThetaTimeScheme(field *f, real tmax, real dt);
 
 //! \brief Assembly of the DG operator into a sparse matrix
 //! assembly of the interface fluxes between the neighboring fields
@@ -72,7 +71,7 @@ void ThetaTimeScheme(Simulation *simu, real tmax, real dt);
 //! \param[inout] solver a linear solver
 //! \param[in] theta the crank nicholson parameter
 //!  \param[in] dt time step
-void InterfaceAssembly(Simulation *simu,  LinearSolver *solver,real theta, real dt);
+void InterfaceAssembly(field *f, LinearSolver *solver,real theta, real dt);
 
 //! \brief Assembly of the DG operator into a sparse matrix
 //! assembly of the right hand side of the linear system:
@@ -80,14 +79,15 @@ void InterfaceAssembly(Simulation *simu,  LinearSolver *solver,real theta, real 
 //! \param[inout] simu a simulation
 //! \param[inout] solver a linear solver
 //! \param[in] theta the crank nicholson parameter
-//!  \param[in] dt time step
-void SourceAssembly(Simulation *simu,  LinearSolver *solver,real theta, real dt);
+//! \param[in] tnow
+void SourceAssembly(field *f, LinearSolver *solver, real theta, real tnow,
+		    real dt);
 
 //! \brief Assembly of the DG operator into a sparse matrix
 //! assembly of the mass terms
 //! \param[inout] simu a simulation
 //! \param[inout] solver a linear solver
-void MassAssembly(Simulation *simu,  LinearSolver *solver);
+void MassAssembly(field *f, LinearSolver *solver);
 
 
 

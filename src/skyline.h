@@ -2,7 +2,7 @@
 #define _SKYLINE_H
 
 #include "global.h"
-
+#include <stdbool.h>
 
 
 //! \brief a struct for managing skyline linear system

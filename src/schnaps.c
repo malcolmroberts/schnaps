@@ -2,12 +2,14 @@
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
-#include <stdlib.h>
 #include "getopt.h"
 #ifdef _WITH_OPENCL
 #include "clutils.h"
 #include "clinfo.h"
 #endif
+#include "field.h"
+#include "field_cl.h"
+
 int main(int argc, char *argv[]) 
 {
   int dimension = 2; // Dimension of simulation
@@ -182,29 +184,31 @@ int main(int argc, char *argv[])
     raf[1] = 1;
   }
 
-  Model model;
-  model.m = m;
-  
-  /* field f; */
-  /* init_empty_field(&f); */
+  field f;
+  init_empty_field(&f);
 
+  f.model.cfl = cfl;
+  f.model.m = m; // only one conservative variable
   if(!usegpu) {
-    model.NumFlux = numflux(fluxname);
-    model.BoundaryFlux = bflux(bfluxname);
+    f.model.NumFlux = numflux(fluxname);
+    f.model.BoundaryFlux = bflux(bfluxname);
   }
-  model.InitData = initdata(initdataname);
-  model.ImposedData = imposeddata(imposeddataname);
-  model.Source = NULL;
-  //varindex = GenericVarindex;
+  f.model.InitData = initdata(initdataname);
+  f.model.ImposedData = imposeddata(imposeddataname);
+  f.varindex = GenericVarindex;
 
-  Simulation simu;
-  EmptySimulation(&simu);
-
+  f.m = f.model.m; // _M
+  f.deg[0] = deg[0];
+  f.deg[1] = deg[1];
+  f.deg[2] = deg[2];
+  f.raf[0] = raf[0];
+  f.raf[1] = raf[1];
+  f.raf[2] = raf[2];
 
 #ifdef _WITH_OPENCL
   char buf[1000];
 
-  sprintf(buf, "-D _M=%d", model.m);
+  sprintf(buf, "-D _M=%d", f.model.m);
   strcat(cl_buildoptions, buf);
 
   sprintf(numflux_cl_name, "%s", fluxname);
@@ -216,33 +220,36 @@ int main(int argc, char *argv[])
   strcat(cl_buildoptions, buf);
 #endif
 
-  MacroMesh mesh;
-  ReadMacroMesh(&mesh,mshname);
+  // Read the gmsh file
+  ReadMacroMesh(&f.macromesh, mshname);
+  //ReadMacroMesh(&(f.macromesh), "geo/cube.msh");
 
   if(dimension == 2) {
-    Detect2DMacroMesh(&mesh);
-    assert(mesh.is2d);
+    Detect2DMacroMesh(&f.macromesh);
+    assert(f.macromesh.is2d);
   }
 
   if(dimension == 1) {
-    Detect1DMacroMesh(&mesh);
-    assert(mesh.is1d);
+    Detect1DMacroMesh(&f.macromesh);
+    assert(f.macromesh.is1d);
   }
 
-  BuildConnectivity(&mesh);
-  CheckMacroMesh(&mesh, deg, raf);
+  // Mesh preparation
+  BuildConnectivity(&f.macromesh);
+  //PrintMacroMesh(&f.macromesh);
 
-  simu.cfl = cfl;
-  simu.dt = dt; // FIXME: what if zero?????
-  
-  InitSimulation(&simu, &mesh, deg, raf, &model);
-  
-  simu.vmax = 1;
-  /* if(dt <= 0.0) */
-  /*   dt = set_dt(&f); */
+  // Prepare the initial fields
+  Initfield(&f);
+
+  // AffineMapMacroMesh(&f.macromesh);
+  CheckMacroMesh(&f.macromesh, f.deg, f.raf);
+
+  f.vmax = 0.1;
+  if(dt <= 0.0)
+    dt = set_dt(&f);
 
   printf("\n\n");
-
+  
   if(!usegpu) {
     printf("C version\n");
   } else {
@@ -260,44 +267,42 @@ int main(int argc, char *argv[])
   printf("gmsh file: %s\n", mshname);
   printf("Polynomial degree: %d, %d, %d\n", deg[0], deg[1], deg[2]);
   printf("Number of subcells: %d, %d, %d\n", raf[0], raf[1], raf[2]);
-  printf("cfl param: %f\n", simu.hmin);
+  printf("cfl param: %f\n", f.hmin);
   printf("dt: %f\n", dt);
   printf("tmax: %f\n", tmax);
-  printf("Buffer size (GB): %f\n", simu.wsize * sizeof(real) * 1e-9);
+  printf("Buffer size (GB): %f\n", f.wsize * sizeof(real) * 1e-9);
 
   printf("\n\n");
 
   if(usegpu) {
 #ifdef _WITH_OPENCL
-    RK2_CL(&simu, tmax, dt, 0, NULL, NULL);
-    //RK2(&simu, tmax);
+    RK2_CL(&f, tmax, dt, 0, NULL, NULL);
 
-    cl_int status = clFinish(simu.cli.commandqueue);
+    cl_int status = clFinish(f.cli.commandqueue);
     if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
     assert(status >= CL_SUCCESS);
     
-    CopyfieldtoCPU(&simu);
+    CopyfieldtoCPU(&f);
 
     printf("\nOpenCL Kernel time:\n");
-    show_cl_timing(&simu);
+    show_cl_timing(&f);
     printf("\n");
 #else
     printf("OpenCL not enabled!\n");
     exit(1);
 #endif
   } else {
-    RK2(&simu, tmax);
+    RK2(&f, tmax, dt);
   }
 
   // Save the results and the error
   if(writeout) {
-    /* Plotfield(0, false, &f, NULL, "dgvisu.msh"); */
-    /* Plotfield(0, true, &f, "Error", "dgerror.msh"); */
+    Plotfield(0, false, &f, NULL, "dgvisu.msh");
+    Plotfield(0, true, &f, "Error", "dgerror.msh");
   }
 
-  real dd = L2error(&simu);
-   PlotFields(0, false, &simu, NULL, "dgvisu.msh");
-
+  real dd = L2error(&f);
+ 
   printf("\n");
   printf("L2 error: %f\n", dd);
   return 0;
