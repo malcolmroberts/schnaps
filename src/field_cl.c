@@ -225,14 +225,6 @@ void init_DGMacroCellInterface_CL(field *f,
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
   assert(status >= CL_SUCCESS);
 
-  //__constant real *physnodeR, // 6: right physnode
-  /* status = clSetKernelArg(kernel, */
-  /*                         argnum++, */
-  /*                         sizeof(cl_mem), */
-  /*                         &physnodeR_cl); */
-  /* if(status < CL_SUCCESS) printf("%s\n", clErrorString(status)); */
-  /* assert(status >= CL_SUCCESS); */
-
   //__global real *w,          // 7: field 
   status = clSetKernelArg(kernel,
                           argnum++,

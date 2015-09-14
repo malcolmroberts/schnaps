@@ -243,16 +243,6 @@ void init_field_cl(field *f)
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
   assert(status >= CL_SUCCESS);
 
-  // Allocate one physnode buffer
-  //f->physnode = calloc(60, sizeof(real));
-  f->physnode_cl = clCreateBuffer(f->cli.context,
-				  CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
-				  sizeof(real) * 60,
-				  f->physnode,
-				  &status);
-  if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
-  assert(status >= CL_SUCCESS);
-
   // Allocate and fill buffer for all macrocell geometries.
   const int nmacro = f->macromesh.nbelems;
   const size_t buf_size = sizeof(real) * 60 * nmacro;
@@ -264,14 +254,6 @@ void init_field_cl(field *f)
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
   assert(status >= CL_SUCCESS);
   set_physnodes_cl(f);
-
-  // Allocate one physnode buffer for R macrocell
-  f->physnodeR = calloc(60, sizeof(real));
-  f->physnodeR_cl = clCreateBuffer(f->cli.context,
-				   CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
-				   sizeof(real) * 60,
-				   f->physnode,
-				   &status);
 
   // Program compilation
   char *strprog;
@@ -505,12 +487,11 @@ void free_field(field *f)
   free(f->mface);
 
 #ifdef _WITH_OPENCL
-  cl_int status;
+  //cl_int status;
 
-  status = clReleaseMemObject(f->physnode_cl);
-  if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
-  assert(status >= CL_SUCCESS);
-  free(f->physnode);
+  /* status = clReleaseMemObject(f->physnode_cl); */
+  /* if(status < CL_SUCCESS) printf("%s\n", clErrorString(status)); */
+  /* assert(status >= CL_SUCCESS); */
 #endif
 }
 
