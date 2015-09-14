@@ -105,8 +105,10 @@ list(APPEND
   src/field.c
   src/field.h
   src/interface.h
+  src/interface.c
   src/implicit.h
   src/implicit.c
+  src/local_implicit.c
   src/geometry.c
   src/geometry.h
   src/global.c

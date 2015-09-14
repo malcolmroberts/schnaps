@@ -9,6 +9,8 @@ typedef struct Interface{
   field *fL;
   field *fR;
 
+  int locfaL,locfaR;
+
   int npgL, npgR;
   
 
@@ -23,5 +25,6 @@ typedef struct Interface{
 
 void ExtractInterface(Interface* inter, int side);
 
+int VarindexFace(int npg, int m, int ipgf, int iv); 
 
 #endif

@@ -20,6 +20,51 @@ void EmptySimulation(Simulation *simu){
 
 }
 
+void InitInterfaces(Simulation *simu){
+
+
+  int nb_interfaces = simu->macromesh.nbfaces;
+
+  simu->interface = malloc(sizeof(Interface) * nb_interfaces);
+  Interface *inter = simu->interface;
+
+  for(int ifa = 0; ifa < nb_interfaces; ifa++){
+     int ieL = simu->macromesh.face2elem[4 * ifa + 0];
+     int locfaL = simu->macromesh.face2elem[4 * ifa + 1];
+     int ieR = simu->macromesh.face2elem[4 * ifa + 2];
+     field *fL = simu->fd + ieL;
+     field *fR = NULL;
+     int locfaR = -1;
+     if (ieR >= 0) {
+       fR = simu->fd + ieR;
+       locfaR = simu->macromesh.face2elem[4 * ifa + 3];
+     }
+
+     inter[ifa].fL = fL;
+     inter[ifa].fR = fR;
+
+     inter[ifa].locfaL = locfaL;
+     inter[ifa].locfaR = locfaR;
+
+     int npgfL = NPGF(fL->deg, fL->raf, locfaL);
+     inter[ifa].npgL = npgfL;
+
+     int npgfR = 0;
+     if (ieR >= 0) {
+       npgfR = NPGF(fR->deg, fR->raf, locfaR);
+     }
+     inter[ifa].npgR = npgfR;
+
+     inter[ifa].wsizeL = npgfL * fL->model.m;
+     inter[ifa].wsizeR = npgfR * fR->model.m;
+     
+     inter[ifa].wL = malloc(sizeof(real) * inter[ifa].wsizeL);
+     inter[ifa].wR = NULL;
+     if (npgfR > 0)  inter[ifa].wR =
+		       malloc(sizeof(real) * inter[ifa].wsizeR);
+     
+  }
+}
 
 void InitSimulation(Simulation *simu, MacroMesh *mesh,
 		    int *deg, int *raf, Model *model){
@@ -96,6 +141,9 @@ void InitSimulation(Simulation *simu, MacroMesh *mesh,
   } else {
 
     init_field_cl(simu);
+
+    InitInterfaces(simu);
+    
   }
 #endif // _WITH_OPENCL
 
