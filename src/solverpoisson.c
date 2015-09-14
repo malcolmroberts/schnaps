@@ -5,7 +5,7 @@
 #include "linear_solver.h"
 
 
-void Computation_ElectricField_Poisson(void * cs, LinearSolver* lsol)
+void Computation_ElectricField_Poisson(void *cs, LinearSolver *lsol)
 {
   ContinuousSolver *ps = cs;
   
@@ -16,7 +16,7 @@ void Computation_ElectricField_Poisson(void * cs, LinearSolver* lsol)
   ComputeElectricField(ps->f);
 }
 
-void MatrixPoisson_Continuous(void * cs,LinearSolver* lsol)
+void MatrixPoisson_Continuous(void *cs, LinearSolver *lsol)
 {
   ContinuousSolver *ps = cs;
 
@@ -101,10 +101,9 @@ void MatrixPoisson_Continuous(void * cs,LinearSolver* lsol)
   
 }
 
-void RHSPoisson_Continuous(void * cs, LinearSolver* lsol)
+void RHSPoisson_Continuous(void *cs, LinearSolver* lsol)
 {
   ContinuousSolver *ps = cs;
-  
   field *f = ps->f;
 
   real charge_average;

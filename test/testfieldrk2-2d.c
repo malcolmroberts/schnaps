@@ -6,51 +6,50 @@
 
 int TestfieldRK2_2D(void) {
   bool test = true;
+  field f;
+  init_empty_field(&f);
 
-  MacroMesh mesh;
-  ReadMacroMesh(&mesh,"../test/testdisque2d.msh");
-  Detect2DMacroMesh(&mesh);
+  f.model.cfl = 0.05;
+  f.model.m = 1; // only one conservative variable
+  f.model.NumFlux = TransNumFlux2d;
+  f.model.BoundaryFlux = TransBoundaryFlux2d;
+  f.model.InitData = TransInitData2d;
+  f.model.ImposedData = TransImposedData2d;
+  f.varindex = GenericVarindex;
+
+
+  f.deg[0] = 2;  // x direction degree
+  f.deg[1] = 2;  // y direction degree
+  f.deg[2] = 0;  // z direction degree
+  f.raf[0] = 1;  // x direction refinement
+  f.raf[1] = 1;  // y direction refinement
+  f.raf[2] = 1;  // z direction refinement
+
+  ReadMacroMesh(&f.macromesh, "../test/testdisque2d.msh");
+  Detect2DMacroMesh(&f.macromesh);
   // require a 2d computation
-  assert(mesh.is2d);
-  BuildConnectivity(&mesh);
+  assert(f.macromesh.is2d);
+  BuildConnectivity(&f.macromesh);
 
-  Model model;
+  Initfield(&f);
 
-  model.m = 1; // only one conservative variable
-  model.NumFlux = TransNumFlux2d;
-  model.BoundaryFlux = TransBoundaryFlux2d;
-  model.InitData = TransInitData2d;
-  model.ImposedData = TransImposedData2d;
-  model.Source = NULL;
+  CheckMacroMesh(&f.macromesh, f.deg, f.raf);
 
-  int deg[]={2, 2, 0};
-  int raf[]={1, 1, 1};
+  printf("cfl param =%f\n",f.hmin);
 
-
-
-  CheckMacroMesh(&mesh,deg,raf);
-
-  Simulation simu;
-
-  InitSimulation(&simu, &mesh, deg, raf, &model);
-  printf("cfl param =%f\n",simu.hmin);
- 
   real tmax = 0.2;
-  simu.cfl=0.2;
-  simu.vmax=1;
-  RK2(&simu,tmax);
+  f.vmax=1;
+  real dt = 0;
+  RK2(&f, tmax, dt);
  
-  PlotFields(0, false, &simu, NULL, "dgvisu.msh");
-  PlotFields(0, true , &simu, "error", "dgerror.msh");
+  Plotfield(0, false, &f, NULL, "dgvisu.msh");
+  Plotfield(0, true, &f, "error", "dgerror.msh");
 
-  real dd = 0;
-  dd = L2error(&simu);
+  real dd = L2error(&f);
 
   printf("erreur L2=%f\n", dd);
 
-  real tolerance = 0.07;
-
-  test = dd < tolerance;
+  test = test && (dd < 0.01);
 
   return test;
 }

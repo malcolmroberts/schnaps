@@ -9,18 +9,19 @@
 #include "solverpoisson.h"
 
 
-/* void Test_Landau_Damping_ImposedData(const real x[3], const real t,real w[]); */
-/* void Test_Landau_Damping_InitData(real x[3],real w[]); */
-/* void Test_Landau_Damping_BoundaryFlux(real x[3],real t,real wL[],real* vnorm, real* flux); */
+void Test_Landau_Damping_ImposedData(const real x[3], const real t, real w[]);
+void Test_Landau_Damping_InitData(real x[3], real w[]);
+void Test_Landau_Damping_BoundaryFlux(real x[3], real t, real wL[],
+				      real* vnorm, real* flux);
 
-/* void UpdateVlasovPoisson(void* field, real *w); */
-/* void PlotVlasovPoisson(void* vf, real * w); */
+void UpdateVlasovPoisson(void* field, real *w);
+void PlotVlasovPoisson(void* vf, real * w);
 
-int main(void) {
-  
+int main() 
+{
   // unit tests
     
-  int resu=TestLandau_Damping_1D();
+  int resu = TestLandau_Damping_1D();
 	 
   if (resu) printf("landau test OK !\n");
   else printf("landau test failed !\n");
@@ -29,91 +30,90 @@ int main(void) {
 } 
 
 
-int TestLandau_Damping_1D()
-{
-  return false; // FIXME!!!
+int TestLandau_Damping_1D(void) {
 
+  bool test=true;
+
+  field f;
+  init_empty_field(&f);
+
+  int vec=1;
+  real k=0.5;
+  real pi=4.0*atan(1.0);
   
- /*  bool test=true; */
-
- /*  field f; */
- /*  init_empty_field(&f); */
-
- /*  int vec=1; */
- /*  real k=0.5; */
- /*  real pi=4.0*atan(1.0); */
-
- /*  // num of conservative variables f(vi) for each vi, phi, E, rho, u, */
- /*  // p, e (ou T) */
- /*  f.model.m=_INDEX_MAX;  */
- /*  f.model.NumFlux=VlasovP_Lagrangian_NumFlux; */
+  // num of conservative variables f(vi) for each vi, phi, E, rho, u,
+  // p, e (ou T)
+  f.model.m=_INDEX_MAX; 
+  f.model.NumFlux=VlasovP_Lagrangian_NumFlux;
  
- /*  //f.model.Source = NULL; */
+  //f.model.Source = NULL;
  
- /*  f.model.InitData=Test_Landau_Damping_InitData; */
- /*  f.model.ImposedData=Test_Landau_Damping_ImposedData; */
- /*  f.model.BoundaryFlux=Test_Landau_Damping_BoundaryFlux; */
+  f.model.InitData=Test_Landau_Damping_InitData;
+  f.model.ImposedData=Test_Landau_Damping_ImposedData;
+  f.model.BoundaryFlux=Test_Landau_Damping_BoundaryFlux;
 
- /*  f.varindex=GenericVarindex; */
+  f.varindex=GenericVarindex;
     
- /*  f.interp.interp_param[0]=f.model.m;  // _M */
- /*  f.interp.interp_param[1]=2;  // x direction degree */
- /*  f.interp.interp_param[2]=0;  // y direction degree */
- /*  f.interp.interp_param[3]=0;  // z direction degree */
- /*  f.interp.interp_param[4]=24;  // x direction refinement */
- /*  f.interp.interp_param[5]=1;  // y direction refinement */
- /*  f.interp.interp_param[6]=1;  // z direction refinement */
- /* // read the gmsh file */
- /*  ReadMacroMesh(&(f.macromesh),"../test/testcube.msh"); */
+
+  f.deg[0] = 2;  // x direction degree
+  f.deg[1] = 0;  // y direction degree
+  f.deg[2] = 0;  // z direction degree
+  f.raf[0] = 32;  // x direction refinement
+  f.raf[1] = 1;  // y direction refinement
+  f.raf[2] = 1;  // z direction refinement
+
+  // read the gmsh file
+  ReadMacroMesh(&f.macromesh,"../test/testcube.msh");
   
- /*  real A[3][3] = {{2.0*pi/k, 0, 0}, {0, 1, 0}, {0, 0,1}}; */
- /*  real x0[3] = {0, 0, 0}; */
- /*  AffineMapMacroMesh(&(f.macromesh),A,x0); */
+  real A[3][3] = {{2.0*pi/k, 0, 0}, {0, 1, 0}, {0, 0,1}};
+  real x0[3] = {0, 0, 0};
+  AffineMapMacroMesh(&f.macromesh,A,x0);
 
- /*  // try to detect a 2d mesh */
- /*  Detect1DMacroMesh(&(f.macromesh)); */
- /*  bool is1d=f.macromesh.is1d; */
- /*  assert(is1d); */
+  // try to detect a 2d mesh
+  Detect1DMacroMesh(&f.macromesh);
+  assert(f.macromesh.is1d);
 
- /*  // mesh preparation */
- /*  f.macromesh.period[0]=2.0*pi/k; */
- /*  BuildConnectivity(&(f.macromesh)); */
+  // mesh preparation
+  f.macromesh.period[0]=2.0*pi/k;
+  BuildConnectivity(&f.macromesh);
  
- /*  // prepare the initial fields */
- /*  f.model.cfl=0.5; */
+  // prepare the initial fields
+  f.model.cfl=0.5;
 
- /*  Initfield(&f); */
- /*  f.vmax = _VMAX; // maximal wave speed */
- /*  f.macromesh.is1d=true; */
- /*    //f.macromesh.is1d=true; */
- /*  f.nb_diags=4; */
- /*  f.pre_dtfield=UpdateVlasovPoisson; */
- /*  f.post_dtfield=NULL; */
- /*  f.update_after_rk=PlotVlasovPoisson; */
- /*  f.model.Source = VlasovP_Lagrangian_Source; */
- /*  // prudence... */
- /*  CheckMacroMesh(&(f.macromesh),f.interp.interp_param+1); */
+  Initfield(&f);
+  f.vmax = _VMAX; // maximal wave speed
+  f.macromesh.is1d=true;
+    //f.macromesh.is1d=true;
+  f.nb_diags=4;
+  f.pre_dtfield=UpdateVlasovPoisson;
+  f.post_dtfield=NULL;
+  f.update_after_rk=PlotVlasovPoisson;
+  f.model.Source = VlasovP_Lagrangian_Source;
+  // prudence...
+  CheckMacroMesh(&f.macromesh, f.deg, f.raf);
 
- /*  printf("cfl param =%f\n",f.hmin); */
+  printf("cfl param =%f\n",f.hmin);
   
- /*  real dt = set_dt(&f); */
- /*  RK4(&f,40, dt); */
+  real dt = set_dt(&f);
+  RK4(&f,20, dt);
+
  
   
- /*   // save the results and the error */
- /*  int iel=_NB_ELEM_V/2; */
- /*  int iloc=0;//_DEG_V; */
- /*  printf("Trace vi=%f\n",-_VMAX+iel*_DV+_DV*glop(_DEG_V,iloc)); */
- /*  Plotfield(iloc+iel*_DEG_V,(1==0),&f,"sol f ","dgvisu.msh"); */
- /*  Plotfield(_INDEX_EX,(1==0),&f,"sol","dgvisuEx.msh"); */
- /*  Plotfield(_INDEX_PHI,(1==0),&f,"sol","dgvisuPhi.msh"); */
- /*  Plotfield(_INDEX_RHO,(1==0),&f,"sol","dgvisuRho.msh"); */
+   // save the results and the error
+  int iel=_NB_ELEM_V/2;
+  int iloc=0;//_DEG_V;
+  printf("Trace vi=%f\n",-_VMAX+iel*_DV+_DV*glop(_DEG_V,iloc));
+  Plotfield(iloc+iel*_DEG_V,(1==0),&f,"sol f ","dgvisu.msh");
+  Plotfield(_INDEX_EX,(1==0),&f,"sol","dgvisuEx.msh");
+  Plotfield(_INDEX_PHI,(1==0),&f,"sol","dgvisuPhi.msh");
+  Plotfield(_INDEX_RHO,(1==0),&f,"sol","dgvisuRho.msh");
 
- /*  Plot_Energies(&f, dt); */
+  //Plot_Energies(&f, dt);
 
- /*  test= 1; */
+  test= 1;
 
- /*  return test; */
+  return test;
+
 }
 
 void Test_Landau_Damping_ImposedData(const real x[3], const real t, real w[])
@@ -121,7 +121,7 @@ void Test_Landau_Damping_ImposedData(const real x[3], const real t, real w[])
   //parameters of the case
   
   real k=0.5;
-  real eps = 0.005;
+  real eps = 0.05;
   real my_pi= 4.0*atan(1.0);
   
   for(int i=0;i<_INDEX_MAX_KIN+1;i++){
@@ -142,25 +142,30 @@ void Test_Landau_Damping_ImposedData(const real x[3], const real t, real w[])
   w[_INDEX_VELOCITY]=0; // u init
   w[_INDEX_PRESSURE]=0; // p init
   w[_INDEX_TEMP]=0; // e ou T init
-}
 
-void Test_Landau_Damping_InitData(real x[3],real w[])
-{
+};
+
+void Test_Landau_Damping_InitData(real x[3],real w[]){
+
   real t=0;
   Test_Landau_Damping_ImposedData(x,t,w);
-}
+
+};
+
+
 
 void Test_Landau_Damping_BoundaryFlux(real x[3],real t,real wL[],real* vnorm,
-				       real* flux)
-{
+				       real* flux){
   real wR[_INDEX_MAX];
   Test_Landau_Damping_ImposedData(x,t,wR);
   VlasovP_Lagrangian_NumFlux(wL,wR,vnorm,flux);
   assert(1==2);
 }
 
-void UpdateVlasovPoisson(void* vf, real * w)
+void UpdateVlasovPoisson(void *vf, real *w)
 {
+  // FIXME!!! The 1D solver has been removed?
+
   /* int type_bc; */
   /* real bc_l, bc_r; */
   /* int itermax; */
@@ -168,13 +173,13 @@ void UpdateVlasovPoisson(void* vf, real * w)
   /* type_bc=2; */
   /* bc_l=0; */
   /* bc_r=0; */
-    
-  /* Computation_charge_density(f,w); */
   
-  /* SolvePoisson1D(f,w,type_bc,bc_l,bc_r,LU,NONE);     */
+  /* Computation_charge_density(f, w); */
+  
+  /* SolvePoisson1D(f, w, type_bc, bc_l, bc_r, LU, NONE);     */
 }
 
-void PlotVlasovPoisson(void* vf, real * w)
+void PlotVlasovPoisson(void* vf, real * w) 
 {
   real k_energy=0,e_energy=0,t_energy=0,t_charge=0;
   

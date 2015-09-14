@@ -3,7 +3,6 @@
 #include<stdio.h>
 #include <assert.h>
 #include <math.h>
-#include <string.h>
 
 int TestfieldRK4_CL(void){
   int test = true;
@@ -13,19 +12,20 @@ int TestfieldRK4_CL(void){
     return true;
   }
 
-  Simulation simu;
-  EmptySimulation(&simu);
+  field f;
+  init_empty_field(&f);
 
+  // 2D meshes:
+  // test/disque2d.msh
+  // test/testdisque2d.msh
+  // test/testmacromesh.msh
+  // test/unit-cube.msh
 
-  MacroMesh mesh;
-  char *mshname =  "../test/disque2d.msh";
+  char *mshname =  "test/disque2d.msh";
   
-  ReadMacroMesh(&mesh, mshname);
-  Detect2DMacroMesh(&mesh);
-  BuildConnectivity(&mesh);
-  int deg[]={3, 3, 0};
-  int raf[]={2, 2, 1};
-  CheckMacroMesh(&mesh, deg, raf);
+  ReadMacroMesh(&f.macromesh, mshname);
+  Detect2DMacroMesh(&f.macromesh);
+  BuildConnectivity(&f.macromesh);
 
   /* f.model.cfl = 0.05; */
   /* f.model.m = 1; */
@@ -43,62 +43,68 @@ int TestfieldRK4_CL(void){
   /* f.interp.interp_param[5] = 1; // y direction refinement */
   /* f.interp.interp_param[6] = 1; // z direction refinement */
 
-  Model model;
-
 #if 1
   // 2D version
-  assert(mesh.is2d);
+  assert(f.macromesh.is2d);
 
-  simu.cfl = 0.05;
-  model.m = 1;
+  f.model.cfl = 0.05;
+  f.model.m = 1;
 
-  model.NumFlux = TransNumFlux2d;
-  model.BoundaryFlux = TransBoundaryFlux2d;
-  model.InitData = TransInitData2d;
-  model.ImposedData = TransImposedData2d;
-  model.Source = NULL;
+  f.model.NumFlux = TransNumFlux2d;
+  f.model.BoundaryFlux = TransBoundaryFlux2d;
+  f.model.InitData = TransInitData2d;
+  f.model.ImposedData = TransImposedData2d;
+  f.varindex = GenericVarindex;
 
-  char buf[1000];
-  sprintf(buf, "-D _M=%d", model.m);
-  strcat(cl_buildoptions, buf);
-
-  sprintf(buf," -D NUMFLUX=%s", "TransNumFlux2d");
-  strcat(cl_buildoptions, buf);
-
-  sprintf(buf, " -D BOUNDARYFLUX=%s", "TransBoundaryFlux2d");
-  strcat(cl_buildoptions, buf);
+  f.deg[0] = 2;  // x direction degree
+  f.deg[1] = 2;  // y direction degree
+  f.deg[2] = 0;  // z direction degree
+  f.raf[0] = 4;  // x direction refinement
+  f.raf[1] = 4;  // y direction refinement
+  f.raf[2] = 1;  // z direction refinement
 
 #else
   // 3D version
-  simu.cfl = 0.05;
-  model.m = 1;
-  
-  model.NumFlux = TransNumFlux;
-  model.BoundaryFlux = TestTransBoundaryFlux;
-  model.InitData = TestTransInitData;
-  model.ImposedData = TestTransImposedData;
+  f.model.cfl = 0.05;
+  f.model.m = 1;
+  f.model.NumFlux = TransNumFlux;
+  f.model.BoundaryFlux = TestTransBoundaryFlux;
+  f.model.InitData = TestTransInitData;
+  f.model.ImposedData = TestTransImposedData;
+  f.varindex = GenericVarindex;
+
+  f.interp.interp_param[0] = f.model.m;
+  f.interp.interp_param[1] = 2; // x direction degree
+  f.interp.interp_param[2] = 2; // y direction degree
+  f.interp.interp_param[3] = 2; // z direction degree
+  f.interp.interp_param[4] = 3; // x direction refinement
+  f.interp.interp_param[5] = 3; // y direction refinement
+  f.interp.interp_param[6] = 3; // z direction refinement
 #endif
 
-  //AffineMapMacroMesh(&(simu.macromesh));
-  InitSimulation(&simu, &mesh, deg, raf, &model);
- 
-  real tmax = 0.1;
-  simu.vmax = 1;
-  real dt = 0;
-  RK4_CL(&simu, tmax, dt,  0, NULL, NULL);
-  
-  CopyfieldtoCPU(&simu);
- 
-  PlotFields(0, false, &simu, NULL, "dgvisu.msh");
-  //Plotfield(0, true , &simu, "error", "dgerror.msh");
+  Initfield(&f);
 
-  real dd = L2error(&simu);
+  CheckMacroMesh(&f.macromesh, f.deg, f.raf);
+ 
+  real tmax = 0.01;
+  //RK4(&f, tmax);
+  f.vmax=1;
+  real dt = set_dt(&f);
+  RK4_CL(&f, tmax, dt, 0, NULL, NULL);
+  clFinish(f.cli.commandqueue); 
+
+  CopyfieldtoCPU(&f);
+    
+  Plotfield(0, false, &f, NULL, "dgvisu.msh");
+  Plotfield(0, true , &f, "error", "dgerror.msh");
+
+  real dd = L2error(&f);
 
   printf("L2 error: %f\n", dd);
 
-  show_cl_timing(&simu);
+  show_cl_timing(&f);
 
-  real tolerance = 0.007;
+  real tolerance = 0.002;
 
   test = dd < tolerance;
   

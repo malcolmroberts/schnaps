@@ -1,13 +1,18 @@
-#include "implicit.h"
 #include "schnaps.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
 #include "test.h"
 #include "collision.h"
-#include "waterwave2d.h"
 
 
+void TestPeriodic_Wave_ImposedData(const real *x, const real t, real *w);
+void TestPeriodic_Wave_InitData(real *x, real *w);
+void Wave_Upwind_BoundaryFlux(real *x, real t, real *wL, real *vnorm,real *flux);
+void Wave_Upwind_NumFlux(real wL[],real wR[],real* vnorm,real* flux);
+
+#define _SPEED_WAVE (10)
+#define _LENGTH_DOMAIN (2.0)
 
 int main(void) {
   
@@ -15,8 +20,8 @@ int main(void) {
     
   int resu = Test_Wave_Periodic();
 	 
-  if (resu) printf("wave periodic  test OK !\n");
-  else printf("wave periodic test failed !\n");
+  if (resu) printf("poisson test OK !\n");
+  else printf("poisson test failed !\n");
 
   return !resu;
 } 
@@ -25,74 +30,90 @@ int Test_Wave_Periodic(void) {
 
   bool test = true;
 
-  MacroMesh mesh;
-  ReadMacroMesh(&mesh,"../test/testcube.msh");
-  Detect2DMacroMesh(&mesh);
-  
+  field f;
+  init_empty_field(&f);
+
+  int vec=1;
+  f.model.m=3; 
+  f.model.NumFlux=Wave_Upwind_NumFlux;
+ 
+  //f.model.Source = NULL;
+ 
+  f.model.InitData = TestPeriodic_Wave_InitData;
+  f.model.ImposedData = TestPeriodic_Wave_ImposedData;
+  f.model.BoundaryFlux = Wave_Upwind_BoundaryFlux;
+
+  f.varindex = GenericVarindex;
+    
+  f.deg[0] = 2;
+  f.deg[1] = 2;
+  f.deg[2] = 0;
+
+  f.raf[0] = 24;
+  f.raf[1] = 24;
+  f.raf[2] = 1;
+
+  ReadMacroMesh(&f.macromesh, "test/testcube.msh");
+
+  Detect2DMacroMesh(&f.macromesh);
+  assert(f.macromesh.is2d);
+
   real A[3][3] = {{_LENGTH_DOMAIN, 0, 0}, {0, _LENGTH_DOMAIN, 0}, {0, 0,1}};
   real x0[3] = {0, 0, 0};
-  AffineMapMacroMesh(&mesh,A,x0);
+  AffineMapMacroMesh(&f.macromesh, A, x0);
 
-  BuildConnectivity(&mesh);
+  f.macromesh.period[0]=_LENGTH_DOMAIN;
+  f.macromesh.period[1]=_LENGTH_DOMAIN;
+  BuildConnectivity(&f.macromesh);
 
-  Model model;
+  // prepare the initial fields
+  f.vmax = _SPEED_WAVE;
+  f.model.cfl = 0.1;
+  Initfield(&f);
+   // maximal wave speed
+  f.nb_diags = 0;
+  f.pre_dtfield = NULL;
+  f.update_after_rk = NULL;
+  f.model.Source = NULL;
+  // prudence...
+  CheckMacroMesh(&f.macromesh, f.deg, f.raf);
 
-  model.m = 3; 
-  model.NumFlux=Wave_Upwind_NumFlux;
-  model.InitData = TestPeriodic_Wave_InitData;
-  model.ImposedData = TestPeriodic_Wave_ImposedData;
-  model.BoundaryFlux = Wave_Upwind_BoundaryFlux;
-  model.Source = NULL;
+  printf("cfl param =%f\n", f.hmin);
 
-  int deg[]={4, 4, 0};
-  int raf[]={4, 4, 1};
+  real tmax = 0.2;
+  real dt = set_dt(&f);
+  RK2(&f, tmax, dt);
 
-
-  assert(mesh.is2d);
-
-  CheckMacroMesh(&mesh, deg, raf);
-  Simulation simu;
-
-  InitSimulation(&simu, &mesh, deg, raf, &model);
- 
-  real tmax = 0.025;
-  simu.cfl=0.2;
-  simu.vmax=_SPEED_WAVE;
-  RK4(&simu,tmax);
-
-  real dd = 0;
-  dd = L2error(&simu);
-
-  printf("erreur L2=%.12e\n", dd);
-
-  real tolerance = 0.002;
-
+  real dd = L2error(&f);
+  real tolerance = 9e-3;
   test = test && (dd < tolerance);
+  printf("L2 error: %f\n", dd);
 
-  PlotFields(0,false, &simu, "p", "dgvisu_exp.msh");
-  PlotFields(1,false, &simu, "u", "dgvisu_exu.msh");
-  PlotFields(2,false, &simu, "v", "dgvisu_exv.msh");
+   // Save the results and the error
+  Plotfield(0,false, &f, "p", "dgvisup.msh");
+  Plotfield(1,false, &f, "u1", "dgvisuu1.msh");
+  Plotfield(2,false, &f, "u2", "dgvisuu2.msh");
 
-  Simulation simu2;
-
-  InitSimulation(&simu2, &mesh, deg, raf, &model);
-  ThetaTimeScheme(&simu2, tmax, simu.dt);
-
-  
-  dd = L2error(&simu2);
-
-  printf("erreur implicit L2=%.12e\n", dd);
-
-  test = test && (dd < tolerance);
-
-  PlotFields(0,false, &simu2, "p", "dgvisu_imp.msh");
-  PlotFields(1,false, &simu2, "u", "dgvisu_imu.msh");
-  PlotFields(2,false, &simu2, "v", "dgvisu_imv.msh");
   
 
   return test;
 }
 
+void Wave_Upwind_NumFlux(real wL[],real wR[],real* vnorm,real* flux){
+  real flux_temp=0;
+  
+  flux[0]=0.5*((wL[1]+wR[1])*vnorm[0] + (wL[2]+wR[2])*vnorm[1])+0.5*(wL[0]-wR[0]);
+  
+  flux_temp=0.5*(wL[0]+wR[0]) + 0.5*((wL[1]-wR[1])*vnorm[0] + (wL[2]-wR[2])*vnorm[1]);
+  flux[1]=flux_temp*vnorm[0];
+  flux[2]=flux_temp*vnorm[1];
+ 
+
+  flux[0]=_SPEED_WAVE*flux[0];
+  flux[1]=_SPEED_WAVE*flux[1];
+  flux[2]=_SPEED_WAVE*flux[2];
+  
+};
 
 
 void TestPeriodic_Wave_ImposedData(const real *x, const real t, real *w) {
@@ -112,6 +133,7 @@ void TestPeriodic_Wave_InitData(real *x, real *w) {
   real t = 0;
   TestPeriodic_Wave_ImposedData(x, t, w);
 }
+
 
 
 void Wave_Upwind_BoundaryFlux(real *x, real t, real *wL, real *vnorm,

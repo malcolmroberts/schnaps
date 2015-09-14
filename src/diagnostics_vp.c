@@ -9,8 +9,8 @@
 #include "quantities_vp.h"
 #include "diagnostics_vp.h"
 
-real L2VelError(field *f, real *x, real *w){
-
+real L2VelError(field *f, real *x, real *w)
+{
   real wex[_INDEX_MAX];
   real err2 = 0;
   real t = f->tnow;
@@ -89,10 +89,11 @@ real local_kinetic_energy(field *f,real *x, real *w) {
   return l_ke;
 }
 
+
 // TODO: do not store all diagnotics for all time, but instead just
 // append to the output file.
-void Energies(field *f, real *w, real k_energy, real e_energy, real t_energy)
-{
+void Energies(field *f, real *w, real k_energy, real e_energy, real t_energy,
+	      int first_diag) {
   
   k_energy = 0;
   e_energy = 0;
@@ -130,15 +131,16 @@ void Energies(field *f, real *w, real k_energy, real e_energy, real t_energy)
       }
       // get the exact value
       k_energy += local_kinetic_energy(f, xphy, wn) * wpg * det;
-      e_energy += wn[_MV+1] * wn[_MV+1] * wpg * det;      
+      e_energy += wn[_INDEX_EX] * wn[_INDEX_EX] * wpg * det;
+  
     }
   }   
   
   t_energy = 0.5 * (e_energy + k_energy);
   
-  f->Diagnostics[f->iter_time] = 0.5 * k_energy;
-  f->Diagnostics[f->iter_time + f->itermax] = 0.5 * e_energy;
-  f->Diagnostics[f->iter_time + 2 * f->itermax] = t_energy;
+  f->Diagnostics[f->iter_time + (first_diag-1) * f->itermax] = 0.5 * k_energy;
+  f->Diagnostics[f->iter_time + (first_diag) * f->itermax] = 0.5 * e_energy;
+  f->Diagnostics[f->iter_time + (first_diag+1) * f->itermax] = t_energy;
 }
 
 void Charge_total(field *f, real *w, real t_charge, int first_diag)

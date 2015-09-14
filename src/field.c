@@ -18,8 +18,8 @@
 #endif
 
 #pragma start_opencl
-int GenericVarindex(__constant int *deg, __constant int *raf, const int m,
-		    int elem,
+int GenericVarindex(__constant int *deg, __constant int *raf, int elem,
+		    const int m,
 		    int ipg, int iv) {
   int npg = (deg[0] + 1) * (deg[1] + 1) * (deg[2] + 1)
     * raf[0] * raf[1] * raf[2];
@@ -167,7 +167,7 @@ void init_data(field *f)
       real w[f->model.m];
       f->model.InitData(xpg, w);
       for(int iv = 0; iv < f->model.m; iv++) {
-	int imem = f->varindex(f->deg, f->raf,f->model.m,  ie, ipg, iv);
+	int imem = f->varindex(f->deg, f->raf, f->model.m, ie, ipg, iv);
 	f->wn[imem] = w[iv];
       }
     }
@@ -1460,6 +1460,62 @@ real L2error(field *f) {
     }
   }
   return sqrt(error) / (sqrt(mean)  + 1e-16);
+}
+
+
+// Compute the normalized L2 distance with the imposed data
+real L2error_onefield(field *f, int nbfield) 
+{
+  real error = 0;
+  real mean = 0;
+
+  for (int ie = 0; ie < f->macromesh.nbelems; ie++) {
+    // Get the physical nodes of element ie
+
+    // Loop on the glops (for numerical integration)
+    const int npg = NPG(f->deg, f->raf);
+    for(int ipg = 0; ipg < npg; ipg++) {
+      real w[f->model.m];
+      for(int iv = 0; iv < f->model.m; iv++) {
+	int imem = f->varindex(f->deg, f->raf, f->model.m, ie, ipg, iv);
+	w[iv] = f->wn[imem];
+      }
+
+      real wex[f->model.m];
+      real wpg, det;
+      // Compute wpg, det, and the exact solution
+      { 
+	real xphy[3], xpgref[3];
+	real dtau[3][3], codtau[3][3];
+	// Get the coordinates of the Gauss point
+	ref_pg_vol(f->deg, f->raf, ipg, xpgref, &wpg, NULL);
+
+	real physnode[20][3];
+	for(int inoloc = 0; inoloc < 20; inoloc++) {
+	  int ino = f->macromesh.elem2node[20*ie+inoloc];
+	  physnode[inoloc][0] = f->macromesh.node[3 * ino + 0];
+	  physnode[inoloc][1] = f->macromesh.node[3 * ino + 1];
+	  physnode[inoloc][2] = f->macromesh.node[3 * ino + 2];
+	}
+
+	Ref2Phy(physnode, // phys. nodes
+		xpgref, // xref
+		NULL, -1, // dpsiref, ifa
+		xphy, dtau, // xphy, dtau
+		codtau, NULL, NULL); // codtau, dpsi, vnds
+	det = dot_product(dtau[0], codtau[0]);
+
+	// Get the exact value
+	f->model.ImposedData(xphy, f->tnow, wex);
+      }
+
+      int iv = nbfield;
+      real diff = w[iv] - wex[iv];
+      error += diff * diff * wpg * det;
+      mean += w[iv] * w[iv] * wpg * det;
+    }
+  }
+  return sqrt(error);
 }
 
 

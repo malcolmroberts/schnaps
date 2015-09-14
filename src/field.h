@@ -322,4 +322,6 @@ void Gnuplot(field *f, int dir, real fixval, char *filename);
 //! \returns the error.
 real L2error(field *f);
 
+real L2error_onefield(field *f, int nbfield);
+
 #endif

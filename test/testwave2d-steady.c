@@ -11,24 +11,16 @@ const  real a[6]={1,1,1,1,1,1};
 const  real b[6]={1,1,1,1,1,1};
 const  real c[6]={1,1,1,1,1,1};
   
-
-
-
-
 void TestSteady_Wave_ImposedData(const real *x, const real t, real *w);
 void TestSteady_Wave_InitData(real *x, real *w);
-void TestSteady_Wave_Source(const real *xy, const real t, const real *w, real *S);
+void TestSteady_Wave_Source(const real *xy, const real t, const real *w, 
+			    real *S);
 void Wave_Upwind_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
 			      real *flux);
 
 
-void AssemblyImplicitLinearSolver(Simulation *simu, LinearSolver *solver,real theta,real dt);
-
-
-
-
-int main(void) {
-  
+int main() 
+{
   // unit tests
     
   int resu = Test_Wave_Steady();
@@ -39,73 +31,74 @@ int main(void) {
   return !resu;
 } 
 
-int Test_Wave_Steady(void) {
-
+int Test_Wave_Steady() 
+{
   bool test = true;
 
-  MacroMesh mesh;
-  ReadMacroMesh(&mesh,"../test/testcube.msh");
-  Detect2DMacroMesh(&mesh);
+
+  field f;
+  init_empty_field(&f);
+
+  ReadMacroMesh(&f.macromesh,"../test/testcube.msh");
+  Detect2DMacroMesh(&f.macromesh);
   
   real A[3][3] = {{_LENGTH_DOMAIN, 0, 0}, {0, _LENGTH_DOMAIN, 0}, {0, 0,1}};
   real x0[3] = {0, 0, 0};
-  AffineMapMacroMesh(&mesh,A,x0);
+  AffineMapMacroMesh(&f.macromesh,A,x0);
+  BuildConnectivity(&f.macromesh);
 
-  BuildConnectivity(&mesh);
+  f.model.m=3; 
+  f.model.NumFlux=Wave_Upwind_NumFlux;
+  f.model.InitData = TestSteady_Wave_InitData; 
+  f.model.ImposedData = TestSteady_Wave_ImposedData; 
+  f.model.BoundaryFlux = Wave_Upwind_BoundaryFlux; 
+  f.model.Source = TestSteady_Wave_Source; 
 
-  Model model;
+  f.deg[0] = 3;
+  f.deg[1] = 3;
+  f.deg[2] = 0;
 
-  model.m=3; 
-  model.NumFlux=Wave_Upwind_NumFlux;
-  model.InitData = TestSteady_Wave_InitData; 
-  model.ImposedData = TestSteady_Wave_ImposedData; 
-  model.BoundaryFlux = Wave_Upwind_BoundaryFlux; 
-  model.Source = TestSteady_Wave_Source; 
-
-  int deg[]={3, 3, 0};
-  int raf[]={2, 2, 1};
+  f.raf[0] = 2;
+  f.raf[1] = 2;
+  f.raf[2] = 1;
   
-  CheckMacroMesh(&mesh, deg, raf);
-  Simulation simu, simu2;
+  CheckMacroMesh(&f.macromesh, f.deg, f.raf);
 
-  EmptySimulation(&simu);
-
-  InitSimulation(&simu, &mesh, deg, raf, &model);
+  // FIXME: init f
 
   real tmax = 0.01;
-  simu.cfl=0.2;
-  simu.vmax=_SPEED_WAVE;
-  RK4(&simu,tmax);
+  real dt = 1e-5; // FIXME
+  f.model.cfl=0.2;
+  f.vmax=_SPEED_WAVE;
+  RK4(&f,tmax, dt);
  
   real dd = 0;
-  dd = L2error(&simu);
+  dd = L2error(&f);
 
   printf("erreur explicit L2=%.12e\n", dd);
 
-  PlotFields(0,false, &simu, "p", "dgvisu_exp.msh");
-  PlotFields(1,false, &simu, "u", "dgvisu_exu.msh");
-  PlotFields(2,false, &simu, "v", "dgvisu_exv.msh");
+  /* PlotFields(0,false, &simu, "p", "dgvisu_exp.msh"); */
+  /* PlotFields(1,false, &simu, "u", "dgvisu_exu.msh"); */
+  /* PlotFields(2,false, &simu, "v", "dgvisu_exv.msh"); */
 
   real tolerance = _SMALL;
 
   test = test && (dd < tolerance);
 
+  // FIXME: init f
 
+  ThetaTimeScheme(&f, tmax, dt);
   
-  EmptySimulation(&simu2);
-  InitSimulation(&simu2, &mesh, deg, raf, &model);
-  ThetaTimeScheme(&simu2, tmax, simu.dt);
-  
-  dd = L2error(&simu2);
+  dd = L2error(&f);
 
   printf("erreur implicit L2=%.12e\n", dd);
 
-  PlotFields(0,false, &simu2, "p", "dgvisu_imp.msh");
-  PlotFields(1,false, &simu2, "u", "dgvisu_imu.msh");
-  PlotFields(2,false, &simu2, "v", "dgvisu_imv.msh");
+  /* PlotFields(0,false, &simu2, "p", "dgvisu_imp.msh"); */
+  /* PlotFields(1,false, &simu2, "u", "dgvisu_imu.msh"); */
+  /* PlotFields(2,false, &simu2, "v", "dgvisu_imv.msh"); */
 
   test = test && (dd < tolerance);
-   
+  
   return test;
 }
 

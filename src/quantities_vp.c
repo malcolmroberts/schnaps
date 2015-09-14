@@ -18,20 +18,22 @@ void physic_entropy_to_distribution(field *f,real w, real *tw)
   *tw=exp(w)-1;
 }
 
-void Computation_charge_density(field *f, real * w, int ie)
+void Computation_charge_density(field *f, real * w)
 {
-  for(int ipg=0;ipg<NPG(f->deg, f-> raf);ipg++){
-    int imemc=f->varindex(f->deg, f->raf, f->model.m, ie, ipg,_INDEX_RHO);
-    w[imemc]=0;
+  for(int ie=0;ie<f->macromesh.nbelems;ie++){
+    for(int ipg=0;ipg<NPG(f->deg, f-> raf);ipg++){
+      int imemc=f->varindex(f->deg, f->raf, f->model.m, ie, ipg,_INDEX_RHO);
+      w[imemc]=0;
   
-    for(int ielv=0;ielv<_NB_ELEM_V;ielv++){
-      // loop on the local glops
-      for(int iloc=0;iloc<_DEG_V+1;iloc++){
-	real omega=wglop(_DEG_V,iloc);
-	real vi=-_VMAX+ielv*_DV+_DV*glop(_DEG_V,iloc);
-	int ipgv=iloc+ielv*_DEG_V;
-	int imem=f->varindex(f->deg, f->raf, ie, f->model.m,ipg,ipgv);
-	w[imemc]+=omega*_DV*w[imem];
+      for(int ielv=0;ielv<_NB_ELEM_V;ielv++){
+	// loop on the local glops
+	for(int iloc=0;iloc<_DEG_V+1;iloc++){
+	  real omega=wglop(_DEG_V,iloc);
+	  real vi=-_VMAX+ielv*_DV+_DV*glop(_DEG_V,iloc);
+	  int ipgv=iloc+ielv*_DEG_V;
+	  int imem=f->varindex(f->deg, f->raf, ie, f->model.m,ipg,ipgv);
+	  w[imemc]+=omega*_DV*w[imem];
+	}
       }
     }
   }

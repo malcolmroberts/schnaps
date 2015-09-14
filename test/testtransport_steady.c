@@ -13,75 +13,72 @@ const  real c[6]={1,1,1,1,1,1};
   
 void TestSteady_Transport_ImposedData(const real *x, const real t, real *w);
 void TestSteady_Transport_InitData(real *x, real *w);
-void TestSteady_Transport_Source(const real *xy, const real t, const real *w, real *S);
+void TestSteady_Transport_Source(const real *xy, const real t, const real *w, 
+				 real *S);
 void Transport_Upwind_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
-                              real *flux);
+				   real *flux);
 
-
-void AssemblyImplicitLinearSolver(Simulation *simu, LinearSolver *solver,real theta,real dt);
-
-
-
-
-int main(void) {
-  
+int main() 
+{
   // unit tests
     
   int resu = Test_Transport_Steady();
-	 
+  
   if (resu) printf("transport steady  test OK !\n");
   else printf("transport steady test failed !\n");
 
   return !resu;
 } 
 
-int Test_Transport_Steady(void) {
+int Test_Transport_Steady()
+{
 
   bool test = true;
 
-  MacroMesh mesh;
-  //ReadMacroMesh(&mesh,"../test/testcube.msh");
-  ReadMacroMesh(&mesh,"../test/testdisque2d.msh");
+  field f;
+  init_empty_field(&f);
+
+  ReadMacroMesh(&f.macromesh, "../test/testdisque2d.msh");
   //ReadMacroMesh(&mesh,"../test/testmacromesh.msh");
-  Detect2DMacroMesh(&mesh);
+  Detect2DMacroMesh(&f.macromesh);
   
   real A[3][3] = {{_LENGTH_DOMAIN, 0, 0}, {0, _LENGTH_DOMAIN, 0}, {0, 0,1}};
   real x0[3] = {0, 0, 0};
-  AffineMapMacroMesh(&mesh,A,x0);
+  AffineMapMacroMesh(&f.macromesh,A,x0);
+  BuildConnectivity(&f.macromesh);
 
-  BuildConnectivity(&mesh);
+  f.model.m=1;
+  f.model.NumFlux = TransNumFlux2d;
+  f.model.BoundaryFlux = Transport_Upwind_BoundaryFlux;
+  f.model.InitData = TestSteady_Transport_InitData;
+  f.model.ImposedData = TestSteady_Transport_ImposedData;
+  f.model.Source = TestSteady_Transport_Source;
 
-  Model model;
+  f.deg[0] = 4;
+  f.deg[1] = 4;
+  f.deg[2] = 0;
 
-   model.m=1;
-  model.NumFlux = TransNumFlux2d;
-  model.BoundaryFlux = Transport_Upwind_BoundaryFlux;
-  model.InitData = TestSteady_Transport_InitData;
-  model.ImposedData = TestSteady_Transport_ImposedData;
-  model.Source = TestSteady_Transport_Source;
+  f.raf[0] = 2;
+  f.raf[1] = 2;
+  f.raf[2] = 1;
 
-  int deg[]={4, 4, 0};
-  int raf[]={2, 2, 1};
+  f.model.cfl = 0.2;
+  f.vmax=_SPEED_WAVE;
+
+  CheckMacroMesh(&f.macromesh, f.deg, f.raf);
   
-  CheckMacroMesh(&mesh, deg, raf);
-  Simulation simu;
-  EmptySimulation(&simu);
-
-  InitSimulation(&simu, &mesh, deg, raf, &model);
+  // FIXME: init
 
   real tmax = 1000.0;
-  simu.cfl=0.2;
-  simu.vmax=_SPEED_WAVE;
- 
   real dd = 0;
 
   real tolerance = 3e-5;
 
   test = test && (dd < tolerance);
 
-  ThetaTimeScheme(&simu, tmax, 10);
+  ThetaTimeScheme(&f, tmax, 10);
   
-  dd = L2error(&simu);
+  dd = L2error(&f);
 
   printf("erreur implicit L2=%.12e\n", dd);
 
@@ -117,7 +114,7 @@ void TestSteady_Transport_InitData(real *x, real *w) {
 
 
 void Transport_Upwind_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
-                                       real *flux) {
+				   real *flux) {
   real wR[3];
   TestSteady_Transport_ImposedData(x , t, wR);
   TransNumFlux2d(wL, wR, vnorm, flux);

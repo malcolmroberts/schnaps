@@ -26,7 +26,7 @@ int Testfield(void){
   f.raf[2] = 2; // z direction refinement
 
   ReadMacroMesh(&f.macromesh,"../test/testmacromesh.msh");
-  BuildConnectivity(&(f.macromesh));
+  BuildConnectivity(&f.macromesh);
 
   Initfield(&f);
   CheckMacroMesh(&f.macromesh, f.deg, f.raf);

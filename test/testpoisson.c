@@ -7,139 +7,123 @@
 #include "solverpoisson.h"
 #include "linear_solver.h"
 
-
-void TestPoisson_ImposedData(const real x[3],const real t,real w[]);
+void TestPoisson_ImposedData(const real x[3], const real t,real w[]);
 void TestPoisson_InitData(real x[3],real w[]);
 void TestPoisson_BoundaryFlux(real x[3],real t,real wL[],real* vnorm,
 			      real* flux);
 
-int main(void) 
-{
+int main(void) {
   
   // unit tests
     
   int resu = TestPoisson();
 	 
-  if (resu) printf("1d poisson test OK !\n");
-  else printf("1d poisson test failed !\n");
+  if (resu) printf("poisson test OK !\n");
+  else printf("poisson test failed !\n");
 
   return !resu;
-}
+} 
 
-int TestPoisson(void) 
-{
+int TestPoisson(void) {
+
   bool test = true;
 
-  // 2D meshes:
-  // test/disque2d.msh
-  // test/testdisque2d.msh
-  // test/testmacromesh.msh
-  // test/unit-cube.msh
-
-  // 3D meshes"
-  // test/testdisque.msh
-
+  field f;
+  init_empty_field(&f);
   
-  MacroMesh mesh;
-  ReadMacroMesh(&mesh,"../test/testcube.msh");
-  Detect1DMacroMesh(&mesh);
-  bool is1d=mesh.is1d;
-  assert(is1d);
-  BuildConnectivity(&mesh);
-
-  Model model;
-
+  int vec=1;
 
   // num of conservative variables f(vi) for each vi, phi, E, rho, u,
   // p, e (ou T)
-  model.m=_INDEX_MAX; 
-  model.NumFlux = VlasovP_Lagrangian_NumFlux;
-  model.Source = VlasovP_Lagrangian_Source;
+  f.model.m=_MV+6; 
+  f.vmax = _VMAX; // maximal wave speed
+  f.model.NumFlux = VlasovP_Lagrangian_NumFlux;
+  f.model.Source = VlasovP_Lagrangian_Source;
+   //f.model.Source = NULL;
   
-  model.BoundaryFlux = TestPoisson_BoundaryFlux;
-  model.InitData = TestPoisson_InitData;
-  model.ImposedData = TestPoisson_ImposedData;
-  model.Source = NULL;
+  f.model.BoundaryFlux = TestPoisson_BoundaryFlux;
+  f.model.InitData = TestPoisson_InitData;
+  f.model.ImposedData = TestPoisson_ImposedData;
  
-  int deg[]={3, 0, 0};
-  int raf[]={3, 1, 1};
-    
-  PrintMacroMesh(&mesh);
+  f.varindex = GenericVarindex;
+  f.pre_dtfield = NULL;
+  f.update_after_rk = NULL; 
+
+
+  f.deg[0] = 3;  // x direction degree
+  f.deg[1] = 0;  // y direction degree
+  f.deg[2] = 0;  // z direction degree
+  f.raf[0] = 32;  // x direction refinement
+  f.raf[1] = 1;  // y direction refinement
+  f.raf[2] = 1;  // z direction refinement
+
+  // read the gmsh file
+  ReadMacroMesh(&f.macromesh,"../test/testcube.msh");
+  // try to detect a 2d mesh
+  //bool is1d=Detect1DMacroMesh(&f.macromesh);
+  Detect1DMacroMesh(&f.macromesh);
+  bool is1d=f.macromesh.is1d;
+  assert(is1d);
+
+  // mesh preparation
+  BuildConnectivity(&f.macromesh);
+
+  PrintMacroMesh(&f.macromesh);
+
+  // prepare the initial fields
+  Initfield(&f);
+  f.nb_diags=0;
+  
+  // prudence...
+  CheckMacroMesh(&f.macromesh,f.deg, f.raf);
+
+  printf("cfl param =%f\n",f.hmin);
+
+  // time derivative
+  //dtField(&f);
+  //DisplayField(&f);
   //assert(1==2);
-  //AffineMapMacroMesh(&(f.macromesh));
+  // apply the DG scheme
+  // time integration by RK2 scheme 
+  // up to final time = 1.
  
-  CheckMacroMesh(&mesh, deg, raf);
-  Simulation simu;
+  /*Compute_electric_field(&f);
 
-  InitSimulation(&simu, &mesh, deg, raf, &model);
+  // check the gradient on every glop
+  for(int ie=0;ie<f.macromesh.nbelems;ie++){
+    printf("elem %d\n",ie);
+    for(int ipg=0;ipg<NPG(f.interp_param+1);ipg++){
+      real xref[3],wpg;
+      ref_pg_vol(f.interp_param+1,ipg,xref,&wpg,NULL);
+      printf("Gauss point %d %f %f %f \n",ipg,xref[0],xref[1],xref[2]);
+      int imem=f.varindex(f.interp_param,ie,ipg,_MV+1);
+      printf("gradphi exact=%f gradphinum=%f\n",1-2*xref[0],f.wn[imem]);
+      test=test && (fabs(f.wn[imem]-(1-2*xref[0]))<1e-10);
+    }
+    }*/
 
-
-  ContinuousSolver ps;
+  //Computation_charge_density(f);
   
-  int nb_var=1;
-  int * listvar= malloc(nb_var * sizeof(int));
-  listvar[0]=_INDEX_PHI;
-  
-  InitContinuousSolver(&ps,&simu,1,nb_var,listvar);
-  ps.matrix_assembly=MatrixPoisson_Continuous;
-  ps.rhs_assembly=RHSPoisson_Continuous;
-  ps.bc_assembly= ExactDirichletContinuousMatrix;
-  ps.postcomputation_assembly=Computation_ElectricField_Poisson;
 
-#ifdef PARALUTION
-  ps.lsol.solver_type = PAR_AMG;
-  ps.lsol.pc_type=NONE;
-#else
-  ps.lsol.solver_type = LU;
-  ps.lsol.pc_type=NONE;
-#endif
+  // FIXME!!!! This has been deleted?
+  //SolvePoisson1D(&f,f.wn,1,0.0,0.0,LU,NONE);
 
-  SolveContinuous2D(&ps);
-
-  real errl2 = L2error(&simu);
-
-  printf("Erreur L2=%f\n",errl2);
-
-  test = test && (errl2 < 2e-2);
-
-  printf("Plot...\n");
-
-
-  PlotFields(_INDEX_PHI, false, &simu, NULL, "dgvisu.msh");
-  PlotFields(_INDEX_EX, false, &simu, NULL, "dgex.msh");
-
-
+  // check the gradient given by the poisson solver
+  for(int ie=0;ie<f.macromesh.nbelems;ie++){
+    //printf("elem %d\n",ie);
+    for(int ipg=0;ipg<NPG(f.deg, f.raf);ipg++){
+      real xref[3],wpg;
+      ref_pg_vol(f.deg, f.raf, ipg, xref,&wpg,NULL);
+      //printf("Gauss point %d %f %f %f \n",ipg,xref[0],xref[1],xref[2]);
+      int imem=f.varindex(f.deg, f.raf, f.model.m, ie, ipg, _MV + 1);
+      // printf("gradphi exact=%f gradphinum=%f rap=%f\n",
+      //1-2*xref[0],f.wn[imem],(1-2*xref[0])/f.wn[imem]);
+      test=test && (fabs(f.wn[imem]-(-1+2*xref[0]))<1e-6);
+    }
+  }
   return test;
 }
 
-/* void TestPoisson_ImposedData(const real x[3], const real t, real w[]) */
-/* { */
-/*   for(int i = 0; i < _INDEX_MAX; i++){ */
-/*     w[i] = 0; */
-/*   } */
-/*   // exact value of the potential */
-/*   // and electric field */
-/*   w[_INDEX_PHI] = (x[0] * x[0] + x[1] * x[1])/4; */
-/*   w[_INDEX_EX] =  -x[0]/2; */
-/*   w[_INDEX_RHO] = -1; //rho init */
-/*   /\* w[_INDEX_PHI] = x[0] ; *\/ */
-/*   /\* w[_INDEX_EX] =  -1; *\/ */
-/*   /\* w[_INDEX_RHO] = 0; //rho init *\/ */
-/* } */
-
-/* void TestPoisson_InitData(real x[3], real w[]) */
-/* { */
-/*   real t = 0; */
-/*   TestPoisson_ImposedData(x, t, w); */
-/* } */
-
-/* void TestPoisson_BoundaryFlux(real x[3], real t, real wL[], real *vnorm,  */
-/* 			      real *flux) */
-/* { */
-/*   real wR[_INDEX_MAX]; */
-/*   TestPoisson_ImposedData(x, t, wR); */
-/*   VlasovP_Lagrangian_NumFlux(wL, wR, vnorm, flux); */
-/* } */
 void TestPoisson_ImposedData(const real x[3], const real t,real w[]){
   for(int i = 0; i < _INDEX_MAX_KIN + 1; i++){
     int j = i%_DEG_V; // local connectivity put in function
@@ -152,7 +136,7 @@ void TestPoisson_ImposedData(const real x[3], const real t,real w[]){
   // exact value of the potential
   // and electric field
   w[_INDEX_PHI] = x[0] * (1 - x[0]);
-  w[_INDEX_EX] = - 1. + 2. * x[0];
+  w[_INDEX_EX] = -1. + 2. * x[0];
   w[_INDEX_RHO] = 2.; //rho init
   w[_INDEX_VELOCITY] = 0; // u init
   w[_INDEX_PRESSURE] = 0; // p init
