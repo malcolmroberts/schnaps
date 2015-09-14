@@ -14,108 +14,111 @@ int TestKernel(void)
     return true;
   }
 
-  Model model;
-  model.m = m;
-  
-  model.m = 1; // only one conservative variable
-  model.NumFlux = TransNumFlux2d;
-  model.BoundaryFlux = TransBoundaryFlux2d;
-  model.InitData = TransInitData2d;
-  model.ImposedData = TransImposedData2d;
-  
-  /* field f; */
-  /* init_empty_field(&f); */
+  field f;
+  init_empty_field(&f);
 
-  /* f.varindex = GenericVarindex; */
+  f.model.cfl = 0.05;
+  f.model.m = 1; // only one conservative variable
+  f.model.NumFlux = TransNumFlux2d;
+  f.model.BoundaryFlux = TransBoundaryFlux2d;
+  f.model.InitData = TransInitData2d;
+  f.model.ImposedData = TransImposedData2d;
+  f.varindex = GenericVarindex;
 
-  int deg[3] = {1, 1, 0}; // Poynomial degree
-  int raf[3] = {2, 2, 1}; // Number of subcells per macrocell
-  
-  /* f.model.cfl = 0.05; */
+  f.deg[0] = 1; // x direction degree
+  f.deg[1] = 1; // y direction degree
+  f.deg[2] = 0; // z direction degree
+  f.raf[0] = 2; // x direction refinement
+  f.raf[1] = 2; // y direction refinement
+  f.raf[2] = 1; // z direction refinement
 
+  ReadMacroMesh(&(f.macromesh), "../test/testmacromesh.msh");
+  //ReadMacroMesh(&(f.macromesh),"test/testcube.msh");
+  Detect2DMacroMesh(&(f.macromesh));
+  assert(f.macromesh.is2d);  
+  BuildConnectivity(&(f.macromesh));
 
-  MacroMesh mesh;
-  ReadMacroMesh(&mesh, "../test/testmacromesh.msh");
-  Detect2DMacroMesh(&mesh);
-  assert(mesh.is2d);
-  BuildConnectivity(&mesh);
+  //AffineMapMacroMesh(&(f.macromesh));
+ 
+  Initfield(&f);
 
-  Simulation simu;
-  EmptySimulation(&simu);
-  InitSimulation(&simu, &mesh, deg, raf, &model);
+  printf("&f=%p\n",&f);
 
-   // Set dtwn to 1 for testing
-  {
+  // Set dtwn to 1 for testing
+  { 
     void *chkptr;
     cl_int status;
-    chkptr = clEnqueueMapBuffer(simu.cli.commandqueue,
-  				simu.dtw_cl,  // buffer to copy from
-  				CL_TRUE,  // block until the buffer is available
-  				CL_MAP_WRITE,
-  				0, // offset
-  				sizeof(real) * (simu.wsize), // buffersize
-  				0,
-  				NULL,
-  				NULL, // events management
-  				&status);
+    chkptr = clEnqueueMapBuffer(f.cli.commandqueue,
+				f.dtwn_cl,  // buffer to copy from
+				CL_TRUE,  // block until the buffer is available
+				CL_MAP_WRITE, 
+				0, // offset
+				sizeof(real) * (f.wsize), // buffersize
+				0,
+				NULL,
+				NULL, // events management
+				&status);
     assert(status == CL_SUCCESS);
-    assert(chkptr == simu.dtw);
+    assert(chkptr == f.dtwn);
 
-    for(int i = 0; i < simu.wsize; i++) {
-      simu.dtw[i] = 1;
+    for(int i = 0; i < f.wsize; i++){
+      f.dtwn[i] = 1;
     }
 
-    status = clEnqueueUnmapMemObject(simu.cli.commandqueue,
-  				     simu.dtw_cl,
-  				     simu.dtw,
-  				     0,
-  				     NULL,
-  				     NULL);
+    status = clEnqueueUnmapMemObject(f.cli.commandqueue,
+				     f.dtwn_cl,
+				     f.dtwn,
+				     0,
+				     NULL,
+				     NULL);
     assert(status == CL_SUCCESS);
 
-    status = clFinish(simu.cli.commandqueue);
+    status = clFinish(f.cli.commandqueue);
     assert(status == CL_SUCCESS);
   }
  
-  for(int ie = 0; ie < mesh.nbelems; ++ie) {
+  for(int ie = 0; ie < f.macromesh.nbelems; ++ie) {
     printf("ie: %d\n", ie);
-    DGMass_CL(ie, &simu, 0, NULL, NULL);
-    clFinish(simu.cli.commandqueue);
+    /* update_physnode_cl(&f, ie, f.physnode_cl, f.physnode, NULL, */
+    /* 		       0, NULL, NULL); */
+    /* clFinish(f.cli.commandqueue); */
+
+    DGMass_CL(ie, &f, 0, NULL, NULL);
+    clFinish(f.cli.commandqueue);
   }
 
-  CopyfieldtoCPU(&simu);
+  CopyfieldtoCPU(&f);
 
-  /* Displayfield(&f); */
+  Displayfield(&f);
 
   // save the dtwn pointer
-  real *saveptr = simu.dtw;
+  real *saveptr = f.dtwn;
 
   // malloc a new dtwn.
-  simu.dtw = calloc(simu.wsize, sizeof(real));
-  for(int i = 0; i < simu.wsize; i++){
-    simu.dtw[i] = 1;
+  f.dtwn = calloc(f.wsize,sizeof(real));
+  for(int i = 0; i < f.wsize; i++){
+    f.dtwn[i] = 1;
   }
 
-  int fsize =  simu.wsize / mesh.nbelems;
-  for(int ie = 0; ie < mesh.nbelems; ++ie)
-    DGMass(simu.fd + ie, simu.w + ie * fsize, simu.dtw + ie * fsize);
+  for(int ie = 0; ie < f.macromesh.nbelems; ++ie)
+    DGMass((void*) &(f.mcell[ie]), &f, f.dtwn);
 
-  //Displayfield(&f);
+  Displayfield(&f);
 
   //check that the results are the same
   real maxerr = 0;
-  for(int i = 0; i < simu.wsize; i++){
-    //printf("error=%f %f %f\n", f.dtw[i] - saveptr[i], f.dtw[i], saveptr[i]);
-    maxerr = fmax(fabs(simu.dtw[i] - saveptr[i]), maxerr);
+  for(int i = 0; i < f.wsize; i++){
+    printf("error=%f %f %f\n", f.dtwn[i]-saveptr[i], f.dtwn[i],saveptr[i]);
+    maxerr=fmax(fabs(f.dtwn[i] - saveptr[i]), maxerr);
   }
   printf("max error=%f\n",maxerr);
 
-  test = (maxerr < _SMALL);
+  test = (maxerr < 1e-8);
 
   return test;
 }
 
-int main() {
+int main(void) {
   // Unit tests
   int resu = TestKernel();
   if (resu) 

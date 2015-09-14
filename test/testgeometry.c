@@ -13,7 +13,8 @@ int main(void) {
   return !resu;
 } 
 
-int TestGeometry(void){
+int TestGeometry()
+{
   int test = true;
   MacroMesh mc;
 
@@ -50,7 +51,7 @@ int TestGeometry(void){
   v[2] = xref[2]-xref0[2];
 
   real d = sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
-  test = (d < _SMALL);
+  test = (d < 1e-12);
 
 
   // again with the other function
@@ -61,7 +62,7 @@ int TestGeometry(void){
   v[2] = xref[2]-xref0[2];
 
   d = sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
-  test = test && (d < _SMALL);
+  test = test && (d < 1e-12);
 
 
 

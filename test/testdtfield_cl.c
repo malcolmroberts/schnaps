@@ -27,6 +27,7 @@ int TestDtfield_CL(void){
   }
 
   field f;
+  init_empty_field(&f);
   
   // 2D meshes:
   // test/disque2d.msh
@@ -34,7 +35,8 @@ int TestDtfield_CL(void){
   // test/testmacromesh.msh
   // test/unit-cube.msh
 
-  char *mshname =  "../test/disque2d.msh";
+  char *mshname = "../test/disque2d.msh";
+  //char *mshname = "test/unit-cube.msh";
   
   ReadMacroMesh(&(f.macromesh), mshname);
   Detect2DMacroMesh(&f.macromesh);
@@ -48,19 +50,18 @@ int TestDtfield_CL(void){
   f.model.m = 1;
   m = f.model.m;
 
-
   f.model.NumFlux = TransNumFlux2d;
   f.model.BoundaryFlux = TransBoundaryFlux2d;
   f.model.InitData = TransInitData2d;
   f.model.ImposedData = TransImposedData2d;
   f.varindex = GenericVarindex;
 
-  f.deg[0] = 2;
-  f.deg[1] = 2;
-  f.deg[2] = 0;
-  f.raf[0] = 4;
-  f.raf[1] = 4;
-  f.raf[2] = 1;
+  f.deg[0] = 2; // x direction degree
+  f.deg[1] = 2; // y direction degree
+  f.deg[2] = 0; // z direction degree
+  f.raf[0] = 4; // x direction refinement
+  f.raf[1] = 4; // y direction refinement
+  f.raf[2] = 1; // z direction refinement
 
 #else
   // 3D version
