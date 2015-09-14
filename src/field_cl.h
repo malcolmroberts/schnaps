@@ -3,12 +3,12 @@
 
 #ifdef _WITH_OPENCL
 
+#ifdef _WITH_OPENCL
 #include "clinfo.h"
+#endif
 
+#include "field.h"
 #include "clinfo.h"
-
-void complete_event(field *f,
-		    cl_uint nwait, cl_event *wait,  cl_event *done);
 
 //! copy back the field to host memory
 //! \param[inout] f a field
@@ -24,30 +24,16 @@ void dtfield_CL(field *f, cl_mem *dtwn_cl,
 		cl_uint nwait, cl_event *wait, cl_event *done);
 void DGFlux_CL(field *f, int d, int ie, cl_mem *wn_cl,
 	       cl_uint nwait, cl_event *wait, cl_event *done);
-void DGVolume_CL(int ie, field *f, cl_mem *dtwn_cl,
+void DGVolume_CL(void *mcell, field *f, cl_mem *dtwn_cl,
 		 cl_uint nwait, cl_event *wait, cl_event *done);
-void DGMacroCellInterface_CL(int ifa, field *f, cl_mem *wn_cl,
+void DGMacroCellInterface_CL(void *mface, field *f, cl_mem *wn_cl,
 			     cl_uint nwait, cl_event *wait, cl_event *done);
-void DGBoundary_CL(int ifa, field *f, cl_mem *wn_cl,
+void DGBoundary_CL(void *mface, field *f, cl_mem *wn_cl,
 		   cl_uint nwait, cl_event *wait, cl_event *done);
-void DGMass_CL(int ie, field *f,
+void DGMass_CL(MacroCell *mcell, field *f,
 	       cl_uint nwait, cl_event *wait, cl_event *done);
 
 void show_cl_timing(field *f);
-
-void init_field_cl(field *f);
-void set_physnodes_cl(field *f);
-
-
-//! \brief OpenCL version of RK2
-//! time integration by a second order Runge-Kutta algorithm
-//! \param[inout] f a field
-//! \param[in] tmax physical duration of the simulation
-void RK2_CL(field *f, real tmax, real dt,
-	    cl_uint nwait, cl_event *wait, cl_event *done);
-void RK4_CL(field *f, real tmax, real dt,
-	    cl_uint nwait, cl_event *wait, cl_event *done);
-
 #endif // _WITH_OPENCL
 
 #endif // _FIELD_CL_H

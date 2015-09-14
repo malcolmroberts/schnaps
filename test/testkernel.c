@@ -83,7 +83,7 @@ int TestKernel(void)
     /* 		       0, NULL, NULL); */
     /* clFinish(f.cli.commandqueue); */
 
-    DGMass_CL(ie, &f, 0, NULL, NULL);
+    DGMass_CL((void*) &(f.mcell[ie]), &f, 0, NULL, NULL);
     clFinish(f.cli.commandqueue);
   }
 
@@ -100,8 +100,9 @@ int TestKernel(void)
     f.dtwn[i] = 1;
   }
 
-  for(int ie = 0; ie < f.macromesh.nbelems; ++ie)
+  for(int ie = 0; ie < f.macromesh.nbelems; ++ie) {
     DGMass((void*) &(f.mcell[ie]), &f, f.dtwn);
+  }
 
   Displayfield(&f);
 
