@@ -4,111 +4,8 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <math.h>
-#include <string.h>
 
-
-int TestDtfield_CL()
-{
-   bool test = true; 
-
-  if(!cldevice_is_acceptable(nplatform_cl, ndevice_cl)) {
-    printf("OpenCL device not acceptable.\n");
-    return true;
-  }
-  
-  MacroMesh mesh;
-  char *mshname = "../test/testmacromesh.msh";
-  //char *mshname = "../test/unit-cube.msh";
-  
-  ReadMacroMesh(&mesh, mshname);
-  Detect2DMacroMesh(&mesh);
-  BuildConnectivity(&mesh);
-
-  Model model;
-
-#if 1
-  // 2D version
-  assert(mesh.is2d);
-
-  model.cfl = 0.05;
-  model.m = 1;
-  m = model.m;
-
-  model.NumFlux = TransNumFlux2d;
-  model.BoundaryFlux = TransBoundaryFlux2d;
-  model.InitData = TransInitData2d;
-  model.ImposedData = TransImposedData2d;
- 
-  int deg[] = {2, 2, 0};
-  int raf[] = {4, 4, 1};
-
-  char buf[1000];
-  sprintf(buf, "-D _M=%d", model.m);
-  strcat(cl_buildoptions, buf);
-
-  sprintf(buf," -D NUMFLUX=%s", "TransNumFlux2d");
-  strcat(cl_buildoptions, buf);
-
-  sprintf(buf, " -D BOUNDARYFLUX=%s", "TransBoundaryFlux2d");
-  strcat(cl_buildoptions, buf);
-
-#else
-  // 3D version
-  assert(!mesh.is2d);
-  
-  model.cfl = 0.05;
-  model.m = 1;
-  model.NumFlux = TransNumFlux;
-  model.BoundaryFlux = TestTransBoundaryFlux;
-  model.InitData = TestTransInitData;
-  model.ImposedData = TestTransImposedData;
-
-  int deg[] = {2, 2, 2};
-  int raf[] = {3, 3, 3};
-  
-#endif
-
-  set_global_m(model.m);
-
-  Simulation simu;
-
-  model.Source = OneSource;
-  set_source_CL(&simu, "OneSource");
-  //model.Source = NULL;
-
-
-  assert(simu.use_source_cl);
-  InitSimulation(&simu, &mesh, deg, raf, &model);
-  
-  cl_int status;
-  cl_event clv_dtfield;// = clCreateUserEvent(simu.cli.context, &status);
-  printf("dtfield_CL...\n");
-  dtfield_CL(&simu, &simu.w_cl, 0, NULL, &clv_dtfield);
-  printf("\t...dtfield_CL done\n");
-  
-  //clWaitForEvents(1, &clv_dtfield);
-  CopyfieldtoCPU(&simu);
-
-  // Displayfield(&f);
-  show_cl_timing(&simu);
-
-  real *saveptr = simu.dtw;
-  simu.dtw = calloc(simu.wsize, sizeof(real));
-
-  DtFields(&simu, simu.w, simu.dtw);
- 
-  real maxerr = 0;
-  for(int i = 0; i < simu.wsize; i++) {
-    real error = simu.dtw[i] - saveptr[i];
-    //printf("error= \t%f\t%f\t%f\n", error, f.dtwn[i], saveptr[i]);
-    maxerr = fmax(fabs(error), maxerr);
-  }
-  printf("max error: %f\n", maxerr);
-
-  test = (maxerr < _SMALL * 10);
-
-  return test;
-}
+int TestDtfield_CL(void);
 
 int main(void) {
   int resu = TestDtfield_CL();
@@ -119,4 +16,99 @@ int main(void) {
     printf("Dtfield_CL test failed !\n");
 
   return !resu;
+} 
+
+int TestDtfield_CL(void){
+  bool test = true;
+
+  if(!cldevice_is_acceptable(nplatform_cl, ndevice_cl)) {
+    printf("OpenCL device not acceptable.\n");
+    return true;
+  }
+
+  field f;
+  
+  // 2D meshes:
+  // test/disque2d.msh
+  // test/testdisque2d.msh
+  // test/testmacromesh.msh
+  // test/unit-cube.msh
+
+  char *mshname =  "../test/disque2d.msh";
+  
+  ReadMacroMesh(&(f.macromesh), mshname);
+  Detect2DMacroMesh(&f.macromesh);
+  BuildConnectivity(&f.macromesh);
+
+#if 1
+  // 2D version
+  assert(f.macromesh.is2d);
+
+  f.model.cfl = 0.05;
+  f.model.m = 1;
+  m = f.model.m;
+
+
+  f.model.NumFlux = TransNumFlux2d;
+  f.model.BoundaryFlux = TransBoundaryFlux2d;
+  f.model.InitData = TransInitData2d;
+  f.model.ImposedData = TransImposedData2d;
+  f.varindex = GenericVarindex;
+
+  f.deg[0] = 2;
+  f.deg[1] = 2;
+  f.deg[2] = 0;
+  f.raf[0] = 4;
+  f.raf[1] = 4;
+  f.raf[2] = 1;
+
+#else
+  // 3D version
+  f.model.cfl = 0.05;
+  f.model.m = 1;
+  f.model.NumFlux = TransNumFlux;
+  f.model.BoundaryFlux = TestTransBoundaryFlux;
+  f.model.InitData = TestTransInitData;
+  f.model.ImposedData = TestTransImposedData;
+  f.varindex = GenericVarindex;
+
+  f.interp.interp_param[0] = f.model.m;
+  f.interp.interp_param[1] = 2; // x direction degree
+  f.interp.interp_param[2] = 2; // y direction degree
+  f.interp.interp_param[3] = 2; // z direction degree
+  f.interp.interp_param[4] = 3; // x direction refinement
+  f.interp.interp_param[5] = 3; // y direction refinement
+  f.interp.interp_param[6] = 3; // z direction refinement
+#endif
+
+  set_global_m(f.model.m);
+  set_source_CL(&f, "OneSource");
+  Initfield(&f);
+  
+  cl_event clv_dtfield = clCreateUserEvent(f.cli.context, NULL);
+  
+  dtfield_CL(&f, &f.wn_cl, 0, NULL, &clv_dtfield);
+  clWaitForEvents(1, &clv_dtfield);
+  CopyfieldtoCPU(&f);
+
+  // Displayfield(&f);
+  show_cl_timing(&f);
+
+  real *saveptr = f.dtwn;
+  f.dtwn = calloc(f.wsize, sizeof(real));
+
+  f.model.Source = OneSource;
+  dtfield(&f, f.wn, f.dtwn);
+ 
+  real maxerr = 0;
+  for(int i = 0; i < f.wsize; i++) {
+    real error = f.dtwn[i] - saveptr[i];
+    //printf("error= \t%f\t%f\t%f\n", error, f.dtwn[i], saveptr[i]);
+    maxerr = fmax(fabs(error), maxerr);
+  }
+  printf("max error: %f\n", maxerr);
+
+  test = (maxerr < 1e-8);
+
+  return test;
 }
