@@ -40,20 +40,19 @@ int TestfieldDG()
   
   Displayfield(&f);
 
-  Plotfield(0, false, &f, NULL, "visu.msh");
-  Plotfield(0, true, &f, "error", "error.msh");
+  //Plotfield(0, false, &f, NULL, "visu.msh");
+  //Plotfield(0, true, &f, "error", "error.msh");
 
   // Test the time derivative with the exact solution
-  for(int i = 0; 
-      i < f.model.m * f.macromesh.nbelems * NPG(f.deg, f.raf); 
-      i++){
+  const int wsize = f.model.m * f.macromesh.nbelems * NPG(f.deg, f.raf); 
+  for(int i = 0; i < wsize; i++) {
     test = test && fabs(4 * f.wn[i] - pow(f.dtwn[i], 2)) < 1e-2;
     printf("i=%d err=%f \n",i,4 * f.wn[i] - pow(f.dtwn[i], 2));
-    assert(test);
+    //assert(test);
   }
   
   return test;
-};
+}
 
 int main(void) {
   // Unit tests
