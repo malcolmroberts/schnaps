@@ -4,7 +4,6 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <math.h>
-#include <string.h>
 
 int TestKernelInterface(void){
   bool test = true;
@@ -14,158 +13,108 @@ int TestKernelInterface(void){
     return true;
   }
 
-  /* field f; */
-  /* init_empty_field(&f); */
+  field f;
+  init_empty_field(&f);
   
-  /* // Original: */
-  /* f.model.cfl = 0.05; */
-  /* f.model.m = 1; // only one conservative variable */
-  /* f.model.NumFlux = TransNumFlux2d; */
-  /* f.model.BoundaryFlux = TransBoundaryFlux2d; */
-  /* f.model.InitData = TransInitData2d; */
-  /* f.model.ImposedData = TransImposedData2d; */
-  /* f.varindex = GenericVarindex; */
+  // Original:
+  f.model.cfl = 0.05;
+  f.model.m = 1; // only one conservative variable
+  f.model.NumFlux = TransNumFlux2d;
+  f.model.BoundaryFlux = TransBoundaryFlux2d;
+  f.model.InitData = TransInitData2d;
+  f.model.ImposedData = TransImposedData2d;
+  f.varindex = GenericVarindex;
 
-  /* f.interp.interp_param[0] = f.model.m; */
-  /* f.interp.interp_param[1] = 2; // x direction degree */
-  /* f.interp.interp_param[2] = 2; // y direction degree */
-  /* f.interp.interp_param[3] = 0; // z direction degree */
-  /* f.interp.interp_param[4] = 3; // x direction refinement */
-  /* f.interp.interp_param[5] = 3; // y direction refinement */
-  /* f.interp.interp_param[6] = 1; // z direction refinement */
+  f.deg[0] = 2;  // x direction degree
+  f.deg[1] = 2;  // y direction degree
+  f.deg[2] = 0;  // z direction degree
+  f.raf[0] = 3;  // x direction refinement
+  f.raf[1] = 3;  // y direction refinement
+  f.raf[2] = 1;  // z direction refinement
 
-  /* ReadMacroMesh(&(f.macromesh),"../test/testmacromesh.msh"); */
-  /* //ReadMacroMesh(&(f.macromesh),"../test/testcube.msh"); */
-  /* Detect2DMacroMesh(&(f.macromesh)); */
-  /* assert(f.macromesh.is2d); */
+  ReadMacroMesh(&(f.macromesh),"test/testmacromesh.msh");
+  //ReadMacroMesh(&(f.macromesh),"test/testcube.msh");
+  Detect2DMacroMesh(&(f.macromesh));
+  assert(f.macromesh.is2d);
 
-  /* BuildConnectivity(&(f.macromesh)); */
-  /* PrintMacroMesh(&(f.macromesh)); */
+  BuildConnectivity(&(f.macromesh));
+  PrintMacroMesh(&(f.macromesh));
 
-  /* //AffineMapMacroMesh(&(f.macromesh)); */
- 
-  /* Initfield(&f); */
-  Model model;
-  
-  model.cfl = 0.05;
-  model.m = 1; // only one conservative variable
-  model.NumFlux = TransNumFlux2d;
-  model.BoundaryFlux = TransBoundaryFlux2d;
-  model.InitData = TransInitData2d;
-  model.ImposedData = TransImposedData2d;
-  model.Source = NULL;
-
-  char buf[1000];
-  sprintf(buf, "-D _M=%d", model.m);
-  strcat(cl_buildoptions, buf);
-
-  sprintf(buf," -D NUMFLUX=%s", "TransNumFlux2d");
-  strcat(cl_buildoptions, buf);
-
-  sprintf(buf, " -D BOUNDARYFLUX=%s", "TransBoundaryFlux2d");
-  strcat(cl_buildoptions, buf);
-
-  int deg[]={3, 3, 0};
-  int raf[]={2, 2, 2};
-
-  MacroMesh mesh;
-
-  ReadMacroMesh(&mesh, "../test/testmacromesh.msh");
-  //ReadMacroMesh(&mesh,"../test/testcube.msh");
-  Detect2DMacroMesh(&mesh);
-  assert(mesh.is2d);
-  BuildConnectivity(&mesh);
-  
-  PrintMacroMesh(&mesh);
-
-
-  Simulation simu;
   //AffineMapMacroMesh(&(f.macromesh));
-  InitSimulation(&simu, &mesh, deg, raf, &model);
+ 
+  Initfield(&f);
+
+  MacroFace mface[f.macromesh.nbfaces];
+  for(int ifa = 0; ifa < f.macromesh.nbfaces; ++ifa){
+    mface[ifa].first = ifa;
+    mface[ifa].last_p1 = ifa + 1;
+  }
 
   void* chkptr;
   cl_int status;
-  chkptr = clEnqueueMapBuffer(simu.cli.commandqueue,
-			      simu.dtw_cl,
+  chkptr = clEnqueueMapBuffer(f.cli.commandqueue,
+			      f.dtwn_cl,
 			      CL_TRUE,
 			      CL_MAP_WRITE,
 			      0, // offset
-			      sizeof(real) * (simu.wsize),
+			      sizeof(real) * (f.wsize),
 			      0, NULL, NULL, // events management
 			      &status);
   assert(status == CL_SUCCESS);
-  assert(chkptr == simu.dtw);
+  assert(chkptr == f.dtwn);
 
-  for(int i = 0; i < simu.wsize; i++)
-    simu.dtw[i] = 0;
+  for(int i = 0; i < f.wsize; i++)
+    f.dtwn[i] = 0.0;
 
-  status = clEnqueueUnmapMemObject(simu.cli.commandqueue,
-				   simu.dtw_cl,
-				   simu.dtw,
+  status = clEnqueueUnmapMemObject(f.cli.commandqueue,
+				   f.dtwn_cl,
+				   f.dtwn,
 				   0, NULL, NULL);
   assert(status == CL_SUCCESS);
-  status = clFinish(simu.cli.commandqueue);
+  status = clFinish(f.cli.commandqueue);
   assert(status == CL_SUCCESS);
 
   // OpenCL version
   
-  const int ninterfaces = simu.macromesh.nmacrointerfaces;
+  const int ninterfaces = f.macromesh.nmacrointerfaces;
   for(int i = 0; i < ninterfaces; ++i) {
-    int ifa = simu.macromesh.macrointerface[i];
-    DGMacroCellInterface_CL(ifa, &simu, &(simu.w_cl), 
-    			    0, NULL, NULL);
-    clFinish(simu.cli.commandqueue);
+    int ifa = f.macromesh.macrointerface[i];
+    DGMacroCellInterface_CL((void*) (mface + ifa), &f, &(f.wn_cl), 
+			    0, NULL, NULL);
+    clFinish(f.cli.commandqueue);
   }
   
-  const int nboundaryfaces = simu.macromesh.nboundaryfaces;
+  const int nboundaryfaces = f.macromesh.nboundaryfaces;
   for(int i = 0; i < nboundaryfaces; ++i) {
-    int ifa = simu.macromesh.boundaryface[i];
-    printf("ocl ifa=%d\n",ifa);
-    DGBoundary_CL(ifa, &simu, &(simu.w_cl),
+    int ifa = f.macromesh.boundaryface[i];
+    DGBoundary_CL((void*) (mface + ifa), &f, &(f.wn_cl),
 			    0, NULL, NULL);
-    clFinish(simu.cli.commandqueue);
+    clFinish(f.cli.commandqueue);
   }
-  clFinish(simu.cli.commandqueue);
-  CopyfieldtoCPU(&simu);
+  clFinish(f.cli.commandqueue);
+  CopyfieldtoCPU(&f);
   //Displayfield(&f);
-  real *fdtw_opencl = simu.dtw;
+  real *fdtwn_opencl = f.dtwn;
 
   // OpenMP version
-  simu.dtw = calloc(simu.wsize, sizeof(real));
-  for(int iw = 0; iw < simu.wsize; iw++) simu.dtw[iw] = 0;
-  
-  for(int ifa = 0; ifa < simu.macromesh.nbfaces; ifa++){
-    int fsize =  simu.wsize / simu.macromesh.nbelems;
-    int ieL = simu.macromesh.face2elem[4 * ifa + 0];
-    int locfaL = simu.macromesh.face2elem[4 * ifa + 1];
-    int ieR = simu.macromesh.face2elem[4 * ifa + 2];
-    field *fL = simu.fd + ieL;
-    field *fR = NULL;
-    int offsetR = -1;
-    //printf("iel=%d ier=%d\n",ieL,ieR);
-    int offsetL = fsize * ieL;
-    if (ieR >= 0) {
-      fR = simu.fd + ieR;
-      offsetR = fsize * ieR;
-    }
-    
-    printf("cpu ifa=%d\n",ifa);
-    DGMacroCellInterface(locfaL, fL, offsetL,
-			 fR, offsetR, simu.w, simu.dtw);
-  }
+  f.dtwn = calloc(f.wsize, sizeof(real));
+  for(int iw = 0; iw < f.wsize; iw++)
+    f.dtwn[iw] = 0;
+  for(int ifa = 0; ifa < f.macromesh.nbfaces; ifa++)
+    DGMacroCellInterface((void*) (mface + ifa), &f, f.wn, f.dtwn);
   //Displayfield(&f);
-  real *fdtw_openmp = simu.dtw;
+  real *fdtwn_openmp = f.dtwn;
 
   real maxerr = 0.0;
-  for(int i = 0; i < simu.wsize; i++) {
-    real error = fabs(fdtw_openmp[i] - fdtw_opencl[i]);
-    printf("error: %f \t%f \t%f\n", error, fdtw_openmp[i], fdtw_opencl[i]);
+  for(int i = 0; i < f.wsize; i++) {
+    real error = fabs(fdtwn_openmp[i] - fdtwn_opencl[i]);
+    printf("error: %f \t%f \t%f\n", error, fdtwn_openmp[i], fdtwn_opencl[i]);
     maxerr = fmax(error, maxerr);
   }
  
   printf("error: %f\n", maxerr);
 
-  test = (maxerr < _SMALL);
+  test = (maxerr < 1e-8);
 
   return test;
 }
