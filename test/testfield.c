@@ -7,55 +7,31 @@
 int Testfield(void){
   int test = true;
 
-  Model model;
-  
-  model.cfl = 0.05;
-  model.m = 1; // only one conservative variable
-  model.NumFlux = TransNumFlux;
-  model.BoundaryFlux = TestTransBoundaryFlux;
-  model.InitData = TestTransInitData;
-  model.ImposedData = TestTransImposedData;
-
-  int deg[]={2, 2, 2};
-  int raf[]={2, 2, 2};
-  
-  MacroMesh mesh;
-  ReadMacroMesh(&mesh,"../test/testmacromesh.msh");
-  BuildConnectivity(&mesh);
-
-  CheckMacroMesh(&mesh, deg, raf);
-
   field f;
-
-  real physnode[20][3];
-
-  for(int inoloc = 0; inoloc < 20; inoloc++) {
-    int ino = mesh.elem2node[20 * 0 + inoloc];
-    physnode[inoloc][0] = mesh.node[3 * ino + 0];
-    physnode[inoloc][1] = mesh.node[3 * ino + 1];
-    physnode[inoloc][2] = mesh.node[3 * ino + 2];
-  }
+  init_empty_field(&f);
   
-  
-  Initfield(&f, model, physnode, deg, raf, NULL, NULL);
+  f.model.cfl = 0.05;
+  f.model.m = 1; // only one conservative variable
+  f.model.NumFlux = TransNumFlux;
+  f.model.BoundaryFlux = TestTransBoundaryFlux;
+  f.model.InitData = TestTransInitData;
+  f.model.ImposedData = TestTransImposedData;
+  f.varindex = GenericVarindex;
 
+  f.deg[0] = 2; // x direction degree
+  f.deg[1] = 2; // y direction degree
+  f.deg[2] = 2; // z direction degree
+  f.raf[0] = 2; // x direction refinement
+  f.raf[1] = 2; // y direction refinement
+  f.raf[2] = 2; // z direction refinement
 
-  int ipg = 4;
+  ReadMacroMesh(&f.macromesh,"../test/testmacromesh.msh");
+  BuildConnectivity(&(f.macromesh));
 
-  real xref[3],xphy[3],wtest[1];
+  Initfield(&f);
+  CheckMacroMesh(&f.macromesh, f.deg, f.raf);
 
-  ref_pg_vol(f.deg, f.raf, ipg, xref, NULL, NULL);
-  Ref2Phy(f.physnode,
-	  xref,
-	  NULL, -1, // dphiref, ifa
-	  xphy, NULL,
-	  NULL, NULL, NULL); // codtau, dphi, vnds
-
-  int imem = f.varindex(f.deg, f.raf, f.model.m,ipg,0);
-  f.model.InitData(xphy,wtest);
-  test = fabs(f.wn[imem] - wtest[0]) < _SMALL;
- 
-  
+  Plotfield(0, false, &f, NULL, "testvisufield.msh");
   
   return test;
 }
