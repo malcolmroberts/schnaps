@@ -172,11 +172,13 @@ void CreateParticles(PIC* pic,MacroMesh *m)
   }
 }
 
-void AccumulateParticles(PIC* pic, field *f)
+void AccumulateParticles(field *f, real *w)
 {
+  PIC *pic = f->pic;
+
   for(int i=0;i<pic->nbparts;i++) {
     
-    int ie=pic->old_cell_id[i];
+    int ie = pic->old_cell_id[i];
     
     if (ie < 0) goto nexti;
  

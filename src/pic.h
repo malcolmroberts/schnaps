@@ -59,7 +59,7 @@ void CreateCoil2DParticles(PIC* pic,MacroMesh *m);
 
 
 //! \brief compute charge and current associated to particles
-void AccumulateParticles(PIC* pic, field *f);
+void AccumulateParticles(field *f, real *w);
 
 //! brief pseudo-random van der corput number generator
 //! \param[in] n index of the number in the sequence
