@@ -14,7 +14,7 @@
 *.la
 *.lo
 
-# Shared objects (inc. Windows DLLs)
+# Shared objects (inc. Windows DLLs):
 *.dll
 *.so
 *.so.*
@@ -28,11 +28,13 @@
 *.x86_64
 *.hex
 
-#editor temp files
+#editor temp files:
 *~
 
-#schnaps files
+#MacOS is a bad operating system:
 .DS_Store
+
+#schnaps files
 doc/html/
 doc/latex/
 
@@ -42,18 +44,21 @@ error.msh
 geo/disque.msh
 visu.msh
 
-
-
 #output files
 *.csv
 *.log
 *.msh
 testfieldrk2_cl
+Makefile
+CMakeFiles/
+Testing/
+schnaps.cl
+schnaps_temp.cl
+schnaps
 
 #PN
 *.swp
 /build/
-
 
 wisdom3.txt
 
@@ -62,3 +67,60 @@ paralution-1.0.0-prefix
 *.dat
 *.pdf
 
+
+#tests:
+test2dmeshdettion
+teshel
+teslinfo
+tesoil2d
+testdoubletearing
+testdtfield3dl
+testdtfieldl
+testfield
+testfielddg
+testfieldrk2-2d
+testfieldrk2-2d-suell
+testfieldrk2
+testfieldrk2l
+testfieldrk4
+testfieldrk4l
+testgeometry
+testgyro
+testinterpolation
+testkelvinhelmotz
+testkernel
+testkernelflux
+testkernelinterfe
+testkernelvolume
+testlandaollision_1d
+testlandau_damping_1D
+testlinearsolver
+testmrellinterfe
+testmromesh
+testmanyv
+testmaxwell2d
+testmaxwell2dl
+testmaxwell3d
+testmeq2
+testmeq2l
+testmhd1d
+testmhd
+testmodel
+testnonlinearsolver
+testorszagtang
+testperiod
+testp_cumulate
+testp
+testpoisson2d
+testpoisson
+testronnexion
+testshequilibrium2d
+testshperiod2d
+testsimulation
+testskyline
+testsuelldgvol
+testtransport_steady
+test_transportvp
+testumfpk
+testwave2d
+testwave2d-steady
