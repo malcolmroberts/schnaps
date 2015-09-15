@@ -56,12 +56,31 @@ void InitInterfaces(Simulation *simu){
      inter[ifa].npgR = npgfR;
 
      inter[ifa].wsizeL = npgfL * fL->model.m;
-     inter[ifa].wsizeR = npgfR * fR->model.m;
+     inter[ifa].wsizeR = 0;
+     if (fR != NULL) inter[ifa].wsizeR = npgfR * fR->model.m;
      
      inter[ifa].wL = malloc(sizeof(real) * inter[ifa].wsizeL);
      inter[ifa].wR = NULL;
      if (npgfR > 0)  inter[ifa].wR =
 		       malloc(sizeof(real) * inter[ifa].wsizeR);
+
+     inter[ifa].vol_indexL = malloc(sizeof(int) * npgfL);
+     inter[ifa].vol_indexR = NULL;
+     if (fR != NULL) inter[ifa].vol_indexR = malloc(sizeof(int) * npgfR);
+
+     for(int ipgf = 0; ipgf < npgfL; ipgf++){
+      inter[ifa].vol_indexL[ipgf] =
+	ref_pg_face(fL->deg, fL->raf, locfaL, ipgf,
+			     NULL, NULL, NULL);
+     }
+     if (fR != NULL){
+       for(int ipgf = 0; ipgf < npgfR; ipgf++){
+      inter[ifa].vol_indexR[ipgf] =
+	ref_pg_face(fR->deg, fR->raf, locfaR, ipgf,
+			     NULL, NULL, NULL);
+       }
+     }
+
      
   }
 }

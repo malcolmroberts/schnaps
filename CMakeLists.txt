@@ -402,6 +402,14 @@ target_link_libraries(testtransport_steady ${LIBS})
 add_test(testtransport_steady testtransport_steady)
 
 add_executable(
+  testlocal_implicit
+  test/test.h
+  test/testlocal_implicit.c
+  )
+target_link_libraries(testlocal_implicit ${LIBS})
+add_test(testlocal_implicit testlocal_implicit)
+
+add_executable(
   testshequilibrium2d
   test/test.h
   test/testshequilibrium2d.c

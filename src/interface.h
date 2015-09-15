@@ -12,7 +12,9 @@ typedef struct Interface{
   int locfaL,locfaR;
 
   int npgL, npgR;
-  
+
+  int* vol_indexL;
+  int * vol_indexR;
 
   int wsizeL,wsizeR;
 
