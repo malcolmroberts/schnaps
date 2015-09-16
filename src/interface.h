@@ -21,11 +21,18 @@ typedef struct Interface{
   real *wL;
   real *wR;
 
+  real *vnds;
+  real *xpg;
+
 
 } Interface;
 
 
 void ExtractInterface(Interface* inter, int side);
+
+
+void InterfaceExplicitFlux(Interface* inter, int side);
+void ComputeFluxes(Interface* inter);
 
 int VarindexFace(int npg, int m, int ipgf, int iv); 
 

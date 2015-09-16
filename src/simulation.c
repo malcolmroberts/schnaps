@@ -68,11 +68,32 @@ void InitInterfaces(Simulation *simu){
      inter[ifa].vol_indexR = NULL;
      if (fR != NULL) inter[ifa].vol_indexR = malloc(sizeof(int) * npgfR);
 
+     inter[ifa].vnds = malloc(3* sizeof(real) * npgfL);
+     inter[ifa].xpg = malloc(3* sizeof(real) * npgfL);
+     
      for(int ipgf = 0; ipgf < npgfL; ipgf++){
-      inter[ifa].vol_indexL[ipgf] =
-	ref_pg_face(fL->deg, fL->raf, locfaL, ipgf,
-			     NULL, NULL, NULL);
+       real xpgref[3], xpg[3], wpg;
+       real vnds[3];
+       int ipgv =
+	 ref_pg_face(fL->deg, fL->raf, locfaL, ipgf,
+		     xpgref, &wpg, NULL);
+       inter[ifa].vol_indexL[ipgf] = ipgv;
+       {
+	 real codtau[3][3], dtau[3][3];
+	 Ref2Phy(fL->physnode,
+		 xpgref,
+		 NULL, ifa, // dpsiref, ifa
+		 xpg, dtau,
+		 codtau, NULL, vnds); // codtau, dpsi, vnds
+       }
+       inter[ifa].vnds[3 * ipgf + 0] = vnds[0] * wpg;
+       inter[ifa].vnds[3 * ipgf + 1] = vnds[1] * wpg;
+       inter[ifa].vnds[3 * ipgf + 2] = vnds[2] * wpg;
+       inter[ifa].xpg[3 * ipgf + 0] = xpg[0];
+       inter[ifa].xpg[3 * ipgf + 1] = xpg[1];
+       inter[ifa].xpg[3 * ipgf + 2] = xpg[2];
      }
+
      if (fR != NULL){
        for(int ipgf = 0; ipgf < npgfR; ipgf++){
       inter[ifa].vol_indexR[ipgf] =

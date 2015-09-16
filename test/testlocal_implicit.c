@@ -70,9 +70,16 @@ int Test_Local_Implicit(void) {
   InitSimulation(&simu, &mesh, deg, raf, &model);
 
   field* fd = simu.fd;
+
+  real tmax = 0.025;
+  simu.cfl=0.2;
+  simu.vmax= 1;
+  simu.dt = 0.025;
+  /* InitFieldImplicitSolver(fd); */
+  /* AssemblyFieldImplicitSolver(fd, 1, 1); */
+  LocalThetaTimeScheme(&simu, tmax, simu.dt);
   
-  InitFieldImplicitSolver(fd);
-  AssemblyFieldImplicitSolver(fd, 1, 1);
+
   
   return test;
 }

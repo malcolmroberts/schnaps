@@ -109,10 +109,20 @@ void FluxAssembly(Simulation *simu,  LinearSolver *solver,real theta, real dt);
 //!  \param[in] dt time step
 void FluxLocalAssembly(field* fd,real theta, real dt);
 
-//! ADD DESCRIPTION
+//! \brief time-stepping by the crank nicholson scheme
+//! \param[inout] simu a simulation
+//! \param[in] tmax final time
+//! \param[in] dt time step
 void ThetaTimeScheme(Simulation *simu, real tmax, real dt);
 
-//! \brief Assembly of the DG operator into a sparse matrix
+//! \brief time-stepping by the crank nicholson scheme
+//! macrocell local version
+//! \param[inout] simu a simulation
+//! \param[in] tmax final time
+//! \param[in] dt time step
+void LocalThetaTimeScheme(Simulation *simu, real tmax, real dt);
+
+///! \brief Assembly of the DG operator into a sparse matrix
 //! assembly of the interface fluxes between the neighboring fields
 //! \param[inout] simu a simulation
 //! \param[inout] solver a linear solver
