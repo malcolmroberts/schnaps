@@ -34,6 +34,8 @@ void ExtractInterface(Interface* inter, int side);
 void InterfaceExplicitFlux(Interface* inter, int side);
 void ComputeFluxes(Interface* inter);
 
+void InterfaceLocalAssembly(Interface *inter,  real theta, real dt);
+
 int VarindexFace(int npg, int m, int ipgf, int iv); 
 
 #endif

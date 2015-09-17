@@ -61,8 +61,8 @@ int Test_Local_Implicit(void) {
   model.ImposedData = TestSteady_Transport_ImposedData;
   model.Source = TestSteady_Transport_Source;
 
-  int deg[]={1, 1, 0};
-  int raf[]={1, 1, 1};
+  int deg[]={3, 3, 0};
+  int raf[]={4, 4, 1};
   
   CheckMacroMesh(&mesh, deg, raf);
   Simulation simu;
