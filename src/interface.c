@@ -84,7 +84,7 @@ void InterfaceExplicitFlux(Interface* inter, int side){
   
     const unsigned int m = f->model.m;
 
-    printf("locfa=%d \n",locfa);
+    //printf("locfa=%d \n",locfa);
 
     for(int ipgf = 0; ipgf < NPGF(f->deg, f->raf, locfa); ipgf++) {
 
@@ -122,9 +122,9 @@ void InterfaceExplicitFlux(Interface* inter, int side){
 	
 	f->model.BoundaryFlux(xpg, f->tnow, wL, vnds, flux);
 	int ipgL = index[ipgf];
-	printf("xpg=%f %f %f vnds=%f %f %f ipgL=%d \n",
-	       xpg[0], xpg[1], xpg[2],
-	       vnds[0], vnds[1],vnds[2], ipgL);
+	/* printf("xpg=%f %f %f vnds=%f %f %f ipgL=%d \n", */
+	/*        xpg[0], xpg[1], xpg[2], */
+	/*        vnds[0], vnds[1],vnds[2], ipgL); */
 	for(int iv = 0; iv < m; iv++) {
 	  int ipgL = index[ipgf];
 	  // The basis functions is also the gauss point index

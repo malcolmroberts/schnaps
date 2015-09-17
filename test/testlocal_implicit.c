@@ -72,11 +72,11 @@ int Test_Local_Implicit(void) {
 
   field* fd = simu.fd;
 
-  real tmax = 0.1;
+  real tmax = 1;
   simu.cfl=0.2;
   simu.vmax= 1;
   simu.dt = 0.025;
-  simu.dt = 10;
+  simu.dt = 0.01;
   /* InitFieldImplicitSolver(fd); */
   /* AssemblyFieldImplicitSolver(fd, 1, 1); */
   LocalThetaTimeScheme(&simu, tmax, simu.dt);

@@ -107,14 +107,14 @@ void AssemblyFieldImplicitSolver(field *fd,real theta, real dt)
 
   
 
-  /* if(fd->solver->rhs_is_assembly == false){ */
-  /*   for(int i=0;i<fd->solver->neq;i++){ */
-  /*     fd->solver->rhs[i]=0; */
-  /*   } */
-  /*   //SourceLocalAssembly(fd, theta, dt);  */
-  /* } */
-  /* DisplayLinearSolver(fd->solver); */
-  /* assert(1==2); */
+  if(fd->solver->rhs_is_assembly == false){
+    for(int i=0;i<fd->solver->neq;i++){
+      fd->solver->rhs[i]=0;
+    }
+    //SourceLocalAssembly(fd, theta, dt);
+  }
+  DisplayLinearSolver(fd->solver);
+  assert(1==2);
 }
 
 void LocalThetaTimeScheme(Simulation *simu, real tmax, real dt){
@@ -165,13 +165,13 @@ void LocalThetaTimeScheme(Simulation *simu, real tmax, real dt){
       InterfaceExplicitFlux(inter, 1);
     }
 
-    // xxxxxxxxxxxxxxxxxxxxxxx
-    for(int ie=0; ie <  simu->macromesh.nbelems; ++ie){
-      field *f = simu->fd + ie;
-      DisplayLinearSolver(f->solver);
-      DisplayLinearSolver(f->rmat);
-    }
-    assert(1==2);
+    /* // xxxxxxxxxxxxxxxxxxxxxxx */
+    /* for(int ie=0; ie <  simu->macromesh.nbelems; ++ie){ */
+    /*   field *f = simu->fd + ie; */
+    /*   DisplayLinearSolver(f->solver); */
+    /*   DisplayLinearSolver(f->rmat); */
+    /* } */
+    /* assert(1==2); */
     
     simu->tnow += (1 - theta) * dt;
 
@@ -1699,7 +1699,7 @@ void InterfaceLocalAssembly(Interface *inter,  real theta, real dt)
 
 	  for(int iv2 = 0; iv2 < m; iv2++) {
 	    int imem2 = fL->varindex(fL->deg, fL->raf, fL->model.m, ipgL, iv2) + offsetL;		  
-	    real val = theta * dt * flux[iv2] * wpg;		      
+	    real val = theta * dt * flux[iv2];		      
 	    AddLinearSolver(fL->solver, imem2, imem1, val);
 		      
 	  }
@@ -1716,7 +1716,7 @@ void InterfaceLocalAssembly(Interface *inter,  real theta, real dt)
 	  for(int iv2 = 0; iv2 < m; iv2++) {
 		    
 	    int imem2 = fR->varindex(fR->deg, fR->raf, fR->model.m, ipgR, iv2) + offsetR;		    
-	    real val = theta *dt * flux[iv2] * wpg;		    
+	    real val = theta *dt * flux[iv2];		    
 	    AddLinearSolver(fR->solver, imem2, imem1, -val);
 	  }
 	}
