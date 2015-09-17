@@ -24,7 +24,7 @@ int TestfieldRK4_CL(void){
   Detect2DMacroMesh(&mesh);
   BuildConnectivity(&mesh);
   int deg[]={3, 3, 0};
-  int raf[]={2, 2, 1};
+  int raf[]={8, 8, 1};
   CheckMacroMesh(&mesh, deg, raf);
 
   /* f.model.cfl = 0.05; */
@@ -49,7 +49,7 @@ int TestfieldRK4_CL(void){
   // 2D version
   assert(mesh.is2d);
 
-  simu.cfl = 0.05;
+  simu.cfl = 0.04;
   model.m = 1;
 
   model.NumFlux = TransNumFlux2d;
@@ -82,7 +82,7 @@ int TestfieldRK4_CL(void){
   //AffineMapMacroMesh(&(simu.macromesh));
   InitSimulation(&simu, &mesh, deg, raf, &model);
  
-  real tmax = 0.1;
+  real tmax = .1;
   simu.vmax = 1;
   real dt = 0;
   RK4_CL(&simu, tmax, dt,  0, NULL, NULL);

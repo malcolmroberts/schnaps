@@ -289,6 +289,10 @@ void Initfield(field *f, Model model,
 
   
   //printf("field init done\n");
+  // default values for the linear solvers: not used
+  f->solver = NULL;
+  f->rmat = NULL;
+  
 }
 
 // This is the destructor for a field

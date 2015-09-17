@@ -16,6 +16,7 @@ SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 #set(CMAKE_C_FLAGS " -std=c99 -D_DOUBLE_PRECISION -D_SCHNAPS_DIR=${PROJECT_SOURCE_DIR} -O3 -g  ")
 set(CMAKE_C_FLAGS " -std=c99 -D_SCHNAPS_DIR=${PROJECT_SOURCE_DIR} -O3")
 #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_DOUBLE_PRECISION")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g")
 # needed for mac
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -lsuitesparseconfig")  
 set(CMAKE_CXX_FLAGS "-lsuitesparseconfig")  
@@ -103,8 +104,11 @@ list(APPEND
   src/simulation.h
   src/field.c
   src/field.h
+  src/interface.h
+  src/interface.c
   src/implicit.h
   src/implicit.c
+  src/local_implicit.c
   src/geometry.c
   src/geometry.h
   src/global.c
@@ -132,6 +136,8 @@ list(APPEND
   src/dpackfgmres.c
   src/linear_solver.h
   src/linear_solver.c
+  src/advanced_linear_solver.h
+  src/advanced_linear_solver.c
   src/solvercontinuous.h
   src/solvercontinuous.c
   src/solverpoisson.h
@@ -393,6 +399,14 @@ add_executable(
   )
 target_link_libraries(testtransport_steady ${LIBS})
 add_test(testtransport_steady testtransport_steady)
+
+add_executable(
+  testlocal_implicit
+  test/test.h
+  test/testlocal_implicit.c
+  )
+target_link_libraries(testlocal_implicit ${LIBS})
+add_test(testlocal_implicit testlocal_implicit)
 
 add_executable(
   testshequilibrium2d

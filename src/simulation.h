@@ -3,6 +3,7 @@
 
 #include "macromesh.h"
 #include "field.h"
+#include "interface.h"
 
 #ifdef _WITH_OPENCL
 #include "clinfo.h"
@@ -15,6 +16,9 @@ typedef struct Simulation {
   MacroMesh macromesh;
   //! List of fields for each macrocell
   field *fd;
+
+  //! interfaces list
+  Interface *interface;
 
   //! memory spaces for w and dtw
   real *w;
@@ -143,6 +147,10 @@ void EmptySimulation(Simulation *simu);
 void InitSimulation(Simulation *simu, MacroMesh *mesh,
 		    int *deg, int *raf, Model *model);
 
+
+//! \brief init interface structs
+//! \param[inout] simu a simulation
+void InitInterfaces(Simulation *simu);
 
 //! \brief apply the Discontinuous Galerkin approximation for computing
 //! the time derivative of the fields. Works with several subcells.

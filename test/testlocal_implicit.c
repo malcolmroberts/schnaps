@@ -28,15 +28,15 @@ int main(void) {
   
   // unit tests
     
-  int resu = Test_Transport_Steady();
+  int resu = Test_Local_Implicit();
 	 
-  if (resu) printf("transport steady  test OK !\n");
-  else printf("transport steady test failed !\n");
+  if (resu) printf("locally implicit  test OK !\n");
+  else printf("locally implicit  test failed !\n");
 
   return !resu;
 } 
 
-int Test_Transport_Steady(void) {
+int Test_Local_Implicit(void) {
 
   bool test = true;
 
@@ -61,10 +61,8 @@ int Test_Transport_Steady(void) {
   model.ImposedData = TestSteady_Transport_ImposedData;
   model.Source = TestSteady_Transport_Source;
 
-  //int deg[]={4, 4, 0};
-  //int raf[]={2, 2, 1};
-  int deg[]={1, 1, 0};
-  int raf[]={1, 1, 1};
+  int deg[]={3, 3, 0};
+  int raf[]={4, 4, 1};
   
   CheckMacroMesh(&mesh, deg, raf);
   Simulation simu;
@@ -72,26 +70,22 @@ int Test_Transport_Steady(void) {
 
   InitSimulation(&simu, &mesh, deg, raf, &model);
 
-  real tmax = 1000.0;
+  field* fd = simu.fd;
+
+  real tmax = 1;
   simu.cfl=0.2;
-  simu.vmax=_SPEED_WAVE;
- 
-  real dd = 0;
+  simu.vmax= 1;
+  simu.dt = 0.025;
+  simu.dt = 0.01;
+  /* InitFieldImplicitSolver(fd); */
+  /* AssemblyFieldImplicitSolver(fd, 1, 1); */
+  LocalThetaTimeScheme(&simu, tmax, simu.dt);
+  real dd = L2error(&simu);
+  printf("erreur local implicit L2=%.12e\n", dd);
+  PlotFields(0, false, &simu, NULL, "dgvisu.msh");
 
-  real tolerance = 3e-5;
-
-  test = test && (dd < tolerance);
-
-  ThetaTimeScheme(&simu, tmax, 10);
 
   
-  
-  dd = L2error(&simu);
-
-  printf("erreur implicit L2=%.12e\n", dd);
-
-  test = test && (dd < tolerance);
-   
   return test;
 }
 
@@ -101,6 +95,7 @@ void TestSteady_Transport_ImposedData(const real *xy, const real t, real *w) {
   real y=xy[1];
 
   w[0] = x * (1 - x) * y * (1-y) + 1;
+  w[0] = 1;
 }
 
 void TestSteady_Transport_Source(const real *xy, const real t, const real *w, real *S){
@@ -112,6 +107,7 @@ void TestSteady_Transport_Source(const real *xy, const real t, const real *w, re
 
   S[0] = v2[0] * (1 - 2 * x) * y * (1 - y) +
     v2[1] * (1 - 2 * y) * x * (1 - x);
+  S[0] = 0;
 
 }
 

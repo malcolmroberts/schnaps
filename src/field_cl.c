@@ -1513,7 +1513,7 @@ void init_field_cl(Simulation *simu)
     char *D_SOURCE_FUNC = " -D_SOURCE_FUNC=";
     int len1 = strlen(D_SOURCE_FUNC);
     int len2 = strlen(simu->sourcename_cl);
-    temp = calloc(sizeof(char), len0 + len1 + len2 + 2);
+    temp = calloc(sizeof(char), len0 + len1 + len2 + 3);
     printf("lens=%d %d %d \n",len0,len1,len2);
     strcat(temp, cl_buildoptions);
     strcat(temp, D_SOURCE_FUNC);

@@ -4,6 +4,7 @@
 #include "macromesh.h"
 #include "interpolation.h"
 #include "model.h"
+#include "linear_solver.h"
 
 #ifdef _WITH_OPENCL
 #include "clinfo.h"
@@ -44,6 +45,14 @@ typedef struct field {
 
   //! PIC struct pointer (=NULL if not used)
   //void *pic;
+
+  //! a solver for the locally implicit scheme
+  LinearSolver* solver;
+
+  //! another solver for computing the rhs
+  //! the matrix is not factorized
+  LinearSolver* rmat;
+  
 
   //! Size of the field buffers
   int wsize;

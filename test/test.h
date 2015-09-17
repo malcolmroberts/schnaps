@@ -81,6 +81,8 @@ int Test_Wave_Steady(void);
 
 int Test_Transport_Steady(void);
 
+int Test_Local_Implicit(void);
+
 int Test_Transport_ExImp(void);
 
 int Test_SH_equilibrium(void);

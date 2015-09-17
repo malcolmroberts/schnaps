@@ -81,6 +81,7 @@ void TransNumFlux(real *wL, real *wR, real* vnorm, real* flux)
 void TransNumFlux2d(real *wL, real *wR, real *vnorm, real *flux)
 {
   const real transport_v2d[] = {sqrt(0.5), sqrt(0.5), 0};
+  //const real transport_v2d[] = {1,0, 0};
   real vn 
     = transport_v2d[0] * vnorm[0]
     + transport_v2d[1] * vnorm[1]

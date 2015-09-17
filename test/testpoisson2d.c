@@ -82,6 +82,7 @@ int TestPoisson2d(void)
   ps.bc_assembly= ExactDirichletContinuousMatrix;
   ps.postcomputation_assembly=Computation_ElectricField_Poisson;
 
+#undef PARALUTION
 #ifdef PARALUTION
   ps.lsol.solver_type = PAR_AMG;
   ps.lsol.pc_type=NONE;

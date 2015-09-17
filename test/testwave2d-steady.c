@@ -63,6 +63,7 @@ int Test_Wave_Steady(void) {
   model.Source = TestSteady_Wave_Source; 
 
   int deg[]={3, 3, 0};
+
   int raf[]={2, 2, 1};
   
   CheckMacroMesh(&mesh, deg, raf);
