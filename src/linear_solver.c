@@ -191,6 +191,11 @@ void DisplayLinearSolver(LinearSolver* lsol){
     assert(1==2);
   }
 
+  printf("rhs=");
+  for(int i=0; i<lsol->neq; i++){
+    printf("%f ", lsol->rhs[i]);
+  }
+
 } 
 
 void MatVect(void * system,real x[],real prod[]){

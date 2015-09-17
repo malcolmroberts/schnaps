@@ -11,6 +11,7 @@ const  real a[6]={1,1,1,1,1,1};
 const  real b[6]={1,1,1,1,1,1};
 const  real c[6]={1,1,1,1,1,1};
   
+void TestSteady_Transport_NumFlux(real *wL, real *wR, real *vnorm, real *flux);
 void TestSteady_Transport_ImposedData(const real *x, const real t, real *w);
 void TestSteady_Transport_InitData(real *x, real *w);
 void TestSteady_Transport_Source(const real *xy, const real t, const real *w, real *S);
@@ -54,14 +55,16 @@ int Test_Transport_Steady(void) {
   Model model;
 
   model.m=1;
-  model.NumFlux = TransNumFlux2d;
+  model.NumFlux = TestSteady_Transport_NumFlux;
   model.BoundaryFlux = Transport_Upwind_BoundaryFlux;
   model.InitData = TestSteady_Transport_InitData;
   model.ImposedData = TestSteady_Transport_ImposedData;
   model.Source = TestSteady_Transport_Source;
 
-  int deg[]={4, 4, 0};
-  int raf[]={2, 2, 1};
+  //int deg[]={4, 4, 0};
+  //int raf[]={2, 2, 1};
+  int deg[]={1, 1, 0};
+  int raf[]={1, 1, 1};
   
   CheckMacroMesh(&mesh, deg, raf);
   Simulation simu;
@@ -80,6 +83,8 @@ int Test_Transport_Steady(void) {
   test = test && (dd < tolerance);
 
   ThetaTimeScheme(&simu, tmax, 10);
+
+  
   
   dd = L2error(&simu);
 
@@ -120,6 +125,24 @@ void Transport_Upwind_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
                                        real *flux) {
   real wR[3];
   TestSteady_Transport_ImposedData(x , t, wR);
-  TransNumFlux2d(wL, wR, vnorm, flux);
+  TestSteady_Transport_NumFlux(wL, wR, vnorm, flux);
 }
  
+void TestSteady_Transport_NumFlux(real *wL, real *wR, real *vnorm, real *flux)
+{
+  //const real transport_v2d[] = {sqrt(0.5), sqrt(0.5), 0};
+  const real transport_v2d[] = {1,0, 0};
+  real vn 
+    = transport_v2d[0] * vnorm[0]
+    + transport_v2d[1] * vnorm[1]
+    + transport_v2d[2] * vnorm[2];
+  real vnp = vn > 0 ? vn : 0;
+  real vnm = vn - vnp;
+  flux[0] = vnp * wL[0] + vnm * wR[0];
+  /* if (fabs(vnorm[2])>1e-6) { */
+  /*   printf("vnds %lf %lf %lf \n", vnorm[0], vnorm[1], vnorm[2]); */
+  /* } */
+  // verify that 2d computations are actually
+  // activated
+  //assert(fabs(vnorm[2]) < 1e-8);
+}

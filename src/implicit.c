@@ -120,25 +120,33 @@ void LocalThetaTimeScheme(Simulation *simu, real tmax, real dt){
   real theta=0.5;
   simu->dt=dt;
   
-  int itermax=tmax/simu->dt+1;
+  int itermax=tmax / simu->dt;
   simu->itermax_rk=itermax;
   simu->tnow=0;
+  simu->tmax = tmax;
 
   for(int ie=0; ie <  simu->macromesh.nbelems; ++ie){
     field *f = simu->fd + ie;
-    f->tnow = simu->tnow;
-    f->dt = simu->dt;
     InitFieldImplicitSolver(f);
     AssemblyFieldImplicitSolver(f, theta, dt);
   }
-  
-  for(int tstep=0;tstep<simu->itermax_rk;tstep++){
+
+  int freq = (1 >= simu->itermax_rk / 10)? 1 : simu->itermax_rk / 10;
+  freq = 1;
+  int iter = 0;
+
+  while(simu->tnow < tmax) {
     
+    simu->tnow += theta * dt;
+
     for(int ie=0; ie <  simu->macromesh.nbelems; ++ie){
       field *f = simu->fd + ie;
+      f->tnow = simu->tnow;
+      f->dt = simu->dt;
       MatVect(f->rmat, f->wn, f->solver->rhs);
     }
 
+    
     for(int ifa = 0; ifa < simu->macromesh.nbfaces; ifa++){
       Interface* inter = simu->interface + ifa;
       // left = 0  right = 1
@@ -146,19 +154,32 @@ void LocalThetaTimeScheme(Simulation *simu, real tmax, real dt){
       ExtractInterface(inter, 1);
       InterfaceExplicitFlux(inter, 0);
       InterfaceExplicitFlux(inter, 1);
-    }   
-    
+    }
+
+    // xxxxxxxxxxxxxxxxxxxxxxx
     for(int ie=0; ie <  simu->macromesh.nbelems; ++ie){
       field *f = simu->fd + ie;
+      DisplayLinearSolver(f->solver);
+      DisplayLinearSolver(f->rmat);
+    }
+    assert(1==2);
+    
+    simu->tnow += (1 - theta) * dt;
+
+    for(int ie=0; ie <  simu->macromesh.nbelems; ++ie){
+      field *f = simu->fd + ie;
+      f->tnow = simu->tnow;
       SolveLinearSolver(f->solver);
       for(int i=0;i<f->solver->neq;i++){
 	f->wn[i] += f->solver->sol[i];
       }
-    }  
-    int freq = (1 >= simu->itermax_rk / 10)? 1 : simu->itermax_rk / 10;
-    if (tstep % freq == 0)
-      printf("t=%f iter=%d/%d dt=%f\n", simu->tnow,
-	     tstep, simu->itermax_rk, dt);
+    }
+    
+    if (iter % freq == 0)
+      printf("t=%f iter=%d/%d dt=%f\n",
+	     simu->tnow, iter+1, simu->itermax_rk, dt);
+    iter++;
+
   }
   
 };
@@ -205,7 +226,9 @@ void ThetaTimeScheme(Simulation *simu, real tmax, real dt){
       simu->fd[ie].tnow=simu->tnow;
     } 
     AssemblyImplicitLinearSolver(simu, &solver_implicit,theta,simu->dt);
-  
+
+    DisplayLinearSolver(&solver_implicit);
+    assert(1==2);
 
     MatVect(&solver_explicit, simu->w, res);
 
@@ -1144,6 +1167,7 @@ void FluxAssembly(Simulation *simu, LinearSolver *solver,real theta, real dt){
 		      imem2 = f->varindex(f->deg, f->raf, f->model.m, ipgR, iv2)+offsetw;		    
 		      val = theta *dt * flux[iv2] * wpg;		    
 		      AddLinearSolver(solver, imem2, imem1, -val);
+		      
 		    }
 		  }
 
@@ -1187,6 +1211,7 @@ void MassLocalAssembly(field *f)
 	real val = wpg * det;
 	AddLinearSolver(f->solver, imem, imem,val);
 	AddLinearSolver(f->rmat, imem, imem, 0 * val);
+	//printf("val local imp =%f\n",val);
       }
     }
  
@@ -1226,6 +1251,7 @@ void MassAssembly(Simulation *simu,  LinearSolver *solver){
 	int imem = f->varindex(deg, nraf, m, ipg, iv1)+offsetw;
 	real val = wpg * det;
 	AddLinearSolver(solver, imem, imem,val);
+	//printf("val full imp =%f\n",val);
       }
     }
  
@@ -1602,6 +1628,121 @@ void InterfaceAssembly(Simulation *simu,  LinearSolver *solver,real theta, real 
 	    // The basis functions is also the gauss point index
 	    int imem2 = fL->varindex(fL->deg, fL->raf,fL->model.m, ipgL, iv2) + offsetL;
 	    real val = theta *dt * (flux[iv2]-flux0[iv2]) * wpg;		    
+	    AddLinearSolver(solver, imem2, imem1, val);
+	  }
+	} // iv1
+
+      } // else
+
+  
+    } // ipgfl
+
+  } // macroface loop
+
+}
+
+
+void InterfaceLocalAssembly(Interface *inter,  real theta, real dt)
+{
+
+
+  field* fL = inter->fL;
+  field* fR = inter->fR;
+  
+    const unsigned int m = fL->model.m;
+
+
+    for(int ipgfL = 0; ipgfL < NPGF(fL->deg, fL->raf, locfaL); ipgfL++) {
+
+      real xpgref[3], xpgref_in[3], wpg;
+    
+      // Get the coordinates of the Gauss point and coordinates of a
+      // point slightly inside the opposite element in xref_in
+
+      int ipgL = inter->vol_indexL[ipgfL];
+      real* vnds = inter->vnds + 3 * ipgfL;
+      real* xpg = inter->xpg + 3 * ipgfL;
+    
+      if (fR != NULL) {  // the right element exists
+	int ipgR = inter->vol_indexL[ipgfL];
+
+	real flux[m];
+	real wL[m];
+	real wR[m];
+
+	for (int iv1 = 0; iv1 < m; iv1++){			    
+
+	  for(int iv = 0; iv < m; iv++) {
+	    wL[iv] = (iv == iv1);
+	    wR[iv] = 0;
+	  }
+	  int imem1 = fL->varindex(fL->deg, fL->raf, fL->model.m, ipgL, iv1);
+
+	  // int_dL F(wL, wR, grad phi_ib)
+
+	  fL->model.NumFlux(wL, wR, vnds, flux);
+
+	  // Add flux to both sides
+
+	  for(int iv2 = 0; iv2 < m; iv2++) {
+	    int imem2 = fL->varindex(fL->deg, fL->raf, fL->model.m, ipgL, iv2);		  
+	    real val = theta * dt * flux[iv2];		      
+	    AddLinearSolver(fL->solver, imem2, imem1, val);
+		      
+	    imem2 = fR->varindex(fR->deg, fR->raf, fR->model.m, ipgR, iv2);
+	    val = theta * dt * flux[iv2];		      
+	    AddLinearSolver(solver, imem2, imem1, -val);
+	  }
+		  
+	  for(int iv = 0; iv < m; iv++) {
+	    wL[iv] = 0;
+	    wR[iv] = (iv == iv1);
+	  }
+	  imem1 = fL->varindex(fL->deg, fL->raf, fL->model.m, ipgR, iv1);
+
+
+	  fL->model.NumFlux(wL, wR, vnds, flux);
+
+	  for(int iv2 = 0; iv2 < m; iv2++) {
+	    int imem2 = fL->varindex(fL->deg, fL->raf, fL->model.m, ipgL, iv2);
+	    real val = theta * dt * flux[iv2];
+	    AddLinearSolver(solver, imem2, imem1, val);
+		    
+	    imem2 = fR->varindex(fR->deg, fR->raf, fR->model.m, ipgR, iv2);		    
+	    val = theta *dt * flux[iv2];		    
+	    AddLinearSolver(solver, imem2, imem1, -val);
+	  }
+	}
+
+      } else { // The point is on the boundary.
+
+	// the boundary flux is an affine function
+	real flux0[m], wL[m];
+	for(int iv = 0; iv < m; iv++) {
+	  wL[iv] = 0;
+	}
+	fL->model.BoundaryFlux(xpg, fL->tnow, wL, vnds, flux0);
+
+	/* for(int iv2 = 0; iv2 < m; iv2++) { */
+	/*   int imem2 = fL->varindex(fL->deg, fL->raf,fL->model.m, ipgL, iv2); */
+	/*   real val = theta *dt * flux0[iv2] * wpg; */
+	/*   solver->rhs[imem2] -= val; */
+	/* } */
+      
+	for(int iv1 = 0; iv1 < m; iv1++) {
+	  int imem1 = fL->varindex(fL->deg, fL->raf,fL->model.m, ipgL, iv1);
+
+	  for(int iv = 0; iv < m; iv++) {
+	    wL[iv] = (iv == iv1);
+	  }
+
+	  real flux[m];
+	  fL->model.BoundaryFlux(xpg, fL->tnow, wL, vnds, flux);
+
+	  for(int iv2 = 0; iv2 < m; iv2++) {
+	    // The basis functions is also the gauss point index
+	    int imem2 = fL->varindex(fL->deg, fL->raf,fL->model.m, ipgL, iv2);
+	    real val = theta *dt * (flux[iv2]-flux0[iv2]);		    
 	    AddLinearSolver(solver, imem2, imem1, val);
 	  }
 	} // iv1

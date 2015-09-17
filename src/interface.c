@@ -84,6 +84,7 @@ void InterfaceExplicitFlux(Interface* inter, int side){
   
     const unsigned int m = f->model.m;
 
+    printf("locfa=%d \n",locfa);
 
     for(int ipgf = 0; ipgf < NPGF(f->deg, f->raf, locfa); ipgf++) {
 
@@ -112,18 +113,23 @@ void InterfaceExplicitFlux(Interface* inter, int side){
 	  int ipgL = index[ipgf];
 	  // The basis functions is also the gauss point index
 	  int imemL = f->varindex(f->deg, f->raf,f->model.m, ipgL, iv);
-	  f->solver->rhs[imemL] += flux[iv] * sign;
+	  f->solver->rhs[imemL] += flux[iv] * sign * f->dt;
 	}
-
       } else { // The point is on the boundary.
 
-	f->model.BoundaryFlux(inter->xpg + 3 * ipgf, f->tnow, wL, inter->vnds + 3 * ipgf, flux);
- 
+	real* xpg = inter->xpg + 3 * ipgf;
+	real* vnds = inter->vnds + 3 * ipgf;
+	
+	f->model.BoundaryFlux(xpg, f->tnow, wL, vnds, flux);
+	int ipgL = index[ipgf];
+	printf("xpg=%f %f %f vnds=%f %f %f ipgL=%d \n",
+	       xpg[0], xpg[1], xpg[2],
+	       vnds[0], vnds[1],vnds[2], ipgL);
 	for(int iv = 0; iv < m; iv++) {
 	  int ipgL = index[ipgf];
 	  // The basis functions is also the gauss point index
 	  int imemL = f->varindex(f->deg, f->raf,f->model.m, ipgL, iv);
-	  f->solver->rhs[imemL] += flux[iv] * sign;
+	  f->solver->rhs[imemL] += flux[iv] * sign * f->dt;
 	}
       }
 

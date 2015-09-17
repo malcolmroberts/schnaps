@@ -96,9 +96,9 @@ void InitInterfaces(Simulation *simu){
 
      if (fR != NULL){
        for(int ipgf = 0; ipgf < npgfR; ipgf++){
-      inter[ifa].vol_indexR[ipgf] =
-	ref_pg_face(fR->deg, fR->raf, locfaR, ipgf,
-			     NULL, NULL, NULL);
+	 inter[ifa].vol_indexR[ipgf] =
+	   ref_pg_face(fR->deg, fR->raf, locfaR, ipgf,
+		       NULL, NULL, NULL);
        }
      }
 
