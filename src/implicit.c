@@ -113,8 +113,8 @@ void AssemblyFieldImplicitSolver(field *fd,real theta, real dt)
     }
     //SourceLocalAssembly(fd, theta, dt);
   }
-  DisplayLinearSolver(fd->solver);
-  assert(1==2);
+  /* DisplayLinearSolver(fd->solver); */
+  /* assert(1==2); */
 }
 
 void LocalThetaTimeScheme(Simulation *simu, real tmax, real dt){
@@ -136,7 +136,9 @@ void LocalThetaTimeScheme(Simulation *simu, real tmax, real dt){
 
   // assembly of the boundary condition part of the matrix 
   for(int ifa = 0; ifa < simu->macromesh.nbfaces; ifa++){
+    printf("ifa=%d\n",ifa);
     Interface* inter = simu->interface + ifa;
+    assert(inter->fL);
     InterfaceLocalAssembly(inter, theta, dt);
   }
   
@@ -236,8 +238,8 @@ void ThetaTimeScheme(Simulation *simu, real tmax, real dt){
     } 
     AssemblyImplicitLinearSolver(simu, &solver_implicit,theta,simu->dt);
 
-    DisplayLinearSolver(&solver_implicit);
-    assert(1==2);
+    /* DisplayLinearSolver(&solver_implicit); */
+    /* assert(1==2); */
 
     MatVect(&solver_explicit, simu->w, res);
 

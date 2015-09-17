@@ -182,10 +182,12 @@ void InitSimulation(Simulation *simu, MacroMesh *mesh,
 
     init_field_cl(simu);
 
-    InitInterfaces(simu);
     
   }
 #endif // _WITH_OPENCL
+
+    InitInterfaces(simu);
+
 
 }
 
