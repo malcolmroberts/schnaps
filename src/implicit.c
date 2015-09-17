@@ -167,13 +167,12 @@ void LocalThetaTimeScheme(Simulation *simu, real tmax, real dt){
       InterfaceExplicitFlux(inter, 1);
     }
 
-    /* // xxxxxxxxxxxxxxxxxxxxxxx */
+    // xxxxxxxxxxxxxxxxxxxxxxx
     /* for(int ie=0; ie <  simu->macromesh.nbelems; ++ie){ */
     /*   field *f = simu->fd + ie; */
-    /*   DisplayLinearSolver(f->solver); */
+    /*   //DisplayLinearSolver(f->solver); */
     /*   DisplayLinearSolver(f->rmat); */
     /* } */
-    /* assert(1==2); */
     
     simu->tnow += (1 - theta) * dt;
 

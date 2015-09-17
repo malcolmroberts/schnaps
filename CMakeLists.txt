@@ -56,7 +56,7 @@ endif()
 #  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 #endif()
 
-SET(BUILD_PARALUTION      OFF CACHE BOOL   "Build paralution library")
+SET(BUILD_PARALUTION      ON CACHE BOOL   "Build paralution library")
 
 IF(BUILD_PARALUTION)
 
@@ -148,7 +148,6 @@ list(APPEND
   src/diagnostics_vp.c
   src/collision.h
   src/collision.c
-  
   )
 
 if(SuiteSparse_FOUND)
