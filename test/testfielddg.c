@@ -4,9 +4,8 @@
 #include <assert.h>
 #include <math.h>
 
-
-int TestfieldDG(void){
-
+int TestfieldDG()
+{
   int test = true;
 
   Model model;
@@ -19,18 +18,13 @@ int TestfieldDG(void){
   model.ImposedData = TestTransImposedData;
   model.Source = NULL;
 
-  int deg[]={4, 4, 4};
-  int raf[]={4, 4, 4};
+  int deg[] = {4, 4, 4};
+  int raf[] = {4, 4, 4};
   
   MacroMesh mesh;
   ReadMacroMesh(&mesh,"../test/testmacromesh.msh");
   //ReadMacroMesh(&mesh,"../test/testcube2.msh");
   BuildConnectivity(&mesh);
-
-  /* real A[3][3] = {{10,2 , 0}, {0, 1, -0.1}, {0, 0.1,1}}; */
-  /* real x0[3] = {1, 2, 3}; */
-  /* AffineMapMacroMesh(&mesh,A,x0); */
-
   CheckMacroMesh(&mesh, deg, raf);
 
   //PrintMacroMesh(&mesh);
@@ -38,7 +32,6 @@ int TestfieldDG(void){
   Simulation simu;
 
   InitSimulation(&simu, &mesh, deg, raf, &model);
-
 
   DtFields(&simu, simu.w, simu.dtw);
   
@@ -49,9 +42,8 @@ int TestfieldDG(void){
 
   // Test the time derivative with the exact solution
   real test2 = 0;
-  for(int i = 0; 
-      i < model.m * mesh.nbelems * NPG(deg,raf); 
-      i++){
+  int stop = model.m * mesh.nbelems * NPG(deg,raf);
+  for(int i = 0; i < stop; i++) {
     real errloc = fabs(4 * simu.w[i] - pow(simu.dtw[i], 2));
     test2 += errloc * errloc;
     test = test && errloc < 1e-2;
@@ -61,7 +53,7 @@ int TestfieldDG(void){
 
   printf("error=%f\n",sqrt(test2/ (mesh.nbelems * NPG(deg,raf)) ));
   return test;
-};
+}
 
 int main(void) {
   // Unit tests

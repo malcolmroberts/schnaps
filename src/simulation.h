@@ -8,7 +8,6 @@
 #include "clinfo.h"
 #endif
 
-
 //! \brief Data structure for managing a schnaps numerical simulation
 typedef struct Simulation {
   //! Underlying mesh
@@ -23,7 +22,7 @@ typedef struct Simulation {
   //! sum of sizes of field data
   int wsize;
 
-  //!
+  //! FIXME: REMOVE
   int interp_param[7];
 
   //! Current time
@@ -34,7 +33,6 @@ typedef struct Simulation {
   //! PIC struct pointer (=NULL if not used)
   void *pic;
 
-
   //! final time of simulation
   real tmax;
 
@@ -43,17 +41,16 @@ typedef struct Simulation {
 
   //! current iteration of the RK algorithm
   int iter_time_rk;
-  //! maximal number of iterations
+  //! maximal number of iterations FIXME: REMOVE
   int itermax_rk;
-  //! nb of diagnostics
+  //! nb of diagnostics FIXME: REMOVE
   int nb_diags;
-  //! table for diagnostics
+  //! table for diagnostics FIXME: REMOVE
   real *Diagnostics;
 
   //! \brief Pointer to a generic function called before computing dtfields. 
   //! \param[inout] simu a simulation (to be converted from void*)
   void (*pre_dtfields)(void *simu, real *w);
-
 
   //! vmax
   real vmax;
@@ -143,7 +140,6 @@ void EmptySimulation(Simulation *simu);
 //! \param[in] model a model
 void InitSimulation(Simulation *simu, MacroMesh *mesh,
 		    int *deg, int *raf, Model *model);
-
 
 //! \brief apply the Discontinuous Galerkin approximation for computing
 //! the time derivative of the fields. Works with several subcells.

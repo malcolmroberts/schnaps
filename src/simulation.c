@@ -9,7 +9,7 @@
 
 void EmptySimulation(Simulation *simu)
 {
-  printf("%p\n", (void *) simu);
+  simu->use_source_cl = false;
 #ifdef _WITH_OPENCL
   sprintf(numflux_cl_name,"%s",""); // FIXME: move to field struct.
   sprintf(cl_buildoptions,"%s",""); // FIXME: move to field struct.
@@ -331,9 +331,8 @@ void DtFields(Simulation *simu, real *w, real *dtw)
 {
   if(simu->pre_dtfields != NULL) {
     simu->pre_dtfields(simu, w);
-    //assert(1==2);
   }
-
+  
   int fsize =  simu->wsize / simu->macromesh.nbelems;
 
 #ifdef _OPENMP
@@ -360,7 +359,7 @@ void DtFields(Simulation *simu, real *w, real *dtw)
       fR = simu->fd + ieR;
       offsetR = fsize * ieR;
     }
-         
+    
     DGMacroCellInterface(locfaL,
 			 fL, offsetL, fR, offsetR,
 			 w, dtw);

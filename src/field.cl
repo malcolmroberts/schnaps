@@ -1367,11 +1367,6 @@ int ref_ipg(__constant int *param, real *xref)
   return ix + (deg[0] + 1) * (iy + (deg[1] + 1) * iz) + offset;
 }
 
-#ifndef _SOURCE_FUNC
-#define _SOURCE_FUNC ZeroSource
-//ZeroSource
-#endif
-
 void ZeroSource(const real *x, const real t, const real *w, real *source) {
   for(int i = 0; i < _M; ++i) 
     source[i] = 0.0;
@@ -1381,6 +1376,10 @@ void OneSource(const real *x, const real t, const real *w, real *source) {
   for(int i = 0; i < _M; ++i) 
     source[i] = 1.0;
 }
+
+#ifndef _SOURCE_FUNC
+#define _SOURCE_FUNC ZeroSource
+#endif
 
 // Compute the source terms inside  one macrocell
 __kernel
@@ -1451,7 +1450,6 @@ void DGSource(__constant int *param,     // 0: interp param
 
   // Compute source using w and xref, putting the result in source
   real source[_M];
-
   _SOURCE_FUNC(xphy, tnow, w, source);
   
   // Add the source buffer to dtw
@@ -1466,7 +1464,7 @@ void DGSource(__constant int *param,     // 0: interp param
   for(int i = 0; i < m; ++i){
     int iread = get_local_id(0) + i * get_local_size(0);
     int iv = iread % m;
-    int ipgloc = iread / m ;
+    int ipgloc = iread / m;
     int ipgL = ipgloc + icell * get_local_size(0);
     int imem =  VARINDEX(param + 1, param + 4, m, ipgL, iv) + woffset;
     //VARINDEX(param, ie, ipgL, iv);
@@ -1474,7 +1472,6 @@ void DGSource(__constant int *param,     // 0: interp param
     dtwn[imem] += dtwnloc[imemloc];
   }
 }
-
 
 // Out-of-place RK stage
 __kernel

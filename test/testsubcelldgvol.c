@@ -6,68 +6,77 @@
 
 int TestfieldSubCellDGVol()
 {
-  return false; // FIXME!
 
-  /* int test = true; */
+  int test = true;
 
-  /* field f; */
-  /* init_empty_field(&f); */
+  Model model;
+  model.cfl = 0.05;
+  model.m = 1; // only one conservative variable
+   
+  field f;
+  init_empty_field(&f);
 
-  /* f.model.cfl = 0.05; */
-  /* f.model.m = 1; // only one conservative variable */
-  /* f.model.NumFlux = TransNumFlux; */
-  /* f.model.BoundaryFlux = TestTransBoundaryFlux; */
-  /* f.model.InitData = TestTransInitData; */
-  /* f.model.ImposedData = TestTransImposedData; */
-  /* f.varindex = GenericVarindex; */
+  model.NumFlux = TransNumFlux;
+  model.BoundaryFlux = TestTransBoundaryFlux;
+  model.InitData = TestTransInitData;
+  model.ImposedData = TestTransImposedData;
+  f.varindex = GenericVarindex;
 
-  /* f.interp.interp_param[0] = 1; // _M */
-  /* f.interp.interp_param[1] = 2; // x direction degree */
-  /* f.interp.interp_param[2] = 2; // y direction degree */
-  /* f.interp.interp_param[3] = 2; // z direction degree */
-  /* f.interp.interp_param[4] = 2; // x direction refinement */
-  /* f.interp.interp_param[5] = 2; // y direction refinement */
-  /* f.interp.interp_param[6] = 1; // z direction refinement */
-
-  /* ReadMacroMesh(&f.macromesh, "../test/testcube.msh"); */
-  /* //ReadMacroMesh(&f.macromesh,"../test/testdisque.msh"); */
-  /* BuildConnectivity(&f.macromesh); */
-
-  /* PrintMacroMesh(&f.macromesh); */
-  /* //AffineMapMacroMesh(&f.macromesh); */
-  /* PrintMacroMesh(&f.macromesh); */
+  int deg[] = {2, 2, 2};
+  int raf[] = {2, 2, 1};
   
-  /* Initfield(&f); */
-  /* CheckMacroMesh(&f.macromesh, f.interp.interp_param + 1); */
-
-  /* for(int ifa = 0; ifa < f.macromesh.nbfaces; ifa++){ */
-  /*   DGMacroCellInterface(ifa, &f, f.wn, f.dtwn); */
-  /* } */
-  /* for(int ie = 0; ie < f.macromesh.nbelems; ie++) { */
-  /*   DGSubCellInterface(ie, &f, f.wn, f.dtwn); */
-  /*   DGVolume(ie, &f, f.wn, f.dtwn); */
-  /*   DGMass(ie, &f, f.dtwn); */
-  /*   DGSource(ie, &f, f.wn, f.dtwn); */
-  /* } */
-
+  MacroMesh mesh;
+  ReadMacroMesh(&mesh, "../test/testcube.msh");
+  BuildConnectivity(&mesh);
+  CheckMacroMesh(&mesh, deg, raf);
   
-  /* Displayfield(&f);   */
+  Simulation simu;
+  InitSimulation(&simu, &mesh, deg, raf, &model);
+
+  // number of points in a macrocell.
+  int mcell_size =  simu.wsize / simu.macromesh.nbelems;
+  
+  for(int ifa = 0; ifa < simu.macromesh.nbfaces; ifa++){
+    //DGMacroCellInterface(ifa, &f, f.wn, f.dtwn);
+  }
+  for(int ie = 0; ie < simu.macromesh.nbelems; ie++) {
+    /* DGSubCellInterface(ie, &f, f.wn, f.dtwn); */
+    /* DGVolume(ie, &f, f.wn, f.dtwn); */
+    /* DGMass(ie, &f, f.dtwn); */
+    /* DGSource(ie, &f, f.wn, f.dtwn); */
+  }
+  
+  /* Displayfield(&f); */
 
   /* Plotfield(0, false, &f, NULL, "visu.msh"); */
   /* Plotfield(0, true, &f, "error", "error.msh"); */
-
-  /* // test the time derivative with the exact solution */
-  /* for(int i=0; */
-  /*     i < f.model.m * f.macromesh.nbelems * NPG(f.interp.interp_param+1); */
-  /*     i++) { */
-  /*   test = test && fabs(4 * f.wn[i] - pow(f.dtwn[i] , 2)) < 1e-2; */
-  /*   assert(test); */
-  /* } */
   
-  /* return test; */
+  // test the time derivative with the exact solution
+  real maxerr = 0.0;
+  int stop = model.m * mesh.nbelems * NPG(deg,raf);
+  for(int i = 0; i < stop; i++) {
+    real errloc = fabs(4 * simu.w[i] - pow(simu.dtw[i], 2));
+    test = test && errloc < 1e-2;
+    //printf("i=%d err=%f \n",i,4 * w[i] - pow(dtw[i], 2));
+    //assert(test);
+  }
+  
+  /* int stop = model.m * simu.macromesh.nbelems * NPG(deg, raf); */
+  /* for(int i=0; i < stop; i++) { */
+  /*   real err = fabs(4 * f.wn[i] - pow(f.dtwn[i] , 2)); */
+    
+  /*   printf("i: %d\terr: %f\tw: %f\tdtw: %f \n",i, err, ); */
+  /*   if(err > maxerr) */
+  /*     maxerr = err; */
+  /* } */
+  test = maxerr < 1e-2;
+
+  printf("\nmaxerr: %f\n", maxerr);
+  return test;
 }
 
-int main(void) {
+int main()
+{
   int resu = TestfieldSubCellDGVol();
   if(resu) 
     printf("field DG Subcell Vol test OK !\n");
