@@ -486,7 +486,7 @@ void ReadFile(char filename[], char **s){
 // \#pragma end_opencl
 void GetOpenCLCode(void){
   int status;
-  status = system("sh ../get_opencl_code.sh");
+  status = system("../sh get_opencl_code.sh");
   assert(status == 0);
 }
 

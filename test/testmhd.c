@@ -29,7 +29,81 @@ int main(int argc, char *argv[]) {
 
 int TestMHD(int argc, char *argv[])
 {
-  return false; // FIXME!!!
+
+  int test = true;
+
+  if(!cldevice_is_acceptable(nplatform_cl, ndevice_cl)) {
+    printf("OpenCL device not acceptable.\n");
+    return true;
+  }
+
+  Simulation simu;
+  EmptySimulation(&simu);
+
+  MacroMesh mesh;
+  char *mshname =  "../test/testOTgrid.msh";
+
+  ReadMacroMesh(&mesh, mshname);
+  Detect2DMacroMesh(&mesh);
+  BuildConnectivity(&mesh);
+  int deg[]={1, 1, 0};
+  int raf[]={4, 4, 1};
+  CheckMacroMesh(&mesh, deg, raf);
+
+  Model model;
+
+  assert(mesh.is2d);
+
+  simu.cfl = 0.1;
+  model.m = 9;
+  real periodsize = 6.2831853;
+
+  model.NumFlux = MHDNumFluxP2;
+  model.BoundaryFlux = MHDBoundaryFlux;
+  model.InitData = MHDInitData;
+  model.ImposedData = MHDImposedData;
+  model.Source = NULL;
+  
+  char buf[1000];
+  sprintf(buf, "-D _M=%d -D _PERIODX=%f -D _PERIODY=%f",
+          model.m,
+          periodsize,
+          periodsize);
+  strcat(cl_buildoptions, buf);
+
+  sprintf(numflux_cl_name, "%s", "MHDNumFluxP2");
+  sprintf(buf," -D NUMFLUX=");
+  strcat(buf, numflux_cl_name);
+  strcat(cl_buildoptions, buf);
+
+  sprintf(buf, " -D BOUNDARYFLUX=%s", "MHDBoundaryFlux");
+  strcat(cl_buildoptions, buf);
+
+  simu.macromesh.period[0]=periodsize;
+  simu.macromesh.period[1]=periodsize;
+  
+  //AffineMapMacroMesh(&(simu.macromesh));
+  InitSimulation(&simu, &mesh, deg, raf, &model);
+ 
+  real tmax = 0.1;
+  simu.vmax = 6.0;
+  real dt = 0;
+  RK2_CL(&simu, tmax, dt,  0, NULL, NULL);
+  
+  CopyfieldtoCPU(&simu);
+ 
+  PlotFields(0, false, &simu, NULL, "dgvisu.msh");
+  //Plotfield(0, true , &simu, "error", "dgerror.msh");
+
+  real dd = L2error(&simu);
+
+  printf("L2 error: %f\n", dd);
+
+  show_cl_timing(&simu);
+
+  return test;
+  
+
 
   /* real cfl = 0.1; */
   /* real tmax = 0.1; */
