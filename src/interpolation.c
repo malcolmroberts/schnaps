@@ -314,35 +314,32 @@ int ref_ipg_CG(int *deg, int *nraf, real *xref) {
   //printf("xref %f %f %f ix[0]=%d ix[1]=%d ix[2]=%d\n",
   //	 xref[0],xref[1],xref[2],ix[0],ix[1],ix[2]);
 
-  int nx[3] = {
-    deg[0] * nraf[0] + 1,
-    deg[1] * nraf[1] + 1,
-    deg[2] * nraf[2] + 1};
+  int nx[3] = {deg[0] * nraf[0] + 1,
+	       deg[1] * nraf[1] + 1,
+	       deg[2] * nraf[2] + 1};
 
-  int irefx[3]= {
-    deg[0] * ic[0] + ix[0],
-    deg[1] * ic[1] + ix[1],
-    deg[2] * ic[2] + ix[2]};
+  int irefx[3]= {deg[0] * ic[0] + ix[0],
+		 deg[1] * ic[1] + ix[1],
+		 deg[2] * ic[2] + ix[2]};
   
   int ipg = irefx[0] + nx[0] * (irefx[1] + nx[1] * irefx[2]);
   //xyz_to_ipg(nraf,deg,ic,ix,&ipg);
 
   //return ix[0] + (deg[0] + 1) * (ix[1] + (deg[1] + 1) * ix[2]) + offset;
   return ipg;
-} // ref_ipg_CG
+}
 
-void ref_pg_vol(int *deg, int *nraf, int ipg, real *xpg, real *wpg, real *xpg_in) {
-
+void ref_pg_vol(int *deg, int *nraf, int ipg, real *xpg, real *wpg, 
+		real *xpg_in)
+{
   int offset[3];
-
-
   int ix[3], ic[3];
 
-  ipg_to_xyz(nraf,deg,ic,ix,&ipg);
+  ipg_to_xyz(nraf, deg, ic, ix, &ipg);
 
-  real hx = 1 / (real) nraf[0];
-  real hy =1 / (real) nraf[1];
-  real hz = 1 / (real) nraf[2];
+  real hx = 1.0 / (real) nraf[0];
+  real hy = 1.0 / (real) nraf[1];
+  real hz = 1.0 / (real) nraf[2];
 
   //printf("h=%f %f %f\n",hx,hy,hz);
 
@@ -356,10 +353,11 @@ void ref_pg_vol(int *deg, int *nraf, int ipg, real *xpg, real *wpg, real *xpg_in
     xpg[2] = hz * (ic[2] + gauss_lob_point[offset[2]]);
   }
   
-  if (wpg != NULL) *wpg = hx * hy * hz *
-		     gauss_lob_weight[offset[0]]*
-		     gauss_lob_weight[offset[1]]*
-		     gauss_lob_weight[offset[2]];
+  if (wpg != NULL) {
+    *wpg = hx * gauss_lob_weight[offset[0]] 
+      * hy * gauss_lob_weight[offset[1]]
+      * hz * gauss_lob_weight[offset[2]];
+  }
 
   if (xpg_in !=0) {
     real small = _SMALL;
@@ -367,12 +365,18 @@ void ref_pg_vol(int *deg, int *nraf, int ipg, real *xpg, real *wpg, real *xpg_in
     xpg_in[1] = xpg[1];
     xpg_in[2] = xpg[2];
 
-    if (ix[0] == 0) xpg_in[0] += hx * _SMALL;
-    if (ix[0] == deg[0]) xpg_in[0] -= hx * _SMALL;
-    if (ix[1] == 0) xpg_in[1] += hy * _SMALL;
-    if (ix[1] == deg[1]) xpg_in[1] -= hy * _SMALL;
-    if (ix[2] == 0) xpg_in[2] += hz * _SMALL;
-    if (ix[2] == deg[2]) xpg_in[2] -= hz * _SMALL;
+    if (ix[0] == 0) 
+      xpg_in[0] += hx * _SMALL;
+    if (ix[0] == deg[0]) 
+      xpg_in[0] -= hx * _SMALL;
+    if (ix[1] == 0) 
+      xpg_in[1] += hy * _SMALL;
+    if (ix[1] == deg[1]) 
+      xpg_in[1] -= hy * _SMALL;
+    if (ix[2] == 0) 
+      xpg_in[2] += hz * _SMALL;
+    if (ix[2] == deg[2]) 
+      xpg_in[2] -= hz * _SMALL;
 
     /* printf("xpg %f %f %f\n",xpg[0],xpg[1],xpg[2]); */
     /*  printf("xpg_in %f %f %f %d %d %d\n",xpg_in[0],xpg_in[1],xpg_in[2], */
@@ -380,20 +384,19 @@ void ref_pg_vol(int *deg, int *nraf, int ipg, real *xpg, real *wpg, real *xpg_in
   }
 }
 
-void ref_pg_vol_CG(int *deg, int *nraf, int ipg, real *xpg, real *wpg, real *xpg_in) {
-
+void ref_pg_vol_CG(int *deg, int *nraf, int ipg, real *xpg, real *wpg, 
+		   real *xpg_in) 
+{
   int offset[3], irefx[3], ic[3], ix[3];
   real hx[3];
   
-  int nx[3] = {
-    deg[0] * nraf[0] + 1,
-    deg[1] * nraf[1] + 1,
-    deg[2] * nraf[2] + 1};
+  int nx[3] = {deg[0] * nraf[0] + 1,
+	       deg[1] * nraf[1] + 1,
+	       deg[2] * nraf[2] + 1};
 
-
-  hx[0] = 1 / (real) nraf[0];
-  hx[1] = 1 / (real) nraf[1];
-  hx[2] = 1 / (real) nraf[2];
+  hx[0] = 1.0 / (real) nraf[0];
+  hx[1] = 1.0 / (real) nraf[1];
+  hx[2] = 1.0 / (real) nraf[2];
 
   //printf("h=%f %f %f\n",hx,hy,hz);
 
@@ -462,7 +465,7 @@ void ref_pg_vol_CG(int *deg, int *nraf, int ipg, real *xpg, real *wpg, real *xpg
 // ipg on the face ifa.
 // and returns the index of the volume gauss point
 int ref_pg_face(int deg3d[], int nraf3d[], int ifa, int ipg, 
-		 real *xpg, real *wpg, real *xpgin) {
+		real *xpg, real *wpg, real *xpgin) {
   // For each face, give the dimension index i
   const int axis_permut[6][4] = { {0, 2, 1, 0},
 				  {1, 2, 0, 1},
@@ -577,7 +580,7 @@ int ref_pg_face(int deg3d[], int nraf3d[], int ifa, int ipg,
 // ipg on the face ifa.
 // and returns the index of the volume gauss point
 int ref_pg_face_CG(int deg3d[], int nraf3d[], int ifa, int ipg, 
-		 real *xpg, real *wpg, real *xpgin) {
+		   real *xpg, real *wpg, real *xpgin) {
   // For each face, give the dimension index i
   const int axis_permut[6][4] = { {0, 2, 1, 0},
 				  {1, 2, 0, 1},

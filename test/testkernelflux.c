@@ -29,8 +29,8 @@ int TestKernelFlux()
   f.deg[0] = 2;  // x direction degree
   f.deg[1] = 2;  // y direction degree
   f.deg[2] = 0;  // z direction degree
-  f.raf[0] = 3;  // x direction refinement
-  f.raf[1] = 3;  // y direction refinement
+  f.raf[0] = 2;  // x direction refinement
+  f.raf[1] = 1;  // y direction refinement
   f.raf[2] = 1;  // z direction refinement
 
   ReadMacroMesh(&(f.macromesh),"test/testmacromesh.msh");

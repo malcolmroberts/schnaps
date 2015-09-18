@@ -99,7 +99,8 @@ int TestDtfield_CL(void){
   f.dtwn = calloc(f.wsize, sizeof(real));
 
   f.model.Source = OneSource;
-  dtfield(&f, f.wn, f.dtwn);
+  real tnow = 0.0;
+  dtfield(&f, f.wn, f.dtwn, tnow);
  
   real maxerr = 0;
   for(int i = 0; i < f.wsize; i++) {

@@ -5,7 +5,8 @@
 #include <assert.h>
 #include <math.h>
 
-int TestKernelInterface(void){
+int TestKernelInterface()
+{
   bool test = true;
 
   if(!cldevice_is_acceptable(nplatform_cl, ndevice_cl)) {
@@ -25,23 +26,20 @@ int TestKernelInterface(void){
   f.model.ImposedData = TransImposedData2d;
   f.varindex = GenericVarindex;
 
-  f.deg[0] = 2;  // x direction degree
-  f.deg[1] = 2;  // y direction degree
+  f.deg[0] = 1;  // x direction degree
+  f.deg[1] = 1;  // y direction degree
   f.deg[2] = 0;  // z direction degree
-  f.raf[0] = 3;  // x direction refinement
-  f.raf[1] = 3;  // y direction refinement
+  f.raf[0] = 2;  // x direction refinement
+  f.raf[1] = 1;  // y direction refinement
   f.raf[2] = 1;  // z direction refinement
 
-  ReadMacroMesh(&(f.macromesh),"test/testmacromesh.msh");
-  //ReadMacroMesh(&(f.macromesh),"test/testcube.msh");
-  Detect2DMacroMesh(&(f.macromesh));
+  ReadMacroMesh(&f.macromesh,"../test/testmacromesh.msh");
+  Detect2DMacroMesh(&f.macromesh);
   assert(f.macromesh.is2d);
 
-  BuildConnectivity(&(f.macromesh));
-  PrintMacroMesh(&(f.macromesh));
+  BuildConnectivity(&f.macromesh);
+  PrintMacroMesh(&f.macromesh);
 
-  //AffineMapMacroMesh(&(f.macromesh));
- 
   Initfield(&f);
 
   MacroFace mface[f.macromesh.nbfaces];
@@ -79,7 +77,7 @@ int TestKernelInterface(void){
   const int ninterfaces = f.macromesh.nmacrointerfaces;
   for(int i = 0; i < ninterfaces; ++i) {
     int ifa = f.macromesh.macrointerface[i];
-    DGMacroCellInterface_CL((void*) (mface + ifa), &f, &(f.wn_cl), 
+    DGMacroCellInterface_CL((void*) (mface + ifa), &f, &f.wn_cl, 
 			    0, NULL, NULL);
     clFinish(f.cli.commandqueue);
   }
@@ -87,7 +85,7 @@ int TestKernelInterface(void){
   const int nboundaryfaces = f.macromesh.nboundaryfaces;
   for(int i = 0; i < nboundaryfaces; ++i) {
     int ifa = f.macromesh.boundaryface[i];
-    DGBoundary_CL((void*) (mface + ifa), &f, &(f.wn_cl),
+    DGBoundary_CL((void*) (mface + ifa), &f, &f.wn_cl,
 			    0, NULL, NULL);
     clFinish(f.cli.commandqueue);
   }
@@ -100,15 +98,18 @@ int TestKernelInterface(void){
   f.dtwn = calloc(f.wsize, sizeof(real));
   for(int iw = 0; iw < f.wsize; iw++)
     f.dtwn[iw] = 0;
-  for(int ifa = 0; ifa < f.macromesh.nbfaces; ifa++)
-    DGMacroCellInterface((void*) (mface + ifa), &f, f.wn, f.dtwn);
+  real tnow = 0.0;
+  for(int ifa = 0; ifa < f.macromesh.nbfaces; ifa++) {
+    DGMacroCellInterface((void*) (mface + ifa), &f, f.wn, f.dtwn, tnow);
+  }
   //Displayfield(&f);
   real *fdtwn_openmp = f.dtwn;
 
   real maxerr = 0.0;
+  printf("error\t\tC\t\tOpenCL\n");
   for(int i = 0; i < f.wsize; i++) {
     real error = fabs(fdtwn_openmp[i] - fdtwn_opencl[i]);
-    printf("error: %f \t%f \t%f\n", error, fdtwn_openmp[i], fdtwn_opencl[i]);
+    printf("%f\t%f\t%f\n", error, fdtwn_openmp[i], fdtwn_opencl[i]);
     maxerr = fmax(error, maxerr);
   }
  

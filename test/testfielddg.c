@@ -23,9 +23,10 @@ int TestfieldDG()
   f.deg[0] = 2; // x direction degree
   f.deg[1] = 2; // y direction degree
   f.deg[2] = 2; // z direction degree
-  f.raf[0] = 2; // x direction refinement
-  f.raf[1] = 2; // y direction refinement
-  f.raf[2] = 2; // z direction refinement
+  f.raf[0] = 1; // x direction refinement
+  f.raf[1] = 1; // y direction refinement
+  f.raf[2] = 1; // z direction refinement
+  // FIXME: set back to 2.
 
   ReadMacroMesh(&f.macromesh, "../test/testcube2.msh");
   BuildConnectivity(&f.macromesh);
@@ -36,20 +37,27 @@ int TestfieldDG()
   Initfield(&f);
   CheckMacroMesh(&f.macromesh, f.deg, f.raf);
 
-  dtfield(&f, f.wn, f.dtwn);
+  real tnow = 0.0;
+  dtfield(&f, f.wn, f.dtwn, tnow);
   
   Displayfield(&f);
 
-  //Plotfield(0, false, &f, NULL, "visu.msh");
-  //Plotfield(0, true, &f, "error", "error.msh");
+  /* Plotfield(0, false, &f, NULL, "visu.msh"); */
+  /* Plotfield(0, true, &f, "error", "error.msh"); */
+
+  real maxerr = 0.0;
 
   // Test the time derivative with the exact solution
   const int wsize = f.model.m * f.macromesh.nbelems * NPG(f.deg, f.raf); 
   for(int i = 0; i < wsize; i++) {
-    test = test && fabs(4 * f.wn[i] - pow(f.dtwn[i], 2)) < 1e-2;
-    printf("i=%d err=%f \n",i,4 * f.wn[i] - pow(f.dtwn[i], 2));
-    //assert(test);
+    real err = fabs(4 * f.wn[i] - pow(f.dtwn[i], 2));
+    if(err > maxerr)
+      maxerr = err;
+    printf("i: %d\terr: %f\tdtw: %f\tw: %f\n", i, err, f.dtwn[i], f.wn[i]);
   }
+
+  test = maxerr < 1e-2;
+  printf("maxerr: %f\n", maxerr);
   
   return test;
 }

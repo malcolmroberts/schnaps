@@ -222,34 +222,28 @@ void Freefield(field *f);
 //! the time derivative of the field. Works with several subcells.
 //! Fast version: multithreaded and with tensor products optimizations
 //! \param[inout] f a field
-void dtfield(field *f, real *w, real *dtw);
+void dtfield(field *f, real *w, real *dtw, real tnow);
 
 //! \brief compute the Discontinuous Galerkin inter-macrocells
 //! boundary terms second implementation with a loop on the faces
 //! The argument has to be void* (for compatibility with pthread)
 //! but it is logically a MacroCell*
 //! \param[inout] mface a MacroFace
-void DGMacroCellInterface(void *mface, field *f, real *w, real *dtw);
+void DGMacroCellInterface(void *mface, field *f, real *w, real *dtw, real tnow);
 
 //! \brief compute the Discontinuous Galerkin volume terms
-//! The argument has to be void* (for compatibility with pthread)
-//! but it is logically a MacroCell*
-//! \param[inout] mcell a MacroCell
-void DGVolume(void *mcell, field *f, real *w, real *dtw);
+void DGVolume(int ie, field *f, real *w, real *dtw);
 
 //! \brief compute the Discontinuous Galerkin inter-subcells terms
-//! \param[inout] mcell a MacroCell
-void DGSubCellInterface(void *mcell, field *f, real *w, real *dtw);
+void DGSubCellInterface(int ie, field *f, real *w, real *dtw);
 
 //! \brief  apply the DG mass term
-//! \param[inout] mcell a MacroCell
-void DGMass(void *mcell, field *f, real *dtw);
+void DGMass(int ie, field *f, real *dtw);
 
 //! \brief Add the source term
-//! \param[inout] mcell a MacroCell
 //! \param[in] w: the field
 //! \param[out] dtw: the derivative
-void DGSource(void *mcell, field *f, real *w, real *dtw);
+void DGSource(int ie, field *f, real *w, real *dtw);
 
 //! \brief An out-of-place RK stage
 //! \param[out] fwnp1 field at time n+1
