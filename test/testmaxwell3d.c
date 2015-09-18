@@ -4,88 +4,111 @@
 #include "test.h"
 #include <string.h>
 
-int TestMaxwell3D() 
-{
-  return false; // FIXME!!!
+int TestMaxwell3D(void) {
+  bool test = true;
+
+  // 2D meshes:
+  // test/disque2d.msh
+  // test/testdisque2d.msh
+  // test/testmacromesh.msh
+  // test/unit-cube.msh
+
+  // 3D meshes"
+  // test/testdisque.msh
+
+  char *mshname =  "../test/testcube.msh";
   
-/*   bool test = true; */
-/*   field f; */
-/*   init_empty_field(&f); */
+  MacroMesh mesh;
+  ReadMacroMesh(&mesh,"../test/testcube.msh");
+  //ReadMacroMesh(&mesh,"../test/testmacromesh.msh");
+  //Detect2DMacroMesh(&mesh);
+  BuildConnectivity(&mesh);
 
-/*   f.model.cfl = 0.05;   */
-/*   f.model.m = 8; // num of conservative variables */
+  Model model;
 
-/*   f.model.NumFlux = Maxwell3DNumFluxClean_uncentered; */
-/*   f.model.BoundaryFlux = Maxwell3DBoundaryFlux_uncentered; */
-/*   f.model.InitData = Maxwell3DInitData; */
-/*   f.model.ImposedData = Maxwell3DImposedData; */
-/*   f.varindex = GenericVarindex; */
-    
-/*   f.interp.interp_param[0] = f.model.m; */
-/*   f.interp.interp_param[1] = 3; // x direction degree */
-/*   f.interp.interp_param[2] = 3; // y direction degree */
-/*   f.interp.interp_param[3] = 3; // z direction degree */
-/*   f.interp.interp_param[4] = 2; // x direction refinement */
-/*   f.interp.interp_param[5] = 2; // y direction refinement */
-/*   f.interp.interp_param[6] = 2; // z direction refinement */
+  model.m = 7;
 
-/*   ReadMacroMesh(&(f.macromesh), "../test/testcube.msh"); */
+  model.NumFlux = Maxwell3DNumFluxClean_upwind;
+  //f.model.NumFlux = Maxwell2DNumFlux_centered;
+  model.BoundaryFlux = Maxwell3DBoundaryFlux_upwind;
+  model.InitData = Maxwell3DInitData;
+  model.ImposedData = Maxwell3DImposedData;
+  //model.Source = Maxwell2DSource;
+  model.Source = NULL;
 
-/*   // FIXME: temp */
-/*   /\* Detect2DMacroMesh(&(f.macromesh)); *\/ */
-/*   /\* assert(f.macromesh.is2d); *\/ */
 
-/*   BuildConnectivity(&(f.macromesh)); */
+  int deg[]={3, 3, 3};
+  int raf[]={4, 4, 4};
 
-/*   char buf[1000]; */
-/*   sprintf(buf, "-D _M=%d", f.model.m); */
-/*   strcat(cl_buildoptions, buf); */
+  //assert(mesh.is2d);
 
-/*   // Source is for rho and J, which are zero here. */
-/*   //set_source_CL(&f, "Maxwell3DSource"); */
-/*   sprintf(numflux_cl_name, "%s", "Maxwell3DNumFluxClean_uncentered"); */
-/*   sprintf(buf," -D NUMFLUX="); */
-/*   strcat(buf, numflux_cl_name); */
-/*   strcat(cl_buildoptions, buf); */
-
-/*   sprintf(buf, " -D BOUNDARYFLUX=%s", "Maxwell3DBoundaryFlux_uncentered"); */
-/*   strcat(cl_buildoptions, buf); */
-
-/*   Initfield(&f); */
+#ifdef _WITH_OPENCL
+  if(!cldevice_is_acceptable(nplatform_cl, ndevice_cl)) {
+    printf("OpenCL device not acceptable.\n");
+    return true;
+  }
+#endif
   
-/*   CheckMacroMesh(&(f.macromesh), f.interp.interp_param + 1); */
+  CheckMacroMesh(&mesh, deg, raf);
 
-/*   real tmax = 0.1; */
-/*   f.vmax = 1.0; */
-/*   real dt = set_dt(&f); */
-/*   //  dt = 1e-4; */
 
-/* #if 0 */
-/*   // C version */
-/*   RK2(&f, tmax, dt); */
-/* #else */
-/*   // OpenCL version */
-/*   RK4_CL(&f, tmax, dt, 0, 0, 0); */
-/*   CopyfieldtoCPU(&f); */
-/*   printf("\nOpenCL Kernel time:\n"); */
-/*   show_cl_timing(&f); */
-/*   printf("\n"); */
-/* #endif */
 
-/*   // Save the results and the error */
-/*   Plotfield(0, false, &f, NULL, "dgvisu.msh"); */
-/*   Plotfield(0, true, &f, "error", "dgerror.msh"); */
+  Simulation simu;
+  EmptySimulation(&simu);
 
-/*   real dd = L2error(&f); */
-/*   real tolerance = 0.08; */
-/*   test = test && (dd < tolerance); */
-/*   printf("L2 error: %f\n", dd); */
+  char buf[1000];
+  sprintf(buf, "-D _M=%d", model.m);
+  strcat(cl_buildoptions, buf);
 
-/*   return test; */
+  //set_source_CL(&simu, "Maxwell3DSource");
+  sprintf(numflux_cl_name, "%s", "Maxwell3DNumFluxClean_upwind");
+  sprintf(buf," -D NUMFLUX=");
+  strcat(buf, numflux_cl_name);
+  strcat(cl_buildoptions, buf);
+
+  sprintf(buf, " -D BOUNDARYFLUX=%s", "Maxwell3DBoundaryFlux_upwind");
+  strcat(cl_buildoptions, buf);
+
+
+
+  InitSimulation(&simu, &mesh, deg, raf, &model);
+ 
+  real tmax = .1;
+  simu.cfl=0.2;
+  simu.vmax=1;
+
+#if 1
+  // C version
+  RK4(&simu, tmax);
+#else
+  // OpenCL version
+  real dt = 0;
+  RK4_CL(&simu, tmax, dt, 0, 0, 0);
+
+  CopyfieldtoCPU(&simu); 
+  printf("\nOpenCL Kernel time:\n");
+  show_cl_timing(&simu);
+  printf("\n");
+#endif
+
+
+  PlotFields(0, false, &simu, NULL, "dgvisu.msh");
+  PlotFields(0, true , &simu, "error", "dgerror.msh");
+
+  real dd = 0;
+  dd = L2error(&simu);
+
+  printf("erreur L2=%f\n", dd);
+
+  real tolerance = 0.0025;
+  tolerance = 0.08;
+  test = dd < tolerance;
+  
+ 
+  return test;
 }
 
-int main() 
-{
+int main(void) {
   int resu = TestMaxwell3D();
   if (resu) 
     printf("Maxwell3D test OK!\n");

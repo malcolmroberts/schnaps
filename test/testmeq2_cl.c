@@ -23,7 +23,6 @@ real maxerr(real *a, real *b, int n)
 int TestmEq2()
 {
   return false; // FIXME!
-  
   /* bool test = true; */
   /* field f; */
   /* init_empty_field(&f); */

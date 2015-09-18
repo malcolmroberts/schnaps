@@ -38,7 +38,7 @@ int TestMaxwell2D(void) {
 
 
   int deg[]={3, 3, 0};
-  int raf[]={4, 4, 1};
+  int raf[]={8, 8, 1};
 
   assert(mesh.is2d);
 
@@ -73,17 +73,17 @@ int TestMaxwell2D(void) {
 
   InitSimulation(&simu, &mesh, deg, raf, &model);
  
-  real tmax = .5;
+  real tmax = 2;
   simu.cfl=0.2;
   simu.vmax=1;
 
 #if 0
   // C version
-  RK2(&simu, tmax);
+  RK4(&simu, tmax);
 #else
   // OpenCL version
   real dt = 0;
-  RK2_CL(&simu, tmax, dt, 0, 0, 0);
+  RK4_CL(&simu, tmax, dt, 0, 0, 0);
 
   CopyfieldtoCPU(&simu); 
   printf("\nOpenCL Kernel time:\n");

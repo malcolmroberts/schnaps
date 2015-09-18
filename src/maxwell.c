@@ -385,13 +385,11 @@ void Maxwell3DImposedData(const real *x, const real t, real *w)
 }
 #pragma end_opencl
 
-#pragma start_opencl
 void Maxwell3DInitData(real *x, real *w) 
 {
   real t = 0;
   Maxwell3DImposedData(x, t, w);
 }
-#pragma end_opencl
 
 #pragma start_opencl
 void Maxwell3DBoundaryFlux_upwind(real *x, real t, 
