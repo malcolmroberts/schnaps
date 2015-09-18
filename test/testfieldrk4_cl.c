@@ -24,7 +24,7 @@ int TestfieldRK4_CL(void){
   Detect2DMacroMesh(&mesh);
   BuildConnectivity(&mesh);
   int deg[]={3, 3, 0};
-  int raf[]={8, 8, 1};
+  int raf[]={2, 2, 2};
   CheckMacroMesh(&mesh, deg, raf);
 
   /* f.model.cfl = 0.05; */

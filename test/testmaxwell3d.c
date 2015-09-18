@@ -26,7 +26,7 @@ int TestMaxwell3D(void) {
 
   Model model;
 
-  model.m = 7;
+  model.m = 8;
 
   model.NumFlux = Maxwell3DNumFluxClean_upwind;
   //f.model.NumFlux = Maxwell2DNumFlux_centered;
@@ -37,7 +37,7 @@ int TestMaxwell3D(void) {
   model.Source = NULL;
 
 
-  int deg[]={1, 1, 1};
+  int deg[]={3, 3, 3};
   int raf[]={4, 4, 4};
 
   //assert(mesh.is2d);
@@ -74,16 +74,16 @@ int TestMaxwell3D(void) {
   InitSimulation(&simu, &mesh, deg, raf, &model);
  
   real tmax = .1;
-  simu.cfl=0.1;
+  simu.cfl=0.2;
   simu.vmax=1;
 
 #if 0
   // C version
-  RK2(&simu, tmax);
+  RK4(&simu, tmax);
 #else
   // OpenCL version
   real dt = 0;
-  RK2_CL(&simu, tmax, dt, 0, 0, 0);
+  RK4_CL(&simu, tmax, dt, 0, 0, 0);
 
   CopyfieldtoCPU(&simu); 
   printf("\nOpenCL Kernel time:\n");
@@ -92,8 +92,8 @@ int TestMaxwell3D(void) {
 #endif
 
 
-  PlotFields(0, false, &simu, NULL, "dgvisu.msh");
-  PlotFields(0, true , &simu, "error", "dgerror.msh");
+  //PlotFields(0, false, &simu, NULL, "dgvisu.msh");
+  //PlotFields(0, true , &simu, "error", "dgerror.msh");
 
   real dd = 0;
   dd = L2error(&simu);
