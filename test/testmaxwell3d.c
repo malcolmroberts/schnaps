@@ -26,7 +26,7 @@ int TestMaxwell3D(void) {
 
   Model model;
 
-  model.m = 7;
+  model.m = 8;
 
   model.NumFlux = Maxwell3DNumFluxClean_upwind;
   //f.model.NumFlux = Maxwell2DNumFlux_centered;
@@ -37,8 +37,8 @@ int TestMaxwell3D(void) {
   model.Source = NULL;
 
 
-  int deg[]={3, 3, 3};
-  int raf[]={4, 4, 4};
+  int deg[]={2, 2, 2};
+  int raf[]={32, 32, 32};
 
   //assert(mesh.is2d);
 
@@ -77,7 +77,7 @@ int TestMaxwell3D(void) {
   simu.cfl=0.2;
   simu.vmax=1;
 
-#if 1
+#if 0
   // C version
   RK4(&simu, tmax);
 #else
@@ -92,8 +92,8 @@ int TestMaxwell3D(void) {
 #endif
 
 
-  PlotFields(0, false, &simu, NULL, "dgvisu.msh");
-  PlotFields(0, true , &simu, "error", "dgerror.msh");
+  //PlotFields(0, false, &simu, NULL, "dgvisu.msh");
+  //PlotFields(0, true , &simu, "error", "dgerror.msh");
 
   real dd = 0;
   dd = L2error(&simu);
