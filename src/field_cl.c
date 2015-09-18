@@ -1304,6 +1304,7 @@ void RK2_CL(Simulation *simu, real tmax, real dt,
     simu->rk_time += clv_duration(stage2);
     iter++;
   }
+  status = clFinish(simu->cli.commandqueue);
   gettimeofday(&t_end, NULL);
   if(done != NULL) 
     status = clSetUserEventStatus(*done, CL_COMPLETE);
@@ -1317,6 +1318,8 @@ void RK2_CL(Simulation *simu, real tmax, real dt,
   printf("\nTotal RK time per time-step (s):\n%f\n", rkseconds / iter );
  
   printf("\nt=%f iter=%d/%d dt=%f\n", simu->tnow, iter, simu->itermax_rk, dt);
+
+  
 }
 
 void show_cl_timing(Simulation *simu)

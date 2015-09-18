@@ -4,86 +4,111 @@
 #include "test.h"
 #include <string.h>
 
-int TestMaxwell3D() 
-{
+int TestMaxwell3D(void) {
   bool test = true;
-  field f;
-  init_empty_field(&f);
 
-  f.model.cfl = 0.05;  
-  f.model.m = 8; // num of conservative variables
+  // 2D meshes:
+  // test/disque2d.msh
+  // test/testdisque2d.msh
+  // test/testmacromesh.msh
+  // test/unit-cube.msh
 
-  f.model.NumFlux = Maxwell3DNumFluxClean_uncentered;
-  f.model.BoundaryFlux = Maxwell3DBoundaryFlux_uncentered;
-  f.model.InitData = Maxwell3DInitData;
-  f.model.ImposedData = Maxwell3DImposedData;
-  f.varindex = GenericVarindex;
-    
-  f.interp.interp_param[0] = f.model.m;
-  f.interp.interp_param[1] = 3; // x direction degree
-  f.interp.interp_param[2] = 3; // y direction degree
-  f.interp.interp_param[3] = 3; // z direction degree
-  f.interp.interp_param[4] = 2; // x direction refinement
-  f.interp.interp_param[5] = 2; // y direction refinement
-  f.interp.interp_param[6] = 2; // z direction refinement
+  // 3D meshes"
+  // test/testdisque.msh
 
-  ReadMacroMesh(&(f.macromesh), "../test/testcube.msh");
+  char *mshname =  "../test/testcube.msh";
+  
+  MacroMesh mesh;
+  ReadMacroMesh(&mesh,"../test/testcube.msh");
+  //ReadMacroMesh(&mesh,"../test/testmacromesh.msh");
+  //Detect2DMacroMesh(&mesh);
+  BuildConnectivity(&mesh);
 
-  // FIXME: temp
-  /* Detect2DMacroMesh(&(f.macromesh)); */
-  /* assert(f.macromesh.is2d); */
+  Model model;
 
-  BuildConnectivity(&(f.macromesh));
+  model.m = 7;
+
+  model.NumFlux = Maxwell3DNumFluxClean_upwind;
+  //f.model.NumFlux = Maxwell2DNumFlux_centered;
+  model.BoundaryFlux = Maxwell3DBoundaryFlux_upwind;
+  model.InitData = Maxwell3DInitData;
+  model.ImposedData = Maxwell3DImposedData;
+  //model.Source = Maxwell2DSource;
+  model.Source = NULL;
+
+
+  int deg[]={1, 1, 1};
+  int raf[]={4, 4, 4};
+
+  //assert(mesh.is2d);
+
+#ifdef _WITH_OPENCL
+  if(!cldevice_is_acceptable(nplatform_cl, ndevice_cl)) {
+    printf("OpenCL device not acceptable.\n");
+    return true;
+  }
+#endif
+  
+  CheckMacroMesh(&mesh, deg, raf);
+
+
+
+  Simulation simu;
+  EmptySimulation(&simu);
 
   char buf[1000];
-  sprintf(buf, "-D _M=%d", f.model.m);
+  sprintf(buf, "-D _M=%d", model.m);
   strcat(cl_buildoptions, buf);
 
-  // Source is for rho and J, which are zero here.
-  //set_source_CL(&f, "Maxwell3DSource");
-  sprintf(numflux_cl_name, "%s", "Maxwell3DNumFluxClean_uncentered");
+  //set_source_CL(&simu, "Maxwell3DSource");
+  sprintf(numflux_cl_name, "%s", "Maxwell3DNumFluxClean_upwind");
   sprintf(buf," -D NUMFLUX=");
   strcat(buf, numflux_cl_name);
   strcat(cl_buildoptions, buf);
 
-  sprintf(buf, " -D BOUNDARYFLUX=%s", "Maxwell3DBoundaryFlux_uncentered");
+  sprintf(buf, " -D BOUNDARYFLUX=%s", "Maxwell3DBoundaryFlux_upwind");
   strcat(cl_buildoptions, buf);
 
-  Initfield(&f);
-  
-  CheckMacroMesh(&(f.macromesh), f.interp.interp_param + 1);
 
-  real tmax = 0.1;
-  f.vmax = 1.0;
-  real dt = set_dt(&f);
-  //  dt = 1e-4;
+
+  InitSimulation(&simu, &mesh, deg, raf, &model);
+ 
+  real tmax = .1;
+  simu.cfl=0.1;
+  simu.vmax=1;
 
 #if 0
   // C version
-  RK2(&f, tmax, dt);
+  RK2(&simu, tmax);
 #else
   // OpenCL version
-  RK4_CL(&f, tmax, dt, 0, 0, 0);
-  CopyfieldtoCPU(&f);
+  real dt = 0;
+  RK2_CL(&simu, tmax, dt, 0, 0, 0);
+
+  CopyfieldtoCPU(&simu); 
   printf("\nOpenCL Kernel time:\n");
-  show_cl_timing(&f);
+  show_cl_timing(&simu);
   printf("\n");
 #endif
 
-  // Save the results and the error
-  Plotfield(0, false, &f, NULL, "dgvisu.msh");
-  Plotfield(0, true, &f, "error", "dgerror.msh");
 
-  real dd = L2error(&f);
-  real tolerance = 0.08;
-  test = test && (dd < tolerance);
-  printf("L2 error: %f\n", dd);
+  PlotFields(0, false, &simu, NULL, "dgvisu.msh");
+  PlotFields(0, true , &simu, "error", "dgerror.msh");
 
+  real dd = 0;
+  dd = L2error(&simu);
+
+  printf("erreur L2=%f\n", dd);
+
+  real tolerance = 0.0025;
+  tolerance = 0.08;
+  test = dd < tolerance;
+  
+ 
   return test;
 }
 
-int main() 
-{
+int main(void) {
   int resu = TestMaxwell3D();
   if (resu) 
     printf("Maxwell3D test OK!\n");

@@ -15,8 +15,8 @@ SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 # -D_SCHNAPS_DIR=${PROJECT_SOURCE_DIR} -O3 -g  ")
 #set(CMAKE_C_FLAGS " -std=c99 -D_DOUBLE_PRECISION -D_SCHNAPS_DIR=${PROJECT_SOURCE_DIR} -O3 -g  ")
 set(CMAKE_C_FLAGS " -std=c99 -D_SCHNAPS_DIR=${PROJECT_SOURCE_DIR} -O3")
-#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_DOUBLE_PRECISION")
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_DOUBLE_PRECISION")
+#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g")
 # needed for mac
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -lsuitesparseconfig")  
 set(CMAKE_CXX_FLAGS "-lsuitesparseconfig")  
@@ -501,6 +501,14 @@ if(OPENCL_FOUND)
     )
   target_link_libraries(testmaxwell2d_cl ${LIBS})
   add_test(testmaxwell2d_cl testmaxwell2d_cl)
+  
+  add_executable(
+    testmaxwell3d
+    test/test.h
+    test/testmaxwell3d.c
+    )
+  target_link_libraries(testmaxwell3d ${LIBS})
+  add_test(testmaxwell3d testmaxwell3d)
   
 
 endif(OPENCL_FOUND)
