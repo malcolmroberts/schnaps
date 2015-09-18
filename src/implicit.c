@@ -155,24 +155,30 @@ void LocalThetaTimeScheme(Simulation *simu, real tmax, real dt){
       f->tnow = simu->tnow;
       f->dt = simu->dt;
       MatVect(f->rmat, f->wn, f->solver->rhs);
+      //for(int i=0;i<f->solver->neq;i++) f->solver->rhs[i]=0;
     }
 
     
+    for(int ie=0; ie <  simu->macromesh.nbelems; ++ie){
+      field *f = simu->fd + ie;
+      //DisplayLinearSolver(f->solver);
+      //DisplayLinearSolver(f->rmat);
+    }
+
     for(int ifa = 0; ifa < simu->macromesh.nbfaces; ifa++){
       Interface* inter = simu->interface + ifa;
       // left = 0  right = 1
       ExtractInterface(inter, 0);
       ExtractInterface(inter, 1);
       InterfaceExplicitFlux(inter, 0);
-      InterfaceExplicitFlux(inter, 1);
+      //InterfaceExplicitFlux(inter, 1);
     }
 
-    // xxxxxxxxxxxxxxxxxxxxxxx
-    /* for(int ie=0; ie <  simu->macromesh.nbelems; ++ie){ */
-    /*   field *f = simu->fd + ie; */
-    /*   //DisplayLinearSolver(f->solver); */
-    /*   DisplayLinearSolver(f->rmat); */
-    /* } */
+    for(int ie=0; ie <  simu->macromesh.nbelems; ++ie){
+      field *f = simu->fd + ie;
+      DisplayLinearSolver(f->solver);
+      //DisplayLinearSolver(f->rmat);
+    }
     
     simu->tnow += (1 - theta) * dt;
 
@@ -182,6 +188,7 @@ void LocalThetaTimeScheme(Simulation *simu, real tmax, real dt){
       SolveLinearSolver(f->solver);
       for(int i=0;i<f->solver->neq;i++){
 	f->wn[i] += f->solver->sol[i];
+	printf("i=%d sol=%f\n",i,f->solver->sol[i]);
       }
     }
     
@@ -1677,6 +1684,7 @@ void InterfaceLocalAssembly(Interface *inter,  real theta, real dt)
 
     if (fR != NULL) {
 
+      assert(1==2);
       int ipgR = inter->vol_indexR[ipgf];
 	real flux[m];
 	real wL[m];
@@ -1745,8 +1753,11 @@ void InterfaceLocalAssembly(Interface *inter,  real theta, real dt)
 	for(int iv2 = 0; iv2 < m; iv2++) {
 	  // The basis functions is also the gauss point index
 	  int imem2 = fL->varindex(fL->deg, fL->raf,fL->model.m, ipgL, iv2);
-	  real val = theta *dt * (flux[iv2]-flux0[iv2]);		    
-	  AddLinearSolver(fL->solver, imem2, imem1, val);
+	  real val =  (flux[iv2]-flux0[iv2]);		    
+	  AddLinearSolver(fL->solver, imem2, imem1, theta * dt * val);
+	  AddLinearSolver(fL->rmat, imem2, imem1,  - dt * val);
+	  printf("val=%f",val);
+	  assert(1==4);
 	}
       } // iv1
 
