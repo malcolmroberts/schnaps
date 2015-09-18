@@ -20,6 +20,7 @@ int TestfieldSubCellDGVol()
   model.BoundaryFlux = TestTransBoundaryFlux;
   model.InitData = TestTransInitData;
   model.ImposedData = TestTransImposedData;
+  model.Source = NULL;
   f.varindex = GenericVarindex;
 
   int deg[] = {2, 2, 2};
