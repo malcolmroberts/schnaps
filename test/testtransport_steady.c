@@ -82,7 +82,7 @@ int Test_Transport_Steady(void) {
 
   test = test && (dd < tolerance);
 
-  ThetaTimeScheme(&simu, tmax, 10);
+  ThetaTimeScheme(&simu, tmax, 1);
 
   
   

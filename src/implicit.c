@@ -161,7 +161,8 @@ void LocalThetaTimeScheme(Simulation *simu, real tmax, real dt){
     
     for(int ie=0; ie <  simu->macromesh.nbelems; ++ie){
       field *f = simu->fd + ie;
-      //DisplayLinearSolver(f->solver);
+      DisplayLinearSolver(f->solver);
+      assert(1==3);
       //DisplayLinearSolver(f->rmat);
     }
 
@@ -244,8 +245,8 @@ void ThetaTimeScheme(Simulation *simu, real tmax, real dt){
     } 
     AssemblyImplicitLinearSolver(simu, &solver_implicit,theta,simu->dt);
 
-    /* DisplayLinearSolver(&solver_implicit); */
-    /* assert(1==2); */
+    DisplayLinearSolver(&solver_implicit);
+    assert(1==2);
 
     MatVect(&solver_explicit, simu->w, res);
 
@@ -1757,7 +1758,6 @@ void InterfaceLocalAssembly(Interface *inter,  real theta, real dt)
 	  AddLinearSolver(fL->solver, imem2, imem1, theta * dt * val);
 	  AddLinearSolver(fL->rmat, imem2, imem1,  - dt * val);
 	  printf("val=%f",val);
-	  assert(1==4);
 	}
       } // iv1
 
