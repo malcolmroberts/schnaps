@@ -73,7 +73,7 @@ int Test_Local_Implicit(void) {
 
   field* fd = simu.fd;
 
-  real tmax = 1;
+  real tmax = 10;
   simu.cfl=0.2;
   simu.vmax= 1;
   simu.dt = 0.025;
@@ -85,7 +85,7 @@ int Test_Local_Implicit(void) {
   printf("erreur local implicit L2=%.12e\n", dd);
   PlotFields(0, false, &simu, NULL, "dgvisu.msh");
 
-
+  test = test && (dd < 100 * _VERY_SMALL);
   
   return test;
 }
