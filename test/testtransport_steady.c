@@ -72,7 +72,7 @@ int Test_Transport_Steady(void) {
 
   InitSimulation(&simu, &mesh, deg, raf, &model);
 
-  real tmax = 1000.0;
+  real tmax = 1.0;
   simu.cfl=0.2;
   simu.vmax=_SPEED_WAVE;
  

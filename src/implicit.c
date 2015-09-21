@@ -161,9 +161,9 @@ void LocalThetaTimeScheme(Simulation *simu, real tmax, real dt){
     
     for(int ie=0; ie <  simu->macromesh.nbelems; ++ie){
       field *f = simu->fd + ie;
-      DisplayLinearSolver(f->solver);
-      assert(1==3);
-      //DisplayLinearSolver(f->rmat);
+      /* DisplayLinearSolver(f->solver); */
+      /* DisplayLinearSolver(f->rmat); */
+      /* assert(1==3); */
     }
 
     for(int ifa = 0; ifa < simu->macromesh.nbfaces; ifa++){
@@ -188,7 +188,7 @@ void LocalThetaTimeScheme(Simulation *simu, real tmax, real dt){
       f->tnow = simu->tnow;
       SolveLinearSolver(f->solver);
       for(int i=0;i<f->solver->neq;i++){
-	f->wn[i] += f->solver->sol[i];
+	f->wn[i] = f->solver->sol[i];
 	printf("i=%d sol=%f\n",i,f->solver->sol[i]);
       }
     }
@@ -210,7 +210,7 @@ void ThetaTimeScheme(Simulation *simu, real tmax, real dt){
   real theta=0.5;
   simu->dt=dt;
   
-  int itermax=tmax/simu->dt+1;
+  int itermax=tmax/simu->dt;
   simu->itermax_rk=itermax;
   InitImplicitLinearSolver(simu, &solver_implicit);
   InitImplicitLinearSolver(simu, &solver_explicit);
@@ -245,8 +245,9 @@ void ThetaTimeScheme(Simulation *simu, real tmax, real dt){
     } 
     AssemblyImplicitLinearSolver(simu, &solver_implicit,theta,simu->dt);
 
-    DisplayLinearSolver(&solver_implicit);
-    assert(1==2);
+    /* DisplayLinearSolver(&solver_implicit); */
+    /* DisplayLinearSolver(&solver_explicit); */
+    /* assert(1==2); */
 
     MatVect(&solver_explicit, simu->w, res);
 
@@ -261,7 +262,7 @@ void ThetaTimeScheme(Simulation *simu, real tmax, real dt){
     }
     int freq = (1 >= simu->itermax_rk / 10)? 1 : simu->itermax_rk / 10;
     if (tstep % freq == 0)
-      printf("t=%f iter=%d/%d dt=%f\n", simu->tnow, tstep, simu->itermax_rk, dt);
+      printf("t=%f iter=%d/%d dt=%f\n", simu->tnow, tstep+1, simu->itermax_rk, dt);
   }
   
 }
@@ -718,8 +719,10 @@ void InternalLocalAssembly(field *f, real theta, real dt)
 		    for(int iv2 = 0; iv2 < m; iv2++) {
 		      real val =  - flux[iv2] * wpgL;
 		      int imemR = f->varindex(f->deg,f->raf,f->model.m, ipgR, iv2);
+		      /* AddLinearSolver(f->solver, imemR, imemL, theta * dt * val); */
+		      /* AddLinearSolver(f->rmat, imemR, imemL, - dt * val); */
 		      AddLinearSolver(f->solver, imemR, imemL, theta * dt * val);
-		      AddLinearSolver(f->rmat, imemR, imemL, - dt * val);
+		      AddLinearSolver(f->rmat, imemR, imemL, -(1-theta) * dt * val);
 		    }
 		  }
 		} // iq
@@ -996,13 +999,17 @@ void FluxLocalAssembly(field* f,real theta, real dt)
 		  for(int iv2 = 0; iv2 < m; iv2++) {
 		    int imem2 = f->varindex(f->deg, f->raf, f->model.m, ipgL, iv2);		  
 		    real val = flux[iv2] * wpg;		      
+		    /* AddLinearSolver(f->solver, imem2, imem1, theta * dt * val); */
+		    /* AddLinearSolver(f->rmat, imem2, imem1, -dt * val); */
 		    AddLinearSolver(f->solver, imem2, imem1, theta * dt * val);
-		    AddLinearSolver(f->rmat, imem2, imem1, -dt * val);
+		    AddLinearSolver(f->rmat, imem2, imem1, -(1-theta) * dt * val);
 		      
 		    imem2 = f->varindex(f->deg, f->raf, f->model.m, ipgR, iv2);
 		    val = flux[iv2] * wpg;		      
-		    AddLinearSolver(f->solver, imem2, imem1, -theta * dt * val);
-		    AddLinearSolver(f->rmat, imem2, imem1, dt * val);
+		    /* AddLinearSolver(f->solver, imem2, imem1, -theta * dt * val); */
+		    /* AddLinearSolver(f->rmat, imem2, imem1, dt * val); */
+		    AddLinearSolver(f->solver, imem2, imem1, theta * dt * (-val));
+		    AddLinearSolver(f->rmat, imem2, imem1, -(1-theta) * dt * (-val));
 		  }
 		  
 		  for(int iv = 0; iv < m; iv++) {
@@ -1017,13 +1024,17 @@ void FluxLocalAssembly(field* f,real theta, real dt)
 		  for(int iv2 = 0; iv2 < m; iv2++) {
 		    int imem2 = f->varindex(f->deg, f->raf, f->model.m, ipgL, iv2);
 		    real val =  flux[iv2] * wpg;
+		    /* AddLinearSolver(f->solver, imem2, imem1, theta * dt * val); */
+		    /* AddLinearSolver(f->rmat, imem2, imem1, -dt * val); */
 		    AddLinearSolver(f->solver, imem2, imem1, theta * dt * val);
-		    AddLinearSolver(f->rmat, imem2, imem1, -dt * val);
+		    AddLinearSolver(f->rmat, imem2, imem1, -(1-theta) * dt * val);
 		    
 		    imem2 = f->varindex(f->deg, f->raf, f->model.m, ipgR, iv2);		    
 		    val =  flux[iv2] * wpg;		    
-		    AddLinearSolver(f->solver, imem2, imem1, -theta * dt * val);
-		    AddLinearSolver(f->rmat, imem2, imem1, dt *val);
+		    /* AddLinearSolver(f->solver, imem2, imem1, -theta * dt * val); */
+		    /* AddLinearSolver(f->rmat, imem2, imem1, dt *val); */
+		    AddLinearSolver(f->solver, imem2, imem1, theta * dt * (-val));
+		    AddLinearSolver(f->rmat, imem2, imem1, -(1-theta) * dt * (-val));
 		  }
 		}
 
@@ -1228,7 +1239,7 @@ void MassLocalAssembly(field *f)
       int imem = f->varindex(deg, nraf, m, ipg, iv1);
       real val = wpg * det;
       AddLinearSolver(f->solver, imem, imem,val);
-      AddLinearSolver(f->rmat, imem, imem, 0 * val);
+      AddLinearSolver(f->rmat, imem, imem,  val);
       //printf("val local imp =%f\n",val);
     }
   }
@@ -1709,8 +1720,9 @@ void InterfaceLocalAssembly(Interface *inter,  real theta, real dt)
 
 	  for(int iv2 = 0; iv2 < m; iv2++) {
 	    int imem2 = fL->varindex(fL->deg, fL->raf, fL->model.m, ipgL, iv2) + offsetL;		  
-	    real val = theta * dt * flux[iv2];		      
-	    AddLinearSolver(fL->solver, imem2, imem1, val);
+	    real val =  flux[iv2];		      
+	    AddLinearSolver(fL->solver, imem2, imem1, theta * dt * val);
+	    AddLinearSolver(fL->rmat, imem2, imem1, -(1-theta) * dt * val);
 		      
 	  }
 		  
@@ -1726,8 +1738,9 @@ void InterfaceLocalAssembly(Interface *inter,  real theta, real dt)
 	  for(int iv2 = 0; iv2 < m; iv2++) {
 		    
 	    int imem2 = fR->varindex(fR->deg, fR->raf, fR->model.m, ipgR, iv2) + offsetR;		    
-	    real val = theta *dt * flux[iv2];		    
-	    AddLinearSolver(fR->solver, imem2, imem1, -val);
+	    real val =  flux[iv2];		    
+	    AddLinearSolver(fR->solver, imem2, imem1, theta * dt * (-val));
+	    AddLinearSolver(fR->rmat, imem2, imem1, -(1-theta) * dt * (-val));
 	  }
 	}
     }
@@ -1756,7 +1769,7 @@ void InterfaceLocalAssembly(Interface *inter,  real theta, real dt)
 	  int imem2 = fL->varindex(fL->deg, fL->raf,fL->model.m, ipgL, iv2);
 	  real val =  (flux[iv2]-flux0[iv2]);		    
 	  AddLinearSolver(fL->solver, imem2, imem1, theta * dt * val);
-	  AddLinearSolver(fL->rmat, imem2, imem1,  - dt * val);
+	  AddLinearSolver(fL->rmat, imem2, imem1,  -(1-theta) * dt * val);
 	  printf("val=%f",val);
 	}
       } // iv1
