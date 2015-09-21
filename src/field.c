@@ -317,7 +317,15 @@ void Displayfield(field *f) {
       real xref[3], wpg;
       ref_pg_vol(f->deg, f->raf, ipg, xref, &wpg, NULL);
 
-      printf("Gauss point %d %f %f %f \n", ipg, xref[0], xref[1], xref[2]);
+      real dtau[3][3], codtau[3][3], xpgref[3], xphy[3];
+      ref_pg_vol(f->deg, f->raf, ipg, xpgref, &wpg, NULL);
+      Ref2Phy(f->physnode, // phys. nodes
+	      xpgref, // xref
+	      NULL, -1, // dpsiref, ifa
+	      xphy, dtau, // xphy, dtau
+	      codtau, NULL, NULL); // codtau, dpsi, vnds
+      printf("Gauss point %d xref=%f %f %f \n", ipg, xref[0], xref[1], xref[2]);
+      printf("Gauss point %d xphy=%f %f %f \n", ipg, xphy[0], xphy[1], xphy[2]);
       printf("dtw= ");
       for(int iv = 0; iv < f->model.m; iv++) {
 	int imem = f->varindex(f->deg, f->raf, f->model.m, ipg, iv);

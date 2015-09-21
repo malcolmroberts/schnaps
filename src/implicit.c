@@ -147,7 +147,6 @@ void LocalThetaTimeScheme(Simulation *simu, real tmax, real dt){
 
   while(simu->tnow < tmax) {
     
-    simu->tnow += theta * dt;
 
     for(int ie=0; ie <  simu->macromesh.nbelems; ++ie){
       field *f = simu->fd + ie;
@@ -159,13 +158,16 @@ void LocalThetaTimeScheme(Simulation *simu, real tmax, real dt){
 
     
     
+    simu->tnow += theta * dt;
+
     for(int ie=0; ie <  simu->macromesh.nbelems; ++ie){
       field *f = simu->fd + ie;
       /* DisplayLinearSolver(f->solver); */
       /* DisplayLinearSolver(f->rmat); */
       /* assert(1==3); */
-      f->tnow += dt/2;
-      SourceLocalAssembly(f, 1. , dt);
+      f->tnow = simu->tnow;
+      f->dt = simu->dt;
+      //SourceLocalAssembly(f, 1. , dt);
     }
 
     for(int ifa = 0; ifa < simu->macromesh.nbfaces; ifa++){
@@ -174,7 +176,7 @@ void LocalThetaTimeScheme(Simulation *simu, real tmax, real dt){
       ExtractInterface(inter, 0);
       ExtractInterface(inter, 1);
       InterfaceExplicitFlux(inter, 0);
-      //InterfaceExplicitFlux(inter, 1);
+      InterfaceExplicitFlux(inter, 1);
     }
 
     /* for(int ie=0; ie <  simu->macromesh.nbelems; ++ie){ */
@@ -1748,7 +1750,6 @@ void InterfaceLocalAssembly(Interface *inter,  real theta, real dt)
 
     if (fR != NULL) {
 
-      assert(1==2);
       int ipgR = inter->vol_indexR[ipgf];
       real flux[m];
       real wL[m];
@@ -1822,7 +1823,7 @@ void InterfaceLocalAssembly(Interface *inter,  real theta, real dt)
 	  real val =  (flux[iv2]-flux0[iv2]);		    
 	  AddLinearSolver(fL->solver, imem2, imem1, theta * dt * val);
 	  AddLinearSolver(fL->rmat, imem2, imem1,  -(1-theta) * dt * val);
-	  printf("val=%f",val);
+	  //printf("val=%f",val);
 	}
       } // iv1
 

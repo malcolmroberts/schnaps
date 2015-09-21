@@ -82,10 +82,12 @@ void InitInterfaces(Simulation *simu){
 	 real codtau[3][3], dtau[3][3];
 	 Ref2Phy(fL->physnode,
 		 xpgref,
-		 NULL, ifa, // dpsiref, ifa
+		 NULL, locfaL, // dpsiref, ifa
 		 xpg, dtau,
 		 codtau, NULL, vnds); // codtau, dpsi, vnds
        }
+       /* printf("ifa=%d ieL=%d ieR=%d ipgf=%d vnds=%f %f %f\n", */
+       /* 	      ifa,ieL,ieR,ipgf,vnds[0],vnds[1],vnds[2]); */
        inter[ifa].vnds[3 * ipgf + 0] = vnds[0] * wpg;
        inter[ifa].vnds[3 * ipgf + 1] = vnds[1] * wpg;
        inter[ifa].vnds[3 * ipgf + 2] = vnds[2] * wpg;

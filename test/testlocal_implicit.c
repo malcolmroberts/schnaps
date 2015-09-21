@@ -41,7 +41,7 @@ int Test_Local_Implicit(void) {
   bool test = true;
 
   MacroMesh mesh;
-  ReadMacroMesh(&mesh,"../test/testcube.msh");
+  ReadMacroMesh(&mesh,"../test/testcube2.msh");
   //ReadMacroMesh(&mesh,"../test/testdisque2d.msh");
   //ReadMacroMesh(&mesh,"../test/testmacromesh.msh");
   Detect2DMacroMesh(&mesh);
@@ -61,18 +61,19 @@ int Test_Local_Implicit(void) {
   model.ImposedData = TestSteady_Transport_ImposedData;
   model.Source = TestSteady_Transport_Source;
 
-  int deg[]={3, 3, 0};
-  int raf[]={2, 2, 1};
+  int deg[]={1, 1, 0};
+  int raf[]={1, 1, 1};
   
   CheckMacroMesh(&mesh, deg, raf);
   Simulation simu;
   EmptySimulation(&simu);
 
   InitSimulation(&simu, &mesh, deg, raf, &model);
+  DisplaySimulation(&simu);
 
   field* fd = simu.fd;
 
-  real tmax = 1000;
+  real tmax = 1;
   simu.cfl=0.2;
   simu.vmax= 1;
   simu.dt = 0.025;
@@ -95,7 +96,7 @@ void TestSteady_Transport_ImposedData(const real *xy, const real t, real *w) {
   real y=xy[1];
 
   w[0] = x * (1 - x) * y * (1-y) + 1;
-  //w[0] = 1;
+  w[0] = 1;
 }
 
 void TestSteady_Transport_Source(const real *xy, const real t, const real *w, real *S){
@@ -107,7 +108,7 @@ void TestSteady_Transport_Source(const real *xy, const real t, const real *w, re
 
   S[0] = v2[0] * (1 - 2 * x) * y * (1 - y) +
     v2[1] * (1 - 2 * y) * x * (1 - x);
-  //S[0] = 0;
+  S[0] = 0;
 
 }
 
@@ -127,7 +128,7 @@ void Transport_Upwind_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
 void TestSteady_Transport_NumFlux(real *wL, real *wR, real *vnorm, real *flux)
 {
   const real transport_v2d[] = {sqrt(0.5), sqrt(0.5), 0};
-  //const real transport_v2d[] = {1,0, 0};
+  //const real transport_v2d[] = {-1,0, 0};
   real vn 
     = transport_v2d[0] * vnorm[0]
     + transport_v2d[1] * vnorm[1]
