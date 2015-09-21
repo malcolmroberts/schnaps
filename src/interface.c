@@ -112,10 +112,10 @@ void InterfaceExplicitFlux(Interface* inter, int side){
 	vndsloc[1] = sign * inter->vnds[3 * ipgf + 1];
 	vndsloc[2] = sign * inter->vnds[3 * ipgf + 2];
 
-	printf("sign=%d ipgL=%d ipgR=%d vndsloc=%f %f\n",sign,ipgL,ipgR,vndsloc[0],vndsloc[1]);
+	//printf("sign=%d ipgL=%d ipgR=%d vndsloc=%f %f\n",sign,ipgL,ipgR,vndsloc[0],vndsloc[1]);
 
 	f->model.NumFlux(wL, wR, vndsloc, flux);
-	printf("flux=%f %f\n",flux[0],flux[0]);
+	//printf("flux=%f %f\n",flux[0],flux[0]);
 
 	// Add flux  to the selected side 
 	for(int iv = 0; iv < m; iv++) {

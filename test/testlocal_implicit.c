@@ -61,15 +61,15 @@ int Test_Local_Implicit(void) {
   model.ImposedData = TestSteady_Transport_ImposedData;
   model.Source = TestSteady_Transport_Source;
 
-  int deg[]={1, 1, 0};
-  int raf[]={1, 1, 1};
+  int deg[]={3, 3, 0};
+  int raf[]={4, 4, 1};
   
   CheckMacroMesh(&mesh, deg, raf);
   Simulation simu;
   EmptySimulation(&simu);
 
   InitSimulation(&simu, &mesh, deg, raf, &model);
-  DisplaySimulation(&simu);
+  //DisplaySimulation(&simu);
 
   field* fd = simu.fd;
 
@@ -96,7 +96,7 @@ void TestSteady_Transport_ImposedData(const real *xy, const real t, real *w) {
   real y=xy[1];
 
   w[0] = x * (1 - x) * y * (1-y) + 1;
-  w[0] = 1;
+  //w[0] = 1;
 }
 
 void TestSteady_Transport_Source(const real *xy, const real t, const real *w, real *S){
@@ -108,7 +108,7 @@ void TestSteady_Transport_Source(const real *xy, const real t, const real *w, re
 
   S[0] = v2[0] * (1 - 2 * x) * y * (1 - y) +
     v2[1] * (1 - 2 * y) * x * (1 - x);
-  S[0] = 0;
+  //S[0] = 0;
 
 }
 
