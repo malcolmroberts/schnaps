@@ -11,7 +11,7 @@
 /* void SourceAssembly(Simulation *simu,  LinearSolver *solver,real theta, real dt); */
 /* void MassAssembly(Simulation *simu,  LinearSolver *solver); */
 
-/* void AssemblyImplicitLinearSolver(Simulation *simu, LinearSolver *solver,real theta, real dt); */
+/* void AssemblyImplilcitLinearSolver(Simulation *simu, LinearSolver *solver,real theta, real dt); */
 
 
 void InitImplicitLinearSolver(Simulation *simu, LinearSolver *solver){
@@ -111,7 +111,6 @@ void AssemblyFieldImplicitSolver(field *fd,real theta, real dt)
     for(int i=0;i<fd->solver->neq;i++){
       fd->solver->rhs[i]=0;
     }
-    //SourceLocalAssembly(fd, theta, dt);
   }
   /* DisplayLinearSolver(fd->solver); */
   /* assert(1==2); */
@@ -159,11 +158,14 @@ void LocalThetaTimeScheme(Simulation *simu, real tmax, real dt){
     }
 
     
+    
     for(int ie=0; ie <  simu->macromesh.nbelems; ++ie){
       field *f = simu->fd + ie;
       /* DisplayLinearSolver(f->solver); */
       /* DisplayLinearSolver(f->rmat); */
       /* assert(1==3); */
+      f->tnow += dt/2;
+      SourceLocalAssembly(f, 1. , dt);
     }
 
     for(int ifa = 0; ifa < simu->macromesh.nbfaces; ifa++){
@@ -175,11 +177,11 @@ void LocalThetaTimeScheme(Simulation *simu, real tmax, real dt){
       //InterfaceExplicitFlux(inter, 1);
     }
 
-    for(int ie=0; ie <  simu->macromesh.nbelems; ++ie){
-      field *f = simu->fd + ie;
-      DisplayLinearSolver(f->solver);
-      //DisplayLinearSolver(f->rmat);
-    }
+    /* for(int ie=0; ie <  simu->macromesh.nbelems; ++ie){ */
+    /*   field *f = simu->fd + ie; */
+    /*   DisplayLinearSolver(f->solver); */
+    /*   DisplayLinearSolver(f->rmat); */
+    /* } */
     
     simu->tnow += (1 - theta) * dt;
 
@@ -189,7 +191,7 @@ void LocalThetaTimeScheme(Simulation *simu, real tmax, real dt){
       SolveLinearSolver(f->solver);
       for(int i=0;i<f->solver->neq;i++){
 	f->wn[i] = f->solver->sol[i];
-	printf("i=%d sol=%f\n",i,f->solver->sol[i]);
+	//printf("i=%d sol=%f\n",i,f->solver->sol[i]);
       }
     }
     
@@ -1290,6 +1292,56 @@ void MassAssembly(Simulation *simu,  LinearSolver *solver){
 
 }
 
+void SourceLocalAssembly(field *f, real theta, real dt){
+
+  if(f->model.Source != NULL) {
+   
+    const int m = f->model.m;
+    
+    int deg[3] = {f->deg[0],
+		  f->deg[1],
+		  f->deg[2]};
+
+    int nraf[3] = {f->raf[0],
+		   f->raf[1],
+		   f->raf[2]};
+
+
+    for(int ipg = 0; ipg < NPG(f->deg, f->raf); ipg++) {
+      real dtau[3][3], codtau[3][3], xpgref[3], xphy[3], wpg;
+      ref_pg_vol(f->deg, f->raf, ipg, xpgref, &wpg, NULL);
+      Ref2Phy(f->physnode, // phys. nodes
+	      xpgref, // xref
+	      NULL, -1, // dpsiref, ifa
+	      xphy, dtau, // xphy, dtau
+	      codtau, NULL, NULL); // codtau, dpsi, vnds
+      real det = dot_product(dtau[0], codtau[0]);
+      real wL[m], source[m];
+      /* for(int iv = 0; iv < m; ++iv){ */
+      /* 	int imem = f->varindex(f->deg, f->raf, f->model.m, ipg, iv); */
+      /* 	wL[iv] = w[imem]; */
+      /* } */
+      f->model.Source(xphy, f->tnow, wL, source);
+
+      for(int iv1 = 0; iv1 < m; iv1++) {
+	int imem = f->varindex(deg, nraf, m, ipg, iv1);
+	real val = source[iv1] * wpg * det;
+	f->solver->rhs[imem] += theta * dt * val;
+      }
+    }
+
+
+ 
+     
+  }
+}
+
+ 
+
+
+
+
+
 void SourceAssembly(Simulation *simu,  LinearSolver *solver, real theta, real dt){
 
   if(simu->fd[0].model.Source != NULL) {
@@ -1698,51 +1750,51 @@ void InterfaceLocalAssembly(Interface *inter,  real theta, real dt)
 
       assert(1==2);
       int ipgR = inter->vol_indexR[ipgf];
-	real flux[m];
-	real wL[m];
-	real wR[m];
+      real flux[m];
+      real wL[m];
+      real wR[m];
 
-	for (int iv1 = 0; iv1 < m; iv1++){
+      for (int iv1 = 0; iv1 < m; iv1++){
 
 			    
 
-	  for(int iv = 0; iv < m; iv++) {
-	    wL[iv] = (iv == iv1);
-	    wR[iv] = 0;
-	  }
-	  int imem1 = fL->varindex(fL->deg, fL->raf, fL->model.m, ipgL, iv1) + offsetL;
-
-	  // int_dL F(wL, wR, grad phi_ib)
-
-	  fL->model.NumFlux(wL, wR, vnds, flux);
-
-	  // Add flux to both sides
-
-	  for(int iv2 = 0; iv2 < m; iv2++) {
-	    int imem2 = fL->varindex(fL->deg, fL->raf, fL->model.m, ipgL, iv2) + offsetL;		  
-	    real val =  flux[iv2];		      
-	    AddLinearSolver(fL->solver, imem2, imem1, theta * dt * val);
-	    AddLinearSolver(fL->rmat, imem2, imem1, -(1-theta) * dt * val);
-		      
-	  }
-		  
-	  for(int iv = 0; iv < m; iv++) {
-	    wL[iv] = 0;
-	    wR[iv] = (iv == iv1);
-	  }
-	  imem1 = fL->varindex(fL->deg, fL->raf, fL->model.m, ipgR, iv1) + offsetR;
-
-
-	  fL->model.NumFlux(wL, wR, vnds, flux);
-
-	  for(int iv2 = 0; iv2 < m; iv2++) {
-		    
-	    int imem2 = fR->varindex(fR->deg, fR->raf, fR->model.m, ipgR, iv2) + offsetR;		    
-	    real val =  flux[iv2];		    
-	    AddLinearSolver(fR->solver, imem2, imem1, theta * dt * (-val));
-	    AddLinearSolver(fR->rmat, imem2, imem1, -(1-theta) * dt * (-val));
-	  }
+	for(int iv = 0; iv < m; iv++) {
+	  wL[iv] = (iv == iv1);
+	  wR[iv] = 0;
 	}
+	int imem1 = fL->varindex(fL->deg, fL->raf, fL->model.m, ipgL, iv1) + offsetL;
+
+	// int_dL F(wL, wR, grad phi_ib)
+
+	fL->model.NumFlux(wL, wR, vnds, flux);
+
+	// Add flux to both sides
+
+	for(int iv2 = 0; iv2 < m; iv2++) {
+	  int imem2 = fL->varindex(fL->deg, fL->raf, fL->model.m, ipgL, iv2) + offsetL;		  
+	  real val =  flux[iv2];		      
+	  AddLinearSolver(fL->solver, imem2, imem1, theta * dt * val);
+	  AddLinearSolver(fL->rmat, imem2, imem1, -(1-theta) * dt * val);
+		      
+	}
+		  
+	for(int iv = 0; iv < m; iv++) {
+	  wL[iv] = 0;
+	  wR[iv] = (iv == iv1);
+	}
+	imem1 = fL->varindex(fL->deg, fL->raf, fL->model.m, ipgR, iv1) + offsetR;
+
+
+	fL->model.NumFlux(wL, wR, vnds, flux);
+
+	for(int iv2 = 0; iv2 < m; iv2++) {
+		    
+	  int imem2 = fR->varindex(fR->deg, fR->raf, fR->model.m, ipgR, iv2) + offsetR;		    
+	  real val =  flux[iv2];		    
+	  AddLinearSolver(fR->solver, imem2, imem1, theta * dt * (-val));
+	  AddLinearSolver(fR->rmat, imem2, imem1, -(1-theta) * dt * (-val));
+	}
+      }
     }
     else{ // case of a boundary condition
 
