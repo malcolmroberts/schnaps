@@ -1,5 +1,6 @@
 #include "implicit.h"
 #include <stdlib.h>
+#include <string.h>
 
 
 //void InternalCoupling(Simulation *simu,  LinearSolver *solver, int itest);
@@ -1292,6 +1293,8 @@ void MassAssembly(Simulation *simu,  LinearSolver *solver){
   }
 
 }
+void SourceLocalAssembly_C(void *buffers[], void *cl_arg);
+
 
 void SourceLocalAssembly(field *f, real theta, real dt){
 
@@ -1303,39 +1306,137 @@ void SourceLocalAssembly(field *f, real theta, real dt){
 		  f->deg[1],
 		  f->deg[2]};
 
-    int nraf[3] = {f->raf[0],
+    int raf[3] = {f->raf[0],
 		   f->raf[1],
 		   f->raf[2]};
 
+    //void* buffers[1];
+    size_t max_size = 1000;
 
-    for(int ipg = 0; ipg < NPG(f->deg, f->raf); ipg++) {
-      real dtau[3][3], codtau[3][3], xpgref[3], xphy[3], wpg;
-      ref_pg_vol(f->deg, f->raf, ipg, xpgref, &wpg, NULL);
-      Ref2Phy(f->physnode, // phys. nodes
-	      xpgref, // xref
-	      NULL, -1, // dpsiref, ifa
-	      xphy, dtau, // xphy, dtau
-	      codtau, NULL, NULL); // codtau, dpsi, vnds
-      real det = dot_product(dtau[0], codtau[0]);
-      real wL[m], source[m];
-      /* for(int iv = 0; iv < m; ++iv){ */
-      /* 	int imem = f->varindex(f->deg, f->raf, f->model.m, ipg, iv); */
-      /* 	wL[iv] = w[imem]; */
-      /* } */
-      f->model.Source(xphy, f->tnow, wL, source);
+    void** buffers = malloc(max_size);
 
-      for(int iv1 = 0; iv1 < m; iv1++) {
-	int imem = f->varindex(deg, nraf, m, ipg, iv1);
-	real val = source[iv1] * wpg * det;
-	f->solver->rhs[imem] += theta * dt * val;
-      }
-    }
+    buffers[0] = f->solver->rhs;
 
+    void* cl_arg = malloc(max_size);
 
- 
-     
+    void* p_arg = cl_arg;
+
+    memcpy(p_arg, &f->model.m,  sizeof(int));
+    p_arg +=  sizeof(int);
+
+    memcpy(p_arg, deg, 3 * sizeof(int));
+    p_arg +=  3 * sizeof(int);
+
+    memcpy(p_arg, raf, 3 * sizeof(int));
+    p_arg +=  3 * sizeof(int);
+    
+    memcpy(p_arg, f->physnode, 20 * 3 * sizeof(real));
+    p_arg +=  20 * 3 * sizeof(real);
+    
+    memcpy(p_arg, &f->tnow,  sizeof(real));
+    p_arg +=   sizeof(real);
+    
+    memcpy(p_arg, &theta,  sizeof(real));
+    p_arg +=   sizeof(real);
+    
+    memcpy(p_arg, &dt,  sizeof(real));
+    p_arg +=   sizeof(real);
+    
+    memcpy(p_arg, &f->model.Source,  sizeof(sourceptr));
+    p_arg +=   sizeof(sourceptr);
+
+    memcpy(p_arg, &f->varindex,  sizeof(varindexptr));
+    p_arg +=   sizeof(varindexptr);
+
+    char z='z';
+    memcpy(p_arg, &z,  sizeof(char));
+    p_arg +=   sizeof(char);
+
+    SourceLocalAssembly_C(buffers, cl_arg);
+
+    /* CALL_PU(SourceLocalAssembly_C, */
+    /* 	    &f->model.m, int, 1, */
+    /* 	    deg, int, 3, */
+    /* 	    ... */
+    /* 	    &f->varindex, varindexptr, 1 */
+    /* 	    ...) */
+    
   }
 }
+
+
+void SourceLocalAssembly_C(void *buffers[], void *cl_arg) {
+
+
+  /* DECODE_PU_BUFFER(rhs, real*); */
+  /* DECODE_PU_ARG(m, int, 1, */
+  /* 		deg, int, 3, */
+  /* 		); */
+
+  
+  real* rhs = buffers[0];
+
+  void* p_arg = cl_arg;
+  
+  int *m = p_arg;
+  p_arg +=  sizeof(int);
+
+  int *deg = p_arg;
+  p_arg += 3 * sizeof(int);
+  
+  int *raf = p_arg;
+  p_arg += 3 * sizeof(int);
+
+  real (*physnode)[3] = p_arg;
+  p_arg += 20 * 3 * sizeof(real);
+
+  real* tnow =  p_arg;
+  p_arg += sizeof(real);
+
+  real* theta = p_arg;
+  p_arg += sizeof(real);
+
+  real* dt = p_arg;
+  p_arg += sizeof(real);
+
+  sourceptr* Source  = p_arg;
+  p_arg += sizeof(sourceptr);
+
+  varindexptr* Varindex  = p_arg;
+  p_arg += sizeof(varindexptr);
+
+
+  char* last = p_arg;
+  assert(*last == 'z');
+  
+     /* printf("deg=%d %d %d raf=%d %d %d m=%d \n", */
+     /* 	     deg[0],deg[1],deg[2],raf[0],raf[1],raf[2],*m); */
+  for(int ipg = 0; ipg < NPG(deg, raf); ipg++) {
+    real dtau[3][3], codtau[3][3], xpgref[3], xphy[3], wpg;
+    ref_pg_vol(deg, raf, ipg, xpgref, &wpg, NULL);
+    Ref2Phy(physnode, // phys. nodes
+	    xpgref, // xref
+	    NULL, -1, // dpsiref, ifa
+	    xphy, dtau, // xphy, dtau
+	    codtau, NULL, NULL); // codtau, dpsi, vnds
+    real det = dot_product(dtau[0], codtau[0]);
+    real wL[*m], source[*m];
+    /* for(int iv = 0; iv < m; ++iv){ */
+    /* 	int imem = f->varindex(f->deg, f->raf, f->model.m, ipg, iv); */
+    /* 	wL[iv] = w[imem]; */
+    /* } */
+    (*Source)(xphy, *tnow, wL, source);
+
+    for(int iv1 = 0; iv1 < *m; iv1++) {
+      int imem = (*Varindex)(deg, raf, *m, ipg, iv1);
+      /* printf("deg=%d %d %d raf=%d %d %d m=%d imem=%d\n", */
+      /* 	     deg[0],deg[1],deg[2],raf[0],raf[1],raf[2],*m,imem); */
+      real val = source[iv1] * wpg * det;
+      rhs[imem] += *theta * *dt * val;
+    }
+  }
+}
+
 
  
 

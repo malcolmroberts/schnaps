@@ -12,6 +12,8 @@ typedef void (*bfluxptr)(real*, real, real*, real*, real*);
 typedef void (*initdataptr)(real*, real*);
 // Imposed data function pointer
 typedef void (*imposeddataptr)(const real*, const real, real* w); 
+// Source function pointer
+typedef void (*sourceptr)(const real*, const real, const real*, real *); 
 
 // Return a pointer to a numflux function based on the string given.
 fluxptr numflux(const char *numfluxname);

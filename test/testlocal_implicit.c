@@ -60,12 +60,12 @@ int Test_Local_Implicit(void) {
 
   Model model;
 
-  /* model.m=1; */
-  /* model.NumFlux = TestSteady_Transport_NumFlux; */
-  /* model.BoundaryFlux = Transport_Upwind_BoundaryFlux; */
-  /* model.InitData = TestSteady_Transport_InitData; */
-  /* model.ImposedData = TestSteady_Transport_ImposedData; */
-  /* model.Source = TestSteady_Transport_Source; */
+  model.m=1;
+  model.NumFlux = TestSteady_Transport_NumFlux;
+  model.BoundaryFlux = Transport_Upwind_BoundaryFlux;
+  model.InitData = TestSteady_Transport_InitData;
+  model.ImposedData = TestSteady_Transport_ImposedData;
+  model.Source = TestSteady_Transport_Source;
 
   /* model.m = 7; */
   /* model.NumFlux = Maxwell2DNumFlux_upwind; */
@@ -75,12 +75,12 @@ int Test_Local_Implicit(void) {
   /* model.Source = Maxwell2DSource; */
   //model.Source = NULL;
 
-  model.m=3;
-  model.NumFlux=Wave_Upwind_NumFlux;
-  model.InitData = TestSteady_Wave_InitData;
-  model.ImposedData = TestSteady_Wave_ImposedData;
-  model.BoundaryFlux = Wave_Upwind_BoundaryFlux;
-  model.Source = TestSteady_Wave_Source;
+  /* model.m=3; */
+  /* model.NumFlux=Wave_Upwind_NumFlux; */
+  /* model.InitData = TestSteady_Wave_InitData; */
+  /* model.ImposedData = TestSteady_Wave_ImposedData; */
+  /* model.BoundaryFlux = Wave_Upwind_BoundaryFlux; */
+  /* model.Source = TestSteady_Wave_Source; */
 
   int deg[]={3, 3, 0};
   int raf[]={4, 4, 1};

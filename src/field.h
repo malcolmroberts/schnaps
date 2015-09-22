@@ -11,6 +11,9 @@
 #endif
 
 
+typedef int (*varindexptr)(int*, int*, int, int, int);
+
+
 //! \brief Data structure for managing a  discrete vector field
 //! solution of a DG approximation
 typedef struct field {
