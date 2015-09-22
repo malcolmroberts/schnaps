@@ -10,6 +10,13 @@ int sol_(real *vkgs, real *vkgd, real *
 	 int ifac, int isol, int nsym, real *
 	 energ, int *ier);
 
+int mulku_(real *vkgs, real *vkgd, real *
+	vkgi, int *kld, real *vfg, int neq, int nsym, 
+	   real *vres, int nsky);
+
+real scal_(real *x, real *y, int *n);
+
+
 void InitSkyline(Skyline* sky, int n){
 
   sky->is_alloc=false;
@@ -75,11 +82,11 @@ void AllocateSkyline(Skyline* sky){
     sky->vkgs[k]=0;
      if (! sky->is_sym) sky->vkgi[k]=0;
   }
-  
+
 
 }
 
-void SetSkyline(Skyline* sky,int i,int j,real val){
+void AddSkyline(Skyline* sky,int i,int j,real val){
 
   assert(sky->is_alloc);
 
@@ -95,6 +102,29 @@ void SetSkyline(Skyline* sky,int i,int j,real val){
     assert(!(sky->is_sym));
     int k=sky->kld[i+1]-i+j;
     sky->vkgi[k]+=val;
+    //printf("i=%d j=%d k=%d nmem=%d\n",i,j,k,sky->nmem);
+    //printf("i=%d j=%d k=%d v=%f\n",i,j,k,sky->vkgi[k]);
+  }
+
+
+}
+
+void SetSkyline(Skyline* sky,int i,int j,real val){
+
+  assert(sky->is_alloc);
+
+
+  if (i==j){
+    sky->vkgd[i]=val;
+  }
+  else if (j>i){
+    int k=sky->kld[j+1]-j+i;
+    sky->vkgs[k]=val;
+  }
+  else {
+    assert(!(sky->is_sym));
+    int k=sky->kld[i+1]-i+j;
+    sky->vkgi[k]=val;
     //printf("i=%d j=%d k=%d nmem=%d\n",i,j,k,sky->nmem);
     //printf("i=%d j=%d k=%d v=%f\n",i,j,k,sky->vkgi[k]);
   }
@@ -165,12 +195,10 @@ void DisplaySkyline(Skyline* sky){
 
   for(int i=0;i<n;i++){
     for(int j=0;j<n;j++){
-      printf("%f ",GetSkyline(sky,i,j));
-    }
+      printf("%f ", GetSkyline(sky,i,j));
+    }   
     printf("\n");
   }
-
-    
 }
 
 
@@ -194,6 +222,30 @@ void FactoLU(Skyline* sky){
   sky->is_lu=true;
 
 }
+
+void MatVectSkyline(Skyline * sky, real * x, real * prod) {
+
+  assert(!sky->is_lu);
+
+  int nsym=1;
+  if (sky->is_sym) nsym=0;
+
+  for(int i=0; i < sky->neq; i++) prod[i]=0;
+
+  
+  /* sol_(sky->vkgs,sky->vkgd, sky->vkgi, */
+  /*      vfg, sky->kld, vu, sky->neq,  */
+  /*       ifac, isol, nsym, */
+  /*      &energ, &ier); */
+ 
+  mulku_(sky->vkgs, sky->vkgd, sky->vkgi,
+	 sky->kld, x, sky->neq, nsym, 
+	   prod, sky->nmem);
+
+
+}
+
+
 
 void SolveSkyline(Skyline* sky,real* vfg,real* vu){
   assert(sky->is_lu);
@@ -234,23 +286,6 @@ void FreeSkyline(Skyline* sky){
 
 }
 
-
-
-
-/* sol.f -- translated by f2c (version 20100827).
-   You must link the resulting object file with libf2c:
-	on Microsoft Windows system, link with libf2c.lib;
-	on Linux or Unix systems, link with .../path/to/libf2c.a -lm
-	or, if you install libf2c.a in a standard place, with -lf2c -lm
-	-- in that order, at the end of the command line, as in
-		cc *.o -lf2c -lm
-	Source for libf2c is in /netlib/f2c/libf2c.zip, e.g.,
-
-		http://www.netlib.org/f2c/libf2c.zip
-*/
-
-//#include "f2c.h"
-
 /* Table of constant values */
 
 static int c__1 = 1;
@@ -265,7 +300,7 @@ static int c__1 = 1;
     static real vzero = 0.;
 
     /* Format strings */
-    static char fmt_8000[] = "(\002 * sol pivot nul equation\002,i5)";
+    static char fmt_8000[] = "sol pivot nul equation";
 
     /* System generated locals */
     int i__1, i__2, i__3, i__4;
@@ -281,10 +316,6 @@ static int c__1 = 1;
     extern real scal_(real *, real *, int *);
     static int imin, imax, imin1;
     static real cdiag;
-
-    /* Fortran I/O blocks */
-    //static cilist io___22 = { 0, 0, 0, fmt_8000, 0 };
-
 
 /*   resolution d'un systeme lineaire symetrique ou non. la matrice est */
 /*   stockee par ligne de ciel,en memoire dans les tables vkgs,vkgd,vkgi */
@@ -343,6 +374,7 @@ static int c__1 = 1;
     jhk = 1;
     i__1 = neq;
     for (ik = 2; ik <= i__1; ++ik) {
+      //printf("factolu %d/%d\n",ik,neq);
 
 /* -------  pointeur du haut de la colonne suivante ik+1 */
 
@@ -512,7 +544,7 @@ L150:
 
 L800:
 	/* io___22.ciunit = *mp; */
-      printf("%s\n",fmt_8000);
+    printf("%s %d\n",fmt_8000,ik);
 	/* s_wsfe(&io___22); */
 	/* do_fio(&c__1, (char *)&ik, (ftnlen)sizeof(int)); */
 	/* e_wsfe(); */
@@ -556,4 +588,89 @@ real scal_(real *x, real *y, int *n)
     }
     return ret_val;
 } /* scal_ */
+
+
+/* muls.f -- translated by f2c (version 20100827).
+   You must link the resulting object file with libf2c:
+	on Microsoft Windows system, link with libf2c.lib;
+	on Linux or Unix systems, link with .../path/to/libf2c.a -lm
+	or, if you install libf2c.a in a standard place, with -lf2c -lm
+	-- in that order, at the end of the command line, as in
+		cc *.o -lf2c -lm
+	Source for libf2c is in /netlib/f2c/libf2c.zip, e.g.,
+
+		http://www.netlib.org/f2c/libf2c.zip
+*/
+
+//#include "f2c.h"
+
+/* Subroutine */ int mulku_(real *vkgs, real *vkgd, real *
+	vkgi, int *kld, real *vfg, int neq, int nsym, 
+	real *vres, int nsky)
+{
+    /* System generated locals */
+    int i__1, i__2;
+
+    /* Local variables */
+    static real c__;
+    static int j, i0, i1, ij, ik, jhk, lhk, jhk1;
+    //extern real scal_(real *, real *, int *);
+
+/* =======================================================================MULK   2 */
+/*     CE SOUS-PROGRAMME AJOUTE AU VECTEUR RES LE PRODUIT DE LA          MULK   3 */
+/*     MATRICE KG PAR LE VECTEUR FG                                      MULK   4 */
+/*       ENTREES                                                         MULK   5 */
+/*          VKGS,VKGD,VKGI  MATRICE KG STOCKEE PAR LIGNE DE CIEL (SYM.   MULK   6 */
+/*                          OU NON SYM.)                                 MULK   7 */
+/*          KLD     TABLE DES POINTEURS DES HAUTS DE COLONNES DE KG      MULK   8 */
+/*          VFG     VECTEUR FG                                           MULK   9 */
+/*          NEQ     DIMENSION DES VECTEURS FG ET RES                     MULK  10 */
+/*          NSYM    .EQ.1 SI LE PROBLEME N'EST PAS SYMETRIQUE            MULK  11 */
+/*          VRES    VECTEUR RES                                          MULK  12 */
+/*       SORTIE                                                          MULK  13 */
+/*          VRES    VECTEUR RES                                          MULK  14 */
+/* =======================================================================MULK  15 */
+/* -----------------------------------------------------------------------MULK  18 */
+/* -------  POUR CHAQUE COLONNE DE LA MATRICE KG                          MULK  19 */
+    /* Parameter adjustments */
+    --vres;
+    --vfg;
+    --kld;
+    --vkgd;
+    --vkgi;
+    --vkgs;
+
+    /* Function Body */
+    i__1 = neq;
+    for (ik = 1; ik <= i__1; ++ik) {
+	jhk = kld[ik]+_Z;
+	jhk1 = kld[ik + 1]+_Z;
+	lhk = jhk1 - jhk;
+/* -------  TERME DIAGONAL                                                MULK  24 */
+	c__ = vkgd[ik] * vfg[ik];
+	if (lhk <= 0) {
+	    goto L20;
+	}
+	i0 = ik - lhk;
+/* -------  TERMES DE LIGNE                                               MULK  28 */
+	if (nsym != 1) {
+	    c__ += scal_(&vkgs[jhk], &vfg[i0], &lhk);
+	}
+	if (nsym == 1) {
+	    c__ += scal_(&vkgi[jhk], &vfg[i0], &lhk);
+	}
+/* -------  TERMES DE COLONNE                                             MULK  31 */
+	j = jhk;
+	i1 = ik - 1;
+	i__2 = i1;
+	for (ij = i0; ij <= i__2; ++ij) {
+	    vres[ij] += vkgs[j] * vfg[ik];
+/* L10: */
+	    ++j;
+	}
+L20:
+	vres[ik] += c__;
+    }
+    return 0;
+} /* mulku_ */
 

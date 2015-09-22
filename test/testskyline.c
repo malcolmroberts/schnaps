@@ -35,7 +35,9 @@ int TestSkyline(void){
   InitSkyline(&sky,_NN);
 
   real A[_NN][_NN];
-  real vf[_NN],sol[_NN];
+  real vf[_NN];
+  real sol[_NN]={1,2,3,4,5};
+  real vf2[_NN]={0,0,0,0,6};
 
   A[0][0] = 0.2e1;
   A[0][1] = -0.1e1;
@@ -93,6 +95,27 @@ int TestSkyline(void){
     }
   }
 
+
+  real vf3[_NN];
+
+  // test the product non symmetric case
+  for(int i=0; i < _NN; i++){
+    vf3[i]=0;
+    for(int j=0; j< _NN; j++){
+      vf3[i] += A[i][j] * sol[j];
+    }
+  }
+  
+  for(int i=0; i < _NN; i++) vf2[i]=i*i;
+  MatVectSkyline(&sky,sol,vf2);
+  for(int i=0; i < _NN; i++) {
+    printf("%d vf=%f vf3=%f\n",i,vf2[i],vf3[i]);
+    test = test && fabs(vf2[i]-vf3[i]) < _SMALL;
+  }
+  
+
+ 
+  
   // LU decomposition
   FactoLU(&sky);
 
@@ -118,7 +141,7 @@ int TestSkyline(void){
   FreeSkyline(&sky);
   
 
-  test= (verr<1e-10);
+  test= test && (verr < _SMALL);
   //assert(1==2);
 
   InitSkyline(&sky,_NN);
@@ -179,6 +202,22 @@ int TestSkyline(void){
     }
   }
 
+  // test the product symmetric case
+  for(int i=0; i < _NN; i++){
+    vf3[i]=0;
+    for(int j=0; j< _NN; j++){
+      vf3[i] += A[i][j] * sol[j];
+    }
+  }
+  
+  for(int i=0; i < _NN; i++) vf2[i]=10;
+  MatVectSkyline(&sky,sol,vf2);
+  for(int i=0; i < _NN; i++) {
+    printf("%d vf=%f vf3=%f\n",i,vf2[i],vf3[i]);
+    test = test && fabs(vf2[i]-vf3[i]) < _SMALL;
+  }
+
+ 
   // LU decomposition
   FactoLU(&sky);
 
@@ -198,12 +237,12 @@ int TestSkyline(void){
     printf("%f ",sol[i]);
     verr+=fabs(sol[i]-i-1);
   }
-  printf("\n");
+  printf("\nerror=%f small=%f test=%d \n",verr,_SMALL, (verr < _SMALL));
 
   // deallocate memory
-  FreeSkyline(&sky);
+  //FreeSkyline(&sky);
 
-  test= test && (verr<1e-10);
+  test= test && (verr < _SMALL);
 
 
   return test;

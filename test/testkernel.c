@@ -15,6 +15,8 @@ int TestKernel(void)
   }
 
   field f;
+  init_empty_field(&f);
+
   f.model.cfl = 0.05;
   f.model.m = 1; // only one conservative variable
   f.model.NumFlux = TransNumFlux2d;
@@ -31,8 +33,8 @@ int TestKernel(void)
   f.interp.interp_param[5] = 2; // y direction refinement
   f.interp.interp_param[6] = 1; // z direction refinement
 
-  ReadMacroMesh(&(f.macromesh), "test/testmacromesh.msh");
-  //ReadMacroMesh(&(f.macromesh),"test/testcube.msh");
+  ReadMacroMesh(&(f.macromesh), "../test/testmacromesh.msh");
+  //ReadMacroMesh(&(f.macromesh),"../test/testcube.msh");
   Detect2DMacroMesh(&(f.macromesh));
   assert(f.macromesh.is2d);  
   BuildConnectivity(&(f.macromesh));
@@ -40,7 +42,6 @@ int TestKernel(void)
   //AffineMapMacroMesh(&(f.macromesh));
  
   Initfield(&f);
-  f.is2d=true;
 
   printf("&f=%p\n",&f);
 
@@ -79,11 +80,11 @@ int TestKernel(void)
  
   for(int ie = 0; ie < f.macromesh.nbelems; ++ie) {
     printf("ie: %d\n", ie);
-    update_physnode_cl(&f, ie, f.physnode_cl, f.physnode, NULL,
-		       0, NULL, NULL);
-    clFinish(f.cli.commandqueue);
+    /* update_physnode_cl(&f, ie, f.physnode_cl, f.physnode, NULL, */
+    /* 		       0, NULL, NULL); */
+    /* clFinish(f.cli.commandqueue); */
 
-    DGMass_CL((void*) &(f.mcell[ie]), &f, 0, NULL, NULL);
+    DGMass_CL(ie, &f, 0, NULL, NULL);
     clFinish(f.cli.commandqueue);
   }
 
@@ -101,7 +102,7 @@ int TestKernel(void)
   }
 
   for(int ie = 0; ie < f.macromesh.nbelems; ++ie)
-    DGMass((void*) &(f.mcell[ie]), &f, f.wn, f.dtwn);
+    DGMass(ie, &f, f.dtwn);
 
   Displayfield(&f);
 
@@ -113,7 +114,7 @@ int TestKernel(void)
   }
   printf("max error=%f\n",maxerr);
 
-  test = (maxerr < 1e-8);
+  test = (maxerr < _SMALL);
 
   return test;
 }

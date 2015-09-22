@@ -8,6 +8,8 @@ int TestfieldRK2_2D_SubCell(void) {
   bool test = true;
 
   field f;
+  init_empty_field(&f);
+
   f.model.cfl = 0.05;
   f.model.m = 1; // only one conservative variable
   f.model.NumFlux = TransNumFlux2d;
@@ -24,7 +26,7 @@ int TestfieldRK2_2D_SubCell(void) {
   f.interp.interp_param[5] = 4; // y direction refinement
   f.interp.interp_param[6] = 1; // z direction refinement
 
-  ReadMacroMesh(&(f.macromesh), "test/testmacromesh.msh");
+  ReadMacroMesh(&(f.macromesh), "../test/testmacromesh.msh");
   Detect2DMacroMesh(&(f.macromesh));
   assert(f.macromesh.is2d);
   BuildConnectivity(&(f.macromesh));
@@ -32,17 +34,16 @@ int TestfieldRK2_2D_SubCell(void) {
   //AffineMapMacroMesh(&(f.macromesh));
  
   Initfield(&f);
-  f.is2d = true;
 
   CheckMacroMesh(&(f.macromesh), f.interp.interp_param + 1);
 
   printf("cfl param: %f\n", f.hmin);
 
-  assert(f.is2d);
   real tmax = 0.2;
 
   f.vmax=1;
-  RK2(&f, tmax);
+  real dt = 0;
+  RK2(&f, tmax, dt);
  
   Plotfield(0, false, &f, NULL, "dgvisu.msh");
   Plotfield(0, true, &f, "error", "dgerror.msh");

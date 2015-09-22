@@ -11,6 +11,11 @@ typedef struct MacroMesh{
   int nbelems; //!< number of macro elems
   int nbnodes; //!< number of nodes in the macromesh
   int nbfaces; //!< number of macrofaces
+  int nboundaryfaces; //!< number of macrocell faces which are boundaries
+  int nmacrointerfaces; //!< number of macrocell-to-macrocell interfaces
+  int *boundaryface; //!< list of boundary faces
+  int *macrointerface; //<! List of macrocell interfaces
+  
   // connectivity
   int *elem2node; //!< elems to nodes connectivity (20 nodes/elem)
   int *elem2elem; //!< elems to elems connectivity (along 6 faces)
@@ -23,10 +28,24 @@ typedef struct MacroMesh{
   int* node2elem;
 
   real *node; //!< nodes coordinates array
-  bool is2d; //!< 2d computation detection
 
+  //! Activate or not 2D computations
+  bool is2d;
+  //! Activate or not 1D computations
+  bool is1d;
+
+
+  //! a value for checking that connectivity is finished
+  bool connec_ok; 
+
+
+  // mesh boundaries
   real xmin[3],xmax[3];
-  bool is1d; //!< 1d computation detection
+
+  //! period in each direction
+  //! if negative: non-periodic computation (default)
+  real period[3];
+
 } MacroMesh;
 
 //! \brief a simple struct for modelling a four
@@ -75,23 +94,24 @@ void BuildConnectivity(MacroMesh *m);
 
 //! \brief affine transformation
 //! \param[inout] x the transformed point
-void AffineMap(real* x);
+//! \param[in] x0 the initial point
+//! \param[in] A the transformation 
+void AffineMap(real* x,real A[3][3], real x0[3]);
 //! \brief simple transformations of the mesh
 //! \param[inout] m the macromesh
-void AffineMapMacroMesh(MacroMesh *m);
+//! \param[in] x0 the initial point
+//! \param[in] A the transformation 
+void AffineMapMacroMesh(MacroMesh *m,real A[3][3], real x0[3]);
 
-//! \brief detects if the mesh is 1D
-//! and then permuts the nodes so that
-//! the y,z directions coincide in the reference
-//! or physical frame.
-//! \param[inout] m a macromesh with m.is1d updated
+//! \brief detects if the mesh is 1D and then permuts the nodes so
+//! that the y,z directions coincide in the reference or physical
+//! frame.
+//! \param[inout] m a macromesh with is1d modified.
 void Detect1DMacroMesh(MacroMesh* m);
 
-//! \brief detects if the mesh is 2D
-//! and then permuts the nodes so that
-//! the z direction coincides in the reference
-//! or physical frame.
-//! \param[inout] m a macromesh with m.is2d updated
+//! \brief detects if the mesh is 2D and then permuts the nodes so
+//! that the z direction coincides in the reference or physical frame.
+//! \param[inout] m a macromesh with is2d modified.
 void Detect2DMacroMesh(MacroMesh *m);
 
 //! \brief verify the validity and orientation of the mesh
@@ -99,8 +119,9 @@ void Detect2DMacroMesh(MacroMesh *m);
 //! The function simply aborts if the mesh is bad because
 //! going on with computations has no meaning.
 //! \param[in] m a macromesh
-//! \param[in] param interpolation parameters (m, degrees and refinements)
-void CheckMacroMesh(MacroMesh *m, int param[7]);
+//! \param[in] deg degrees parameters 
+//! \param[in] raf refinement parameters 
+void CheckMacroMesh(MacroMesh *m, int *deg, int *raf);
 //! \brief list the mesh data
 //! \param[in] m a macromesh
 void PrintMacroMesh(MacroMesh *m);

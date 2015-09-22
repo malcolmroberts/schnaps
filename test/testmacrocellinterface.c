@@ -15,7 +15,8 @@ int TestMacroFace(void){
   }
 
   field f;
-
+  init_empty_field(&f);
+  
   // 2D meshes:
   // test/disque2d.msh
   // test/testdisque2d.msh
@@ -25,7 +26,7 @@ int TestMacroFace(void){
   // 3D meshes"
   // test/testdisque.msh
 
-  char *mshname =  "test/disque2d.msh";
+  char *mshname =  "../test/disque2d.msh";
   
   ReadMacroMesh(&(f.macromesh), mshname);
 
@@ -75,7 +76,7 @@ int TestMacroFace(void){
 
   // From testfieldrk2:
   
-  //char *mshname =  "test/testdisque.msh";
+  //char *mshname =  "../test/testdisque.msh";
   /* f.model.cfl = 0.05; */
   /* f.model.m = 1; */
   /* f.model.NumFlux = TransNumFlux; */
@@ -94,11 +95,6 @@ int TestMacroFace(void){
   
   Initfield(&f);
 
-  MacroFace mface[f.macromesh.nbfaces];
-  for(int ifa = 0; ifa < f.macromesh.nbfaces; ifa++) {
-    mface[ifa].first = ifa;
-    mface[ifa].last_p1 = ifa + 1;
-  }
  
   //f.is2d = true;
 
@@ -130,9 +126,21 @@ int TestMacroFace(void){
 
   clFinish(f.cli.commandqueue);
 
-  for(int ifa = 0; ifa < f.macromesh.nbfaces; ifa++)
-    DGMacroCellInterface_CL((void*) (mface + ifa), &f, &(f.wn_cl),
+  const int ninterfaces = f.macromesh.nmacrointerfaces;
+  for(int i = 0; i < ninterfaces; ++i) {
+    int ifa = f.macromesh.macrointerface[i];
+    DGMacroCellInterface_CL(ifa, &f, &(f.wn_cl),
 			    0, NULL, NULL);
+    clFinish(f.cli.commandqueue);
+  }
+  
+  const int nboundaryfaces = f.macromesh.nboundaryfaces;
+  for(int i = 0; i < nboundaryfaces; ++i) {
+    int ifa = f.macromesh.boundaryface[i];
+    DGBoundary_CL(ifa, &f, &(f.wn_cl),
+			    0, NULL, NULL);
+    clFinish(f.cli.commandqueue);
+  }
 
   CopyfieldtoCPU(&f);
   real *fdtwn_opencl = f.dtwn;
@@ -142,12 +150,12 @@ int TestMacroFace(void){
   for(int iw = 0; iw < f.wsize; iw++)
     f.dtwn[iw] = 0;
   for(int ifa = 0; ifa < f.macromesh.nbfaces; ifa++)
-    DGMacroCellInterface((void*) (mface + ifa), &f, f.wn, f.dtwn);
+    DGMacroCellInterface(ifa, &f, f.wn, f.dtwn);
   real *fdtwn_openmp = f.dtwn;
 
   // Check that the results are the same
   test = true;
-  real tolerance = 1e-8;
+  real tolerance = _SMALL;
 
   real maxerr = 0.0;
   for(int i = 0; i < f.wsize; i++) {

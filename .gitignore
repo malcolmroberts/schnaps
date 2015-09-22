@@ -33,48 +33,9 @@
 
 #schnaps files
 .DS_Store
-CMakeCache.txt
-CMakeFiles/
-CTestTestfile.cmake
-Makefile
-Testing/
-cmake_install.cmake
 doc/html/
 doc/latex/
-doc/toto
-toto
-*.cl
 
-dgerror.msh
-dgvisu*.msh
-error.msh
-geo/disque.msh
-visu.msh
-
-schnaps
-test2dmeshdetection
-testfield
-testfielddg
-testfieldrk2
-testfieldrk2-2d
-testfieldrk2-2d-subcell
-testgeometry
-testinterpolation
-testmacromesh
-testmodel
-testsubcelldgvol
-testvisufield.msh
-testvisufield.msh.opt
-testclinfo
-testkernel
-testkernelinterface
-testkernelvolume
-testmanyv
-testmeq2
-testdtfield_cl
-testfieldrk4
-testfieldrk4_cl
-testmacrocellinterface
 
 #output files
 *.csv
@@ -82,4 +43,12 @@ testmacrocellinterface
 *.msh
 testfieldrk2_cl
 
-toto.c
+#PN
+*.swp
+/build/
+
+
+
+*.dat
+*.pdf
+

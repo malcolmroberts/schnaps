@@ -16,6 +16,8 @@ int TestCache(void){
   int my = 1;
 
   field f;
+  init_empty_field(&f);
+  
   f.varindex = GenericVarindex;
   f.model.vlasov_mz = 1;
   f.model.cfl = cfl;
@@ -38,14 +40,13 @@ int TestCache(void){
 
   set_vlasov_params(&(f.model));
 
-  ReadMacroMesh(&(f.macromesh),"test/testmacromesh.msh");
+  ReadMacroMesh(&(f.macromesh),"../test/testmacromesh.msh");
   // Try to detect a 2d mesh
   Detect2DMacroMesh(&(f.macromesh));
   assert(f.macromesh.is2d);  
   BuildConnectivity(&(f.macromesh));
 
   Initfield(&f);
-  f.is2d = true;
   //CheckMacroMesh(&(f.macromesh), f.interp.interp_param + 1);
 
   int raf[3]={nrafx,nraf,1};

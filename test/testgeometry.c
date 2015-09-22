@@ -17,7 +17,7 @@ int TestGeometry(void){
   int test = true;
   MacroMesh mc;
 
-  ReadMacroMesh(&mc,"test/testgeometry.msh");
+  ReadMacroMesh(&mc,"../test/testgeometry.msh");
   BuildConnectivity(&mc);
   PrintMacroMesh(&mc);
 
@@ -50,7 +50,7 @@ int TestGeometry(void){
   v[2] = xref[2]-xref0[2];
 
   real d = sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
-  test = (d < 1e-12);
+  test = (d < _SMALL);
 
 
   // again with the other function
@@ -61,7 +61,7 @@ int TestGeometry(void){
   v[2] = xref[2]-xref0[2];
 
   d = sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
-  test = test && (d < 1e-12);
+  test = test && (d < _SMALL);
 
 
 

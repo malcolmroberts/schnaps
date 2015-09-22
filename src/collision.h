@@ -1,8 +1,8 @@
 #ifndef _COLLISION_H
 #define _COLLISION_H
 
-#define _NB_ELEM_V 16
-#define _DEG_V 3
+#define _NB_ELEM_V 20
+#define _DEG_V 2
 
 //! \brief number of conservative variables
 //! values of  the distribution function at the velocity glops
@@ -20,10 +20,10 @@
 
 #define _VMAX 6.
 #define _DV (2*_VMAX / _NB_ELEM_V)
-#define _Dirichlet_Poisson_BC (1)
-#define _Periodic_Poisson_BC (2)
 
-
+#define _ENTROPY (1)
+#define _EPS (1)
+#define _LAMBDA (1)
 
 #include "model.h"
 #include "field.h"
@@ -33,15 +33,23 @@
 //! \param[in] wL,wR : left and right states
 //! \param[in] vn : normal vector
 //! \param[out] flux : the flux
-void VlasovP_Lagrangian_NumFlux(real wL[],real wR[],real vn[3],real* flux);
+void VlasovP_Lagrangian_NumFlux(real *wL, real *wR, real *vn, real *flux);
 
-
-//! \brief compute compute the source term of the collision
+//! \brief  compute the source term of the collision
 //! model: electric force + true collisions
+//! \param[in] x space position
+//! \param[in] t time
 //! \param[in] w the distribution function
-//! \param[in] f the force 
 //! \param[out] source the source
-void VlasovP_Lagrangian_Source(real* x,real t, real* w, real* source);
+void VlasovP_Lagrangian_Source(const real *x, const real t, const real *w, real *source);
 
 
+//! \brief compute M^{-1 * M_f(v) * w for collision step
+//! \param[in] f the field
+//! \param[in] w the distribution function in entropic variable
+//! \param[in] function the function which compute second order derivate of the adjoint entropic transformation
+//! \param[out] product contains the result
+void VlasovP_Mass_modified(field *f,real * w,void (*function)(field *f,real w,real *tw),real* product);
+
+			    
 #endif

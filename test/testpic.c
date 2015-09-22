@@ -27,49 +27,52 @@ void Maxwell2DConstInitData(real x[3], real w[]) {
 // some unit tests of the macromesh code
 int TestPIC(void)
 {
-  MacroMesh m;
+  bool test = true;
 
-  bool test=true;
-
-  int param[]={4, 4, 4, 1, 1, 1, 0};
+  char *mshname =  "../test/testmacromesh.msh";
   
-  field f;
+  MacroMesh mesh;
+  ReadMacroMesh(&mesh,mshname);
+  Detect2DMacroMesh(&mesh);
+  BuildConnectivity(&mesh);
+
+  int deg[]={4, 4, 4};
+  int raf[]={1, 1, 1};
+
+  CheckMacroMesh(&mesh, deg, raf);
+
   // test gmsh file reading
-  ReadMacroMesh(&(f.macromesh), "test/testmacromesh.msh");
-  BuildConnectivity(&(f.macromesh));
-  CheckMacroMesh(&(f.macromesh), param);
+  ReadMacroMesh(&mesh, "../test/testmacromesh.msh");
+  BuildConnectivity(&mesh);
+  CheckMacroMesh(&mesh, deg, raf);
   //PrintMacroMesh(&m);
 
   PIC pic;
 
   InitPIC(&pic,1); 
-  CreateParticles(&pic,&(f.macromesh));
-  PlotParticles(&pic,&(f.macromesh));
+  CreateParticles(&pic,&mesh);
+  PlotParticles(&pic,&mesh);
 
-  f.model.m = 7; // num of conservative variables
+  Model model;
+  
+  model.m = 7; // num of conservative variables
 
   /* f.model.NumFlux = Maxwell2DNumFlux; */
   /* f.model.BoundaryFlux = Maxwell2DBoundaryFlux; */
-  f.model.InitData = Maxwell2DConstInitData;
+  model.InitData = Maxwell2DConstInitData;
   /* f.model.ImposedData = Maxwell2DImposedData; */
-  f.varindex = GenericVarindex;
     
-  f.interp.interp_param[0] = f.model.m;
-  f.interp.interp_param[1] = 3; // x direction degree
-  f.interp.interp_param[2] = 3; // y direction degree
-  f.interp.interp_param[3] = 0; // z direction degree
-  f.interp.interp_param[4] = 4; // x direction refinement
-  f.interp.interp_param[5] = 4; // y direction refinement
-  f.interp.interp_param[6] = 1; // z direction refinement
+  Simulation simu;
+  EmptySimulation(&simu);
 
-  Initfield(&f);
+  InitSimulation(&simu, &mesh, deg, raf, &model);
 
   // place the particle at (0,1,0) and v=(1,0,0)
   pic.xv[0]=0;
   pic.xv[1]=1;
   pic.xv[2]=0.5;
   real xref[3];
-  pic.cell_id[0]=NumElemFromPoint(&f.macromesh,pic.xv,xref);
+  pic.cell_id[0]=NumElemFromPoint(&mesh,pic.xv,xref);
   pic.xv[0]=xref[0];  
   pic.xv[1]=xref[1];  
   pic.xv[2]=xref[2];  
@@ -77,16 +80,18 @@ int TestPIC(void)
   pic.xv[4]=0;
   pic.xv[5]=0;
 
+  simu.pic = &pic;
+
   real final_pos_phy[3]={0,-1,0.5};
   real final_pos[3];
-  int final_cell=NumElemFromPoint(&f.macromesh,
+  int final_cell=NumElemFromPoint(&mesh,
 				  final_pos_phy,final_pos);
 
   pic.dt=0.001;
   for(int iter=0;iter<3141;iter++){
-    PushParticles(&f,&pic);
+    PushParticles(&simu,&pic);
   }
-  PlotParticles(&pic,&(f.macromesh));
+  PlotParticles(&pic,&mesh);
  
 
   printf("Dist=%f\n",Dist(pic.xv,final_pos));
@@ -95,7 +100,7 @@ int TestPIC(void)
 
   test = test && (final_cell == pic.cell_id[0]);
 
-  AccumulateParticles(&pic,&f);
+  AccumulateParticles(&simu, simu.w);
 
   return test;
 }

@@ -9,51 +9,57 @@ int TestfieldDG(void){
 
   int test = true;
 
-  field f;
-  f.model.cfl = 0.05;
-  f.model.m = 1; // only one conservative variable
-  f.model.NumFlux = TransNumFlux;
-  f.model.BoundaryFlux = TestTransBoundaryFlux;
-  f.model.InitData = TestTransInitData;
-  f.model.ImposedData = TestTransImposedData;
-  f.model.Source = NULL;
-  f.varindex = GenericVarindex;
-
-  f.interp.interp_param[0] = 1; // _M
-  f.interp.interp_param[1] = 2; // x direction degree
-  f.interp.interp_param[2] = 2; // y direction degree
-  f.interp.interp_param[3] = 2; // z direction degree
-  f.interp.interp_param[4] = 2; // x direction refinement
-  f.interp.interp_param[5] = 2; // y direction refinement
-  f.interp.interp_param[6] = 2; // z direction refinement
-
-  ReadMacroMesh(&(f.macromesh), "test/testcube2.msh");
-  //ReadMacroMesh(&(f.macromesh),"test/testmacromesh.msh");
-  BuildConnectivity(&(f.macromesh));
-
-  PrintMacroMesh(&(f.macromesh));
-  //AffineMapMacroMesh(&(f.macromesh));
-  PrintMacroMesh(&(f.macromesh));
+  Model model;
   
-  Initfield(&f);
-  CheckMacroMesh(&(f.macromesh), f.interp.interp_param + 1);
+  model.cfl = 0.05;
+  model.m = 1; // only one conservative variable
+  model.NumFlux = TransNumFlux;
+  model.BoundaryFlux = TestTransBoundaryFlux;
+  model.InitData = TestTransInitData;
+  model.ImposedData = TestTransImposedData;
+  model.Source = NULL;
 
-  dtfield(&f, f.wn, f.dtwn);
+  int deg[]={4, 4, 4};
+  int raf[]={4, 4, 4};
   
-  Displayfield(&f);
+  MacroMesh mesh;
+  ReadMacroMesh(&mesh,"../test/testmacromesh.msh");
+  //ReadMacroMesh(&mesh,"../test/testcube2.msh");
+  BuildConnectivity(&mesh);
 
-  Plotfield(0, false, &f, NULL, "visu.msh");
-  Plotfield(0, true, &f, "error", "error.msh");
+  /* real A[3][3] = {{10,2 , 0}, {0, 1, -0.1}, {0, 0.1,1}}; */
+  /* real x0[3] = {1, 2, 3}; */
+  /* AffineMapMacroMesh(&mesh,A,x0); */
+
+  CheckMacroMesh(&mesh, deg, raf);
+
+  //PrintMacroMesh(&mesh);
+
+  Simulation simu;
+
+  InitSimulation(&simu, &mesh, deg, raf, &model);
+
+
+  DtFields(&simu, simu.w, simu.dtw);
+  
+  DisplaySimulation(&simu);
+
+  //PlotFields(0, false, &simu, NULL, "visu.msh");
+  //PlotFields(0, true, &simu, "error", "error.msh");
 
   // Test the time derivative with the exact solution
+  real test2 = 0;
   for(int i = 0; 
-      i < f.model.m * f.macromesh.nbelems * NPG(f.interp.interp_param+1); 
+      i < model.m * mesh.nbelems * NPG(deg,raf); 
       i++){
-    test = test && fabs(4 * f.wn[i] - pow(f.dtwn[i], 2)) < 1e-2;
-    printf("i=%d err=%f \n",i,4 * f.wn[i] - pow(f.dtwn[i], 2));
-    assert(test);
+    real errloc = fabs(4 * simu.w[i] - pow(simu.dtw[i], 2));
+    test2 += errloc * errloc;
+    test = test && errloc < 1e-2;
+    //printf("i=%d err=%f \n",i,4 * w[i] - pow(dtw[i], 2));
+    //assert(test);
   }
-  
+
+  printf("error=%f\n",sqrt(test2/ (mesh.nbelems * NPG(deg,raf)) ));
   return test;
 };
 

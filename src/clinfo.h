@@ -10,25 +10,27 @@
 
 #include <stdio.h>
 
+#include "global.h"
+
 //! \brief Data structure for managing the OpenCL
 //! system informations
 typedef struct CLInfo{
-  cl_device_id *device; //!< devices list
+  cl_device_id device; //!< devices list
   cl_ulong devicememsize;  //!< GPU global memory size
   cl_ulong maxmembuffer;  //!< maximal size of a GPU buffer
   cl_ulong maxconstmem;  //!< maximal GPU constant memory
   cl_ulong cachesize;  //!< cache size of compute units
 
   cl_uint nbcomputeunits;  //!< number of compute units
-  size_t  maxworkgroupsize;  //!< maximal allowed size of a work group
+  size_t maxworkgroupsize;  //!< maximal allowed size of a work group
   char platformname[1000]; //!< platform name
   char devicename[1000]; //!< accelerator name
   char clextensions[1000]; //!< list of OpenCL extensions
   cl_uint nbplatforms;  //!< number of platforms
-  cl_uint platformid; //!< platform id
+  cl_uint platformnum; //!< platform number
 
-  cl_uint nbdevices;   //!< number of available devices
-  cl_uint deviceid;   //!< chosen device ID
+  //cl_uint nbdevices;   //!< number of available devices
+  cl_uint devicenum;   //!< chosen device number
 
   cl_context context;//!< OpenCL context
   cl_command_queue commandqueue;   //!< default command queue
@@ -51,12 +53,13 @@ void PrintCLInfo(CLInfo *cli);
 //! \brief Compile kernels source
 //! \param[inout] cli pointer to a CLInfo
 //! \param[in] program string containing the kernels sources
+//! \param[in] buildoptions string containing opencl compiler options
 void BuildKernels(CLInfo *cli, char *program, char *buildoptions);
 
 //! \brief scan all *.h and *.c in order to find the code
 //! to be shared with opencl
-//! such code is enclosed between #pragma start_opencl and 
-//! #pragma end_opencl
+//! such code is enclosed between \#pragma start_opencl and 
+// #pragma end_opencl
 //! get also field.cl
 //! the result is put into schnaps.cl
 void GetOpenCLCode(void);
@@ -64,8 +67,15 @@ void GetOpenCLCode(void);
 //! \brief allocates and fills a string with a file content
 void ReadFile(char filename[], char** s);
 
-
 bool cldevice_is_acceptable(cl_uint ndevice, cl_uint nplatform);
 
+real cl_dev_gflops(char *platform_name);
+real cl_dev_bwidth(char *platform_name);
+real kernel_min_time(real dev_flops, real bandwidth,
+		       unsigned long int flop_count, 
+		       unsigned long int io_count);
+void print_kernel_perf(real dev_fflops, real bandwidth,
+		       unsigned long int flop_count, unsigned long int io_count,
+		       cl_ulong kernel_time_ns);
 
 #endif

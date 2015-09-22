@@ -23,6 +23,7 @@ real maxerr(real *a, real *b, int n)
 int TestmEq2(void) {
   bool test = true;
   field f;
+  init_empty_field(&f);
   
   f.model.cfl = 0.05;  
   f.model.m = 2; 
@@ -51,7 +52,7 @@ int TestmEq2(void) {
   strcat(cl_buildoptions, buf);
 
   // Read the gmsh file
-  ReadMacroMesh(&(f.macromesh), "test/testcube.msh");
+  ReadMacroMesh(&(f.macromesh), "../test/testdisque2d.msh");
 
   // Try to detect a 2d mesh
   Detect2DMacroMesh(&(f.macromesh));
@@ -62,7 +63,6 @@ int TestmEq2(void) {
   //AffineMapMacroMesh(&(f.macromesh));
  
   Initfield(&f);
-  f.is2d = true;
   
   CheckMacroMesh(&(f.macromesh), f.interp.interp_param + 1);
 
@@ -70,7 +70,7 @@ int TestmEq2(void) {
   real *dtwn = calloc(f.wsize, sizeof(real));
   
   real err;
-  real tolerance = 1e-8;
+  real tolerance = _SMALL;
 
   printf("Test volume terms\n");
   
@@ -85,11 +85,11 @@ int TestmEq2(void) {
   clFinish(f.cli.commandqueue);
 
   for(int ie = 0; ie < f.macromesh.nbelems; ++ie) {
-    update_physnode_cl(&f, ie, f.physnode_cl, f.physnode, NULL,
-		       0, NULL, NULL);
-    clFinish(f.cli.commandqueue);
+    /* update_physnode_cl(&f, ie, f.physnode_cl, f.physnode, NULL, */
+    /* 		       0, NULL, NULL); */
+    /* clFinish(f.cli.commandqueue); */
 
-    DGVolume_CL((void*) &(f.mcell[ie]), &f, &(f.wn_cl), 0, NULL, NULL);
+    DGVolume_CL(ie, &f, &(f.wn_cl), 0, NULL, NULL);
     clFinish(f.cli.commandqueue);
   }
 
@@ -98,7 +98,7 @@ int TestmEq2(void) {
   
   f.dtwn = dtwn;
   for(int ie = 0; ie < f.macromesh.nbelems; ++ie) {
-    DGVolume((void*) &(f.mcell[ie]), &f, f.wn, f.dtwn);
+    DGVolume(ie, &f, f.wn, f.dtwn);
   }
 
 
@@ -129,7 +129,7 @@ int TestmEq2(void) {
 
   err = maxerr(dtwn, dtwn_cl, f.wsize);
   printf("\tmax error: %f\n", err);
-  test = (err < tolerance);
+  test = test && (err < tolerance);
 
   printf("Test flux terms\n");
   
@@ -143,9 +143,9 @@ int TestmEq2(void) {
   clFinish(f.cli.commandqueue);
 
   for(int ie = 0; ie < f.macromesh.nbelems; ++ie) {
-    update_physnode_cl(&f, ie, f.physnode_cl, f.physnode, NULL,
-    		       0, NULL, NULL);
-    clFinish(f.cli.commandqueue);
+    /* update_physnode_cl(&f, ie, f.physnode_cl, f.physnode, NULL, */
+    /* 		       0, NULL, NULL); */
+    /* clFinish(f.cli.commandqueue); */
     
     DGFlux_CL(&f, 0, ie, &(f.wn_cl), 0, NULL, NULL);
     clFinish(f.cli.commandqueue);
@@ -163,12 +163,12 @@ int TestmEq2(void) {
 
   f.dtwn = dtwn;
   for(int ie = 0; ie < f.macromesh.nbelems; ++ie) {
-    DGSubCellInterface((void*) &(f.mcell[ie]), &f, f.wn, f.dtwn);
+    DGSubCellInterface(ie, &f, f.wn, f.dtwn);
   }
 
   err = maxerr(dtwn, dtwn_cl, f.wsize);
   printf("\tmax error: %f\n", err);
-  test = (err < tolerance);
+  test = test && (err < tolerance);
 
   printf("Test macrocell interfaces\n");
 
@@ -181,7 +181,7 @@ int TestmEq2(void) {
   set_buf_to_zero_cl(&(f.dtwn_cl), f.wsize, &f, 0, NULL, NULL);
   clFinish(f.cli.commandqueue);
   for(int ifa = 0; ifa < f.macromesh.nbfaces; ++ifa) {
-    DGMacroCellInterface_CL((void*) (f.mface + ifa), &f, &f.wn_cl,
+    DGMacroCellInterface_CL(ifa, &f, &f.wn_cl,
     			    0, NULL, NULL);
     clFinish(f.cli.commandqueue);
   }
@@ -189,17 +189,12 @@ int TestmEq2(void) {
   clFinish(f.cli.commandqueue);
   
   f.dtwn = dtwn;
-  MacroFace mface[f.macromesh.nbfaces];
   for(int ifa = 0; ifa < f.macromesh.nbfaces; ifa++) {
-    mface[ifa].first = ifa;
-    mface[ifa].last_p1 = ifa + 1;
-  }
-  for(int ifa = 0; ifa < f.macromesh.nbfaces; ifa++) {
-    DGMacroCellInterface((void*) (mface + ifa), &f, f.wn, f.dtwn);
+    DGMacroCellInterface(ifa, &f, f.wn, f.dtwn);
   }
   err = maxerr(dtwn, dtwn_cl, f.wsize);
   printf("\tmax error: %f\n", err);
-  test = (err < tolerance);
+  test = test && (err < tolerance);
 
   printf("Test all terms\n");
   for(int i = 0; i < f.wsize; ++i) {
@@ -219,7 +214,7 @@ int TestmEq2(void) {
 
   err = maxerr(dtwn, dtwn_cl, f.wsize);
   printf("\tmax error: %f\n", err);
-  test = (err < tolerance);
+  test = test && (err < tolerance);
 
   //Displayfield(&f);
  
@@ -228,7 +223,7 @@ int TestmEq2(void) {
   /* CopyfieldtoCPU(&f); */
  
   /* // Save the results and the error */
-  /* Plotfield(0, false, &f, NULL, "dgvisu.msh"); */
+   Plotfield(1, false, &f, NULL, "dgvisu.msh"); 
   /* Plotfield(0, true, &f, "error", "dgerror.msh"); */
 
   /* real dd = L2error(&f); */

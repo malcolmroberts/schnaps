@@ -5,10 +5,8 @@
 #include <math.h>
 
 int TestfieldRK2(void){
-  int test = true;
+  bool test = true;
 
-  field f;
-  
   // 2D meshes:
   // test/disque2d.msh
   // test/testdisque2d.msh
@@ -18,49 +16,43 @@ int TestfieldRK2(void){
   // 3D meshes"
   // test/testdisque.msh
 
-  char *mshname =  "test/disque2d.msh";
+  char *mshname =  "../test/disque2d.msh";
   
-  ReadMacroMesh(&(f.macromesh), mshname);
-  Detect2DMacroMesh(&(f.macromesh));
-  BuildConnectivity(&(f.macromesh));
+  MacroMesh mesh;
+  ReadMacroMesh(&mesh,"../test/testdisque.msh");
+  //ReadMacroMesh(&mesh,"../test/testcube2.msh");
+  //Detect2DMacroMesh(&mesh);
+  BuildConnectivity(&mesh);
 
-#if 1
+  Model model;
+
+#if 0
   // 2D version
-  f.model.cfl = 0.05;
-  f.model.m = 1;
+  model.cfl = 0.05;
+  model.m = 1;
 
-  f.model.NumFlux = TransNumFlux2d;
-  f.model.BoundaryFlux = TransBoundaryFlux2d;
-  f.model.InitData = TransInitData2d;
-  f.model.ImposedData = TransImposedData2d;
-  f.varindex = GenericVarindex;
+  model.NumFlux = TransNumFlux2d;
+  model.BoundaryFlux = TransBoundaryFlux2d;
+  model.InitData = TransInitData2d;
+  model.ImposedData = TransImposedData2d;
+  model.Source = NULL;
 
-  f.interp.interp_param[0] = f.model.m;
-  f.interp.interp_param[1] = 3; // x direction degree
-  f.interp.interp_param[2] = 3; // y direction degree
-  f.interp.interp_param[3] = 0; // z direction degree
-  f.interp.interp_param[4] = 4; // x direction refinement
-  f.interp.interp_param[5] = 4; // y direction refinement
-  f.interp.interp_param[6] = 1; // z direction refinement
+  int deg[]={3, 3, 0};
+  int raf[]={3, 3, 1};
 
-  assert(f.macromesh.is2d);
+  assert(mesh.is2d);
 #else
   // 3D version
-  f.model.cfl = 0.05;
-  f.model.m = 1;
-  f.model.NumFlux = TransNumFlux;
-  f.model.BoundaryFlux = TestTransBoundaryFlux;
-  f.model.InitData = TestTransInitData;
-  f.model.ImposedData = TestTransImposedData;
-  f.varindex = GenericVarindex;
+  model.m = 1;
+  model.NumFlux = TransNumFlux;
+  model.BoundaryFlux = TestTransBoundaryFlux;
+  model.InitData = TestTransInitData;
+  model.ImposedData = TestTransImposedData;
+  model.Source = NULL;
 
-  f.interp.interp_param[0] = f.model.m;
-  f.interp.interp_param[1] = 2; // x direction degree
-  f.interp.interp_param[2] = 2; // y direction degree
-  f.interp.interp_param[3] = 2; // z direction degree
-  f.interp.interp_param[4] = 3; // x direction refinement
-  f.interp.interp_param[5] = 3; // y direction refinement
-  f.interp.interp_param[6] = 3; // z direction refinement
+  int deg[]={3, 3, 3};
+  int raf[]={1, 1, 1};
+
 #endif
 
   // 2015-01-19: the below parameters fail with testmacrocellinterface
@@ -93,22 +85,25 @@ int TestfieldRK2(void){
   }
 #endif
   
-  Initfield(&f);
+  CheckMacroMesh(&mesh, deg, raf);
+  Simulation simu;
 
-  CheckMacroMesh(&(f.macromesh), f.interp.interp_param + 1);
+  InitSimulation(&simu, &mesh, deg, raf, &model);
  
-  real tmax = 0.1;
-  f.vmax=1;
-  RK2(&f, tmax);
+  real tmax = 0.25;
+  simu.cfl=0.2;
+  simu.vmax=1;
+  RK2(&simu,tmax);
  
-  Plotfield(0, false, &f, NULL, "dgvisu.msh");
-  Plotfield(0, true , &f, "error", "dgerror.msh");
+  PlotFields(0, false, &simu, NULL, "dgvisu.msh");
+  PlotFields(0, true , &simu, "error", "dgerror.msh");
 
-  real dd = L2error(&f);
+  real dd = 0;
+  dd = L2error(&simu);
 
   printf("erreur L2=%f\n", dd);
 
-  real tolerance = 0.001;
+  real tolerance = 0.0025;
 
   test = dd < tolerance;
   

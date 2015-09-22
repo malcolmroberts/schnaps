@@ -37,7 +37,8 @@ void VlasovP_Lagrangian_NumFlux(real wL[],real wR[],real* vnorm,real* flux){
 
 //! \brief compute compute the source term of the collision
 //! model: electric force + true collisions
-void VlasovP_Lagrangian_Source(real* x,real t,real* w, real* source){
+void VlasovP_Lagrangian_Source(const real* x, const real t, const real* w, 
+			       real* source) {
 
   real E=w[_INDEX_EX]; // electric field
   real Md[_INDEX_MAX_KIN+1];
@@ -46,7 +47,9 @@ void VlasovP_Lagrangian_Source(real* x,real t,real* w, real* source){
     Md[iv]=0;
     db[iv]=0;
   }
-  for(int iv=0;iv<_MV+2;iv++){
+  
+  
+  for(int iv=0;iv<_INDEX_MAX_KIN+1;iv++){
     source[iv]=0;
   }
   // no source on the potential for the moment
@@ -83,7 +86,7 @@ void VlasovP_Lagrangian_Source(real* x,real t,real* w, real* source){
 
   for(int iv=0;iv<_INDEX_MAX_KIN+1;iv++){
     source[iv]/=Md[iv];
-    //printf("%f ",db[iv]);
+    //printf("%f ",source[iv]);
   }
   //printf("\n");
   //assert(1==2);
@@ -92,3 +95,45 @@ void VlasovP_Lagrangian_Source(real* x,real t,real* w, real* source){
 };
 
 
+
+void VlasovP_Mass_modified(field *f,real * w,void (*function)(field *f,real w,real *tw),real* product){
+  // give M^-1 * M_f(v)  
+  real tw;
+  real Mass[_INDEX_MAX_KIN+1];
+  real MassCollision[_INDEX_MAX];
+  for(int iv=0;iv<_INDEX_MAX_KIN+1;iv++){
+    Mass[iv]=0;
+
+  }
+
+  for(int iv=0;iv<_INDEX_MAX;iv++){
+    MassCollision[iv]=0;
+    product[iv]=0;
+  }
+  
+  
+  // loop on the finite emlements
+  for(int iel=0;iel<_NB_ELEM_V;iel++){
+    // loop on the local glops
+    for(int kloc=0;kloc<_DEG_V+1;kloc++){
+      real omega=wglop(_DEG_V,kloc);
+      int kpg=kloc+iel*_DEG_V;
+      Mass[kpg]=omega*_DV;
+      function(f,w[kpg],&tw);
+      MassCollision[kpg]=omega*_DV*tw;
+    }
+  }
+
+  for(int iv=0;iv<_INDEX_MAX_KIN+1;iv++){
+    product[iv]=MassCollision[iv]/Mass[iv];
+
+  }
+
+  product[_INDEX_PHI]=w[_INDEX_PHI];
+  product[_INDEX_EX]=w[_INDEX_EX];
+  product[_INDEX_RHO]=w[_INDEX_RHO];
+  product[_INDEX_VELOCITY]=w[_INDEX_VELOCITY];
+  product[_INDEX_PRESSURE]=w[_INDEX_PRESSURE];
+  product[_INDEX_TEMP]=w[_INDEX_TEMP];
+
+};
