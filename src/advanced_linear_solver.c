@@ -151,13 +151,6 @@ void Advanced_GMRESSolver(LinearSolver* lsol, Simulation* simu){
   icntl[8]  = 1; //1
 
   PB_PC pb_pc;
-  if(lsol->pc_type == PHY_BASED_EXACT){
-     int mat2assemble[6] = {1, 1, 1, 1, 1, 1};
-     //Init_PhyBasedPC_SchurVelocity_Wave(simu, &pb_pc, mat2assemble);
-     Init_PhyBasedPC_SchurFull_Wave(simu, &pb_pc, mat2assemble);
-     Init_Parameters_PhyBasedPC(&pb_pc);
-     icntl[4]  = 2;
-  }
   if(lsol->pc_type == PHY_BASED){
      int mat2assemble[6] = {1, 1, 1, 1, 1, 1};
      //Init_PhyBasedPC_SchurVelocity_Wave(simu, &pb_pc, mat2assemble);
@@ -266,14 +259,6 @@ void Advanced_GMRESSolver(LinearSolver* lsol, Simulation* simu){
         PhyBased_PC_DG(&pb_pc,simu,loc_z,loc_x);
         //solveIdentity(&pb_pc,simu,loc_z,loc_x);
       }
-    }
-    else if(lsol->pc_type == PHY_BASED_EXACT){
-      if (lsol->is_CG){
-	PhyBased_PC_Full(&pb_pc,simu,loc_z,loc_x);
-      }
-       else {
-	 Vector_copy(loc_x,loc_z,N);
-       }
     }
     else if(lsol->pc_type == EXACT){
       Exact_PC(lsol,loc_z,loc_x);

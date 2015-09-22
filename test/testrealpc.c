@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include "test.h"
-#include "solvercontinuous.h"
+#include "solverwave.h"
 #include "waterwave2d.h"
 #include "physBased_PC.h"
 
@@ -363,6 +363,7 @@ int Testrealpc(void) {
 
     freeSimulation(&simu3);
   }
+  
   printf("//////////////////////////////////////\n");
   printf("TEST FOUR!\n");
   printf("//////////////////////////////////////\n");
@@ -379,14 +380,11 @@ int Testrealpc(void) {
     int deg4[]={4, 4, 0};
     int raf4[]={32, 32, 1};
 
-
     assert(mesh.is2d);
-
     CheckMacroMesh(&mesh, deg4, raf4);
     Simulation simu4;
 
     InitSimulation(&simu4, &mesh, deg4, raf4, &model4);
-
 
     ContinuousSolver cs;
     ContinuousSolver csSolve;
@@ -409,27 +407,18 @@ int Testrealpc(void) {
     real *resCG = calloc(size, sizeof(real));
     real *wCG = calloc(size, sizeof(real));
   
-
-    csSolve.lsol.solver_type=GMRES;//LU;
+    csSolve.lsol.solver_type=LU;
     csSolve.lsol.tol=1.e-10;
-    csSolve.lsol.pc_type=PHY_BASED;//PHY_BASED;//;NONE;//EXACT;//PHY_BASED;
+    csSolve.lsol.pc_type=NONE;
     csSolve.lsol.iter_max=10000;
     csSolve.lsol.restart_gmres=5;
     csSolve.lsol.is_CG=true;
     csSolve.bc_assembly=ExactDirichletContinuousMatrix;
 
-    //////////////////////////////////
-    PB_PC pb_pc;
-     int mat2assemble[6] = {1, 1, 1, 1, 1, 1};
-     Init_PhyBasedPC_SchurPressure_Wave(&simu4, &pb_pc, mat2assemble);
-     Init_Parameters_PhyBasedPC(&pb_pc);
-       real *solpc = calloc(size, sizeof(real));
-     ////////////////////////////
-
     Wave_test(&cs,-(1.0-simu4.theta),simu4.dt);
-    Generic(&cs);
+    GenericOperator2Vec_Continuous(&cs,&cs.lsol);
     Wave_test(&csSolve,simu4.theta,simu4.dt);
-    Generic(&csSolve);
+    GenericOperator2Vec_Continuous(&csSolve,&csSolve.lsol);
 
     PiDgToCg(&cs,simu4.w,wCG);
 
@@ -451,28 +440,10 @@ int Testrealpc(void) {
       csSolve.bc_assembly(&csSolve, &csSolve.lsol);     
       Advanced_SolveLinearSolver(&csSolve.lsol,&simu4);
       
-      ///////////////////////////////////////
-      /*PhyBased_PC_Full(&pb_pc,&simu4,solpc,csSolve.lsol.rhs);
-       real error=0;
-       for (int i=0; i<size; i++){
-	 error=error+fabs((solpc[i]-csSolve.lsol.sol[i])*(solpc[i]-csSolve.lsol.sol[i]));
-	 //printf("pppp %d %.12e %.12e %.12e\n",i,solpc[i],csSolve.lsol.sol[i],wCG[i]-csSolve.lsol.sol[i]);
-       }
-       printf("pppp %.12e\n",sqrt(error));*/
-	 /////////////////////////////////// */
       for (int i=0; i<size; i++){
         wCG[i] = csSolve.lsol.sol[i];
       }
-      
-      /*real error2=0;
-      for (int i=0; i<size/3; i++){
-	 error2=error2+(10.0-csSolve.lsol.sol[3*i])*(10.0-csSolve.lsol.sol[3*i]);
-	 error2=error2+(2.0-csSolve.lsol.sol[3*i+1])*(2.0-csSolve.lsol.sol[3*i+1]);
-	 error2=error2+(3.0-csSolve.lsol.sol[3*i+2])*(3.0-csSolve.lsol.sol[3*i+2]);
-       }
-       printf("pppp  sol %.12e\n",sqrt(error2));*/
-      
-      
+       
       int freq = (1 >= simu4.itermax_rk / 10)? 1 : simu4.itermax_rk / 10;
       if (tstep % freq == 0)
         printf("t=%f iter=%d/%d dt=%f\n", simu4.tnow, tstep, simu4.itermax_rk, simu4.dt);
@@ -485,6 +456,7 @@ int Testrealpc(void) {
     test = test && (dd<2.e-2);
     freeSimulation(&simu4);
   }
+  
   printf("//////////////////////////////////////\n");
   printf("TEST FIVE!\n");
   printf("//////////////////////////////////////\n");
@@ -499,7 +471,7 @@ int Testrealpc(void) {
     model5.Source = NULL;
 
     int deg5[]={4, 4, 0};
-    int raf5[]={8, 8, 1};
+    int raf5[]={16, 16, 1};
 
     assert(mesh.is2d);
 
@@ -521,9 +493,9 @@ int Testrealpc(void) {
 
     real theta5=0.5;
     simu5.theta=theta5;
-    simu5.dt=0.01;//0.001667;
+    simu5.dt=0.001;//0.001667;
     simu5.vmax=_SPEED_WAVE;
-    real tmax5=1*simu5.dt;//;0.5;
+    real tmax5=0.1;//;0.5;
 
     int itermax5=tmax5/simu5.dt;
     simu5.itermax_rk=itermax5;
@@ -531,29 +503,25 @@ int Testrealpc(void) {
     real *resCG = calloc(size, sizeof(real));
     real *wCG = calloc(size, sizeof(real));
 
-    //csSolve.lsol.solver_type=GMRES;
     csSolve.lsol.solver_type=LU;
     csSolve.lsol.tol=1.e-10;
     csSolve.lsol.pc_type=NONE;//PHY_BASED;
     csSolve.lsol.iter_max=500;
     csSolve.lsol.restart_gmres=30;
     csSolve.lsol.is_CG=true;
-    csSolve.bc_assembly=ExactDirichletContinuousMatrix;
 
-     //////////////////////////////////
-    PB_PC pb_pc;
-     int mat2assemble[6] = {1, 1, 1, 1, 1, 1};
-     //Init_PhyBasedPC_SchurPressure_Wave(&simu5, &pb_pc, mat2assemble);
-     //Init_PhyBasedPC_SchurFull_Wave(&simu5, &pb_pc, mat2assemble);
-     Init_Parameters_PhyBasedPC(&pb_pc);
-     real *solpc = calloc(size, sizeof(real));
-     ////////////////////////////
+    cs.bc_flux=Wave_BC;
+    csSolve.bc_flux=Wave_BC;
+    csSolve.bc_assembly=BoundaryConditionFriedrichsAssembly;
+    cs.bc_assembly=BoundaryConditionFriedrichsAssembly;//ExactDirichletContinuousMatrix;
 
+    
     Wave_test(&cs,-(1.0-simu5.theta),simu5.dt);
-    Generic(&cs);
+    GenericOperator2Vec_Continuous(&cs,&cs.lsol);
     Wave_test(&csSolve,simu5.theta,simu5.dt);
-    Generic(&csSolve);
-
+    GenericOperator2Vec_Continuous(&csSolve,&csSolve.lsol);
+    
+  
     PiDgToCg(&cs,simu5.w,wCG);
 
     simu5.tnow=0;
@@ -575,33 +543,15 @@ int Testrealpc(void) {
       for(int i=0;i<size;i++){
         csSolve.lsol.rhs[i]=resCG[i];
       }
+      
+      cs.bc_assembly(&cs, &cs.lsol);
       csSolve.bc_assembly(&csSolve, &csSolve.lsol);
+      
       Advanced_SolveLinearSolver(&csSolve.lsol,&simu5);
       
       for (int i=0; i<size; i++){
         wCG[i] = csSolve.lsol.sol[i];
       }
-
-          ///////////////////////////////////////
-      //PhyBased_PC_Full(&pb_pc,&simu5,solpc,csSolve.lsol.rhs);
-      // PhyBased_PC_InvertSchur_CG(&pb_pc,&simu5,solpc,csSolve.lsol.rhs);
-       real error=0;
-       for (int i=0; i<size; i++){
-	 error=error+fabs((solpc[i]-csSolve.lsol.sol[i])*(solpc[i]-csSolve.lsol.sol[i]));
-       }
-       printf("pppp %.12e\n",sqrt(error));
-	 /////////////////////////////////// */
-       /*for (int i=0; i<size/3; i++){
-	 printf("iter=%d p=%.12e %.12e %.12e\n",i,solpc[3*i],wCG[3*i],solpc[3*i]-wCG[3*i]);
-       }
-
-       for (int i=0; i<size/3; i++){
-	 printf("iter=%d u=%.12e %.12e %.12e\n",i,solpc[3*i+1],wCG[3*i+1],solpc[3*i+1]-wCG[3*i+1]);
-       }
-
-       for (int i=0; i<size/3; i++){
-	 printf("iter=%d v=%.12e %.12e %.12e\n",i,solpc[3*i+2],wCG[3*i+2],solpc[3*i+2]-wCG[3*i+2]);
-	 }*/
        
       int freq = (1 >= simu5.itermax_rk / 10)? 1 : simu5.itermax_rk / 10;
       if (tstep % freq == 0)
@@ -615,8 +565,6 @@ int Testrealpc(void) {
     test = test && (dd<5.e-2);
     freeSimulation(&simu5);
   }
-
-  
 
 #ifdef PARALUTION 
   paralution_end();
@@ -749,202 +697,5 @@ void Wave_Upwind_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
 
 
 
-void Generic(ContinuousSolver *cs){
-
-  int nnodes = cs->nnodes;
-  field* f0 = &cs->simu->fd[0];
-  int nbel = cs->nbel;
-  int dg_to_fe_index[cs->nb_dg_nodes];
-  for (int i=0; i<cs->nb_dg_nodes; i++){
-    dg_to_fe_index[i]=cs->dg_to_fe_index[i];
-  }
-
- 
-  for(int ie = 0; ie < nbel; ie++){
-
-     real aloc[cs->nnodes*cs->nb_phy_vars][cs->nnodes*cs->nb_phy_vars];
-     for(int iloc = 0; iloc < cs->nnodes*cs->nb_phy_vars; iloc++){
-       for(int jloc = 0; jloc < cs->nnodes*cs->nb_phy_vars; jloc++){
-	 aloc[iloc][jloc] = 0;
-       }
-     }
-
-
-    int iemacro = ie / (f0->raf[0] * f0->raf[1] * f0->raf[2]);
-    int isubcell = ie % (f0->raf[0] * f0->raf[1] * f0->raf[2]);
-
-    for(int ipg = 0;ipg < nnodes; ipg++){
-      real wpg;
-      real xref[3];
-      int ipgmacro = ipg + isubcell * nnodes;
-
-      ref_pg_vol(f0->deg,f0->raf,ipgmacro,xref,&wpg,NULL);
-
-      for(int iloc = 0; iloc < nnodes; iloc++){
-        real dtau[3][3],codtau[3][3];
-        real dphiref_i[3],dphiref_j[3];
-        real dphi_i[3],dphi_j[3];
-        real basisPhi_i[4], basisPhi_j[4];
-        int ilocmacro = iloc + isubcell * nnodes;
-        int ino_dg = iloc + ie * nnodes;
-        int ino_fe = dg_to_fe_index[ino_dg];
-        grad_psi_pg(f0->deg,f0->raf,ilocmacro,ipgmacro,dphiref_i);
-        Ref2Phy(cs->simu->fd[iemacro].physnode,
-            xref,dphiref_i,0,NULL,
-            dtau,codtau,dphi_i,NULL);
-
-        real det = dot_product(dtau[0], codtau[0]);
-        if (ilocmacro==ipgmacro){
-          basisPhi_i[0]=1.;
-        }
-        else
-        {
-          basisPhi_i[0]=0.;
-        }
-        basisPhi_i[1]=dphi_i[0]/det;
-        basisPhi_i[2]=dphi_i[1]/det;
-        basisPhi_i[3]=dphi_i[2]/det;
-        for(int jloc = 0; jloc < nnodes; jloc++){
-          int jlocmacro = jloc + isubcell * nnodes;
-          int jno_dg = jloc + ie * nnodes;
-          int jno_fe = dg_to_fe_index[jno_dg];
-          grad_psi_pg(f0->deg,f0->raf,jlocmacro,ipgmacro,dphiref_j);
-          Ref2Phy(cs->simu->fd[iemacro].physnode,
-              xref,dphiref_j,0,NULL,
-              dtau,codtau,dphi_j,NULL);
-          if (jlocmacro==ipgmacro){
-            basisPhi_j[0]=1.;
-          }
-          else
-          {
-            basisPhi_j[0]=0.;
-          }
-          basisPhi_j[1]=dphi_j[0]/det;
-          basisPhi_j[2]=dphi_j[1]/det;
-          basisPhi_j[3]=dphi_j[2]/det;
-          real val;
-          real res[4];
-
-          // Building Schur Matrix
-          for (int iv1=0; iv1<cs->nb_phy_vars; iv1++){
-            for (int iv2=0; iv2<cs->nb_phy_vars; iv2++){
-              for (int i=0; i<4; i++){
-                res[i]=0;
-                for (int j=0; j<4; j++){
-                  res[i]+=basisPhi_j[j]*cs->diff_op3vec[cs->nb_phy_vars*iv1+iv2][i][j];
-                }
-              }
-              val = dot_product(basisPhi_i, res) * wpg * det;
-	      aloc[iloc*cs->nb_phy_vars+iv1][jloc*cs->nb_phy_vars+iv2]+=val;
-            } // end for iv1
-          } // end for iv2
-
-        } // end for jloc
-      } // end for iloc
-    } // end for ipg
-
-    for(int iloc = 0; iloc < cs->nnodes; iloc++){
-      for(int jloc = 0; jloc < cs->nnodes; jloc++){
-          int ino_dg = iloc + ie * cs->nnodes;
-          int jno_dg = jloc + ie * cs->nnodes;
-          int ino_fe = cs->dg_to_fe_index[ino_dg];
-          int jno_fe = cs->dg_to_fe_index[jno_dg];
-          for (int iv1=0;iv1<cs->nb_phy_vars;iv1++){
-            for (int iv2=0;iv2<cs->nb_phy_vars;iv2++){
-              real val = aloc[iloc*cs->nb_phy_vars+iv1][jloc*cs->nb_phy_vars+iv2];
-              AddLinearSolver(&cs->lsol,ino_fe*cs->nb_phy_vars+iv1,jno_fe*cs->nb_phy_vars+iv2,val);
-            }
-          }
-      }
-    }  
-    } // end for ie 
-
-  /* for(int ie = 0; ie < nbel; ie++){
-
-     real aloc[cs->nnodes*cs->nb_phy_vars][cs->nnodes*cs->nb_phy_vars];
-     for(int iloc = 0; iloc < cs->nnodes*cs->nb_phy_vars; iloc++){
-       for(int jloc = 0; jloc < cs->nnodes*cs->nb_phy_vars; jloc++){
-	 aloc[iloc][jloc] = 0;
-       }
-     }
-
-
-    int iemacro = ie / (f0->raf[0] * f0->raf[1] * f0->raf[2]);
-    int isubcell = ie % (f0->raf[0] * f0->raf[1] * f0->raf[2]);
-
-    for(int ipg = 0;ipg < nnodes; ipg++){
-      real wpg;
-      real xref[3];
-      int ipgmacro = ipg + isubcell * nnodes;
-
-      ref_pg_vol(f0->deg,f0->raf,ipgmacro,xref,&wpg,NULL);
-
-      for(int iloc = 0; iloc < nnodes; iloc++){
-        real dtau[3][3],codtau[3][3];
-        real dphiref_i[3],dphiref_j[3];
-        real dphi_i[3],dphi_j[3];
-        real basisPhi_i[4], basisPhi_j[4];
-        int ilocmacro = iloc + isubcell * nnodes;
-        int ino_dg = iloc + ie * nnodes;
-        int ino_fe = dg_to_fe_index[ino_dg];
-        grad_psi_pg(f0->deg,f0->raf,ilocmacro,ipgmacro,dphiref_i);
-        Ref2Phy(cs->simu->fd[iemacro].physnode,
-            xref,dphiref_i,0,NULL,
-            dtau,codtau,dphi_i,NULL);
-
-        real det = dot_product(dtau[0], codtau[0]);
-        if (ilocmacro==ipgmacro){
-          basisPhi_i[0]=1.;
-        }
-        else
-        {
-          basisPhi_i[0]=0.;
-        }
-        basisPhi_i[1]=dphi_i[0]/det;
-        basisPhi_i[2]=dphi_i[1]/det;
-        basisPhi_i[3]=dphi_i[2]/det;
-        for(int jloc = 0; jloc < nnodes; jloc++){
-          int jlocmacro = jloc + isubcell * nnodes;
-          int jno_dg = jloc + ie * nnodes;
-          int jno_fe = dg_to_fe_index[jno_dg];
-          grad_psi_pg(f0->deg,f0->raf,jlocmacro,ipgmacro,dphiref_j);
-          Ref2Phy(cs->simu->fd[iemacro].physnode,
-              xref,dphiref_j,0,NULL,
-              dtau,codtau,dphi_j,NULL);
-          if (jlocmacro==ipgmacro){
-            basisPhi_j[0]=1.;
-          }
-          else
-          {
-            basisPhi_j[0]=0.;
-          }
-          basisPhi_j[1]=dphi_j[0]/det;
-          basisPhi_j[2]=dphi_j[1]/det;
-          basisPhi_j[3]=dphi_j[2]/det;
-          real val;
-          real res[4];
-
-          // Building Schur Matrix
-          for (int iv1=0; iv1<cs->nb_phy_vars; iv1++){
-            for (int iv2=0; iv2<cs->nb_phy_vars; iv2++){
-              for (int i=0; i<4; i++){
-                res[i]=0;
-                for (int j=0; j<4; j++){
-                  res[i]+=basisPhi_j[j]*cs->diff_op3vec[cs->nb_phy_vars*iv1+iv2][i][j];
-                }
-              }
-              val = dot_product(basisPhi_i, res) * wpg * det;
-	      AddLinearSolver(&cs->lsol,ino_fe*cs->nb_phy_vars+iv1,jno_fe*cs->nb_phy_vars+iv2,val);
-            } // end for iv1
-          } // end for iv2
-
-        } // end for jloc
-      } // end for iloc
-    } // end for ipg
-
-    
-  }*/
-  
-}
 
 

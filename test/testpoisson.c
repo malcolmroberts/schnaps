@@ -92,7 +92,7 @@ int TestPoisson(void)
                  {0,0,0,0}};
   for (int i=0;i<4;i++){
     for (int j=0;j<4;j++){
-      ps.diff_op[i][j]=D[i][j];
+      ps.diff_op.DO[i][j]=D[i][j];
     }
   }
 

@@ -123,6 +123,8 @@ list(APPEND
   src/physBased_PC.c
   src/solverpoisson.h
   src/solverpoisson.c
+  src/solverwave.h
+  src/solverwave.c
   src/quantities_vp.h
   src/quantities_vp.c
   src/diagnostics_vp.h

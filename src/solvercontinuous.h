@@ -11,6 +11,13 @@
 #define _Dirichlet_Poisson_BC (1)
 #define _Periodic_Poisson_BC (2)
 
+//! \brief Scalar diffusion operator
+typedef struct SDO{
+
+  //! \brief physical coordinates of the node
+  real DO[4][4];
+
+} SDO;
 
 //! \brief a struct for sorting and pasting the
 //! nodes of the DG mesh for obtaining a FE mesh
@@ -81,13 +88,14 @@ typedef struct ContinuousSolver{
   int type_bc;
 
   //! \brief Differential operator for scalar problems
-  real diff_op[4][4];
+  SDO diff_op;
 
-  //! \brief Differential operator for 2d vectorial problems
-  real diff_op2vec[4][4][4];
+  //! \brief Differential operator for 2d vectorial (some variables) problems
+  SDO * diff_opvec;
 
-  //! \brief Differential operator for 2d vectorial (3 scalars) problems
-  real diff_op3vec[9][4][4];
+  //! \brief FluxMatrix is the matrix of the hyperbolic model
+  real ** FluxMatrix;
+  
 
   //! \brief pointer on the function which assembles the rhs
   //! \param[inout] lsol a linear solver allocate
@@ -108,6 +116,16 @@ typedef struct ContinuousSolver{
   //! \param[inout] lsol a linear solver allocate
   //! \param[in] a continuous solver
   void (*bc_assembly)(void * cs,LinearSolver* lsol);
+
+  //! \brief pointer on the function which compute the BC flux 
+  //! \param[in] lsol a linear solver allocate
+  //! \param[in] cs a continuous solver
+  //! \param[in] xpg a point of the mesh
+  //! \param[in] w a vector of unknowns
+  //! \param[in] vnorm a vector of normal
+  //! \param[inout] flux a vector of flux
+  void (*bc_flux)(void * cs,LinearSolver* lsol, real * xpg, real * w, real *vnorm, real * flux);
+
   
 
 } ContinuousSolver;
@@ -192,11 +210,5 @@ void extract2CGVectors(ContinuousSolver* L1Solver,ContinuousSolver* L2Solver, re
 //! \brief frees a ContinuousSolver object
 //! \param[in] cs: a ContinuousSolver object
 void freeContinuousSolver(ContinuousSolver* cs);
-
-//! \brief compute the local operator fo the wave weak form
-//! \param[in] cs: a ContinuousSolver object
-//! \param[in] theta: a coeffcient
-//! \param[in] dt: a time step
-void Wave_test(ContinuousSolver* cs, real theta, real dt);
 
 #endif
