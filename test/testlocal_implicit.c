@@ -19,7 +19,13 @@ void Transport_Upwind_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
                               real *flux);
 
 
-void AssemblyImplicitLinearSolver(Simulation *simu, LinearSolver *solver,real theta,real dt);
+
+void TestSteady_Wave_ImposedData(const real *x, const real t, real *w);
+void TestSteady_Wave_InitData(real *x, real *w);
+void TestSteady_Wave_Source(const real *xy, const real t, const real *w, real *S);
+void Wave_Upwind_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
+			      real *flux);
+
 
 
 
@@ -54,17 +60,33 @@ int Test_Local_Implicit(void) {
 
   Model model;
 
-  model.m=1;
-  model.NumFlux = TestSteady_Transport_NumFlux;
-  model.BoundaryFlux = Transport_Upwind_BoundaryFlux;
-  model.InitData = TestSteady_Transport_InitData;
-  model.ImposedData = TestSteady_Transport_ImposedData;
-  model.Source = TestSteady_Transport_Source;
+  /* model.m=1; */
+  /* model.NumFlux = TestSteady_Transport_NumFlux; */
+  /* model.BoundaryFlux = Transport_Upwind_BoundaryFlux; */
+  /* model.InitData = TestSteady_Transport_InitData; */
+  /* model.ImposedData = TestSteady_Transport_ImposedData; */
+  /* model.Source = TestSteady_Transport_Source; */
+
+  /* model.m = 7; */
+  /* model.NumFlux = Maxwell2DNumFlux_upwind; */
+  /* model.BoundaryFlux = Maxwell2DBoundaryFlux_upwind; */
+  /* model.InitData = Maxwell2DInitData; */
+  /* model.ImposedData = Maxwell2DImposedData; */
+  /* model.Source = Maxwell2DSource; */
+  //model.Source = NULL;
+
+  model.m=3;
+  model.NumFlux=Wave_Upwind_NumFlux;
+  model.InitData = TestSteady_Wave_InitData;
+  model.ImposedData = TestSteady_Wave_ImposedData;
+  model.BoundaryFlux = Wave_Upwind_BoundaryFlux;
+  model.Source = TestSteady_Wave_Source;
 
   int deg[]={3, 3, 0};
   int raf[]={4, 4, 1};
   
   CheckMacroMesh(&mesh, deg, raf);
+
   Simulation simu;
   EmptySimulation(&simu);
 
@@ -142,4 +164,51 @@ void TestSteady_Transport_NumFlux(real *wL, real *wR, real *vnorm, real *flux)
   // verify that 2d computations are actually
   // activated
   //assert(fabs(vnorm[2]) < 1e-8);
+}
+
+/* #undef _SPEED_WAVE */
+/* #define _SPEED_WAVE 2 */
+
+void TestSteady_Wave_ImposedData(const real *xy, const real t, real *w) {
+
+  real x=xy[0];
+  real y=xy[1];
+
+
+  w[0] = x*(1-x)*y*(1-y)+1;
+  w[1] = 2*x*(1-x)*y*(1-y)+2;
+  w[2] = 3*x*(1-x)*y*(1-y)+3;
+
+
+}
+
+
+void TestSteady_Wave_Source(const real *xy, const real t, const real *w, real *S){
+  
+  real x=xy[0];
+  real y=xy[1];
+
+  S[0] = 2*(1-2*x)*(y*(1-y))+3*(1-2*y)*(x*(1-x));
+  S[1] = (1-2*x)*(y*(1-y));
+  S[2] = (1-2*y)*(x*(1-x));
+
+  S[0] *= _SPEED_WAVE;
+  S[1] *= _SPEED_WAVE;
+  S[2] *= _SPEED_WAVE;
+
+}
+
+void TestSteady_Wave_InitData(real *x, real *w) {
+  real t = 0;
+  TestSteady_Wave_ImposedData(x, t, w);
+}
+
+
+
+
+void Wave_Upwind_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
+				       real *flux) {
+  real wR[3];
+  TestSteady_Wave_ImposedData(x , t, wR);
+  Wave_Upwind_NumFlux(wL, wR, vnorm, flux);
 }
