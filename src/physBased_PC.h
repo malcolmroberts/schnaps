@@ -11,6 +11,8 @@
 #include "linear_solver.h"
 #include "simulation.h"
 #include "solvercontinuous.h"
+#include "solverwave.h"
+#include "solverpoisson.h"
 
 //! \brief Struct managing Physics Based Preconditioners
 typedef struct PB_PC{
@@ -104,12 +106,6 @@ void Init_PhyBasedPC_SchurVelocity_Wave(Simulation *simu, PB_PC* pb_pc, int* lis
 // \param[in] list_mat2assembly: Integer array. Tells which matrices shall be assembled.
 void Init_PhyBasedPC_SchurPressure_Wave(Simulation *simu, PB_PC* pb_pc, int* list_mat2assemble);
 
-// \brief Initialize the physics-based preconditioner with schur on the pressure
-// \param[in] simu: Simulation object containing some run-related variables
-// \param[inout] pb_pc: Physics-based Preconditioner object.
-// \param[in] list_mat2assembly: Integer array. Tells which matrices shall be assembled.
-void Init_PhyBasedPC_SchurFull_Wave(Simulation *simu, PB_PC* pb_pc, int* list_mat2assemble);
-
 // \brief Initialize Generic matrices for differential opertors -> Has to be tuned to the considered problem.
 // Schur decomposition is given by the following definition of the matrices:
 // |  D   |  U1    U2 |
@@ -146,18 +142,6 @@ void PhyBased_PC_CG(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*global
 // \param[in] globalRHS: Right-hand-side containing all explicit and source terms.
 void PhyBased_PC_InvertSchur_CG(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*globalRHS);
 
-// \brief Physics-based CG preconditioner for CG problem
-// \param[in] pb_pc: Physics-based preconditioner (contains all the Schur decomposition)
-// \param[out] globalSol: Stores the solution of the preconditioner.
-// \param[in] globalRHS: Right-hand-side containing all explicit and source terms.
-void PhyBased_PC_Full(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*globalRHS);
-
-// \brief Solves problem using identity CG preconditioner.
-// \param[in] pb_pc: Physics-based preconditioner (contains all the Schur decomposition)
-// \param[out] globalSol: Stores the solution of the preconditioner.
-// \param[in] globalRHS: Right-hand-side containing all explicit and source terms.
-void solveIdentity(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*globalRHS);
-
 // \brief Frees any PB_PC object
 // \param[inout] pb_pc a PhysicsBased_PreConditioner 
 void freePB_PC(PB_PC* pb_pc);
@@ -170,11 +154,11 @@ void GenericOperator_PBPC_Velocity(PB_PC* pb_pc);
 // \param[in] pb_pc: The working preconditioner.
 void GenericOperator_PBPC_Pressure(PB_PC* pb_pc);
 
-void ExactDerivateContinuousMatrix(void * ps,real * vector, int var,int derivate, real t);
-
 // \brief Function resetting all but problem matrices.
 // \param[in] pb_pc: The working preconditioner.
 void reset(PB_PC* pb_pc);
+
+void RobinFlux_pressure(void * cs,LinearSolver* lsol, real * xpg, real * w, real *vnorm, real * flux);
 
 
 #endif

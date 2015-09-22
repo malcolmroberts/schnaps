@@ -26,18 +26,10 @@ void Computation_ElectricField_Poisson(void * cs,LinearSolver* lsol);
 void RHSPoisson_Continuous(void * cs,LinearSolver* lsol);
 
 
-//! \brief solve a 1D poisson problem
-//! \param[in] simu a simulation
-//! \param[in] w the field values (for computing the charge
-//! , returning the potential and the electric field)
-//! \param[in] type_bc the boundary condition type
-//!  (1->dirichlet ; 2-> periodic)
-//! \param[in] bc_l left boundary value (dirichlet case)
-//! \param[in] bc_r right boundary value (dirichlet case)
-//! \param[in] solver_sys linear solver
-//! \param[in] precon preconditionner
-void SolvePoisson1D(Simulation *simu,real * w,
-		    int type_bc, real bc_l, real bc_r,Solver solver_sys, PC precon);
+void RobinBoundaryConditionAssembly(void * cs,LinearSolver* lsol);
+
+
+
 
 
 #endif

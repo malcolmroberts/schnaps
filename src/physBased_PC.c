@@ -387,8 +387,11 @@ void Init_PhyBasedPC_SchurPressure_Wave(Simulation *simu, PB_PC* pb_pc, int* lis
   GenericOperator_PBPC_Pressure(pb_pc);
 
   // For the Schur the the condition is Neumann
-  pb_pc->D.bc_assembly=ExactDirichletContinuousMatrix_PC;
-  pb_pc->Schur.bc_assembly=ExactDirichletContinuousMatrix_PC;
+  
+  pb_pc->D.bc_assembly=NULL;
+
+  pb_pc->Schur.bc_flux=RobinFlux_pressure;
+  pb_pc->Schur.bc_assembly=RobinBoundaryConditionAssembly;
 
   pb_pc->D.bc_assembly(&pb_pc->D,&pb_pc->D.lsol);
   pb_pc->Schur.bc_assembly(&pb_pc->Schur,&pb_pc->Schur.lsol);
@@ -446,46 +449,6 @@ void Init_Parameters_PhyBasedPC(PB_PC* pb_pc){
   
 }
 
-void solveIdentity(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*globalRHS_DG){
-  
-  // 0)1) Reset everything (needed for time evolution)
-  reset(pb_pc);
-
-
-  // Parsing globalRHS (in DG) into a CG vector
-  ContinuousSolver waveSolver;
-  int nb_var = 3;
-  int * listvarGlobal = calloc(nb_var, sizeof(int));
-  listvarGlobal[0]=0;
-  listvarGlobal[1]=1;
-  listvarGlobal[2]=2;
-  InitContinuousSolver(&waveSolver,simu,1,nb_var,listvarGlobal);
-  free(listvarGlobal);
-  real * globalRHS_CG = calloc(waveSolver.lsol.neq,sizeof(real));
-
-  //for(int i=0;i<simu->wsize;i++){
-  // globalSol[i]=globalRHS_DG[i];
-  //}
-  
-  VectorDgToCg(&waveSolver, globalRHS_DG, globalRHS_CG);
-  // Back from CG to DG
-  VectorCgToDg(&waveSolver,globalRHS_CG,globalSol);
-
-  /*real error=0;
-  real norm=0;
-  real normnum=0;
-  for(int i=0;i<simu->wsize;i++){
-    //printf("  i, dg, sol, diff %d %.7e %.7e %.7e \n",i,globalRHS_DG[i],globalSol[i],globalSol[i]-globalRHS_DG[i]);
-    error=error+fabs(globalSol[i]-globalRHS_DG[i]);
-    norm=norm+fabs(globalRHS_DG[i]);
-    normnum=normnum+fabs(globalSol[i]);
-    }
-  //printf(" error cg to dg:%f %f %f %f\n",error,error/(norm+1.0),norm,normnum);
-  //sleep(100);
-  */
-  freeContinuousSolver(&waveSolver);
-  free(globalRHS_CG);
-}
 
 void PhyBased_PC_DG(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*globalRHS_DG){
   
@@ -1495,71 +1458,22 @@ void VectorCgToDg(ContinuousSolver * cs, real * rhsIn, real * rhsOut){
 
 }
 
+void RobinFlux_pressure(void * cs,LinearSolver* lsol, real * xpg, real * w, real *vnorm, real * flux){
 
-
-void ExactDerivateContinuousMatrix(void * ps,real * vector, int var,int derivate, real t){
-  ContinuousSolver * cs=ps;
-  
-  field* f = &cs->simu->fd[0];
-
-  for(int i= 0; i < cs->nb_fe_nodes; i++){
-    vector[i]=0;
-  }
-
-  int nraf[3] = {f->raf[0],f->raf[1],f->raf[2]};
-
-  int deg[3] = {f->deg[0],f->deg[1],f->deg[2]};
-
-  int npg[3] = {f->npg[0],f->npg[1],f->npg[2]};
-
-
-  for(int ie = 0; ie < cs->nbel; ie++){  
-
-    int iemacro  = ie / (f->raf[0] * f->raf[1] * f->raf[2]);
-    int isubcell = ie % (f->raf[0] * f->raf[1] * f->raf[2]);
-    
-    for(int iloc = 0; iloc < cs->nnodes; iloc++){
-      real wpg;
-      real xref[3];
-      int ilocmacro = iloc + isubcell * cs->nnodes;
-      ref_pg_vol(f->deg,f->raf,ilocmacro,xref,&wpg,NULL);
-      real dtau[3][3],codtau[3][3];
-      Ref2Phy(cs->simu->fd[iemacro].physnode,
-	      xref,NULL,0,NULL,
-	      dtau,codtau,NULL,NULL);
-      real det = dot_product(dtau[0], codtau[0]);	
-      int ino_dg = iloc + ie * cs->nnodes;
-      int ino_fe = cs->dg_to_fe_index[ino_dg];
-      real pi=4.0*atan(1.0);
-      real L=1;
-      real Coef=(2.0*pi)/L;
-      real val=0;
-      if(var == 0 ){
-	 if(derivate ==0 ){
-	   val=Coef*Coef*sqrt(2.0)*sin(Coef*sqrt(2.0)*t)*sin(Coef*xref[0])*cos(Coef*xref[1]);
-	 }
-	 if(derivate ==1 ){
-	   val=Coef*Coef*sqrt(2.0)*sin(Coef*sqrt(2.0)*t)*sin(Coef*xref[0])*cos(Coef*xref[1]);
-	 }
-      }
-      if(var == 1 ){
-	if(derivate ==0 ){
-	  val=Coef*Coef*cos(Coef*sqrt(2.0)*t)*cos(Coef*xref[0])*cos(Coef*xref[1]);
-	}
-	if(derivate ==1 ){
-	  val=-Coef*Coef*cos(Coef*sqrt(2.0)*t)*sin(Coef*xref[0])*sin(Coef*xref[1]);
-	}
-      }
-      if(var == 2 ){
-	if(derivate ==0 ){
-	  val=-Coef*Coef*cos(Coef*sqrt(2.0)*t)*sin(Coef*xref[0])*sin(Coef*xref[1]);
-	}
-	if(derivate ==1 ){
-	  val=Coef*Coef*cos(Coef*sqrt(2.0)*t)*cos(Coef*xref[0])*cos(Coef*xref[1]);
-	}
-      }
-      vector[ino_fe]+= val * wpg * det ;
-    }
- }
+  ContinuousSolver * ps=cs;
  
+  real lambda=0;
+  real Coef_diff=0;
+  real p0=0;
+
+  Coef_diff=ps->simu->dt*ps->simu->vmax*ps->simu->theta;
+
+  // u=- c dt theta nabla p
+  // boudnary condition for wave lambda p-1/c (u,n)=g ==> * Coef_diff * (nabla p,n)+lambda p=g
+  // ==> -(nabla p,n)= c* lambda / (Coeff*diff)-g *c /(Coeff*diff)
+  // ==> -(Coeff*diff)**2 (nabla p,n)= c* lambda * (Coeff*diff)-g *c *(Coeff*diff)
+
+  flux[0]=ps->simu->vmax * lambda* Coef_diff * w[0]- ps->simu->vmax * Coef_diff * p0;
 }
+
+

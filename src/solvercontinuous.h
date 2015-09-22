@@ -96,7 +96,6 @@ typedef struct ContinuousSolver{
   //! \brief FluxMatrix is the matrix of the hyperbolic model
   real ** FluxMatrix;
   
-
   //! \brief pointer on the function which assembles the rhs
   //! \param[inout] lsol a linear solver allocate
   //! \param[in] a continuous solver

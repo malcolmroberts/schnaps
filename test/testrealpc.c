@@ -377,8 +377,8 @@ int Testrealpc(void) {
     model4.BoundaryFlux = SteadyStateOne_BoundaryFlux;
     model4.Source = SteadyStateOne_Source;
 
-    int deg4[]={4, 4, 0};
-    int raf4[]={32, 32, 1};
+    int deg4[]={2, 2, 0};
+    int raf4[]={1, 1, 1};
 
     assert(mesh.is2d);
     CheckMacroMesh(&mesh, deg4, raf4);
@@ -398,9 +398,9 @@ int Testrealpc(void) {
 
     real theta4=0.5;
     simu4.theta=theta4;
-    simu4.dt=1000;//0.001667;
+    simu4.dt=10;//0.001667;
     simu4.vmax=_SPEED_WAVE;
-    real tmax4=10*simu4.dt;//10*simu.dt;//;0.5;
+    real tmax4=1*simu4.dt;//10*simu.dt;//;0.5;
     int itermax4=tmax4/simu4.dt;
     simu4.itermax_rk=itermax4;
     int size = cs.nb_fe_dof;
@@ -410,16 +410,21 @@ int Testrealpc(void) {
     csSolve.lsol.solver_type=LU;
     csSolve.lsol.tol=1.e-10;
     csSolve.lsol.pc_type=NONE;
-    csSolve.lsol.iter_max=10000;
-    csSolve.lsol.restart_gmres=5;
+    csSolve.lsol.iter_max=1000;
+    csSolve.lsol.restart_gmres=20;
     csSolve.lsol.is_CG=true;
-    csSolve.bc_assembly=ExactDirichletContinuousMatrix;
 
+    cs.bc_flux=Wave_BC_pressure_imposed;
+    csSolve.bc_flux=Wave_BC_pressure_imposed;
+    csSolve.bc_assembly=BoundaryConditionFriedrichsAssembly;
+    cs.bc_assembly=BoundaryConditionFriedrichsAssembly;
+    
     Wave_test(&cs,-(1.0-simu4.theta),simu4.dt);
     GenericOperator2Vec_Continuous(&cs,&cs.lsol);
     Wave_test(&csSolve,simu4.theta,simu4.dt);
     GenericOperator2Vec_Continuous(&csSolve,&csSolve.lsol);
 
+  
     PiDgToCg(&cs,simu4.w,wCG);
 
     simu4.tnow=0;
@@ -433,11 +438,21 @@ int Testrealpc(void) {
       simu4.tnow=simu4.tnow+simu4.dt;
       for(int ie=0; ie < simu4.macromesh.nbelems; ++ie){
         simu4.fd[ie].tnow=simu4.tnow;
-      } 
-      for(int i=0;i<size;i++){
-        csSolve.lsol.rhs[i]=resCG[i];
       }
-      csSolve.bc_assembly(&csSolve, &csSolve.lsol);     
+
+      for (int i=0; i<size; i++){
+	csSolve.lsol.rhs[i]=0;
+      }
+
+      cs.bc_assembly(&cs, &cs.lsol);
+      csSolve.bc_assembly(&csSolve, &csSolve.lsol);
+      //DisplayLinearSolver(&csSolve.lsol);
+      
+      for (int i=0; i<size; i++){
+	csSolve.lsol.rhs[i]+=resCG[i]-cs.lsol.rhs[i];
+        //printf(" rhs %d %.e6 \n",i,csSolve.lsol.rhs[i]);
+      }
+      
       Advanced_SolveLinearSolver(&csSolve.lsol,&simu4);
       
       for (int i=0; i<size; i++){
@@ -510,8 +525,8 @@ int Testrealpc(void) {
     csSolve.lsol.restart_gmres=30;
     csSolve.lsol.is_CG=true;
 
-    cs.bc_flux=Wave_BC;
-    csSolve.bc_flux=Wave_BC;
+    cs.bc_flux=Wave_BC_normalvelocity_null;
+    csSolve.bc_flux=Wave_BC_normalvelocity_null;
     csSolve.bc_assembly=BoundaryConditionFriedrichsAssembly;
     cs.bc_assembly=BoundaryConditionFriedrichsAssembly;//ExactDirichletContinuousMatrix;
 
@@ -520,7 +535,7 @@ int Testrealpc(void) {
     GenericOperator2Vec_Continuous(&cs,&cs.lsol);
     Wave_test(&csSolve,simu5.theta,simu5.dt);
     GenericOperator2Vec_Continuous(&csSolve,&csSolve.lsol);
-    
+
   
     PiDgToCg(&cs,simu5.w,wCG);
 
@@ -539,13 +554,18 @@ int Testrealpc(void) {
       simu5.tnow=simu5.tnow+simu5.dt;
       for(int ie=0; ie < simu5.macromesh.nbelems; ++ie){
         simu5.fd[ie].tnow=simu5.tnow;
-      } 
-      for(int i=0;i<size;i++){
-        csSolve.lsol.rhs[i]=resCG[i];
+      }
+      
+      for (int i=0; i<size; i++){
+	csSolve.lsol.rhs[i]=0;
       }
       
       cs.bc_assembly(&cs, &cs.lsol);
       csSolve.bc_assembly(&csSolve, &csSolve.lsol);
+
+      for (int i=0; i<size; i++){
+	csSolve.lsol.rhs[i]+=resCG[i]-cs.lsol.rhs[i];
+      }
       
       Advanced_SolveLinearSolver(&csSolve.lsol,&simu5);
       
@@ -560,7 +580,7 @@ int Testrealpc(void) {
     PiInvertCgToDg(&cs,wCG,simu5.w);
     dd = L2error(&simu5);
 
-    printf("erreur L2=%.12e\n", dd);
+    printf("erreur L2= %.12e\n", dd);
 
     test = test && (dd<5.e-2);
     freeSimulation(&simu5);
@@ -581,29 +601,11 @@ void SteadyStateOne_ImposedData(const real *xy, const real t, real *w) {
   real y=xy[1];
 
   w[0] = 10.0;//+exp(x)+exp(2*y); // 10+x*x+y*y*y
-  w[1] = 2.0;//0.2*x*x*x*x*x*y-exp(y)+2;
-  w[2] = 4.0;//exp(x)-x*x*x*x*y*y*0.5+5.6;
+  w[1] = x*y+2;
+  w[2] = -y*y*0.5+5.0;
 
 }
 
-void SteadyStateTwo_ImposedData(const real *xy, const real t, real *w) {
-
-  real x=xy[0];
-  real y=xy[1];
-
-
-  /*w[0] = x*(1-x)*y*(1-y);
-    w[1] = 2*x*(1-x)*y*(1-y);
-    w[2] = 3*x*(1-x)*y*(1-y);*/
-
-  real x5=x*x*x;
-  real y5=y*y*y;
-
-  w[0] = x5*(1-x5)*y5*(1-y5);
-  w[1] = 2.0*x5*(1-x5)*y5*(1-y5);
-  w[2] = 2.0*x5*(1-x5)*y5*(1-y5);
-
-}
 
 void SteadyStateOne_Source(const real *xy, const real t, const real *w, real *S){
 
@@ -620,52 +622,15 @@ void SteadyStateOne_Source(const real *xy, const real t, const real *w, real *S)
 
 }
 
-void SteadyStateTwo_Source(const real *xy, const real t, const real *w, real *S){
-
-  real x=xy[0];
-  real y=xy[1];
-
-  /*S[0] = 2*(1-2*x)*(y*(1-y))+3*(1-2*y)*(x*(1-x));
-    S[1] = (1-2*x)*(y*(1-y));
-    S[2] = (1-2*y)*(x*(1-x));*/
-
-
-  real x5=x*x*x;
-  real x4=3.0*x*x;
-  real y5=y*y*y;
-  real y4=3.0*y*y;
-
-  S[0] = 2.0*(x5*(-x4)+x4*(1.0-x5))*y5*(1.0-y5)+2.0*(y5*(-y4)+y4*(1.0-y5))*x5*(1.0-x5);
-  S[1] = (x5*(-x4)+x4*(1.0-x5))*y5*(1.0-y5);
-  S[2] = (y5*(-y4)+y4*(1.0-y5))*x5*(1.0-x5);
-
-  S[0] *= _SPEED_WAVE;
-  S[1] *= _SPEED_WAVE;
-  S[2] *= _SPEED_WAVE;
-
-}
-
 void SteadyStateOne_InitData(real *x, real *w) {
   real t = 0;
   SteadyStateOne_ImposedData(x, t, w);
-}
-
-void SteadyStateTwo_InitData(real *x, real *w) {
-  real t = 0;
-  SteadyStateTwo_ImposedData(x, t, w);
 }
 
 void SteadyStateOne_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
     real *flux) {
   real wR[3];
   SteadyStateOne_ImposedData(x , t, wR);
-  Wave_Upwind_NumFlux(wL, wR, vnorm, flux);
-}
-
-void SteadyStateTwo_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
-    real *flux) {
-  real wR[3];
-  SteadyStateTwo_ImposedData(x , t, wR);
   Wave_Upwind_NumFlux(wL, wR, vnorm, flux);
 }
 

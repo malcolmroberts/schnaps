@@ -63,7 +63,7 @@ void BoundaryConditionFriedrichsAssembly(void * cs,LinearSolver* lsol){
 	      // The basis functions is also the gauss point index
 	      //int imem2 = fL->varindex(fL->deg, fL->raf,fL->model.m, ipgL, iv2) + offsetL;
 	      int ipot_fe2 = ino_fe*ps->nb_phy_vars + iv2;
-	      real val =  (flux[iv2]-flux0[iv2]) * wpg;		    
+	      real val =  (flux[iv2]-flux0[iv2]) * wpg;
 	      AddLinearSolver(lsol, ipot_fe2, ipot_fe1, val);
 	    }
 	  }	    
@@ -188,7 +188,7 @@ void Wave_test(ContinuousSolver* cs,real theta, real dt){
 }
 
 
-void Wave_BC(void * cs,LinearSolver* lsol, real * xpg, real * w, real *vnorm, real * flux){
+void Wave_BC_normalvelocity_null(void * cs,LinearSolver* lsol, real * xpg, real * w, real *vnorm, real * flux){
 
   ContinuousSolver * ps=cs;
   real M[3][3];
@@ -196,7 +196,7 @@ void Wave_BC(void * cs,LinearSolver* lsol, real * xpg, real * w, real *vnorm, re
   real lambda=0;
   real p0=0,u0_1=0,u0_2=0;
 
-  real coefbc=ps->simu->dt*0.5;
+  real h=ps->FluxMatrix[0][1]/ps->simu->vmax;
   
   M[0][0]=lambda;
   M[0][1]=-(1.0/ps->simu->vmax)*vnorm[0];
@@ -218,7 +218,44 @@ void Wave_BC(void * cs,LinearSolver* lsol, real * xpg, real * w, real *vnorm, re
   BC[2][1]=M[2][1];
   BC[2][2]=M[2][2];
 
-  flux[0]=(BC[0][0]*w[0]+BC[0][1]*w[1]+BC[0][2]*w[2])-coefbc*(M[0][0]*p0+M[0][1]*u0_1+M[0][2]*u0_2);
-  flux[1]=(BC[1][0]*w[0]+BC[1][1]*w[1]+BC[1][2]*w[2])-coefbc*(M[1][0]*p0+M[1][1]*u0_1+M[1][2]*u0_2);
-  flux[2]=(BC[2][0]*w[0]+BC[2][1]*w[1]+BC[2][2]*w[2])-coefbc*(M[2][0]*p0+M[2][1]*u0_1+M[2][2]*u0_2);
+  flux[0]=(BC[0][0]*w[0]+BC[0][1]*w[1]+BC[0][2]*w[2])-h*(M[0][0]*p0+M[0][1]*u0_1+M[0][2]*u0_2);
+  flux[1]=(BC[1][0]*w[0]+BC[1][1]*w[1]+BC[1][2]*w[2])-h*(M[1][0]*p0+M[1][1]*u0_1+M[1][2]*u0_2);
+  flux[2]=(BC[2][0]*w[0]+BC[2][1]*w[1]+BC[2][2]*w[2])-h*(M[2][0]*p0+M[2][1]*u0_1+M[2][2]*u0_2);
+}
+
+
+
+void Wave_BC_pressure_imposed(void * cs,LinearSolver* lsol, real * xpg, real * w, real *vnorm, real * flux){
+
+  ContinuousSolver * ps=cs;
+  real M[3][3];
+  real BC[3][3];
+  real lambda=1.e+12;
+  real p0=10,u0_1=0,u0_2=0;
+
+  real h=ps->FluxMatrix[0][1];
+
+  M[0][0]=lambda;
+  M[0][1]=-(1.0/ps->simu->vmax)*vnorm[0];
+  M[0][2]=-(1.0/ps->simu->vmax)*vnorm[1];
+  M[1][0]=0;
+  M[1][1]=0;
+  M[1][2]=0;
+  M[2][0]=0;
+  M[2][1]=0;
+  M[2][2]=0;
+
+  BC[0][0]=M[0][0];
+  BC[0][1]=(ps->FluxMatrix[0][1]*vnorm[0]+M[0][1]);
+  BC[0][2]=(ps->FluxMatrix[0][2]*vnorm[1]+M[0][2]);
+  BC[1][0]=(ps->FluxMatrix[1][0]*vnorm[0]+M[1][0]);
+  BC[1][1]=M[1][1];
+  BC[1][2]=M[1][2];
+  BC[2][0]=(ps->FluxMatrix[2][0]*vnorm[1]+M[2][0]);
+  BC[2][1]=M[2][1];
+  BC[2][2]=M[2][2];
+
+  flux[0]=(BC[0][0]*w[0]+BC[0][1]*w[1]+BC[0][2]*w[2])-h*(M[0][0]*p0+M[0][1]*u0_1+M[0][2]*u0_2);
+  flux[1]=(BC[1][0]*w[0]+BC[1][1]*w[1]+BC[1][2]*w[2])-h*(M[1][0]*p0+M[1][1]*u0_1+M[1][2]*u0_2);
+  flux[2]=(BC[2][0]*w[0]+BC[2][1]*w[1]+BC[2][2]*w[2])-h*(M[2][0]*p0+M[2][1]*u0_1+M[2][2]*u0_2);
 }
