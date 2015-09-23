@@ -87,11 +87,8 @@ typedef struct ContinuousSolver{
   //! \brief for dirchilet homogeneous, 2 for periodic 
   int type_bc;
 
-  //! \brief Differential operator for scalar problems
-  SDO diff_op;
-
   //! \brief Differential operator for 2d vectorial (some variables) problems
-  SDO * diff_opvec;
+  SDO * diff_op;
 
   //! \brief FluxMatrix is the matrix of the hyperbolic model
   real ** FluxMatrix;
@@ -191,10 +188,7 @@ void PenalizedDirichletContinuousMatrix_PC(void * cs,LinearSolver* lsol);
 void SolveContinuous2D(void * cs);
 
 //! TODOODODODODOOD
-void GenericOperatorScalar_Continuous(void * cs,LinearSolver* lsol);
-
-//! TODOODODODODOOD
-void GenericOperator2Vec_Continuous(void * cs,LinearSolver* lsol);
+void GenericOperator_Continuous(void * cs,LinearSolver* lsol);
 
 //! TODOODODODODOOD
 void cat2CGVectors(ContinuousSolver* L1Solver,ContinuousSolver* L2Solver, real *L1, real *L2, real *L);

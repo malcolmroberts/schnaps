@@ -158,106 +158,7 @@ int Testrealpc(void) {
     test = test && (dd<2.e-2);
     freeSimulation(&simu);
   }
-  ///////////////////////////////// Test TWO: Splitting error
-  printf("//////////////////////////////////////\n");
-  printf("TEST TWO!\n");
-  printf("//////////////////////////////////////\n");
-  if(test2_ok==1){
-    Model model2;
 
-    model2.m = 3; 
-    model2.NumFlux=Wave_Upwind_NumFlux;
-    model2.InitData = SteadyStateTwo_InitData;
-    model2.ImposedData = SteadyStateTwo_ImposedData;
-    model2.BoundaryFlux = SteadyStateTwo_BoundaryFlux;
-    model2.Source = SteadyStateTwo_Source;
-
-    int deg2[]={4, 4, 0};
-    int raf2[]={10, 10, 1};
-
-
-    CheckMacroMesh(&mesh, deg2, raf2);
-    Simulation simu2;
-
-    InitSimulation(&simu2, &mesh, deg2, raf2, &model2);
-
-
-    LinearSolver solver_implicit2;
-    LinearSolver solver_explicit2;  
-
-    real theta2=0.5;
-    simu2.theta=theta2;
-    simu2.dt=0.01;
-    simu2.vmax=_SPEED_WAVE;
-    real tmax2 = 5*simu2.dt;//0.08;
-
-    real itermax2=tmax2/simu2.dt;
-    simu2.itermax_rk=itermax2;
-    InitImplicitLinearSolver(&simu2, &solver_implicit2);
-    InitImplicitLinearSolver(&simu2, &solver_explicit2);
-    real *res2 = calloc(simu2.wsize, sizeof(real));
-
-    solver_implicit2.solver_type=GMRES;//LU;//GMRES;
-    solver_implicit2.tol=1.e-8;
-    solver_implicit2.pc_type=PHY_BASED;
-    solver_implicit2.iter_max=500;
-
-    simu2.tnow=0;
-    for(int ie=0; ie < simu2.macromesh.nbelems; ++ie){
-      simu2.fd[ie].tnow=simu2.tnow;
-    } 
-
-    for(int tstep=0;tstep<simu2.itermax_rk;tstep++){
-
-
-      if(tstep==0){ 
-        solver_implicit2.mat_is_assembly=false;
-        solver_explicit2.mat_is_assembly=false;
-      } 
-      else 
-      { 
-        solver_implicit2.mat_is_assembly=true;
-        solver_explicit2.mat_is_assembly=true;
-      } 
-
-      solver_implicit2.rhs_is_assembly=false;
-      solver_explicit2.rhs_is_assembly=false;
-
-
-      AssemblyImplicitLinearSolver(&simu2, &solver_explicit2,-(1.0-theta2),simu2.dt);
-      simu2.tnow=simu2.tnow+simu2.dt;
-      for(int ie=0; ie < simu2.macromesh.nbelems; ++ie){
-        simu2.fd[ie].tnow=simu2.tnow;
-      } 
-      AssemblyImplicitLinearSolver(&simu2, &solver_implicit2,theta2,simu2.dt);
-
-
-      MatVect(&solver_explicit2, simu2.w, res2);
-
-      for(int i=0;i<solver_implicit2.neq;i++){
-        solver_implicit2.rhs[i]=solver_implicit2.rhs[i]+res2[i]-solver_explicit2.rhs[i];
-      }
-
-      Advanced_SolveLinearSolver(&solver_implicit2,&simu2);
-
-      for(int i=0;i<simu2.wsize;i++){ 
-        simu2.fd[0].wn[i]=solver_implicit2.sol[i];
-      }
-      for(int i=0;i<simu2.wsize;i++){ 
-        solver_implicit2.sol[i]=0; // sans cela ca marche pas le PC pk ?????????
-      } 
-
-      int freq = (1 >= simu2.itermax_rk / 10)? 1 : simu2.itermax_rk / 10;
-      if (tstep % freq == 0)
-        printf("t=%f iter=%d/%d dt=%f\n", simu2.tnow, tstep, simu2.itermax_rk, simu2.dt);
-    }
-    dd = L2error(&simu2);
-
-    printf("erreur L2=%.12e\n", dd);
-
-    test = test && (dd<1.e-2);
-    freeSimulation(&simu2);
-  } 
 
   ///////////////////////////////// Test THREE: Time-dependent problem
   printf("//////////////////////////////////////\n");
@@ -420,9 +321,9 @@ int Testrealpc(void) {
     cs.bc_assembly=BoundaryConditionFriedrichsAssembly;
     
     Wave_test(&cs,-(1.0-simu4.theta),simu4.dt);
-    GenericOperator2Vec_Continuous(&cs,&cs.lsol);
+    GenericOperator_Continuous(&cs,&cs.lsol);
     Wave_test(&csSolve,simu4.theta,simu4.dt);
-    GenericOperator2Vec_Continuous(&csSolve,&csSolve.lsol);
+    GenericOperator_Continuous(&csSolve,&csSolve.lsol);
 
   
     PiDgToCg(&cs,simu4.w,wCG);
@@ -486,7 +387,7 @@ int Testrealpc(void) {
     model5.Source = NULL;
 
     int deg5[]={4, 4, 0};
-    int raf5[]={16, 16, 1};
+    int raf5[]={8, 8, 1};
 
     assert(mesh.is2d);
 
@@ -494,7 +395,7 @@ int Testrealpc(void) {
     Simulation simu5;
 
     InitSimulation(&simu5, &mesh, deg5, raf5, &model5);
-
+   
 
     ContinuousSolver cs;
     ContinuousSolver csSolve;
@@ -508,9 +409,9 @@ int Testrealpc(void) {
 
     real theta5=0.5;
     simu5.theta=theta5;
-    simu5.dt=0.001;//0.001667;
+    simu5.dt=10;//0.001667;
     simu5.vmax=_SPEED_WAVE;
-    real tmax5=0.1;//;0.5;
+    real tmax5=200;//;0.5;
 
     int itermax5=tmax5/simu5.dt;
     simu5.itermax_rk=itermax5;
@@ -518,10 +419,10 @@ int Testrealpc(void) {
     real *resCG = calloc(size, sizeof(real));
     real *wCG = calloc(size, sizeof(real));
 
-    csSolve.lsol.solver_type=LU;
-    csSolve.lsol.tol=1.e-10;
-    csSolve.lsol.pc_type=NONE;//PHY_BASED;
-    csSolve.lsol.iter_max=500;
+    csSolve.lsol.solver_type=GMRES;
+    csSolve.lsol.tol=1.e-9;
+    csSolve.lsol.pc_type=PHY_BASED;
+    csSolve.lsol.iter_max=5000;
     csSolve.lsol.restart_gmres=30;
     csSolve.lsol.is_CG=true;
 
@@ -532,9 +433,9 @@ int Testrealpc(void) {
 
     
     Wave_test(&cs,-(1.0-simu5.theta),simu5.dt);
-    GenericOperator2Vec_Continuous(&cs,&cs.lsol);
+    GenericOperator_Continuous(&cs,&cs.lsol);
     Wave_test(&csSolve,simu5.theta,simu5.dt);
-    GenericOperator2Vec_Continuous(&csSolve,&csSolve.lsol);
+    GenericOperator_Continuous(&csSolve,&csSolve.lsol);
 
   
     PiDgToCg(&cs,simu5.w,wCG);
@@ -566,7 +467,7 @@ int Testrealpc(void) {
       for (int i=0; i<size; i++){
 	csSolve.lsol.rhs[i]+=resCG[i]-cs.lsol.rhs[i];
       }
-      
+
       Advanced_SolveLinearSolver(&csSolve.lsol,&simu5);
       
       for (int i=0; i<size; i++){

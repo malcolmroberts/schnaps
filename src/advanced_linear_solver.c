@@ -142,7 +142,6 @@ void Advanced_GMRESSolver(LinearSolver* lsol, Simulation* simu){
   lsol->MatVecProduct=MatVect;
   
   res=init_dgmres(icntl,cntl);
-  
   icntl[3]  = 6 ;           // output unit
   icntl[7]  = lsol->iter_max; // Maximum number of iterations
   icntl[4]  = 0; //!1            // preconditioner (1) = left preconditioner

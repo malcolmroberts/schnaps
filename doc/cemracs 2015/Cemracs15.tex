@@ -122,12 +122,12 @@ Before we propose to add some admissible boundary condition. Defining $p=\dt f$ 
 $$
 \partial_{tt} f-c^2\Delta f=0
 $$
-A classical boundary condition for this problem is $\dt f+ \lambda f=g$. Using the definition of $\bm{u}$ and $p$ we obtain the following hyperbolic problem
+A classical boundary condition for this problem is $\lambda \dt f+f=g$. Using the definition of $\bm{u}$ and $p$ we obtain the following hyperbolic problem
 $$
 \left\{\begin{array}{l}
 \ds \dt p+c\nabla \cdot \bm{u}=0\\
 \ds \dt \bm{u}+c\nabla p = 0 \\
-p-c \lambda (\bm{u},\bm{n})=g\quad \delta \Omega \end{array}\right.
+\lambda p-c  (\bm{u},\bm{n})=g\quad \delta \Omega \end{array}\right.
 $$
 Firstly we propose a energy estimate for this problem. For this we multiply the first equation by $p$ and the second one by $\bm{u}$ and we integrate. We obtain
 \begin{align*}
@@ -137,9 +137,10 @@ Firstly we propose a energy estimate for this problem. For this we multiply the 
 \end{align*}
 at the end we obtain
 $$
-\frac{1}{2}\dt \int_{\Omega}(p^2+(\bm{u},\bm{u}))=-\int_{\partial \Omega} \lambda c^2 (\bm{u},\bm{n})^2- \int_{\partial \Omega} c g (\bm{u},\bm{n})
+\frac{1}{2}\dt \int_{\Omega}(p^2+(\bm{u},\bm{u}))=-\int_{\partial \Omega} \frac{c^2}{\lambda} (\bm{u},\bm{n})^2- \int_{\partial \Omega} \frac{c g}{\lambda} (\bm{u},\bm{n})
 $$
-In the homogeneous case the boundary condition is dissipative. 
+In the homogeneous case the boundary condition is dissipative.
+TOOOOODDOOO BC 
 \section{Time and spatial discretization}
 The classical explicit scheme for this problem are not useful is the velocity $c>>1$. Indeed the time step is constrained by this velocity. Consequently use an implicit scheme is an interesting way (there also a possibility to construct semi-implicit AP scheme with a CFL condition independent of $\eps$). Now we propose to write an implicit scheme based on a Cranck-Nicholson scheme :
 $$
@@ -147,7 +148,7 @@ $$
 \ds p^{n+1} + \theta c\Delta t \nabla \cdot \mathbf{u}^{n+1}=  p^n- (1-\theta) c \Delta t   \nabla \cdot \mathbf{u}^{n}\\
 \ds \mathbf{u}^{n+1}+\theta c \Delta t \nabla p^{n+1}= \mathbf{u}^n-(1-\theta ) c\Delta t \nabla p^{n}\end{array}\right.
 $$
-We add the boundary condition $p^{n+1}-c \lambda (\bm{u}^{n+1},\bm{n})=g$.
+We add the boundary condition $ \lambda  p^{n+1}-c(\bm{u}^{n+1},\bm{n})=g$.
 \subsection{Finite element method and spatial discretization}
 To discretize the previous semi discrete scheme with finite element method. To begin we define three test function $v_p$, $v_{\bm{u}}=(v_{u1},v_{u2})$. Firstly we consider the weak form multiplying the problem by thee basis function. We will begin by the first equation
 $$
@@ -249,40 +250,40 @@ $$
 This algorithm can be also obtain using a reformulation of wave equation and a splitting. Firstly we discretize in time the model
 $$
 \left\{\begin{array}{l}
-\ds \frac{p^{n+1}-p^n}{\Delta t}+c\nabla \cdot \bm{u}^{n+1}= f_p \\
-\ds \frac{\bm{u}^{n+1}-\bm{u}^n}{\Delta t} +c\nabla p^{n+1} = f_u \end{array}\right.
+\ds \frac{p^{n+1}-p^n}{\Delta t}+c\theta \nabla \cdot \bm{u}^{n+1}= f_p \\
+\ds \frac{\bm{u}^{n+1}-\bm{u}^n}{\Delta t} +c\theta \nabla p^{n+1} = f_u \end{array}\right.
 $$
 Now we applying a splitting to obtain
 $$
 \left\{\begin{array}{l}
 \ds \frac{\bm{u}^{*}-\bm{u}^n}{\Delta t}  = \mathbf{f}_u\\
 ~\\
-\ds \frac{p^{n+1}-p^n}{\Delta t}+ c\nabla \cdot  \mathbf{u}^{n+1}= f_p\\
+\ds \frac{p^{n+1}-p^n}{\Delta t}+ c\theta \nabla \cdot  \mathbf{u}^{n+1}= f_p\\
 ~\\
-\ds \frac{\bm{u}^{n+1}-\bm{u}^*}{\Delta t} +c\nabla p^{n+1} = 0 \end{array}\right.
+\ds \frac{\bm{u}^{n+1}-\bm{u}^*}{\Delta t} +c\theta \nabla p^{n+1} = 0 \end{array}\right.
 $$
 Plugging the third equation in the second we obtain
 $$
 \left\{\begin{array}{l}
 \ds \frac{\bm{u}^{*}-\bm{u}^n}{\Delta t}  = \mathbf{f}_u\\
 ~\\
-\ds \frac{p^{n+1}-p^n}{\Delta t}- \Delta t c^2\Delta p^{n+1} = f_p-c\nabla \cdot (\bm{u}^*) \\
+\ds \frac{p^{n+1}-p^n}{\Delta t}- \Delta t \theta^2 c^2\Delta p^{n+1} = f_p-c\theta \nabla \cdot (\bm{u}^*) \\
 ~\\
-\ds \frac{\bm{u}^{n+1}-\bm{u}^*}{\Delta t} +c\nabla p^{n+1} = 0 \end{array}\right.
+\ds \frac{\bm{u}^{n+1}-\bm{u}^*}{\Delta t} +c\theta \nabla p^{n+1} = 0 \end{array}\right.
 $$
 Now the question is what this the good boundary condition to assure that the solution of the algorithm and the solution of the real problem are closed ( error in $\Delta t$). We want obtain at the boundary condition
-$p^{n+1}-\lambda c (\bm{u}^{n+1},\bm{n})=g$. Using this $\bm{u}^{n+1}=-c \Delta t\nabla p^{n+1}$ we obtain $p^{n+1}+\lambda  \Delta t c^2 (\nabla p^{n+1},\bm{n})=g$. Consequently we obtain Robin boundary condition for $p$
+$\lambda p^{n+1}- c (\bm{u}^{n+1},\bm{n})=g$. Using this $\bm{u}^{n+1}=-c \theta \Delta t\nabla p^{n+1}$ we obtain $\lambda p^{n+1}+ \theta \Delta t c^2 (\nabla p^{n+1},\bm{n})=g$. Consequently we obtain Robin boundary condition for $p$
 $$
-\nabla p\cdot \bm{n}+\frac{p}{\Delta t\lambda c^2}=\frac{g}{\Delta t\lambda c^2 }
+\nabla p\cdot \bm{n}=-\lambda\frac{p}{c(\Delta t\theta c)}+\frac{g}{c(\Delta t\theta c)}
 $$
 We will consider the implicit problem with $\mathbf{f}_u$ and $f_p$ generic RHS
 $$
 \left\{\begin{array}{l}
 \ds \bm{u}^{*}= \mathbf{f}_u\\
 ~\\
-\ds p^{n+1}- \Delta t c^2\Delta p^{n+1} = f_p-c\Delta t\nabla \cdot (\bm{u}^*) \\
+\ds p^{n+1}- \Delta t c^2\theta^2\Delta p^{n+1} = f_p-c\theta \Delta t\nabla \cdot (\bm{u}^*) \\
 ~\\
-\ds \bm{u}^{n+1}+c\Delta t\nabla p^{n+1} = 0 \end{array}\right.
+\ds \bm{u}^{n+1}+c\Delta t\theta \nabla p^{n+1} = 0 \end{array}\right.
 $$
 
 
@@ -290,10 +291,10 @@ At the end we introduce two test functions $v_p$ and $\mathbf{v}_u$. The weak fo
 $$\left\{\begin{array}{l}
 \ds \int_{\Omega} \bm{u}^{*} \mathbf{v}_u = \int_{\Omega}\mathbf{f}_u \mathbf{v}_u\\
 ~\\
-\ds \int_{\Omega} p^{n+1} v_p+ \Delta t^2 c^2 \int_{\Omega}\nabla p^{n+1} \cdot \nabla v_p +\Delta t \int_{\delta \Omega} \frac{1}{\lambda }p^{n+1} v_p\\
-= \ds +c\Delta t\int_{\Omega} \bm{u}^* \cdot \nabla v_p -c\Delta t \int_{\delta \Omega} (\bm{u}\cdot\bm{n})v_p + \int_{\Omega}f_p+\Delta t \int_{\delta \Omega} \frac{1}{\lambda }g v_p\\
+\ds \int_{\Omega} p^{n+1} v_p+ \Delta t^2 \theta^2 c^2 \int_{\Omega}\nabla p^{n+1} \cdot \nabla v_p +\Delta t \theta\int_{\delta \Omega} \lambda p^{n+1} v_p\\
+= \ds +c\theta\Delta t\int_{\Omega} \bm{u}^* \cdot \nabla v_p -c\theta\Delta t \int_{\delta \Omega} (\bm{u}\cdot\bm{n})v_p + \Delta t\int_{\Omega}f_p+\Delta t \theta \int_{\delta \Omega} \lambda g v_p\\
 ~\\
-\ds \int_{\Omega} \bm{u}^{n+1} \mathbf{v}_u= c\Delta t \int_{\Omega} p^{n+1} \nabla \cdot (\mathbf{v}_u)-c\Delta t \int_{\delta \Omega} (\bm{v}_u\cdot\bm{n})p^{n+1}  \end{array}\right.
+\ds \int_{\Omega} \bm{u}^{n+1} \mathbf{v}_u= c\theta\Delta t \int_{\Omega} p^{n+1} \nabla \cdot (\mathbf{v}_u)-c\theta\Delta t \int_{\delta \Omega} (\bm{v}_u\cdot\bm{n})p^{n+1}  \end{array}\right.
 $$
 We assume that the solution are regular. The first and third operators to invert are just the Identity consequently the two problem are well posed.The second one is a coercive problem with Robin Boundary condition. It is also known that this problem is well posed.
 

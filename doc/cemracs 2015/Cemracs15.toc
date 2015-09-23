@@ -4,3 +4,4 @@
 \contentsline {subsection}{\numberline {2.1}Finite element method and spatial discretization}{2}{subsection.2.1}
 \contentsline {section}{\numberline {3}Principle of the preconditioning for the wave equation}{3}{section.3}
 \contentsline {subsection}{\numberline {3.1}Schur on the pressure}{3}{subsection.3.1}
+\contentsline {subsection}{\numberline {3.2}Schur on the velocity}{5}{subsection.3.2}

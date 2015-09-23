@@ -228,19 +228,25 @@ void Init_PhyBasedPC_SchurVelocity_Wave(Simulation *simu, PB_PC* pb_pc, int* lis
                             {0,0,h*h,0},
                             {0,0,0,0}}};
 
-  pb_pc->Schur.diff_opvec = calloc(pb_pc->Schur.nb_phy_vars*pb_pc->Schur.nb_phy_vars,sizeof(tab));
+  pb_pc->D.diff_op = calloc(pb_pc->D.nb_phy_vars*pb_pc->D.nb_phy_vars,sizeof(SDO));
+  pb_pc->Schur.diff_op = calloc(pb_pc->Schur.nb_phy_vars*pb_pc->Schur.nb_phy_vars,sizeof(SDO));
+  pb_pc->L1.diff_op = calloc(pb_pc->L1.nb_phy_vars*pb_pc->L1.nb_phy_vars,sizeof(SDO));
+  pb_pc->L2.diff_op = calloc(pb_pc->L2.nb_phy_vars*pb_pc->L2.nb_phy_vars,sizeof(SDO));
+  pb_pc->U1.diff_op = calloc(pb_pc->U1.nb_phy_vars*pb_pc->U1.nb_phy_vars,sizeof(SDO));
+  pb_pc->U2.diff_op = calloc(pb_pc->U2.nb_phy_vars*pb_pc->U2.nb_phy_vars,sizeof(SDO));
+  
 
   // Applying these matrices inside the different ContinuousSolver
   for (int i=0; i<4; i++){
     for (int j=0; j<4; j++){
       for (int k=0; k<4; k++){
-        if (SchurMat != NULL) pb_pc->Schur.diff_opvec[k].DO[i][j] = SchurMat[k][i][j];
+        if (SchurMat != NULL) pb_pc->Schur.diff_op[k].DO[i][j] = SchurMat[k][i][j];
       }
-      if (DMat != NULL) pb_pc->D.diff_op.DO[i][j]  = DMat[i][j];
-      if (L1Mat != NULL) pb_pc->L1.diff_op.DO[i][j] = L1Mat[i][j];
-      if (L2Mat != NULL) pb_pc->L2.diff_op.DO[i][j] = L2Mat[i][j];
-      if (U1Mat != NULL) pb_pc->U1.diff_op.DO[i][j] = U1Mat[i][j];
-      if (U2Mat != NULL) pb_pc->U2.diff_op.DO[i][j] = U2Mat[i][j];
+      if (DMat != NULL) pb_pc->D.diff_op[0].DO[i][j]  = DMat[i][j];
+      if (L1Mat != NULL) pb_pc->L1.diff_op[0].DO[i][j] = L1Mat[i][j];
+      if (L2Mat != NULL) pb_pc->L2.diff_op[0].DO[i][j] = L2Mat[i][j];
+      if (U1Mat != NULL) pb_pc->U1.diff_op[0].DO[i][j] = U1Mat[i][j];
+      if (U2Mat != NULL) pb_pc->U2.diff_op[0].DO[i][j] = U2Mat[i][j];
     }
   }
 
@@ -282,9 +288,10 @@ void Init_PhyBasedPC_SchurVelocity_Wave(Simulation *simu, PB_PC* pb_pc, int* lis
 
 
 void Init_PhyBasedPC_SchurPressure_Wave(Simulation *simu, PB_PC* pb_pc, int* list_mat2assemble){
-
+  printf(" pppp111111 ");
   // system is linear
   pb_pc->nonlinear=0;
+
 
   pb_pc->list_mat2assemble = calloc(6, sizeof(int));
   for (int i=0; i<6; i++) pb_pc->list_mat2assemble[i] = list_mat2assemble[i];
@@ -367,22 +374,28 @@ void Init_PhyBasedPC_SchurPressure_Wave(Simulation *simu, PB_PC* pb_pc, int* lis
 			{0,0,0,0},
 			{0,0,0,0}}};
 
-  pb_pc->D.diff_opvec = calloc(pb_pc->D.nb_phy_vars*pb_pc->D.nb_phy_vars,sizeof(SDO));
+  pb_pc->D.diff_op = calloc(pb_pc->D.nb_phy_vars*pb_pc->D.nb_phy_vars,sizeof(SDO));
+  pb_pc->Schur.diff_op = calloc(pb_pc->Schur.nb_phy_vars*pb_pc->Schur.nb_phy_vars,sizeof(SDO));
+  pb_pc->L1.diff_op = calloc(pb_pc->L1.nb_phy_vars*pb_pc->L1.nb_phy_vars,sizeof(SDO));
+  pb_pc->L2.diff_op = calloc(pb_pc->L2.nb_phy_vars*pb_pc->L2.nb_phy_vars,sizeof(SDO));
+  pb_pc->U1.diff_op = calloc(pb_pc->U1.nb_phy_vars*pb_pc->U1.nb_phy_vars,sizeof(SDO));
+  pb_pc->U2.diff_op = calloc(pb_pc->U2.nb_phy_vars*pb_pc->U2.nb_phy_vars,sizeof(SDO));
   
   // Applying these matrices inside the different ContinuousSolver
   for (int i=0; i<4; i++){
     for (int j=0; j<4; j++){
       for (int k=0; k<4; k++){
-        if (DMat != NULL) pb_pc->D.diff_opvec[k].DO[i][j] = DMat[k][i][j];
+        if (DMat != NULL) pb_pc->D.diff_op[k].DO[i][j] = DMat[k][i][j];
       }
-      if (SchurMat != NULL) pb_pc->Schur.diff_op.DO[i][j]  = SchurMat[i][j];
-      if (L1Mat != NULL) pb_pc->L1.diff_op.DO[i][j] = L1Mat[i][j];
-      if (L2Mat != NULL) pb_pc->L2.diff_op.DO[i][j] = L2Mat[i][j];
-      if (U1Mat != NULL) pb_pc->U1.diff_op.DO[i][j] = U1Mat[i][j];
-      if (U2Mat != NULL) pb_pc->U2.diff_op.DO[i][j] = U2Mat[i][j];
+      if (SchurMat != NULL) pb_pc->Schur.diff_op[0].DO[i][j]  = SchurMat[i][j];
+      if (L1Mat != NULL) pb_pc->L1.diff_op[0].DO[i][j] = L1Mat[i][j];
+      if (L2Mat != NULL) pb_pc->L2.diff_op[0].DO[i][j] = L2Mat[i][j];
+      if (U1Mat != NULL) pb_pc->U1.diff_op[0].DO[i][j] = U1Mat[i][j];
+      if (U2Mat != NULL) pb_pc->U2.diff_op[0].DO[i][j] = U2Mat[i][j];
     }
   }
 
+ 
   // Assembling all operators' matrices
   GenericOperator_PBPC_Pressure(pb_pc);
 
@@ -393,8 +406,20 @@ void Init_PhyBasedPC_SchurPressure_Wave(Simulation *simu, PB_PC* pb_pc, int* lis
   pb_pc->Schur.bc_flux=RobinFlux_pressure;
   pb_pc->Schur.bc_assembly=RobinBoundaryConditionAssembly;
 
-  pb_pc->D.bc_assembly(&pb_pc->D,&pb_pc->D.lsol);
-  pb_pc->Schur.bc_assembly(&pb_pc->Schur,&pb_pc->Schur.lsol);
+  pb_pc->L1.bc_flux=BoundaryTerm_Xderivative;
+  pb_pc->L1.bc_assembly=BoundaryConditionFriedrichsAssembly;
+  pb_pc->U1.bc_flux=BoundaryTerm_Xderivative;
+  pb_pc->U1.bc_assembly=BoundaryConditionFriedrichsAssembly;
+
+  pb_pc->L2.bc_flux=BoundaryTerm_Yderivative;
+  pb_pc->L2.bc_assembly=BoundaryConditionFriedrichsAssembly;
+  pb_pc->U2.bc_flux=BoundaryTerm_Yderivative;
+  pb_pc->U2.bc_assembly=BoundaryConditionFriedrichsAssembly;
+
+  pb_pc->U2.bc_assembly(&pb_pc->U2,&pb_pc->U2.lsol);
+  pb_pc->U1.bc_assembly(&pb_pc->U1,&pb_pc->U1.lsol);
+  pb_pc->L2.bc_assembly(&pb_pc->L2,&pb_pc->L2.lsol);
+  pb_pc->L1.bc_assembly(&pb_pc->L1,&pb_pc->L1.lsol);
 
   pb_pc->Schur.lsol.MatVecProduct=MatVect;
   pb_pc->L1.lsol.MatVecProduct=MatVect;
@@ -408,17 +433,6 @@ void Init_PhyBasedPC_SchurPressure_Wave(Simulation *simu, PB_PC* pb_pc, int* lis
   pb_pc->rhs_propagation = calloc(pb_pc->Schur.lsol.neq,sizeof(real));
   pb_pc->rhs_correction = calloc(pb_pc->D.lsol.neq,sizeof(real));
 
-  for (int i=0;i<pb_pc->D.nb_fe_nodes;i++){
-    if (pb_pc->L1.is_boundary_node[i]){
-      for (int j=0;j<pb_pc->D.nb_fe_nodes;j++){
-	SetLinearSolver(&pb_pc->L1.lsol,i,j,0.0);
-	SetLinearSolver(&pb_pc->L2.lsol,i,j,0.0);
-	SetLinearSolver(&pb_pc->U1.lsol,i,j,0.0);
-	SetLinearSolver(&pb_pc->U2.lsol,i,j,0.0);
-      } 
-    }
-  } 
-  
 }
 
 
@@ -607,6 +621,9 @@ void PhyBased_PC_CG(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*global
     pb_pc->Schur.lsol.rhs[i*2+1] = globalRHS[i*3+2] - pb_pc->L2.lsol.sol[i];
   }
 
+  //printf assembly boundary condition 
+  pb_pc->Schur.bc_assembly(&pb_pc->Schur,&pb_pc->Schur.lsol);
+
   //printf("Solution...\n");
   Advanced_SolveLinearSolver(&pb_pc->Schur.lsol,simu);
 
@@ -685,7 +702,6 @@ void PhyBased_PC_InvertSchur_CG(PB_PC* pb_pc, Simulation *simu, real* globalSol,
   //printf("Solution prediction\n");
   Advanced_SolveLinearSolver(&pb_pc->D.lsol,simu);
 
-
   // 2) PROPAGATION STEP
 
   pb_pc->Schur.lsol.solver_type=pb_pc->solver_propagation;
@@ -701,13 +717,6 @@ void PhyBased_PC_InvertSchur_CG(PB_PC* pb_pc, Simulation *simu, real* globalSol,
   // Parsing L1P, L2P into the "sol" of L1 and L2 (since it is unused).
   pb_pc->L1.lsol.MatVecProduct(&pb_pc->L1.lsol,solU1,pb_pc->L1.lsol.sol);
   pb_pc->L2.lsol.MatVecProduct(&pb_pc->L2.lsol,solU2,pb_pc->L2.lsol.sol);
-
-  //ExactDerivateContinuousMatrix(&pb_pc->L1,pb_pc->L1.lsol.sol,1,0,0);
-  //ExactDerivateContinuousMatrix(&pb_pc->L2,pb_pc->L2.lsol.sol,2,1,0);
-
-  /*for (int i=0; i<pb_pc->D.nb_fe_nodes; i++){
-    printf("i===%d false div(U)=%.8e %.8e , rhs_p %.8e \n",i,pb_pc->L1.lsol.sol[i], pb_pc->L2.lsol.sol[i],globalRHS[i*3]);
-    }*/
 
   //printf("RHS assembly.....\n");
   for (int i=0;i<pb_pc->D.nb_fe_nodes;i++){
@@ -725,12 +734,9 @@ void PhyBased_PC_InvertSchur_CG(PB_PC* pb_pc, Simulation *simu, real* globalSol,
   pb_pc->D.lsol.iter_max=pb_pc->itermax_correction;
   pb_pc->D.lsol.restart_gmres=pb_pc->restart_correction;
   
-  pb_pc->L1.lsol.MatVecProduct(&pb_pc->U1.lsol,pb_pc->Schur.lsol.sol,pb_pc->U1.lsol.sol);
-  pb_pc->L2.lsol.MatVecProduct(&pb_pc->U2.lsol,pb_pc->Schur.lsol.sol,pb_pc->U2.lsol.sol);
+  pb_pc->U1.lsol.MatVecProduct(&pb_pc->U1.lsol,pb_pc->Schur.lsol.sol,pb_pc->U1.lsol.sol);
+  pb_pc->U2.lsol.MatVecProduct(&pb_pc->U2.lsol,pb_pc->Schur.lsol.sol,pb_pc->U2.lsol.sol);
   pb_pc->D.lsol.MatVecProduct(&pb_pc->D.lsol,pb_pc->D.lsol.sol,pb_pc->D.lsol.rhs);
-
-  //ExactDerivateContinuousMatrix(&pb_pc->U1,pb_pc->U1.lsol.sol,0,0,0);
-  //ExactDerivateContinuousMatrix(&pb_pc->U2,pb_pc->U2.lsol.sol,0,1,0);
 
   //printf("RHS assembly.....\n");
   for (int i=0;i<pb_pc->D.nb_fe_nodes;i++){
@@ -833,7 +839,7 @@ void GenericOperator_PBPC_Velocity(PB_PC* pb_pc){
             for (int i=0; i<4; i++){
               res[i]=0;
               for (int j=0; j<4; j++){
-                res[i]+=basisPhi_j[j]*cs->diff_op.DO[i][j];
+                res[i]+=basisPhi_j[j]*cs->diff_op[0].DO[i][j];
               }
             }
             val = dot_product(basisPhi_i, res) * wpg * det  ;
@@ -844,7 +850,7 @@ void GenericOperator_PBPC_Velocity(PB_PC* pb_pc){
             for (int i=0; i<4; i++){
               res[i]=0;
               for (int j=0; j<4; j++){
-                res[i]+=basisPhi_j[j]*cs->diff_op.DO[i][j];
+                res[i]+=basisPhi_j[j]*cs->diff_op[0].DO[i][j];
               }
             }
             val = dot_product(basisPhi_i, res) * wpg * det  ;
@@ -855,7 +861,7 @@ void GenericOperator_PBPC_Velocity(PB_PC* pb_pc){
             for (int i=0; i<4; i++){
               res[i]=0;
               for (int j=0; j<4; j++){
-                res[i]+=basisPhi_j[j]*cs->diff_op.DO[i][j];
+                res[i]+=basisPhi_j[j]*cs->diff_op[0].DO[i][j];
               }
             }
             val = dot_product(basisPhi_i, res) * wpg * det  ;
@@ -866,7 +872,7 @@ void GenericOperator_PBPC_Velocity(PB_PC* pb_pc){
             for (int i=0; i<4; i++){
               res[i]=0;
               for (int j=0; j<4; j++){
-                res[i]+=basisPhi_j[j]*cs->diff_op.DO[i][j];
+                res[i]+=basisPhi_j[j]*cs->diff_op[0].DO[i][j];
               }
             }
             val = dot_product(basisPhi_i, res) * wpg * det  ;
@@ -877,7 +883,7 @@ void GenericOperator_PBPC_Velocity(PB_PC* pb_pc){
             for (int i=0; i<4; i++){
               res[i]=0;
               for (int j=0; j<4; j++){
-                res[i]+=basisPhi_j[j]*cs->diff_op.DO[i][j];
+                res[i]+=basisPhi_j[j]*cs->diff_op[0].DO[i][j];
               }
             }
             val = dot_product(basisPhi_i, res) * wpg * det  ;
@@ -891,7 +897,7 @@ void GenericOperator_PBPC_Velocity(PB_PC* pb_pc){
                 for (int i=0; i<4; i++){
                   res[i]=0;
                   for (int j=0; j<4; j++){
-                    res[i]+=basisPhi_j[j]*cs->diff_opvec[2*iv1+iv2].DO[i][j];
+                    res[i]+=basisPhi_j[j]*cs->diff_op[2*iv1+iv2].DO[i][j];
                   }
                 }
                 val = dot_product(basisPhi_i, res) * wpg * det  ;
@@ -988,7 +994,7 @@ void GenericOperator_PBPC_Pressure(PB_PC* pb_pc){
             for (int i=0; i<4; i++){
               res[i]=0;
               for (int j=0; j<4; j++){
-                res[i]+=basisPhi_j[j]*cs->diff_op.DO[i][j];
+                res[i]+=basisPhi_j[j]*cs->diff_op[0].DO[i][j];
               }
             }
             val = dot_product(basisPhi_i, res) * wpg * det  ;
@@ -999,7 +1005,7 @@ void GenericOperator_PBPC_Pressure(PB_PC* pb_pc){
             for (int i=0; i<4; i++){
               res[i]=0;
               for (int j=0; j<4; j++){
-                res[i]+=basisPhi_j[j]*cs->diff_op.DO[i][j];
+                res[i]+=basisPhi_j[j]*cs->diff_op[0].DO[i][j];
               }
             }
             val = dot_product(basisPhi_i, res) * wpg * det  ;
@@ -1010,7 +1016,7 @@ void GenericOperator_PBPC_Pressure(PB_PC* pb_pc){
             for (int i=0; i<4; i++){
               res[i]=0;
               for (int j=0; j<4; j++){
-                res[i]+=basisPhi_j[j]*cs->diff_op.DO[i][j];
+                res[i]+=basisPhi_j[j]*cs->diff_op[0].DO[i][j];
               }
             }
             val = dot_product(basisPhi_i, res) * wpg * det  ;
@@ -1021,7 +1027,7 @@ void GenericOperator_PBPC_Pressure(PB_PC* pb_pc){
             for (int i=0; i<4; i++){
               res[i]=0;
               for (int j=0; j<4; j++){
-                res[i]+=basisPhi_j[j]*cs->diff_op.DO[i][j];
+                res[i]+=basisPhi_j[j]*cs->diff_op[0].DO[i][j];
               }
             }
             val = dot_product(basisPhi_i, res) * wpg * det  ;
@@ -1032,7 +1038,7 @@ void GenericOperator_PBPC_Pressure(PB_PC* pb_pc){
             for (int i=0; i<4; i++){
               res[i]=0;
               for (int j=0; j<4; j++){
-                res[i]+=basisPhi_j[j]*cs->diff_op.DO[i][j];
+                res[i]+=basisPhi_j[j]*cs->diff_op[0].DO[i][j];
               }
             }
             val = dot_product(basisPhi_i, res) * wpg * det  ;
@@ -1046,7 +1052,7 @@ void GenericOperator_PBPC_Pressure(PB_PC* pb_pc){
                 for (int i=0; i<4; i++){
                   res[i]=0;
                   for (int j=0; j<4; j++){
-                    res[i]+=basisPhi_j[j]*cs->diff_opvec[2*iv1+iv2].DO[i][j];
+                    res[i]+=basisPhi_j[j]*cs->diff_op[2*iv1+iv2].DO[i][j];
                   }
                 }
                 val = dot_product(basisPhi_i, res) * wpg * det  ;
@@ -1146,8 +1152,6 @@ for (int ino_fe=0;ino_fe<cs->nb_fe_nodes;ino_fe++){
    }
  }
 
-
- 
  for(int ie = 0; ie < cs->nbel; ie++){  
 
     int iemacro  = ie / (f->raf[0] * f->raf[1] * f->raf[2]);
@@ -1170,14 +1174,11 @@ for (int ino_fe=0;ino_fe<cs->nb_fe_nodes;ino_fe++){
     }
  }
 
-
-
  for (int ino_fe=0;ino_fe<cs->nb_fe_nodes;ino_fe++){
    for (int ino_dg=0;ino_dg<cs->nb_dg_nodes;ino_dg++){
      Restriction[ino_fe][ino_dg]/=coeff[ino_fe];
    }
  }
-
 
  for (int ino_fe=0;ino_fe<cs->nb_fe_nodes;ino_fe++){
    for(int iv=0;iv<cs->nb_phy_vars;iv++){
@@ -1189,8 +1190,6 @@ for (int ino_fe=0;ino_fe<cs->nb_fe_nodes;ino_fe++){
      }
    }
  }
-
-
 
  for (int i=0;i<cs->nb_fe_nodes;i++){
    for (int iv=0;iv<cs->nb_phy_vars;iv++){
@@ -1225,8 +1224,6 @@ void PiInvertCgToDg(ContinuousSolver * cs,real * rhsIn, real * rhsOut){
    tabvar_transform[i] = calloc(cs->nb_dg_nodes,sizeof(real));
  }
 
-
-
  for (int i=0;i<cs->nb_fe_nodes;i++){
    for (int iv=0;iv<cs->nb_phy_vars;iv++){
      tabvar[iv][i] = rhsIn[iv+i*cs->nb_phy_vars];
@@ -1260,98 +1257,11 @@ for(int ie = 0; ie < cs->nbel; ie++){
       coeff[ino_dg] = wpg * det; // We need to multiply by the member of dg node for 1 fe node.
     }
  }
-
-
  for (int ino_dg=0;ino_dg<cs->nb_dg_nodes;ino_dg++){
    for (int ino_fe=0;ino_fe<cs->nb_fe_nodes;ino_fe++){
      Reconstruction[ino_dg][ino_fe]/=coeff[ino_dg];
    }
  }
-//////////////////////////////////////////////////////////////////////////////////
- real ** Restriction;
- real* coeff2 = calloc(cs->nb_fe_nodes, sizeof(real));
-
- Restriction = calloc(cs->nb_fe_nodes,sizeof(real*));
- for (int i=0;i<cs->nb_fe_nodes;i++){
-   Restriction[i] = calloc(cs->nb_dg_nodes,sizeof(real));
- }
-
-for (int ino_fe=0;ino_fe<cs->nb_fe_nodes;ino_fe++){
-   for (int ino_dg=0;ino_dg<cs->nb_dg_nodes;ino_dg++){
-     Restriction[ino_fe][ino_dg]=0.;
-   }
- }
-
-
- 
- for(int ie = 0; ie < cs->nbel; ie++){  
-
-    int iemacro  = ie / (f->raf[0] * f->raf[1] * f->raf[2]);
-    int isubcell = ie % (f->raf[0] * f->raf[1] * f->raf[2]);
-    
-    for(int iloc = 0; iloc < cs->nnodes; iloc++){
-      real wpg;
-      real xref[3];
-      int ilocmacro = iloc + isubcell * cs->nnodes;
-      ref_pg_vol(f->deg,f->raf,ilocmacro,xref,&wpg,NULL);
-      real dtau[3][3],codtau[3][3];
-      Ref2Phy(cs->simu->fd[iemacro].physnode,
-	      xref,NULL,0,NULL,
-	      dtau,codtau,NULL,NULL);
-      real det = dot_product(dtau[0], codtau[0]);	
-      int ino_dg = iloc + ie * cs->nnodes;
-      int ino_fe = cs->dg_to_fe_index[ino_dg];
-      Restriction[ino_fe][ino_dg]= wpg * det; // We need to multiply by the member of dg node for 1 fe node.
-      coeff2[ino_fe] += wpg * det; // We need to multiply by the member of dg node for 1 fe node.
-    }
- }
-
-
-
- for (int ino_fe=0;ino_fe<cs->nb_fe_nodes;ino_fe++){
-   for (int ino_dg=0;ino_dg<cs->nb_dg_nodes;ino_dg++){
-     Restriction[ino_fe][ino_dg]/=coeff2[ino_fe];
-   }
- }
- //////////////////////////////////
- // real **pipi = calloc(cs->nb_dg_nodes,sizeof(real*));
- //real **pipi2 = calloc(cs->nb_fe_nodes,sizeof(real*));
- //for (int i=0;i<cs->nb_dg_nodes;i++){
- //  pipi[i] = calloc(cs->nb_dg_nodes,sizeof(real));
- //}
- //for (int i=0;i<cs->nb_fe_nodes;i++){
- // pipi2[i] = calloc(cs->nb_fe_nodes,sizeof(real));
- //}
- //for (int i=0; i<cs->nb_dg_nodes; i++){
- //  for (int j=0; j<cs->nb_dg_nodes; j++){
- //    pipi[i][j]=0.;
- //    for (int k=0; k<cs->nb_fe_nodes; k++){
- //      pipi[i][j] += Reconstruction[i][k]*Restriction[k][j];
- //    }
- //    if (j==cs->nb_dg_nodes-1){
- //      printf("%.12e;",pipi[i][j]);
- //    }
- //    else{
- //      printf("%.12e,",pipi[i][j]);
- //    }
- //  }
- //}
- //for (int i=0; i<cs->nb_fe_nodes; i++){
- //  for (int j=0; j<cs->nb_fe_nodes; j++){
- //    pipi2[i][j]=0.;
- //    for (int k=0; k<cs->nb_dg_nodes; k++){
- //      pipi2[i][j] += Restriction[i][k]*Reconstruction[k][j];
- //    }
- //    //if (j==cs->nb_fe_nodes-1){
- //    //  printf("%.12e;",pipi2[i][j]);
- //    //}
- //    //else{
- //    //  printf("%.12e,",pipi2[i][j]);
- //    //}
- //  }
- //}
- 
-//////////////////////////////////////////////////////////////////////////////////
 
  for (int ino_dg=0;ino_dg<cs->nb_dg_nodes;ino_dg++){
     for(int iv=0;iv<cs->nb_phy_vars;iv++){
@@ -1363,7 +1273,6 @@ for (int ino_fe=0;ino_fe<cs->nb_fe_nodes;ino_fe++){
      }
    }
  }
-
 
 for (int i=0;i<cs->nb_dg_nodes;i++){
    for (int iv=0;iv<cs->nb_phy_vars;iv++){
@@ -1476,4 +1385,32 @@ void RobinFlux_pressure(void * cs,LinearSolver* lsol, real * xpg, real * w, real
   flux[0]=ps->simu->vmax * lambda* Coef_diff * w[0]- ps->simu->vmax * Coef_diff * p0;
 }
 
+void BoundaryTerm_Xderivative(void * cs,LinearSolver* lsol, real * xpg, real * w, real *vnorm, real * flux){
 
+  ContinuousSolver * ps=cs;
+ 
+  real lambda=0;
+  real Coef_diff=0;
+  real p0=0;
+
+  Coef_diff=ps->simu->dt*ps->simu->vmax*ps->simu->theta;
+
+  // term c dt theta n1
+
+  flux[0]= Coef_diff * w[0] * vnorm[0];
+}
+
+void BoundaryTerm_Yderivative(void * cs,LinearSolver* lsol, real * xpg, real * w, real *vnorm, real * flux){
+
+  ContinuousSolver * ps=cs;
+ 
+  real lambda=0;
+  real Coef_diff=0;
+  real p0=0;
+
+  Coef_diff=ps->simu->dt*ps->simu->vmax*ps->simu->theta;
+
+  // term c dt theta n2
+
+  flux[0]= Coef_diff * w[0] * vnorm[1];
+}

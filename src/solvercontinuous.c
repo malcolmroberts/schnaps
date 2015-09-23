@@ -130,7 +130,6 @@ void InitContinuousSolver(void * cs, Simulation* simu,int type_bc,int nb_phy_var
     /* printf("ino=%d idg=%d ife=%d\n",ino,ps->fn_list[ino].dg_index, */
     /* 	   ps->fn_list[ino].fe_index); */
     ps->dg_to_fe_index[ps->fn_list[ino].dg_index]=ps->fn_list[ino].fe_index;
-    
   }
 
   // now construct the list of boundary nodes
@@ -499,99 +498,8 @@ void AllocateContinuousMatrix(void *cs,LinearSolver* lsol){
 }
 
 
-void GenericOperatorScalar_Continuous(void * cs,LinearSolver* lsol){
 
-  ContinuousSolver * ps=cs;
-
-  field* f0 = &ps->simu->fd[0];
-
-  if(!ps->lsol.mat_is_assembly){
-    for(int ie = 0; ie < ps->nbel; ie++){  
-
-      // local matrix 
-      real aloc[ps->nnodes][ps->nnodes];
-      for(int iloc = 0; iloc < ps->nnodes; iloc++){
-        for(int jloc = 0; jloc < ps->nnodes; jloc++){
-          aloc[iloc][jloc] = 0;
-        }
-      }
-        
-      int iemacro = ie / (f0->raf[0] * f0->raf[1] * f0->raf[2]);
-      int isubcell = ie % (f0->raf[0] * f0->raf[1] * f0->raf[2]);
-        
-      for(int ipg = 0;ipg < ps->nnodes; ipg++){
-        real wpg;
-        real xref[3];
-        int ipgmacro= ipg + isubcell * ps->nnodes;
-        
-        ref_pg_vol(f0->deg,f0->raf,ipgmacro,xref,&wpg,NULL);
-        
-        for(int iloc = 0; iloc < ps->nnodes; iloc++){
-          real dtau[3][3],codtau[3][3];
-          real dphiref_i[3],dphiref_j[3];
-          real dphi_i[3],dphi_j[3];
-          real basisPhi_i[4], basisPhi_j[4];
-          int ilocmacro = iloc + isubcell * ps->nnodes;
-          grad_psi_pg(f0->deg,f0->raf,ilocmacro,ipgmacro,dphiref_i);
-          Ref2Phy(ps->simu->fd[iemacro].physnode,
-                  xref,dphiref_i,0,NULL,
-                  dtau,codtau,dphi_i,NULL);
-        
-          real det = dot_product(dtau[0], codtau[0]);
-          if (ilocmacro==ipgmacro){
-            basisPhi_i[0]=1;
-          }
-          else
-          {
-            basisPhi_i[0]=0;
-          }
-          basisPhi_i[1]=dphi_i[0]/det;
-          basisPhi_i[2]=dphi_i[1]/det;
-          basisPhi_i[3]=dphi_i[2]/det;
-          for(int jloc = 0; jloc < ps->nnodes; jloc++){
-            int jlocmacro = jloc + isubcell * ps->nnodes;
-            grad_psi_pg(f0->deg,f0->raf,jlocmacro,ipgmacro,dphiref_j);
-            Ref2Phy(ps->simu->fd[iemacro].physnode,
-                    xref,dphiref_j,0,NULL,
-                    dtau,codtau,dphi_j,NULL);
-            if (jlocmacro==ipgmacro){
-              basisPhi_j[0]=1;
-            }
-            else
-            {
-              basisPhi_j[0]=0;
-            }
-            basisPhi_j[1]=dphi_j[0]/det;
-            basisPhi_j[2]=dphi_j[1]/det;
-            basisPhi_j[3]=dphi_j[2]/det;
-            real res[4] = {0, 0, 0, 0};
-            for (int i=0; i<4; i++){
-              for (int j=0; j<4; j++){
-                res[i]+=basisPhi_j[j]*ps->diff_op.DO[i][j];
-              }
-            }
-            aloc[iloc][jloc] += dot_product(basisPhi_i, res) * wpg * det  ;
-          }
-        }
-      }
-        
-        
-      for(int iloc = 0; iloc < ps->nnodes; iloc++){
-        for(int jloc = 0; jloc < ps->nnodes; jloc++){
-          int ino_dg = iloc + ie * ps->nnodes;
-          int jno_dg = jloc + ie * ps->nnodes;
-          int ino_fe = ps->dg_to_fe_index[ino_dg];
-          int jno_fe = ps->dg_to_fe_index[jno_dg];
-          real val = aloc[iloc][jloc];
-          AddLinearSolver(&ps->lsol,ino_fe,jno_fe,val);
-        }
-      }
-    }
-  }
-}
-
-
-void GenericOperator2Vec_Continuous(void * cs,LinearSolver* lsol){
+void GenericOperator_Continuous(void * cs,LinearSolver* lsol){
 
   ContinuousSolver * ps=cs;
 
@@ -661,7 +569,7 @@ void GenericOperator2Vec_Continuous(void * cs,LinearSolver* lsol){
                 real res[4] = {0, 0, 0, 0};
                 for (int i=0; i<4; i++){
                   for (int j=0; j<4; j++){
-                    res[i]+=basisPhi_j[j]*ps->diff_opvec[ps->nb_phy_vars*iv1+iv2].DO[i][j];
+                    res[i]+=basisPhi_j[j]*ps->diff_op[ps->nb_phy_vars*iv1+iv2].DO[i][j];
                   }
                 }
                 aloc[iv1+iloc*ps->nb_phy_vars][iv2+jloc*ps->nb_phy_vars] += dot_product(basisPhi_i, res) * wpg * det  ;

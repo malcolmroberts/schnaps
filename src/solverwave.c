@@ -164,12 +164,12 @@ void Wave_test(ContinuousSolver* cs,real theta, real dt){
                            {0,0,0,0},
                            {0,0,0,0}}};
   
-  cs->diff_opvec = calloc(cs->nb_phy_vars*cs->nb_phy_vars,sizeof(SDO));
+  cs->diff_op = calloc(cs->nb_phy_vars*cs->nb_phy_vars,sizeof(SDO));
   
   for (int i=0; i<cs->nb_phy_vars*cs->nb_phy_vars; i++){
     for (int j=0; j<4; j++){
       for (int k=0; k<4; k++){
-        cs->diff_opvec[i].DO[j][k]=waveMat[i][j][k];
+        cs->diff_op[i].DO[j][k]=waveMat[i][j][k];
       }
     }
   }

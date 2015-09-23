@@ -154,17 +154,18 @@ void UpdateVlasovPoisson(void *si, real *w) {
   
   InitContinuousSolver(&ps,simu,1,nb_var,listvar);
 
+  ps.diff_op=calloc(ps.nb_phy_vars*ps.nb_phy_vars,sizeof(SDO));
   real D[4][4] = {{0,0,0,0},
                  {0,1,0,0},
-                 {0,0,1,0},
-                 {0,0,0,1}};
+                 {0,0,0,0},
+                 {0,0,0,0}};
   for (int i=0;i<4;i++){
     for (int j=0;j<4;j++){
-      ps.diff_op.DO[i][j]=D[i][j];
+      ps.diff_op[0].DO[i][j]=D[i][j];
     }
   }
 
-  ps.matrix_assembly=GenericOperatorScalar_Continuous;
+  ps.matrix_assembly=GenericOperator_Continuous;
   ps.rhs_assembly=RHSPoisson_Continuous;
   ps.bc_assembly= ExactDirichletContinuousMatrix;
   ps.postcomputation_assembly=Computation_ElectricField_Poisson;
