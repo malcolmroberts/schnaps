@@ -38,7 +38,7 @@ int Testrealpc(void) {
 
   bool test = true;
   real dd;
-  int test1_ok=0,test2_ok=0,test3_ok=0,test4_ok=0,test5_ok=1;
+  int test1_ok=0,test2_ok=0,test3_ok=0,test4_ok=1,test5_ok=0;
 
 
 #ifdef PARALUTION 
@@ -278,7 +278,7 @@ int Testrealpc(void) {
     model4.BoundaryFlux = SteadyStateOne_BoundaryFlux;
     model4.Source = SteadyStateOne_Source;
 
-    int deg4[]={2, 2, 0};
+    int deg4[]={4, 4, 0};
     int raf4[]={1, 1, 1};
 
     assert(mesh.is2d);
@@ -297,9 +297,9 @@ int Testrealpc(void) {
     InitContinuousSolver(&cs,&simu4,1,nbvar,listvar);
     InitContinuousSolver(&csSolve,&simu4,1,nbvar,listvar);
 
-    real theta4=0.5;
+    real theta4=1;
     simu4.theta=theta4;
-    simu4.dt=10;//0.001667;
+    simu4.dt=1;//0.001667;
     simu4.vmax=_SPEED_WAVE;
     real tmax4=1*simu4.dt;//10*simu.dt;//;0.5;
     int itermax4=tmax4/simu4.dt;
@@ -501,9 +501,9 @@ void SteadyStateOne_ImposedData(const real *xy, const real t, real *w) {
   real x=xy[0];
   real y=xy[1];
 
-  w[0] = 10.0;//+exp(x)+exp(2*y); // 10+x*x+y*y*y
-  w[1] = x*y+2;
-  w[2] = -y*y*0.5+5.0;
+  w[0] = 0.0;//+exp(x)+exp(2*y); // 10+x*x+y*y*y
+  w[1] = x*y;
+  w[2] = -y*y*0.5;
 
 }
 
@@ -512,7 +512,7 @@ void SteadyStateOne_Source(const real *xy, const real t, const real *w, real *S)
 
   real x=xy[0];
   real y=xy[1];
-
+  assert(1==2);
   S[0] = 0;
   S[1] = 0;//exp(x);//2*x;
   S[2] = 0;//2*exp(2*y);//3*y*y;

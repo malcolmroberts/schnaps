@@ -230,14 +230,24 @@ void Wave_BC_pressure_imposed(void * cs,LinearSolver* lsol, real * xpg, real * w
   ContinuousSolver * ps=cs;
   real M[3][3];
   real BC[3][3];
-  real lambda=1.e+12;
+  real lambda=3;
   real p0=10,u0_1=0,u0_2=0;
+  real x,y;
+  x=xpg[0];
+  y=xpg[1];
+
+  real Win[3];
+  
+  ps->simu->fd[0].model.ImposedData(xpg,0,Win);
+  p0=Win[0];
+  u0_1=Win[1];
+  u0_2=Win[2];
 
   real h=ps->FluxMatrix[0][1];
 
-  M[0][0]=lambda;
-  M[0][1]=-(1.0/ps->simu->vmax)*vnorm[0];
-  M[0][2]=-(1.0/ps->simu->vmax)*vnorm[1];
+  M[0][0]=1;
+  M[0][1]=-lambda*(1.0/ps->simu->vmax)*vnorm[0];
+  M[0][2]=-lambda*(1.0/ps->simu->vmax)*vnorm[1];
   M[1][0]=0;
   M[1][1]=0;
   M[1][2]=0;
@@ -255,6 +265,9 @@ void Wave_BC_pressure_imposed(void * cs,LinearSolver* lsol, real * xpg, real * w
   BC[2][1]=M[2][1];
   BC[2][2]=M[2][2];
 
+  /* flux[0]=(BC[0][0]*w[0]+BC[0][1]*w[1]+BC[0][2]*w[2])-h*(M[0][0]*p0+M[0][1]*u0_1+M[0][2]*u0_2); */
+  /* flux[1]=(BC[1][0]*w[0]+BC[1][1]*w[1]+BC[1][2]*w[2])-h*(M[1][0]*p0+M[1][1]*u0_1+M[1][2]*u0_2); */
+  /* flux[2]=(BC[2][0]*w[0]+BC[2][1]*w[1]+BC[2][2]*w[2])-h*(M[2][0]*p0+M[2][1]*u0_1+M[2][2]*u0_2); */
   flux[0]=(BC[0][0]*w[0]+BC[0][1]*w[1]+BC[0][2]*w[2])-h*(M[0][0]*p0+M[0][1]*u0_1+M[0][2]*u0_2);
   flux[1]=(BC[1][0]*w[0]+BC[1][1]*w[1]+BC[1][2]*w[2])-h*(M[1][0]*p0+M[1][1]*u0_1+M[1][2]*u0_2);
   flux[2]=(BC[2][0]*w[0]+BC[2][1]*w[1]+BC[2][2]*w[2])-h*(M[2][0]*p0+M[2][1]*u0_1+M[2][2]*u0_2);
