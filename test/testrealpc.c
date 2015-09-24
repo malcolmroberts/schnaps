@@ -279,7 +279,7 @@ int Testrealpc(void) {
     model4.Source = SteadyStateOne_Source;
 
     int deg4[]={4, 4, 0};
-    int raf4[]={1, 1, 1};
+    int raf4[]={8, 8, 1};
 
     assert(mesh.is2d);
     CheckMacroMesh(&mesh, deg4, raf4);
@@ -297,9 +297,9 @@ int Testrealpc(void) {
     InitContinuousSolver(&cs,&simu4,1,nbvar,listvar);
     InitContinuousSolver(&csSolve,&simu4,1,nbvar,listvar);
 
-    real theta4=1;
+    real theta4=0.5;
     simu4.theta=theta4;
-    simu4.dt=1;//0.001667;
+    simu4.dt=10;//0.001667;
     simu4.vmax=_SPEED_WAVE;
     real tmax4=1*simu4.dt;//10*simu.dt;//;0.5;
     int itermax4=tmax4/simu4.dt;
@@ -387,7 +387,7 @@ int Testrealpc(void) {
     model5.Source = NULL;
 
     int deg5[]={4, 4, 0};
-    int raf5[]={8, 8, 1};
+    int raf5[]={16, 16, 1};
 
     assert(mesh.is2d);
 
@@ -411,7 +411,7 @@ int Testrealpc(void) {
     simu5.theta=theta5;
     simu5.dt=10;//0.001667;
     simu5.vmax=_SPEED_WAVE;
-    real tmax5=200;//;0.5;
+    real tmax5=40;//;0.5;
 
     int itermax5=tmax5/simu5.dt;
     simu5.itermax_rk=itermax5;
