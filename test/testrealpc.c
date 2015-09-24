@@ -447,7 +447,10 @@ int Testrealpc(void) {
 
     for(int tstep=0;tstep<simu5.itermax_rk;tstep++){
 
+      cs.bc_assembly(&cs, &cs.lsol);
       MatVect(&cs.lsol,wCG,resCG);
+
+      
       simu5.tnow=simu5.tnow+simu5.dt;
       for(int ie=0; ie < simu5.macromesh.nbelems; ++ie){
         simu5.fd[ie].tnow=simu5.tnow;
@@ -457,7 +460,6 @@ int Testrealpc(void) {
 	csSolve.lsol.rhs[i]=0;
       }
       
-      cs.bc_assembly(&cs, &cs.lsol);
       csSolve.bc_assembly(&csSolve, &csSolve.lsol);
 
       for (int i=0; i<size; i++){
