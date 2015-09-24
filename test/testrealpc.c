@@ -278,8 +278,8 @@ int Testrealpc(void) {
     model4.BoundaryFlux = SteadyStateOne_BoundaryFlux;
     model4.Source = SteadyStateOne_Source;
 
-    int deg4[]={4, 4, 0};
-    int raf4[]={8, 8, 1};
+    int deg4[]={3, 3, 0};
+    int raf4[]={1, 1, 1};
 
     assert(mesh.is2d);
     CheckMacroMesh(&mesh, deg4, raf4);
@@ -299,7 +299,7 @@ int Testrealpc(void) {
 
     real theta4=0.5;
     simu4.theta=theta4;
-    simu4.dt=10;//0.001667;
+    simu4.dt=1;//0.001667;
     simu4.vmax=_SPEED_WAVE;
     real tmax4=1*simu4.dt;//10*simu.dt;//;0.5;
     int itermax4=tmax4/simu4.dt;
@@ -309,10 +309,10 @@ int Testrealpc(void) {
     real *wCG = calloc(size, sizeof(real));
   
     csSolve.lsol.solver_type=LU;
-    csSolve.lsol.tol=1.e-10;
+    csSolve.lsol.tol=1.e-9;
     csSolve.lsol.pc_type=NONE;
     csSolve.lsol.iter_max=1000;
-    csSolve.lsol.restart_gmres=20;
+    csSolve.lsol.restart_gmres=30;
     csSolve.lsol.is_CG=true;
 
     cs.bc_flux=Wave_BC_pressure_imposed;
@@ -335,23 +335,19 @@ int Testrealpc(void) {
 
     for(int tstep=0;tstep<simu4.itermax_rk;tstep++){
 
+      cs.bc_assembly(&cs, &cs.lsol);
       MatVect(&cs.lsol,wCG,resCG);
+  
       simu4.tnow=simu4.tnow+simu4.dt;
       for(int ie=0; ie < simu4.macromesh.nbelems; ++ie){
         simu4.fd[ie].tnow=simu4.tnow;
       }
 
-      for (int i=0; i<size; i++){
-	csSolve.lsol.rhs[i]=0;
-      }
-
-      cs.bc_assembly(&cs, &cs.lsol);
       csSolve.bc_assembly(&csSolve, &csSolve.lsol);
-      //DisplayLinearSolver(&csSolve.lsol);
       
       for (int i=0; i<size; i++){
-	csSolve.lsol.rhs[i]+=resCG[i]-cs.lsol.rhs[i];
-        //printf(" rhs %d %.e6 \n",i,csSolve.lsol.rhs[i]);
+	csSolve.lsol.rhs[i]=csSolve.lsol.rhs[i]+resCG[i]-cs.lsol.rhs[i];
+        //printf(" rhs  aftr un %d %.6e \n",i,csSolve.lsol.rhs[i]);
       }
       
       Advanced_SolveLinearSolver(&csSolve.lsol,&simu4);
@@ -501,7 +497,7 @@ void SteadyStateOne_ImposedData(const real *xy, const real t, real *w) {
   real x=xy[0];
   real y=xy[1];
 
-  w[0] = 0.0;//+exp(x)+exp(2*y); // 10+x*x+y*y*y
+  w[0] = 10.0;//10
   w[1] = x*y;
   w[2] = -y*y*0.5;
 

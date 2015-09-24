@@ -63,7 +63,7 @@ void BoundaryConditionFriedrichsAssembly(void * cs,LinearSolver* lsol){
 	      // The basis functions is also the gauss point index
 	      //int imem2 = fL->varindex(fL->deg, fL->raf,fL->model.m, ipgL, iv2) + offsetL;
 	      int ipot_fe2 = ino_fe*ps->nb_phy_vars + iv2;
-	      real val =  (flux[iv2]-flux0[iv2]) * wpg;
+	      real val =  (flux[ps->list_of_var[iv2]]-flux0[ps->list_of_var[iv2]]) * wpg;
 	      AddLinearSolver(lsol, ipot_fe2, ipot_fe1, val);
 	    }
 	  }	    
@@ -209,7 +209,7 @@ void Wave_BC_normalvelocity_null(void * cs,LinearSolver* lsol, real * xpg, real 
   M[2][1]=0;
   M[2][2]=0;
 
-   BC[0][0]=h*M[0][0];
+  BC[0][0]=h*M[0][0];
   BC[0][1]=(ps->FluxMatrix[0][1]*vnorm[0]+h*M[0][1]);
   BC[0][2]=(ps->FluxMatrix[0][2]*vnorm[1]+h*M[0][2]);
   BC[1][0]=(ps->FluxMatrix[1][0]*vnorm[0]+h*M[1][0]);
@@ -231,21 +231,22 @@ void Wave_BC_pressure_imposed(void * cs,LinearSolver* lsol, real * xpg, real * w
   ContinuousSolver * ps=cs;
   real M[3][3];
   real BC[3][3];
-  real lambda=-10000;
+  real lambda=-10000000;
   real mu=0;
-  real p0=10,u0_1=0,u0_2=0;
+  real p0=0,u0_1=0,u0_2=0;
   real x,y;
   x=xpg[0];
   y=xpg[1];
 
   real Win[3];
   
-  ps->simu->fd[0].model.ImposedData(xpg,0,Win);
+  ps->simu->fd[0].model.ImposedData(xpg,ps->simu->dt,Win);
   p0=Win[0];
   u0_1=Win[1];
   u0_2=Win[2];
 
-  real h=ps->FluxMatrix[0][1];
+  real h=ps->FluxMatrix[0][1]/ps->simu->vmax;
+
 
   M[0][0]=lambda;
   M[0][1]=-mu*vnorm[0];
