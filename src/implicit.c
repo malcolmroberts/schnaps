@@ -1331,7 +1331,7 @@ void SourceLocalAssembly(field *f, real theta, real dt){
     
   static bool is_init = false;
   static struct starpu_codelet codelet;
-  static struct starpu_task *task;
+  struct starpu_task *task;
 
   if (!is_init){
     printf("init codelet...\n");
@@ -1341,8 +1341,6 @@ void SourceLocalAssembly(field *f, real theta, real dt){
     codelet.nbuffers = 1;
     codelet.modes[0] = STARPU_RW;
     codelet.name="SourceLocalAssembly";
-    task = starpu_task_create();
-    task->cl = &codelet;
   }
   /* if (!f->local_source_cl_init){ */
   /*   printf("register rhs %d %d...\n",f->wsize,f->solver->neq); */
@@ -1355,6 +1353,8 @@ void SourceLocalAssembly(field *f, real theta, real dt){
   /*   printf("end register...\n"); */
   /* } */
   
+  task = starpu_task_create();
+  task->cl = &codelet;
   task->cl_arg = f;
   task->cl_arg_size = sizeof(field);
   task->handles[0] = f->rhs_handle;
@@ -1367,7 +1367,7 @@ void SourceLocalAssembly(field *f, real theta, real dt){
 
     int ret = starpu_task_submit(task);
     STARPU_CHECK_RETURN_VALUE(ret, "starpu_task_submit");
-
+    printf("task submitted\n");
 
     /* void* buffers[1]; */
     /* buffers[0] = f->solver->rhs; */
@@ -1382,7 +1382,9 @@ void SourceLocalAssembly_C(void *buffers[], void *cl_arg) {
 
   field *f = cl_arg;
   
-  real* rhs = buffers[0];
+  struct starpu_vector_interface *rhs_v =
+    (struct starpu_vector_interface *) buffers[0]; 
+  real* rhs = (real *)STARPU_VECTOR_GET_PTR(rhs_v);  
 
   const int m = f->model.m;
   
