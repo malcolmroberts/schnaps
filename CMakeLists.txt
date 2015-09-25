@@ -14,7 +14,7 @@ SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 #set(CMAKE_C_FLAGS " -std=c99 -lumfpack -lamd -lblas -lsuitesparseconfig -lcholmod -lcolamd -D_DOUBLE_PRECISION
 # -D_SCHNAPS_DIR=${PROJECT_SOURCE_DIR} -O3 -g  ")
 #set(CMAKE_C_FLAGS " -std=c99 -D_DOUBLE_PRECISION -D_SCHNAPS_DIR=${PROJECT_SOURCE_DIR} -O3 -g  ")
-set(CMAKE_C_FLAGS " -std=c99 -D_SCHNAPS_DIR=${PROJECT_SOURCE_DIR} -O3")
+set(CMAKE_C_FLAGS " -std=gnu99 -D_SCHNAPS_DIR=${PROJECT_SOURCE_DIR} -O3")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_DOUBLE_PRECISION")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g")
 # needed for mac
@@ -51,9 +51,10 @@ OPTION(USE_STARPU
 
 IF(USE_STARPU)# set with: cmake . -DUSE_STARPU:BOOL=ON
   MESSAGE("Compiling with StarPU Library")
-  find_package (StarPU)
+  find_package (STARPU REQUIRED COMPONENTS HWLOC MPI)
   if(STARPU_FOUND)
     MESSAGE("StarPU found")
+    INCLUDE_DIRECTORIES(${STARPU_INCLUDE_DIRS})
   else()
     MESSAGE("StarPU not found")
   endif(STARPU_FOUND)
@@ -201,6 +202,13 @@ if (OPENCL_FOUND)
 else()
   list(APPEND LIBS _schnaps  m)
 endif (OPENCL_FOUND)
+
+
+if (STARPU_FOUND)
+  list(APPEND LIBS _schnaps ${STARPU_LIBRARIES} m)
+else()
+  list(APPEND LIBS _schnaps  m)
+endif (STARPU_FOUND)
 
 # nearest neighbour fast search library
 find_package(flann)

@@ -6,6 +6,9 @@
 #include "model.h"
 #include "linear_solver.h"
 
+
+#include <starpu.h>
+
 #ifdef _WITH_OPENCL
 #include "clinfo.h"
 #endif
@@ -38,6 +41,9 @@ typedef struct field {
   real tnow;
   real dt;
 
+  //! Crank-Nicholson parameter
+  real theta;
+
   //! ref length of the mesh subcells
   real hmin;
 
@@ -51,7 +57,12 @@ typedef struct field {
 
   //! a solver for the locally implicit scheme
   LinearSolver* solver;
-
+  
+  
+  //! a vector handle for the solver rhs
+  starpu_data_handle_t rhs_handle;
+  bool local_source_cl_init;
+  
   //! another solver for computing the rhs
   //! the matrix is not factorized
   LinearSolver* rmat;
@@ -90,6 +101,7 @@ typedef struct field {
   //! \param[in] iv field component index
   int (*varindex)(int* deg, int *ref, int m, int ipg, int iv);
 
+  
 
 } field;
 

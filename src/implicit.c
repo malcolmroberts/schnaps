@@ -145,6 +145,26 @@ void LocalThetaTimeScheme(Simulation *simu, real tmax, real dt){
   freq = 1;
   int iter = 0;
 
+
+  int ret = starpu_init(NULL);
+  assert(ret != -ENODEV) ;
+
+  for(int ie=0; ie <  simu->macromesh.nbelems; ++ie){
+    field *f = simu->fd + ie;
+    f->local_source_cl_init = false;
+    if (!f->local_source_cl_init){
+      printf("register rhs %d %d...\n",f->wsize,f->solver->neq);
+      f->local_source_cl_init = true;
+      starpu_vector_data_register(&(f->rhs_handle), // mem handle
+				  0, // location: CPU
+				  (uintptr_t)(f->solver->rhs), // vector location
+				  f->wsize,  // size
+				  sizeof(real));  // type
+      printf("end register...\n");
+    }
+
+  }
+
   while(simu->tnow < tmax) {
     
 
@@ -152,7 +172,7 @@ void LocalThetaTimeScheme(Simulation *simu, real tmax, real dt){
       field *f = simu->fd + ie;
       f->tnow = simu->tnow;
       f->dt = simu->dt;
-      MatVect(f->rmat, f->wn, f->solver->rhs);
+      //MatVect(f->rmat, f->wn, f->solver->rhs);
       //for(int i=0;i<f->solver->neq;i++) f->solver->rhs[i]=0;
     }
 
@@ -173,10 +193,10 @@ void LocalThetaTimeScheme(Simulation *simu, real tmax, real dt){
     for(int ifa = 0; ifa < simu->macromesh.nbfaces; ifa++){
       Interface* inter = simu->interface + ifa;
       // left = 0  right = 1
-      ExtractInterface(inter, 0);
-      ExtractInterface(inter, 1);
-      InterfaceExplicitFlux(inter, 0);
-      InterfaceExplicitFlux(inter, 1);
+      /* ExtractInterface(inter, 0); */
+      /* ExtractInterface(inter, 1); */
+      /* InterfaceExplicitFlux(inter, 0); */
+      /* InterfaceExplicitFlux(inter, 1); */
     }
 
     /* for(int ie=0; ie <  simu->macromesh.nbelems; ++ie){ */
@@ -190,9 +210,9 @@ void LocalThetaTimeScheme(Simulation *simu, real tmax, real dt){
     for(int ie=0; ie <  simu->macromesh.nbelems; ++ie){
       field *f = simu->fd + ie;
       f->tnow = simu->tnow;
-      SolveLinearSolver(f->solver);
+      //SolveLinearSolver(f->solver);
       for(int i=0;i<f->solver->neq;i++){
-	f->wn[i] = f->solver->sol[i];
+	//f->wn[i] = f->solver->sol[i];
 	//printf("i=%d sol=%f\n",i,f->solver->sol[i]);
       }
     }
@@ -203,6 +223,14 @@ void LocalThetaTimeScheme(Simulation *simu, real tmax, real dt){
     iter++;
 
   }
+
+  for(int ie=0; ie <  simu->macromesh.nbelems; ++ie){
+    starpu_data_unregister(simu->fd[ie].rhs_handle);
+  }
+
+  starpu_shutdown();
+
+
   
 };
 
@@ -1298,68 +1326,53 @@ void SourceLocalAssembly_C(void *buffers[], void *cl_arg);
 
 void SourceLocalAssembly(field *f, real theta, real dt){
 
+  f->dt = dt;  
+  f->theta = theta;
+    
+  static bool is_init = false;
+  static struct starpu_codelet codelet;
+  static struct starpu_task *task;
+
+  if (!is_init){
+    printf("init codelet...\n");
+    is_init = true;
+    starpu_codelet_init(&codelet);
+    codelet.cpu_funcs[0] = SourceLocalAssembly_C;
+    codelet.nbuffers = 1;
+    codelet.modes[0] = STARPU_RW;
+    codelet.name="SourceLocalAssembly";
+    task = starpu_task_create();
+    task->cl = &codelet;
+  }
+  /* if (!f->local_source_cl_init){ */
+  /*   printf("register rhs %d %d...\n",f->wsize,f->solver->neq); */
+  /*   f->local_source_cl_init = true; */
+  /*   starpu_vector_data_register(&(f->rhs_handle), // mem handle */
+  /* 				0, // location: CPU */
+  /* 				(uintptr_t)(f->solver->rhs), // vector location */
+  /* 				f->wsize,  // size */
+  /* 				sizeof(real));  // type */
+  /*   printf("end register...\n"); */
+  /* } */
+  
+  task->cl_arg = f;
+  task->cl_arg_size = sizeof(field);
+  task->handles[0] = f->rhs_handle;
+  
+
   if(f->model.Source != NULL) {
-   
-    const int m = f->model.m;
+
     
-    int deg[3] = {f->deg[0],
-		  f->deg[1],
-		  f->deg[2]};
-
-    int raf[3] = {f->raf[0],
-		   f->raf[1],
-		   f->raf[2]};
-
-    //void* buffers[1];
-    size_t max_size = 1000;
-
-    void** buffers = malloc(max_size);
-
-    buffers[0] = f->solver->rhs;
-
-    void* cl_arg = malloc(max_size);
-
-    void* p_arg = cl_arg;
-
-    memcpy(p_arg, &f->model.m,  sizeof(int));
-    p_arg +=  sizeof(int);
-
-    memcpy(p_arg, deg, 3 * sizeof(int));
-    p_arg +=  3 * sizeof(int);
-
-    memcpy(p_arg, raf, 3 * sizeof(int));
-    p_arg +=  3 * sizeof(int);
     
-    memcpy(p_arg, f->physnode, 20 * 3 * sizeof(real));
-    p_arg +=  20 * 3 * sizeof(real);
-    
-    memcpy(p_arg, &f->tnow,  sizeof(real));
-    p_arg +=   sizeof(real);
-    
-    memcpy(p_arg, &theta,  sizeof(real));
-    p_arg +=   sizeof(real);
-    
-    memcpy(p_arg, &dt,  sizeof(real));
-    p_arg +=   sizeof(real);
-    
-    memcpy(p_arg, &f->model.Source,  sizeof(sourceptr));
-    p_arg +=   sizeof(sourceptr);
 
-    memcpy(p_arg, &f->varindex,  sizeof(varindexptr));
-    p_arg +=   sizeof(varindexptr);
+    int ret = starpu_task_submit(task);
+    STARPU_CHECK_RETURN_VALUE(ret, "starpu_task_submit");
 
-    char z='z';
-    memcpy(p_arg, &z,  sizeof(char));
-    p_arg +=   sizeof(char);
 
-    SourceLocalAssembly_C(buffers, cl_arg);
+    /* void* buffers[1]; */
+    /* buffers[0] = f->solver->rhs; */
+    //SourceLocalAssembly_C(buffers, f);
 
-    /* CALL_PU(SourceLocalAssembly_C, */
-    /* 	    &f->model.m, int, 1, */
-    /* 	    deg, int, 3, */
-    /* 	    ... */
-    /* 	    &f->varindex, varindexptr, 1 */
-    /* 	    ...) */
     
   }
 }
@@ -1367,72 +1380,28 @@ void SourceLocalAssembly(field *f, real theta, real dt){
 
 void SourceLocalAssembly_C(void *buffers[], void *cl_arg) {
 
-
-  /* DECODE_PU_BUFFER(rhs, real*); */
-  /* DECODE_PU_ARG(m, int, 1, */
-  /* 		deg, int, 3, */
-  /* 		); */
-
+  field *f = cl_arg;
   
   real* rhs = buffers[0];
 
-  void* p_arg = cl_arg;
+  const int m = f->model.m;
   
-  int *m = p_arg;
-  p_arg +=  sizeof(int);
-
-  int *deg = p_arg;
-  p_arg += 3 * sizeof(int);
-  
-  int *raf = p_arg;
-  p_arg += 3 * sizeof(int);
-
-  real (*physnode)[3] = p_arg;
-  p_arg += 20 * 3 * sizeof(real);
-
-  real* tnow =  p_arg;
-  p_arg += sizeof(real);
-
-  real* theta = p_arg;
-  p_arg += sizeof(real);
-
-  real* dt = p_arg;
-  p_arg += sizeof(real);
-
-  sourceptr* Source  = p_arg;
-  p_arg += sizeof(sourceptr);
-
-  varindexptr* Varindex  = p_arg;
-  p_arg += sizeof(varindexptr);
-
-
-  char* last = p_arg;
-  assert(*last == 'z');
-  
-     /* printf("deg=%d %d %d raf=%d %d %d m=%d \n", */
-     /* 	     deg[0],deg[1],deg[2],raf[0],raf[1],raf[2],*m); */
-  for(int ipg = 0; ipg < NPG(deg, raf); ipg++) {
+  for(int ipg = 0; ipg < NPG(f->deg, f->raf); ipg++) {
     real dtau[3][3], codtau[3][3], xpgref[3], xphy[3], wpg;
-    ref_pg_vol(deg, raf, ipg, xpgref, &wpg, NULL);
-    Ref2Phy(physnode, // phys. nodes
+    ref_pg_vol(f->deg, f->raf, ipg, xpgref, &wpg, NULL);
+    Ref2Phy(f->physnode, // phys. nodes
 	    xpgref, // xref
 	    NULL, -1, // dpsiref, ifa
 	    xphy, dtau, // xphy, dtau
 	    codtau, NULL, NULL); // codtau, dpsi, vnds
     real det = dot_product(dtau[0], codtau[0]);
-    real wL[*m], source[*m];
-    /* for(int iv = 0; iv < m; ++iv){ */
-    /* 	int imem = f->varindex(f->deg, f->raf, f->model.m, ipg, iv); */
-    /* 	wL[iv] = w[imem]; */
-    /* } */
-    (*Source)(xphy, *tnow, wL, source);
+    real wL[m], source[m];
+    f->model.Source(xphy, f->tnow, wL, source);
 
-    for(int iv1 = 0; iv1 < *m; iv1++) {
-      int imem = (*Varindex)(deg, raf, *m, ipg, iv1);
-      /* printf("deg=%d %d %d raf=%d %d %d m=%d imem=%d\n", */
-      /* 	     deg[0],deg[1],deg[2],raf[0],raf[1],raf[2],*m,imem); */
+    for(int iv1 = 0; iv1 < m; iv1++) {
+      int imem = f->varindex(f->deg, f->raf, m, ipg, iv1);
       real val = source[iv1] * wpg * det;
-      rhs[imem] += *theta * *dt * val;
+      rhs[imem] += f->theta * f->dt * val;
     }
   }
 }
