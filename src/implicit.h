@@ -122,6 +122,13 @@ void ThetaTimeScheme(Simulation *simu, real tmax, real dt);
 //! \param[in] dt time step
 void LocalThetaTimeScheme(Simulation *simu, real tmax, real dt);
 
+//! \brief time-stepping by the crank nicholson scheme StarPU version
+//! macrocell local version 
+//! \param[inout] simu a simulation
+//! \param[in] tmax final time
+//! \param[in] dt time step
+void LocalThetaTimeScheme_SPU(Simulation *simu, real tmax, real dt);
+
 ///! \brief Assembly of the DG operator into a sparse matrix
 //! assembly of the interface fluxes between the neighboring fields
 //! \param[inout] simu a simulation

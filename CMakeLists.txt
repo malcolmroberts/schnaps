@@ -433,6 +433,14 @@ target_link_libraries(testlocal_implicit ${LIBS})
 add_test(testlocal_implicit testlocal_implicit)
 
 add_executable(
+  testlocal_implicit_spu
+  test/test.h
+  test/testlocal_implicit_spu.c
+  )
+target_link_libraries(testlocal_implicit_spu ${LIBS})
+add_test(testlocal_implicit_spu testlocal_implicit_spu)
+
+add_executable(
   testshequilibrium2d
   test/test.h
   test/testshequilibrium2d.c

@@ -117,7 +117,97 @@ void AssemblyFieldImplicitSolver(field *fd,real theta, real dt)
   /* assert(1==2); */
 }
 
-void LocalThetaTimeScheme(Simulation *simu, real tmax, real dt){
+void LocalThetaTimeScheme(Simulation *simu, real tmax, real dt)
+{
+
+  real theta=0.5;
+  simu->dt=dt;
+  
+  int itermax=tmax / simu->dt;
+  simu->itermax_rk=itermax;
+  simu->tnow=0;
+  simu->tmax = tmax;
+
+  // assembly of the volume part of the matrix
+  for(int ie=0; ie <  simu->macromesh.nbelems; ++ie){
+    field *f = simu->fd + ie;
+    InitFieldImplicitSolver(f);
+    AssemblyFieldImplicitSolver(f, theta, dt);
+  }
+
+  // assembly of the boundary condition part of the matrix 
+  for(int ifa = 0; ifa < simu->macromesh.nbfaces; ifa++){
+    Interface* inter = simu->interface + ifa;
+    assert(inter->fL);
+    InterfaceLocalAssembly(inter, theta, dt);
+  }
+  
+  int freq = (1 >= simu->itermax_rk / 10)? 1 : simu->itermax_rk / 10;
+  freq = 1;
+  int iter = 0;
+
+  while(simu->tnow < tmax) {
+    
+
+    for(int ie=0; ie <  simu->macromesh.nbelems; ++ie){
+      field *f = simu->fd + ie;
+      f->tnow = simu->tnow;
+      f->dt = simu->dt;
+      MatVect(f->rmat, f->wn, f->solver->rhs);
+      //for(int i=0;i<f->solver->neq;i++) f->solver->rhs[i]=0;
+    }
+
+    
+    
+    simu->tnow += theta * dt;
+
+    for(int ie=0; ie <  simu->macromesh.nbelems; ++ie){
+      field *f = simu->fd + ie;
+      /* DisplayLinearSolver(f->solver); */
+      /* DisplayLinearSolver(f->rmat); */
+      /* assert(1==3); */
+      f->tnow = simu->tnow;
+      f->dt = simu->dt;
+      SourceLocalAssembly(f, 1. , dt);
+    }
+
+    for(int ifa = 0; ifa < simu->macromesh.nbfaces; ifa++){
+      Interface* inter = simu->interface + ifa;
+      // left = 0  right = 1
+      ExtractInterface(inter, 0);
+      ExtractInterface(inter, 1);
+      InterfaceExplicitFlux(inter, 0);
+      InterfaceExplicitFlux(inter, 1);
+    }
+
+    /* for(int ie=0; ie <  simu->macromesh.nbelems; ++ie){ */
+    /*   field *f = simu->fd + ie; */
+    /*   DisplayLinearSolver(f->solver); */
+    /*   DisplayLinearSolver(f->rmat); */
+    /* } */
+    
+    simu->tnow += (1 - theta) * dt;
+
+    for(int ie=0; ie <  simu->macromesh.nbelems; ++ie){
+      field *f = simu->fd + ie;
+      f->tnow = simu->tnow;
+      SolveLinearSolver(f->solver);
+      for(int i=0;i<f->solver->neq;i++){
+	f->wn[i] = f->solver->sol[i];
+	//printf("i=%d sol=%f\n",i,f->solver->sol[i]);
+      }
+    }
+    
+    if (iter % freq == 0)
+      printf("t=%f iter=%d/%d dt=%f\n",
+	     simu->tnow, iter+1, simu->itermax_rk, dt);
+    iter++;
+
+  }
+  
+}
+ 
+void LocalThetaTimeScheme_SPU(Simulation *simu, real tmax, real dt){
 
   real theta=0.5;
   simu->dt=dt;
@@ -1324,7 +1414,7 @@ void MassAssembly(Simulation *simu,  LinearSolver *solver){
 void SourceLocalAssembly_C(void *buffers[], void *cl_arg);
 
 
-void SourceLocalAssembly(field *f, real theta, real dt){
+void SourceLocalAssembly_SPU(field *f, real theta, real dt){
 
   f->dt = dt;  
   f->theta = theta;
@@ -1373,6 +1463,41 @@ void SourceLocalAssembly(field *f, real theta, real dt){
     /* buffers[0] = f->solver->rhs; */
     //SourceLocalAssembly_C(buffers, f);
 
+    
+  }
+}
+
+
+void SourceLocalAssembly(field *f, real theta, real dt){
+
+  f->dt = dt;  
+  f->theta = theta;
+    
+
+  if(f->model.Source != NULL) {
+
+    const int m = f->model.m;
+  
+    for(int ipg = 0; ipg < NPG(f->deg, f->raf); ipg++) {
+      real dtau[3][3], codtau[3][3], xpgref[3], xphy[3], wpg;
+      ref_pg_vol(f->deg, f->raf, ipg, xpgref, &wpg, NULL);
+      Ref2Phy(f->physnode, // phys. nodes
+	      xpgref, // xref
+	      NULL, -1, // dpsiref, ifa
+	      xphy, dtau, // xphy, dtau
+	      codtau, NULL, NULL); // codtau, dpsi, vnds
+      real det = dot_product(dtau[0], codtau[0]);
+      real wL[m], source[m];
+      f->model.Source(xphy, f->tnow, wL, source);
+
+      for(int iv1 = 0; iv1 < m; iv1++) {
+	int imem = f->varindex(f->deg, f->raf, m, ipg, iv1);
+	real val = source[iv1] * wpg * det;
+	f->solver->rhs[imem] += f->theta * f->dt * val;
+      }
+    }
+    
+  
     
   }
 }
