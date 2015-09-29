@@ -2,6 +2,8 @@
 #define _GLOBAL_H
 //! brief global variables and defs
 
+#include <stdbool.h>
+
 #ifndef _OPENMP
 // activate pthread if openmp is not here
 //#define _WITH_PTHREAD
@@ -27,6 +29,8 @@ char cl_buildoptions[1024];
 #define _SMALL (1e-10)
 #define real double
 #endif
+
+bool starpu_is_init;
 
 
 #endif // #ifndef _GLOBAL_H

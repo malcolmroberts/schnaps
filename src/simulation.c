@@ -111,8 +111,11 @@ void InitInterfaces(Simulation *simu){
 void InitSimulation(Simulation *simu, MacroMesh *mesh,
 		    int *deg, int *raf, Model *model){
 
-  int ret = starpu_init(NULL);
-  assert(ret != -ENODEV) ;
+  if (!starpu_is_init){
+    int ret = starpu_init(NULL);
+    assert(ret != -ENODEV) ;
+    starpu_is_init = true;
+  }
 
 
   simu->macromesh = *mesh;
