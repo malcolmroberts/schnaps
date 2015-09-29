@@ -292,8 +292,23 @@ void Initfield(field *f, Model model,
   // default values for the linear solvers: not used
   f->solver = NULL;
   f->rmat = NULL;
+
+  // starpu registration (must be called after init_data) 
+  Initfield_SPU(f);
   
 }
+
+void Initfield_SPU(field *f){
+
+  starpu_vector_data_register(&(f->wn_handle), // mem handle
+			      0, // location: CPU
+			      (uintptr_t)(f->wn), // vector location
+			      f->wsize,  // size
+			      sizeof(real));  // type
+  
+  
+}
+
 
 // This is the destructor for a field
 void free_field(field *f) 

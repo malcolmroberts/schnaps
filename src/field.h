@@ -72,6 +72,8 @@ typedef struct field {
   int wsize;
   //! fields at current time step
   real *wn;
+  starpu_data_handle_t wn_handle;
+  
   //! Time derivative of the field
   real *dtwn;
 
@@ -142,7 +144,13 @@ int GenericVarindex_CG(__constant int *deg, __constant int *raf, int m,
 //! \param[inout] dtw a pointer to derivatives (if NULL memory will be allocated)
 void Initfield(field *f, Model m, real physnode[][3], int *deg, int *raf, real *w, real* dtw);
 
+//! \brief clean empty field initialization
+//! \param[inout] f a field
 void init_empty_field(field *f);
+
+//! \brief init of starpu data inside a field (called at the end of Initfield)
+//! \param[inout] f a field
+void Initfield_SPU(field *f);
 
 //! free the buffers created in Initfield.
 //! \param[inout] f a field

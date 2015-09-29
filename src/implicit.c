@@ -236,9 +236,6 @@ void LocalThetaTimeScheme_SPU(Simulation *simu, real tmax, real dt){
   int iter = 0;
 
 
-  int ret = starpu_init(NULL);
-  assert(ret != -ENODEV) ;
-
   for(int ie=0; ie <  simu->macromesh.nbelems; ++ie){
     field *f = simu->fd + ie;
     f->local_source_cl_init = false;
@@ -283,8 +280,8 @@ void LocalThetaTimeScheme_SPU(Simulation *simu, real tmax, real dt){
     for(int ifa = 0; ifa < simu->macromesh.nbfaces; ifa++){
       Interface* inter = simu->interface + ifa;
       // left = 0  right = 1
-      /* ExtractInterface(inter, 0); */
-      /* ExtractInterface(inter, 1); */
+      ExtractInterface_SPU(inter, 0);
+      ExtractInterface_SPU(inter, 1);
       /* InterfaceExplicitFlux(inter, 0); */
       /* InterfaceExplicitFlux(inter, 1); */
     }
@@ -1443,16 +1440,15 @@ void SourceLocalAssembly_SPU(field *f, real theta, real dt){
   /*   printf("end register...\n"); */
   /* } */
   
-  task = starpu_task_create();
-  task->cl = &codelet;
-  task->cl_arg = f;
-  task->cl_arg_size = sizeof(field);
-  task->handles[0] = f->rhs_handle;
-  
 
   if(f->model.Source != NULL) {
 
     
+    task = starpu_task_create();
+    task->cl = &codelet;
+    task->cl_arg = f;
+    task->cl_arg_size = sizeof(field);
+    task->handles[0] = f->rhs_handle;
     
 
     int ret = starpu_task_submit(task);

@@ -104,12 +104,16 @@ void InitInterfaces(Simulation *simu){
        }
      }
 
-     
+     InitInterface_SPU(inter + ifa);
   }
 }
 
 void InitSimulation(Simulation *simu, MacroMesh *mesh,
 		    int *deg, int *raf, Model *model){
+
+  int ret = starpu_init(NULL);
+  assert(ret != -ENODEV) ;
+
 
   simu->macromesh = *mesh;
 
