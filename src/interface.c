@@ -99,23 +99,26 @@ void ExtractInterface_SPU(Interface* inter, int side){
   
   if (fd !=NULL){
 
-    void* arg_buffer;// = malloc(sizeof(int)+sizeof(field));
-  size_t arg_buffer_size;
-  starpu_codelet_pack_args(&arg_buffer, &arg_buffer_size,
-			   STARPU_VALUE, &npgf, sizeof(int),
-			   STARPU_VALUE, fd, sizeof(field),
-			   0);
+    void* arg_buffer;
+    size_t arg_buffer_size;
+    /////////   warning: memory leak
+    // this should be done only once for each side of the interface...
+    /////////   warning: memory leak
+    starpu_codelet_pack_args(&arg_buffer, &arg_buffer_size,
+			     STARPU_VALUE, &npgf, sizeof(int),
+			     STARPU_VALUE, fd, sizeof(field),
+			     0);   
 
     
-  task = starpu_task_create();
-  task->cl = &codelet;
-  task->cl_arg = arg_buffer;
-  task->cl_arg_size = arg_buffer_size;
-  task->handles[0] = wf_handle;
-  task->handles[1] = fd->wn_handle;
-  task->handles[2] = vol_index_handle;
-  int ret = starpu_task_submit(task);
-  STARPU_CHECK_RETURN_VALUE(ret, "starpu_task_submit");
+    task = starpu_task_create();
+    task->cl = &codelet;
+    task->cl_arg = arg_buffer;
+    task->cl_arg_size = arg_buffer_size;
+    task->handles[0] = wf_handle;
+    task->handles[1] = fd->wn_handle;
+    task->handles[2] = vol_index_handle;
+    int ret = starpu_task_submit(task);
+    STARPU_CHECK_RETURN_VALUE(ret, "starpu_task_submit");
 
 
   }
@@ -148,7 +151,7 @@ void ExtractInterface_C(void* buffer[], void* cl_args){
     int ipgv = vol_index[ipgf];
     for(int iv=0; iv < fd.model.m; iv++){
       int imem = fd.varindex(fd.deg, fd.raf, fd.model.m,
-			      ipgv, iv);
+			     ipgv, iv);
       int imemf = VarindexFace(npgf, fd.model.m, ipgf, iv);
       wf[imemf] = wn[imem];
     }
