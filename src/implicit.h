@@ -157,6 +157,17 @@ void SourceAssembly(Simulation *simu,  LinearSolver *solver,real theta, real dt)
 void SourceLocalAssembly(field *fd,real theta, real dt);
 
 //! \brief Assembly of the DG operator into a sparse matrix
+//! assembly of the right hand side of the linear system:
+//! volume terms
+//! case of the locally implicit scheme
+//! StarPU version
+//! \param[inout] field a field
+//! \param[inout] solver a linear solver
+//! \param[in] theta the crank nicholson parameter
+//!  \param[in] dt time step
+void SourceLocalAssembly_SPU(field *fd,real theta, real dt);
+
+//! \brief Assembly of the DG operator into a sparse matrix
 //! assembly of the mass terms
 //! \param[inout] simu a simulation
 //! \param[inout] solver a linear solver

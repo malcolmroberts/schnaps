@@ -56,7 +56,7 @@ void ExtractInterface_SPU(Interface* inter, int side){
   struct starpu_task *task;
 
   if (!is_init){
-    printf("init codelet interface...\n");
+    printf("init codelet ExtractInterface...\n");
     is_init = true;
     starpu_codelet_init(&codelet);
     codelet.cpu_funcs[0] = ExtractInterface_C;

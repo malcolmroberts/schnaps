@@ -274,7 +274,7 @@ void LocalThetaTimeScheme_SPU(Simulation *simu, real tmax, real dt){
       /* assert(1==3); */
       f->tnow = simu->tnow;
       f->dt = simu->dt;
-      SourceLocalAssembly(f, 1. , dt);
+      SourceLocalAssembly_SPU(f, 1. , dt);
     }
 
     for(int ifa = 0; ifa < simu->macromesh.nbfaces; ifa++){
@@ -1421,7 +1421,7 @@ void SourceLocalAssembly_SPU(field *f, real theta, real dt){
   struct starpu_task *task;
 
   if (!is_init){
-    printf("init codelet...\n");
+    printf("init codelet SourceLocalAssembly...\n");
     is_init = true;
     starpu_codelet_init(&codelet);
     codelet.cpu_funcs[0] = SourceLocalAssembly_C;
