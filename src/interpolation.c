@@ -183,6 +183,8 @@ int NPGF(int deg[], int raf[], int ifa) {
   };
   int i0 = permut[ifa][0];
   int i1 = permut[ifa][1];
+  /* printf("locfa=%d deg= %d %d %d raf=%d %d %d\n",ifa,deg[0],deg[1],deg[2], */
+  /* 	raf[0],raf[1],raf[2]); */
   return (deg[i0] + 1) * (deg[i1] + 1) * raf[i0] * raf[i1];
 }
 

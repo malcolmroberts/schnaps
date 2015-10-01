@@ -282,8 +282,13 @@ void LocalThetaTimeScheme_SPU(Simulation *simu, real tmax, real dt){
       // left = 0  right = 1
       ExtractInterface_SPU(inter, 0);
       ExtractInterface_SPU(inter, 1);
-      /* InterfaceExplicitFlux(inter, 0); */
-      /* InterfaceExplicitFlux(inter, 1); */
+      if (inter->fR != NULL) {	
+	InterfaceExplicitFlux_SPU(inter, 0);
+	InterfaceExplicitFlux_SPU(inter, 1);
+      }
+      else{
+	InterfaceBoundaryFlux_SPU(inter);
+      }
     }
 
     /* for(int ie=0; ie <  simu->macromesh.nbelems; ++ie){ */

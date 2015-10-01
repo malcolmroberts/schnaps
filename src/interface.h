@@ -86,6 +86,11 @@ void InterfaceExplicitFlux(Interface* inter, int side);
 //! \param[in] side the side: left if == 0 right if ==1
 void InterfaceExplicitFlux_SPU(Interface* inter, int side);
 
+//! \brief  apply the boundary fluxes to the Left field
+//! \brief StarPU version
+//! \param[in] inter an Interface
+void InterfaceBoundaryFlux_SPU(Interface* inter);
+
 //! \brief  assembly of the inter-fields matrix
 //! \param[in] inter an Interface
 //! \param[in] side the side: left if == 0 right if ==1
