@@ -1443,11 +1443,34 @@ void SourceLocalAssembly_SPU(field *f, real theta, real dt){
 
   if(f->model.Source != NULL) {
 
-    
+    /* int m; */
+    /* int deg[3]; */
+    /* int raf[3]; */
+    /* real physnode[20][3]; */
+    /* varindexptr Varindex; */
+    /* sourceptr Source; */
+    /* real tnow,dt,theta; */
+
+    void* arg_buffer;
+    size_t arg_buffer_size;
+   
+    starpu_codelet_pack_args(&arg_buffer, &arg_buffer_size,
+			     STARPU_VALUE, &f->model.m, sizeof(int),
+			     STARPU_VALUE, f->deg, 3 * sizeof(int),
+			     STARPU_VALUE, f->raf, 3 * sizeof(int),
+			     STARPU_VALUE, f->physnode, 60 * sizeof(real),
+			     STARPU_VALUE, &f->varindex, sizeof(varindexptr),
+			     STARPU_VALUE, &f->model.Source, sizeof(sourceptr),
+			     STARPU_VALUE, &f->tnow, sizeof(real),
+			     STARPU_VALUE, &dt, sizeof(real),
+			     STARPU_VALUE, &theta, sizeof(real),
+			     0);
+
+
     task = starpu_task_create();
     task->cl = &codelet;
-    task->cl_arg = f;
-    task->cl_arg_size = sizeof(field);
+    task->cl_arg = arg_buffer;
+    task->cl_arg_size = arg_buffer_size;
     task->handles[0] = f->rhs_handle;
     
 
@@ -1501,32 +1524,44 @@ void SourceLocalAssembly(field *f, real theta, real dt){
 
 void SourceLocalAssembly_C(void *buffers[], void *cl_arg) {
 
-  field *f = cl_arg;
+  //field *f = cl_arg;
+  int m;
+  int deg[3];
+  int raf[3];
+  real physnode[20][3];
+  real tnow,dt,theta;
+  varindexptr Varindex;
+  sourceptr Source;
   
-  struct starpu_vector_interface *rhs_v =
-    (struct starpu_vector_interface *) buffers[0]; 
-  real* rhs = (real *)STARPU_VECTOR_GET_PTR(rhs_v);  
+    starpu_codelet_unpack_args(cl_arg,
+			       &m, deg, raf, physnode, &Varindex, &Source,
+			       &tnow, &dt, &theta);
 
-  const int m = f->model.m;
-  
-  for(int ipg = 0; ipg < NPG(f->deg, f->raf); ipg++) {
+    free(cl_arg);
+    
+    struct starpu_vector_interface *rhs_v =
+      (struct starpu_vector_interface *) buffers[0]; 
+    real* rhs = (real *)STARPU_VECTOR_GET_PTR(rhs_v);  
+
+  for(int ipg = 0; ipg < NPG(deg, raf); ipg++) {
     real dtau[3][3], codtau[3][3], xpgref[3], xphy[3], wpg;
-    ref_pg_vol(f->deg, f->raf, ipg, xpgref, &wpg, NULL);
-    Ref2Phy(f->physnode, // phys. nodes
+    ref_pg_vol(deg, raf, ipg, xpgref, &wpg, NULL);
+    Ref2Phy(physnode, // phys. nodes
 	    xpgref, // xref
 	    NULL, -1, // dpsiref, ifa
 	    xphy, dtau, // xphy, dtau
 	    codtau, NULL, NULL); // codtau, dpsi, vnds
     real det = dot_product(dtau[0], codtau[0]);
     real wL[m], source[m];
-    f->model.Source(xphy, f->tnow, wL, source);
+    Source(xphy, tnow, wL, source);
 
     for(int iv1 = 0; iv1 < m; iv1++) {
-      int imem = f->varindex(f->deg, f->raf, m, ipg, iv1);
+      int imem = Varindex(deg, raf, m, ipg, iv1);
       real val = source[iv1] * wpg * det;
-      rhs[imem] += f->theta * f->dt * val;
+      rhs[imem] += theta * dt * val;
     }
   }
+
 }
 
 

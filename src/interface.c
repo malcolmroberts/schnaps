@@ -101,12 +101,13 @@ void ExtractInterface_SPU(Interface* inter, int side){
 
     void* arg_buffer;
     size_t arg_buffer_size;
-    /////////   warning: memory leak
-    // this should be done only once for each side of the interface...
-    /////////   warning: memory leak
+
     starpu_codelet_pack_args(&arg_buffer, &arg_buffer_size,
+			     STARPU_VALUE, &fd->model.m, sizeof(int),
+			     STARPU_VALUE, fd->deg, 3 * sizeof(int),
+			     STARPU_VALUE, fd->raf, 3 * sizeof(int),
+			     STARPU_VALUE, &fd->varindex, sizeof(varindexptr),
 			     STARPU_VALUE, &npgf, sizeof(int),
-			     STARPU_VALUE, fd, sizeof(field),
 			     0);   
 
     
@@ -120,7 +121,6 @@ void ExtractInterface_SPU(Interface* inter, int side){
     int ret = starpu_task_submit(task);
     STARPU_CHECK_RETURN_VALUE(ret, "starpu_task_submit");
 
-
   }
     
 
@@ -129,10 +129,15 @@ void ExtractInterface_SPU(Interface* inter, int side){
 void ExtractInterface_C(void* buffer[], void* cl_args){
 
   int npgf;
-  field fd;
-  
+  int m;  
+  int deg[3];
+  int raf[3];
+  varindexptr Varindex;
+
   starpu_codelet_unpack_args(cl_args,
-			     &npgf, &fd);
+			     &m, deg, raf, &Varindex,
+			     &npgf);
+  free(cl_args);
  
 
   struct starpu_vector_interface *wf_v =
@@ -149,13 +154,14 @@ void ExtractInterface_C(void* buffer[], void* cl_args){
   
   for(int ipgf = 0; ipgf < npgf; ipgf++){
     int ipgv = vol_index[ipgf];
-    for(int iv=0; iv < fd.model.m; iv++){
-      int imem = fd.varindex(fd.deg, fd.raf, fd.model.m,
+    for(int iv=0; iv < m; iv++){
+      int imem = Varindex(deg, raf, m,
 			     ipgv, iv);
-      int imemf = VarindexFace(npgf, fd.model.m, ipgf, iv);
+      int imemf = VarindexFace(npgf, m, ipgf, iv);
       wf[imemf] = wn[imem];
     }
   }
+
 }
 
 
