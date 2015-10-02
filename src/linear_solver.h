@@ -127,6 +127,11 @@ void DisplayLinearSolver(LinearSolver* lsol);
 void MatVect(void * system,real x[],real prod[]);
 
 //! \brief compute a matrix vector product
+//! use the rhs and sol internal arrays
+//! \param[in] system the LinearSolver object containing matrix A
+void MatVectIn(void * system);
+
+//! \brief compute a matrix vector product
 //! \param[in] system the LinearSolver object containing matrix A
 //! \param[in] x a vector
 //! \param[out] prod Ax
