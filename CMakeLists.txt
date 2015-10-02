@@ -149,6 +149,8 @@ list(APPEND
   src/pic.c
   src/skyline.h
   src/skyline.c
+  src/skyline_spu.h
+  src/skyline_spu.c
   src/dpackfgmres.h
   src/dpackfgmres.c
   src/linear_solver.h
@@ -374,6 +376,15 @@ add_executable(
   )
 target_link_libraries(testskyline ${LIBS})
 add_test(testskyline testskyline)
+
+add_executable(
+  testskyline_spu
+  test/test.h
+  test/testskyline_spu.c
+  )
+target_link_libraries(testskyline_spu ${LIBS})
+add_test(testskyline_spu testskyline_spu)
+
 
 add_executable(
   testnonlinearsolver

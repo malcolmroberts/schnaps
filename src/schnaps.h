@@ -97,6 +97,7 @@ firefox html/index.html
 #include "simulation.h"
 #include "pic.h"
 #include "skyline.h"
+#include "skyline_spu.h"
 #include "linear_solver.h"
 #include "advanced_linear_solver.h"
 #ifdef _WITH_OPENCL
