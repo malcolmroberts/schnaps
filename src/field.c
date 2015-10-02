@@ -292,6 +292,8 @@ void Initfield(field *f, Model model,
   // default values for the linear solvers: not used
   f->solver = NULL;
   f->rmat = NULL;
+  f->solver_spu = NULL;
+  f->rmat_spu = NULL;
 
   // starpu registration (must be called after init_data) 
   Initfield_SPU(f);

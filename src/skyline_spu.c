@@ -5,16 +5,16 @@
 #include "skyline_spu.h"
 
 
-int sol_(real *vkgs, real *vkgd, real *
+int sol_spu(real *vkgs, real *vkgd, real *
 	vkgi, real *vfg, int *kld, real *vu, int neq, 
 	 int ifac, int isol, int nsym, real *
 	 energ, int *ier);
 
-int mulku_(real *vkgs, real *vkgd, real *
+int mulku_spu(real *vkgs, real *vkgd, real *
 	vkgi, int *kld, real *vfg, int neq, int nsym, 
 	   real *vres, int nsky);
 
-real scal_(real *x, real *y, int *n);
+real scal_spu(real *x, real *y, int *n);
 
 
 void InitSkyline_SPU(Skyline_SPU* sky, int n){
@@ -218,7 +218,7 @@ void FactoLU_SPU(Skyline_SPU* sky){
   int nsym=1;
   if (sky->is_sym) nsym=0;
 
-  sol_(sky->vkgs,sky->vkgd, sky->vkgi,
+  sol_spu(sky->vkgs,sky->vkgd, sky->vkgi,
        vfg, sky->kld, vu, sky->neq, 
         ifac, isol, nsym,
        &energ, &ier);
@@ -383,12 +383,12 @@ void MatVectSkyline_C(void* buffer[], void* cl_args) {
   
   for(int i=0; i < neq; i++) rhs[i]=0;
   
-  /* sol_(vkgs,vkgd, vkgi, */
+  /* sol_spu(vkgs,vkgd, vkgi, */
   /*      vfg, kld, vu, neq,  */
   /*       ifac, isol, nsym, */
   /*      &energ, &ier); */
  
-  mulku_(vkgs, vkgd, vkgi,
+  mulku_spu(vkgs, vkgd, vkgi,
 	 kld, sol, neq, nsym, 
 	   rhs, nmem);
 
@@ -489,7 +489,7 @@ void SolveSkyline_C(void* buffer[], void* cl_args){
   real* rhs = (real *)STARPU_VECTOR_GET_PTR(rhs_v);  
   
 
-  sol_(vkgs,vkgd, vkgi,
+  sol_spu(vkgs,vkgd, vkgi,
        rhs, kld, sol, neq, 
         ifac, isol, nsym,
        &energ, &ier);
@@ -520,7 +520,7 @@ void FreeSkyline_SPU(Skyline_SPU* sky){
 
 static int c__1 = 1;
 
-/* Subroutine */ int sol_(real *vkgs, real *vkgd, real *
+/* Subroutine */ int sol_spu(real *vkgs, real *vkgd, real *
 	vkgi, real *vfg, int *kld, real *vu, int neq, 
 	 int ifac, int isol, int nsym, real *
 	energ, int *ier)
@@ -543,7 +543,7 @@ static int c__1 = 1;
     static real c1, c2;
     static int j1, j2, ic, ij, ik, jbk, jck, jhj, jhk, lhk, jhj1, jhk1, 
 	    lhk1;
-    extern real scal_(real *, real *, int *);
+    extern real scal_spu(real *, real *, int *);
     static int imin, imax, imin1;
     static real cdiag;
 
@@ -665,11 +665,11 @@ static int c__1 = 1;
 	    if (nsym == 1) {
 		goto L15;
 	    }
-	    vkgs[jck] -= scal_(&vkgs[j1], &vkgs[j2], &ic);
+	    vkgs[jck] -= scal_spu(&vkgs[j1], &vkgs[j2], &ic);
 	    goto L20;
 L15:
-	    vkgs[jck] -= scal_(&vkgi[j1], &vkgs[j2], &ic);
-	    c1 = scal_(&vkgs[j1], &vkgi[j2], &ic);
+	    vkgs[jck] -= scal_spu(&vkgi[j1], &vkgs[j2], &ic);
+	    c1 = scal_spu(&vkgs[j1], &vkgi[j2], &ic);
 L17:
 	    vkgi[jck] = (vkgi[jck] - c1) / vkgd[ij];
 L20:
@@ -711,10 +711,10 @@ L90:
 	    goto L100;
 	}
 	if (nsym != 1) {
-	    vu[ik] = vfg[ik] - scal_(&vkgs[jhk], &vu[imin1], &lhk);
+	    vu[ik] = vfg[ik] - scal_spu(&vkgs[jhk], &vu[imin1], &lhk);
 	}
 	if (nsym == 1) {
-	    vu[ik] = vfg[ik] - scal_(&vkgi[jhk], &vu[imin1], &lhk);
+	    vu[ik] = vfg[ik] - scal_spu(&vkgi[jhk], &vu[imin1], &lhk);
 	}
 L100:
 	jhk = jhk1;
@@ -787,9 +787,9 @@ L800:
 L9999:
     return 0;
 /* ===========================   fin du module sol    ================== */
-} /* sol_ */
+} /* sol_spu */
 
-real scal_(real *x, real *y, int *n)
+real scal_spu(real *x, real *y, int *n)
 {
     /* Initialized data */
 
@@ -817,7 +817,7 @@ real scal_(real *x, real *y, int *n)
 	ret_val += x[i__] * y[i__];
     }
     return ret_val;
-} /* scal_ */
+} /* scal_spu */
 
 
 /* muls.f -- translated by f2c (version 20100827).
@@ -834,7 +834,7 @@ real scal_(real *x, real *y, int *n)
 
 //#include "f2c.h"
 
-/* Subroutine */ int mulku_(real *vkgs, real *vkgd, real *
+/* Subroutine */ int mulku_spu(real *vkgs, real *vkgd, real *
 	vkgi, int *kld, real *vfg, int neq, int nsym, 
 	real *vres, int nsky)
 {
@@ -844,7 +844,7 @@ real scal_(real *x, real *y, int *n)
     /* Local variables */
     static real c__;
     static int j, i0, i1, ij, ik, jhk, lhk, jhk1;
-    //extern real scal_(real *, real *, int *);
+    //extern real scal_spu(real *, real *, int *);
 
 /* =======================================================================MULK   2 */
 /*     CE SOUS-PROGRAMME AJOUTE AU VECTEUR RES LE PRODUIT DE LA          MULK   3 */
@@ -884,10 +884,10 @@ real scal_(real *x, real *y, int *n)
 	i0 = ik - lhk;
 /* -------  TERMES DE LIGNE                                               MULK  28 */
 	if (nsym != 1) {
-	    c__ += scal_(&vkgs[jhk], &vfg[i0], &lhk);
+	    c__ += scal_spu(&vkgs[jhk], &vfg[i0], &lhk);
 	}
 	if (nsym == 1) {
-	    c__ += scal_(&vkgi[jhk], &vfg[i0], &lhk);
+	    c__ += scal_spu(&vkgi[jhk], &vfg[i0], &lhk);
 	}
 /* -------  TERMES DE COLONNE                                             MULK  31 */
 	j = jhk;
@@ -902,5 +902,5 @@ L20:
 	vres[ik] += c__;
     }
     return 0;
-} /* mulku_ */
+} /* mulku_spu */
 

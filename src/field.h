@@ -5,7 +5,7 @@
 #include "interpolation.h"
 #include "model.h"
 #include "linear_solver.h"
-
+#include "skyline_spu.h"
 
 #include <starpu.h>
 
@@ -57,7 +57,7 @@ typedef struct field {
 
   //! a solver for the locally implicit scheme
   LinearSolver* solver;
-  
+  Skyline_SPU* solver_spu;
   
   //! a vector handle for the solver rhs
   starpu_data_handle_t rhs_handle;
@@ -66,6 +66,7 @@ typedef struct field {
   //! another solver for computing the rhs
   //! the matrix is not factorized
   LinearSolver* rmat;
+  Skyline_SPU* rmat_spu;
   
 
   //! Size of the field buffers
