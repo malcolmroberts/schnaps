@@ -77,7 +77,7 @@ int TestMaxwell3D(void) {
   simu.cfl=0.2;
   simu.vmax=1;
 
-#if 0
+#if 1
   // C version
   RK4(&simu, tmax);
 #else

@@ -48,7 +48,6 @@ int GenericVarindex_CG(__constant int *deg, __constant int *raf, int m,
 
 
 
-#pragma start_opencl
 int GenericVarindex3d(int m, int *nx, int *nc,
 		      int elem,
 		      int iv, int *ix, int *ic) 
@@ -74,7 +73,6 @@ int GenericVarindex3d(int m, int *nx, int *nc,
   int ipg = ipgc + npgc * nsubcell; 
   return iv + m * (ipg + npg * elem);
 }
-#pragma end_opencl
 
 // Given a the index ipg of a poing in a subcell, determine the three
 // logical coordinates of that point in the subcell.
