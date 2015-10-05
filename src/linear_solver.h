@@ -5,7 +5,7 @@
 #include <stdbool.h>
 #include "paralution_c.h"
 
-typedef enum MatrixStorage{SKYLINE,CSR} MatrixStorage;
+typedef enum MatrixStorage{SKYLINE,CSR,SKYLINE_SPU} MatrixStorage;
 typedef enum Solver{LU,GMRES,PAR_GMRES,PAR_FGMRES,PAR_CG,PAR_BICGSTAB,PAR_AMG,PAR_LU,PAR_QR} Solver;
 typedef enum PC{NONE,JACOBI,PAR_JACOBI,PAR_ILU,PAR_MULTICOLOREDSGS,PAR_MULTICOLOREDGS,PAR_MULTICOLOREDILU,PAR_AMG_PC,PAR_ELIMI,PHY_BASED,PHY_BASED_EXACT,EXACT,PHDF} PC;
 

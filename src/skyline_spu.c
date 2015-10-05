@@ -19,6 +19,13 @@ real scal_spu(real *x, real *y, int *n);
 
 void InitSkyline_SPU(Skyline_SPU* sky, int n){
 
+    if (!starpu_is_init){
+    int ret = starpu_init(NULL);
+    assert(ret != -ENODEV) ;
+    starpu_is_init = true;
+  }
+
+
   sky->is_alloc=false;
   sky->is_sym=false;
   sky->is_lu=false;
@@ -44,6 +51,11 @@ void InitSkyline_SPU(Skyline_SPU* sky, int n){
   assert(sky->kld);
   for(int i=0;i<n+1;i++) sky->kld[i]=0;
 
+  sky->sol = malloc(n * sizeof(real));
+  for(int i=0;i<n;i++) sky->sol[i]=0;
+
+  sky->rhs = malloc(n * sizeof(real));
+  for(int i=0;i<n;i++) sky->rhs[i]=0;
 }
 
 
@@ -230,11 +242,6 @@ void FactoLU_SPU(Skyline_SPU* sky){
 
 void RegisterSkyline_SPU(Skyline_SPU* sky){
 
-  if (!starpu_is_init){
-    int ret = starpu_init(NULL);
-    assert(ret != -ENODEV) ;
-    starpu_is_init = true;
-  }
 
   if (sky->is_registered == false){
 

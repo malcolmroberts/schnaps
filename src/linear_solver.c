@@ -4,6 +4,7 @@
 #include <assert.h>
 #include <math.h>
 #include "skyline.h"
+#include "skyline_spu.h"
 #include "paralution_c.h"
 #include "dpackfgmres.h"
 
@@ -31,18 +32,34 @@ void InitLinearSolver(LinearSolver* lsol,int n,
   if (matstor != NULL) lsol->storage_type = *matstor;
   if (solvtyp != NULL) lsol->solver_type = *solvtyp;
 
-  lsol->rhs=calloc(n,sizeof(real));
-  lsol->sol=calloc(n,sizeof(real));
 
+  if (matstor != NULL) {
+    if (*matstor != SKYLINE_SPU){
+      lsol->rhs=calloc(n,sizeof(real));
+      lsol->sol=calloc(n,sizeof(real));
+    }
+  }
+    
   switch(lsol->storage_type) {
 
-  Skyline* sky;
+    Skyline* sky;
+    Skyline_SPU* sky_spu;
 
-  case SKYLINE :
+  case SKYLINE:
     sky = malloc(sizeof(Skyline));
     assert(sky);
     lsol->matrix = (void*) sky;
     InitSkyline(sky,n);
+    lsol->is_init = true;
+    break;
+
+  case SKYLINE_SPU :
+    sky_spu = malloc(sizeof(Skyline_SPU));
+    assert(sky_spu);
+    lsol->matrix = (void*) sky_spu;
+    InitSkyline_SPU(sky_spu,n);
+    lsol->rhs = sky_spu->rhs;
+    lsol->sol = sky_spu->sol;
     lsol->is_init = true;
     break;
 
@@ -69,6 +86,11 @@ void FreeLinearSolver(LinearSolver* lsol){
     free(lsol->matrix);
     break;
 
+  case SKYLINE_SPU :
+    FreeSkyline_SPU((Skyline_SPU*)lsol->matrix);
+    free(lsol->matrix);
+    break;
+
   default : 
     assert(1==2);
    
@@ -91,6 +113,10 @@ void IsNonZero(LinearSolver* lsol,int i,int j){
     SwitchOn((Skyline*)lsol->matrix,i,j);
     break;
 
+  case SKYLINE_SPU :
+    SwitchOn_SPU((Skyline_SPU*)lsol->matrix,i,j);
+    break;
+
   default : 
     assert(1==2);
    
@@ -108,6 +134,10 @@ void AllocateLinearSolver(LinearSolver* lsol){
 
   case SKYLINE :
     AllocateSkyline((Skyline*)lsol->matrix);
+    break;
+
+  case SKYLINE_SPU :
+    AllocateSkyline_SPU((Skyline_SPU*)lsol->matrix);
     break;
 
   default : 
@@ -128,6 +158,10 @@ void AddLinearSolver(LinearSolver* lsol,int i,int j,real val){
     AddSkyline((Skyline*)lsol->matrix,i,j,val);
     break;
 
+  case SKYLINE_SPU :
+    AddSkyline_SPU((Skyline_SPU*)lsol->matrix,i,j,val);
+    break;
+
   default : 
     assert(1==2);
    
@@ -144,6 +178,10 @@ void SetLinearSolver(LinearSolver* lsol,int i,int j,real val){
 
   case SKYLINE :
     SetSkyline((Skyline*)lsol->matrix,i,j,val);
+    break;
+
+  case SKYLINE_SPU :
+    SetSkyline_SPU((Skyline_SPU*)lsol->matrix,i,j,val);
     break;
 
   default : 
@@ -164,6 +202,10 @@ real GetLinearSolver(LinearSolver* lsol,int i,int j){
 
   case SKYLINE :
     val=GetSkyline((Skyline*)lsol->matrix,i,j);
+    break;
+
+  case SKYLINE_SPU :
+    val=GetSkyline_SPU((Skyline_SPU*)lsol->matrix,i,j);
     break;
 
   default : 
@@ -187,6 +229,10 @@ void DisplayLinearSolver(LinearSolver* lsol){
     DisplaySkyline((Skyline*)lsol->matrix);
     break;
 
+  case SKYLINE_SPU :
+    DisplaySkyline_SPU((Skyline_SPU*)lsol->matrix);
+    break;
+
   default : 
     assert(1==2);
   }
@@ -208,7 +254,7 @@ void MatVect(void * system,real x[],real prod[]){
   case SKYLINE :
 
     MatVectSkyline((Skyline*) lsol->matrix, x, prod);
- 
+    break;
     /* for(i=0;i<lsol->neq;i++) */
     /*   { */
     /* 	prod[i]=0; */
@@ -218,6 +264,8 @@ void MatVect(void * system,real x[],real prod[]){
     /* 	} */
     /*   } */
     
+  case SKYLINE_SPU :
+    assert(1==2);
     break;
 
   default : 
@@ -277,6 +325,10 @@ void LUDecompLinearSolver(LinearSolver* lsol){
     FactoLU((Skyline*)lsol->matrix);
     break;
 
+  case SKYLINE_SPU :
+    FactoLU_SPU((Skyline_SPU*)lsol->matrix);
+    break;
+
   default : 
     assert(1==2);
   }
@@ -293,6 +345,8 @@ void SolveLinearSolver(LinearSolver* lsol){
 
   if(lsol->solver_type == LU) {
        Skyline* sky;
+       Skyline_SPU* sky_spu;
+       
        switch(lsol->storage_type) {
        case SKYLINE :
          sky=(Skyline*)lsol->matrix;
@@ -300,6 +354,14 @@ void SolveLinearSolver(LinearSolver* lsol){
 	   FactoLU(sky);
 	  }
 	 SolveSkyline(sky,lsol->rhs,lsol->sol);
+	 break;
+      
+       case SKYLINE_SPU :
+         sky_spu=(Skyline_SPU*)lsol->matrix;
+	 if (!sky_spu->is_lu){
+	   FactoLU_SPU(sky_spu);
+	  }
+	 SolveSkyline_SPU(sky_spu);
 	 break;
       
        default : 

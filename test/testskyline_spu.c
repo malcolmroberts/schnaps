@@ -25,15 +25,13 @@ int TestSkyline_SPU(void){
 
   int test=1;
 
-  Skyline_SPU sky;
+  int nbtests = 5;
+
+  Skyline_SPU sky[nbtests];
 
 
 #define _NN 5
   
-  // preliminary work on the skyline struct
-  // _NN is the size of the linear system to be solved
-  InitSkyline_SPU(&sky,_NN);
-
   real A[_NN][_NN];
   real vf[_NN];
   real sol[_NN]={1,2,3,4,5};
@@ -70,34 +68,41 @@ int TestSkyline_SPU(void){
   vf[3] = 0;
   vf[4] = 0.6e1;
 
-
-
-  // first mark the nonzero values in A
-  for(int i=0;i<_NN;i++){
-    for(int j=0;j<_NN;j++){
-      if (A[i][j] != 0) SwitchOn_SPU(&sky,i,j);
-      //if (i==j) SwitchOn(&sky,i,j);
-    }
+  for (int is = 0; is < nbtests; is++){
+    // preliminary work on the skyline struct
+    // _NN is the size of the linear system to be solved
+    InitSkyline_SPU(sky + is,_NN);
+    for(int i = 0 ; i < _NN; i++) sky[is].rhs[i] = 0; // xxx
+    for(int i = 0 ; i < _NN; i++) sky[is].sol[i] = 0; // xxx
   }
 
-  // once the nonzero positions are known allocate memory
-  AllocateSkyline_SPU(&sky);
-
-  // now set the nonzero terms
-  for(int i=0;i<_NN;i++){
-    for(int j=0;j<_NN;j++){
-      if (A[i][j] != 0){
-      	SetSkyline_SPU(&sky,i,j,A[i][j]);
+  for (int is = 0; is < nbtests; is++){
+    // first mark the nonzero values in A
+    for(int i=0;i<_NN;i++){
+      for(int j=0;j<_NN;j++){
+	if (A[i][j] != 0) SwitchOn_SPU(sky + is,i,j);
+	//if (i==j) SwitchOn(&sky,i,j);
       }
-      /* if (i==j){ */
-      /* 	SetSkyline_SPU(&sky,i,j,2); */
-      /* } */
+    }
+    
+    // once the nonzero positions are known allocate memory
+    AllocateSkyline_SPU(sky + is);
+
+    // now set the nonzero terms
+    for(int i=0;i<_NN;i++){
+      for(int j=0;j<_NN;j++){
+	if (A[i][j] != 0){
+	  SetSkyline_SPU(sky + is,i,j,A[i][j]);
+	}
+	/* if (i==j){ */
+	/* 	SetSkyline_SPU(&sky,i,j,2); */
+	/* } */
+      }
     }
   }
-
-
+  
   real vf3[_NN];
-
+    
   // test the product non symmetric case
   for(int i=0; i < _NN; i++){
     vf3[i]=0;
@@ -106,158 +111,59 @@ int TestSkyline_SPU(void){
     }
   }
 
-  
-  for(int i=0; i < _NN; i++) vf2[i]=i*i;
-  sky.sol = sol;
-  sky.rhs = vf2;
 
-  MatVectSkyline_SPU(&sky);
-  UnRegisterSkyline_SPU(&sky);
-  for(int i=0; i < _NN; i++) {
-    printf("%d vf=%f vf3=%f\n",i,vf2[i],vf3[i]);
-    test = test && fabs(vf2[i]-vf3[i]) < _SMALL;
+  for(int is = 0; is < nbtests; is++){
+  
+    for(int i = 0 ; i < _NN; i++) sky[is].sol[i] = sol[i];
+
+    MatVectSkyline_SPU(sky + is);
+    UnRegisterSkyline_SPU(sky + is);
+
+    printf("test num. %d\n",is);
+    for(int i=0; i < _NN; i++) {
+      printf("%d vf=%f vf3=%f\n",i,sky[is].rhs[i],vf3[i]);
+      test = test && fabs(sky[is].rhs[i]-vf3[i]) < _SMALL;
+    }
   }
+
   
 
- 
+
+  
   
   // LU decomposition
-  FactoLU_SPU(&sky);
+  for(int is = 0; is < nbtests; is++){
+    FactoLU_SPU(sky + is);
 
-  // printf for checking...
-  DisplaySkyline_SPU(&sky);
+    // printf for checking...
+    DisplaySkyline_SPU(sky + is);
+    
+    // solve from a decomposed matrix
+    UnRegisterSkyline_SPU(sky + is);
 
-  // solve from a decomposed matrix
-  // vf: rhs
-  // sol: solution
-  sky.rhs = vf;
-  sky.sol = sol;
-  SolveSkyline_SPU(&sky);
-  UnRegisterSkyline_SPU(&sky);
+    for(int i = 0 ; i < _NN; i++) sky[is].rhs[i] = vf[i];
+    for(int i = 0 ; i < _NN; i++) sky[is].sol[i] = 0;
+    
+    SolveSkyline_SPU(sky + is);
+    UnRegisterSkyline_SPU(sky + is);
 
 
-  // checking
-  real verr=0;
-  printf("sol=");
-  for(int i=0;i<_NN;i++){
-    printf("%f ",sol[i]);
-    verr+=fabs(sol[i]-i-1);
-  }
-  printf("\n");
-
-  // deallocate memory
-  FreeSkyline_SPU(&sky);
-  
-
-  test= test && (verr < _SMALL);
-  //assert(1==2);
-
-  InitSkyline_SPU(&sky,_NN);
-  // now test a symmetric matrix
-  A[0][0] = 0.3e1;
-  A[0][1] = -0.1e1;
-  A[0][2] = 0;
-  A[0][3] = 0;
-  A[0][4] = -0.1e1;
-  A[1][0] = -0.1e1;
-  A[1][1] = 0.2e1;
-  A[1][2] = -0.1e1;
-  A[1][3] = 0;
-  A[1][4] = 0;
-  A[2][0] = 0;
-  A[2][1] = -0.1e1;
-  A[2][2] = 0.2e1;
-  A[2][3] = -0.1e1;
-  A[2][4] = 0;
-  A[3][0] = 0;
-  A[3][1] = 0;
-  A[3][2] = -0.1e1;
-  A[3][3] = 0.2e1;
-  A[3][4] = -0.1e1;
-  A[4][0] = -0.1e1;
-  A[4][1] = 0;
-  A[4][2] = 0;
-  A[4][3] = -0.1e1;
-  A[4][4] = 0.3e1;
-  vf[0] = -0.4e1;
-  vf[1] = 0;
-  vf[2] = 0;
-  vf[3] = 0;
-  vf[4] = 0.10e2;
-
-  sky.is_sym=true;
-
-  // first mark the nonzero values in A
-  for(int i=0;i<_NN;i++){
-    for(int j=0;j<_NN;j++){
-      if ((A[i][j] != 0) && (j >= i)) SwitchOn_SPU(&sky,i,j);
-      //if (i==j) SwitchOn(&sky,i,j);
+    // checking
+    real verr=0;
+    printf("sol test num. %d\n", is);
+    for(int i=0;i<_NN;i++){
+      printf("%f ",sky[is].sol[i]);
+      verr+=fabs(sky[is].sol[i]-i-1);
     }
+    test = test && (verr < _SMALL);
+    printf("\n");
+    
+    // deallocate memory
+    FreeSkyline_SPU(sky + is);
+
   }
 
-  // once the nonzero positions are known allocate memory
-  AllocateSkyline_SPU(&sky);
 
-  // now set the nonzero terms
-  for(int i=0;i<_NN;i++){
-    for(int j=0;j<_NN;j++){
-      if ((A[i][j] != 0) && (j >= i)){
-      	SetSkyline_SPU(&sky,i,j,A[i][j]);
-      }
-      /* if (i==j){ */
-      /* 	SetSkyline_SPU(&sky,i,j,2); */
-      /* } */
-    }
-  }
-
-  // test the product symmetric case
-  for(int i=0; i < _NN; i++){
-    vf3[i]=0;
-    for(int j=0; j< _NN; j++){
-      vf3[i] += A[i][j] * sol[j];
-    }
-  }
-  
-  for(int i=0; i < _NN; i++) vf2[i]=10;
-  sky.sol = sol;
-  sky.rhs = vf2;
-
-  MatVectSkyline_SPU(&sky);
-  UnRegisterSkyline_SPU(&sky);
-  for(int i=0; i < _NN; i++) {
-    printf("%d vf=%f vf3=%f\n",i,vf2[i],vf3[i]);
-    test = test && fabs(vf2[i]-vf3[i]) < _SMALL;
-  }
-
- 
-  // LU decomposition
-  FactoLU_SPU(&sky);
-
-  // printf for checking...
-  DisplaySkyline_SPU(&sky);
-
-  // solve from a decomposed matrix
-  // vf: rhs
-  // sol: solution
-  sky.rhs = vf;
-  sky.sol = sol;
-  SolveSkyline_SPU(&sky);
-  UnRegisterSkyline_SPU(&sky);
-
-
-  // checking
-  verr=0;
-  printf("sol=");
-  for(int i=0;i<_NN;i++){
-    printf("%f ",sol[i]);
-    verr+=fabs(sol[i]-i-1);
-  }
-  printf("\nerror=%f small=%f test=%d \n",verr,_SMALL, (verr < _SMALL));
-
-  // deallocate memory
-  //FreeSkyline_SPU(&sky);
-
-  test= test && (verr < _SMALL);
 
 
   return test;

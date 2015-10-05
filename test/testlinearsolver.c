@@ -33,7 +33,11 @@ int TestLinearSolver(void){
 
   // preliminary work on the skyline struct
   // _NN is the size of the linear system to be solved
-  InitLinearSolver(&sky,_NN,NULL,NULL);
+
+  MatrixStorage ms = SKYLINE_SPU;
+  
+  //InitLinearSolver(&sky,_NN,NULL,NULL);
+  InitLinearSolver(&sky,_NN,&ms,NULL);
 
   sky.solver_type = LU;
   sky.pc_type=NONE;
