@@ -275,6 +275,36 @@ void MatVect(void * system,real x[],real prod[]){
   
 }
 
+void MatVectIn(void * system){
+  int i,j;
+  real aij;
+  LinearSolver* lsol=system;
+  
+  switch(lsol->storage_type) {
+
+  case SKYLINE :
+    assert(1==2); // not yet implemented and verified
+    break;
+    /* for(i=0;i<lsol->neq;i++) */
+    /*   { */
+    /* 	prod[i]=0; */
+    /* 	for(j=0;j<lsol->neq;j++) { */
+    /* 	  aij=GetLinearSolver(lsol,i,j); */
+    /* 	  prod[i] += aij*x[j]; */
+    /* 	} */
+    /*   } */
+    
+  case SKYLINE_SPU :
+    MatVectSkyline_SPU((Skyline_SPU*) lsol->matrix);
+    break;
+
+  default : 
+    assert(1==2);
+  }
+
+  
+}
+
 void Vector_copy(real x[],real prod[],int N){
   int i;
  

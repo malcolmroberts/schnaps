@@ -19,7 +19,7 @@ real scal_spu(real *x, real *y, int *n);
 
 void InitSkyline_SPU(Skyline_SPU* sky, int n){
 
-    if (!starpu_is_init){
+  if (!starpu_is_init){
     int ret = starpu_init(NULL);
     assert(ret != -ENODEV) ;
     starpu_is_init = true;

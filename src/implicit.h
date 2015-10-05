@@ -18,7 +18,7 @@ void InitImplicitLinearSolver(Simulation *simu, LinearSolver *solver);
 //! \brief Construct the profile of the linear solver
 //! for the locally implicit scheme
 //! \param[inout] field a field
-void InitFieldImplicitSolver(field *fd);
+void InitFieldImplicitSolver(field *fd, MatrixStorage ms);
 
 
 

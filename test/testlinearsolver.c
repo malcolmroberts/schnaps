@@ -34,7 +34,8 @@ int TestLinearSolver(void){
   // preliminary work on the skyline struct
   // _NN is the size of the linear system to be solved
 
-  MatrixStorage ms = SKYLINE_SPU;
+  //MatrixStorage ms = SKYLINE_SPU;
+  MatrixStorage ms = SKYLINE;
   
   //InitLinearSolver(&sky,_NN,NULL,NULL);
   InitLinearSolver(&sky,_NN,&ms,NULL);
@@ -137,7 +138,6 @@ int TestLinearSolver(void){
   
 
   test1= (verr<1e-10);
-
 
 #ifdef PARALUTION
   // preliminary work on the skyline struct

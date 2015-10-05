@@ -40,11 +40,11 @@ void InitImplicitLinearSolver(Simulation *simu, LinearSolver *solver){
 
 }
 
-void InitFieldImplicitSolver(field *fd){
+void InitFieldImplicitSolver(field *fd, MatrixStorage ms){
 
   int neq = fd->wsize;
 
-  MatrixStorage ms = SKYLINE;
+  //MatrixStorage ms = SKYLINE;
   Solver st = LU;
   if (fd->solver == NULL) fd->solver = malloc(sizeof(LinearSolver));
   if (fd->rmat == NULL) fd->rmat = malloc(sizeof(LinearSolver));
@@ -131,7 +131,7 @@ void LocalThetaTimeScheme(Simulation *simu, real tmax, real dt)
   // assembly of the volume part of the matrix
   for(int ie=0; ie <  simu->macromesh.nbelems; ++ie){
     field *f = simu->fd + ie;
-    InitFieldImplicitSolver(f);
+    InitFieldImplicitSolver(f, SKYLINE);
     AssemblyFieldImplicitSolver(f, theta, dt);
   }
 
@@ -220,7 +220,7 @@ void LocalThetaTimeScheme_SPU(Simulation *simu, real tmax, real dt){
   // assembly of the volume part of the matrix
   for(int ie=0; ie <  simu->macromesh.nbelems; ++ie){
     field *f = simu->fd + ie;
-    InitFieldImplicitSolver(f);
+    InitFieldImplicitSolver(f, SKYLINE_SPU);
     AssemblyFieldImplicitSolver(f, theta, dt);
   }
 
@@ -259,7 +259,7 @@ void LocalThetaTimeScheme_SPU(Simulation *simu, real tmax, real dt){
       field *f = simu->fd + ie;
       f->tnow = simu->tnow;
       f->dt = simu->dt;
-      //MatVect(f->rmat, f->wn, f->solver->rhs);
+      MatVectIn(f->rmat);
       //for(int i=0;i<f->solver->neq;i++) f->solver->rhs[i]=0;
     }
 
@@ -302,7 +302,7 @@ void LocalThetaTimeScheme_SPU(Simulation *simu, real tmax, real dt){
     for(int ie=0; ie <  simu->macromesh.nbelems; ++ie){
       field *f = simu->fd + ie;
       f->tnow = simu->tnow;
-      //SolveLinearSolver(f->solver);
+      SolveLinearSolver(f->solver);
       for(int i=0;i<f->solver->neq;i++){
 	//f->wn[i] = f->solver->sol[i];
 	//printf("i=%d sol=%f\n",i,f->solver->sol[i]);
