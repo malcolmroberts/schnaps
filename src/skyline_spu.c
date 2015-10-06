@@ -25,7 +25,6 @@ void InitSkyline_SPU(Skyline_SPU* sky, int n){
     starpu_is_init = true;
   }
 
-
   sky->is_alloc=false;
   sky->is_sym=false;
   sky->is_lu=false;

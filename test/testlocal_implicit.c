@@ -48,6 +48,7 @@ int Test_Local_Implicit(void) {
 
   MacroMesh mesh;
   ReadMacroMesh(&mesh,"../test/testcube2.msh");
+  //ReadMacroMesh(&mesh,"cubegros.msh");
   //ReadMacroMesh(&mesh,"../test/testdisque2d.msh");
   //ReadMacroMesh(&mesh,"../test/testmacromesh.msh");
   Detect2DMacroMesh(&mesh);
@@ -83,7 +84,7 @@ int Test_Local_Implicit(void) {
   /* model.Source = TestSteady_Wave_Source; */
 
   int deg[]={3, 3, 0};
-  int raf[]={4, 4, 1};
+  int raf[]={8, 8, 1};
   
   CheckMacroMesh(&mesh, deg, raf);
 
@@ -99,13 +100,13 @@ int Test_Local_Implicit(void) {
   simu.cfl=0.2;
   simu.vmax= 1;
   simu.dt = 0.025;
-  simu.dt = 1;
+  simu.dt = 0.01;
   /* InitFieldImplicitSolver(fd); */
   /* AssemblyFieldImplicitSolver(fd, 1, 1); */
   LocalThetaTimeScheme(&simu, tmax, simu.dt);
   real dd = L2error(&simu);
   printf("erreur local implicit L2=%.12e\n", dd);
-  PlotFields(0, false, &simu, NULL, "dgvisu.msh");
+  //PlotFields(0, false, &simu, NULL, "dgvisu.msh");
 
   test = test && (dd < 100 * _VERY_SMALL);
   

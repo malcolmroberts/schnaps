@@ -146,8 +146,11 @@ void LocalThetaTimeScheme(Simulation *simu, real tmax, real dt)
   freq = 1;
   int iter = 0;
 
+  time_t start;
   while(simu->tnow < tmax) {
+
     
+    if (iter == 1) start = time(NULL);
 
     for(int ie=0; ie <  simu->macromesh.nbelems; ++ie){
       field *f = simu->fd + ie;
@@ -204,6 +207,8 @@ void LocalThetaTimeScheme(Simulation *simu, real tmax, real dt)
     iter++;
 
   }
+
+  printf("Elapsed time=%f\n", (double) (time(NULL) -start));
   
 }
  
@@ -249,7 +254,11 @@ void LocalThetaTimeScheme_SPU(Simulation *simu, real tmax, real dt){
 
   }
 
+  time_t start;
   while(simu->tnow < tmax) {
+
+    
+    if (iter == 1) start = time(NULL);
     
 
     for(int ie=0; ie <  simu->macromesh.nbelems; ++ie){
@@ -322,14 +331,17 @@ void LocalThetaTimeScheme_SPU(Simulation *simu, real tmax, real dt){
       printf("t=%f iter=%d/%d dt=%f\n",
 	     simu->tnow, iter+1, simu->itermax_rk, dt);
     iter++;
-
   }
+
+  starpu_task_wait_for_all();
+  printf("Elapsed time=%f\n", (double) (time(NULL) -start));
 
   for(int ie=0; ie <  simu->macromesh.nbelems; ++ie){
     field* f = simu->fd + ie;
     Skyline_SPU* sky_spu = f->solver->matrix;
     UnRegisterSkyline_SPU(sky_spu); 
   }
+
 
   starpu_shutdown();
 
@@ -1493,7 +1505,7 @@ void SourceLocalAssembly_SPU(field *f, real theta, real dt){
 
     int ret = starpu_task_submit(task);
     STARPU_CHECK_RETURN_VALUE(ret, "starpu_task_submit");
-    printf("task submitted\n");
+    //printf("task submitted\n");
 
     /* void* buffers[1]; */
     /* buffers[0] = f->solver->rhs; */

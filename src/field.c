@@ -303,7 +303,8 @@ void Initfield(field *f, Model model,
 void Initfield_SPU(field *f){
 
   if (!starpu_is_init){
-    int ret = starpu_init(NULL);
+    int ret;
+    //ret = starpu_init(NULL);
     assert(ret != -ENODEV) ;
     starpu_is_init = true;
   }

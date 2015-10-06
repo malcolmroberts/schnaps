@@ -112,7 +112,8 @@ void InitSimulation(Simulation *simu, MacroMesh *mesh,
 		    int *deg, int *raf, Model *model){
 
   if (!starpu_is_init){
-    int ret = starpu_init(NULL);
+    int ret;
+    ret = starpu_init(NULL);
     assert(ret != -ENODEV) ;
     starpu_is_init = true;
   }
