@@ -236,19 +236,16 @@ void LocalThetaTimeScheme_SPU(Simulation *simu, real tmax, real dt){
   int iter = 0;
 
 
+  // clean the allocated arrays in each field
   for(int ie=0; ie <  simu->macromesh.nbelems; ++ie){
     field *f = simu->fd + ie;
     f->local_source_cl_init = false;
-    if (!f->local_source_cl_init){
-      printf("register rhs %d %d...\n",f->wsize,f->solver->neq);
-      f->local_source_cl_init = true;
-      starpu_vector_data_register(&(f->rhs_handle), // mem handle
-				  0, // location: CPU
-				  (uintptr_t)(f->solver->rhs), // vector location
-				  f->wsize,  // size
-				  sizeof(real));  // type
-      printf("end register...\n");
-    }
+    Skyline_SPU* solver = f->solver->matrix;
+    free(solver->sol);
+    solver->sol = f->wn;
+    Skyline_SPU* rmat = f->rmat->matrix;
+    free(rmat->sol);
+    free(rmat->rhs);
 
   }
 
@@ -259,7 +256,11 @@ void LocalThetaTimeScheme_SPU(Simulation *simu, real tmax, real dt){
       field *f = simu->fd + ie;
       f->tnow = simu->tnow;
       f->dt = simu->dt;
-      MatVectIn(f->rmat);
+      Skyline_SPU* sky_spu = f->solver->matrix;
+      RegisterSkyline_SPU(sky_spu);
+      MatVect_SPU(f->rmat,
+		  sky_spu->sol_handle,
+		  sky_spu->rhs_handle);
       //for(int i=0;i<f->solver->neq;i++) f->solver->rhs[i]=0;
     }
 
@@ -317,7 +318,9 @@ void LocalThetaTimeScheme_SPU(Simulation *simu, real tmax, real dt){
   }
 
   for(int ie=0; ie <  simu->macromesh.nbelems; ++ie){
-    starpu_data_unregister(simu->fd[ie].rhs_handle);
+    field* f = simu->fd + ie;
+    Skyline_SPU* sky_spu = f->solver->matrix;
+    UnRegisterSkyline_SPU(sky_spu); 
   }
 
   starpu_shutdown();
@@ -1476,7 +1479,8 @@ void SourceLocalAssembly_SPU(field *f, real theta, real dt){
     task->cl = &codelet;
     task->cl_arg = arg_buffer;
     task->cl_arg_size = arg_buffer_size;
-    task->handles[0] = f->rhs_handle;
+    Skyline_SPU* sky_spu = f->solver->matrix;
+    task->handles[0] = sky_spu->rhs_handle;
     
 
     int ret = starpu_task_submit(task);

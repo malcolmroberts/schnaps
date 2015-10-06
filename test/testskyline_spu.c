@@ -116,7 +116,7 @@ int TestSkyline_SPU(void){
   
     for(int i = 0 ; i < _NN; i++) sky[is].sol[i] = sol[i];
 
-    MatVectSkyline_SPU(sky + is);
+    MatVectSkyline_SPU(sky + is, NULL, NULL);
     UnRegisterSkyline_SPU(sky + is);
 
     printf("test num. %d\n",is);

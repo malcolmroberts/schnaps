@@ -125,9 +125,11 @@ void SolveSkyline_SPU(Skyline_SPU* sky);
 
 //! \brief compute a matrix vector product
 //! \param[in] sky a skyline matrix
-//! \param[in] x a vector
-//! \param[out] prod Ax
-void MatVectSkyline_SPU(Skyline_SPU * sky);
+//! \param[in] sol_handle starpu handle to the multiplied vector
+//! \param[out] rhs_handle starpu handle to the result
+void MatVectSkyline_SPU(Skyline_SPU * sky,
+			starpu_data_handle_t sol_handle,
+			starpu_data_handle_t rhs_handle);
 
 
 #endif

@@ -4,6 +4,7 @@
 #include "global.h"
 #include <stdbool.h>
 #include "paralution_c.h"
+#include <starpu.h>
 
 typedef enum MatrixStorage{SKYLINE,CSR,SKYLINE_SPU} MatrixStorage;
 typedef enum Solver{LU,GMRES,PAR_GMRES,PAR_FGMRES,PAR_CG,PAR_BICGSTAB,PAR_AMG,PAR_LU,PAR_QR} Solver;
@@ -127,8 +128,15 @@ void DisplayLinearSolver(LinearSolver* lsol);
 void MatVect(void * system,real x[],real prod[]);
 
 //! \brief compute a matrix vector product
-//! use the rhs and sol internal arrays
+//! use the rhs and sol starpu data handles
 //! \param[in] system the LinearSolver object containing matrix A
+//! \param[in] sol_handle starpu handle to the multiplied vector
+//! \param[out] rhs_handle starpu handle to the result
+void MatVect_SPU(void * system, starpu_data_handle_t sol_handle, starpu_data_handle_t rhs_handle);
+
+//! \brief compute a matrix vector product
+//! use the rhs and sol stored inside the structure
+//! \param[inout] system the LinearSolver object containing matrix A
 void MatVectIn(void * system);
 
 //! \brief compute a matrix vector product

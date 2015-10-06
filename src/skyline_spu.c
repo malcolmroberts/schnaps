@@ -301,7 +301,9 @@ void UnRegisterSkyline_SPU(Skyline_SPU* sky){
 
 void MatVectSkyline_C(void* buffer[], void* cl_args);
 
-void MatVectSkyline_SPU(Skyline_SPU * sky) {
+void MatVectSkyline_SPU(Skyline_SPU * sky,
+			starpu_data_handle_t sol_handle,
+			starpu_data_handle_t rhs_handle) {
 
   assert(!sky->is_lu);
 
@@ -347,8 +349,11 @@ void MatVectSkyline_SPU(Skyline_SPU * sky) {
   task->handles[1] = sky->vkgd_handle;
   task->handles[2] = sky->vkgi_handle;
   task->handles[3] = sky->kld_handle;
-  task->handles[4] = sky->sol_handle;
-  task->handles[5] = sky->rhs_handle;
+  if (sol_handle == NULL) task->handles[4] = sky->sol_handle;
+  else task->handles[4] = sol_handle;
+  
+  if (rhs_handle == NULL) task->handles[5] = sky->rhs_handle;
+  else task->handles[5] = rhs_handle;
   int ret = starpu_task_submit(task);
   STARPU_CHECK_RETURN_VALUE(ret, "starpu_task_submit");
 
@@ -517,6 +522,8 @@ void FreeSkyline_SPU(Skyline_SPU* sky){
   if (! sky->is_sym)  free(sky->vkgi);
   free(sky->prof);
   free(sky->kld);
+  free(sky->sol);
+  free(sky->rhs);
 
   sky->is_alloc=false;
   //InitSkyline_SPU(sky,sky->neq);
