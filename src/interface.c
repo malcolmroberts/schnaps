@@ -116,7 +116,8 @@ void ExtractInterface_SPU(Interface* inter, int side){
     task->cl_arg = arg_buffer;
     task->cl_arg_size = arg_buffer_size;
     task->handles[0] = wf_handle;
-    task->handles[1] = fd->wn_handle;
+    Skyline_SPU* sky = fd->solver->matrix;
+    task->handles[1] = sky->sol_handle;
     task->handles[2] = vol_index_handle;
     int ret = starpu_task_submit(task);
     STARPU_CHECK_RETURN_VALUE(ret, "starpu_task_submit");
@@ -159,6 +160,7 @@ void ExtractInterface_C(void* buffer[], void* cl_args){
 			  ipgv, iv);
       int imemf = VarindexFace(npgf, m, ipgf, iv);
       wf[imemf] = wn[imem];
+      //printf("wf=%f imem=%d\n",wf[imemf],imem);
     }
   }
 
@@ -198,6 +200,7 @@ void ExtractInterface(Interface* inter, int side){
 				ipgv, iv);
 	int imemf = VarindexFace(npgf, fd->model.m, ipgf, iv);
 	wf[imemf] = fd->wn[imem];
+	//printf("wf=%f imem=%d\n",wf[imemf],imem);
       }
     }
   }
@@ -228,12 +231,12 @@ void InterfaceExplicitFlux_SPU(Interface* inter, int side)
     starpu_codelet_init(&codelet);
     codelet.cpu_funcs[0] = InterfaceExplicitFlux_C;
     codelet.nbuffers = 6;
-    codelet.modes[0] = STARPU_R;  // wface
-    codelet.modes[1] = STARPU_R; // wvol
-    codelet.modes[2] = STARPU_R; // vol_index
-    codelet.modes[3] = STARPU_R; // vol_index
-    codelet.modes[4] = STARPU_R; // vol_index
-    codelet.modes[5] = STARPU_RW; // vol_index
+    codelet.modes[0] = STARPU_R;  // index_ext
+    codelet.modes[1] = STARPU_R; // index
+    codelet.modes[2] = STARPU_R; // vnds
+    codelet.modes[3] = STARPU_R; // xpg
+    codelet.modes[4] = STARPU_R; // wn_ext
+    codelet.modes[5] = STARPU_RW; // rhs
     codelet.name="InterfaceExplicitFlux";
   }
 
@@ -334,8 +337,11 @@ void InterfaceExplicitFlux_C(void* buffer[], void* cl_args){
     (struct starpu_vector_interface *) buffer[buf_num++]; 
   real* rhs = (real *)STARPU_VECTOR_GET_PTR(rhs_v);  
   
+
+  int npgf = NPGF(f->deg, f->raf, locfa);
+  int m = fext->model.m;
   
-  for(int ipgf = 0; ipgf < NPGF(f->deg, f->raf, locfa); ipgf++) {
+  for(int ipgf = 0; ipgf < npgf; ipgf++) {
 
  
     real flux[m];
@@ -348,8 +354,9 @@ void InterfaceExplicitFlux_C(void* buffer[], void* cl_args){
     int ipgR = index_ext[ipgf];
     int ipgL = index[ipgf];
     for(int iv = 0; iv < m; iv++) {
-      int imemR = fext->varindex(fext->deg, fext->raf,fext->model.m, ipgR, iv);
-      wR[iv] = wn_ext[imemR];
+      int imemf = VarindexFace(npgf, m, ipgf, iv);
+      //int imemR = fext->varindex(fext->deg, fext->raf,m , ipgR, iv);
+      wR[iv] = wn_ext[imemf];
       //wR[iv] = 1; // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     }
 

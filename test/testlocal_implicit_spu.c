@@ -95,7 +95,7 @@ int Test_Local_Implicit_SPU(void) {
 
   field* fd = simu.fd;
 
-  real tmax = 10;
+  real tmax = 1;
   simu.cfl=0.2;
   simu.vmax= 1;
   simu.dt = 0.025;
