@@ -47,8 +47,8 @@ int Test_Local_Implicit(void) {
   bool test = true;
 
   MacroMesh mesh;
-  ReadMacroMesh(&mesh,"../test/testcube2.msh");
-  //ReadMacroMesh(&mesh,"cubegros.msh");
+  //ReadMacroMesh(&mesh,"../test/testcube2.msh");
+  ReadMacroMesh(&mesh,"cubegros.msh");
   //ReadMacroMesh(&mesh,"../test/testdisque2d.msh");
   //ReadMacroMesh(&mesh,"../test/testmacromesh.msh");
   Detect2DMacroMesh(&mesh);
@@ -84,7 +84,7 @@ int Test_Local_Implicit(void) {
   /* model.Source = TestSteady_Wave_Source; */
 
   int deg[]={3, 3, 0};
-  int raf[]={8, 8, 1};
+  int raf[]={16, 16, 1};
   
   CheckMacroMesh(&mesh, deg, raf);
 

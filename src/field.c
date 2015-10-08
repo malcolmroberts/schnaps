@@ -302,19 +302,21 @@ void Initfield(field *f, Model model,
 
 void Initfield_SPU(field *f){
 
-  if (!starpu_is_init){
+  if (!starpu_is_init && starpu_use){
     int ret;
-    //ret = starpu_init(NULL);
+    ret = starpu_init(NULL);
     assert(ret != -ENODEV) ;
     starpu_is_init = true;
   }
 
-  starpu_vector_data_register(&(f->wn_handle), // mem handle
-			      0, // location: CPU
-			      (uintptr_t)(f->wn), // vector location
-			      f->wsize,  // size
-			      sizeof(real));  // type
-  
+  if (starpu_use){
+
+    starpu_vector_data_register(&(f->wn_handle), // mem handle
+				0, // location: CPU
+				(uintptr_t)(f->wn), // vector location
+				f->wsize,  // size
+				sizeof(real));  // type
+  }
   
 }
 

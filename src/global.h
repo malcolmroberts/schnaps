@@ -31,6 +31,7 @@ char cl_buildoptions[1024];
 #endif
 
 bool starpu_is_init;
+bool starpu_use;
 
 
 #endif // #ifndef _GLOBAL_H

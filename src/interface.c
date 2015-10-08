@@ -10,41 +10,45 @@ int VarindexFace(int npg, int m, int ipgf, int iv){
 
 void InitInterface_SPU(Interface* inter){
 
-  starpu_vector_data_register(&(inter->vol_indexL_handle), // mem handle
-			      0, // location: CPU
-			      (uintptr_t)(inter->vol_indexL), // vector location
-			      inter->npgL,  // size
-			      sizeof(int));  // type
+  if (starpu_use){
 
-  starpu_vector_data_register(&(inter->vol_indexR_handle), // mem handle
-			      0, // location: CPU
-			      (uintptr_t)(inter->vol_indexR), // vector location
-			      inter->npgR,  // size
-			      sizeof(int));  // type
+  
+    starpu_vector_data_register(&(inter->vol_indexL_handle), // mem handle
+				0, // location: CPU
+				(uintptr_t)(inter->vol_indexL), // vector location
+				inter->npgL,  // size
+				sizeof(int));  // type
 
-  starpu_vector_data_register(&(inter->wL_handle), // mem handle
-			      0, // location: CPU
-			      (uintptr_t)(inter->wL), // vector location
-			      inter->wsizeL,  // size
-			      sizeof(real));  // type
+    starpu_vector_data_register(&(inter->vol_indexR_handle), // mem handle
+				0, // location: CPU
+				(uintptr_t)(inter->vol_indexR), // vector location
+				inter->npgR,  // size
+				sizeof(int));  // type
 
-  starpu_vector_data_register(&(inter->wR_handle), // mem handle
-			      0, // location: CPU
-			      (uintptr_t)(inter->wR), // vector location
-			      inter->wsizeR,  // size
-			      sizeof(real));  // type
+    starpu_vector_data_register(&(inter->wL_handle), // mem handle
+				0, // location: CPU
+				(uintptr_t)(inter->wL), // vector location
+				inter->wsizeL,  // size
+				sizeof(real));  // type
 
-  starpu_vector_data_register(&(inter->vnds_handle), // mem handle
-			      0, // location: CPU
-			      (uintptr_t)(inter->vnds), // vector location
-			      inter->npgL * 3,  // size  !!!!!!!!!!! same for left and right ????
-			      sizeof(real));  // type
+    starpu_vector_data_register(&(inter->wR_handle), // mem handle
+				0, // location: CPU
+				(uintptr_t)(inter->wR), // vector location
+				inter->wsizeR,  // size
+				sizeof(real));  // type
 
-  starpu_vector_data_register(&(inter->xpg_handle), // mem handle
-			      0, // location: CPU
-			      (uintptr_t)(inter->xpg), // vector location
-			      inter->npgL * 3,  // size  !!!!!!!!!!! same for left and right ????
-			      sizeof(real));  // type
+    starpu_vector_data_register(&(inter->vnds_handle), // mem handle
+				0, // location: CPU
+				(uintptr_t)(inter->vnds), // vector location
+				inter->npgL * 3,  // size  !!!!!!!!!!! same for left and right ????
+				sizeof(real));  // type
+
+    starpu_vector_data_register(&(inter->xpg_handle), // mem handle
+				0, // location: CPU
+				(uintptr_t)(inter->xpg), // vector location
+				inter->npgL * 3,  // size  !!!!!!!!!!! same for left and right ????
+				sizeof(real));  // type
+  }
 }
 
 void ExtractInterface_C(void* buffer[], void* cl_args);
@@ -276,7 +280,7 @@ void InterfaceExplicitFlux_SPU(Interface* inter, int side)
 			     STARPU_VALUE, &locfa, sizeof(int),
 			     STARPU_VALUE, &sign, sizeof(int),
 			     0);   
-
+    //printf("sizeof_field=%d\n", (int) sizeof(field));
     
     task = starpu_task_create();
     task->cl = &codelet;
