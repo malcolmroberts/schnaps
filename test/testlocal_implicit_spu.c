@@ -101,7 +101,7 @@ int Test_Local_Implicit_SPU(void) {
   simu.cfl=0.2;
   simu.vmax= 1;
   //simu.dt = 0.025;
-  simu.dt = 1;
+  simu.dt = 0.1;
   /* InitFieldImplicitSolver(fd); */
   /* AssemblyFieldImplicitSolver(fd, 1, 1); */
   LocalThetaTimeScheme_SPU(&simu, tmax, simu.dt);
