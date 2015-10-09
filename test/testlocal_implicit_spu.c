@@ -47,8 +47,8 @@ int Test_Local_Implicit_SPU(void) {
   bool test = true;
 
   MacroMesh mesh;
-  //ReadMacroMesh(&mesh,"../test/testcube2.msh");
-  ReadMacroMesh(&mesh,"cubegros.msh");
+  ReadMacroMesh(&mesh,"../test/testcube2.msh");
+  //ReadMacroMesh(&mesh,"cubegros.msh");
   //ReadMacroMesh(&mesh,"../test/testmacromesh.msh");
   Detect2DMacroMesh(&mesh);
   
@@ -83,7 +83,7 @@ int Test_Local_Implicit_SPU(void) {
   /* model.Source = TestSteady_Wave_Source; */
 
   int deg[]={3, 3, 0};
-  int raf[]={16, 16, 1};
+  int raf[]={4, 4, 1};
   
   CheckMacroMesh(&mesh, deg, raf);
 
@@ -100,8 +100,8 @@ int Test_Local_Implicit_SPU(void) {
   real tmax = 1;
   simu.cfl=0.2;
   simu.vmax= 1;
-  simu.dt = 0.025;
-  simu.dt = 0.01;
+  //simu.dt = 0.025;
+  simu.dt = 1;
   /* InitFieldImplicitSolver(fd); */
   /* AssemblyFieldImplicitSolver(fd, 1, 1); */
   LocalThetaTimeScheme_SPU(&simu, tmax, simu.dt);

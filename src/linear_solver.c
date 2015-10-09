@@ -420,7 +420,10 @@ void SolveLinearSolver(LinearSolver* lsol){
        case SKYLINE_SPU :
          sky_spu=(Skyline_SPU*)lsol->matrix;
 	 if (!sky_spu->is_lu){
-	   FactoLU_SPU(sky_spu);
+	   //UnRegisterSkyline_SPU(sky_spu);
+	   //FactoLU_SPU(sky_spu);
+	   printf("to do: insert factolu in the starpu system !!!!!\n");
+	   //RegisterSkyline_SPU(sky_spu);
 	  }
 	 SolveSkyline_SPU(sky_spu);
 	 break;

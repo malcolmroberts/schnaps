@@ -246,6 +246,7 @@ void LocalThetaTimeScheme_SPU(Simulation *simu, real tmax, real dt){
     field *f = simu->fd + ie;
     f->local_source_cl_init = false;
     Skyline_SPU* solver = f->solver->matrix;
+    FactoLU_SPU(solver);
     free(solver->sol);
     solver->sol = f->wn;
     Skyline_SPU* rmat = f->rmat->matrix;
@@ -320,7 +321,6 @@ void LocalThetaTimeScheme_SPU(Simulation *simu, real tmax, real dt){
       field *f = simu->fd + ie;
       f->tnow = simu->tnow;
       SolveLinearSolver(f->solver);
-      //starpu_task_wait_for_all();
       for(int i=0;i<f->solver->neq;i++){
 	//f->wn[i] = f->solver->sol[i];
 	//printf("i=%d sol=%f\n",i,f->solver->sol[i]);
@@ -331,9 +331,10 @@ void LocalThetaTimeScheme_SPU(Simulation *simu, real tmax, real dt){
       printf("t=%f iter=%d/%d dt=%f\n",
 	     simu->tnow, iter+1, simu->itermax_rk, dt);
     iter++;
+    starpu_task_wait_for_all();
   }
 
-  starpu_task_wait_for_all();
+  //starpu_task_wait_for_all();
   printf("Elapsed time=%f\n", (double) (time(NULL) -start));
 
   for(int ie=0; ie <  simu->macromesh.nbelems; ++ie){

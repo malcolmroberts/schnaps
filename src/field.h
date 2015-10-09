@@ -36,6 +36,9 @@ typedef struct field {
 
   //! number og Gauss points in each direction
   int npg[3];
+
+  //! id of the field in the macromesh
+  int id;
   
   //! Current time and time steps
   real tnow;

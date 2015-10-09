@@ -163,6 +163,8 @@ void InitSimulation(Simulation *simu, MacroMesh *mesh,
     fd[ie].period[1] = simu->macromesh.period[1];
     fd[ie].period[2] = simu->macromesh.period[2];
 
+    fd[ie].id = ie;
+
     Initfield(fd + ie, *model, physnode, deg, raf,
 	      w + ie * field_size, dtw + ie * field_size);
 

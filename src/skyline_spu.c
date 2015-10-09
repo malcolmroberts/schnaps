@@ -288,12 +288,12 @@ void UnRegisterSkyline_SPU(Skyline_SPU* sky){
 
   if (sky->is_registered == true){
 
-    starpu_data_unregister(sky->rhs_handle);
+    //starpu_data_unregister(sky->rhs_handle);
     starpu_data_unregister(sky->sol_handle);
-    starpu_data_unregister(sky->vkgs_handle);
-    starpu_data_unregister(sky->vkgd_handle);
-    starpu_data_unregister(sky->vkgi_handle);
-    starpu_data_unregister(sky->kld_handle);
+    //starpu_data_unregister(sky->vkgs_handle);
+    //starpu_data_unregister(sky->vkgd_handle);
+    //starpu_data_unregister(sky->vkgi_handle);
+    //starpu_data_unregister(sky->kld_handle);
     sky->is_registered = false;
   
   }

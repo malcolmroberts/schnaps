@@ -73,7 +73,7 @@ endif()
 #  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 #endif()
 
-SET(BUILD_PARALUTION      ON CACHE BOOL   "Build paralution library")
+SET(BUILD_PARALUTION      OFF CACHE BOOL   "Build paralution library")
 
 IF(BUILD_PARALUTION)
 

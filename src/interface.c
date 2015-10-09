@@ -71,37 +71,38 @@ void ExtractInterface_SPU(Interface* inter, int side){
     codelet.name="ExtractInterface";
   }
 
-  field *fd;
-  int locfa,npgf;
-  real *wf;
-  starpu_data_handle_t wf_handle;
-  int* vol_index;
-  starpu_data_handle_t vol_index_handle;
+  if (inter->fL != NULL && inter->fR != NULL) { 
 
-  if (side == 0) {
-    fd = inter->fL;
-    locfa = inter->locfaL;
-    npgf = inter->npgL;
-    wf = inter->wL;
-    wf_handle = inter->wL_handle;
-    vol_index = inter->vol_indexL;
-    vol_index_handle = inter->vol_indexL_handle;
-  }
+    field *fd;
+    int locfa,npgf;
+    real *wf;
+    starpu_data_handle_t wf_handle;
+    int* vol_index;
+    starpu_data_handle_t vol_index_handle;
 
-  if (side == 1) {
-    fd = inter->fR;
-    locfa = inter->locfaR;
-    npgf = inter->npgR;
-    wf = inter->wR;
-    wf_handle = inter->wR_handle;
-    vol_index = inter->vol_indexR;
-    vol_index_handle = inter->vol_indexR_handle;
-  }
+    if (side == 0) {
+      fd = inter->fL;
+      locfa = inter->locfaL;
+      npgf = inter->npgL;
+      wf = inter->wL;
+      wf_handle = inter->wL_handle;
+      vol_index = inter->vol_indexL;
+      vol_index_handle = inter->vol_indexL_handle;
+    }
+
+    if (side == 1) {
+      fd = inter->fR;
+      locfa = inter->locfaR;
+      npgf = inter->npgR;
+      wf = inter->wR;
+      wf_handle = inter->wR_handle;
+      vol_index = inter->vol_indexR;
+      vol_index_handle = inter->vol_indexR_handle;
+    }
   
-  assert(side ==1 || side == 0);
+    assert(side ==1 || side == 0);
 
   
-  if (fd !=NULL){
 
     void* arg_buffer;
     size_t arg_buffer_size;
