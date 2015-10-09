@@ -27,6 +27,8 @@ int TestSkyline_SPU(void){
 
   int nbtests = 5;
 
+  starpu_use = true;
+
   Skyline_SPU sky[nbtests];
 
 

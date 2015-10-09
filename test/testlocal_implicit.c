@@ -84,7 +84,7 @@ int Test_Local_Implicit(void) {
   /* model.Source = TestSteady_Wave_Source; */
 
   int deg[]={3, 3, 0};
-  int raf[]={16, 16, 1};
+  int raf[]={2, 2, 1};
   
   CheckMacroMesh(&mesh, deg, raf);
 
@@ -100,15 +100,17 @@ int Test_Local_Implicit(void) {
   simu.cfl=0.2;
   simu.vmax= 1;
   simu.dt = 0.025;
-  simu.dt = 0.01;
+  simu.dt = 0.1;
   /* InitFieldImplicitSolver(fd); */
   /* AssemblyFieldImplicitSolver(fd, 1, 1); */
   LocalThetaTimeScheme(&simu, tmax, simu.dt);
   real dd = L2error(&simu);
   printf("erreur local implicit L2=%.12e\n", dd);
-  //PlotFields(0, false, &simu, NULL, "dgvisu.msh");
+  PlotFields(0, false, &simu, NULL, "dgvisu.msh");
+  PlotFields(0, true, &simu, NULL, "dgerror.msh");
 
-  test = test && (dd < 100 * _VERY_SMALL);
+  //printf("erreur local implicit L2=%.12e\n", _VERY_SMALL);
+  test = test && (dd < 200 * _VERY_SMALL);
   
   return test;
 }
@@ -117,8 +119,11 @@ void TestSteady_Transport_ImposedData(const real *xy, const real t, real *w) {
 
   real x=xy[0];
   real y=xy[1];
-
+  const real v2[] = {sqrt(0.5), sqrt(0.5), 0};
+  real xx = x * v2[0] + y * v2[1] - t;
+  
   w[0] = x * (1 - x) * y * (1-y) + 1;
+  //w[0] = exp(-2 * xx * xx);
   //w[0] = 1;
 }
 
@@ -130,7 +135,7 @@ void TestSteady_Transport_Source(const real *xy, const real t, const real *w, re
   const real v2[] = {sqrt(0.5), sqrt(0.5), 0};
 
   S[0] = v2[0] * (1 - 2 * x) * y * (1 - y) +
-    v2[1] * (1 - 2 * y) * x * (1 - x);
+   v2[1] * (1 - 2 * y) * x * (1 - x);
   //S[0] = 0;
 
 }

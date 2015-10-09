@@ -1537,6 +1537,7 @@ void SourceLocalAssembly(field *f, real theta, real dt){
 	      codtau, NULL, NULL); // codtau, dpsi, vnds
       real det = dot_product(dtau[0], codtau[0]);
       real wL[m], source[m];
+      // we should extract wL and add a buffer to the codelet TODO
       f->model.Source(xphy, f->tnow, wL, source);
 
       for(int iv1 = 0; iv1 < m; iv1++) {
@@ -1563,15 +1564,15 @@ void SourceLocalAssembly_C(void *buffers[], void *cl_arg) {
   varindexptr Varindex;
   sourceptr Source;
   
-    starpu_codelet_unpack_args(cl_arg,
-			       &m, deg, raf, physnode, &Varindex, &Source,
-			       &tnow, &dt, &theta);
+  starpu_codelet_unpack_args(cl_arg,
+			     &m, deg, raf, physnode, &Varindex, &Source,
+			     &tnow, &dt, &theta);
 
-    free(cl_arg);
+  free(cl_arg);
     
-    struct starpu_vector_interface *rhs_v =
-      (struct starpu_vector_interface *) buffers[0]; 
-    real* rhs = (real *)STARPU_VECTOR_GET_PTR(rhs_v);  
+  struct starpu_vector_interface *rhs_v =
+    (struct starpu_vector_interface *) buffers[0]; 
+  real* rhs = (real *)STARPU_VECTOR_GET_PTR(rhs_v);  
 
   for(int ipg = 0; ipg < NPG(deg, raf); ipg++) {
     real dtau[3][3], codtau[3][3], xpgref[3], xphy[3], wpg;
@@ -1591,7 +1592,6 @@ void SourceLocalAssembly_C(void *buffers[], void *cl_arg) {
       rhs[imem] += theta * dt * val;
     }
   }
-
 }
 
 

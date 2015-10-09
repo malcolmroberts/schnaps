@@ -47,8 +47,8 @@ int Test_Local_Implicit_SPU(void) {
   bool test = true;
 
   MacroMesh mesh;
-  ReadMacroMesh(&mesh,"../test/testcube2.msh");
-  //ReadMacroMesh(&mesh,"cubegros.msh");
+  //ReadMacroMesh(&mesh,"../test/testcube2.msh");
+  ReadMacroMesh(&mesh,"cubegros.msh");
   //ReadMacroMesh(&mesh,"../test/testmacromesh.msh");
   Detect2DMacroMesh(&mesh);
   
@@ -83,7 +83,7 @@ int Test_Local_Implicit_SPU(void) {
   /* model.Source = TestSteady_Wave_Source; */
 
   int deg[]={3, 3, 0};
-  int raf[]={4, 4, 1};
+  int raf[]={2, 2, 1};
   
   CheckMacroMesh(&mesh, deg, raf);
 
@@ -105,11 +105,22 @@ int Test_Local_Implicit_SPU(void) {
   /* InitFieldImplicitSolver(fd); */
   /* AssemblyFieldImplicitSolver(fd, 1, 1); */
   LocalThetaTimeScheme_SPU(&simu, tmax, simu.dt);
+  // pour tracer le graphe des tâches:
+  // avant l'execution: export STARPU_FXT_PREFIX=/Users/helluy/schnaps/build/
+  //  starpu_fxt_tool -i prof_file_*
+  // dot -Tpdf dag.dot -o output.pdf
+  // pour tracer le diagramme de Gant:
+  // vite paje.trace
+  // autres commandes utiles
+  // export STARPU_GENERATE_TRACE=0 ou 1
+  // voir aussi http://starpu.gforge.inria.fr/doc/html/ExecutionConfigurationThroughEnvironmentVariables.html
+  // export STARPU_SCHED=dmda
   real dd = L2error(&simu);
   printf("erreur local implicit L2=%.12e\n", dd);
-  //PlotFields(0, false, &simu, NULL, "dgvisu.msh");
+  PlotFields(0, false, &simu, NULL, "dgvisu.msh");
+  // pour gmsh sur mac: export PYTHONDIR=/usr/local/Cellar/gmsh/2.10.1/libexec
 
-  test = test && (dd < 100 * _VERY_SMALL);
+  test = test && (dd < 200 * _VERY_SMALL);
   
   return test;
 }
@@ -118,8 +129,12 @@ void TestSteady_Transport_ImposedData(const real *xy, const real t, real *w) {
 
   real x=xy[0];
   real y=xy[1];
+  const real v2[] = {sqrt(0.5), sqrt(0.5), 0};
+
+  real xx = x * v2[0] + y * v2[1] - t;
 
   w[0] = x * (1 - x) * y * (1-y) + 1;
+  //w[0] = exp(-2 * xx * xx);
   //w[0] = 1;
 }
 
@@ -131,7 +146,7 @@ void TestSteady_Transport_Source(const real *xy, const real t, const real *w, re
   const real v2[] = {sqrt(0.5), sqrt(0.5), 0};
 
   S[0] = v2[0] * (1 - 2 * x) * y * (1 - y) +
-    v2[1] * (1 - 2 * y) * x * (1 - x);
+  v2[1] * (1 - 2 * y) * x * (1 - x);
   //S[0] = 0;
 
 }
