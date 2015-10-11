@@ -60,6 +60,22 @@ IF(USE_STARPU)# set with: cmake . -DUSE_STARPU:BOOL=ON
   endif(STARPU_FOUND)
 ENDIF(USE_STARPU)
 
+OPTION(USE_IGRAPH
+  "Compile with the igraph library"
+  ON)
+
+IF(USE_IGRAPH)# set with: cmake . -DUSE_IGRAPH:BOOL=ON
+  MESSAGE("Compiling with igraph Library")
+  find_package (igraph)
+  if(HAVE_IGRAPH)
+    MESSAGE("igraph found")
+    INCLUDE_DIRECTORIES(${IGRAPH_INCLUDES})
+  else()
+    MESSAGE("igraph not found")
+  endif(HAVE_IGRAPH)
+ENDIF(USE_IGRAPH)
+
+
 
 
 if(CMAKE_COMPILER_IS_GNUCC)
@@ -104,10 +120,10 @@ if(SuiteSparse_FOUND)
   list(APPEND LIBS ${SuiteSparse_LIBRARIES})
   list(APPEND LIBS ${SuiteSparse_LAPACK_BLAS_LIBRARIES})
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_WITH_UMFPACK")
-  MESSAGE("libs: " ${LIBS})
 else()
   MESSAGE(STATUS "umfpack not found: deactivated")
 endif()
+
 
 
 include_directories(src)
@@ -207,10 +223,13 @@ endif (OPENCL_FOUND)
 
 
 if (STARPU_FOUND)
-  list(APPEND LIBS _schnaps ${STARPU_LIBRARIES} m)
-else()
-  list(APPEND LIBS _schnaps  m)
+  list(APPEND LIBS ${STARPU_LIBRARIES})
 endif (STARPU_FOUND)
+
+if (HAVE_IGRAPH)
+  list(APPEND LIBS  ${IGRAPH_LIBRARIES})
+endif (HAVE_IGRAPH)
+
 
 # nearest neighbour fast search library
 find_package(flann)
@@ -228,6 +247,12 @@ endif()
 
 
 
+
+MESSAGE("detected libs: " ${LIBS})
+
+
+
+
 # list of tests
 add_executable(
   testmacromesh
@@ -237,6 +262,14 @@ add_executable(
 target_link_libraries(testmacromesh ${LIBS})
 add_test(testmacromesh testmacromesh)
 
+add_executable(
+  testigraph
+  test/test.h
+  test/testigraph.c
+  )
+target_link_libraries(testigraph ${LIBS})
+add_test(testigraph testigraph)
+ 
 add_executable(
   testgeometry
   test/test.h

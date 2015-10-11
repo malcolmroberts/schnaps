@@ -5,6 +5,8 @@
 // some simple tests
 int TestMacroMesh(void);
 
+int TestIGraph(void);
+
 int TestGeometry(void);
 
 int TestInterpolation(void);
