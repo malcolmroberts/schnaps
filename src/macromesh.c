@@ -18,6 +18,10 @@
 
 void ReadMacroMesh(MacroMesh *m, char *filename)
 {
+
+  m->is_read = false;
+  m->is_build = false;
+
   // First, set default values
   m->is2d = false;
   m->is1d = false;
@@ -113,6 +117,8 @@ void ReadMacroMesh(MacroMesh *m, char *filename)
   printf("nbelems=%d\n", m->nbelems);
   m->elem2node = realloc(m->elem2node, 20 * sizeof(int) * m->nbelems);
   assert(m->elem2node);
+
+  m->is_read = true;
 
   m->elem2elem = NULL;
 }
@@ -611,6 +617,8 @@ void build_node2elem(MacroMesh *m)
 // Build other connectivity arrays
 void BuildConnectivity(MacroMesh* m) 
 {
+  assert(m->is_read);
+  assert(!m->is_build);
   printf("Build connectivity...\n");
 
   real *bounds = malloc(6 * sizeof(real));
@@ -740,6 +748,7 @@ void BuildConnectivity(MacroMesh* m)
   free(bounds);
 
   m->connec_ok = true;
+  m->is_build = true;
 
 /* #ifdef _PERIOD */
 /*   assert(m->is1d); // TODO : generalize to 2D */
@@ -751,6 +760,15 @@ void BuildConnectivity(MacroMesh* m)
   
 }
 
+void BuildMacroMeshGraph(MacroMesh *m){
+
+  assert(m->is_build = true);
+
+  
+  
+
+
+}
 
 // Compare two integers
 int CompareInt(const void* a, const void* b) {

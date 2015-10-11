@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 #include "global.h"
+#include <igraph.h>
 
 //! \brief structure for managing the mesh obtained from gmsh.
 //! It is called a macromesh, because it will be refined
@@ -16,10 +17,16 @@ typedef struct MacroMesh{
   int *boundaryface; //!< list of boundary faces
   int *macrointerface; //<! List of macrocell interfaces
   
+  bool is_read;
+  bool is_build;
+
   // connectivity
   int *elem2node; //!< elems to nodes connectivity (20 nodes/elem)
   int *elem2elem; //!< elems to elems connectivity (along 6 faces)
   int *face2elem; //!< faces to elems connectivity (Left and Right)
+
+  //! graph data for upwind implicit resolution
+  igraph_t connect_graph;
 
   //! max numbers of elems that touch a node +1 
   int max_node2elem;
@@ -91,6 +98,10 @@ void ReadMacroMesh(MacroMesh *m, char *filename);
 //! a basic connectivity given by gmsh.
 //! \param[inout] m pointer to a macromesh
 void BuildConnectivity(MacroMesh *m);
+
+//! \brief compute the connectivity graph
+//! \param[inout] m pointer to a macromesh
+void BuildMacroMeshGraph(MacroMesh *m);
 
 //! \brief affine transformation
 //! \param[inout] x the transformed point
