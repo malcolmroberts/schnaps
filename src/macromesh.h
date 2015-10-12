@@ -3,7 +3,22 @@
 
 #include <stdbool.h>
 #include "global.h"
+
+
+//// problem: change real into schnaps_real in all the code
+// in order to avoid collision with igraph.h
+// ugly workaround
+#undef real
 #include <igraph.h>
+// ugly workaround
+#ifndef _DOUBLE_PRECISION
+#define real float
+#else
+#define real double
+#endif
+
+
+
 
 //! \brief structure for managing the mesh obtained from gmsh.
 //! It is called a macromesh, because it will be refined

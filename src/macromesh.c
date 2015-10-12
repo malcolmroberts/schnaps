@@ -1,5 +1,7 @@
 #include "macromesh.h"
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE  // for avoiding a compiler warning
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>

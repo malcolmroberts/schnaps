@@ -21,14 +21,19 @@ char cl_buildoptions[1024];
 #define __private
 
 #ifndef _DOUBLE_PRECISION
+#define real float
+#else
+#define real double
+#endif
+
+#ifndef _DOUBLE_PRECISION
 #define  _VERY_SMALL (1e-8)
 #define _SMALL (1e-5)
-#define real float
 #else
 #define _VERY_SMALL (1e-16)
 #define _SMALL (1e-10)
-#define real double
 #endif
+
 
 bool starpu_is_init;
 bool starpu_use;
