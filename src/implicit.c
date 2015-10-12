@@ -237,7 +237,7 @@ void LocalThetaTimeScheme_SPU(Simulation *simu, real tmax, real dt){
   }
   
   int freq = (1 >= simu->itermax_rk / 10)? 1 : simu->itermax_rk / 10;
-  freq = 1;
+  //freq = 10;
   int iter = 0;
 
 
@@ -271,8 +271,6 @@ void LocalThetaTimeScheme_SPU(Simulation *simu, real tmax, real dt){
       MatVect_SPU(f->rmat,
 		  sky_spu->sol_handle,
 		  sky_spu->rhs_handle);
-      //starpu_task_wait_for_all();
-      //for(int i=0;i<f->solver->neq;i++) f->solver->rhs[i]=0;
     }
 
     
@@ -281,39 +279,24 @@ void LocalThetaTimeScheme_SPU(Simulation *simu, real tmax, real dt){
 
     for(int ie=0; ie <  simu->macromesh.nbelems; ++ie){
       field *f = simu->fd + ie;
-      /* DisplayLinearSolver(f->solver); */
-      /* DisplayLinearSolver(f->rmat); */
-      /* assert(1==3); */
       f->tnow = simu->tnow;
       f->dt = simu->dt;
       SourceLocalAssembly_SPU(f, 1. , dt);
-      //starpu_task_wait_for_all();
     }
 
     for(int ifa = 0; ifa < simu->macromesh.nbfaces; ifa++){
       Interface* inter = simu->interface + ifa;
       // left = 0  right = 1
       ExtractInterface_SPU(inter, 0);
-      //starpu_task_wait_for_all();
       ExtractInterface_SPU(inter, 1);
-      //starpu_task_wait_for_all();
       if (inter->fR != NULL) {
       	InterfaceExplicitFlux_SPU(inter, 0);
-      	//starpu_task_wait_for_all();
       	InterfaceExplicitFlux_SPU(inter, 1);
-      	//starpu_task_wait_for_all();
       }
       else{
       	InterfaceBoundaryFlux_SPU(inter);
-      	//starpu_task_wait_for_all();
       }
     }
-
-    /* for(int ie=0; ie <  simu->macromesh.nbelems; ++ie){ */
-    /*   field *f = simu->fd + ie; */
-    /*   DisplayLinearSolver(f->solver); */
-    /*   DisplayLinearSolver(f->rmat); */
-    /* } */
     
     simu->tnow += (1 - theta) * dt;
 
@@ -322,19 +305,17 @@ void LocalThetaTimeScheme_SPU(Simulation *simu, real tmax, real dt){
       f->tnow = simu->tnow;
       SolveLinearSolver(f->solver);
       for(int i=0;i<f->solver->neq;i++){
-	//f->wn[i] = f->solver->sol[i];
-	//printf("i=%d sol=%f\n",i,f->solver->sol[i]);
       }
     }
     
-    if (iter % freq == 0)
+    if (iter % freq == 0) {
       printf("t=%f iter=%d/%d dt=%f\n",
 	     simu->tnow, iter+1, simu->itermax_rk, dt);
+    }
     iter++;
-    starpu_task_wait_for_all();
   }
 
-  //starpu_task_wait_for_all();
+  starpu_task_wait_for_all();
   printf("Elapsed time=%f\n", (double) (time(NULL) -start));
 
   for(int ie=0; ie <  simu->macromesh.nbelems; ++ie){

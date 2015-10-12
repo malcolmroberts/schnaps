@@ -47,8 +47,8 @@ int Test_Local_Implicit_SPU(void) {
   bool test = true;
 
   MacroMesh mesh;
-  //ReadMacroMesh(&mesh,"../test/testcube2.msh");
-  ReadMacroMesh(&mesh,"cubegros.msh");
+  ReadMacroMesh(&mesh,"../test/testcube2.msh");
+  //ReadMacroMesh(&mesh,"cubegros.msh");
   //ReadMacroMesh(&mesh,"../test/testmacromesh.msh");
   Detect2DMacroMesh(&mesh);
   
@@ -101,7 +101,7 @@ int Test_Local_Implicit_SPU(void) {
   simu.cfl=0.2;
   simu.vmax= 1;
   //simu.dt = 0.025;
-  simu.dt = 0.1;
+  simu.dt = 0.01;
   /* InitFieldImplicitSolver(fd); */
   /* AssemblyFieldImplicitSolver(fd, 1, 1); */
   LocalThetaTimeScheme_SPU(&simu, tmax, simu.dt);
@@ -117,7 +117,7 @@ int Test_Local_Implicit_SPU(void) {
   // export STARPU_SCHED=dmda
   real dd = L2error(&simu);
   printf("erreur local implicit L2=%.12e\n", dd);
-  PlotFields(0, false, &simu, NULL, "dgvisu.msh");
+  //PlotFields(0, false, &simu, NULL, "dgvisu.msh");
   // pour gmsh sur mac: export PYTHONDIR=/usr/local/Cellar/gmsh/2.10.1/libexec
 
   test = test && (dd < 200 * _VERY_SMALL);

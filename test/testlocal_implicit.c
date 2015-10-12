@@ -47,8 +47,8 @@ int Test_Local_Implicit(void) {
   bool test = true;
 
   MacroMesh mesh;
-  //ReadMacroMesh(&mesh,"../test/testcube2.msh");
-  ReadMacroMesh(&mesh,"cubegros.msh");
+  ReadMacroMesh(&mesh,"../test/testcube2.msh");
+  //ReadMacroMesh(&mesh,"cubegros.msh");
   //ReadMacroMesh(&mesh,"../test/testdisque2d.msh");
   //ReadMacroMesh(&mesh,"../test/testmacromesh.msh");
   Detect2DMacroMesh(&mesh);
@@ -100,7 +100,7 @@ int Test_Local_Implicit(void) {
   simu.cfl=0.2;
   simu.vmax= 1;
   simu.dt = 0.025;
-  simu.dt = 0.1;
+  simu.dt = 0.01;
   /* InitFieldImplicitSolver(fd); */
   /* AssemblyFieldImplicitSolver(fd, 1, 1); */
   LocalThetaTimeScheme(&simu, tmax, simu.dt);
