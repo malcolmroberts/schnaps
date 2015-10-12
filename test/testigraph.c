@@ -26,7 +26,8 @@ int TestIGraph(void)
   BuildConnectivity(&m);
   CheckMacroMesh(&m, deg, raf);
   PrintMacroMesh(&m);
-
+  BuildMacroMeshGraph(&m);
+  
   int test = (m.nbelems == 5);
   test = (test && m.nbnodes == 50);
 

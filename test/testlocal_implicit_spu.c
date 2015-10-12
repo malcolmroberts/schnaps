@@ -84,7 +84,7 @@ int Test_Local_Implicit_SPU(void) {
   /* model.Source = TestSteady_Wave_Source; */
 
   int deg[]={3, 3, 3};
-  int raf[]={2, 2, 2};
+  int raf[]={4, 4, 2};
   
   CheckMacroMesh(&mesh, deg, raf);
 
@@ -98,11 +98,11 @@ int Test_Local_Implicit_SPU(void) {
 
   field* fd = simu.fd;
 
-  real tmax = .1;
+  real tmax = 1;
   simu.cfl=0.2;
   simu.vmax= 1;
   //simu.dt = 0.025;
-  simu.dt = 0.001;
+  simu.dt = 0.01;
   /* InitFieldImplicitSolver(fd); */
   /* AssemblyFieldImplicitSolver(fd, 1, 1); */
   LocalThetaTimeScheme_SPU(&simu, tmax, simu.dt);

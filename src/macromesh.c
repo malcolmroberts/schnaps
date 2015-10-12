@@ -764,12 +764,27 @@ void BuildConnectivity(MacroMesh* m)
 
 void BuildMacroMeshGraph(MacroMesh *m){
 
+  igraph_t* graph = &(m->connect_graph);
+  
   assert(m->is_build = true);
 
-  
-  
+  //igraph_empty(graph, m->nbelems+2, IGRAPH_DIRECTED);
+  igraph_empty(graph, m->nbelems+2, IGRAPH_DIRECTED);
 
-
+  for(int ifa = 0; ifa < m->nbfaces; ifa++){
+    int ieL = m->face2elem[4 * ifa + 0];
+    int locfaL = m->face2elem[4 * ifa + 1];
+    int ieR = m->face2elem[4 * ifa + 2];
+    int locfaR = m->face2elem[4 * ifa + 3];
+    if (ieL < 0) ieL = m->nbelems;
+    if (ieR < 0) ieR = m->nbelems+1;
+    igraph_add_edge(graph, ieL, ieR);
+  }
+    
+    // drawing
+    FILE *f = fopen("macromesh.dot","w");;
+    igraph_write_graph_dot(graph, f);
+    fclose(f);
 }
 
 // Compare two integers
