@@ -132,7 +132,13 @@ void LocalThetaTimeScheme(Simulation *simu, real tmax, real dt)
   for(int ie=0; ie <  simu->macromesh.nbelems; ++ie){
     field *f = simu->fd + ie;
     InitFieldImplicitSolver(f, SKYLINE);
+    //performs: InternalLocalCoupling(fd, isky);
+    //and FluxLocalCoupling(fd, isky);
+    
     AssemblyFieldImplicitSolver(f, theta, dt);
+    // performs: MassLocalAssembly(fd);
+    //InternalLocalAssembly(fd, theta, dt);
+    //FluxLocalAssembly(fd, theta, dt);
   }
 
   // assembly of the boundary condition part of the matrix 

@@ -44,7 +44,7 @@ int Test_Transport_Steady(void) {
   ReadMacroMesh(&mesh,"../test/testcube.msh");
   //ReadMacroMesh(&mesh,"../test/testdisque2d.msh");
   //ReadMacroMesh(&mesh,"../test/testmacromesh.msh");
-  Detect2DMacroMesh(&mesh);
+  //Detect2DMacroMesh(&mesh);
   
   real A[3][3] = {{_LENGTH_DOMAIN, 0, 0}, {0, _LENGTH_DOMAIN, 0}, {0, 0,1}};
   real x0[3] = {0, 0, 0};
@@ -63,8 +63,8 @@ int Test_Transport_Steady(void) {
 
   //int deg[]={4, 4, 0};
   //int raf[]={2, 2, 1};
-  int deg[]={1, 1, 0};
-  int raf[]={1, 1, 1};
+  int deg[]={3, 3, 3};
+  int raf[]={2, 2, 2};
   
   CheckMacroMesh(&mesh, deg, raf);
   Simulation simu;
@@ -74,7 +74,7 @@ int Test_Transport_Steady(void) {
 
   real tmax = 1.0;
   simu.cfl=0.2;
-  simu.vmax=_SPEED_WAVE;
+  simu.vmax=1;
  
   real dd = 0;
 
@@ -83,6 +83,8 @@ int Test_Transport_Steady(void) {
   test = test && (dd < tolerance);
 
   ThetaTimeScheme(&simu, tmax, 1);
+  //simu.dt = 0;
+  //RK4(&simu, tmax);
 
   
   
@@ -130,8 +132,8 @@ void Transport_Upwind_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
  
 void TestSteady_Transport_NumFlux(real *wL, real *wR, real *vnorm, real *flux)
 {
-  //const real transport_v2d[] = {sqrt(0.5), sqrt(0.5), 0};
-  const real transport_v2d[] = {1,0, 0};
+  const real transport_v2d[] = {sqrt(0.5), sqrt(0.5), 0};
+  //const real transport_v2d[] = {1,0, 0};
   real vn 
     = transport_v2d[0] * vnorm[0]
     + transport_v2d[1] * vnorm[1]

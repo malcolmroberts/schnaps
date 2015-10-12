@@ -25,7 +25,8 @@ void TestSteady_Wave_InitData(real *x, real *w);
 void TestSteady_Wave_Source(const real *xy, const real t, const real *w, real *S);
 void Wave_Upwind_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
 			      real *flux);
-
+// sqrt(1/3) = 0.5773502691896257
+const real TestSteady_Transport_v2[3] = {0.7071067811865476, 0.7071067811865476, 0};
 
 
 
@@ -47,8 +48,8 @@ int Test_Local_Implicit_SPU(void) {
   bool test = true;
 
   MacroMesh mesh;
-  ReadMacroMesh(&mesh,"../test/testcube2.msh");
-  //ReadMacroMesh(&mesh,"cubegros.msh");
+  //ReadMacroMesh(&mesh,"../test/testcube2.msh");
+  ReadMacroMesh(&mesh,"cubegros.msh");
   //ReadMacroMesh(&mesh,"../test/testmacromesh.msh");
   Detect2DMacroMesh(&mesh);
   
@@ -82,8 +83,8 @@ int Test_Local_Implicit_SPU(void) {
   /* model.BoundaryFlux = Wave_Upwind_BoundaryFlux; */
   /* model.Source = TestSteady_Wave_Source; */
 
-  int deg[]={3, 3, 0};
-  int raf[]={2, 2, 1};
+  int deg[]={3, 3, 3};
+  int raf[]={2, 2, 2};
   
   CheckMacroMesh(&mesh, deg, raf);
 
@@ -97,11 +98,11 @@ int Test_Local_Implicit_SPU(void) {
 
   field* fd = simu.fd;
 
-  real tmax = 1;
+  real tmax = .1;
   simu.cfl=0.2;
   simu.vmax= 1;
   //simu.dt = 0.025;
-  simu.dt = 0.01;
+  simu.dt = 0.001;
   /* InitFieldImplicitSolver(fd); */
   /* AssemblyFieldImplicitSolver(fd, 1, 1); */
   LocalThetaTimeScheme_SPU(&simu, tmax, simu.dt);
@@ -129,9 +130,8 @@ void TestSteady_Transport_ImposedData(const real *xy, const real t, real *w) {
 
   real x=xy[0];
   real y=xy[1];
-  const real v2[] = {sqrt(0.5), sqrt(0.5), 0};
 
-  real xx = x * v2[0] + y * v2[1] - t;
+  real xx = x * TestSteady_Transport_v2[0] + y * TestSteady_Transport_v2[1] - t;
 
   w[0] = x * (1 - x) * y * (1-y) + 1;
   //w[0] = exp(-2 * xx * xx);
@@ -143,10 +143,9 @@ void TestSteady_Transport_Source(const real *xy, const real t, const real *w, re
   real x=xy[0];
   real y=xy[1];
 
-  const real v2[] = {sqrt(0.5), sqrt(0.5), 0};
 
-  S[0] = v2[0] * (1 - 2 * x) * y * (1 - y) +
-  v2[1] * (1 - 2 * y) * x * (1 - x);
+  S[0] = TestSteady_Transport_v2[0] * (1 - 2 * x) * y * (1 - y) +
+  TestSteady_Transport_v2[1] * (1 - 2 * y) * x * (1 - x);
   //S[0] = 0;
 
 }
@@ -169,9 +168,9 @@ void TestSteady_Transport_NumFlux(real *wL, real *wR, real *vnorm, real *flux)
   const real transport_v2d[] = {sqrt(0.5), sqrt(0.5), 0};
   //const real transport_v2d[] = {-1,0, 0};
   real vn 
-    = transport_v2d[0] * vnorm[0]
-    + transport_v2d[1] * vnorm[1]
-    + transport_v2d[2] * vnorm[2];
+    = TestSteady_Transport_v2[0] * vnorm[0]
+    + TestSteady_Transport_v2[1] * vnorm[1]
+    + TestSteady_Transport_v2[2] * vnorm[2];
   real vnp = vn > 0 ? vn : 0;
   real vnm = vn - vnp;
   flux[0] = vnp * wL[0] + vnm * wR[0];
