@@ -110,7 +110,7 @@ int Test_Local_Implicit(void) {
   PlotFields(0, true, &simu, NULL, "dgerror.msh");
 
   //printf("erreur local implicit L2=%.12e\n", _VERY_SMALL);
-  test = test && (dd < 200 * _VERY_SMALL);
+  test = test && (dd < 600 * _VERY_SMALL);
   
   return test;
 }

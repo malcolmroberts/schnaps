@@ -120,7 +120,7 @@ int Test_Local_Implicit_SPU(void) {
   //PlotFields(0, false, &simu, NULL, "dgvisu.msh");
   // pour gmsh sur mac: export PYTHONDIR=/usr/local/Cellar/gmsh/2.10.1/libexec
 
-  test = test && (dd < 200 * _VERY_SMALL);
+  test = test && (dd < 600 * _VERY_SMALL);
   
   return test;
 }
