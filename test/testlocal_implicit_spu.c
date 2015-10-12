@@ -83,8 +83,8 @@ int Test_Local_Implicit_SPU(void) {
   /* model.BoundaryFlux = Wave_Upwind_BoundaryFlux; */
   /* model.Source = TestSteady_Wave_Source; */
 
-  int deg[]={3, 3, 3};
-  int raf[]={4, 4, 2};
+  int deg[]={3, 3, 0};
+  int raf[]={4, 4, 1};
   
   CheckMacroMesh(&mesh, deg, raf);
 

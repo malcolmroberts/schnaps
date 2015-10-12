@@ -43,6 +43,9 @@ typedef struct MacroMesh{
   //! graph data for upwind implicit resolution
   igraph_t connect_graph;
 
+  //! record of the graph edges -> faces association
+  int *edge2face;
+
   //! max numbers of elems that touch a node +1 
   int max_node2elem;
   //! nodes to elems connectivity (size = max_node2elem * nbelems)
@@ -114,9 +117,13 @@ void ReadMacroMesh(MacroMesh *m, char *filename);
 //! \param[inout] m pointer to a macromesh
 void BuildConnectivity(MacroMesh *m);
 
-//! \brief compute the connectivity graph
-//! \param[inout] m pointer to a macromesh
-void BuildMacroMeshGraph(MacroMesh *m);
+//! \brief compute the upwind connectivity graph
+//! associated to a constant velocity
+//! \param[inout] m a macromesh
+//! \param[in] vit a velocity vector (3 components)
+//! \param[in] deg degree approximation in each direction
+//! \param[in] raf refinement in each direction
+void BuildMacroMeshGraph(MacroMesh *m, real* vit, real* deg, real *raf);
 
 //! \brief affine transformation
 //! \param[inout] x the transformed point

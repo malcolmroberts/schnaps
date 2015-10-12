@@ -54,7 +54,7 @@ int Test_Local_Implicit(void) {
   ReadMacroMesh(&mesh,"cubegros.msh");
   //ReadMacroMesh(&mesh,"../test/testdisque2d.msh");
   //ReadMacroMesh(&mesh,"../test/testmacromesh.msh");
-  //Detect2DMacroMesh(&mesh);
+  Detect2DMacroMesh(&mesh);
   
   real A[3][3] = {{_LENGTH_DOMAIN, 0, 0}, {0, _LENGTH_DOMAIN, 0}, {0, 0,1}};
   real x0[3] = {0, 0, 0};
@@ -86,8 +86,8 @@ int Test_Local_Implicit(void) {
   /* model.BoundaryFlux = Wave_Upwind_BoundaryFlux; */
   /* model.Source = TestSteady_Wave_Source; */
 
-  int deg[]={3, 3, 3};
-  int raf[]={2, 2, 2};
+  int deg[]={3, 3, 0};
+  int raf[]={4, 4, 1};
   
   CheckMacroMesh(&mesh, deg, raf);
 
@@ -99,11 +99,11 @@ int Test_Local_Implicit(void) {
 
   field* fd = simu.fd;
 
-  real tmax = 0.1;
+  real tmax = 1;
   simu.cfl=0.2;
-  simu.vmax= 1;
+  simu.vmax= _SPEED_WAVE;
   simu.dt = 0.025;
-  simu.dt = 0.001;
+  simu.dt = 0.1;
   /* InitFieldImplicitSolver(fd); */
   /* AssemblyFieldImplicitSolver(fd, 1, 1); */
   LocalThetaTimeScheme(&simu, tmax, simu.dt);
