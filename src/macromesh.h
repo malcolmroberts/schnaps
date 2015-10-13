@@ -45,6 +45,11 @@ typedef struct MacroMesh{
 
   //! record of the graph edges -> faces association
   int *edge2face;
+  //! edge order:"0"= L to R ; "1" = R to L
+  int* edge_dir;
+
+  //! topological order of the macrocells
+  int* topo_order;
 
   //! max numbers of elems that touch a node +1 
   int max_node2elem;
@@ -123,7 +128,7 @@ void BuildConnectivity(MacroMesh *m);
 //! \param[in] vit a velocity vector (3 components)
 //! \param[in] deg degree approximation in each direction
 //! \param[in] raf refinement in each direction
-void BuildMacroMeshGraph(MacroMesh *m, real* vit, real* deg, real *raf);
+void BuildMacroMeshGraph(MacroMesh *m, real vit[], int deg[], int raf[]);
 
 //! \brief affine transformation
 //! \param[inout] x the transformed point

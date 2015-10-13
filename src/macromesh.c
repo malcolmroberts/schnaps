@@ -770,13 +770,14 @@ void print_vector(igraph_vector_t *v, FILE *f) {
   fprintf(f, "\n");
 }
 
-void BuildMacroMeshGraph(MacroMesh *m, real* vit, real* deg, real *raf){
+void BuildMacroMeshGraph(MacroMesh *m, real vit[], int deg[], int raf[]){
   
   igraph_t* graph = &(m->connect_graph);
   
   assert(m->is_build = true);
 
   m->edge2face = malloc((m->nbfaces + 2) * sizeof(int));
+  m->edge_dir = malloc((m->nbfaces + 2) * sizeof(int));
   
   //igraph_empty(graph, m->nbelems+2, IGRAPH_DIRECTED);
   igraph_empty(graph, m->nbelems+2, IGRAPH_DIRECTED);
@@ -822,19 +823,23 @@ void BuildMacroMeshGraph(MacroMesh *m, real* vit, real* deg, real *raf){
 
     if (edgeLtoR) {
       igraph_add_edge(graph, ieL, ieR);
-      m->edge2face[count_edge++] = ifa;
+      m->edge2face[count_edge] = ifa;
+      m->edge_dir[count_edge++] = 0;
     }
     if (edgeRtoL) {
       igraph_add_edge(graph, ieR, ieL);
-      m->edge2face[count_edge++] = ifa;
+      m->edge2face[count_edge] = ifa;
+      m->edge_dir[count_edge++] = 1;
     }
     if (upwind) {
       igraph_add_edge(graph, m->nbelems, ieL);
-      m->edge2face[count_edge++] = ifa;
+      m->edge2face[count_edge] = ifa;
+      m->edge_dir[count_edge++] = 1;
     }
     if (downwind) {
       igraph_add_edge(graph, ieL, m->nbelems + 1);
-      m->edge2face[count_edge++] = ifa;
+      m->edge2face[count_edge] = ifa;
+      m->edge_dir[count_edge++] = 0;
     }
 
   } 
@@ -842,31 +847,37 @@ void BuildMacroMeshGraph(MacroMesh *m, real* vit, real* deg, real *raf){
 
   printf("Found %d edges and igraph says : %d\n", count_edge,
 	 igraph_ecount(graph));
-  realloc(m->edge2face, count_edge * sizeof(int));
+  m->edge2face = realloc(m->edge2face, count_edge * sizeof(int));
+  m->edge_dir = realloc(m->edge_dir, count_edge * sizeof(int));
 
   for(int eid = 0; eid < count_edge; eid++){
     int ifa =  m->edge2face[eid];
     int ieL = m->face2elem[4 * ifa + 0];
     int ieR = m->face2elem[4 * ifa + 2];
-    printf("Edge %d is face %d with ieL=%d and ieR=%d\n",eid,ifa,ieL,ieR);	  
+    /* printf("Edge %d is face %d with ieL=%d ieR=%d dir=%d\n", */
+    /* 	   eid,ifa,ieL,ieR,m->edge_dir[eid]);     */
   }
 
   // topological sorting
   igraph_bool_t is_dag;
   igraph_is_dag(graph, &is_dag);
+  igraph_vector_t sorting;
   if (is_dag) {
     printf("The graph is a DAG. Topological sorting...\n");
-    igraph_vector_t sorting;
     igraph_vector_init(&sorting, m->nbelems + 2);
     igraph_topological_sorting(graph, &sorting,
                   IGRAPH_OUT);
-    print_vector(&sorting, stdout);
+    //print_vector(&sorting, stdout);
   }
 
-  // drawing
-  FILE *f = fopen("macromesh.dot","w");;
-  igraph_write_graph_dot(graph, f);
-  fclose(f);
+  m->topo_order = malloc((m->nbelems + 2) * sizeof(int));
+
+  for(int nid = 0; nid < m->nbelems + 2; nid++){
+    m->topo_order[nid] = (int)VECTOR(sorting)[nid];
+  }
+
+  igraph_vector_destroy(&sorting);
+
 }
 
 
