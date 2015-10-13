@@ -394,7 +394,7 @@ void GraphThetaTimeScheme_SPU(Simulation *simu, real tmax, real dt){
     for(int ies=0; ies <  simu->macromesh.nbelems; ++ies){
       // -1 because the ghost upwind vertex is always the first
       // and the ghost downwind vertex is always the last
-      int ie = simu->macromesh.topo_order[ies] - 1;
+      int ie = simu->macromesh.topo_order[ies+1];
       assert(ie >=0 && ie < simu->macromesh.nbelems);
       //printf("ies=%d ie=%d\n",ies,ie);
       field *f = simu->fd + ie;

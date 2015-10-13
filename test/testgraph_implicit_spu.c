@@ -104,7 +104,7 @@ int Test_Graph_Implicit_SPU(void) {
   simu.cfl=0.2;
   simu.vmax= 1;
   //simu.dt = 0.025;
-  simu.dt = 1;
+  simu.dt = .01;
   /* InitFieldImplicitSolver(fd); */
   /* AssemblyFieldImplicitSolver(fd, 1, 1); */
   GraphThetaTimeScheme_SPU(&simu, tmax, simu.dt);
@@ -167,8 +167,6 @@ void Transport_Upwind_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
  
 void TestSteady_Transport_NumFlux(real *wL, real *wR, real *vnorm, real *flux)
 {
-  const real transport_v2d[] = {sqrt(0.5), sqrt(0.5), 0};
-  //const real transport_v2d[] = {-1,0, 0};
   real vn 
     = TestSteady_Transport_v2[0] * vnorm[0]
     + TestSteady_Transport_v2[1] * vnorm[1]
