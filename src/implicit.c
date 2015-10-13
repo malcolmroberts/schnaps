@@ -276,7 +276,7 @@ void LocalThetaTimeScheme_SPU(Simulation *simu, real tmax, real dt){
       RegisterSkyline_SPU(sky_spu);
       MatVect_SPU(f->rmat,
 		  sky_spu->sol_handle,
-		  sky_spu->rhs_handle);
+		  sky_spu->rhs_handle); // note: matvect implies a register
     }
 
     
@@ -336,6 +336,143 @@ void LocalThetaTimeScheme_SPU(Simulation *simu, real tmax, real dt){
 
   
 };
+
+
+void GraphThetaTimeScheme_SPU(Simulation *simu, real tmax, real dt){
+
+  real theta=0.5;
+  simu->dt=dt;
+  
+  int itermax=tmax / simu->dt;
+  simu->itermax_rk=itermax;
+  simu->tnow=0;
+  simu->tmax = tmax;
+
+  // assembly of the volume part of the matrix
+  for(int ie=0; ie <  simu->macromesh.nbelems; ++ie){
+    field *f = simu->fd + ie;
+    InitFieldImplicitSolver(f, SKYLINE_SPU);
+    AssemblyFieldImplicitSolver(f, theta, dt);
+  }
+
+  // assembly of the boundary condition part of the matrix 
+  for(int ifa = 0; ifa < simu->macromesh.nbfaces; ifa++){
+    Interface* inter = simu->interface + ifa;
+    assert(inter->fL);
+    InterfaceLocalAssembly(inter, theta, dt);
+  }
+  
+  int freq = (1 >= simu->itermax_rk / 10)? 1 : simu->itermax_rk / 10;
+  //freq = 10;
+  int iter = 0;
+
+
+  // clean the allocated arrays in each field
+  for(int ie=0; ie <  simu->macromesh.nbelems; ++ie){
+    field *f = simu->fd + ie;
+    f->local_source_cl_init = false;
+    Skyline_SPU* solver = f->solver->matrix;
+    FactoLU_SPU(solver);
+    free(solver->sol);
+    solver->sol = f->wn;
+    Skyline_SPU* rmat = f->rmat->matrix;
+    free(rmat->sol);
+    free(rmat->rhs);
+
+  }
+
+  time_t start;
+
+  while(simu->tnow < tmax) {
+    
+    if (iter == 1) start = time(NULL);
+
+    simu->tnow += theta * dt;
+  
+    for(int ies=0; ies <  simu->macromesh.nbelems; ++ies){
+      // -1 because the ghost upwind vertex is always the first
+      int ie = simu->macromesh.topo_order[ies] - 1;
+      assert(ie >=0 && ie < simu->macromesh.nbelems);
+      //printf("ies=%d ie=%d\n",ies,ie);
+      field *f = simu->fd + ie;
+      f->tnow = simu->tnow;
+      f->dt = simu->dt;
+      Skyline_SPU* sky_spu = f->solver->matrix;
+      RegisterSkyline_SPU(sky_spu);
+      MatVect_SPU(f->rmat,
+		  sky_spu->sol_handle,
+		  sky_spu->rhs_handle);
+
+      SourceLocalAssembly_SPU(f, 1. , dt);
+
+      // search upwind boundaries
+      igraph_t* graph = &(simu->macromesh.connect_graph);  
+      igraph_vector_t found_edge;
+      igraph_vector_init(&found_edge, 6);
+      igraph_incident(graph, &found_edge, ie, IGRAPH_IN);
+      int nup = igraph_vector_size(&found_edge);
+      for(int ii=0; ii < nup; ii++) {
+	int eid = (int)VECTOR(found_edge)[ii];
+	int iefrom, ieto;
+	igraph_edge(graph, eid, &iefrom, &ieto);
+	assert(ie == ieto);
+	int side = simu->macromesh.edge_dir[eid];
+	int interid = simu->macromesh.edge2face[eid];
+	Interface *inter = simu->interface + interid;
+	if (iefrom >= simu->macromesh.nbelems) {
+	  InterfaceBoundaryFlux_SPU(inter);
+	}
+	else {
+	  InterfaceExplicitFlux_SPU(inter, 1 - side);
+	}
+      }
+
+      SolveLinearSolver(f->solver);
+
+      igraph_incident(graph, &found_edge, ie, IGRAPH_OUT);
+      int ndown = igraph_vector_size(&found_edge);
+      for(int ii=0; ii < ndown; ii++) {
+	int eid = (int)VECTOR(found_edge)[ii];
+	int iefrom, ieto;
+	igraph_edge(graph, eid, &iefrom, &ieto);
+	assert(ie == iefrom);
+	int side = simu->macromesh.edge_dir[eid];
+	int interid = simu->macromesh.edge2face[eid];
+	Interface *inter = simu->interface + interid;
+	if (ieto < simu->macromesh.nbelems) {
+	  ExtractInterface_SPU(inter, side);
+	}
+      }     
+    }
+
+    simu->tnow += (1 - theta) * dt;
+
+
+    
+    if (iter % freq == 0) {
+      printf("t=%f iter=%d/%d dt=%f\n",
+	     simu->tnow, iter+1, simu->itermax_rk, dt);
+    }
+    iter++;
+  starpu_task_wait_for_all();
+  }
+
+  printf("Elapsed time=%f\n", (double) (time(NULL) -start));
+
+  for(int ie=0; ie <  simu->macromesh.nbelems; ++ie){
+    field* f = simu->fd + ie;
+    Skyline_SPU* sky_spu = f->solver->matrix;
+    UnRegisterSkyline_SPU(sky_spu); 
+  }
+
+
+  starpu_shutdown();
+
+
+  
+};
+
+
 
 void ThetaTimeScheme(Simulation *simu, real tmax, real dt){
 

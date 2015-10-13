@@ -873,7 +873,7 @@ void BuildMacroMeshGraph(MacroMesh *m, real vit[], int deg[], int raf[]){
   m->topo_order = malloc((m->nbelems + 2) * sizeof(int));
 
   for(int nid = 0; nid < m->nbelems + 2; nid++){
-    m->topo_order[nid] = (int)VECTOR(sorting)[nid];
+    m->topo_order[(int)VECTOR(sorting)[nid]] = nid;
   }
 
   igraph_vector_destroy(&sorting);

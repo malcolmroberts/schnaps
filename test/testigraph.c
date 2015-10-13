@@ -29,7 +29,7 @@ int TestIGraph(void)
   BuildConnectivity(&m);
   CheckMacroMesh(&m, deg, raf);
   //PrintMacroMesh(&m);
-  real vit[3] = {1, 1, 1};
+  real vit[3] = {1, 0, 0};
   BuildMacroMeshGraph(&m, vit, deg, raf);
   
   igraph_t* graph = &m.connect_graph;
@@ -78,11 +78,19 @@ int TestIGraph(void)
     igraph_neighbors(graph, &found_vert, nid, IGRAPH_IN);
     int nup = igraph_vector_size(&found_vert);
     printf("Vert. %d has %d Upwind Vert.:",nid,nup);
-    for(int ii=0; ii < nup; ii++) printf(" %d ",(int)VECTOR(found_vert)[ii]);
+    for(int ii=0; ii < nup; ii++) {
+      int upvert = (int)VECTOR(found_vert)[ii];
+      printf(" %d ", upvert);
+      assert(m.topo_order[nid] > m.topo_order[upvert]);
+    }
     igraph_neighbors(graph, &found_vert, nid, IGRAPH_OUT);
     int ndown = igraph_vector_size(&found_vert);
     printf("\nVert. %d has %d Downwind Vert.:",nid,ndown);
-    for(int ii=0; ii < ndown; ii++) printf(" %d ",(int)VECTOR(found_vert)[ii]);
+    for(int ii=0; ii < ndown; ii++) {
+      int downvert = (int)VECTOR(found_vert)[ii];
+      printf(" %d ",downvert);
+      assert(m.topo_order[nid] < m.topo_order[downvert]);
+    }
     printf("\n");
   }
   // drawing

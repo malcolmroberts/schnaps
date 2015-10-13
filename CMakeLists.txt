@@ -15,7 +15,7 @@ SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 # -D_SCHNAPS_DIR=${PROJECT_SOURCE_DIR} -O3 -g  ")
 #set(CMAKE_C_FLAGS " -std=c99 -D_DOUBLE_PRECISION -D_SCHNAPS_DIR=${PROJECT_SOURCE_DIR} -O3 -g  ")
 set(CMAKE_C_FLAGS " -std=gnu99 -D_SCHNAPS_DIR=${PROJECT_SOURCE_DIR} -O3")
-#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_DOUBLE_PRECISION")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_DOUBLE_PRECISION")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g")
 # needed for mac
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -lsuitesparseconfig")  
@@ -485,6 +485,14 @@ add_executable(
   )
 target_link_libraries(testlocal_implicit_spu ${LIBS})
 add_test(testlocal_implicit_spu testlocal_implicit_spu)
+
+add_executable(
+  testgraph_implicit_spu
+  test/test.h
+  test/testgraph_implicit_spu.c
+  )
+target_link_libraries(testgraph_implicit_spu ${LIBS})
+add_test(testgraph_implicit_spu testgraph_implicit_spu)
 
 add_executable(
   testshequilibrium2d
