@@ -387,7 +387,7 @@ void GraphThetaTimeScheme_SPU(Simulation *simu, real tmax, real dt){
   start = time(NULL);
   while(simu->tnow < tmax) {
     
-    if (iter == 1) start = time(NULL);
+    if (iter <= 1) start = time(NULL);
 
     simu->tnow += theta * dt;
   
@@ -456,9 +456,14 @@ void GraphThetaTimeScheme_SPU(Simulation *simu, real tmax, real dt){
 	     simu->tnow, iter+1, simu->itermax_rk, dt);
     }
     iter++;
-  starpu_task_wait_for_all();
+    if (iter == 1) {
+      starpu_task_wait_for_all();
+      printf("Elapsed time first iter=%f\n", (double) (time(NULL) -start));
+    }
   }
 
+  starpu_task_wait_for_all();
+  //starpu_task_wait_for_all();
   printf("Elapsed time=%f\n", (double) (time(NULL) -start));
 
   for(int ie=0; ie <  simu->macromesh.nbelems; ++ie){
@@ -495,8 +500,12 @@ void ThetaTimeScheme(Simulation *simu, real tmax, real dt){
     simu->fd[ie].tnow=simu->tnow;
   } 
 
+  time_t start;
+  int iter=0;
   for(int tstep=0;tstep<simu->itermax_rk;tstep++){
   
+    if (iter <= 1) start = time(NULL);
+    iter++;
 
     if(tstep==0){ 
       solver_implicit.mat_is_assembly=false;
@@ -537,8 +546,11 @@ void ThetaTimeScheme(Simulation *simu, real tmax, real dt){
     int freq = (1 >= simu->itermax_rk / 10)? 1 : simu->itermax_rk / 10;
     if (tstep % freq == 0)
       printf("t=%f iter=%d/%d dt=%f\n", simu->tnow, tstep+1, simu->itermax_rk, dt);
+    if (iter == 1)
+      printf("Elapsed time first iter=%f\n", (double) (time(NULL) -start));
   }
-  
+    printf("Elapsed time=%f\n", (double) (time(NULL) -start));
+
 }
 
 void InternalCoupling(Simulation *simu,  LinearSolver *solver, int isky){

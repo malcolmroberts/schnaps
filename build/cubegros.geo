@@ -1,5 +1,5 @@
-rafx = 3;
-rafy = 4;
+rafx = 20;
+rafy = 20;
 rafz = 1;
 Point(1) = {-1, -1, 0, raf};
 Point(2) = {1, -1, 0, raf};

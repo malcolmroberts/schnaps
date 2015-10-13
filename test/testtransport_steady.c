@@ -41,10 +41,11 @@ int Test_Transport_Steady(void) {
   bool test = true;
 
   MacroMesh mesh;
-  ReadMacroMesh(&mesh,"../test/testcube.msh");
+  //ReadMacroMesh(&mesh,"../test/testcube.msh");
+  ReadMacroMesh(&mesh,"cubegros.msh");
   //ReadMacroMesh(&mesh,"../test/testdisque2d.msh");
   //ReadMacroMesh(&mesh,"../test/testmacromesh.msh");
-  //Detect2DMacroMesh(&mesh);
+  Detect2DMacroMesh(&mesh);
   
   real A[3][3] = {{_LENGTH_DOMAIN, 0, 0}, {0, _LENGTH_DOMAIN, 0}, {0, 0,1}};
   real x0[3] = {0, 0, 0};
@@ -63,8 +64,8 @@ int Test_Transport_Steady(void) {
 
   //int deg[]={4, 4, 0};
   //int raf[]={2, 2, 1};
-  int deg[]={3, 3, 3};
-  int raf[]={2, 2, 2};
+  int deg[]={3, 3, 0};
+  int raf[]={8, 8, 1};
   
   CheckMacroMesh(&mesh, deg, raf);
   Simulation simu;
@@ -82,7 +83,7 @@ int Test_Transport_Steady(void) {
 
   test = test && (dd < tolerance);
 
-  ThetaTimeScheme(&simu, tmax, 1);
+  ThetaTimeScheme(&simu, tmax, .01);
   //simu.dt = 0;
   //RK4(&simu, tmax);
 

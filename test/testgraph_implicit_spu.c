@@ -85,7 +85,7 @@ int Test_Graph_Implicit_SPU(void) {
   /* model.Source = TestSteady_Wave_Source; */
 
   int deg[]={3, 3, 0};
-  int raf[]={4, 4, 1};
+  int raf[]={8, 8, 1};
   
   CheckMacroMesh(&mesh, deg, raf);
   BuildMacroMeshGraph(&mesh, TestSteady_Transport_v2, deg, raf);
@@ -104,7 +104,7 @@ int Test_Graph_Implicit_SPU(void) {
   simu.cfl=0.2;
   simu.vmax= 1;
   //simu.dt = 0.025;
-  simu.dt = .01;
+  simu.dt = 0.01;
   /* InitFieldImplicitSolver(fd); */
   /* AssemblyFieldImplicitSolver(fd, 1, 1); */
   GraphThetaTimeScheme_SPU(&simu, tmax, simu.dt);
@@ -120,7 +120,7 @@ int Test_Graph_Implicit_SPU(void) {
   // export STARPU_SCHED=dmda
   real dd = L2error(&simu);
   printf("erreur local implicit L2=%.12e\n", dd);
-  PlotFields(0, false, &simu, NULL, "dgvisu.msh");
+  //PlotFields(0, false, &simu, NULL, "dgvisu.msh");
   // pour gmsh sur mac: export PYTHONDIR=/usr/local/Cellar/gmsh/2.10.1/libexec
 
   test = test && (dd < 600 * _VERY_SMALL);
