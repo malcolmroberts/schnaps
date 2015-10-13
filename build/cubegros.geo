@@ -1,4 +1,4 @@
-rafx = 4;
+rafx = 3;
 rafy = 4;
 rafz = 1;
 Point(1) = {-1, -1, 0, raf};
