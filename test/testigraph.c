@@ -29,12 +29,13 @@ int TestIGraph(void)
   BuildConnectivity(&m);
   CheckMacroMesh(&m, deg, raf);
   //PrintMacroMesh(&m);
-  real vit[3] = {1, 1, 0};
+  real vit[3] = {1, 1, 1};
   BuildMacroMeshGraph(&m, vit, deg, raf);
   
   igraph_t* graph = &m.connect_graph;
   int nedges = igraph_ecount(graph);
-  test = test && (nedges < m.nbfaces);
+  test = test && (nedges <= m.nbfaces);
+  assert(test);
 
   int nverts = igraph_vcount(graph);
   test = test && (nverts == m.nbelems + 2);
@@ -43,7 +44,7 @@ int TestIGraph(void)
   igraph_bool_t is_dag;
   igraph_is_dag(graph, &is_dag);
   test = test && is_dag; 
-
+  assert(is_dag);
   
   for(int eid = 0; eid < nedges; eid++){
     int ifa =  m.edge2face[eid];
@@ -52,13 +53,21 @@ int TestIGraph(void)
     int iefrom, ieto;
     int dir = m.edge_dir[eid];
     igraph_edge(graph, eid, &iefrom, &ieto);
-    printf("Edge %d from %d to %d. ieL=%d ieR=%d\n",
-	   eid, iefrom, ieto, ieL,ieR);
+    printf("Edge %d from %d to %d. dir=%d ieL=%d ieR=%d\n",
+	   eid, iefrom, ieto, dir, ieL,ieR);
+
     if (iefrom >= m.nbelems) iefrom = -1; 
     if (ieto >= m.nbelems) ieto = -1; 
     
-    if (dir == 0) test = test && (iefrom == ieL && ieto == ieR);
-    if (dir == 1) test = test && (iefrom == ieR && ieto == ieL);    
+    if (dir == 0) {
+      test = test && (iefrom == ieL && ieto == ieR);
+      assert(test);
+    }
+    if (dir == 1) {
+      test = test && (iefrom == ieR && ieto == ieL);
+      printf("pb iefrom=%d ieR=%d ieto=%d ieL=%d\n",iefrom,ieR,ieto,ieL);
+      assert(iefrom == ieR && ieto == ieL);
+    }
   }
 
   // print upwind and downwind neighbors

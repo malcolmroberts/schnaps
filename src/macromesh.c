@@ -867,7 +867,7 @@ void BuildMacroMeshGraph(MacroMesh *m, real vit[], int deg[], int raf[]){
     igraph_vector_init(&sorting, m->nbelems + 2);
     igraph_topological_sorting(graph, &sorting,
                   IGRAPH_OUT);
-    //print_vector(&sorting, stdout);
+    print_vector(&sorting, stdout);
   }
 
   m->topo_order = malloc((m->nbelems + 2) * sizeof(int));
