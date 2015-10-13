@@ -375,6 +375,8 @@ void GraphThetaTimeScheme_SPU(Simulation *simu, real tmax, real dt){
     FactoLU_SPU(solver);
     free(solver->sol);
     solver->sol = f->wn;
+    Skyline_SPU* sky_spu = f->solver->matrix;
+    RegisterSkyline_SPU(sky_spu);
     Skyline_SPU* rmat = f->rmat->matrix;
     free(rmat->sol);
     free(rmat->rhs);
@@ -382,7 +384,7 @@ void GraphThetaTimeScheme_SPU(Simulation *simu, real tmax, real dt){
   }
 
   time_t start;
-
+  start = time(NULL);
   while(simu->tnow < tmax) {
     
     if (iter == 1) start = time(NULL);
@@ -391,6 +393,7 @@ void GraphThetaTimeScheme_SPU(Simulation *simu, real tmax, real dt){
   
     for(int ies=0; ies <  simu->macromesh.nbelems; ++ies){
       // -1 because the ghost upwind vertex is always the first
+      // and the ghost downwind vertex is always the last
       int ie = simu->macromesh.topo_order[ies] - 1;
       assert(ie >=0 && ie < simu->macromesh.nbelems);
       //printf("ies=%d ie=%d\n",ies,ie);
@@ -398,7 +401,6 @@ void GraphThetaTimeScheme_SPU(Simulation *simu, real tmax, real dt){
       f->tnow = simu->tnow;
       f->dt = simu->dt;
       Skyline_SPU* sky_spu = f->solver->matrix;
-      RegisterSkyline_SPU(sky_spu);
       MatVect_SPU(f->rmat,
 		  sky_spu->sol_handle,
 		  sky_spu->rhs_handle);

@@ -59,10 +59,10 @@ void InitInterfaces(Simulation *simu){
      inter[ifa].wsizeR = 0;
      if (fR != NULL) inter[ifa].wsizeR = npgfR * fR->model.m;
      
-     inter[ifa].wL = malloc(sizeof(real) * inter[ifa].wsizeL);
+     inter[ifa].wL = calloc(inter[ifa].wsizeL, sizeof(real));
      inter[ifa].wR = NULL;
      if (npgfR > 0)  inter[ifa].wR =
-		       malloc(sizeof(real) * inter[ifa].wsizeR);
+		       calloc(inter[ifa].wsizeR, sizeof(real));
 
      inter[ifa].vol_indexL = malloc(sizeof(int) * npgfL);
      inter[ifa].vol_indexR = NULL;
