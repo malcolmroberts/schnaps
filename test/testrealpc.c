@@ -38,7 +38,7 @@ int Testrealpc(void) {
 
   bool test = true;
   real dd;
-  int test1_ok=0,test2_ok=0,test3_ok=0,test4_ok=1,test5_ok=0;
+  int test1_ok=0,test2_ok=0,test3_ok=0,test4_ok=1,test5_ok=1;
 
 
 #ifdef PARALUTION 
@@ -96,7 +96,7 @@ int Testrealpc(void) {
     real *res = calloc(simu.wsize, sizeof(real));
 
     solver_implicit.solver_type=GMRES;
-    solver_implicit.pc_type=PHY_BASED;
+    solver_implicit.pc_type=NONE;//PHY_BASED;
     solver_implicit.tol=1.e-10;
     solver_implicit.iter_max=200;
     solver_implicit.restart_gmres=30;
@@ -201,7 +201,7 @@ int Testrealpc(void) {
 
     solver_implicit3.solver_type=GMRES;//LU;//GMRES;
     solver_implicit3.tol=1.e-8;
-    solver_implicit3.pc_type=PHY_BASED;
+    solver_implicit3.pc_type=NONE;//PHY_BASED;
     solver_implicit3.iter_max=2000;
     solver_implicit3.restart_gmres=30;
 
@@ -278,8 +278,8 @@ int Testrealpc(void) {
     model4.BoundaryFlux = SteadyStateOne_BoundaryFlux;
     model4.Source = SteadyStateOne_Source;
 
-    int deg4[]={3, 3, 0};
-    int raf4[]={1, 1, 1};
+    int deg4[]={4, 4, 0};
+    int raf4[]={8, 8, 1};
 
     assert(mesh.is2d);
     CheckMacroMesh(&mesh, deg4, raf4);
@@ -299,26 +299,27 @@ int Testrealpc(void) {
 
     real theta4=0.5;
     simu4.theta=theta4;
-    simu4.dt=1;//0.001667;
+    simu4.dt=10;
     simu4.vmax=_SPEED_WAVE;
-    real tmax4=1*simu4.dt;//10*simu.dt;//;0.5;
+    real tmax4=5*simu4.dt;
     int itermax4=tmax4/simu4.dt;
     simu4.itermax_rk=itermax4;
     int size = cs.nb_fe_dof;
     real *resCG = calloc(size, sizeof(real));
     real *wCG = calloc(size, sizeof(real));
   
-    csSolve.lsol.solver_type=LU;
+    csSolve.lsol.solver_type=GMRES;
     csSolve.lsol.tol=1.e-9;
-    csSolve.lsol.pc_type=NONE;
+    csSolve.lsol.pc_type=PHY_BASED_P2;//JACOBI;
     csSolve.lsol.iter_max=1000;
-    csSolve.lsol.restart_gmres=30;
+    csSolve.lsol.restart_gmres=15;
     csSolve.lsol.is_CG=true;
 
     cs.bc_flux=Wave_BC_pressure_imposed;
+    cs.bc_assembly=BoundaryConditionFriedrichsAssembly;
     csSolve.bc_flux=Wave_BC_pressure_imposed;
     csSolve.bc_assembly=BoundaryConditionFriedrichsAssembly;
-    cs.bc_assembly=BoundaryConditionFriedrichsAssembly;
+    csSolve.type_bc=2;
     
     Wave_test(&cs,-(1.0-simu4.theta),simu4.dt);
     GenericOperator_Continuous(&cs,&cs.lsol);
@@ -335,6 +336,9 @@ int Testrealpc(void) {
 
     for(int tstep=0;tstep<simu4.itermax_rk;tstep++){
 
+      for (int i=0; i<size; i++){
+	cs.lsol.rhs[i]=0;
+      }
       cs.bc_assembly(&cs, &cs.lsol);
       MatVect(&cs.lsol,wCG,resCG);
   
@@ -343,11 +347,13 @@ int Testrealpc(void) {
         simu4.fd[ie].tnow=simu4.tnow;
       }
 
+      for (int i=0; i<size; i++){
+	csSolve.lsol.rhs[i]=0;
+      }
       csSolve.bc_assembly(&csSolve, &csSolve.lsol);
       
       for (int i=0; i<size; i++){
 	csSolve.lsol.rhs[i]=csSolve.lsol.rhs[i]+resCG[i]-cs.lsol.rhs[i];
-        //printf(" rhs  aftr un %d %.6e \n",i,csSolve.lsol.rhs[i]);
       }
       
       Advanced_SolveLinearSolver(&csSolve.lsol,&simu4);
@@ -417,15 +423,16 @@ int Testrealpc(void) {
 
     csSolve.lsol.solver_type=GMRES;
     csSolve.lsol.tol=1.e-9;
-    csSolve.lsol.pc_type=PHY_BASED;
+    csSolve.lsol.pc_type=PHY_BASED_P1;
     csSolve.lsol.iter_max=5000;
     csSolve.lsol.restart_gmres=30;
     csSolve.lsol.is_CG=true;
 
     cs.bc_flux=Wave_BC_normalvelocity_null;
+    cs.bc_assembly=BoundaryConditionFriedrichsAssembly;
     csSolve.bc_flux=Wave_BC_normalvelocity_null;
     csSolve.bc_assembly=BoundaryConditionFriedrichsAssembly;
-    cs.bc_assembly=BoundaryConditionFriedrichsAssembly;//ExactDirichletContinuousMatrix;
+    csSolve.type_bc=1;
 
     
     Wave_test(&cs,-(1.0-simu5.theta),simu5.dt);
@@ -447,6 +454,9 @@ int Testrealpc(void) {
 
     for(int tstep=0;tstep<simu5.itermax_rk;tstep++){
 
+      for (int i=0; i<size; i++){
+	cs.lsol.rhs[i]=0;
+      }
       cs.bc_assembly(&cs, &cs.lsol);
       MatVect(&cs.lsol,wCG,resCG);
 
@@ -458,12 +468,10 @@ int Testrealpc(void) {
       
       for (int i=0; i<size; i++){
 	csSolve.lsol.rhs[i]=0;
-      }
-      
+      }      
       csSolve.bc_assembly(&csSolve, &csSolve.lsol);
-
       for (int i=0; i<size; i++){
-	csSolve.lsol.rhs[i]+=resCG[i]-cs.lsol.rhs[i];
+	csSolve.lsol.rhs[i]=csSolve.lsol.rhs[i]+resCG[i]-cs.lsol.rhs[i];
       }
 
       Advanced_SolveLinearSolver(&csSolve.lsol,&simu5);

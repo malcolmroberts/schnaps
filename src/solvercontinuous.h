@@ -84,7 +84,7 @@ typedef struct ContinuousSolver{
   //! \brief list of index for the variables
   int * list_of_var;
 
-  //! \brief for dirchilet homogeneous, 2 for periodic 
+  //! \brief for Neumann (or (u,n)=0 for wave), robin ( or p imposed for wave),
   int type_bc;
 
   //! \brief Differential operator for 2d vectorial (some variables) problems

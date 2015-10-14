@@ -89,10 +89,8 @@ void PiDgToCg(ContinuousSolver * cs,real * rhsIn, real * rhsOut);
 void VectorCgToDg(ContinuousSolver * cs, real * rhsIn, real * rhsOut);
 void PiInvertCgToDg(ContinuousSolver * cs,real * rhsIn, real * rhsOut);
 
-
-// \brief Initialize the data of the solvers.
-// \param[inout] pb_pc: Physics-based Preconditioner object.
 void Init_Parameters_PhyBasedPC(PB_PC* pb_pc);
+
 
 // \brief Initialize the physics-based preconditioner with schur on the velocity
 // \param[in] simu: Simulation object containing some run-related variables
@@ -100,11 +98,17 @@ void Init_Parameters_PhyBasedPC(PB_PC* pb_pc);
 // \param[in] list_mat2assembly: Integer array. Tells which matrices shall be assembled.
 void Init_PhyBasedPC_SchurVelocity_Wave(Simulation *simu, PB_PC* pb_pc, int* list_mat2assemble);
 
-// \brief Initialize the physics-based preconditioner with schur on the pressure
+// \brief Initialize the physics-based preconditioner with schur on the pressure with boundary condition (u,n)=0
 // \param[in] simu: Simulation object containing some run-related variables
 // \param[inout] pb_pc: Physics-based Preconditioner object.
 // \param[in] list_mat2assembly: Integer array. Tells which matrices shall be assembled.
-void Init_PhyBasedPC_SchurPressure_Wave(Simulation *simu, PB_PC* pb_pc, int* list_mat2assemble);
+void Init_PBPC_Wave_SchurPressure_BCVelocity(Simulation *simu, PB_PC* pb_pc, int* list_mat2assemble);
+
+// \brief Initialize the physics-based preconditioner with schur on the pressure with boundary condition p=g
+// \param[in] simu: Simulation object containing some run-related variables
+// \param[inout] pb_pc: Physics-based Preconditioner object.
+// \param[in] list_mat2assembly: Integer array. Tells which matrices shall be assembled.
+void Init_PBPC_Wave_SchurPressure_BCPressure(Simulation *simu, PB_PC* pb_pc, int* list_mat2assemble);
 
 // \brief Initialize Generic matrices for differential opertors -> Has to be tuned to the considered problem.
 // Schur decomposition is given by the following definition of the matrices:

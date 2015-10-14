@@ -11,7 +11,7 @@ void BoundaryConditionFriedrichsAssembly(void * cs,LinearSolver* lsol){
   ContinuousSolver * ps=cs;
   m=ps->nb_phy_vars;
  
-  if (!ps->lsol.mat_is_assembly){  
+  if (!ps->lsol.mat_is_assembly){
 
     for (int i=0; i<ps->simu->macromesh.nboundaryfaces;i++){
       int ifa = ps->simu->macromesh.boundaryface[i];
