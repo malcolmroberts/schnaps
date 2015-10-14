@@ -24,13 +24,13 @@ int TestIGraph(void)
   int test = true;
   
   // test gmsh file reading
-  //ReadMacroMesh(&m, "../test/testmacromesh.msh");
-  ReadMacroMesh(&m, "cubegros.msh");
+  ReadMacroMesh(&m, "../test/testmacromesh.msh");
+  //ReadMacroMesh(&m, "cubegros.msh");
   Detect2DMacroMesh(&m);
   BuildConnectivity(&m);
   CheckMacroMesh(&m, deg, raf);
   //PrintMacroMesh(&m);
-  real vit[3] = {1, 1, 0};
+  real vit[3] = {0, 1, 0};
   BuildMacroMeshGraph(&m, vit, deg, raf);
   
   igraph_t* graph = &m.connect_graph;

@@ -84,8 +84,8 @@ int Test_Graph_Implicit_SPU(void) {
   /* model.BoundaryFlux = Wave_Upwind_BoundaryFlux; */
   /* model.Source = TestSteady_Wave_Source; */
 
-  int deg[]={3, 3, 0};
-  int raf[]={8, 8, 1};
+  int deg[]={2, 2, 0};
+  int raf[]={4, 4, 1};
   
   CheckMacroMesh(&mesh, deg, raf);
   BuildMacroMeshGraph(&mesh, TestSteady_Transport_v2, deg, raf);
@@ -99,12 +99,11 @@ int Test_Graph_Implicit_SPU(void) {
   //DisplaySimulation(&simu);
 
   field* fd = simu.fd;
-
-  real tmax = 1;
+  real tmax = .1;
   simu.cfl=0.2;
   simu.vmax= 1;
   //simu.dt = 0.025;
-  simu.dt = 0.01;
+  simu.dt = 0.1;
   /* InitFieldImplicitSolver(fd); */
   /* AssemblyFieldImplicitSolver(fd, 1, 1); */
   GraphThetaTimeScheme_SPU(&simu, tmax, simu.dt);

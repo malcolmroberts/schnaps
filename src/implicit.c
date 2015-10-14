@@ -319,9 +319,9 @@ void LocalThetaTimeScheme_SPU(Simulation *simu, real tmax, real dt){
 	     simu->tnow, iter+1, simu->itermax_rk, dt);
     }
     iter++;
-  starpu_task_wait_for_all();
   }
 
+  starpu_task_wait_for_all();
   printf("Elapsed time=%f\n", (double) (time(NULL) -start));
 
   for(int ie=0; ie <  simu->macromesh.nbelems; ++ie){
