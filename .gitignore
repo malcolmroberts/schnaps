@@ -41,7 +41,6 @@ doc/latex/
 *.csv
 *.log
 *.msh
-testfieldrk2_cl
 
 #PN
 *.swp
