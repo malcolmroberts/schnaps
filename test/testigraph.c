@@ -24,8 +24,9 @@ int TestIGraph(void)
   int test = true;
   
   // test gmsh file reading
-  ReadMacroMesh(&m, "../test/testmacromesh.msh");
+  //ReadMacroMesh(&m, "../test/testmacromesh.msh");
   //ReadMacroMesh(&m, "cubegros.msh");
+  ReadMacroMesh(&m, "toto.msh");
   Detect2DMacroMesh(&m);
   BuildConnectivity(&m);
   CheckMacroMesh(&m, deg, raf);

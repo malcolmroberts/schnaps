@@ -19,7 +19,7 @@ int TestMacroMesh(void)
   MacroMesh m;
 
   int deg[]={4, 4, 4};
-  int raf[]={1, 1, 1};
+  int raf[]={2, 2, 2};
   
   // test gmsh file reading
   ReadMacroMesh(&m, "../test/testmacromesh.msh");

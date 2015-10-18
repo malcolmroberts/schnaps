@@ -42,9 +42,9 @@ int Test_Transport_Steady(void) {
 
   MacroMesh mesh;
   //ReadMacroMesh(&mesh,"../test/testcube.msh");
-  ReadMacroMesh(&mesh,"cubegros.msh");
+  //ReadMacroMesh(&mesh,"cubegros.msh");
   //ReadMacroMesh(&mesh,"../test/testdisque2d.msh");
-  //ReadMacroMesh(&mesh,"../test/testmacromesh.msh");
+  ReadMacroMesh(&mesh,"../test/testmacromesh.msh");
   Detect2DMacroMesh(&mesh);
   
   real A[3][3] = {{_LENGTH_DOMAIN, 0, 0}, {0, _LENGTH_DOMAIN, 0}, {0, 0,1}};
@@ -65,7 +65,7 @@ int Test_Transport_Steady(void) {
   //int deg[]={4, 4, 0};
   //int raf[]={2, 2, 1};
   int deg[]={3, 3, 0};
-  int raf[]={8, 8, 1};
+  int raf[]={2, 2, 2};
   
   CheckMacroMesh(&mesh, deg, raf);
   Simulation simu;
@@ -73,7 +73,7 @@ int Test_Transport_Steady(void) {
 
   InitSimulation(&simu, &mesh, deg, raf, &model);
 
-  real tmax = 1.0;
+  real tmax = 0;
   simu.cfl=0.2;
   simu.vmax=1;
  
@@ -90,7 +90,7 @@ int Test_Transport_Steady(void) {
   
   
   dd = L2error(&simu);
-
+  PlotFields(0, false, &simu, NULL, "dgvisu.msh");
   printf("erreur implicit L2=%.12e\n", dd);
 
   test = test && (dd < tolerance);

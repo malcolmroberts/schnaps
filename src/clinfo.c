@@ -482,7 +482,11 @@ void ReadFile(char filename[], char **s){
 // \#pragma end_opencl
 void GetOpenCLCode(void){
   int status;
+#ifdef __APPLE__
+  status = system("sh ../get_opencl_code_apple.sh");
+#else
   status = system("sh ../get_opencl_code.sh");
+#endif
   assert(status == 0);
 }
 
