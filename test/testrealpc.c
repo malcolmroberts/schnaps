@@ -71,14 +71,11 @@ int Testrealpc(void) {
     int deg[]={4, 4, 0};
     int raf[]={4*k, 4*k, 1};
 
-
     assert(mesh.is2d);
 
     CheckMacroMesh(&mesh, deg, raf);
     Simulation simu;
-
     InitSimulation(&simu, &mesh, deg, raf, &model);
-
 
     LinearSolver solver_implicit;
     LinearSolver solver_explicit;  
@@ -101,15 +98,12 @@ int Testrealpc(void) {
     solver_implicit.iter_max=200;
     solver_implicit.restart_gmres=30;
 
-
     simu.tnow=0;
     for(int ie=0; ie < simu.macromesh.nbelems; ++ie){
       simu.fd[ie].tnow=simu.tnow;
     } 
 
     for(int tstep=0;tstep<simu.itermax_rk;tstep++){
-
-
       if(tstep==0){ 
         solver_implicit.mat_is_assembly=false;
         solver_explicit.mat_is_assembly=false;
@@ -119,10 +113,8 @@ int Testrealpc(void) {
         solver_implicit.mat_is_assembly=true;
         solver_explicit.mat_is_assembly=true;
       } 
-
       solver_implicit.rhs_is_assembly=false;
       solver_explicit.rhs_is_assembly=false;
-
 
       AssemblyImplicitLinearSolver(&simu, &solver_explicit,-(1.0-theta),simu.dt);
       simu.tnow=simu.tnow+simu.dt;
@@ -130,7 +122,6 @@ int Testrealpc(void) {
         simu.fd[ie].tnow=simu.tnow;
       } 
       AssemblyImplicitLinearSolver(&simu, &solver_implicit,theta,simu.dt);
-
 
       MatVect(&solver_explicit, simu.w, res);
 
@@ -176,13 +167,10 @@ int Testrealpc(void) {
 
     int deg3[]={4, 4, 0};
     int raf3[]={4, 4, 1};
-
-
     CheckMacroMesh(&mesh, deg3, raf3);
     Simulation simu3;
 
     InitSimulation(&simu3, &mesh, deg3, raf3, &model3);
-
 
     LinearSolver solver_implicit3;
     LinearSolver solver_explicit3;  
@@ -198,7 +186,6 @@ int Testrealpc(void) {
     InitImplicitLinearSolver(&simu3, &solver_implicit3);
     InitImplicitLinearSolver(&simu3, &solver_explicit3);
     real *res3 = calloc(simu3.wsize, sizeof(real));
-
     solver_implicit3.solver_type=GMRES;//LU;//GMRES;
     solver_implicit3.tol=1.e-8;
     solver_implicit3.pc_type=NONE;//PHY_BASED;
@@ -211,9 +198,7 @@ int Testrealpc(void) {
     } 
 
     for(int tstep=0;tstep<simu3.itermax_rk;tstep++){
-
-
-      if(tstep==0){ 
+     if(tstep==0){ 
         solver_implicit3.mat_is_assembly=false;
         solver_explicit3.mat_is_assembly=false;
       } 
@@ -225,7 +210,6 @@ int Testrealpc(void) {
 
       solver_implicit3.rhs_is_assembly=false;
       solver_explicit3.rhs_is_assembly=false;
-
 
       AssemblyImplicitLinearSolver(&simu3, &solver_explicit3,-(1.0-theta3),simu3.dt);
       simu3.tnow=simu3.tnow+simu3.dt;
@@ -389,7 +373,7 @@ int Testrealpc(void) {
     model5.Source = NULL;
 
     int deg5[]={4, 4, 0};
-    int raf5[]={16, 16, 1};
+    int raf5[]={8, 8, 1};
 
     assert(mesh.is2d);
 

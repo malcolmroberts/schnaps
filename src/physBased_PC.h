@@ -96,7 +96,7 @@ void Init_Parameters_PhyBasedPC(PB_PC* pb_pc);
 // \param[in] simu: Simulation object containing some run-related variables
 // \param[inout] pb_pc: Physics-based Preconditioner object.
 // \param[in] list_mat2assembly: Integer array. Tells which matrices shall be assembled.
-void Init_PhyBasedPC_SchurVelocity_Wave(Simulation *simu, PB_PC* pb_pc, int* list_mat2assemble);
+void Init_PBPC_Wave_SchurVelocity(Simulation *simu, PB_PC* pb_pc, int* list_mat2assemble);
 
 // \brief Initialize the physics-based preconditioner with schur on the pressure with boundary condition (u,n)=0
 // \param[in] simu: Simulation object containing some run-related variables

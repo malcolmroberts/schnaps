@@ -63,7 +63,7 @@ void BoundaryConditionFriedrichsAssembly(void * cs,LinearSolver* lsol){
 	      // The basis functions is also the gauss point index
 	      //int imem2 = fL->varindex(fL->deg, fL->raf,fL->model.m, ipgL, iv2) + offsetL;
 	      int ipot_fe2 = ino_fe*ps->nb_phy_vars + iv2;
-	      real val =  (flux[ps->list_of_var[iv2]]-flux0[ps->list_of_var[iv2]]) * wpg;
+	      real val =  (flux[iv2]-flux0[iv2]) * wpg;
 	      AddLinearSolver(lsol, ipot_fe2, ipot_fe1, val);
 	    }
 	  }	    
@@ -109,10 +109,8 @@ void BoundaryConditionFriedrichsAssembly(void * cs,LinearSolver* lsol){
 	for(int ivv=0; ivv < ps->nb_phy_vars; ivv++) w0[ivv]=0;
 	ps->bc_flux(ps,lsol,xpg,w0,vnds,flux0);
 	for(int var=0; var < ps->nb_phy_vars; var++){
-	  int ipot = f->varindex(f->deg,f->raf,f->model.m,
-				  ipg,ps->list_of_var[var]);
 	  int ipot_fe = ino_fe*ps->nb_phy_vars + var;
-	  real val = flux0[ps->list_of_var[var]] * wpg;
+	  real val = flux0[var] * wpg;
 	  ps->lsol.rhs[ipot_fe] -= val;
 	}
       }	    

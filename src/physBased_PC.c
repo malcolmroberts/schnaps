@@ -145,7 +145,7 @@
 //  mat_assembly_PC(PC,DMat,L1Mat,L2Mat,U1Mat,U2Mat,SchurMat);
 //}
 
-void Init_PhyBasedPC_SchurVelocity_Wave(Simulation *simu, PB_PC* pb_pc, int* list_mat2assemble){
+void Init_PBPC_Wave_SchurVelocity(Simulation *simu, PB_PC* pb_pc, int* list_mat2assemble){
   real tab[4][4];
   // system is linear
   pb_pc->nonlinear=0;
@@ -158,18 +158,21 @@ void Init_PhyBasedPC_SchurVelocity_Wave(Simulation *simu, PB_PC* pb_pc, int* lis
   int nb_varD = 1;
   int * listvarD = calloc(nb_varD,sizeof(int));
   listvarD[0]=0;
+  
   int nb_varL1 = 1;
   int * listvarL1 = calloc(nb_varL1,sizeof(int));
   listvarL1[0]=0;
   int nb_varL2 = 1;
   int * listvarL2 = calloc(nb_varL2,sizeof(int));
   listvarL2[0]=0;
+  
   int nb_varU1 = 1;
   int * listvarU1 = calloc(nb_varU1,sizeof(int));
   listvarU1[0]=0;
   int nb_varU2 = 1;
   int * listvarU2 = calloc(nb_varU2,sizeof(int));
   listvarU2[0]=1;
+  
   int nb_varSchur = 2;
   int * listvarSchur = calloc(nb_varSchur,sizeof(int));
   listvarSchur[0]=1;
@@ -234,7 +237,6 @@ void Init_PhyBasedPC_SchurVelocity_Wave(Simulation *simu, PB_PC* pb_pc, int* lis
   pb_pc->L2.diff_op = calloc(pb_pc->L2.nb_phy_vars*pb_pc->L2.nb_phy_vars,sizeof(SDO));
   pb_pc->U1.diff_op = calloc(pb_pc->U1.nb_phy_vars*pb_pc->U1.nb_phy_vars,sizeof(SDO));
   pb_pc->U2.diff_op = calloc(pb_pc->U2.nb_phy_vars*pb_pc->U2.nb_phy_vars,sizeof(SDO));
-  
 
   // Applying these matrices inside the different ContinuousSolver
   for (int i=0; i<4; i++){
@@ -249,28 +251,27 @@ void Init_PhyBasedPC_SchurVelocity_Wave(Simulation *simu, PB_PC* pb_pc, int* lis
       if (U2Mat != NULL) pb_pc->U2.diff_op[0].DO[i][j] = U2Mat[i][j];
     }
   }
-
-   for (int i=0;i<pb_pc->D.nb_fe_nodes;i++){
-    if (pb_pc->L1.is_boundary_node[i]){
-      for (int j=0;j<pb_pc->D.nb_fe_nodes;j++){
-	SetLinearSolver(&pb_pc->L1.lsol,i,j,0.0);
-	SetLinearSolver(&pb_pc->L2.lsol,i,j,0.0);
-	SetLinearSolver(&pb_pc->U1.lsol,i,j,0.0);
-	SetLinearSolver(&pb_pc->U2.lsol,i,j,0.0);
-      } 
-    } 
-  }
-
- 
   // Assembling all operators' matrices
   GenericOperator_PBPC_Velocity(pb_pc);
 
-  // 0)2) Second, initialize all penalization right-hand-sides
-  pb_pc->D.bc_assembly=ExactDirichletContinuousMatrix_PC;
-  pb_pc->Schur.bc_assembly=ExactDirichletContinuousMatrix_PC;
+  // For the Schur the the condition is Neumann
+  pb_pc->D.bc_assembly=NULL;
+  pb_pc->Schur.bc_flux=NULL;
 
-  pb_pc->D.bc_assembly(&pb_pc->D,&pb_pc->D.lsol);
-  pb_pc->Schur.bc_assembly(&pb_pc->Schur,&pb_pc->Schur.lsol);
+  pb_pc->L1.bc_flux=BoundaryTerm_Xderivative;
+  pb_pc->L1.bc_assembly=BoundaryConditionFriedrichsAssembly;
+  pb_pc->U1.bc_flux=BoundaryTerm_Xderivative;
+  pb_pc->U1.bc_assembly=BoundaryConditionFriedrichsAssembly;
+
+  pb_pc->L2.bc_flux=BoundaryTerm_Yderivative;
+  pb_pc->L2.bc_assembly=BoundaryConditionFriedrichsAssembly;
+  pb_pc->U2.bc_flux=BoundaryTerm_Yderivative;
+  pb_pc->U2.bc_assembly=BoundaryConditionFriedrichsAssembly;
+
+  pb_pc->U2.bc_assembly(&pb_pc->U2,&pb_pc->U2.lsol);
+  pb_pc->U1.bc_assembly(&pb_pc->U1,&pb_pc->U1.lsol);
+  pb_pc->L2.bc_assembly(&pb_pc->L2,&pb_pc->L2.lsol);
+  pb_pc->L1.bc_assembly(&pb_pc->L1,&pb_pc->L1.lsol);
 
   pb_pc->Schur.lsol.MatVecProduct=MatVect;
   pb_pc->L1.lsol.MatVecProduct=MatVect;
@@ -307,7 +308,7 @@ void Init_PBPC_Wave_SchurPressure_BCVelocity(Simulation *simu, PB_PC* pb_pc, int
   listvarL1[0]=0;
   int nb_varL2 = 1;
   int * listvarL2 = calloc(nb_varL2,sizeof(int));
-  listvarL2[0]=1;
+  listvarL2[0]=0;
   
   int nb_varU1 = 1;
   int * listvarU1 = calloc(nb_varU1,sizeof(int));
@@ -452,7 +453,7 @@ void Init_PBPC_Wave_SchurPressure_BCPressure(Simulation *simu, PB_PC* pb_pc, int
   listvarL1[0]=0;
   int nb_varL2 = 1;
   int * listvarL2 = calloc(nb_varL2,sizeof(int));
-  listvarL2[0]=1;
+  listvarL2[0]=0;
   
   int nb_varU1 = 1;
   int * listvarU1 = calloc(nb_varU1,sizeof(int));
@@ -650,22 +651,16 @@ void PhyBased_PC_CG(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*global
   pb_pc->L1.lsol.MatVecProduct(&pb_pc->L1.lsol,pb_pc->D.lsol.sol,pb_pc->L1.lsol.sol);
   pb_pc->L2.lsol.MatVecProduct(&pb_pc->L2.lsol,pb_pc->D.lsol.sol,pb_pc->L2.lsol.sol);
 
-
   //printf("RHS assembly.....\n");
   for (int i=0;i<pb_pc->D.nb_fe_nodes;i++){
     pb_pc->Schur.lsol.rhs[i*2]   = globalRHS[i*3+1] - pb_pc->L1.lsol.sol[i];
     pb_pc->Schur.lsol.rhs[i*2+1] = globalRHS[i*3+2] - pb_pc->L2.lsol.sol[i];
   }
-
-  //printf assembly boundary condition 
-  pb_pc->Schur.bc_assembly(&pb_pc->Schur,&pb_pc->Schur.lsol);
-
+  
   //printf("Solution...\n");
   Advanced_SolveLinearSolver(&pb_pc->Schur.lsol,simu);
 
-
   // 3) CORRECTION STEP
-
   // Extracting both U1 and U2 from the previous solution of the propagation step
   real *solU1=calloc(pb_pc->U1.nb_fe_nodes, sizeof(real));
   real *solU2=calloc(pb_pc->U2.nb_fe_nodes, sizeof(real));
@@ -677,22 +672,18 @@ void PhyBased_PC_CG(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*global
   pb_pc->D.lsol.iter_max=pb_pc->itermax_correction;
   pb_pc->D.lsol.restart_gmres=pb_pc->restart_correction;
   
-  pb_pc->L1.lsol.MatVecProduct(&pb_pc->L1.lsol,solU1,pb_pc->L1.lsol.sol);
-  pb_pc->L2.lsol.MatVecProduct(&pb_pc->L2.lsol,solU2,pb_pc->L2.lsol.sol);
+  pb_pc->U1.lsol.MatVecProduct(&pb_pc->U1.lsol,solU1,pb_pc->U1.lsol.sol);
+  pb_pc->U2.lsol.MatVecProduct(&pb_pc->U2.lsol,solU2,pb_pc->U2.lsol.sol);
   pb_pc->D.lsol.MatVecProduct(&pb_pc->D.lsol,pb_pc->D.lsol.sol,pb_pc->D.lsol.rhs);
-  //pb_pc->U1.lsol.MatVecProduct(&pb_pc->U1.lsol,solU1,pb_pc->U1.lsol.sol);
-  //pb_pc->U2.lsol.MatVecProduct(&pb_pc->U2.lsol,solU2,pb_pc->U2.lsol.sol);
 
   //printf("RHS assembly.....\n");
   for (int i=0;i<pb_pc->D.nb_fe_nodes;i++){
     pb_pc->D.lsol.rhs[i] += - pb_pc->L1.lsol.sol[i] - pb_pc->L2.lsol.sol[i];
   }
-
   //printf("Solution...\n");
   Advanced_SolveLinearSolver(&pb_pc->D.lsol,simu);
 
   // 4) OUTPUT STEP
-
   // Final concatenation
   cat2CGVectors(&pb_pc->D,&pb_pc->Schur,pb_pc->D.lsol.sol,pb_pc->Schur.lsol.sol,globalSol);
 

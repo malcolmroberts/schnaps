@@ -162,6 +162,12 @@ void Advanced_GMRESSolver(LinearSolver* lsol, Simulation* simu){
      Init_Parameters_PhyBasedPC(&pb_pc);
      icntl[4]  = 2;
   }
+   if(lsol->pc_type == PHY_BASED_U){
+     int mat2assemble[6] = {1, 1, 1, 1, 1, 1};
+     Init_PBPC_Wave_SchurVelocity(simu, &pb_pc, mat2assemble);
+     Init_Parameters_PhyBasedPC(&pb_pc);
+     icntl[4]  = 2;
+  }
   else if ((lsol->pc_type == JACOBI) ||(lsol->pc_type == EXACT)){
     icntl[4] = 2;
   }
@@ -251,12 +257,16 @@ void Advanced_GMRESSolver(LinearSolver* lsol, Simulation* simu){
   }
 
   else if(revcom == precondRight)  {
-    if(lsol->pc_type == PHY_BASED_P1 || lsol->pc_type == PHY_BASED_P2 ){    
+    if(lsol->pc_type == PHY_BASED_P1 || lsol->pc_type == PHY_BASED_P2 ){
+      printf("mmmhfghm");
        if (lsol->is_CG){
 	 //PhyBased_PC_CG(&pb_pc,simu,loc_z,loc_x);
 	 PhyBased_PC_InvertSchur_CG(&pb_pc,simu,loc_z,loc_x);
        }
     }
+    else if(lsol->pc_type == PHY_BASED_U){
+	 PhyBased_PC_CG(&pb_pc,simu,loc_z,loc_x);
+    }  
     else if(lsol->pc_type == EXACT){
       Exact_PC(lsol,loc_z,loc_x);
     }
