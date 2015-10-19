@@ -258,7 +258,6 @@ void Advanced_GMRESSolver(LinearSolver* lsol, Simulation* simu){
 
   else if(revcom == precondRight)  {
     if(lsol->pc_type == PHY_BASED_P1 || lsol->pc_type == PHY_BASED_P2 ){
-      printf("mmmhfghm");
        if (lsol->is_CG){
 	 //PhyBased_PC_CG(&pb_pc,simu,loc_z,loc_x);
 	 PhyBased_PC_InvertSchur_CG(&pb_pc,simu,loc_z,loc_x);
