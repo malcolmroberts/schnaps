@@ -50,6 +50,12 @@ typedef struct field {
   //! ref length of the mesh subcells
   real hmin;
 
+  //! two arrays for storing jacobians and det at glops
+  //! NULL if store_det is false
+  real *jacobian;
+  real *det;
+  bool store_det;
+
   //! period in each direction
   //! if negative: non-periodic computation (default)
   real period[3];

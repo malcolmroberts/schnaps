@@ -91,6 +91,8 @@ int Test_Local_Implicit_SPU(void);
 
 int Test_Graph_Implicit_SPU(void);
 
+int Test_NoMatrix_Implicit_SPU(void);
+
 int Test_Transport_ExImp(void);
 
 int Test_SH_equilibrium(void);

@@ -145,6 +145,10 @@ void init_empty_field(field *f)
   f->period[1] = -1;
   f->period[2] = -1;
 
+  f->jacobian = NULL;
+  f->det = NULL;
+  f->store_det = false;
+
 }
 
 void init_data(field *f)
@@ -278,6 +282,25 @@ void Initfield(field *f, Model model,
 
   // TODO: move this to the integrator code
   f->tnow=0;
+
+  if (f->store_det) {
+    int npg = NPG(f->deg, f->raf);
+    f->jacobian = malloc(npg * 9 * sizeof(real));
+    f->det = malloc(npg * sizeof(real));
+    for(int ipg = 0; ipg < npg; ipg++) {
+      real xpg[3];
+      real xref[3], omega;
+      ref_pg_vol(f->deg, f->raf, ipg, xref, &omega, NULL);
+      real codtau[9];
+      real* dtau = f->jacobian + 9 * ipg;
+      Ref2Phy(f->physnode,
+	      xref,
+	      NULL, -1, // dphiref, ifa
+              NULL, dtau, // xphy , dtau
+	      codtau, NULL, NULL); // codtau, dphi, vnds
+      f->det[ipg] = dot_product(dtau, codtau);
+    }
+  }
 
   init_data(f);
 

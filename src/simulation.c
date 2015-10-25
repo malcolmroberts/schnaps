@@ -165,6 +165,8 @@ void InitSimulation(Simulation *simu, MacroMesh *mesh,
 
     fd[ie].id = ie;
 
+    fd[ie].store_det = true;
+
     Initfield(fd + ie, *model, physnode, deg, raf,
 	      w + ie * field_size, dtw + ie * field_size);
 

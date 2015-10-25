@@ -15,7 +15,7 @@ SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 # -D_SCHNAPS_DIR=${PROJECT_SOURCE_DIR} -O3 -g  ")
 #set(CMAKE_C_FLAGS " -std=c99 -D_DOUBLE_PRECISION -D_SCHNAPS_DIR=${PROJECT_SOURCE_DIR} -O3 -g  ")
 set(CMAKE_C_FLAGS " -std=gnu99 -D_SCHNAPS_DIR=${PROJECT_SOURCE_DIR} -O3")
-#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_DOUBLE_PRECISION")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_DOUBLE_PRECISION")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g")
 # needed for mac
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -lsuitesparseconfig")  
@@ -167,6 +167,10 @@ list(APPEND
   src/skyline.c
   src/skyline_spu.h
   src/skyline_spu.c
+  src/csparse.h
+  src/csparse.c
+  src/csparse_spu.h
+  src/csparse_spu.c
   src/dpackfgmres.h
   src/dpackfgmres.c
   src/linear_solver.h
@@ -494,6 +498,14 @@ add_executable(
 target_link_libraries(testgraph_implicit_spu ${LIBS})
 add_test(testgraph_implicit_spu testgraph_implicit_spu)
 
+add_executable(
+  testnomatrix_implicit_spu
+  test/test.h
+  test/testnomatrix_implicit_spu.c
+  )
+target_link_libraries(testnomatrix_implicit_spu ${LIBS})
+add_test(testnomatrix_implicit_spu.c testnomatrix_implicit_spu)
+ 
 add_executable(
   testshequilibrium2d
   test/test.h
