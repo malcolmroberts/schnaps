@@ -41,7 +41,7 @@ typedef struct CSparse_SPU{
 //! \brief init the csparse structure with an empty matrix
 //! \param[inout] spm the csparse object
 //! \param[in] n number of equations
-void Init_CSparse_SPU(CSparse_SPU* spm,int n)
+void Init_CSparse_SPU(CSparse_SPU* spm,int n);
 
 //! \brief register the csparse arrays in starPU
 //! \param[inout] spm the csparse object
