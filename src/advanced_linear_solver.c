@@ -162,9 +162,15 @@ void Advanced_GMRESSolver(LinearSolver* lsol, Simulation* simu){
      Init_Parameters_PhyBasedPC(&pb_pc);
      icntl[4]  = 2;
   }
-   if(lsol->pc_type == PHY_BASED_U){
+  if(lsol->pc_type == PHY_BASED_U1){
      int mat2assemble[6] = {1, 1, 1, 1, 1, 1};
-     Init_PBPC_Wave_SchurVelocity(simu, &pb_pc, mat2assemble);
+     Init_PBPC_Wave_SchurVelocity_BCVelocity(simu, &pb_pc, mat2assemble);
+     Init_Parameters_PhyBasedPC(&pb_pc);
+     icntl[4]  = 2;
+  }
+  if(lsol->pc_type == PHY_BASED_U2){
+     int mat2assemble[6] = {1, 1, 1, 1, 1, 1};
+     Init_PBPC_Wave_SchurVelocity_BCPressure(simu, &pb_pc, mat2assemble);
      Init_Parameters_PhyBasedPC(&pb_pc);
      icntl[4]  = 2;
   }
@@ -259,11 +265,13 @@ void Advanced_GMRESSolver(LinearSolver* lsol, Simulation* simu){
   else if(revcom == precondRight)  {
     if(lsol->pc_type == PHY_BASED_P1 || lsol->pc_type == PHY_BASED_P2 ){
        if (lsol->is_CG){
-	 //PhyBased_PC_CG(&pb_pc,simu,loc_z,loc_x);
 	 PhyBased_PC_InvertSchur_CG(&pb_pc,simu,loc_z,loc_x);
        }
+       else{
+	 PhyBased_PC_InvertSchur_DG(&pb_pc,simu,loc_z,loc_x);
+       }
     }
-    else if(lsol->pc_type == PHY_BASED_U){
+    else if(lsol->pc_type == PHY_BASED_U1 || lsol->pc_type == PHY_BASED_U2){
 	 PhyBased_PC_CG(&pb_pc,simu,loc_z,loc_x);
     }  
     else if(lsol->pc_type == EXACT){

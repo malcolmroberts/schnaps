@@ -78,7 +78,6 @@ typedef struct PB_PC{
 // \param[in] cs: ContinuousSolver object.
 // \param[in] rhsIn: Vector in DG.
 // \param[out] rhsOut: Vector in CG.
-void VectorDgToCg (ContinuousSolver * ps,real * rhsIn, real * rhsOut);
 void PiDgToCg(ContinuousSolver * cs,real * rhsIn, real * rhsOut);
 
 // \brief Takes a vector in Continuous Galerkin, and returns the 
@@ -86,7 +85,6 @@ void PiDgToCg(ContinuousSolver * cs,real * rhsIn, real * rhsOut);
 // \param[in] cs: ContinuousSolver object.
 // \param[in] rhsIn: Vector in CG.
 // \param[out] rhsOut: Vector in DG.
-void VectorCgToDg(ContinuousSolver * cs, real * rhsIn, real * rhsOut);
 void PiInvertCgToDg(ContinuousSolver * cs,real * rhsIn, real * rhsOut);
 
 void Init_Parameters_PhyBasedPC(PB_PC* pb_pc);
@@ -96,7 +94,13 @@ void Init_Parameters_PhyBasedPC(PB_PC* pb_pc);
 // \param[in] simu: Simulation object containing some run-related variables
 // \param[inout] pb_pc: Physics-based Preconditioner object.
 // \param[in] list_mat2assembly: Integer array. Tells which matrices shall be assembled.
-void Init_PBPC_Wave_SchurVelocity(Simulation *simu, PB_PC* pb_pc, int* list_mat2assemble);
+void Init_PBPC_Wave_SchurVelocity_BCVelocity(Simulation *simu, PB_PC* pb_pc, int* list_mat2assemble);
+
+// \brief Initialize the physics-based preconditioner with schur on the velocity
+// \param[in] simu: Simulation object containing some run-related variables
+// \param[inout] pb_pc: Physics-based Preconditioner object.
+// \param[in] list_mat2assembly: Integer array. Tells which matrices shall be assembled.
+void Init_PBPC_Wave_SchurVelocity_BCPressure(Simulation *simu, PB_PC* pb_pc, int* list_mat2assemble);
 
 // \brief Initialize the physics-based preconditioner with schur on the pressure with boundary condition (u,n)=0
 // \param[in] simu: Simulation object containing some run-related variables
@@ -129,22 +133,28 @@ void Init_PBPC_Wave_SchurPressure_BCPressure(Simulation *simu, PB_PC* pb_pc, int
 void InitMat_ContinuousSolver(PB_PC* pb_pc, real Dmat[4][4], real L1Mat[4][4], real L2Mat[4][4], real U1Mat[4][4], real U2Mat[4][4], real Schurmat[4][4][4]);
 
 // \brief Physics-based CG preconditioner for DG problem
-// \param[in] pb_pc: Physics-based preconditioner (contains all the Schur decomposition)
+// \param[in] pb_pc: Physics-based preconditioner (Schur velocity)
 // \param[out] globalSol: Stores the solution of the preconditioner.
 // \param[in] globalRHS: Right-hand-side containing all explicit and source terms.
 void PhyBased_PC_DG(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*globalRHS);
 
 // \brief Physics-based CG preconditioner for CG problem
-// \param[in] pb_pc: Physics-based preconditioner (contains all the Schur decomposition)
+// \param[in] pb_pc: Physics-based preconditioner (Schur velocity)
 // \param[out] globalSol: Stores the solution of the preconditioner.
 // \param[in] globalRHS: Right-hand-side containing all explicit and source terms.
 void PhyBased_PC_CG(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*globalRHS);
 
 // \brief Physics-based CG preconditioner for CG problem
-// \param[in] pb_pc: Physics-based preconditioner (contains all the Schur decomposition)
+// \param[in] pb_pc: Physics-based preconditioner (Schur pressure)
 // \param[out] globalSol: Stores the solution of the preconditioner.
 // \param[in] globalRHS: Right-hand-side containing all explicit and source terms.
 void PhyBased_PC_InvertSchur_CG(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*globalRHS);
+
+// \brief Physics-based CG preconditioner for DG problem
+// \param[in] pb_pc: Physics-based preconditioner (Schur Pressure)
+// \param[out] globalSol: Stores the solution of the preconditioner.
+// \param[in] globalRHS: Right-hand-side containing all explicit and source terms.
+void PhyBased_PC_InvertSchur_DG(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*globalRHS);
 
 // \brief Frees any PB_PC object
 // \param[inout] pb_pc a PhysicsBased_PreConditioner 
@@ -163,6 +173,8 @@ void GenericOperator_PBPC_Pressure(PB_PC* pb_pc);
 void reset(PB_PC* pb_pc);
 
 void RobinFlux_pressure(void * cs,LinearSolver* lsol, real * xpg, real * w, real *vnorm, real * flux);
+
+void Dirichlet_Velocity(void * cs,LinearSolver* lsol, real * xpg, real * w, real *vnorm, real * flux);
 
 void BoundaryTerm_Yderivative(void * cs,LinearSolver* lsol, real * xpg, real * w, real *vnorm, real * flux);
 
