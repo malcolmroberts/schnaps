@@ -23,7 +23,6 @@ set(CMAKE_CXX_FLAGS "-lsuitesparseconfig")
 
 MESSAGE(Compil. options: ${CMAKE_C_FLAGS})
 
-
 OPTION(USE_OPENCL "Activate OpenCL library" ON)
 
 IF(USE_OPENCL) # set with: cmake . -DUSE_OPENCL:BOOL=ON
@@ -49,34 +48,49 @@ OPTION(USE_STARPU
   "Compile with the StarPU library"
   ON)
 
+# NB: FindSTARPU.cmake does not properly deal with non-standard
+# locations, so it may be necessary to just put the include directory
+# in by hand.  For example,
+# cmake ../ -DSTARPU_INCDIR=/home/<username>/starpu/include/starpu/1.2/
 IF(USE_STARPU)# set with: cmake . -DUSE_STARPU:BOOL=ON
   MESSAGE("Compiling with StarPU Library")
-  find_package (STARPU REQUIRED COMPONENTS HWLOC MPI)
-  if(STARPU_FOUND)
-    MESSAGE("StarPU found")
-    INCLUDE_DIRECTORIES(${STARPU_INCLUDE_DIRS})
+  if(STARPU_INCDIR)
+    INCLUDE_DIRECTORIES(${STARPU_INCDIR})
   else()
-    MESSAGE("StarPU not found")
-  endif(STARPU_FOUND)
+    find_package (STARPU REQUIRED COMPONENTS HWLOC MPI)
+    if(STARPU_FOUND)
+      MESSAGE("StarPU found")
+      INCLUDE_DIRECTORIES(${STARPU_INCLUDE_DIRS})
+    else()
+      MESSAGE("StarPU not found")
+    endif(STARPU_FOUND)
+  endif(STARPU_INCDIR)
 ENDIF(USE_STARPU)
 
 OPTION(USE_IGRAPH
   "Compile with the igraph library"
   ON)
 
+#INCLUDE_DIRECTORIES("/home/mal/igraph/include/igraph")
+
+# NB: FindSTARPU.cmake does not properly deal with non-standard
+# locations, so it may be necessary to just put the include directory
+# in by hand.  For example,
+# cmake ../ -DIGRAPH_INCDIR=/home/<username>/igraph/include/igraph
 IF(USE_IGRAPH)# set with: cmake . -DUSE_IGRAPH:BOOL=ON
   MESSAGE("Compiling with igraph Library")
-  find_package (igraph)
-  if(HAVE_IGRAPH)
-    MESSAGE("igraph found")
-    INCLUDE_DIRECTORIES(${IGRAPH_INCLUDES})
+  if(IGRAPH_INCDIR)
+    INCLUDE_DIRECTORIES(${IGRAPH_INCDIR})
+  else()
+    find_package (igraph)
+    if(HAVE_IGRAPH)
+      MESSAGE("igraph found")
+      INCLUDE_DIRECTORIES(${IGRAPH_INCLUDES})
   else()
     MESSAGE("igraph not found")
   endif(HAVE_IGRAPH)
+  endif(IGRAPH_INCDIR)
 ENDIF(USE_IGRAPH)
-
-
-
 
 if(CMAKE_COMPILER_IS_GNUCC)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror -Wno-deprecated-declarations")
