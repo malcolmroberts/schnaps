@@ -594,12 +594,6 @@ void GraphThetaTimeSchemeSubCell_SPU(Simulation *simu, real tmax, real dt){
   //starpu_task_wait_for_all();
   printf("Elapsed time=%f\n", (double) (time(NULL) -start));
 
-  for(int ie=0; ie <  simu->macromesh.nbelems; ++ie){
-    field* f = simu->fd + ie;
-    Skyline_SPU* sky_spu = f->solver->matrix;
-    UnRegisterSkyline_SPU(sky_spu); 
-  }
-
 
   starpu_shutdown();
 
