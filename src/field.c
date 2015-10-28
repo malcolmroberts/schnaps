@@ -148,6 +148,13 @@ void init_empty_field(field *f)
   f->jacobian = NULL;
   f->det = NULL;
   f->store_det = false;
+  f->wn = NULL;
+  f->dtwn = NULL;
+  f->res = NULL;
+  f->solver = NULL;
+  f->solver_spu = NULL;
+  f->rmat = NULL;
+  f->rmat_spu = NULL;
 
 }
 
@@ -274,6 +281,8 @@ void Initfield(field *f, Model model,
   }
   assert(f->dtwn);
 
+  f->res = f->dtwn;
+
   f->pre_dtfield = NULL;
   f->post_dtfield = NULL;
   f->update_after_rk = NULL;
@@ -339,6 +348,14 @@ void Initfield_SPU(field *f){
 				(uintptr_t)(f->wn), // vector location
 				f->wsize,  // size
 				sizeof(real));  // type
+
+    starpu_vector_data_register(&(f->res_handle), // mem handle
+				0, // location: CPU
+				(uintptr_t)(f->res), // vector location
+				f->wsize,  // size
+				sizeof(real));  // type
+    assert(f->res != NULL);
+    assert(f->res == f->dtwn);
   }
   
 }
@@ -737,7 +754,7 @@ void DGSource(field *f, real *w, real *dtw)
 	    NULL, -1, // dpsiref, ifa
 	    xphy, dtau, // xphy, dtau
 	    codtau, NULL, NULL); // codtau, dpsi, vnds
-    //real det = dot_product(dtau[0], codtau[0]);  //// temp !!!!!!!!!!!!!!!
+    real det = dot_product(dtau[0], codtau[0]);  //// temp !!!!!!!!!!!!!!!
     real wL[m], source[m];
     for(int iv = 0; iv < m; ++iv){
       int imem = f->varindex(f->deg, f->raf, f->model.m, ipg, iv);
@@ -749,7 +766,7 @@ void DGSource(field *f, real *w, real *dtw)
 
     for(int iv = 0; iv < m; ++iv) {
       int imem = f->varindex(f->deg, f->raf, f->model.m, ipg, iv);
-      dtw[imem] += source[iv];// det * wpg;
+      dtw[imem] += source[iv] * det * wpg;
 	
     }
   }

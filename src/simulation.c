@@ -492,8 +492,8 @@ void DtFields(Simulation *simu, real *w, real *dtw) {
   for(int ie = 0; ie < simu->macromesh.nbelems; ++ie) {
     DGSubCellInterface(simu->fd + ie, w + ie * fsize, dtw + ie * fsize);
     DGVolume(simu->fd + ie, w + ie * fsize, dtw + ie * fsize);
-    DGMass(simu->fd + ie, w + ie * fsize, dtw + ie * fsize);
     DGSource(simu->fd + ie, w + ie * fsize, dtw + ie * fsize);
+    DGMass(simu->fd + ie, w + ie * fsize, dtw + ie * fsize);
 
   }
 

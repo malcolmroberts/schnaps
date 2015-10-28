@@ -34,7 +34,7 @@ int TestMaxwell2D(void) {
   model.InitData = Maxwell2DInitData;
   model.ImposedData = Maxwell2DImposedData;
   model.Source = Maxwell2DSource;
-  model.Source = NULL;
+  //model.Source = NULL;
 
 
   int deg[]={3, 3, 0};

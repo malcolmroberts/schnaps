@@ -292,8 +292,13 @@ void InterfaceExplicitFlux_SPU(Interface* inter, int side)
     task->handles[2] = inter->vnds_handle;
     task->handles[3] = inter->xpg_handle;
     task->handles[4] = wn_ext;
-    Skyline_SPU* sky_spu = f->solver->matrix;
-    task->handles[5] = sky_spu->rhs_handle;
+    if (f->solver != NULL){
+      Skyline_SPU* sky_spu = f->solver->matrix;
+      task->handles[5] = sky_spu->rhs_handle;
+    }
+    else {
+      task->handles[5] = f->rhs_handle;
+    }
     int ret = starpu_task_submit(task);
     STARPU_CHECK_RETURN_VALUE(ret, "starpu_task_submit");
 
@@ -447,8 +452,13 @@ void InterfaceBoundaryFlux_SPU(Interface* inter)
   task->handles[0] = index;
   task->handles[1] = inter->vnds_handle;
   task->handles[2] = inter->xpg_handle;
-  Skyline_SPU* sky_spu = f->solver->matrix;
-  task->handles[3] = sky_spu->rhs_handle;
+  if (f->solver != NULL){
+    Skyline_SPU* sky_spu = f->solver->matrix;
+    task->handles[3] = sky_spu->rhs_handle;
+  }
+  else {
+    task->handles[3] = f->rhs_handle;
+  }
   int ret = starpu_task_submit(task);
   STARPU_CHECK_RETURN_VALUE(ret, "starpu_task_submit");
 

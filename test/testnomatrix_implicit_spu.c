@@ -106,7 +106,7 @@ int Test_NoMatrix_Implicit_SPU(void) {
   simu.dt = 0.1;
   /* InitFieldImplicitSolver(fd); */
   /* AssemblyFieldImplicitSolver(fd, 1, 1); */
-  GraphThetaTimeScheme_SPU(&simu, tmax, simu.dt);
+  GraphThetaTimeSchemeSubCell_SPU(&simu, tmax, simu.dt);
   // pour tracer le graphe des tâches:
   // avant l'execution: export STARPU_FXT_PREFIX=/Users/helluy/schnaps/build/
   //  starpu_fxt_tool -i prof_file_*

@@ -38,6 +38,22 @@ void AssemblyImplicitLinearSolver(Simulation *simu, LinearSolver *solver,real th
 //!  \param[in] dt time step
 void AssemblyFieldImplicitSolver(field *fd,real theta, real dt);
 
+//! \brief Assembly and solving of the implicit DG operator into
+//! one macrocell. No global matrix allocation
+//! thanks to downwind numbering
+//! \param[inout] field a field
+//! \param[in] theta the crank nicholson parameter
+//!  \param[in] dt time step
+void FieldDownwindSolve(field *fd,real theta, real dt);
+
+//! \brief residual of the DG operator into
+//! one macrocell.
+//! \param[inout] field a field
+//! \param[in] theta the crank nicholson parameter
+//!  \param[in] dt time step
+void FieldResidual(field *fd,real theta, real dt);
+
+
 //! \brief Assembly of the DG operator into a sparse matrix
 //! prepare the matrix structure of the differential terms inside the fields
 //! \param[inout] simu a simulation
@@ -135,6 +151,13 @@ void LocalThetaTimeScheme_SPU(Simulation *simu, real tmax, real dt);
 //! \param[in] tmax final time
 //! \param[in] dt time step
 void GraphThetaTimeScheme_SPU(Simulation *simu, real tmax, real dt);
+
+//! \brief Crank-Nicholson time-stepping for transport solver 
+//! graph_based and StarPU version without matrix assembly
+//! \param[inout] simu a simulation
+//! \param[in] tmax final time
+//! \param[in] dt time step
+void GraphThetaTimeSchemeSubCell_SPU(Simulation *simu, real tmax, real dt);
 
 ///! \brief Assembly of the DG operator into a sparse matrix
 //! assembly of the interface fluxes between the neighboring fields

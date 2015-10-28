@@ -85,7 +85,15 @@ typedef struct field {
   starpu_data_handle_t wn_handle;
   
   //! Time derivative of the field
+  //! is equal to res
+  //! only used in explicit schemes
   real *dtwn;
+
+  //! residual
+  //! is equal to dtwn
+  //! only used in implicit schemes
+  real *res;
+  starpu_data_handle_t res_handle;
 
 
   

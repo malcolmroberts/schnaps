@@ -375,8 +375,9 @@ void GraphThetaTimeScheme_SPU(Simulation *simu, real tmax, real dt){
     FactoLU_SPU(solver);
     free(solver->sol);
     solver->sol = f->wn;
-    Skyline_SPU* sky_spu = f->solver->matrix;
-    RegisterSkyline_SPU(sky_spu);
+    free(solver->rhs);
+    solver->rhs = f->res;
+    RegisterSkyline_SPU(solver);
     Skyline_SPU* rmat = f->rmat->matrix;
     free(rmat->sol);
     free(rmat->rhs);
@@ -479,6 +480,115 @@ void GraphThetaTimeScheme_SPU(Simulation *simu, real tmax, real dt){
   
 };
 
+void GraphThetaTimeSchemeSubCell_SPU(Simulation *simu, real tmax, real dt){
+
+  real theta=0.5;
+  simu->dt=dt;
+  
+  int itermax=tmax / simu->dt;
+  simu->itermax_rk=itermax;
+  simu->tnow=0;
+  simu->tmax = tmax;
+
+  
+  int freq = (1 >= simu->itermax_rk / 10)? 1 : simu->itermax_rk / 10;
+  //freq = 10;
+  int iter = 0;
+
+  time_t start;
+  start = time(NULL);
+  while(simu->tnow < tmax) {
+    
+    if (iter <= 1) start = time(NULL);
+
+    simu->tnow += theta * dt;
+  
+    for(int ies=0; ies <  simu->macromesh.nbelems; ++ies){
+      // -1 because the ghost upwind vertex is always the first
+      // and the ghost downwind vertex is always the last
+      int ie = simu->macromesh.topo_order[ies+1];
+      assert(ie >=0 && ie < simu->macromesh.nbelems);
+      //printf("ies=%d ie=%d\n",ies,ie);
+      field *f = simu->fd + ie;
+      f->tnow = simu->tnow;
+      f->dt = simu->dt;
+
+      // explicit part of the Crank-Nicolson algo
+      // All the macrocell internal terms are computed:
+      // fluxes, sources, derivatives
+      //FieldResidual(f, 1. - theta, dt);
+
+    // search upwind boundaries
+      igraph_t* graph = &(simu->macromesh.connect_graph);  
+      igraph_vector_t found_edge;
+      igraph_vector_init(&found_edge, 6);
+      igraph_incident(graph, &found_edge, ie, IGRAPH_IN);
+      int nup = igraph_vector_size(&found_edge);
+      for(int ii=0; ii < nup; ii++) {
+	int eid = (int)VECTOR(found_edge)[ii];
+	int iefrom, ieto;
+	igraph_edge(graph, eid, &iefrom, &ieto);
+	assert(ie == ieto);
+	int side = simu->macromesh.edge_dir[eid];
+	int interid = simu->macromesh.edge2face[eid];
+	Interface *inter = simu->interface + interid;
+	if (iefrom >= simu->macromesh.nbelems) {
+	  InterfaceBoundaryFlux_SPU(inter);
+	}
+	else {
+	  InterfaceExplicitFlux_SPU(inter, 1 - side);
+	}
+      }
+
+      //FieldDownwindSolve(f, theta, dt);
+
+      igraph_incident(graph, &found_edge, ie, IGRAPH_OUT);
+      int ndown = igraph_vector_size(&found_edge);
+      for(int ii=0; ii < ndown; ii++) {
+	int eid = (int)VECTOR(found_edge)[ii];
+	int iefrom, ieto;
+	igraph_edge(graph, eid, &iefrom, &ieto);
+	assert(ie == iefrom);
+	int side = simu->macromesh.edge_dir[eid];
+	int interid = simu->macromesh.edge2face[eid];
+	Interface *inter = simu->interface + interid;
+	if (ieto < simu->macromesh.nbelems) {
+	  ExtractInterface_SPU(inter, side);
+	}
+      }     
+    }
+
+    simu->tnow += (1 - theta) * dt;
+
+
+    
+    if (iter % freq == 0) {
+      printf("t=%f iter=%d/%d dt=%f\n",
+	     simu->tnow, iter+1, simu->itermax_rk, dt);
+    }
+    iter++;
+    if (iter == 1) {
+      starpu_task_wait_for_all();
+      printf("Elapsed time first iter=%f\n", (double) (time(NULL) -start));
+    }
+  }
+
+  starpu_task_wait_for_all();
+  //starpu_task_wait_for_all();
+  printf("Elapsed time=%f\n", (double) (time(NULL) -start));
+
+  for(int ie=0; ie <  simu->macromesh.nbelems; ++ie){
+    field* f = simu->fd + ie;
+    Skyline_SPU* sky_spu = f->solver->matrix;
+    UnRegisterSkyline_SPU(sky_spu); 
+  }
+
+
+  starpu_shutdown();
+
+
+  
+};
 
 
 void ThetaTimeScheme(Simulation *simu, real tmax, real dt){
@@ -2228,3 +2338,16 @@ void InterfaceLocalAssembly(Interface *inter,  real theta, real dt)
   } // if (fR == NULL)
 
 }
+
+
+void FieldResidual(field *fd,real theta, real dt){
+
+    DGSubCellInterface(fd, fd->wn, fd->res);
+    DGVolume(fd, fd->wn, fd->res);
+    DGSource(fd, fd->wn, fd->res);
+
+    // TODO: think and multiply by dt and/or +/-(1-theta)
+  
+}
+
+
