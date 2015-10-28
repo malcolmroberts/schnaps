@@ -296,8 +296,8 @@ void Initfield(field *f, Model model,
       Ref2Phy(f->physnode,
 	      xref,
 	      NULL, -1, // dphiref, ifa
-              NULL, dtau, // xphy , dtau
-	      codtau, NULL, NULL); // codtau, dphi, vnds
+              NULL, (real(*)[3])dtau, // xphy , dtau
+	      (real(*)[3])codtau, NULL, NULL); // codtau, dphi, vnds
       f->det[ipg] = dot_product(dtau, codtau);
     }
   }
