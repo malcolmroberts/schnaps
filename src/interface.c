@@ -122,8 +122,15 @@ void ExtractInterface_SPU(Interface* inter, int side){
     task->cl_arg = arg_buffer;
     task->cl_arg_size = arg_buffer_size;
     task->handles[0] = wf_handle;
-    Skyline_SPU* sky = fd->solver->matrix;
-    task->handles[1] = sky->sol_handle;
+    /* Skyline_SPU* sky = fd->solver->matrix; */
+    /* task->handles[1] = sky->sol_handle; */
+    if (fd->solver != NULL){
+      Skyline_SPU* sky_spu = fd->solver->matrix;
+      task->handles[1] = sky_spu->sol_handle;
+    }
+    else {
+      task->handles[1] = fd->wn_handle;
+    }
     task->handles[2] = vol_index_handle;
     int ret = starpu_task_submit(task);
     STARPU_CHECK_RETURN_VALUE(ret, "starpu_task_submit");
