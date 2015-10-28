@@ -490,6 +490,23 @@ void GraphThetaTimeSchemeSubCell_SPU(Simulation *simu, real tmax, real dt){
   simu->tnow=0;
   simu->tmax = tmax;
 
+
+  for(int ie=0; ie <  simu->macromesh.nbelems; ++ie){
+    field *f = simu->fd + ie;
+    f->local_source_cl_init = false;
+    /* Skyline_SPU* solver = f->solver->matrix; */
+    /* FactoLU_SPU(solver); */
+    /* free(solver->sol); */
+    /* solver->sol = f->wn; */
+    /* free(solver->rhs); */
+    /* solver->rhs = f->res; */
+    /* RegisterSkyline_SPU(solver); */
+    /* Skyline_SPU* rmat = f->rmat->matrix; */
+    /* free(rmat->sol); */
+    /* free(rmat->rhs); */
+
+  }
+
   
   int freq = (1 >= simu->itermax_rk / 10)? 1 : simu->itermax_rk / 10;
   //freq = 10;

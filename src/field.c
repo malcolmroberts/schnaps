@@ -182,6 +182,7 @@ void init_data(field *f)
       for(int iv = 0; iv < f->model.m; iv++) {
 	int imem = f->varindex(f->deg, f->raf, f->model.m, ipg, iv);
 		f->wn[imem] = w[iv];
+		f->dtwn[imem] = 0;
       }
     }
   
@@ -348,6 +349,9 @@ void Initfield_SPU(field *f){
 				(uintptr_t)(f->wn), // vector location
 				f->wsize,  // size
 				sizeof(real));  // type
+
+    for(int ii=0; ii < f->wsize; ii++) f->res[ii] = 0;
+
 
     starpu_vector_data_register(&(f->res_handle), // mem handle
 				0, // location: CPU

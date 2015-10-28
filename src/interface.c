@@ -12,6 +12,7 @@ void InitInterface_SPU(Interface* inter){
 
   if (starpu_use){
 
+
   
     starpu_vector_data_register(&(inter->vol_indexL_handle), // mem handle
 				0, // location: CPU
@@ -297,7 +298,7 @@ void InterfaceExplicitFlux_SPU(Interface* inter, int side)
       task->handles[5] = sky_spu->rhs_handle;
     }
     else {
-      task->handles[5] = f->rhs_handle;
+      task->handles[5] = f->res_handle;
     }
     int ret = starpu_task_submit(task);
     STARPU_CHECK_RETURN_VALUE(ret, "starpu_task_submit");
@@ -457,7 +458,7 @@ void InterfaceBoundaryFlux_SPU(Interface* inter)
     task->handles[3] = sky_spu->rhs_handle;
   }
   else {
-    task->handles[3] = f->rhs_handle;
+    task->handles[3] = f->res_handle;
   }
   int ret = starpu_task_submit(task);
   STARPU_CHECK_RETURN_VALUE(ret, "starpu_task_submit");
