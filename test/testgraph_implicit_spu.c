@@ -50,7 +50,7 @@ int Test_Graph_Implicit_SPU(void) {
 
   MacroMesh mesh;
   //ReadMacroMesh(&mesh,"../test/testcube2.msh");
-  ReadMacroMesh(&mesh,"../geo/cubegros.msh");
+  ReadMacroMesh(&mesh,"cubegros.msh");
   //ReadMacroMesh(&mesh,"../test/testmacromesh.msh");
   Detect2DMacroMesh(&mesh);
   
@@ -99,7 +99,7 @@ int Test_Graph_Implicit_SPU(void) {
   //DisplaySimulation(&simu);
 
   field* fd = simu.fd;
-  real tmax = .1;
+  real tmax = 1;
   simu.cfl=0.2;
   simu.vmax= 1;
   //simu.dt = 0.025;
