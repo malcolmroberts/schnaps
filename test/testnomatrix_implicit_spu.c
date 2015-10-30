@@ -85,7 +85,7 @@ int Test_NoMatrix_Implicit_SPU(void) {
   /* model.Source = TestSteady_Wave_Source; */
 
   int deg[]={2, 2, 0};
-  int raf[]={4, 4, 1};
+  int raf[]={3, 3, 1};
   
   CheckMacroMesh(&mesh, deg, raf);
   BuildMacroMeshGraph(&mesh, TestSteady_Transport_v2, deg, raf);

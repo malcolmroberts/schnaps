@@ -1014,7 +1014,7 @@ void CheckMacroMesh(MacroMesh *m, int *deg, int *raf) {
 
         if(m->is2d) { // in 2D do not check upper and lower face
           if(ifa < 4)
-            assert(Dist(xpgref, xpgref2) < _SMALL);
+          assert(Dist(xpgref, xpgref2) < _SMALL);
         }
 	else if (m->is1d){
 	  if (ifa==1 || ifa==3) {

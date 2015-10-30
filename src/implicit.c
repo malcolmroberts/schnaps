@@ -494,17 +494,6 @@ void GraphThetaTimeSchemeSubCell_SPU(Simulation *simu, real tmax, real dt){
   for(int ie=0; ie <  simu->macromesh.nbelems; ++ie){
     field *f = simu->fd + ie;
     f->local_source_cl_init = false;
-    /* Skyline_SPU* solver = f->solver->matrix; */
-    /* FactoLU_SPU(solver); */
-    /* free(solver->sol); */
-    /* solver->sol = f->wn; */
-    /* free(solver->rhs); */
-    /* solver->rhs = f->res; */
-    /* RegisterSkyline_SPU(solver); */
-    /* Skyline_SPU* rmat = f->rmat->matrix; */
-    /* free(rmat->sol); */
-    /* free(rmat->rhs); */
-
   }
 
   
@@ -533,9 +522,9 @@ void GraphThetaTimeSchemeSubCell_SPU(Simulation *simu, real tmax, real dt){
       // explicit part of the Crank-Nicolson algo
       // All the macrocell internal terms are computed:
       // fluxes, sources, derivatives
-      //FieldResidual(f, 1. - theta, dt);
+      FieldResidual(f, 1. - theta, dt);
 
-    // search upwind boundaries
+      // search upwind boundaries
       igraph_t* graph = &(simu->macromesh.connect_graph);  
       igraph_vector_t found_edge;
       igraph_vector_init(&found_edge, 6);
@@ -557,7 +546,7 @@ void GraphThetaTimeSchemeSubCell_SPU(Simulation *simu, real tmax, real dt){
 	}
       }
 
-      //FieldDownwindSolve(f, theta, dt);
+      FieldDownwindSolve(f, theta, dt);
 
       igraph_incident(graph, &found_edge, ie, IGRAPH_OUT);
       int ndown = igraph_vector_size(&found_edge);
@@ -600,6 +589,215 @@ void GraphThetaTimeSchemeSubCell_SPU(Simulation *simu, real tmax, real dt){
 
   
 };
+
+
+void  build_subcells_downwind_graph(field *fd, igraph_t* dwgraph, real vit[3]);
+
+
+void  build_subcells_downwind_graph(field *f, igraph_t* dwgraph, real vit[3]){
+
+
+  int nraf[3] = {f->raf[0],
+		 f->raf[1],
+		 f->raf[2]};
+  int deg[3] = {f->deg[0],
+		f->deg[1],
+		f->deg[2]};
+  int npg[3] = {deg[0] + 1,
+		deg[1] + 1,
+		deg[2] + 1};
+
+  int count_edge = 0;
+
+  int nbverts = igraph_vcount(dwgraph);
+ 
+  // Loop on the edges
+  // Sweeping subcell faces in the three directions
+  for(int dim0 = 0; dim0 < 3; dim0++) { 
+    int dim_offset[3] = {0, 0, 0};
+    // in direction dim0 we have an aditional face
+    dim_offset[dim0] = -1;
+    for(int icL0 = dim_offset[0]; icL0 < nraf[0]; icL0++) {
+      for(int icL1 = dim_offset[1]; icL1 < nraf[1]; icL1++) {
+	for(int icL2 = dim_offset[2]; icL2 < nraf[2]; icL2++) {
+	  
+	  int icL[3] = {icL0, icL1, icL2};
+	  
+
+	  bool is_first = (icL[dim0] == -1); 
+	  bool is_last = (icL[dim0] == nraf[dim0] - 1); 
+
+	  // Get the left subcell id
+	  int ncL = icL[0] + nraf[0] * (icL[1] + nraf[1] * icL[2]);
+	  // First glop index in the subcell
+	  int offsetL = npg[0] * npg[1] * npg[2] * ncL;
+	  
+	    
+	  int icR[3] = {icL[0], icL[1], icL[2]};
+	  // The right cell index corresponds to an increment in
+	  // the dim0 direction
+	  icR[dim0]++;
+	  int ncR = icR[0] + nraf[0] * (icR[1] + nraf[1] * icR[2]);
+	  int offsetR = npg[0] * npg[1] * npg[2] * ncR;
+	      
+	  const int altdim1[3] = {1, 0, 0};
+	  const int altdim2[3] = {2, 2, 1};
+	      
+	  // now loop on the left glops of the subface
+	  //int dim1 = (dim0 + 1)%3, dim2 = (dim0+2)%3;
+	  int dim1 = altdim1[dim0];
+	  int dim2 = altdim2[dim0];
+	  int iL[3];
+	  iL[dim0] = deg[dim0];
+
+	  bool edgeLtoR = false;
+	  bool edgeRtoL = false;
+	  bool upwind = false;
+	  bool downwind = false;
+
+
+	  for(iL[dim2] = 0; iL[dim2] < npg[dim2]; iL[dim2]++) {
+	    for(iL[dim1] = 0; iL[dim1] < npg[dim1]; iL[dim1]++) {
+	      // find the right and left glops volume indices
+	    
+	      int iR[3] = {iL[0], iL[1], iL[2]};
+	      iR[dim0] = 0;
+	    
+	      int ipgL = offsetL 
+		+ iL[0] + (deg[0] + 1) * (iL[1] + (deg[1] + 1) * iL[2]);
+	      int ipgR = offsetR 
+		+ iR[0] + (deg[0] + 1) * (iR[1] + (deg[1] + 1) * iR[2]);
+	      //printf("ipgL=%d ipgR=%d\n", ipgL, ipgR);
+	    
+	      // Compute the normal vector for integrating on the
+	      // face
+	      real vnds[3];
+	      {
+		real xref[3], wpg3;
+		// change the glop index if we are on the first cell
+		if (is_first) ipgL = ipgR;
+		ref_pg_vol(f->deg, f->raf, ipgL, xref, &wpg3, NULL);
+		// mapping from the ref glop to the physical glop
+		real dtau[3][3], codtau[3][3];
+		Ref2Phy(f->physnode,
+			xref,
+			NULL, // dphiref
+			-1,  // ifa
+			NULL, // xphy
+			dtau,
+			codtau,
+			NULL, // dphi
+			NULL);  // vnds
+		// we compute ourself the normal vector because we
+		// have to take into account the subcell surface
+	      
+		real h1h2 = 1. / nraf[dim1] / nraf[dim2];
+		vnds[0] = - codtau[0][dim0] * h1h2;
+		vnds[1] = - codtau[1][dim0] * h1h2;
+		vnds[2] = - codtau[2][dim0] * h1h2;
+	      }
+
+	    
+	      real v_dot_n = vnds[0] * vit[0] + vnds[1] * vit[1] + vnds[2] * vit[2];
+	    
+	    
+
+	      if (v_dot_n > _SMALL && is_first) upwind = true;
+	      if (v_dot_n > _SMALL && is_last) downwind = true;
+	      if (v_dot_n < -_SMALL && is_first) downwind = true;
+	      if (v_dot_n < -_SMALL && is_last) upwind = true;
+	      if (v_dot_n > _SMALL && !(is_first || is_last)) edgeLtoR = true;
+	      if (v_dot_n < -_SMALL && !(is_first || is_last)) edgeRtoL = true;
+	    
+	    }  // face yhat loop
+	  } // face xhat loop
+
+	  if (edgeLtoR) {
+	    igraph_add_edge(dwgraph, ncL, ncR);
+	    //m->edge2face[count_edge] = ifa;
+	    //m->edge_dir[count_edge++] = 0;
+	  }
+	  if (edgeRtoL) {
+	    igraph_add_edge(dwgraph, ncR, ncL);
+	    //m->edge2face[count_edge] = ifa;
+	    //m->edge_dir[count_edge++] = 1;
+	  }
+	  if (upwind && is_first) {
+	    igraph_add_edge(dwgraph, nbverts - 2, ncR);
+	    //m->edge2face[count_edge] = ifa;
+	    //m->edge_dir[count_edge++] = 1;
+	  }
+	  if (upwind && is_last) {
+	    igraph_add_edge(dwgraph, nbverts - 2, ncL);
+	    //m->edge2face[count_edge] = ifa;
+	    //m->edge_dir[count_edge++] = 1;
+	  }
+	  if (downwind && is_first) {
+	    //printf("ncR=%d nbv-1=%d \n",ncR,nbverts - 1);
+	    igraph_add_edge(dwgraph, ncR, nbverts - 1);
+	    //m->edge2face[count_edge] = ifa;
+	    //m->edge_dir[count_edge++] = 0;
+	  }
+	  if (downwind && is_last) {
+	    igraph_add_edge(dwgraph, ncL, nbverts - 1);
+	    //m->edge2face[count_edge] = ifa;
+	    //m->edge_dir[count_edge++] = 0;
+	  }
+
+		
+	} // subcell icl2 loop
+      } // subcell icl1 loop
+    } // subcell icl0 loop
+  } // dim loop
+
+  // drawing
+  FILE *ff = fopen("subcell_graph.dot","w");;
+  igraph_write_graph_dot(dwgraph, ff);
+  fclose(ff);
+
+  printf("For drawing the graph:\n");
+  printf("dot -Tpng subcell_graph.dot -o subcell_graph.png\n");
+
+  
+}
+
+
+
+
+
+
+void FieldDownwindSolve(field *fd,real theta, real dt){
+
+  int deg[3] = {fd->deg[0],
+		fd->deg[1],
+		fd->deg[2]};
+  const int npg[3] = {deg[0] + 1,
+		      deg[1] + 1,
+		      deg[2] + 1};
+  int nraf[3] = {fd->raf[0],
+		 fd->raf[1],
+		 fd->raf[2]};
+
+  // build the downwind graph
+  real vit[3] = {1, 0, 0};
+  igraph_t dwgraph;
+  int nbverts = nraf[0] * nraf[1] * nraf[2] + 2; 
+  igraph_empty(&dwgraph, nbverts, IGRAPH_DIRECTED);
+
+  build_subcells_downwind_graph(fd, &dwgraph, vit);
+
+  // loop on the subcells in the good order
+
+  // get the upwind fluxes of the subcell
+
+  // assembly and solve the subcell linear system
+
+  // end loop
+
+
+}
+
+
 
 
 void ThetaTimeScheme(Simulation *simu, real tmax, real dt){
@@ -670,7 +868,7 @@ void ThetaTimeScheme(Simulation *simu, real tmax, real dt){
     if (iter == 1)
       printf("Elapsed time first iter=%f\n", (double) (time(NULL) -start));
   }
-    printf("Elapsed time=%f\n", (double) (time(NULL) -start));
+  printf("Elapsed time=%f\n", (double) (time(NULL) -start));
 
 }
 
@@ -2353,11 +2551,11 @@ void InterfaceLocalAssembly(Interface *inter,  real theta, real dt)
 
 void FieldResidual(field *fd,real theta, real dt){
 
-    DGSubCellInterface(fd, fd->wn, fd->res);
-    DGVolume(fd, fd->wn, fd->res);
-    DGSource(fd, fd->wn, fd->res);
+  DGSubCellInterface(fd, fd->wn, fd->res);
+  DGVolume(fd, fd->wn, fd->res);
+  DGSource(fd, fd->wn, fd->res);
 
-    // TODO: think and multiply by dt and/or +/-(1-theta)
+  // TODO: think and multiply by dt and/or +/-(1-theta)
   
 }
 
