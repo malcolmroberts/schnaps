@@ -550,10 +550,8 @@ void DGSubCellInterface(field *f, real *w, real *dtw)
 		// normal vector
 		real wL[m], wR[m], flux[m];
 		for(int iv = 0; iv < m; iv++) {
-		  // TO DO change the varindex signature
 		  int imemL = f->varindex(f->deg, f->raf, f->model.m, ipgL, iv); 
 		  int imemR = f->varindex(f->deg, f->raf, f->model.m, ipgR, iv);
-		  // end TO DO
 		  wL[iv] = w[imemL];
 		  wR[iv] = w[imemR];
 		}

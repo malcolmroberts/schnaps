@@ -591,10 +591,10 @@ void GraphThetaTimeSchemeSubCell_SPU(Simulation *simu, real tmax, real dt){
 };
 
 
-void  build_subcells_downwind_graph(field *fd, igraph_t* dwgraph, real vit[3]);
+void  build_subcells_downwind_graph(field *fd, real vit[3], int *);
 
 
-void  build_subcells_downwind_graph(field *f, igraph_t* dwgraph, real vit[3]){
+void  build_subcells_downwind_graph(field *f, real vit[3], int* subcell_order){
 
 
   int nraf[3] = {f->raf[0],
@@ -607,10 +607,19 @@ void  build_subcells_downwind_graph(field *f, igraph_t* dwgraph, real vit[3]){
 		deg[1] + 1,
 		deg[2] + 1};
 
+
+  igraph_t dwgraph;
+  
+  int nbverts = nraf[0] * nraf[1] * nraf[2] + 2; 
+
+  igraph_empty(&dwgraph, nbverts, IGRAPH_DIRECTED);
+
+
+
+
+
   int count_edge = 0;
 
-  int nbverts = igraph_vcount(dwgraph);
- 
   // Loop on the edges
   // Sweeping subcell faces in the three directions
   for(int dim0 = 0; dim0 < 3; dim0++) { 
@@ -713,33 +722,33 @@ void  build_subcells_downwind_graph(field *f, igraph_t* dwgraph, real vit[3]){
 	  } // face xhat loop
 
 	  if (edgeLtoR) {
-	    igraph_add_edge(dwgraph, ncL, ncR);
+	    igraph_add_edge(&dwgraph, ncL, ncR);
 	    //m->edge2face[count_edge] = ifa;
 	    //m->edge_dir[count_edge++] = 0;
 	  }
 	  if (edgeRtoL) {
-	    igraph_add_edge(dwgraph, ncR, ncL);
+	    igraph_add_edge(&dwgraph, ncR, ncL);
 	    //m->edge2face[count_edge] = ifa;
 	    //m->edge_dir[count_edge++] = 1;
 	  }
 	  if (upwind && is_first) {
-	    igraph_add_edge(dwgraph, nbverts - 2, ncR);
+	    igraph_add_edge(&dwgraph, nbverts - 2, ncR);
 	    //m->edge2face[count_edge] = ifa;
 	    //m->edge_dir[count_edge++] = 1;
 	  }
 	  if (upwind && is_last) {
-	    igraph_add_edge(dwgraph, nbverts - 2, ncL);
+	    igraph_add_edge(&dwgraph, nbverts - 2, ncL);
 	    //m->edge2face[count_edge] = ifa;
 	    //m->edge_dir[count_edge++] = 1;
 	  }
 	  if (downwind && is_first) {
 	    //printf("ncR=%d nbv-1=%d \n",ncR,nbverts - 1);
-	    igraph_add_edge(dwgraph, ncR, nbverts - 1);
+	    igraph_add_edge(&dwgraph, ncR, nbverts - 1);
 	    //m->edge2face[count_edge] = ifa;
 	    //m->edge_dir[count_edge++] = 0;
 	  }
 	  if (downwind && is_last) {
-	    igraph_add_edge(dwgraph, ncL, nbverts - 1);
+	    igraph_add_edge(&dwgraph, ncL, nbverts - 1);
 	    //m->edge2face[count_edge] = ifa;
 	    //m->edge_dir[count_edge++] = 0;
 	  }
@@ -752,48 +761,215 @@ void  build_subcells_downwind_graph(field *f, igraph_t* dwgraph, real vit[3]){
 
   // drawing
   FILE *ff = fopen("subcell_graph.dot","w");;
-  igraph_write_graph_dot(dwgraph, ff);
+  igraph_write_graph_dot(&dwgraph, ff);
   fclose(ff);
 
   printf("For drawing the graph:\n");
   printf("dot -Tpng subcell_graph.dot -o subcell_graph.png\n");
 
+  igraph_bool_t is_dag;
+  igraph_is_dag(&dwgraph, &is_dag);
+  igraph_vector_t sorting;
+  if (is_dag) {
+    printf("The graph is a DAG. Topological sorting...\n");
+    igraph_vector_init(&sorting, nbverts);
+    igraph_topological_sorting(&dwgraph, &sorting,
+			       IGRAPH_OUT);
+    //print_vector(&sorting, stdout);
+  }
+
+  for(int nid = 0; nid < nbverts; nid++){
+    subcell_order[nid] = (int)VECTOR(sorting)[nid];
+  }
+
+  igraph_vector_destroy(&sorting);
+
+
+
   
 }
 
 
+// accumulate the fluxes of the neighbour subcells
+// into the residual of cell isub
+void get_neighbor_fluxes(field* fd, int isub);
 
 
+void get_neighbor_fluxes(field* fd, int isub){
 
-
-void FieldDownwindSolve(field *fd,real theta, real dt){
-
-  int deg[3] = {fd->deg[0],
-		fd->deg[1],
-		fd->deg[2]};
-  const int npg[3] = {deg[0] + 1,
-		      deg[1] + 1,
-		      deg[2] + 1};
   int nraf[3] = {fd->raf[0],
 		 fd->raf[1],
 		 fd->raf[2]};
 
-  // build the downwind graph
-  real vit[3] = {1, 0, 0};
-  igraph_t dwgraph;
-  int nbverts = nraf[0] * nraf[1] * nraf[2] + 2; 
-  igraph_empty(&dwgraph, nbverts, IGRAPH_DIRECTED);
+  int deg[3] = {fd->deg[0],
+		fd->deg[1],
+		fd->deg[2]};
+  int npg[3] = {deg[0] + 1,
+		deg[1] + 1,
+		deg[2] + 1};
+  
+  const int m = fd->model.m;
 
-  build_subcells_downwind_graph(fd, &dwgraph, vit);
+
+  //int ncL = icL[0] + nraf[0] * (icL[1] + nraf[1] * icL[2]);
+  int ncL = isub;
+  // First glop index in the subcell
+  int offsetL = npg[0] * npg[1] * npg[2] * ncL;
+
+  int icL[3];
+  icL[0] = isub % nraf[0];
+  isub /= nraf[0];
+  icL[1] = isub % nraf[1];
+  isub /= nraf[1];
+  icL[2] = isub;
+  // dim loop
+  for(int dim0 = 0; dim0 < 3; dim0++) { 
+    // left or right
+    for(int s = -1; s <= 1; s += 2){
+      int icR[3] = {icL[0], icL[1], icL[2]};
+      icR[dim0] += s;
+      // the boundary fluxes have been previously computed
+      if ((icR[dim0] != -1) && (icR[dim0] != nraf[dim0])){
+
+	int ncR = icR[0] + nraf[0] * (icR[1] + nraf[1] * icR[2]);
+	int offsetR = npg[0] * npg[1] * npg[2] * ncR;
+
+	const int altdim1[3] = {1, 0, 0};
+	const int altdim2[3] = {2, 2, 1};
+	  
+	// now loop on the left glops of the subface
+	//int dim1 = (dim0 + 1)%3, dim2 = (dim0+2)%3;
+	int dim1 = altdim1[dim0];
+	int dim2 = altdim2[dim0];
+	int iL[3];
+	// we want to perform
+	//if (s == 1) {
+	//  iL[dim0] = deg[dim0];
+	//} else {
+	//  iL[dim0] = 0;
+	//}
+	// faster way:
+	iL[dim0] = (s+1)/2 * deg[dim0];
+	
+	for(iL[dim2] = 0; iL[dim2] < npg[dim2]; iL[dim2]++) {
+	  for(iL[dim1] = 0; iL[dim1] < npg[dim1]; iL[dim1]++) {
+	    // find the right and left glops volume indices
+	    
+	    int iR[3] = {iL[0], iL[1], iL[2]};
+	    iR[dim0] = (1-s)/2 * deg[dim0];
+	    
+	    int ipgL = offsetL 
+	      + iL[0] + (deg[0] + 1) * (iL[1] + (deg[1] + 1) * iL[2]);
+	    int ipgR = offsetR 
+	      + iR[0] + (deg[0] + 1) * (iR[1] + (deg[1] + 1) * iR[2]);
+	    //printf("ipgL=%d ipgR=%d\n", ipgL, ipgR);
+	    
+	    // Compute the normal vector for integrating on the
+	    // face
+	    real vnds[3];
+	    {
+	      real xref[3], wpg3;
+	      // change the glop index if we are on the first cell
+	      ref_pg_vol(deg, nraf, ipgL, xref, &wpg3, NULL);
+	      // mapping from the ref glop to the physical glop
+	      real dtau[3][3], codtau[3][3];
+	      Ref2Phy(fd->physnode,
+		      xref,
+		      NULL, // dphiref
+		      -1,  // ifa
+		      NULL, // xphy
+		      dtau,
+		      codtau,
+		      NULL, // dphi
+		      NULL);  // vnds
+	      // we compute ourself the normal vector because we
+	      // have to take into account the subcell surface
+	      
+	      real h1h2 = 1. / nraf[dim1] / nraf[dim2];
+	      vnds[0] = codtau[0][dim0] * h1h2;
+	      vnds[1] = codtau[1][dim0] * h1h2;
+	      vnds[2] = codtau[2][dim0] * h1h2;
+	    }
+	    // numerical flux from the left and right state and
+	    // normal vector
+	    real wL[m], wR[m], flux[m];
+	    for(int iv = 0; iv < m; iv++) {
+	      int imemL = fd->varindex(deg, nraf, m, ipgL, iv); 
+	      int imemR = fd->varindex(deg, nraf, m, ipgR, iv);
+	      //wL[iv] = fd->wn[imemL];
+	      // the left flux is implicit and computed elsewhere
+	      wL[iv] = 0;
+	      wR[iv] = fd->wn[imemR];
+	    }
+	    fd->model.NumFlux(wL, wR, vnds, flux);
+
+	    // subcell ref surface glop weight
+	    real wpg
+	      = wglop(deg[dim1], iL[dim1])
+	      * wglop(deg[dim2], iL[dim2]);
+
+	    /* printf("vnds %f %f %f flux %f wpg %f\n", */
+	    /* 	 vnds[0], vnds[1], vnds[2], */
+	    /* 	 flux[0], wpg); */
+
+	    // finally distribute the flux on the L side
+	    for(int iv = 0; iv < m; iv++) {
+	      int imemL = fd->varindex(deg, nraf, fd->model.m, ipgL, iv);
+	      // the s sign is here because vnds
+	      // is not necessarily oriented from 
+	      // inside to outside of the subcell
+	      fd->res[imemL] -= s * flux[iv] * wpg;  
+	    }
+	  }
+	}
+      }
+    }
+  }
+
+}
+
+
+
+void subcell_solve(field* fd, int isub);
+
+void subcell_solve(field* fd, int isub){
+
+
+}
+
+void FieldDownwindSolve(field *fd,real theta, real dt){
+
+
+  // build the downwind graph
+  real vit[3] = {1, 1, 0};
+
+  int nraf[3] = {fd->raf[0],
+		 fd->raf[1],
+		 fd->raf[2]};
+
+  int nbverts = nraf[0] * nraf[1] * nraf[2] + 2; 
+
+
+  int* subcell_order = malloc(nbverts * 3 * sizeof(int));
+  build_subcells_downwind_graph(fd, vit, subcell_order);
 
   // loop on the subcells in the good order
+  for( int isubt = 0; isubt < nbverts - 2; isubt++){
+    // +1 because the ghost upwind vertex is always the first
+    // and the ghost downwind vertex is always the last
+    int isub = subcell_order[isubt + 1];
+    // accumulate the fluxes of the neighbour subcells
+    // into the residual
+    get_neighbor_fluxes(fd, isub);
 
-  // get the upwind fluxes of the subcell
+    // assembly and solve the subcell linear system
+    subcell_solve(fd, isub);
 
-  // assembly and solve the subcell linear system
+  } // end loop
 
-  // end loop
-
+    // free memory
+  free(subcell_order);
+  
 
 }
 
@@ -2139,7 +2315,7 @@ void SourceAssembly(Simulation *simu,  LinearSolver *solver, real theta, real dt
 		  codtau, NULL, vnds); // codtau, dpsi, vnds
 	}
 	
- 	// the boundary flux is an affine function
+	// the boundary flux is an affine function
 	real flux0[m], wL[m];
 	for(int iv = 0; iv < m; iv++) {
 	  wL[iv] = 0;
@@ -2161,9 +2337,9 @@ void SourceAssembly(Simulation *simu,  LinearSolver *solver, real theta, real dt
 } // SourceAssembly
 
 
-/* void DGMacroCellInterface(int locfaL, */
-/* 			  field *fL, int offsetL, field *fR, int offsetR, */
-/* 			  real *w, real *dtw)  */
+  /* void DGMacroCellInterface(int locfaL, */
+  /* 			  field *fL, int offsetL, field *fR, int offsetR, */
+  /* 			  real *w, real *dtw)  */
 void InterfaceCoupling(Simulation *simu,  LinearSolver *solver, int itest)
 {
 
