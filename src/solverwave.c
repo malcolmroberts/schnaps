@@ -192,7 +192,7 @@ void Wave_BC_normalvelocity_null(void * cs,LinearSolver* lsol, real * xpg, real 
   real M[3][3];
   real BC[3][3];
   real lambda=0;
-  real mu=1;
+  real mu=10000000;
   real p0=0,u0_1=0,u0_2=0;
 
   real h=ps->FluxMatrix[0][1]/ps->simu->vmax;

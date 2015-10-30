@@ -38,7 +38,7 @@ int Testrealpc(void) {
 
   bool test = true;
   real dd;
-  int test1_ok=0,test2_ok=1,test3_ok=0;
+  int test1_ok=0,test2_ok=0,test3_ok=1;
 
 
 #ifdef PARALUTION 
@@ -204,7 +204,7 @@ int Testrealpc(void) {
     csSolve.lsol.solver_type=GMRES;
     csSolve.lsol.tol=1.e-8;
     csSolve.lsol.pc_type=PHY_BASED_U2;//PHY_BASED_U1//JACOBI;
-    csSolve.lsol.iter_max=1000;
+    csSolve.lsol.iter_max=2000;
     csSolve.lsol.restart_gmres=15;
     csSolve.lsol.is_CG=true;
 
@@ -280,8 +280,8 @@ int Testrealpc(void) {
     model5.BoundaryFlux = Wave_Upwind_BoundaryFlux;
     model5.Source = NULL;
 
-    int deg5[]={4, 4, 0};
-    int raf5[]={8, 8, 1};
+    int deg5[]={3, 3, 0};
+    int raf5[]={1, 1, 1};
 
     assert(mesh.is2d);
     CheckMacroMesh(&mesh, deg5, raf5);
@@ -298,9 +298,9 @@ int Testrealpc(void) {
     InitContinuousSolver(&cs,&simu5,1,nbvar,listvar);
     InitContinuousSolver(&csSolve,&simu5,1,nbvar,listvar);
 
-    real theta5=0.5;
+    real theta5=1.0;
     simu5.theta=theta5;
-    simu5.dt=1;//0.001667;
+    simu5.dt=0.1;//0.001667;
     simu5.vmax=_SPEED_WAVE;
     real tmax5=5*simu5.dt;//;0.5;
 
@@ -322,7 +322,7 @@ int Testrealpc(void) {
     csSolve.bc_flux=Wave_BC_normalvelocity_null;
     csSolve.bc_assembly=BoundaryConditionFriedrichsAssembly;
     csSolve.type_bc=1;
-    
+
     Wave_test(&cs,-(1.0-simu5.theta),simu5.dt);
     GenericOperator_Continuous(&cs,&cs.lsol);
     Wave_test(&csSolve,simu5.theta,simu5.dt);
@@ -357,6 +357,11 @@ int Testrealpc(void) {
 	csSolve.lsol.rhs[i]=0;
       }      
       csSolve.bc_assembly(&csSolve, &csSolve.lsol);
+      for(int i=0;i<size/3;i++){
+        printf("CACA resCGP[%d] = %8e, resCGU[%d] = %8e, resCGV[%d] = %8e\n", i, resCG[3*i], i, resCG[3*i+1], i, resCG[3*i+2]);
+        printf("CACA csERHS[%d] = %8e, csERHS[%d] = %8e,  csERHS[%d] = %8e\n", i, cs.lsol.rhs[3*i], i, cs.lsol.rhs[3*i+1], i, cs.lsol.rhs[3*i+2]);
+        printf("CACA csIRHS[%d] = %8e, csIRHS[%d] = %8e,  csIRHS[%d] = %8e\n", i, csSolve.lsol.rhs[3*i], i, csSolve.lsol.rhs[3*i+1], i, csSolve.lsol.rhs[3*i+2]);
+      }
       for (int i=0; i<size; i++){
 	csSolve.lsol.rhs[i]=csSolve.lsol.rhs[i]+resCG[i]-cs.lsol.rhs[i];
       }
