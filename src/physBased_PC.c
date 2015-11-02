@@ -405,6 +405,8 @@ void Init_PBPC_Wave_SchurVelocity_BCVelocity(Simulation *simu, PB_PC* pb_pc, int
   
   pb_pc->D.bc_flux=NULL;
   pb_pc->D.bc_assembly=NULL;
+  pb_pc->Schur.bc_flux=NULL;
+  pb_pc->Schur.bc_assembly=NULL;
 
   pb_pc->Schur.bc_flux=Dirichlet_Velocity;
   pb_pc->Schur.bc_assembly=BoundaryConditionFriedrichsAssembly;
@@ -769,9 +771,9 @@ void PhyBased_PC_CG(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*global
   // 0)1) Reset everything (needed for time evolution)
   reset(pb_pc);
 
-  for (int i=0;i<pb_pc->D.nb_fe_nodes;i++){
+  /*for (int i=0;i<pb_pc->D.nb_fe_nodes;i++){
     printf(" 1) P[%d] = %8e, U[%d] = %8e, V[%d] = %8e\n", i, globalRHS[i*3], i, globalRHS[i*3+1], i, globalRHS[i*3+2]);
-  }
+    }*/
   // Assembling all operators' matrices
   if(pb_pc->nonlinear == 1){
     GenericOperator_PBPC_Velocity(pb_pc);
@@ -801,9 +803,9 @@ void PhyBased_PC_CG(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*global
   }
   //printf("Solution...\n");
   Advanced_SolveLinearSolver(&pb_pc->D.lsol,simu);
-  for (int i=0;i<pb_pc->D.nb_fe_nodes;i++){
+  /*for (int i=0;i<pb_pc->D.nb_fe_nodes;i++){
     printf("1) P[%d] = %8e\n", i, pb_pc->D.lsol.sol[i]);
-  }
+    }*/
  
   // 2) PROPAGATION STEP
 
@@ -824,9 +826,9 @@ void PhyBased_PC_CG(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*global
   }
   
   Advanced_SolveLinearSolver(&pb_pc->Schur.lsol,simu);
-  for (int i=0;i<pb_pc->D.nb_fe_nodes;i++){
+  /*for (int i=0;i<pb_pc->D.nb_fe_nodes;i++){
     printf("2) U[%d] = %8e, V[%d] = %8e\n", i, pb_pc->Schur.lsol.sol[i*2], i, pb_pc->Schur.lsol.sol[i*2+1]);
-  }
+    }*/
 
   // 3) CORRECTION STEP
   // Extracting both U1 and U2 from the previous solution of the propagation step
@@ -851,10 +853,10 @@ void PhyBased_PC_CG(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*global
   //printf("Solution...\n");
   Advanced_SolveLinearSolver(&pb_pc->D.lsol,simu);
 
-  for (int i=0;i<pb_pc->D.nb_fe_nodes;i++){
+  /*for (int i=0;i<pb_pc->D.nb_fe_nodes;i++){
     printf("Prout Schur U : P[%d] = %8e, U[%d] = %8e, V[%d] = %8e\n", i, pb_pc->D.lsol.sol[i], i, pb_pc->Schur.lsol.sol[2*i], i, pb_pc->Schur.lsol.sol[2*i+1]);
   }
-  assert(1==2);
+  assert(1==2);*/
  
   // 4) OUTPUT STEP Final concatenation
   cat2CGVectors(&pb_pc->D,&pb_pc->Schur,pb_pc->D.lsol.sol,pb_pc->Schur.lsol.sol,globalSol);
@@ -873,9 +875,9 @@ void PhyBased_PC_InvertSchur_CG(PB_PC* pb_pc, Simulation *simu, real* globalSol,
     GenericOperator_PBPC_Pressure(pb_pc);
   }
 
-  for (int i=0;i<pb_pc->D.nb_fe_nodes;i++){
+  /*for (int i=0;i<pb_pc->D.nb_fe_nodes;i++){
     printf(" 1) P[%d] = %8e, U[%d] = %8e, V[%d] = %8e\n", i, globalRHS[i*3], i, globalRHS[i*3+1], i, globalRHS[i*3+2]);
-  }
+    }*/
   // Parsing globalRHS (in DG) into a CG vector
   ContinuousSolver waveSolver;
   int nb_var = 3;
@@ -900,9 +902,9 @@ void PhyBased_PC_InvertSchur_CG(PB_PC* pb_pc, Simulation *simu, real* globalSol,
   }
   //printf("Solution prediction\n");
   Advanced_SolveLinearSolver(&pb_pc->D.lsol,simu);
-  for (int i=0;i<pb_pc->D.nb_fe_nodes;i++){
+  /*for (int i=0;i<pb_pc->D.nb_fe_nodes;i++){
     printf(" 1) U[%d] = %8e, V[%d] = %8e\n", i, pb_pc->D.lsol.sol[i*2], i, pb_pc->D.lsol.sol[i*2+1]);
-  }
+    }*/
 
   // 2) PROPAGATION STEP
   pb_pc->Schur.lsol.solver_type=pb_pc->solver_propagation;
@@ -926,9 +928,9 @@ void PhyBased_PC_InvertSchur_CG(PB_PC* pb_pc, Simulation *simu, real* globalSol,
   
   //printf("Solution propagation\n");
   Advanced_SolveLinearSolver(&pb_pc->Schur.lsol,simu);
-  for (int i=0;i<pb_pc->D.nb_fe_nodes;i++){
+  /*for (int i=0;i<pb_pc->D.nb_fe_nodes;i++){
     printf(" 2) P[%d] = %8e\n", i, pb_pc->Schur.lsol.sol[i]);
-  }
+    }*/
 
   
   // 3) CORRECTION STEP
@@ -951,10 +953,10 @@ void PhyBased_PC_InvertSchur_CG(PB_PC* pb_pc, Simulation *simu, real* globalSol,
 
   //printf("Solution correction\n");
   Advanced_SolveLinearSolver(&pb_pc->D.lsol,simu);
-  for (int i=0;i<pb_pc->D.nb_fe_nodes;i++){
+  /*for (int i=0;i<pb_pc->D.nb_fe_nodes;i++){
     printf("Prout Schur P : P[%d] = %8e, U[%d] = %8e, V[%d] = %8e\n", i, pb_pc->Schur.lsol.sol[i], i, pb_pc->D.lsol.sol[2*i], i, pb_pc->D.lsol.sol[2*i+1]);
   }
-  assert(1==2);
+  assert(1==2);*/
   
   // 4) OUTPUT STEP Final concatenation
   cat2CGVectors(&pb_pc->D,&pb_pc->Schur,pb_pc->D.lsol.sol,pb_pc->Schur.lsol.sol,globalSol);
@@ -1605,19 +1607,18 @@ void RobinFlux_pressure(void * cs,LinearSolver* lsol, real * xpg, real * w, real
 
 void Dirichlet_Velocity(void * cs,LinearSolver* lsol, real * xpg, real * w, real *vnorm, real * flux){
   ContinuousSolver * ps=cs;
-  real mu=10000000;
+  real mu=1.e8;//15;
   real Coef_diff=0;
   real u0_1 = 0;
   real u0_2 = 0;
   real Win[3];
-    
   Coef_diff=ps->simu->dt*ps->simu->vmax*ps->simu->theta;
 
-  flux[0]=   mu * (w[0]*vnorm[0]*vnorm[0] + w[1]*vnorm[0]*vnorm[1]) 
-           - mu * (u0_1*vnorm[0]*vnorm[0] + u0_2*vnorm[0]*vnorm[1]);
-  flux[1]=   mu * (w[0]*vnorm[0]*vnorm[1] + w[1]*vnorm[1]*vnorm[1]) 
-           - mu * (u0_1*vnorm[0]*vnorm[1] + u0_2*vnorm[1]*vnorm[1]);
-  //flux[1]= 0.0;//lambda * w[1] - lambda * u0_2;
+  flux[0]= Coef_diff * mu * (w[0]*vnorm[0]*vnorm[0] + w[1]*vnorm[0]*vnorm[1])
+    - Coef_diff * mu * (u0_1*vnorm[0]*vnorm[0] + u0_2*vnorm[0]*vnorm[1]);
+  flux[1]= Coef_diff * mu * (w[0]*vnorm[0]*vnorm[1] + w[1]*vnorm[1]*vnorm[1])
+    - Coef_diff * mu * (u0_1*vnorm[0]*vnorm[1] + u0_2*vnorm[1]*vnorm[1]);
+ 
 }
 
 void BoundaryTerm_Xderivative(void * cs,LinearSolver* lsol, real * xpg, real * w, real *vnorm, real * flux){

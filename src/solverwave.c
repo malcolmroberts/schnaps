@@ -49,6 +49,7 @@ void BoundaryConditionFriedrichsAssembly(void * cs,LinearSolver* lsol){
 	  
 	  ps->bc_flux(ps,lsol,xpg,wL,vnds,flux0);
 
+
 	  for(int iv1 = 0; iv1 < m; iv1++) {
 	    //int imem1 = fL->varindex(fL->deg, fL->raf,fL->model.m, ipgL, iv1) + offsetL;
 	    int ipot_fe1 = ino_fe*ps->nb_phy_vars + iv1;
@@ -192,7 +193,7 @@ void Wave_BC_normalvelocity_null(void * cs,LinearSolver* lsol, real * xpg, real 
   real M[3][3];
   real BC[3][3];
   real lambda=0;
-  real mu=10000000;
+  real mu=1.e0;
   real p0=0,u0_1=0,u0_2=0;
 
   real h=ps->FluxMatrix[0][1]/ps->simu->vmax;
