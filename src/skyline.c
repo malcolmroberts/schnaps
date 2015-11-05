@@ -250,13 +250,14 @@ void DisplaySkyline(Skyline* sky){
     printf("%.5e ",sky->vkgi[i]);
   }
   printf("\n");
-
-  /*for(int i=0;i<n;i++){
+  printf("\n");
+  printf("\n");
+  for(int i=0;i<n;i++){
     for(int j=0;j<n;j++){
       printf("%.3e ", GetSkyline(sky,i,j));
     }   
     printf("\n");
-    }*/
+    }
   
 }
 

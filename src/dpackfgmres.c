@@ -16,9 +16,9 @@
 /* Table of constant values */
 
 static int c__1 = 1;
-static real c_b276 = 1.;
-static real c_b280 = -1.;
-static real c_b305 = 0.;
+static real c_b276 = 1.0;
+static real c_b280 = -1.0;
+static real c_b305 = 0.0;
 
 /* * */
 /* *  Copyright (C) CERFACS 1998 */
@@ -496,10 +496,10 @@ int MatVectorProduct(char *trans, int *m, int *n, real *
 
     if (*beta != 1.) {
 	if (*incy == 1) {
-	    if (*beta == 0.) {
+	    if (*beta == 0.0) {
 		i__1 = leny;
 		for (i = 1; i <= leny; ++i) {
-		    y[i]  = 0.;
+		    y[i]  = 0.0;
 /* L10: */
 		}
 	    } else {
@@ -2389,7 +2389,7 @@ L51:
 /* Save the backward error on a file if convergence history requested */
 	if (ihist != 0) {	 
 	    i__1 = iterout * *m + jh;
-	    printf("   %d      %.6e      --  \n",i__1,bea);
+	    printf("   %d      %.8e      --  \n",i__1,bea);
 	}
     }
 

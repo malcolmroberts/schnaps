@@ -7,10 +7,58 @@
 
 
 
+void SourceFriedrichsAssembly(void * cs,LinearSolver* lsol){
+  ContinuousSolver * ps=cs;
+  field* f0 = &ps->simu->fd[0];
+  m=ps->nb_phy_vars;
+  
+  for(int var =0; var < ps->nb_phy_vars; var++){  
+    for (int i=0; i<ps->simu->macromesh.nboundaryfaces;i++){
+      int ifa = ps->simu->macromesh.boundaryface[i];
+      int locfaL = ps->simu->macromesh.face2elem[4 * ifa + 1];
+      int ie = ps->simu->macromesh.face2elem[4 * ifa ];
+      int ieR = ps->simu->macromesh.face2elem[4 * ifa + 2];
+      if (ieR<0){
+        field *f = &ps->simu->fd[ie];
+
+        for(int ipglf = 0;ipglf < NPGF(f->deg,f->raf,locfaL); ipglf++){
+          real xpgref[3], xpgref_in[3], wpg;
+          
+          // Get the coordinates of the Gauss point and coordinates of a
+          // point slightly inside the opposite element in xref_in
+          int ipg = ref_pg_face(f->deg, f->raf, locfaL, ipglf, xpgref, &wpg, xpgref_in);
+          int ino_dg = ipg + ie * ps->npgmacrocell;
+          int ino_fe = ps->dg_to_fe_index[ino_dg];
+          int ipot = f0->varindex(f0->deg,f0->raf,f0->model.m,
+          			ipg,ps->list_of_var[var]);
+          int ipot_fe = ino_fe*ps->nb_phy_vars + var;
+          // Normal vector at gauss point ipgL
+          real vnds[3], xpg[3];
+          {
+            real dtau[3][3], codtau[3][3];
+            Ref2Phy(f->physnode,
+                    xpgref,
+                    NULL, locfaL, // dpsiref, ifa
+                    xpg, dtau,
+                    codtau, NULL, vnds); // codtau, dpsi, vnds
+          }
+          
+          // the boundary flux is an affine function
+          real Source[f->model.m];
+          f->model.Source(xpg, f->tnow, Source,&ps->simu->vmax);
+          ps->lsol.rhs[ipot_fe] += Source[ps->list_of_var[var]];
+        }
+      }
+    }
+  }
+}
+
+
+
 void BoundaryConditionFriedrichsAssembly(void * cs,LinearSolver* lsol){
   ContinuousSolver * ps=cs;
   m=ps->nb_phy_vars;
- 
+  
   if (!ps->lsol.mat_is_assembly){
 
     for (int i=0; i<ps->simu->macromesh.nboundaryfaces;i++){
@@ -75,8 +123,6 @@ void BoundaryConditionFriedrichsAssembly(void * cs,LinearSolver* lsol){
     ps->lsol.mat_is_assembly=true;
   }
   
-  //for(int var =0; var < ps->nb_phy_vars; var++){ 
-  //for(int ie = 0; ie < ps->simu->macromesh.nbelems; ie++){  
   for (int i=0; i<ps->simu->macromesh.nboundaryfaces;i++){
     int ifa = ps->simu->macromesh.boundaryface[i];
     int locfaL = ps->simu->macromesh.face2elem[4 * ifa + 1];
@@ -193,20 +239,21 @@ void Wave_BC_normalvelocity_null(void * cs,LinearSolver* lsol, real * xpg, real 
   real M[3][3];
   real BC[3][3];
   real lambda=0;
-  real mu=1.e0;
+  real mu=1.e14;
   real p0=0,u0_1=0,u0_2=0;
 
   real h=ps->FluxMatrix[0][1]/ps->simu->vmax;
   
-  M[0][0]=lambda;
-  M[0][1]=-mu*vnorm[0];
-  M[0][2]=-mu*vnorm[1];
+  M[0][0]=0;//lambda;
+  M[0][1]=0;//-mu*vnorm[0];
+  M[0][2]=0;//-mu*vnorm[1];
   M[1][0]=0;
-  M[1][1]=0;
-  M[1][2]=0;
+  M[1][1]=mu*vnorm[0]*vnorm[0];
+  M[1][2]=mu*vnorm[0]*vnorm[1];
   M[2][0]=0;
-  M[2][1]=0;
-  M[2][2]=0;
+  M[2][1]=mu*vnorm[1]*vnorm[0];
+  M[2][2]=mu*vnorm[1]*vnorm[1]; 
+
 
   BC[0][0]=h*M[0][0];
   BC[0][1]=(ps->FluxMatrix[0][1]*vnorm[0]+h*M[0][1]);
@@ -221,6 +268,13 @@ void Wave_BC_normalvelocity_null(void * cs,LinearSolver* lsol, real * xpg, real 
   flux[0]=(BC[0][0]*w[0]+BC[0][1]*w[1]+BC[0][2]*w[2])-h*(M[0][0]*p0+M[0][1]*u0_1+M[0][2]*u0_2);
   flux[1]=(BC[1][0]*w[0]+BC[1][1]*w[1]+BC[1][2]*w[2])-h*(M[1][0]*p0+M[1][1]*u0_1+M[1][2]*u0_2);
   flux[2]=(BC[2][0]*w[0]+BC[2][1]*w[1]+BC[2][2]*w[2])-h*(M[2][0]*p0+M[2][1]*u0_1+M[2][2]*u0_2);
+
+  flux[1]= 0;
+  flux[1]= mu * (w[1]*vnorm[0]*vnorm[0] + w[2]*vnorm[0]*vnorm[1])
+   - mu * (u0_1*vnorm[0]*vnorm[0] + u0_2*vnorm[0]*vnorm[1]);
+  flux[2]=  mu * (w[1]*vnorm[0]*vnorm[1] + w[2]*vnorm[1]*vnorm[1])
+  -  mu * (u0_1*vnorm[0]*vnorm[1] + u0_2*vnorm[1]*vnorm[1]);
+
 }
 
 

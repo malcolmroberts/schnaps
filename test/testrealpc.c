@@ -38,7 +38,7 @@ int Testrealpc(void) {
 
   bool test = true;
   real dd;
-  int test1_ok=0,test2_ok=0,test3_ok=1;
+  int test1_ok=0,test2_ok=1,test3_ok=0;
 
 
 #ifdef PARALUTION 
@@ -192,7 +192,7 @@ int Testrealpc(void) {
 
     real theta4=0.5;
     simu4.theta=theta4;
-    simu4.dt=100;
+    simu4.dt=10;
     simu4.vmax=_SPEED_WAVE;
     real tmax4=5*simu4.dt;
     int itermax4=tmax4/simu4.dt;
@@ -201,9 +201,9 @@ int Testrealpc(void) {
     real *resCG = calloc(size, sizeof(real));
     real *wCG = calloc(size, sizeof(real));
   
-    csSolve.lsol.solver_type=GMRES;
-    csSolve.lsol.tol=1.e-8;
-    csSolve.lsol.pc_type=PHY_BASED_P2;//PHY_BASED_U1//JACOBI;
+    csSolve.lsol.solver_type=LU;//GMRES;
+    csSolve.lsol.tol=1.e-9;
+    csSolve.lsol.pc_type=NONE;//PHY_BASED_U2;//PHY_BASED_U1//JACOBI;
     csSolve.lsol.iter_max=2000;
     csSolve.lsol.restart_gmres=15;
     csSolve.lsol.is_CG=true;
@@ -281,7 +281,7 @@ int Testrealpc(void) {
     model5.Source = NULL;
 
     int deg5[]={4, 4, 0};
-    int raf5[]={8, 8, 1};
+    int raf5[]={32, 32 , 1};
 
     assert(mesh.is2d);
     CheckMacroMesh(&mesh, deg5, raf5);
@@ -300,7 +300,7 @@ int Testrealpc(void) {
 
     real theta5=0.5;
     simu5.theta=theta5;
-    simu5.dt=1;//0.001667;
+    simu5.dt=10;
     simu5.vmax=_SPEED_WAVE;
     real tmax5=1*simu5.dt;//;0.5;
 
@@ -311,9 +311,9 @@ int Testrealpc(void) {
     real *wCG = calloc(size, sizeof(real));
 
     csSolve.lsol.solver_type=GMRES;
-    csSolve.lsol.tol=1.e-8;
-    csSolve.lsol.pc_type=PHY_BASED_U1;
-    csSolve.lsol.iter_max=10000;
+    csSolve.lsol.tol=1.0e-9;
+    csSolve.lsol.pc_type=JACOBI;//PHY_BASED_U1;
+    csSolve.lsol.iter_max=100;
     csSolve.lsol.restart_gmres=30;
     csSolve.lsol.is_CG=true;
 
@@ -327,18 +327,6 @@ int Testrealpc(void) {
     GenericOperator_Continuous(&cs,&cs.lsol);
     Wave_test(&csSolve,simu5.theta,simu5.dt);
     GenericOperator_Continuous(&csSolve,&csSolve.lsol);
-
-    ////////////////////////////////////
-    PB_PC pb_pc;
-    PB_PC pb_pc2;
-    int mat2assemble[6] = {1, 1, 1, 1, 1, 1};
-    Init_PBPC_Wave_SchurPressure_BCVelocity(&simu5, &pb_pc, mat2assemble);
-    Init_PBPC_Wave_SchurVelocity_BCVelocity(&simu5, &pb_pc2, mat2assemble);
-    Init_Parameters_PhyBasedPC(&pb_pc);
-    Init_Parameters_PhyBasedPC(&pb_pc2);
-    real *wCG_pcp = calloc(size, sizeof(real));
-    real *wCG_pcu = calloc(size, sizeof(real));
-    ///////////////////////////////////
   
     PiDgToCg(&cs,simu5.w,wCG);
 
@@ -372,34 +360,8 @@ int Testrealpc(void) {
       for (int i=0; i<size; i++){
 	csSolve.lsol.rhs[i]=csSolve.lsol.rhs[i]+resCG[i]-cs.lsol.rhs[i];
       }
-
+   
       Advanced_SolveLinearSolver(&csSolve.lsol,&simu5);
-      ///////////////////////////////////
-
-      /*PhyBased_PC_InvertSchur_CG(&pb_pc,&simu5,wCG_pcp,csSolve.lsol.rhs);
-      PhyBased_PC_CG(&pb_pc2,&simu5,wCG_pcu,csSolve.lsol.rhs);
-      real error_p_ex_pcp=0,error_p_ex_pcu=0;
-      real error_u1_ex_pcp=0,error_u1_ex_pcu=0;
-      real error_u2_ex_pcp=0,error_u2_ex_pcu=0;
-      real normp=0, normu1=0,normu2=0;
-      for (int i=0; i<size/3; i++){
-        error_p_ex_pcp+=(csSolve.lsol.sol[3*i]-wCG_pcp[3*i])*(csSolve.lsol.sol[3*i]-wCG_pcp[3*i]);
-	error_p_ex_pcu+=(csSolve.lsol.sol[3*i]-wCG_pcu[3*i])*(csSolve.lsol.sol[3*i]-wCG_pcu[3*i]);
-	error_u1_ex_pcp+=(csSolve.lsol.sol[3*i+1]-wCG_pcp[3*i+1])*(csSolve.lsol.sol[3*i+1]-wCG_pcp[3*i+1]);
-	error_u1_ex_pcu+=(csSolve.lsol.sol[3*i+1]-wCG_pcu[3*i+1])*(csSolve.lsol.sol[3*i+1]-wCG_pcu[3*i+1]);
-	error_u2_ex_pcp+=(csSolve.lsol.sol[3*i+2]-wCG_pcp[3*i+2])*(csSolve.lsol.sol[3*i+2]-wCG_pcp[3*i+2]);
-	error_u2_ex_pcu+=(csSolve.lsol.sol[3*i+2]-wCG_pcu[3*i+2])*(csSolve.lsol.sol[3*i+2]-wCG_pcu[3*i+2]);
-	normp+=(csSolve.lsol.sol[3*i])*(csSolve.lsol.sol[3*i]);
-	normu1+=(csSolve.lsol.sol[3*i+1])*(csSolve.lsol.sol[3*i+1]);
-	normu2+=(csSolve.lsol.sol[3*i+2])*(csSolve.lsol.sol[3*i+2]);
-      }
-      printf(" pressure (ex-pcp) %.8e pressure (ex-pcu) %.8e \n",sqrt(error_p_ex_pcp/normp),sqrt(error_p_ex_pcu/normp));
-      printf(" /////////////////////////////////////////////////////////////////////////////////// \n");
-      printf(" u1 (ex-pcp) %.8e u1 (ex-pcu) %.8e \n",sqrt(error_u1_ex_pcp/normu1),sqrt(error_u1_ex_pcu/normu1));
-      printf(" /////////////////////////////////////////////////////////////////////////////////// \n");
-      printf(" u2 (ex-pcp) %.8e u2 (ex-pcu) %.8e \n",sqrt(error_u2_ex_pcp/normu2),sqrt(error_u2_ex_pcu/normu2));
-      printf(" /////////////////////////////////////////////////////////////////////////////////// \n");*/
-      ///////////////////////////////////
       
       for (int i=0; i<size; i++){
         wCG[i] = csSolve.lsol.sol[i];

@@ -15,6 +15,11 @@
 //! \param[in] dt: a time step
 void Wave_test(ContinuousSolver* cs, real theta, real dt);
 
+//! \brief compute the source for Friedrics systems
+//! \param[in] cs: a ContinuousSolver object
+//! \param[in] lsol : a linear solver
+void SourceFriedrichsAssembly(void * cs,LinearSolver* lsol);
+
 //! \brief compute the boundary condition for Friedrics systems
 //! \param[in] cs: a ContinuousSolver object
 //! \param[in] lsol : a linear solver

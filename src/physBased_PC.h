@@ -176,6 +176,8 @@ void RobinFlux_pressure(void * cs,LinearSolver* lsol, real * xpg, real * w, real
 
 void Dirichlet_Velocity(void * cs,LinearSolver* lsol, real * xpg, real * w, real *vnorm, real * flux);
 
+void Dirichlet_Velocity_2(void * cs,LinearSolver* lsol, real * xpg, real * w, real *vnorm, real * flux);
+
 void BoundaryTerm_Yderivative(void * cs,LinearSolver* lsol, real * xpg, real * w, real *vnorm, real * flux);
 
 void BoundaryTerm_Xderivative(void * cs,LinearSolver* lsol, real * xpg, real * w, real *vnorm, real * flux);
