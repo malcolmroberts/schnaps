@@ -166,20 +166,18 @@ void AllocateContinuousMatrix(void * cs,LinearSolver* lsol);
 //! \param[in] a continuous solver
 void ExactDirichletContinuousMatrix(void * cs,LinearSolver* lsol);
 
-//! \brief apply dirichlet homogeneous bc for continuous solver
-//! \param[inout] lsol a linear solver allocate
-//! \param[in] a continuous solver
-void ExactDirichletContinuousMatrix_PC(void * cs,LinearSolver* lsol);
 
 //! \brief apply dirichlet inhomogeneous bc for continuous solver
 //! \param[inout] lsol a linear solver allocate
 //! \param[in] a continuous solver
 void PenalizedDirichletContinuousMatrix(void * cs,LinearSolver* lsol);
 
-//! \brief apply dirichlet homogeneous bc for continuous solver
+//! \brief construct the source 
 //! \param[inout] lsol a linear solver allocate
 //! \param[in] a continuous solver
-void PenalizedDirichletContinuousMatrix_PC(void * cs,LinearSolver* lsol);
+void Source_Assembly(void * cs,LinearSolver* lsol);
+
+
 
 //! \brief solve a 2D poisson problem
 //! \param[inout] ps a Poisson solver (field + linear solver + other parameters)
@@ -192,9 +190,6 @@ void GenericOperator_Continuous(void * cs,LinearSolver* lsol);
 
 //! TODOODODODODOOD
 void cat2CGVectors(ContinuousSolver* L1Solver,ContinuousSolver* L2Solver, real *L1, real *L2, real *L);
-
-//! TODOODODODODOOD
-void catGradients(ContinuousSolver* L1Solver,ContinuousSolver* L2Solver, real *L1, real *L2, real *L);
 
 //! TODOODODODODOOD
 void extract2CGVectors(ContinuousSolver* L1Solver,ContinuousSolver* L2Solver, real *L, real *L1, real *L2);

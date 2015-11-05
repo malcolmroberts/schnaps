@@ -205,13 +205,14 @@ int Testrealpc(void) {
     csSolve.lsol.tol=1.e-9;
     csSolve.lsol.pc_type=NONE;//PHY_BASED_U2;//PHY_BASED_U1//JACOBI;
     csSolve.lsol.iter_max=2000;
-    csSolve.lsol.restart_gmres=15;
+    csSolve.lsol.restart_gmres=30;
     csSolve.lsol.is_CG=true;
 
     cs.bc_flux=Wave_BC_pressure_imposed;
     cs.bc_assembly=BoundaryConditionFriedrichsAssembly;
     csSolve.bc_flux=Wave_BC_pressure_imposed;
     csSolve.bc_assembly=BoundaryConditionFriedrichsAssembly;
+    csSolve.rhs_assembly=Source_Assembly;
     csSolve.type_bc=2;
     
     Wave_test(&cs,-(1.0-simu4.theta),simu4.dt);
@@ -243,6 +244,7 @@ int Testrealpc(void) {
 	csSolve.lsol.rhs[i]=0;
       }
       csSolve.bc_assembly(&csSolve, &csSolve.lsol);
+      csSolve.rhs_assembly(&csSolve, &csSolve.lsol);
       
       for (int i=0; i<size; i++){
 	csSolve.lsol.rhs[i]=csSolve.lsol.rhs[i]+resCG[i]-cs.lsol.rhs[i];

@@ -342,43 +342,51 @@ void ExactDirichletContinuousMatrix(void * cs,LinearSolver* lsol){
 }
 
   
-
-
-void ExactDirichletContinuousMatrix_PC(void * cs,LinearSolver* lsol){
+void Source_Assembly(void * cs,LinearSolver* lsol){
   ContinuousSolver * ps=cs;
-  
   field* f0 = &ps->simu->fd[0];
+  m=ps->nb_phy_vars;
+  
+  for(int var =0; var < ps->nb_phy_vars; var++){  
+    for (int i=0; i<ps->simu->macromesh.nboundaryfaces;i++){
+      int ifa = ps->simu->macromesh.boundaryface[i];
+      int locfaL = ps->simu->macromesh.face2elem[4 * ifa + 1];
+      int ie = ps->simu->macromesh.face2elem[4 * ifa ];
+      int ieR = ps->simu->macromesh.face2elem[4 * ifa + 2];
+      if (ieR<0){
+        field *f = &ps->simu->fd[ie];
 
-  for(int ino=0; ino<ps->nb_fe_nodes; ino++){
-    if (ps->is_boundary_node[ino]){
-      for (int iv=0; iv<ps->nb_phy_vars;iv++){
-        int iBord = ps->nb_phy_vars*ino+iv;
-        for(int i=0; i<ps->nb_fe_dof; i++){
-          SetLinearSolver(&ps->lsol,iBord,i,0.);
+        for(int ipglf = 0;ipglf < NPGF(f->deg,f->raf,locfaL); ipglf++){
+          real xpgref[3], xpgref_in[3], wpg;
+          
+          // Get the coordinates of the Gauss point and coordinates of a
+          // point slightly inside the opposite element in xref_in
+          int ipg = ref_pg_face(f->deg, f->raf, locfaL, ipglf, xpgref, &wpg, xpgref_in);
+          int ino_dg = ipg + ie * ps->npgmacrocell;
+          int ino_fe = ps->dg_to_fe_index[ino_dg];
+          int ipot = f0->varindex(f0->deg,f0->raf,f0->model.m,
+          			ipg,ps->list_of_var[var]);
+          int ipot_fe = ino_fe*ps->nb_phy_vars + var;
+          // Normal vector at gauss point ipgL
+          real vnds[3], xpg[3];
+          {
+            real dtau[3][3], codtau[3][3];
+            Ref2Phy(f->physnode,
+                    xpgref,
+                    NULL, locfaL, // dpsiref, ifa
+                    xpg, dtau,
+                    codtau, NULL, vnds); // codtau, dpsi, vnds
+          }
+          
+          // the boundary flux is an affine function
+          real Source[f->model.m];
+          f->model.Source(xpg, f->tnow, Source,&ps->simu->vmax);
+          ps->lsol.rhs[ipot_fe] += Source[ps->list_of_var[var]];
         }
-        SetLinearSolver(&ps->lsol,iBord,iBord,1.);
       }
     }
   }
-  ps->lsol.mat_is_assembly=true;
 }
-
-void PenalizedDirichletContinuousMatrix_PC(void * cs,LinearSolver* lsol){
-  ContinuousSolver * ps=cs;
-  
-  field* f0 = &ps->simu->fd[0];
-
-  for(int ino=0; ino<ps->nb_fe_nodes; ino++){
-    real bigval = 1.e20;//.e16;
-    if (ps->is_boundary_node[ino]){
-      for (int iv=0; iv<ps->nb_phy_vars;iv++){
-        SetLinearSolver(&ps->lsol,ps->nb_phy_vars*ino+iv,ps->nb_phy_vars*ino+iv,bigval);
-      }
-    }
-  }
-
-}
-
 
 
 void PenalizedDirichletContinuousMatrix(void * cs,LinearSolver* lsol){
@@ -493,8 +501,6 @@ void AllocateContinuousMatrix(void *cs,LinearSolver* lsol){
     
     AllocateLinearSolver(&ps->lsol);
   } 
-   
-
 }
 
 
@@ -613,19 +619,6 @@ void cat2CGVectors(ContinuousSolver* L1Solver,ContinuousSolver* L2Solver, real *
 }
 
 
-void catGradients(ContinuousSolver* L1Solver,ContinuousSolver* L2Solver, real *L1, real *L2, real *L){
-
-  int cc=0;
-  for (int i=0; i<L1Solver->nb_fe_nodes;i++){
-    for (int iv1=0; iv1<L1Solver->nb_phy_vars;iv1++){
-      L[cc+L1Solver->list_of_var[iv1]] = L1[i*L1Solver->nb_phy_vars+iv1];
-    }
-    for (int iv2=0; iv2<L2Solver->nb_phy_vars;iv2++){
-      L[cc+L2Solver->list_of_var[iv2]+1] = L2[i*L2Solver->nb_phy_vars+iv2];
-    }
-    cc+=L1Solver->nb_phy_vars+L2Solver->nb_phy_vars;
-  }
-}
 
 void extract2CGVectors(ContinuousSolver* L1Solver,ContinuousSolver* L2Solver, real *L, real *L1, real *L2){
   
