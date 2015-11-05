@@ -13,7 +13,7 @@ SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 #set(CMAKE_C_FLAGS "-std=gnu99 -D_REENTRANT -O3 -g")
 
 #set(CMAKE_C_FLAGS " -std=c99 -D_REENTRANT -O3 ")
-set(CMAKE_C_FLAGS " -std=c99 -D_DOUBLE_PRECISION -D_SCHNAPS_DIR=${PROJECT_SOURCE_DIR} -g")
+set(CMAKE_C_FLAGS " -std=c99 -D_DOUBLE_PRECISION -D_SCHNAPS_DIR=${PROJECT_SOURCE_DIR} -O2")
 
 MESSAGE(${CMAKE_C_FLAGS})
 
@@ -352,30 +352,13 @@ add_executable(
 target_link_libraries(testwave2d ${LIBS})
 add_test(testwave2d testwave2d)
 
-
 add_executable(
-  testwave2d-steady
+  testshallowwater2d
   test/test.h
-  test/testwave2d-steady.c
+  test/testshallowwater2d.c
 )
-target_link_libraries(testwave2d-steady ${LIBS})
-add_test(testwave2d-steady testwave2d-steady)
-
-add_executable(
-  testtransport_steady
-  test/test.h
-  test/testtransport_steady.c
-)
-target_link_libraries(testtransport_steady ${LIBS})
-add_test(testtransport_steady testtransport_steady)
-
-add_executable(
-  testshequilibrium2d
-  test/test.h
-  test/testshequilibrium2d.c
-)
-target_link_libraries(testshequilibrium2d ${LIBS})
-add_test(testshequilibrium2d testshequilibrium2d)
+target_link_libraries(testshallowwater2d ${LIBS})
+add_test(testshallowwater2d testshallowwater2d)
 
 add_executable(
   testshimplicit
@@ -385,13 +368,6 @@ add_executable(
 target_link_libraries(testshimplicit ${LIBS})
 add_test(testshimplicit testshimplicit)
 
-add_executable(
-  testshperiodic2d
-  test/test.h
-  test/testshperiodic2d.c
-)
-target_link_libraries(testshperiodic2d ${LIBS})
-add_test(testshperiodic2d testshperiodic2d)
 
 add_executable(
   test_transportvp
@@ -408,12 +384,6 @@ add_executable(
 )
 target_link_libraries(testrealpc ${LIBS})
 
-add_executable(
-  testwavedf
-  test/test.h
-  test/testwavedf.c
-)
-target_link_libraries(testwavedf ${LIBS})
 
 
 IF(BUILD_PARALUTION)

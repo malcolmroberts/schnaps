@@ -15,20 +15,24 @@
 
 
 //! \brief compute the electirc field for poisson
-//! \param[inout] lsol a linear solver allocate
-//! \param[in] a continuous solver
-void Computation_ElectricField_Poisson(void * cs,LinearSolver* lsol);
-
+//! \param[inout] a continuous solver
+void Computation_ElectricField_Poisson(void * cs);
 
 //! \brief init the rhs for poisson solver
-//! \param[inout] lsol a linear solver allocate
-//! \param[in] a continuous solver
-void RHSPoisson_Continuous(void * cs,LinearSolver* lsol);
+//! \param[inout] a continuous solver
+void RHSPoisson_Continuous(void * cs);
 
+//! \brief compute the boundary condition for poisson solver
+//! \param[inout] a continuous solver
+void RobinBoundaryConditionAssembly(void * cs);
 
-void RobinBoundaryConditionAssembly(void * cs,LinearSolver* lsol);
-
-
+//! \brief pointer on the function which compute the BC flux for Robin condition (nabla p,n)+alpha p=beta g
+//! \param[in] cs a continuous solver
+//! \param[in] xpg a point of the mesh
+//! \param[in] w a vector of unknowns
+//! \param[in] vnorm a vector of normal
+//! \param[inout] flux a vector of flux
+void RobinFlux(void * cs, real * xpg, real * w, real *vnorm, real * flux);
 
 
 

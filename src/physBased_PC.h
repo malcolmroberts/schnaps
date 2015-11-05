@@ -87,16 +87,19 @@ void PiDgToCg(ContinuousSolver * cs,real * rhsIn, real * rhsOut);
 // \param[out] rhsOut: Vector in DG.
 void PiInvertCgToDg(ContinuousSolver * cs,real * rhsIn, real * rhsOut);
 
+
+// \brief general initialisation of the solvers for eahc sub systems of the pc
+// \param[inout] pb_pc: Physics-based Preconditioner object.
 void Init_Parameters_PhyBasedPC(PB_PC* pb_pc);
 
 
-// \brief Initialize the physics-based preconditioner with schur on the velocity
+// \brief Initialize the physics-based preconditioner with schur on the velocity boundary condition (u,n)=0
 // \param[in] simu: Simulation object containing some run-related variables
 // \param[inout] pb_pc: Physics-based Preconditioner object.
 // \param[in] list_mat2assembly: Integer array. Tells which matrices shall be assembled.
 void Init_PBPC_Wave_SchurVelocity_BCVelocity(Simulation *simu, PB_PC* pb_pc, int* list_mat2assemble);
 
-// \brief Initialize the physics-based preconditioner with schur on the velocity
+// \brief Initialize the physics-based preconditioner with schur on the velocity boundary condition p=g
 // \param[in] simu: Simulation object containing some run-related variables
 // \param[inout] pb_pc: Physics-based Preconditioner object.
 // \param[in] list_mat2assembly: Integer array. Tells which matrices shall be assembled.
@@ -132,29 +135,21 @@ void Init_PBPC_Wave_SchurPressure_BCPressure(Simulation *simu, PB_PC* pb_pc, int
 // \param[in] Schurmat: SchurMatrix
 void InitMat_ContinuousSolver(PB_PC* pb_pc, real Dmat[4][4], real L1Mat[4][4], real L2Mat[4][4], real U1Mat[4][4], real U2Mat[4][4], real Schurmat[4][4][4]);
 
-// \brief Physics-based CG preconditioner for DG problem
-// \param[in] pb_pc: Physics-based preconditioner (Schur velocity)
-// \param[out] globalSol: Stores the solution of the preconditioner.
-// \param[in] globalRHS: Right-hand-side containing all explicit and source terms.
-void PhyBased_PC_DG(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*globalRHS);
 
-// \brief Physics-based CG preconditioner for CG problem
-// \param[in] pb_pc: Physics-based preconditioner (Schur velocity)
-// \param[out] globalSol: Stores the solution of the preconditioner.
-// \param[in] globalRHS: Right-hand-side containing all explicit and source terms.
+// \brief Physics-based CG preconditioner for CG problem with schur on velocity
+// \param[in] pb_pc a Physics-based preconditioner (Schur velocity)
+// \param[inout] globalSol a solution of the preconditioner.
+// \param[in] globalRHS a Right-hand-side containing all explicit and source terms.
+// \param[in] simu a simulation
 void PhyBased_PC_CG(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*globalRHS);
 
-// \brief Physics-based CG preconditioner for CG problem
-// \param[in] pb_pc: Physics-based preconditioner (Schur pressure)
-// \param[out] globalSol: Stores the solution of the preconditioner.
-// \param[in] globalRHS: Right-hand-side containing all explicit and source terms.
+// \brief Physics-based CG preconditioner for CG problem with schur on pressure
+// \param[in] pb_pc a Physics-based preconditioner (Schur pressure)
+// \param[inout] globalSol a solution of the preconditioner.
+// \param[in] globalRHS a Right-hand-side containing all explicit and source terms.
+// \param[in] simu a simulation
 void PhyBased_PC_InvertSchur_CG(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*globalRHS);
 
-// \brief Physics-based CG preconditioner for DG problem
-// \param[in] pb_pc: Physics-based preconditioner (Schur Pressure)
-// \param[out] globalSol: Stores the solution of the preconditioner.
-// \param[in] globalRHS: Right-hand-side containing all explicit and source terms.
-void PhyBased_PC_InvertSchur_DG(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*globalRHS);
 
 // \brief Frees any PB_PC object
 // \param[inout] pb_pc a PhysicsBased_PreConditioner 
@@ -172,14 +167,37 @@ void GenericOperator_PBPC_Pressure(PB_PC* pb_pc);
 // \param[in] pb_pc: The working preconditioner.
 void reset(PB_PC* pb_pc);
 
-void RobinFlux_pressure(void * cs,LinearSolver* lsol, real * xpg, real * w, real *vnorm, real * flux);
+//! \brief pointer on the function which compute the BC flux for the condition (nabla p,n)+=0
+//! \param[in] cs a continuous solver
+//! \param[in] xpg a point of the mesh
+//! \param[in] w a vector of unknowns
+//! \param[in] vnorm a vector of normal
+//! \param[inout] flux a vector of flux
+void RobinFlux_SchurPressure(void * cs, real * xpg, real * w, real *vnorm, real * flux);
 
-void Dirichlet_Velocity(void * cs,LinearSolver* lsol, real * xpg, real * w, real *vnorm, real * flux);
+//! \brief pointer on the function which compute the BC flux for the condition (u,n)=0
+//! \param[in] cs a continuous solver
+//! \param[in] xpg a point of the mesh
+//! \param[in] w a vector of unknowns
+//! \param[in] vnorm a vector of normal
+//! \param[inout] flux a vector of flux
+void Dirichlet_Velocity(void * cs, real * xpg, real * w, real *vnorm, real * flux);
 
-void Dirichlet_Velocity_2(void * cs,LinearSolver* lsol, real * xpg, real * w, real *vnorm, real * flux);
+//! \brief pointer on the function which compute the BC flux for the operator dx 
+//! \param[in] cs a continuous solver
+//! \param[in] xpg a point of the mesh
+//! \param[in] w a vector of unknowns
+//! \param[in] vnorm a vector of normal
+//! \param[inout] flux a vector of flux
+void BoundaryTerm_Yderivative(void * cs, real * xpg, real * w, real *vnorm, real * flux);
 
-void BoundaryTerm_Yderivative(void * cs,LinearSolver* lsol, real * xpg, real * w, real *vnorm, real * flux);
 
-void BoundaryTerm_Xderivative(void * cs,LinearSolver* lsol, real * xpg, real * w, real *vnorm, real * flux);
+//! \brief pointer on the function which compute the BC flux for the operator dy 
+//! \param[in] cs a continuous solver
+//! \param[in] xpg a point of the mesh
+//! \param[in] w a vector of unknowns
+//! \param[in] vnorm a vector of normal
+//! \param[inout] flux a vector of flux
+void BoundaryTerm_Xderivative(void * cs, real * xpg, real * w, real *vnorm, real * flux);
 
 #endif

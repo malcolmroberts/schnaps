@@ -258,9 +258,9 @@ void Init_PBPC_Wave_SchurVelocity_BCPressure(Simulation *simu, PB_PC* pb_pc, int
   pb_pc->Schur.bc_flux=NULL;
   pb_pc->Schur.bc_assembly=NULL;
   
-  pb_pc->D.bc_flux=RobinFlux_pressure;
+  pb_pc->D.bc_flux=RobinFlux_SchurPressure;
   pb_pc->D.bc_assembly=RobinBoundaryConditionAssembly;
-  pb_pc->D.bc_assembly(&pb_pc->D,&pb_pc->D.lsol);
+  pb_pc->D.bc_assembly(&pb_pc->D);
 
   pb_pc->L1.bc_flux=BoundaryTerm_Xderivative;
   pb_pc->L1.bc_assembly=BoundaryConditionFriedrichsAssembly;
@@ -273,10 +273,10 @@ void Init_PBPC_Wave_SchurVelocity_BCPressure(Simulation *simu, PB_PC* pb_pc, int
   pb_pc->U2.bc_assembly=BoundaryConditionFriedrichsAssembly;
 
  
-  pb_pc->U2.bc_assembly(&pb_pc->U2,&pb_pc->U2.lsol);
-  pb_pc->U1.bc_assembly(&pb_pc->U1,&pb_pc->U1.lsol);
-  pb_pc->L2.bc_assembly(&pb_pc->L2,&pb_pc->L2.lsol);
-  pb_pc->L1.bc_assembly(&pb_pc->L1,&pb_pc->L1.lsol);
+  pb_pc->U2.bc_assembly(&pb_pc->U2);
+  pb_pc->U1.bc_assembly(&pb_pc->U1);
+  pb_pc->L2.bc_assembly(&pb_pc->L2);
+  pb_pc->L1.bc_assembly(&pb_pc->L1);
 
   pb_pc->Schur.lsol.MatVecProduct=MatVect;
   pb_pc->L1.lsol.MatVecProduct=MatVect;
@@ -408,11 +408,9 @@ void Init_PBPC_Wave_SchurVelocity_BCVelocity(Simulation *simu, PB_PC* pb_pc, int
   pb_pc->Schur.bc_flux=NULL;
   pb_pc->Schur.bc_assembly=NULL;
 
-  //pb_pc->Schur.bc_flux=Dirichlet_Velocity_2;
-  //pb_pc->Schur.bc_assembly=BoundaryConditionFriedrichsAssembly_Exact;
   pb_pc->Schur.bc_flux=Dirichlet_Velocity;
   pb_pc->Schur.bc_assembly=BoundaryConditionFriedrichsAssembly;
-  pb_pc->Schur.bc_assembly(&pb_pc->Schur,&pb_pc->Schur.lsol);
+  pb_pc->Schur.bc_assembly(&pb_pc->Schur);
 
   pb_pc->L1.bc_flux=BoundaryTerm_Xderivative;
   pb_pc->L1.bc_assembly=BoundaryConditionFriedrichsAssembly;
@@ -425,10 +423,10 @@ void Init_PBPC_Wave_SchurVelocity_BCVelocity(Simulation *simu, PB_PC* pb_pc, int
   pb_pc->U2.bc_assembly=BoundaryConditionFriedrichsAssembly;
 
  
-  pb_pc->U2.bc_assembly(&pb_pc->U2,&pb_pc->U2.lsol);
-  pb_pc->U1.bc_assembly(&pb_pc->U1,&pb_pc->U1.lsol);
-  pb_pc->L2.bc_assembly(&pb_pc->L2,&pb_pc->L2.lsol);
-  pb_pc->L1.bc_assembly(&pb_pc->L1,&pb_pc->L1.lsol);
+  pb_pc->U2.bc_assembly(&pb_pc->U2);
+  pb_pc->U1.bc_assembly(&pb_pc->U1);
+  pb_pc->L2.bc_assembly(&pb_pc->L2);
+  pb_pc->L1.bc_assembly(&pb_pc->L1);
 
   pb_pc->Schur.lsol.MatVecProduct=MatVect;
   pb_pc->L1.lsol.MatVecProduct=MatVect;
@@ -565,7 +563,7 @@ void Init_PBPC_Wave_SchurPressure_BCVelocity(Simulation *simu, PB_PC* pb_pc, int
 
   pb_pc->D.bc_flux=Dirichlet_Velocity;
   pb_pc->D.bc_assembly=BoundaryConditionFriedrichsAssembly;
-  pb_pc->D.bc_assembly(&pb_pc->D,&pb_pc->D.lsol);
+  pb_pc->D.bc_assembly(&pb_pc->D);
 
   pb_pc->L1.bc_flux=BoundaryTerm_Xderivative;
   pb_pc->L1.bc_assembly=BoundaryConditionFriedrichsAssembly;
@@ -577,10 +575,10 @@ void Init_PBPC_Wave_SchurPressure_BCVelocity(Simulation *simu, PB_PC* pb_pc, int
   pb_pc->U2.bc_flux=BoundaryTerm_Yderivative;
   pb_pc->U2.bc_assembly=BoundaryConditionFriedrichsAssembly;
 
-  pb_pc->U2.bc_assembly(&pb_pc->U2,&pb_pc->U2.lsol);
-  pb_pc->U1.bc_assembly(&pb_pc->U1,&pb_pc->U1.lsol);
-  pb_pc->L2.bc_assembly(&pb_pc->L2,&pb_pc->L2.lsol);
-  pb_pc->L1.bc_assembly(&pb_pc->L1,&pb_pc->L1.lsol);
+  pb_pc->U2.bc_assembly(&pb_pc->U2);
+  pb_pc->U1.bc_assembly(&pb_pc->U1);
+  pb_pc->L2.bc_assembly(&pb_pc->L2);
+  pb_pc->L1.bc_assembly(&pb_pc->L1);
 
   pb_pc->Schur.lsol.MatVecProduct=MatVect;
   pb_pc->L1.lsol.MatVecProduct=MatVect;
@@ -709,7 +707,7 @@ void Init_PBPC_Wave_SchurPressure_BCPressure(Simulation *simu, PB_PC* pb_pc, int
   pb_pc->D.bc_flux=NULL;
   pb_pc->D.bc_assembly=NULL;
   
-  pb_pc->Schur.bc_flux=RobinFlux_pressure;
+  pb_pc->Schur.bc_flux=RobinFlux_SchurPressure;
   pb_pc->Schur.bc_assembly=RobinBoundaryConditionAssembly;
 
   pb_pc->L1.bc_flux=BoundaryTerm_Xderivative;
@@ -722,11 +720,11 @@ void Init_PBPC_Wave_SchurPressure_BCPressure(Simulation *simu, PB_PC* pb_pc, int
   pb_pc->U2.bc_flux=BoundaryTerm_Yderivative;
   pb_pc->U2.bc_assembly=BoundaryConditionFriedrichsAssembly;
 
-  pb_pc->Schur.bc_assembly(&pb_pc->Schur,&pb_pc->Schur.lsol);
-  pb_pc->U2.bc_assembly(&pb_pc->U2,&pb_pc->U2.lsol);
-  pb_pc->U1.bc_assembly(&pb_pc->U1,&pb_pc->U1.lsol);
-  pb_pc->L2.bc_assembly(&pb_pc->L2,&pb_pc->L2.lsol);
-  pb_pc->L1.bc_assembly(&pb_pc->L1,&pb_pc->L1.lsol);
+  pb_pc->Schur.bc_assembly(&pb_pc->Schur);
+  pb_pc->U2.bc_assembly(&pb_pc->U2);
+  pb_pc->U1.bc_assembly(&pb_pc->U1);
+  pb_pc->L2.bc_assembly(&pb_pc->L2);
+  pb_pc->L1.bc_assembly(&pb_pc->L1);
 
   pb_pc->Schur.lsol.MatVecProduct=MatVect;
   pb_pc->L1.lsol.MatVecProduct=MatVect;
@@ -968,98 +966,6 @@ void PhyBased_PC_InvertSchur_CG(PB_PC* pb_pc, Simulation *simu, real* globalSol,
   free(solU2);
 }
 
-
-
-void PhyBased_PC_InvertSchur_DG(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*globalRHS){
-  reset(pb_pc);
-
-  // Assembling all operators' matrices
-  if(pb_pc->nonlinear == 1){
-    GenericOperator_PBPC_Pressure(pb_pc);
-  }
-
-  // Parsing globalRHS (in DG) into a CG vector
-  ContinuousSolver waveSolver;
-  int nb_var = 3;
-  int * listvarGlobal = calloc(nb_var, sizeof(int));
-  listvarGlobal[0]=0;
-  listvarGlobal[1]=1;
-  listvarGlobal[2]=2;
-  InitContinuousSolver(&waveSolver,simu,1,nb_var,listvarGlobal);
-  free(listvarGlobal);
-  real * rhs_CG = calloc(waveSolver.nb_fe_dof, sizeof(real));
-
-  PiDgToCg(&waveSolver,rhs_CG,globalRHS);
-
-  // 1) PREDICTION STEP
-  pb_pc->D.lsol.solver_type=pb_pc->solver_prediction;
-  pb_pc->D.lsol.tol=pb_pc->tol_prediction;
-  pb_pc->D.lsol.pc_type=pb_pc->pc_prediction;
-  pb_pc->D.lsol.iter_max=pb_pc->itermax_prediction;
-  pb_pc->D.lsol.restart_gmres=pb_pc->restart_prediction;
-
-  //printf("RHS assembly.....\n");
-  for (int i=0;i<pb_pc->D.nb_fe_nodes;i++){
-    pb_pc->D.lsol.rhs[i*2]   = rhs_CG[i*3+1];
-    pb_pc->D.lsol.rhs[i*2+1] = rhs_CG[i*3+2];
-  }
-  //printf("Solution prediction\n");
-  Advanced_SolveLinearSolver(&pb_pc->D.lsol,simu);
-
-  // 2) PROPAGATION STEP
-  pb_pc->Schur.lsol.solver_type=pb_pc->solver_propagation;
-  pb_pc->Schur.lsol.tol=pb_pc->tol_propagation;
-  pb_pc->Schur.lsol.pc_type=pb_pc->pc_propagation;
-  pb_pc->Schur.lsol.iter_max=pb_pc->itermax_propagation;
-  pb_pc->Schur.lsol.restart_gmres=pb_pc->restart_propagation;
-
-  real *solU1=calloc(pb_pc->U1.nb_fe_nodes, sizeof(real));
-  real *solU2=calloc(pb_pc->U2.nb_fe_nodes, sizeof(real));
-  extract2CGVectors(&pb_pc->U1,&pb_pc->U2,pb_pc->D.lsol.sol,solU1,solU2);
-  
-  // Parsing L1P, L2P into the "sol" of L1 and L2 (since it is unused).
-  pb_pc->L1.lsol.MatVecProduct(&pb_pc->L1.lsol,solU1,pb_pc->L1.lsol.sol);
-  pb_pc->L2.lsol.MatVecProduct(&pb_pc->L2.lsol,solU2,pb_pc->L2.lsol.sol);
-
-  //printf("RHS assembly.....\n");
-  for (int i=0;i<pb_pc->D.nb_fe_nodes;i++){
-    pb_pc->Schur.lsol.rhs[i]   = rhs_CG[i*3] - pb_pc->L1.lsol.sol[i] - pb_pc->L2.lsol.sol[i];
-  }
-  
-  //printf("Solution propagation\n");
-  Advanced_SolveLinearSolver(&pb_pc->Schur.lsol,simu);
-  
-  // 3) CORRECTION STEP
-
-  pb_pc->D.lsol.solver_type=pb_pc->solver_correction;
-  pb_pc->D.lsol.tol=pb_pc->tol_correction;
-  pb_pc->D.lsol.pc_type=pb_pc->pc_correction;
-  pb_pc->D.lsol.iter_max=pb_pc->itermax_correction;
-  pb_pc->D.lsol.restart_gmres=pb_pc->restart_correction;
-  
-  pb_pc->U1.lsol.MatVecProduct(&pb_pc->U1.lsol,pb_pc->Schur.lsol.sol,pb_pc->U1.lsol.sol);
-  pb_pc->U2.lsol.MatVecProduct(&pb_pc->U2.lsol,pb_pc->Schur.lsol.sol,pb_pc->U2.lsol.sol);
-  pb_pc->D.lsol.MatVecProduct(&pb_pc->D.lsol,pb_pc->D.lsol.sol,pb_pc->D.lsol.rhs);
-
-  //printf("RHS assembly.....\n");
-  for (int i=0;i<pb_pc->D.nb_fe_nodes;i++){
-    pb_pc->D.lsol.rhs[i*2] = pb_pc->D.lsol.rhs[i*2]- pb_pc->U1.lsol.sol[i];
-    pb_pc->D.lsol.rhs[i*2+1] =  pb_pc->D.lsol.rhs[i*2+1] - pb_pc->U2.lsol.sol[i];
-  }
-
-  //printf("Solution correction\n");
-   Advanced_SolveLinearSolver(&pb_pc->D.lsol,simu);
-  
-  // 4) OUTPUT STEP Final concatenation
-  cat2CGVectors(&pb_pc->D,&pb_pc->Schur,pb_pc->D.lsol.sol,pb_pc->Schur.lsol.sol,waveSolver.lsol.sol);
-
-  PiInvertCgToDg(&waveSolver,globalSol,waveSolver.lsol.sol);
-
-
-  freeContinuousSolver(&waveSolver);
-  free(solU1);
-  free(solU2);
-}
 
 
 void GenericOperator_PBPC_Velocity(PB_PC* pb_pc){
@@ -1587,7 +1493,7 @@ for (int i=0;i<cs->nb_dg_nodes;i++){
 }
 
 
-void RobinFlux_pressure(void * cs,LinearSolver* lsol, real * xpg, real * w, real *vnorm, real * flux){
+void RobinFlux_SchurPressure(void * cs, real * xpg, real * w, real *vnorm, real * flux){
   ContinuousSolver * ps=cs;
   real lambda=-10000000;
   real Coef_diff=0;
@@ -1607,7 +1513,7 @@ void RobinFlux_pressure(void * cs,LinearSolver* lsol, real * xpg, real * w, real
   flux[0]=ps->simu->vmax * lambda* Coef_diff * w[0];//- ps->simu->vmax * Coef_diff * p0;
 }
 
-void Dirichlet_Velocity(void * cs,LinearSolver* lsol, real * xpg, real * w, real *vnorm, real * flux){
+void Dirichlet_Velocity(void * cs, real * xpg, real * w, real *vnorm, real * flux){
   ContinuousSolver * ps=cs;
   real mu=1.0e14;//15;
   real Coef_diff=0;
@@ -1626,7 +1532,7 @@ void Dirichlet_Velocity(void * cs,LinearSolver* lsol, real * xpg, real * w, real
 }
 
 
-void BoundaryTerm_Xderivative(void * cs,LinearSolver* lsol, real * xpg, real * w, real *vnorm, real * flux){
+void BoundaryTerm_Xderivative(void * cs, real * xpg, real * w, real *vnorm, real * flux){
   ContinuousSolver * ps=cs;
   real lambda=0;
   real Coef_diff=0;
@@ -1637,7 +1543,7 @@ void BoundaryTerm_Xderivative(void * cs,LinearSolver* lsol, real * xpg, real * w
   flux[0]= Coef_diff * w[0] * vnorm[0];
 }
 
-void BoundaryTerm_Yderivative(void * cs,LinearSolver* lsol, real * xpg, real * w, real *vnorm, real * flux){
+void BoundaryTerm_Yderivative(void * cs, real * xpg, real * w, real *vnorm, real * flux){
   ContinuousSolver * ps=cs; 
   real lambda=0;
   real Coef_diff=0;

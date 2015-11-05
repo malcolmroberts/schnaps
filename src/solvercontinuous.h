@@ -96,31 +96,29 @@ typedef struct ContinuousSolver{
   //! \brief pointer on the function which assembles the rhs
   //! \param[inout] lsol a linear solver allocate
   //! \param[in] a continuous solver
-  void (*rhs_assembly)(void * cs,LinearSolver* lsol);
+  void (*rhs_assembly)(void * cs);
 
   //! \brief pointer on the function which assembles the matrix
-  //! \param[inout] lsol a linear solver allocate
-  //! \param[in] a continuous solver
-  void (*matrix_assembly)(void * cs,LinearSolver* lsol);
+  //! \param[inout] a continuous solver
+  void (*matrix_assembly)(void * cs);
 
   //! \brief pointer on the function which assembly the post computation
   //! \param[inout] lsol a linear solver allocate
   //! \param[in] a continuous solver
-  void (*postcomputation_assembly)(void * cs,LinearSolver* lsol);
+  void (*postcomputation_assembly)(void * cs);
 
    //! \brief pointer on the function which assembly the post computation
   //! \param[inout] lsol a linear solver allocate
   //! \param[in] a continuous solver
-  void (*bc_assembly)(void * cs,LinearSolver* lsol);
+  void (*bc_assembly)(void * cs);
 
   //! \brief pointer on the function which compute the BC flux 
-  //! \param[in] lsol a linear solver allocate
   //! \param[in] cs a continuous solver
   //! \param[in] xpg a point of the mesh
   //! \param[in] w a vector of unknowns
   //! \param[in] vnorm a vector of normal
   //! \param[inout] flux a vector of flux
-  void (*bc_flux)(void * cs,LinearSolver* lsol, real * xpg, real * w, real *vnorm, real * flux);
+  void (*bc_flux)(void * cs, real * xpg, real * w, real *vnorm, real * flux);
 
   
 
@@ -141,8 +139,8 @@ int CompareFatNode(const void* a,const void* b);
 //! \returns the size of the list
 int BuildFatNodeList(Simulation *simu,FatNode* fn_list);
 
-//! \brief init a poisson solver
-//! \param[inout] ps a PoissonSolver struct
+//! \brief init a continuous solver
+//! \param[inout] cs a continuous Solver struct
 //! \param[in] simu a simulation
 //! \param[in] type_bc the number of bc type
 //! \param[in] nb_phy_vars the number of variable for the solver
@@ -151,47 +149,49 @@ void InitContinuousSolver(void* cs, Simulation* simu,
 
 
 //! \brief compute the discontinuous unknown using the continuous one
-//! \param[inout] lsol a linear solver allocate
 //! \param[in] a continuous solver
-void ContinuousToDiscontinuous_Copy(ContinuousSolver * cs,LinearSolver* lsol);
+void ContinuousToDiscontinuous_Copy(ContinuousSolver * cs);
 
 
 //! \brief allocate matrix for continuous solver
-//! \param[inout] lsol a linear solver allocate
-//! \param[in] a continuous solver
-void AllocateContinuousMatrix(void * cs,LinearSolver* lsol);
+//! \param[inout] cs a continuous solver
+void AllocateContinuousMatrix(void * cs);
 
 //! \brief apply dirichlet inhomogeneous bc for continuous solver
-//! \param[inout] lsol a linear solver allocate
-//! \param[in] a continuous solver
-void ExactDirichletContinuousMatrix(void * cs,LinearSolver* lsol);
+//! \param[inout] cs a continuous solver
+void ExactDirichletContinuousMatrix(void * cs);
 
 
 //! \brief apply dirichlet inhomogeneous bc for continuous solver
-//! \param[inout] lsol a linear solver allocate
-//! \param[in] a continuous solver
-void PenalizedDirichletContinuousMatrix(void * cs,LinearSolver* lsol);
+//! \param[inout] cs a continuous solver
+void PenalizedDirichletContinuousMatrix(void * cs);
 
-//! \brief construct the source 
-//! \param[inout] lsol a linear solver allocate
-//! \param[in] a continuous solver
-void Source_Assembly(void * cs,LinearSolver* lsol);
+//! \brief construct the source associated to the source of the model 
+//! \param[inout] cs a continuous solver
+void Source_Assembly(void * cs);
 
-
-
-//! \brief solve a 2D poisson problem
-//! \param[inout] ps a Poisson solver (field + linear solver + other parameters)
-//! \param[in] type_bc the boundary condition type
-//!  (1->dirichlet ; 2-> periodic)
+//! \brief solve a 2D Continuous solver problem (we mus speficy the function which construct, matrice, rhs and bc)
+//! \param[inout] ps a continuous solver (field + linear solver + other parameters)
 void SolveContinuous2D(void * cs);
 
-//! TODOODODODODOOD
-void GenericOperator_Continuous(void * cs,LinearSolver* lsol);
+//! \brief construct the matrix associated to a generic continuous operator 
+//! \param[inout] cs a continuous solver
+void GenericOperator_Continuous(void * cs);//,LinearSolver* lsol);
 
-//! TODOODODODODOOD
+//! \brief fusion the variable of the Solver L1Solver and L2Solver (contains in the L1 and L2 vectors) in the vector L
+//! \param[inout] L is a vector
+//! \param[in] L1 is a vector
+//! \param[in] L2 is a vector
+//! \param[in] L1Solver a continuous solver
+//! \param[in] L2Solver continuous solver
 void cat2CGVectors(ContinuousSolver* L1Solver,ContinuousSolver* L2Solver, real *L1, real *L2, real *L);
 
-//! TODOODODODODOOD
+//! \brief extract the variables of the Solver L1Solver in the L1 vector (resp variables of the Solver L2Solver in the L2 vector)
+//! \param[inout] L is a vector
+//! \param[in] L1 is a vector
+//! \param[in] L2 is a vector
+//! \param[in] L1Solver a continuous solver
+//! \param[in] L2Solver continuous solver
 void extract2CGVectors(ContinuousSolver* L1Solver,ContinuousSolver* L2Solver, real *L, real *L1, real *L2);
 
 

@@ -5,11 +5,11 @@
 #include "linear_solver.h"
 
 
-void Computation_ElectricField_Poisson(void * cs,LinearSolver* lsol){
+void Computation_ElectricField_Poisson(void * cs){
 
   ContinuousSolver * ps=cs;
   
-  ContinuousToDiscontinuous_Copy(ps,lsol);
+  ContinuousToDiscontinuous_Copy(ps);
 
   printf("Compute electric field...\n");
 
@@ -20,7 +20,7 @@ void Computation_ElectricField_Poisson(void * cs,LinearSolver* lsol){
 }
 
 
-void RHSPoisson_Continuous(void * cs,LinearSolver* lsol){
+void RHSPoisson_Continuous(void * cs){
 
   ContinuousSolver * ps=cs;
   
@@ -75,7 +75,7 @@ void RHSPoisson_Continuous(void * cs,LinearSolver* lsol){
 }
 
 
-void RobinBoundaryConditionAssembly(void * cs,LinearSolver* lsol){
+void RobinBoundaryConditionAssembly(void * cs){
   ContinuousSolver * ps=cs;
   m=ps->nb_phy_vars;
  
@@ -115,7 +115,7 @@ void RobinBoundaryConditionAssembly(void * cs,LinearSolver* lsol){
 	    wL[iv] = 0;
 	  }
 	  
-	  ps->bc_flux(ps,lsol,xpg,wL,vnds,flux0);
+	  ps->bc_flux(ps,xpg,wL,vnds,flux0);
 
 	  for(int iv1 = 0; iv1 < m; iv1++) {
 	    //int imem1 = fL->varindex(fL->deg, fL->raf,fL->model.m, ipgL, iv1) + offsetL;
@@ -125,14 +125,14 @@ void RobinBoundaryConditionAssembly(void * cs,LinearSolver* lsol){
 	    }
 	    
 	    real flux[m];
-	    ps->bc_flux(ps,lsol,xpg,wL,vnds,flux);
+	    ps->bc_flux(ps,xpg,wL,vnds,flux);
 	    
 	    for(int iv2 = 0; iv2 < m; iv2++) {
 	      // The basis functions is also the gauss point index
 	      //int imem2 = fL->varindex(fL->deg, fL->raf,fL->model.m, ipgL, iv2) + offsetL;
 	      int ipot_fe2 = ino_fe*ps->nb_phy_vars + iv2;
 	      real val =  (flux[iv2]-flux0[iv2]) * wpg;
-	      AddLinearSolver(lsol, ipot_fe2, ipot_fe1, val);
+	      AddLinearSolver(&ps->lsol, ipot_fe2, ipot_fe1, val);
 	    }
 	  }	    
 	}
@@ -175,7 +175,7 @@ void RobinBoundaryConditionAssembly(void * cs,LinearSolver* lsol){
 	// the boundary flux is an affine function
 	real w0[f->model.m],flux0[f->model.m];
 	for(int ivv=0; ivv < ps->nb_phy_vars; ivv++) w0[ivv]=0;
-	ps->bc_flux(ps,lsol,xpg,w0,vnds,flux0);
+	ps->bc_flux(ps,xpg,w0,vnds,flux0);
 	for(int var=0; var < ps->nb_phy_vars; var++){
 	  int ipot = f->varindex(f->deg,f->raf,f->model.m,
 				  ipg,ps->list_of_var[var]);
@@ -190,3 +190,16 @@ void RobinBoundaryConditionAssembly(void * cs,LinearSolver* lsol){
 
 
 
+void RobinFlux(void * cs, real * xpg, real * w, real *vnorm, real * flux){
+  ContinuousSolver * ps=cs;
+  real alpha=-10000000;
+  real beta=0;
+  real p0=0;
+  real Win[3];
+    
+  ps->simu->fd[0].model.ImposedData(xpg,ps->simu->dt,Win);
+  p0=Win[0];
+
+
+  flux[0]= alpha * w[0]- beta * p0;
+}

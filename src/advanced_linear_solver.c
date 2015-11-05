@@ -264,12 +264,7 @@ void Advanced_GMRESSolver(LinearSolver* lsol, Simulation* simu){
 
   else if(revcom == precondRight)  {
     if(lsol->pc_type == PHY_BASED_P1 || lsol->pc_type == PHY_BASED_P2 ){
-       if (lsol->is_CG){
 	 PhyBased_PC_InvertSchur_CG(&pb_pc,simu,loc_z,loc_x);
-       }
-       else{
-	 PhyBased_PC_InvertSchur_DG(&pb_pc,simu,loc_z,loc_x);
-       }
     }
     else if(lsol->pc_type == PHY_BASED_U1 || lsol->pc_type == PHY_BASED_U2){
 	 PhyBased_PC_CG(&pb_pc,simu,loc_z,loc_x);
@@ -326,9 +321,12 @@ void Advanced_GMRESSolver(LinearSolver* lsol, Simulation* simu){
   free(loc_x);
   free(loc_y);
   free(loc_z);
-    if(lsol->pc_type == PHY_BASED_P1 || lsol->pc_type == PHY_BASED_P2){
-      freePB_PC(&pb_pc);
-    }
+  if(lsol->pc_type == PHY_BASED_P1 || lsol->pc_type == PHY_BASED_P2){
+    freePB_PC(&pb_pc);
+  }
+  if(lsol->pc_type == PHY_BASED_U1 || lsol->pc_type == PHY_BASED_U2){
+    freePB_PC(&pb_pc);
+  }
 
 }
 

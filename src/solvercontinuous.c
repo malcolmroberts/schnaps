@@ -52,7 +52,6 @@ int BuildFatNodeList(Simulation *simu,FatNode* fn_list){
       fn_list[ino].x[2]=xpg[2];
 
       // convert points to "pixels" and round to nearest integer
-
       fn_list[ino].x_int[0]=(int) ((xpg[0]-xmin[0])/(xmax[0]-xmin[0]) * big_int)  ;
       fn_list[ino].x_int[1]=(int) ((xpg[1]-xmin[1])/(xmax[1]-xmin[1]) * big_int)  ;
       fn_list[ino].x_int[2]=(int) ((xpg[2]-xmin[2])/(xmax[2]-xmin[2]) * big_int)  ;
@@ -63,7 +62,6 @@ int BuildFatNodeList(Simulation *simu,FatNode* fn_list){
     }
   }
 
-
   assert(ino == nb_dg_nodes);
   qsort(fn_list, nb_dg_nodes, sizeof(FatNode),CompareFatNode);
 
@@ -73,26 +71,13 @@ int BuildFatNodeList(Simulation *simu,FatNode* fn_list){
     if (CompareFatNode(fn_list+ino,fn_list+ino-1)!=0) fe_index++;
     fn_list[ino].fe_index=fe_index;
   }
-  
-
-  /* for(int ino=0;ino<nb_dg_nodes;ino++){ */
-  /*   printf("ino=%d xyz= %f %f %f i_xyz=%d %d %d dg_index=%d fe_index=%d\n",ino, */
-  /* 	   fn_list[ino].x[0],fn_list[ino].x[1],fn_list[ino].x[2], */
-  /* 	   fn_list[ino].x_int[0],fn_list[ino].x_int[1],fn_list[ino].x_int[2], */
-  /* 	   fn_list[ino].dg_index, */
-  /* 	   fn_list[ino].fe_index); */
-  /* } */
-
-  
 
   return fe_index+1;
 
 }
 
 void InitContinuousSolver(void * cs, Simulation* simu,int type_bc,int nb_phy_vars, int * listvar){
-
   ContinuousSolver * ps=cs;
-
   ps->simu = simu;
 
   ps->type_bc=type_bc;
@@ -119,16 +104,10 @@ void InitContinuousSolver(void * cs, Simulation* simu,int type_bc,int nb_phy_var
   // paste the nodes of the DG mesh
   ps->nb_fe_nodes=BuildFatNodeList(simu,ps->fn_list);
   ps->nb_fe_dof= ps->nb_fe_nodes * ps->nb_phy_vars;
-
-  //printf("nb dg nodes=%d ; nb fe nodes=%d\n",ps->nb_dg_nodes,ps->nb_fe_nodes);
-  // build the connectivity array
-
   ps->dg_to_fe_index = malloc(ps->nb_dg_nodes * sizeof(int));
   assert(ps->dg_to_fe_index);
 
   for(int ino=0;ino<ps->nb_dg_nodes;ino++){
-    /* printf("ino=%d idg=%d ife=%d\n",ino,ps->fn_list[ino].dg_index, */
-    /* 	   ps->fn_list[ino].fe_index); */
     ps->dg_to_fe_index[ps->fn_list[ino].dg_index]=ps->fn_list[ino].fe_index;
   }
 
@@ -178,19 +157,14 @@ void InitContinuousSolver(void * cs, Simulation* simu,int type_bc,int nb_phy_var
     count_boundary += ps->is_boundary_node[ino];
   }
 
-  //printf("found %d boundary nodes (on %d fe nodes)\n",
-	// count_boundary, ps->nb_fe_nodes);
-	
   InitLinearSolver(&ps->lsol,ps->nb_fe_dof,NULL,NULL); //InitSkyline(&sky, neq);
 
   ps->lsol.rhs = malloc(ps->nb_fe_dof * sizeof(real));
   assert(ps->lsol.rhs);
-
   ps->lsol.sol = malloc(ps->nb_fe_dof * sizeof(real));
   assert(ps->lsol.sol);
 
-  AllocateContinuousMatrix(ps,&ps->lsol);
-
+  AllocateContinuousMatrix(ps);
 
 }
 
@@ -212,7 +186,7 @@ void SolveContinuous2D(void* cs){
  
   //printf("Matrix assembly.....\n");
   if(ps->matrix_assembly != NULL){
-    ps->matrix_assembly(ps,&ps->lsol);
+    ps->matrix_assembly(ps);
   }
   else
     {
@@ -223,7 +197,7 @@ void SolveContinuous2D(void* cs){
   
   //printf("RHS assembly.....\n");
   if(ps->rhs_assembly != NULL){
-    ps->rhs_assembly(ps,&ps->lsol);
+    ps->rhs_assembly(ps);
   }
   else
     {
@@ -233,7 +207,7 @@ void SolveContinuous2D(void* cs){
 
   //printf("BC assembly.....\n");
   if(ps->bc_assembly != NULL){
-    ps->bc_assembly(ps,&ps->lsol);
+    ps->bc_assembly(ps);
   }
   else
     {
@@ -248,7 +222,7 @@ void SolveContinuous2D(void* cs){
   
   //printf("post computation assembly.....\n");
   if(ps->postcomputation_assembly != NULL){
-    ps->postcomputation_assembly(ps,&ps->lsol);
+    ps->postcomputation_assembly(ps);
   }
 
 
@@ -258,7 +232,7 @@ void SolveContinuous2D(void* cs){
 }
 
 
-void ContinuousToDiscontinuous_Copy(ContinuousSolver * cs,LinearSolver* lsol){
+void ContinuousToDiscontinuous_Copy(ContinuousSolver * cs){
   
   field* f0 = &cs->simu->fd[0];
 
@@ -280,7 +254,7 @@ void ContinuousToDiscontinuous_Copy(ContinuousSolver * cs,LinearSolver* lsol){
 
 }
 
-void ExactDirichletContinuousMatrix(void * cs,LinearSolver* lsol){
+void ExactDirichletContinuousMatrix(void * cs){
   ContinuousSolver * ps=cs;
 
   field* f0 = &ps->simu->fd[0];
@@ -342,7 +316,7 @@ void ExactDirichletContinuousMatrix(void * cs,LinearSolver* lsol){
 }
 
   
-void Source_Assembly(void * cs,LinearSolver* lsol){
+void Source_Assembly(void * cs){
   ContinuousSolver * ps=cs;
   field* f0 = &ps->simu->fd[0];
   m=ps->nb_phy_vars;
@@ -389,7 +363,7 @@ void Source_Assembly(void * cs,LinearSolver* lsol){
 }
 
 
-void PenalizedDirichletContinuousMatrix(void * cs,LinearSolver* lsol){
+void PenalizedDirichletContinuousMatrix(void * cs){
   ContinuousSolver * ps=cs;
   
   field* f0 = &ps->simu->fd[0];
@@ -447,7 +421,7 @@ void PenalizedDirichletContinuousMatrix(void * cs,LinearSolver* lsol){
   }
 }
 
-void AllocateContinuousMatrix(void *cs,LinearSolver* lsol){
+void AllocateContinuousMatrix(void *cs){
     ContinuousSolver * ps=cs;
 
   //static bool is_lu = false;
@@ -505,7 +479,7 @@ void AllocateContinuousMatrix(void *cs,LinearSolver* lsol){
 
 
 
-void GenericOperator_Continuous(void * cs,LinearSolver* lsol){
+void GenericOperator_Continuous(void * cs){
 
   ContinuousSolver * ps=cs;
 

@@ -79,8 +79,6 @@ int Test_Wave_Periodic(void);
 
 int Test_Wave_Steady(void);
 
-int Test_Transport_Steady(void);
-
 int Test_Transport_ExImp(void);
 
 int Test_SH_equilibrium(void);
@@ -101,7 +99,6 @@ int Test_Wave_Periodic(void);
 
 int Testrealpc(void);
 
-int TestWaveDF(void);
 
 
 #endif

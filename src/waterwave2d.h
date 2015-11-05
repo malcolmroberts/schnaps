@@ -51,40 +51,6 @@ void TestPeriodic_Wave_ImposedData(const real *x, const real t, real *w);
 void TestPeriodic_Wave_InitData(real *x, real *w);
 
 
-//! \brief boundardy rusanov flux based for shallow water
-//! \param[in] t : current time
-//! \param[in] x : current position
-//! \param[in] wL : states
-//! \param[in] vnorm : normal vector
-//! \param[out] flux : the flux
-void ShallowWater_Rusanov_BoundaryFlux(real *x, real t, real *wL, real *vnorm,real *flux);
-
-//! \brief boundardy hll flux based for shallow water
-//! \param[in] t : current time
-//! \param[in] x : current position
-//! \param[in] wL : states
-//! \param[in] vnorm : normal vector
-//! \param[out] flux : the flux
-void ShallowWater_HLL_BoundaryFlux(real *x, real t, real *wL, real *vnorm,real *flux);
-
-//! \brief boundardy roe flux based for shallow water
-//! \param[in] t : current time
-//! \param[in] x : current position
-//! \param[in] wL : states
-//! \param[in] vnorm : normal vector
-//! \param[out] flux : the flux
-void ShallowWater_Roe_BoundaryFlux(real *x, real t, real *wL, real *vnorm,real *flux);
-
-
-//! \brief boundardy HLL wb flux based for shallow water
-//! \param[in] t : current time
-//! \param[in] x : current position
-//! \param[in] wL : states
-//! \param[in] vnorm : normal vector
-//! \param[out] flux : the flux
-void ShallowWater_HLLWB_BoundaryFlux(real *x, real t, real *wL, real *vnorm,real *flux);
-
-
 //! \brief roe flux for shallows water
 //! \param[in] wL,wR : left and right states
 //! \param[in] vnorm : normal vector
@@ -103,12 +69,6 @@ void ShallowWater_HLL_NumFlux(real wL[],real wR[],real* vnorm,real* flux);
 //! \param[in] vnorm : normal vector
 //! \param[out] flux : the flux
 void ShallowWater_Rusanov_NumFlux(real wL[],real wR[],real* vnorm,real* flux);
-
-//! \brief wb HLL flux for Shallow water
-//! \param[in] wL,wR : left and right states
-//! \param[in] vnorm : normal vector
-//! \param[out] flux : the flux
-void ShallowWater_HLLWB_NumFlux(real wL[],real wR[],real* vnorm,real* flux);
 
 
  //! \brief a pointer to the source function

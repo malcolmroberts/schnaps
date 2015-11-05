@@ -6,7 +6,7 @@
 #include "solverwave.h"
 
 
-void BoundaryConditionFriedrichsAssembly(void * cs,LinearSolver* lsol){
+void BoundaryConditionFriedrichsAssembly(void * cs){
   ContinuousSolver * ps=cs;
   m=ps->nb_phy_vars;
   
@@ -46,7 +46,7 @@ void BoundaryConditionFriedrichsAssembly(void * cs,LinearSolver* lsol){
 	    wL[iv] = 0;
 	  }
 	  
-	  ps->bc_flux(ps,lsol,xpg,wL,vnds,flux0);
+	  ps->bc_flux(ps,xpg,wL,vnds,flux0);
 
 
 	  for(int iv1 = 0; iv1 < m; iv1++) {
@@ -57,14 +57,14 @@ void BoundaryConditionFriedrichsAssembly(void * cs,LinearSolver* lsol){
 	    }
 	    
 	    real flux[m];
-	    ps->bc_flux(ps,lsol,xpg,wL,vnds,flux);
+	    ps->bc_flux(ps,xpg,wL,vnds,flux);
 	    
 	    for(int iv2 = 0; iv2 < m; iv2++) {
 	      // The basis functions is also the gauss point index
 	      //int imem2 = fL->varindex(fL->deg, fL->raf,fL->model.m, ipgL, iv2) + offsetL;
 	      int ipot_fe2 = ino_fe*ps->nb_phy_vars + iv2;
 	      real val =  (flux[iv2]-flux0[iv2]) * wpg;
-	      AddLinearSolver(lsol, ipot_fe2, ipot_fe1, val);
+	      AddLinearSolver(&ps->lsol, ipot_fe2, ipot_fe1, val);
 	    }
 	  }	    
 	}
@@ -105,7 +105,7 @@ void BoundaryConditionFriedrichsAssembly(void * cs,LinearSolver* lsol){
 	// the boundary flux is an affine function
 	real w0[f->model.m],flux0[f->model.m];
 	for(int ivv=0; ivv < ps->nb_phy_vars; ivv++) w0[ivv]=0;
-	ps->bc_flux(ps,lsol,xpg,w0,vnds,flux0);
+	ps->bc_flux(ps,xpg,w0,vnds,flux0);
 	for(int var=0; var < ps->nb_phy_vars; var++){
 	  int ipot_fe = ino_fe*ps->nb_phy_vars + var;
 	  real val = flux0[var] * wpg;
@@ -184,7 +184,7 @@ void Wave_test(ContinuousSolver* cs,real theta, real dt){
 }
 
 
-void Wave_BC_normalvelocity_null(void * cs,LinearSolver* lsol, real * xpg, real * w, real *vnorm, real * flux){
+void Wave_BC_normalvelocity_null(void * cs, real * xpg, real * w, real *vnorm, real * flux){
 
   ContinuousSolver * ps=cs;
   real M[3][3];
@@ -230,7 +230,7 @@ void Wave_BC_normalvelocity_null(void * cs,LinearSolver* lsol, real * xpg, real 
 
 
 
-void Wave_BC_pressure_imposed(void * cs,LinearSolver* lsol, real * xpg, real * w, real *vnorm, real * flux){
+void Wave_BC_pressure_imposed(void * cs, real * xpg, real * w, real *vnorm, real * flux){
 
   ContinuousSolver * ps=cs;
   real M[3][3];
