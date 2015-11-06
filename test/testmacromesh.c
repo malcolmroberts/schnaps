@@ -60,7 +60,7 @@ int TestMacroMesh(void)
   test=test && (num == 3);
 
 
-
+  FreeMacroMesh(&m);
 
 
   return test;

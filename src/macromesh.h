@@ -117,6 +117,10 @@ int CompareFace4Sort(const void *a, const void *b);
 //! \param[in] filename location of the gmsh file
 void ReadMacroMesh(MacroMesh *m, char *filename);
 
+//! \brief Free the macro mesh structure.
+//! \param[inout] m pointer to a macromesh
+void FreeMacroMesh(MacroMesh *m);
+
 //! \brief compute additional connectivity arrays from
 //! a basic connectivity given by gmsh.
 //! \param[inout] m pointer to a macromesh

@@ -174,6 +174,10 @@ void InitSimulation(Simulation *simu, MacroMesh *mesh,
   }
 
   simu->pre_dtfields = NULL;
+  simu->post_dtfields = NULL;
+  simu->update_after_rk = NULL;
+  simu->Diagnostics = NULL;
+  simu->pic =NULL;
   simu->nb_diags = 0;
 
 
@@ -439,7 +443,31 @@ void PlotFields(int typplot, int compare, Simulation* simu, char *fieldname,
   free(value);
 }
 
-// Apply the Discontinuous Galerkin approximation for computing the
+void freeSimulation(Simulation* simu){
+  
+  for(int i=0;i<simu->macromesh.nbelems;i++){
+    simu->fd[i].wn=NULL;
+    simu->fd[i].dtwn=NULL;
+  }
+  
+  
+  free(simu->w);   //Already freed in field.
+  free(simu->dtw); //Already freed in field.
+  free(simu->fd);
+
+  if(simu->Diagnostics != NULL){
+    free(simu->Diagnostics);
+  }
+  if(simu->pic != NULL){
+    free(simu->pic);
+  }
+  
+  
+
+}
+
+
+// Apply the Discontinuous Galerkin approximation to compute the
 // time derivative of the field
 void DtFields(Simulation *simu, real *w, real *dtw) {
 
@@ -497,8 +525,10 @@ void DtFields(Simulation *simu, real *w, real *dtw) {
 
   }
 
-  //if(f->post_dtfield != NULL) // FIXME: rename to after dtfield
-    //f->post_dtfield(f, w);
+  if(simu->post_dtfields != NULL) {
+    simu->post_dtfields(simu, w);
+    //assert(1==2);
+  }
 }
 
 real L2error(Simulation *simu) {
@@ -556,11 +586,13 @@ void RK2(Simulation *simu, real tmax){
 
   simu->dt = Get_Dt_RK(simu);
 
+
   real dt = simu->dt;
 
   simu->tmax = tmax;
 
   simu->itermax_rk = tmax / simu->dt;
+  int size_diags;
   int freq = (1 >= simu->itermax_rk / 10)? 1 : simu->itermax_rk / 10;
   int iter = 0;
 
@@ -568,11 +600,12 @@ void RK2(Simulation *simu, real tmax){
   assert(wnp1);
 
   // FIXME: remove
-  //int size_diags = simu->nb_diags * simu->itermax_rk;
+  size_diags = simu->nb_diags * simu->itermax_rk;
   simu->iter_time_rk = iter;
 
-  /* if(simu->nb_diags != 0) */
-  /*   simu->Diagnostics = malloc(size_diags * sizeof(real)); */
+   if(simu->nb_diags != 0) {
+     simu->Diagnostics = malloc(size_diags * sizeof(real));
+   }
 
   while(simu->tnow < tmax) {
     if (iter % freq == 0)
@@ -588,9 +621,10 @@ void RK2(Simulation *simu, real tmax){
 
     simu->tnow += 0.5 * dt;
 
-    /* if(simu->update_after_rk != NULL) */
-    /*   simu->update_after_rk(f, simu->wn); */
-
+    if(simu->update_after_rk != NULL){ 
+      simu->update_after_rk(simu, simu->w); 
+    }
+    
     iter++;
     simu->iter_time_rk = iter;
   }
@@ -652,8 +686,9 @@ void RK4(Simulation *simu, real tmax)
     RK4_final_inplace(simu->w, l1, l2, l3, simu->dtw, dt, simu->wsize);
 
     
-    /* if(f->update_after_rk != NULL) */
-    /*   f->update_after_rk(f, f->wn); */
+     if(simu->update_after_rk != NULL){ 
+      simu->update_after_rk(simu, simu->w); 
+    }
     
     iter++;
      simu->iter_time_rk=iter;
@@ -710,8 +745,6 @@ void RK4_final_inplace(real *w, real *l1, real *l2, real *l3,
 
 real Get_Dt_RK(Simulation *simu)
 {
-
-  //printf("hmin=%f cfl=%f vmax=%f\n",simu->hmin,simu->cfl,simu->vmax);
   return simu->cfl * simu->hmin / simu->vmax; 
   
 }

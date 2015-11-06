@@ -7,7 +7,7 @@
 #include "skyline_spu.h"
 #include "paralution_c.h"
 #include "dpackfgmres.h"
-
+#include "physBased_PC.h"
 
 void InitLinearSolver(LinearSolver* lsol,int n,
 		      MatrixStorage* matstor,
@@ -25,13 +25,13 @@ void InitLinearSolver(LinearSolver* lsol,int n,
   lsol->rhs=NULL;
   lsol->sol=NULL;
   lsol->MatVecProduct=NULL;
-  lsol->tol=1.e-6;
+  lsol->tol=1.e-9;
   lsol->restart_gmres=1;
-  lsol->iter_max=10000;
+  lsol->iter_max=100;
+  lsol->is_CG=false;
 
   if (matstor != NULL) lsol->storage_type = *matstor;
   if (solvtyp != NULL) lsol->solver_type = *solvtyp;
-
 
   if (matstor != NULL) {
     if (*matstor != SKYLINE_SPU){
@@ -45,7 +45,7 @@ void InitLinearSolver(LinearSolver* lsol,int n,
     Skyline* sky;
     Skyline_SPU* sky_spu;
 
-  case SKYLINE:
+  case SKYLINE :
     sky = malloc(sizeof(Skyline));
     assert(sky);
     lsol->matrix = (void*) sky;
@@ -78,15 +78,31 @@ void InitLinearSolver(LinearSolver* lsol,int n,
 void FreeLinearSolver(LinearSolver* lsol){
 
   assert(lsol->is_alloc);
-
+  assert(lsol->rhs);
+  assert(lsol->sol);
+  // Free rhs
+  if (lsol->rhs != NULL)
+  {
+    free(lsol->rhs);
+  }
+  // Free sol
+  if (lsol->sol != NULL)
+  {
+    free(lsol->sol);
+  }
+  
   switch(lsol->storage_type) {
 
   case SKYLINE :
     FreeSkyline((Skyline*)lsol->matrix);
-    free(lsol->matrix);
+    // Free matrix
+    if (lsol->matrix != NULL)
+    {
+      free(lsol->matrix);
+    }
     break;
 
-  case SKYLINE_SPU :
+case SKYLINE_SPU :
     FreeSkyline_SPU((Skyline_SPU*)lsol->matrix);
     free(lsol->matrix);
     break;
@@ -204,10 +220,6 @@ real GetLinearSolver(LinearSolver* lsol,int i,int j){
     val=GetSkyline((Skyline*)lsol->matrix,i,j);
     break;
 
-  case SKYLINE_SPU :
-    val=GetSkyline_SPU((Skyline_SPU*)lsol->matrix,i,j);
-    break;
-
   default : 
     assert(1==2);
    
@@ -253,16 +265,21 @@ void MatVect(void * system,real x[],real prod[]){
 
   case SKYLINE :
 
-    MatVectSkyline((Skyline*) lsol->matrix, x, prod);
-    break;
-    /* for(i=0;i<lsol->neq;i++) */
-    /*   { */
-    /* 	prod[i]=0; */
-    /* 	for(j=0;j<lsol->neq;j++) { */
-    /* 	  aij=GetLinearSolver(lsol,i,j); */
-    /* 	  prod[i] += aij*x[j]; */
-    /* 	} */
-    /*   } */
+    //if (!((Skyline*)lsol->matrix)->is_lu){
+     MatVectSkyline((Skyline*) lsol->matrix, x, prod);
+     //}
+     /*else
+       {
+	 for(i=0;i<lsol->neq;i++)
+	   { 
+	     prod[i]=0; 
+	     for(j=0;j<lsol->neq;j++) { 
+	  aij=GetLinearSolver(lsol,i,j); 
+	  prod[i] += aij*x[j]; 
+        } 
+	} 
+	}*/
+     break;
     
   case SKYLINE_SPU :
     assert(1==2);
@@ -448,10 +465,6 @@ void SolveLinearSolver(LinearSolver* lsol){
 
 
 
-
-
-
-
 void Solver_Paralution(LinearSolver* lsol){
   int * rows=NULL;
   int * cols=NULL;
@@ -470,13 +483,20 @@ void Solver_Paralution(LinearSolver* lsol){
   int basis_size_gmres=30, ILU_p=2,ILU_q=2;
   int* iter_final=0;
   int* ierr=0;
-  int maxit=100000;
+  int maxit=10000;
   real norm_rhs=0;
   real a_tol=0,r_tol=0,div_tol=1.e+8;
 
   storage="CSR";
   norm_rhs=Vector_norm2(lsol->rhs,lsol->neq);
-  a_tol=1.e-8*(1.0+1.e-20*norm_rhs);
+  a_tol=lsol->tol*(1.0+1.e-20*norm_rhs);
+
+  if(lsol->neq<61) {
+    basis_size_gmres = (int) (lsol->neq/2);
+    }
+  else {
+      basis_size_gmres = 30;
+    }
 
   switch(lsol->solver_type){
   case PAR_CG :
@@ -649,8 +669,12 @@ void GMRESSolver(LinearSolver* lsol){
   icntl[4]  = 0; //!1            // preconditioner (1) = left preconditioner
   icntl[5]  = 1; ////3            // orthogonalization scheme
   icntl[6]  = 1; //1            // initial guess  (1) = user supplied guess
-  icntl[8]  = 1; //1            
-   
+  icntl[8]  = 1; //1
+
+  
+  if ((lsol->pc_type == JACOBI) ||(lsol->pc_type == EXACT)){
+    icntl[4] = 2;
+  }
      
   cntl[1]  = lsol->tol; //       ! stopping tolerance
   cntl[2]  = 1.0;
@@ -671,7 +695,7 @@ void GMRESSolver(LinearSolver* lsol){
   else {
       m = lsol->restart_gmres;
     }
-  lwork = m*m + m*(N+5) + 5*N + m + 1 +1; //(+ one because  ) ??
+  lwork = m*m + m*(N+5) + 5*N + m +1; //(+ one because  ) ??
 
   pt_m = &m;
   pt_Size = &N;
@@ -687,7 +711,17 @@ void GMRESSolver(LinearSolver* lsol){
     work[N+ivec+1]    = lsol->rhs[ivec];
   }
 
-  
+
+  real * Ax2=calloc(lsol->neq,sizeof(real));
+  lsol->MatVecProduct(lsol,lsol->sol,Ax2);
+  real errorb=0;
+  real errorb2=0;
+   for(int i = 0; i < N; i++) {
+     errorb=errorb+fabs((Ax2[i]-lsol->rhs[i])*(Ax2[i]-lsol->rhs[i]));                    
+     errorb2=errorb2+fabs(lsol->sol[i]*lsol->sol[i]);                    
+  }
+  printf(" error gmres begin %.5e \n",sqrt(errorb)/(sqrt(errorb2)+1.0)); 
+
   //*****************************************
   //** Reverse communication implementation
   //*****************************************
@@ -716,7 +750,7 @@ void GMRESSolver(LinearSolver* lsol){
      goto L10;
   }
   else if(revcom == precondLeft)  {                 // perform the matrix vector product
-    // work(colz) <-- M-1 * work(colx)  
+    // work(colz) <-- M-1 * work(colx)
     Vector_copy(loc_x,loc_z,N);
     for(int ivec = 0; ivec < N; ivec++) {
       work[colz+ivec]= loc_z[ivec];                    
@@ -725,9 +759,18 @@ void GMRESSolver(LinearSolver* lsol){
      goto L10;
   }
 
-  else if(revcom == precondRight)  {                 // perform the matrix vector product
-    // work(colz) <-- M-1 * work(colx)  
-    Vector_copy(loc_x,loc_z,N);
+  else if(revcom == precondRight)  {
+    if(lsol->pc_type == EXACT){
+      Exact_PC(lsol,loc_z,loc_x);
+    }
+    else if (lsol->pc_type == JACOBI){
+      Jacobi_PC(lsol,loc_z,loc_x);
+    }
+    else {
+      Vector_copy(loc_x,loc_z,N);
+    }
+
+    
     for(int ivec = 0; ivec < N; ivec++) {
       work[colz+ivec]= loc_z[ivec];                    
       work[colx+ivec]= loc_x[ivec]; 
@@ -747,15 +790,83 @@ void GMRESSolver(LinearSolver* lsol){
   }
 
   //******************************** end of GMRES reverse communication
+
+  
   
   for(int ivec = 0; ivec < N; ivec++) {
     lsol->sol[ivec] = work[ivec+1];                    
   }
+
+  real * Ax=calloc(lsol->neq,sizeof(real));
+  lsol->MatVecProduct(lsol,lsol->sol,Ax);
+  real error=0;
+  real error2=0;
+   for(int i = 0; i < N; i++) {
+     error=error+fabs((Ax[i]-lsol->rhs[i])*(Ax[i]-lsol->rhs[i]));                    
+     error2=error2+fabs(lsol->sol[i]*lsol->sol[i]);                    
+  }
+   printf(" error gmres end %.5e \n",sqrt(error)/(sqrt(error2)+1.0)); 
   
+  
+  free(work);
+  free(loc_x);
+  free(loc_y);
+  free(loc_z);
 
 }
 
 
+
+void Jacobi_PC(LinearSolver *lsol, real* sol, real* rhs){
+
+  for (int i=0;i<lsol->neq; i++){
+    assert(GetLinearSolver(lsol,i,i)!=0);
+    sol[i]=rhs[i]/GetLinearSolver(lsol,i,i);
+  }
+}
+
+void Exact_PC(LinearSolver *lsol, real* sol, real* rhs){
+
+  Skyline * mat;
+  Skyline mat_copy;
+
+  mat=(Skyline*)lsol->matrix; 
+  
+  mat_copy.is_alloc= mat->is_alloc;
+  mat_copy.copy_is_alloc=mat->copy_is_alloc;
+  mat_copy.is_sym=mat->is_sym;
+  mat_copy.is_lu=mat->is_lu;
+
+  mat_copy.neq=mat->neq;
+  mat_copy.nmem=mat->nmem;
+
+  mat_copy.vkgd=malloc(mat_copy.neq*sizeof(real));
+  mat_copy.vkgi=malloc(mat_copy.nmem*sizeof(real));
+  mat_copy.vkgs=malloc(mat_copy.nmem*sizeof(real));
+  
+
+  mat_copy.prof=malloc(mat_copy.neq*sizeof(int));
+  mat_copy.kld=malloc((mat_copy.neq+1)*sizeof(int));
+
+  for (int i=0;i<mat->neq; i++){
+    mat_copy.vkgd[i]=mat->vkgd[i];
+  }
+  for (int i=0;i<mat->nmem; i++){
+    mat_copy.vkgi[i]=mat->vkgi[i];
+    mat_copy.vkgs[i]=mat->vkgs[i];
+  }
+
+  for (int i=0;i<mat->neq+1; i++){
+    mat_copy.kld[i]=mat->kld[i];
+  }
+  for (int i=0;i<mat->neq; i++){
+    mat_copy.prof[i]=mat->prof[i];
+  }
+  
+  FactoLU(&mat_copy);
+  SolveSkyline(&mat_copy,rhs,sol);
+  
+}
 
 
 

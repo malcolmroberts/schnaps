@@ -25,6 +25,8 @@ int TestFieldRK2(void);
 
 int Test2DMeshDetection(void);
 
+int TestPCWave(void);
+
 int TestFieldRK2_2D(void);
 
 int TestFieldSubCellDGVol(void);
@@ -97,6 +99,8 @@ int Test_Transport_ExImp(void);
 
 int Test_SH_equilibrium(void);
 
+int Test_SH_equilibrium_Implicit(void);
+
 int Test_SH_periodic(void);
 
 int TestOrszagTang(int argc, char *argv[]);
@@ -108,6 +112,9 @@ int TestKelvinHelmotz(int argc, char *argv[]);
 int TestDoubleTearing(int argc, char *argv[]);
 
 int Test_Wave_Periodic(void);
+
+int Testrealpc(void);
+
 
 
 #endif

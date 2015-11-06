@@ -29,9 +29,10 @@
 #pragma start_opencl
 int GenericVarindex(__constant int *deg, __constant int *raf, int m,
 		    int ipg, int iv) {
+ 
   return iv + m * ipg;
-  //int npg = (deg[0] + 1) * (deg[1] + 1) * (deg[2] + 1)
-  //  * raf[0] * raf[1] * raf[2];
+// int npg = (deg[0] + 1) * (deg[1] + 1) * (deg[2] + 1)
+  // * raf[0] * raf[1] * raf[2];
   //return ipg + npg * iv;
 }
 #pragma end_opencl
@@ -140,6 +141,9 @@ real min_grid_spacing(field *f)
 
 void init_empty_field(field *f)
 {
+//#ifdef _WITH_OPENCL
+//  f->use_source_cl = false;
+//#endif
 
   f->period[0] = -1;
   f->period[1] = -1;
@@ -219,6 +223,8 @@ void set_physnodes_cl(Simulation *simu)
   assert(status >= CL_SUCCESS);
   
   free(physnode);
+
+
 }
 #endif
 
@@ -362,8 +368,8 @@ void Initfield_SPU(field *f){
     assert(f->res == f->dtwn);
   }
   
-}
 
+}
 
 // This is the destructor for a field
 void free_field(field *f) 
@@ -550,8 +556,10 @@ void DGSubCellInterface(field *f, real *w, real *dtw)
 		// normal vector
 		real wL[m], wR[m], flux[m];
 		for(int iv = 0; iv < m; iv++) {
+		  // TO DO change the varindex signature
 		  int imemL = f->varindex(f->deg, f->raf, f->model.m, ipgL, iv); 
 		  int imemR = f->varindex(f->deg, f->raf, f->model.m, ipgR, iv);
+		  // end TO DO
 		  wL[iv] = w[imemL];
 		  wR[iv] = w[imemR];
 		}
@@ -703,7 +711,6 @@ void DGMacroCellInterface(int locfaL,
 
       fL->model.BoundaryFlux(xpg, fL->tnow, wL, vnds, flux);
 
- 
       for(int iv = 0; iv < m; iv++) {
 	// The basis functions is also the gauss point index
 	int imemL = fL->varindex(fL->deg, fL->raf,fL->model.m, ipgL, iv);

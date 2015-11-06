@@ -13,36 +13,37 @@
 #include "solvercontinuous.h"
 
 
-//! \brief init the rhs for poisson solver
-//! \param[inout] lsol a linear solver allocate
-//! \param[in] a continuous solver
-void MatrixPoisson_Continuous(void * cs,LinearSolver* lsol);
-
 
 //! \brief compute the electirc field for poisson
-//! \param[inout] lsol a linear solver allocate
-//! \param[in] a continuous solver
-void Computation_ElectricField_Poisson(void * cs,LinearSolver* lsol);
-
+//! \param[inout] a continuous solver
+void Computation_ElectricField_Poisson(void * cs);
 
 //! \brief init the rhs for poisson solver
-//! \param[inout] lsol a linear solver allocate
-//! \param[in] a continuous solver
-void RHSPoisson_Continuous(void * cs,LinearSolver* lsol);
+//! \param[inout] a continuous solver
+void RHSPoisson_Continuous(void * cs);
+
+//! \brief init the matrix for 1D poisson solver
+//! \param[inout] a continuous solver
+void ContinuousOperator_Poisson1D(void * cs);
+
+//! \brief init the matrix for 2D poisson solver
+//! \param[inout] a continuous solver
+void ContinuousOperator_Poisson2D(void * cs);
+
+//! \brief compute the boundary condition for poisson solver
+//! \param[inout] a continuous solver
+void RobinBoundaryConditionAssembly(void * cs);
+
+//! \brief pointer on the function which compute the BC flux for Robin condition (nabla p,n)+alpha p=beta g
+//! \param[in] cs a continuous solver
+//! \param[in] xpg a point of the mesh
+//! \param[in] w a vector of unknowns
+//! \param[in] vnorm a vector of normal
+//! \param[inout] flux a vector of flux
+void RobinFlux(void * cs, real * xpg, real * w, real *vnorm, real * flux);
 
 
-//! \brief solve a 1D poisson problem
-//! \param[in] simu a simulation
-//! \param[in] w the field values (for computing the charge
-//! , returning the potential and the electric field)
-//! \param[in] type_bc the boundary condition type
-//!  (1->dirichlet ; 2-> periodic)
-//! \param[in] bc_l left boundary value (dirichlet case)
-//! \param[in] bc_r right boundary value (dirichlet case)
-//! \param[in] solver_sys linear solver
-//! \param[in] precon preconditionner
-void SolvePoisson1D(Simulation *simu,real * w,
-		    int type_bc, real bc_l, real bc_r,Solver solver_sys, PC precon);
+
 
 
 #endif

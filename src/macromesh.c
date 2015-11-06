@@ -123,6 +123,9 @@ void ReadMacroMesh(MacroMesh *m, char *filename)
   m->is_read = true;
 
   m->elem2elem = NULL;
+
+  free(line);
+  
 }
 
 void AffineMap(real *x, real A[3][3], real x0[3])
@@ -332,7 +335,7 @@ int* build_interfacelist(MacroMesh *m)
   
   printf("m->nmacrointerfaces: %d\n", m->nmacrointerfaces);
   if(m->nmacrointerfaces > 0) {
-    int *mif = malloc(sizeof(int) * m->nmacrointerfaces);
+    int *mif = calloc(m->nmacrointerfaces,sizeof(int));
 
     int iinter = 0;
     for(int ifa = 0; ifa < m->nbfaces; ++ifa) {
@@ -352,7 +355,7 @@ void build_elem2elem(MacroMesh *m, Face4Sort *face)
 {
   // Allocate element connectivity array
   assert(m->elem2elem == NULL);
-  m->elem2elem = malloc(6 * m->nbelems * sizeof(int));
+  m->elem2elem = calloc(6 * m->nbelems,sizeof(int));
   assert(m->elem2elem);
 
   // Initialize to -1 (value for faces on a boundary)
@@ -378,7 +381,7 @@ void build_elem2elem(MacroMesh *m, Face4Sort *face)
     m->nbfaces++;
   }
 
-  m->face2elem = malloc(4 * sizeof(int) * m->nbfaces);
+  m->face2elem = calloc(4 * m->nbfaces,sizeof(int));
   printf("nfaces=%d\n", m->nbfaces);
 
   /* m->nbfaces = 0; */
@@ -463,7 +466,7 @@ void suppress_zfaces(MacroMesh *m)
   printf("Old num faces=%d, new num faces=%d\n", m->nbfaces, newfacecount);
 
   int* oldf = m->face2elem;
-  m->face2elem = malloc(4 * sizeof(int) * newfacecount);
+  m->face2elem = calloc(4 * newfacecount, sizeof(int));
 
   newfacecount = 0;
   for(int ifa = 0; ifa < m->nbfaces; ifa++) {
@@ -501,7 +504,7 @@ void suppress_yfaces(MacroMesh *m)
   printf("Old num faces=%d, new num faces=%d\n", m->nbfaces, newfacecount);
 
   int* oldf = m->face2elem;
-  m->face2elem = malloc(4 * sizeof(int) * newfacecount);
+  m->face2elem = calloc(4 * newfacecount,sizeof(int));
 
   newfacecount = 0;
   for(int ifa = 0; ifa < m->nbfaces; ifa++) {
@@ -538,7 +541,7 @@ void suppress_double_faces(MacroMesh *m)
   printf("Old num faces=%d, new num faces=%d\n", m->nbfaces, newfacecount);
 
   int* oldf = m->face2elem;
-  m->face2elem = malloc(4 * sizeof(int) * newfacecount);
+  m->face2elem = calloc(4 * newfacecount, sizeof(int));
 
   newfacecount = 0;
   for(int ifa = 0; ifa < m->nbfaces; ifa++) {
@@ -589,7 +592,7 @@ void build_node2elem(MacroMesh *m)
   (m->max_node2elem)++;
   printf("max number of elems touching a node: %d\n", m->max_node2elem - 1);
 
-  m->node2elem = malloc((m->max_node2elem + 1) * m->nbnodes * sizeof(int));
+  m->node2elem = calloc((m->max_node2elem + 1) * m->nbnodes,sizeof(int));
   assert(m->node2elem);
 
   // fill the array with -1's for marking the end of neighbours
@@ -623,20 +626,21 @@ void BuildConnectivity(MacroMesh* m)
   assert(!m->is_build);
   printf("Build connectivity...\n");
 
-  real *bounds = malloc(6 * sizeof(real));
+  real *bounds = calloc(6,sizeof(real));
   macromesh_bounds(m, bounds);
 
-  printf("bounds: %f, %f, %f, %f, %f, %f\n",
+  printf("bounds: %.5e, %.5e, %.5e, %.5e, %.5e, %.5e\n",
 	 bounds[0], bounds[1], bounds[2], bounds[3], bounds[4], bounds[5]);
 
-  printf("bounds: %f, %f, %f, %f, %f, %f\n",
+  printf("bounds:  %.5e, %.5e, %.5e, %.5e, %.5e, %.5e\n",
 	 m->xmin[0],m->xmax[0],
 	 m->xmin[1],m->xmax[1],
 	 m->xmin[2],m->xmax[2]
 	 );
   // Build a list of faces each face is made of four corners of the
   // hexaedron mesh
-  Face4Sort *face = malloc(6 * sizeof(Face4Sort) * m->nbelems);
+  //Face4Sort *face = malloc(6 * sizeof(Face4Sort) * m->nbelems);
+  Face4Sort *face = calloc(6 *  m->nbelems, sizeof(Face4Sort));
   build_face(m, face);
   build_elem2elem(m, face);
   free(face);
@@ -650,14 +654,14 @@ void BuildConnectivity(MacroMesh* m)
   /* 	     ie,ifa,m->elem2elem[ifa+6*ie]); */
   /*   } */
   /* } */
-    
+  
   if(m->is2d) suppress_zfaces(m);
   if(m->is1d) {
     suppress_zfaces(m);
     suppress_yfaces(m);
   }
 
-
+  
   // update connectivity if the mesh is periodic
   // in some directions
 
@@ -1473,3 +1477,35 @@ void Detect1DMacroMesh(MacroMesh* m){
 
 
 
+void FreeMacroMesh(MacroMesh *m){
+
+  if(m->boundaryface !=NULL){
+    free(m->boundaryface);
+  }
+  if(m->macrointerface != NULL){
+    free(m->macrointerface);
+  }
+
+  if(m->elem2node !=NULL){
+    free(m->elem2node);
+  }
+
+  if(m->elem2elem !=NULL){
+  free(m->elem2elem);
+  }
+
+  if(m->face2elem !=NULL){
+    free(m->face2elem);
+  }
+  
+  if(m->node2elem !=NULL){
+    free(m->node2elem);
+  }
+
+  if(m->node !=NULL){
+    free(m->node);
+  }
+
+
+  
+}

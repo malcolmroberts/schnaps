@@ -14,7 +14,7 @@ SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 #set(CMAKE_C_FLAGS " -std=c99 -lumfpack -lamd -lblas -lsuitesparseconfig -lcholmod -lcolamd -D_DOUBLE_PRECISION
 # -D_SCHNAPS_DIR=${PROJECT_SOURCE_DIR} -O3 -g  ")
 #set(CMAKE_C_FLAGS " -std=c99 -D_DOUBLE_PRECISION -D_SCHNAPS_DIR=${PROJECT_SOURCE_DIR} -O3 -g  ")
-set(CMAKE_C_FLAGS " -std=gnu99 -D_SCHNAPS_DIR=${PROJECT_SOURCE_DIR} -O3")
+set(CMAKE_C_FLAGS " -std=gnu99 -D_DOUBLE_PRECISION -D_SCHNAPS_DIR=${PROJECT_SOURCE_DIR} -O3 ")
 #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_DOUBLE_PRECISION")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g")
 # needed for mac
@@ -111,11 +111,11 @@ IF(BUILD_PARALUTION)
   INCLUDE(ExternalProject)
   SET(PARALUTION_VERSION 1.0.0 CACHE STRING "Paralution version number")
   EXTERNALPROJECT_ADD( paralution-${PARALUTION_VERSION}
-    URL  http://www.paralution.com/downloads/paralution-${PARALUTION_VERSION}.tar.gz
-    CMAKE_ARGS -DSUPPORT_CUDA=OFF -DSUPPORT_OMP=OFF
-    -DBUILD_EXAMPLES=OFF -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER} -O3
-    INSTALL_COMMAND ""
-    )
+     URL  http://www.paralution.com/downloads/paralution-${PARALUTION_VERSION}.tar.gz
+     CMAKE_ARGS -DSUPPORT_CUDA=OFF -DSUPPORT_OMP=OFF -DSUPPORT_OCL=OFF -DSUPPORT_MIC=OFF
+   -DBUILD_EXAMPLES=OFF -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER} -O3
+     INSTALL_COMMAND ""
+  )
 
   INCLUDE_DIRECTORIES(${CMAKE_BINARY_DIR}/paralution-${PARALUTION_VERSION}-prefix/src/paralution-${PARALUTION_VERSION}/src/)
   LINK_DIRECTORIES(${CMAKE_BINARY_DIR}/paralution-${PARALUTION_VERSION}-prefix/src/paralution-${PARALUTION_VERSION}-build/lib)
@@ -149,6 +149,8 @@ list(APPEND
   src/schnaps.h
   src/simulation.c
   src/simulation.h
+  src/linear_solver.h
+  src/linear_solver.c
   src/field.c
   src/field.h
   src/interface.h
@@ -187,14 +189,16 @@ list(APPEND
   src/csparse_spu.c
   src/dpackfgmres.h
   src/dpackfgmres.c
-  src/linear_solver.h
-  src/linear_solver.c
   src/advanced_linear_solver.h
   src/advanced_linear_solver.c
   src/solvercontinuous.h
   src/solvercontinuous.c
+  src/physBased_PC.h
+  src/physBased_PC.c
   src/solverpoisson.h
   src/solverpoisson.c
+  src/solverwave.h
+  src/solverwave.c
   src/quantities_vp.h
   src/quantities_vp.c
   src/diagnostics_vp.h
@@ -351,7 +355,7 @@ add_executable(
   testperiodic
   test/test.h
   test/testperiodic.c
-  )
+)
 target_link_libraries(testperiodic ${LIBS})
 add_test(testperiodic testperiodic)
 
@@ -380,13 +384,13 @@ add_executable(
 target_link_libraries(testmeq2 ${LIBS})
 add_test(testmeq2 testmeq2)
 
-add_executable(
-  testmaxwell2d
-  test/test.h
-  test/testmaxwell2d.c
-  )
-target_link_libraries(testmaxwell2d ${LIBS})
-add_test(testmaxwell2d testmaxwell2d)
+  add_executable(
+    testmaxwell2d
+    test/test.h
+    test/testmaxwell2d.c
+    )
+  target_link_libraries(testmaxwell2d ${LIBS})
+  add_test(testmaxwell2d testmaxwell2d)
 
 add_executable(
   testfieldrk4
@@ -431,15 +435,6 @@ target_link_libraries(testskyline ${LIBS})
 add_test(testskyline testskyline)
 
 add_executable(
-  testskyline_spu
-  test/test.h
-  test/testskyline_spu.c
-  )
-target_link_libraries(testskyline_spu ${LIBS})
-add_test(testskyline_spu testskyline_spu)
-
-
-add_executable(
   testnonlinearsolver
   test/test.h
   test/testnonlinearsolver.c
@@ -451,7 +446,7 @@ add_executable(
   testpoisson
   test/test.h
   test/testpoisson.c
-  )
+)
 target_link_libraries(testpoisson ${LIBS})
 add_test(testpoisson testpoisson)
 
@@ -459,7 +454,7 @@ add_executable(
   testpoisson2d
   test/test.h
   test/testpoisson2d.c
-  )
+)
 target_link_libraries(testpoisson2d ${LIBS})
 add_test(testpoisson2d testpoisson2d)
 
@@ -467,26 +462,26 @@ add_executable(
   testwave2d
   test/test.h
   test/testwave2d.c
-  )
+)
 target_link_libraries(testwave2d ${LIBS})
 add_test(testwave2d testwave2d)
 
 
 add_executable(
-  testwave2d-steady
+  testshallowwater2d
   test/test.h
-  test/testwave2d-steady.c
-  )
-target_link_libraries(testwave2d-steady ${LIBS})
-add_test(testwave2d-steady testwave2d-steady)
+  test/testshallowwater2d.c
+)
+target_link_libraries(testshallowwater2d ${LIBS})
+add_test(testshallowwater2d testshallowwater2d)
 
 add_executable(
-  testtransport_steady
+  testshimplicit
   test/test.h
-  test/testtransport_steady.c
-  )
-target_link_libraries(testtransport_steady ${LIBS})
-add_test(testtransport_steady testtransport_steady)
+  test/testshimplicit.c
+)
+target_link_libraries(testshimplicit ${LIBS})
+add_test(testshimplicit testshimplicit)
 
 add_executable(
   testlocal_implicit
@@ -519,22 +514,22 @@ add_executable(
   )
 target_link_libraries(testnomatrix_implicit_spu ${LIBS})
 add_test(testnomatrix_implicit_spu testnomatrix_implicit_spu)
- 
-add_executable(
-  testshequilibrium2d
+
+ add_executable(
+  test_transportvp
   test/test.h
-  test/testshequilibrium2d.c
-  )
-target_link_libraries(testshequilibrium2d ${LIBS})
-add_test(testshequilibrium2d testshequilibrium2d)
+  test/test_transportvp.c
+)
+target_link_libraries(test_transportvp ${LIBS})
+add_test(test_transportvp test_transportvp)
 
 add_executable(
-  testshperiodic2d
+  testrealpc
   test/test.h
-  test/testshperiodic2d.c
-  )
-target_link_libraries(testshperiodic2d ${LIBS})
-add_test(testshperiodic2d testshperiodic2d)
+  test/testrealpc.c
+)
+target_link_libraries(testrealpc ${LIBS})
+
 
 # umfpack tests
 if(SuiteSparse_FOUND)
@@ -626,6 +621,7 @@ if(OPENCL_FOUND)
 endif(OPENCL_FOUND)
 
 IF(BUILD_PARALUTION)
+
 
   SET(MATRIX_FILE gr_30_30.mtx)
 

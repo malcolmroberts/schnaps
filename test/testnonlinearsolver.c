@@ -22,7 +22,7 @@ int main(void) {
 
 
 
-void JFNonlinearVector_GX(void* system,Simulation  * simu,real * solvector,real *nlvector){
+void JFNonlinearVector_GX(Simulation *simu,void* system,real * solvector,real *nlvector){
   JFLinearSolver* lsol=system;
 
   nlvector[0] = 9*solvector[0]*solvector[0]+36*solvector[1]*solvector[1]+4*solvector[2]*solvector[2];
@@ -31,7 +31,7 @@ void JFNonlinearVector_GX(void* system,Simulation  * simu,real * solvector,real 
 
 }
 
-void NonlinearVector_GX(void* system,Simulation * simu,real * solvector,real *nlvector){
+void NonlinearVector_GX(Simulation *simu,void* system,real * solvector,real *nlvector){
   LinearSolver* lsol=system;
 
   nlvector[0] = 9*solvector[0]*solvector[0]+36*solvector[1]*solvector[1]+4*solvector[2]*solvector[2];
@@ -48,15 +48,22 @@ int TestNonLinearSolver(void){
   real b[_NN],sold[_NN],soln[_NN],fsoln[_NN],rhs[_NN];
   double verr;
 
+#ifdef PARALUTION 
+  paralution_begin();
+#endif 
+
   LinearSolver sky;
+  Simulation simu;
   JFLinearSolver skyJF;
-    Skyline * skymat;
+  Skyline * skymat;
+  //MatrixStorage ms = SKYLINE_SPU;
+  MatrixStorage ms = SKYLINE;
 
   printf("/*****************************************************/ \n");
   printf("/*************** Newton + LU *************************/ \n");
   printf("/*****************************************************/ \n");
     
-  InitLinearSolver(&sky,_NN,NULL,NULL);
+  InitLinearSolver(&sky,_NN,&ms,NULL);
 
   sky.solver_type = LU;
   sky.pc_type=NONE;
@@ -92,9 +99,12 @@ int TestNonLinearSolver(void){
   fsoln[0] = 0;
   fsoln[1] = 0;
   fsoln[2] = 0;
-  
-  sky.sol=sold;
-  sky.rhs=rhs;
+
+  for(int i=0;i<_NN;i++){
+    sky.rhs[i]=rhs[i];
+    sky.sol[i]=sold[i];
+  }
+ 
 
   for(int i=0;i<_NN;i++){
     for(int j=0;j<_NN;j++){
@@ -107,7 +117,7 @@ int TestNonLinearSolver(void){
   
   for(int i=1;i<5;i++){
 
-    NonlinearVector_GX(&sky,NULL,soln,fsoln);
+    NonlinearVector_GX(NULL,&sky,soln,fsoln);
     rhs[0] = b[0]-fsoln[0];
     rhs[1] = b[1]-fsoln[1];
     rhs[2] = b[2]-fsoln[2];
@@ -136,7 +146,7 @@ int TestNonLinearSolver(void){
     skymat=(Skyline*)sky.matrix;
     skymat->is_lu=false;
   
-    SolveLinearSolver(&sky);
+    Advanced_SolveLinearSolver(&sky,&simu);
     
     soln[0] = soln[0]+sky.sol[0];
     soln[1] = soln[1]+sky.sol[1];
@@ -168,8 +178,9 @@ int TestNonLinearSolver(void){
   printf("/*************** Newton + GMRES **********************/ \n");
   printf("/*****************************************************/ \n");
 
- InitLinearSolver(&sky,_NN,NULL,NULL);
+ InitLinearSolver(&sky,_NN,&ms,NULL);
 
+ 
   sky.solver_type = GMRES;
   sky.pc_type=NONE;
   sky.storage_type=SKYLINE;
@@ -208,8 +219,10 @@ int TestNonLinearSolver(void){
   fsoln[1] = 0;
   fsoln[2] = 0;
   
-  sky.sol=sold;
-  sky.rhs=rhs;
+  for(int i=0;i<_NN;i++){
+    sky.rhs[i]=rhs[i];
+    sky.sol[i]=sold[i];
+  }
 
   for(int i=0;i<_NN;i++){
     for(int j=0;j<_NN;j++){
@@ -222,7 +235,7 @@ int TestNonLinearSolver(void){
   
   for(int i=1;i<5;i++){
 
-    NonlinearVector_GX(&sky,NULL,soln,fsoln);
+    NonlinearVector_GX(NULL,&sky,soln,fsoln);
     rhs[0] = b[0]-fsoln[0];
     rhs[1] = b[1]-fsoln[1];
     rhs[2] = b[2]-fsoln[2];
@@ -251,7 +264,7 @@ int TestNonLinearSolver(void){
     skymat=(Skyline*)sky.matrix;
     skymat->is_lu=false;
   
-    SolveLinearSolver(&sky);
+    Advanced_SolveLinearSolver(&sky,&simu);
     
     soln[0] = soln[0]+sky.sol[0];
     soln[1] = soln[1]+sky.sol[1];
@@ -314,13 +327,15 @@ int TestNonLinearSolver(void){
   fsoln[0] = 0;
   fsoln[1] = 0;
   fsoln[2] = 0;
-  
-  skyJF.sol=sold;
-  skyJF.soln=soln;
-  skyJF.rhs=rhs;
+
+   for(int i=0;i<_NN;i++){
+    skyJF.rhs[i]=rhs[i];
+    skyJF.sol[i]=sold[i];
+    skyJF.soln[i]=soln[i];
+  }
   
   for(int i=1;i<5;i++){
-    JFNonlinearVector_GX(&skyJF,NULL,soln,fsoln);
+    JFNonlinearVector_GX(NULL,&skyJF,soln,fsoln);
     
     rhs[0] = b[0]-fsoln[0];
     rhs[1] = b[1]-fsoln[1];
@@ -355,6 +370,10 @@ int TestNonLinearSolver(void){
   
 
   if(test1==1 &&  test2==1 && test3==1) test=1;
+
+#ifdef PARALUTION 
+  paralution_end();
+#endif 
 
   return test;
 

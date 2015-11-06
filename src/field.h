@@ -95,9 +95,6 @@ typedef struct field {
   real *res;
   starpu_data_handle_t res_handle;
 
-
-  
-
   //! \brief Pointer to a generic function called before computing dtfield. 
   //! \param[inout] f a field (to be converted from void*)
   void (*pre_dtfield)(void *f, real *w);
@@ -120,8 +117,6 @@ typedef struct field {
   //! \param[in] ipg glop index
   //! \param[in] iv field component index
   int (*varindex)(int* deg, int *ref, int m, int ipg, int iv);
-
-  
 
 } field;
 
@@ -202,8 +197,6 @@ void DGMass(field *f, real *w, real *dtw);
 //! \param[in] f a field
 void DGSource(field *f, real *w, real *dtw);
 
-
-
 /* //! \brief save the results in the gmsh format */
 /* //! \param[in] typplot index of the field variable to plot. */
 /* //! \param[in] compare if true, the numerical solution is compared */
@@ -224,8 +217,6 @@ void InterpField(field *f,real* xref,real* w);
 //! \brief  display the field on screen
 //! \param[in] f the field.
 void Displayfield(field *f);
-
-
 
 
 #endif
