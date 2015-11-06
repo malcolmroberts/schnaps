@@ -49,8 +49,9 @@ int Test_Graph_Implicit_SPU(void) {
   bool test = true;
 
   MacroMesh mesh;
-  //ReadMacroMesh(&mesh,"../test/testcube2.msh");
-  ReadMacroMesh(&mesh,"cubegros.msh");
+
+  ReadMacroMesh(&mesh,"../test/testcube2.msh");
+  //ReadMacroMesh(&mesh,"cubegros.msh");
   //ReadMacroMesh(&mesh,"../test/testmacromesh.msh");
   Detect2DMacroMesh(&mesh);
   
