@@ -19,7 +19,7 @@ int main(void) {
 } 
 
 
-int TestGyro(void) {
+int TestGyro(void) { /*
 
   bool test=true;
 
@@ -97,6 +97,6 @@ int TestGyro(void) {
   //test= test && (dd<3e-4);
 
 
-  return test;
+  return test; */
 
 };

@@ -27,7 +27,7 @@ int main(int argc, char *argv[]) {
   return !resu;
 }
 
-int TestMHD1D(int argc, char *argv[]) {
+int TestMHD1D(int argc, char *argv[]) { /*
   real cfl = 0.2;
   real tmax = 1.0;
   bool writemsh = false;
@@ -167,5 +167,5 @@ int TestMHD1D(int argc, char *argv[]) {
   printf("time per RK2 (s):\n");
   printf("%f\n", executiontime / (real)f.itermax);
 
-  return test;
+  return test; */
 }

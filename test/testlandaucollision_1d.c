@@ -29,7 +29,7 @@ int main(void) {
 } 
 
 
-int TestLandauCollision_1D(void) {
+int TestLandauCollision_1D(void) { /*
 
   bool test=true;
 
@@ -112,11 +112,11 @@ int TestLandauCollision_1D(void) {
 
   test= 1;
 
-  return test;
+  return test; */
 
 }
 
-void Test_Landau_Damping_ImposedData(const real x[3], const real t, real w[])
+/* void Test_Landau_Damping_ImposedData(const real x[3], const real t, real w[])
 {
   //parameters of the case
   
@@ -192,3 +192,5 @@ void PlotVlasovPoisson(void* vf, real * w){
   Charge_total(f,w,t_charge,4);
   vf=f;
 }
+
+*/

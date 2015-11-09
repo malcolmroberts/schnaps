@@ -27,7 +27,7 @@ int main(int argc, char *argv[]) {
   return !resu;
 }
 
-int TestOrszagTang(int argc, char *argv[]) {
+int TestOrszagTang(int argc, char *argv[]) { /*
   real cfl = 0.2;
   real tmax = 0.1;
   bool writemsh = false;
@@ -152,5 +152,5 @@ int TestOrszagTang(int argc, char *argv[]) {
   //Gnuplot(&f,0,0.0,"data1D.dat");
 
 
-  return test;
+  return test; */
 }

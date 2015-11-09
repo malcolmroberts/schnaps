@@ -27,7 +27,7 @@ int main(int argc, char *argv[]) {
   return !resu;
 }
 
-int TestDoubleTearing(int argc, char *argv[]) {
+int TestDoubleTearing(int argc, char *argv[]) { /*
   real cfl = 0.1;
   real tmax = 0.1;
   bool writemsh = false;
@@ -150,5 +150,5 @@ int TestDoubleTearing(int argc, char *argv[]) {
   //Gnuplot(&f,0,0.0,"data1D.dat");
 
 
-  return test;
+  return test; */
 }

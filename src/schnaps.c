@@ -10,7 +10,7 @@
 #endif
 int main(int argc, char *argv[]) 
 {
-  int dimension = 2; // Dimension of simulation
+  /*  int dimension = 2; // Dimension of simulation
 #ifdef _WITH_OPENCL
   bool usegpu = true;
 #else
@@ -304,5 +304,5 @@ int main(int argc, char *argv[])
  
   printf("\n");
   printf("L2 error: %f\n", dd);
-  return 0;
+  return 0; */
 }

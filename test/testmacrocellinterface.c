@@ -6,7 +6,7 @@
 #include <math.h>
 #include "clutils.h"
 
-int TestMacroFace(void){
+int TestMacroFace(void){ /*
   bool test = true;
 
   if(!cldevice_is_acceptable(nplatform_cl, ndevice_cl)) {
@@ -91,7 +91,7 @@ int TestMacroFace(void){
   /* f.interp.interp_param[3] = 3; // z direction degree */
   /* f.interp.interp_param[4] = 1; // x direction refinement */
   /* f.interp.interp_param[5] = 1; // y direction refinement */
-  /* f.interp.interp_param[6] = 1; // z direction refinement */
+  /* f.interp.interp_param[6] = 1; // z direction refinement 
   
   Initfield(&f);
 
@@ -194,9 +194,9 @@ int TestMacroFace(void){
   /*   maxerr = fmax(fabs(fdtwn_opencl[i] - fdtwn_slow[i]), maxerr); */
   /* } */
   /* printf("Max difference between OpenCL and OpenMP-slow: %f\n", maxerr); */
-  /* test = test && (maxerr < tolerance); */
+  /* test = test && (maxerr < tolerance); 
 
-  return test;
+  return test; */
 }
 
 int main(void) {

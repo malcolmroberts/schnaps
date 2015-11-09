@@ -32,7 +32,7 @@ int main(void) {
   return !resu;
 } 
 
-int TestPCWave(void) {
+int TestPCWave(void) { /*
 
   bool test = true;
   real dd;
@@ -439,5 +439,5 @@ void Wave_Upwind_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
 				       real *flux) {
   real wR[3];
   TestPeriodic_Wave_ImposedData(x , t, wR);
-  Wave_Upwind_NumFlux(wL, wR, vnorm, flux);
+  Wave_Upwind_NumFlux(wL, wR, vnorm, flux); */
 }
