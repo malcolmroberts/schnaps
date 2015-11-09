@@ -86,12 +86,19 @@ void ShallowWater_classical_SourceTerm(const real *x, const real t, const real *
   //! \param[out] source : the source
 void ShallowWater_periodic_SourceTerm(const real *x, const real t, const real *w, real *source);
 
- //! \brief a pointer to the source function for the Steady State case
+ //! \brief a pointer to the source function for the Steady State case with u imposed
  //! \param[in] x : space position
  //! \param[in] t : time
   //! \param[in] w :  state
   //! \param[out] source : the source
-void ShallowWater_SteadyState_SourceTerm(const real *x, const real t, const real *w, real *source);
+void ShallowWater_SteadyState_U_SourceTerm(const real *x, const real t, const real *w, real *source);
+
+ //! \brief a pointer to the source function for the Steady State case with p imposed
+ //! \param[in] x : space position
+ //! \param[in] t : time
+  //! \param[in] w :  state
+  //! \param[out] source : the source
+void ShallowWater_SteadyState_P_SourceTerm(const real *x, const real t, const real *w, real *source);
 
 
 //! \brief init solution for x
@@ -112,23 +119,32 @@ void TestSH_equilibrium_InitData(real *x, real *w);
 //! \param[out] w : solution exact
 void TestSH_periodic_ImposedData(const real *x, const real t, real *w);
 
-
-//! \brief imposed SteadyState solution for x
+//! \brief imposed SteadyState with u imposed solution for x
 //! \param[in] x : current position
 //! \param[in] t : current time
 //! \param[out] w : solution exact
-void TestSH_SteadyState_ImposedData(const real *x, const real t, real *w);
+void TestSH_SteadyState_U_ImposedData(const real *x, const real t, real *w);
 
+//! \brief imposed SteadyState with p imposed solution for x
+//! \param[in] x : current position
+//! \param[in] t : current time
+//! \param[out] w : solution exact
+void TestSH_SteadyState_P_ImposedData(const real *x, const real t, real *w);
 
 //! \brief init solution for x
 //! \param[in] x : current position
 //! \param[out] w : solution exact
 void TestSH_periodic_InitData(real *x, real *w);
 
-//! \brief init a steady solution for x
+//! \brief init a steady solution with u imposed for x
 //! \param[in] x : current position
 //! \param[out] w : solution exact
-void TestSH_SteadyState_InitData(real *x, real *w);
+void TestSH_SteadyState_U_InitData(real *x, real *w);
+
+//! \brief init a steady solution with p imposed for x
+//! \param[in] x : current position
+//! \param[out] w : solution exact
+void TestSH_SteadyState_P_InitData(real *x, real *w);
 
 
 #endif
