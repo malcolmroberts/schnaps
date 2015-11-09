@@ -45,7 +45,7 @@ void Wave_Centered_NumFlux(real wL[],real wR[],real* vnorm,real* flux);
 void TestPeriodic_Wave_ImposedData(const real *x, const real t, real *w);
 
 
-//! \brief init solution for x
+//! \brief init periodic solution for x
 //! \param[in] x : current position
 //! \param[out] w : solution exact
 void TestPeriodic_Wave_InitData(real *x, real *w);
@@ -71,7 +71,7 @@ void ShallowWater_HLL_NumFlux(real wL[],real wR[],real* vnorm,real* flux);
 void ShallowWater_Rusanov_NumFlux(real wL[],real wR[],real* vnorm,real* flux);
 
 
- //! \brief a pointer to the source function
+ //! \brief a pointer to the source function for the equilibrium case
  //! \param[in] x : space position
  //! \param[in] t : time
   //! \param[in] w :  state
@@ -79,19 +79,19 @@ void ShallowWater_Rusanov_NumFlux(real wL[],real wR[],real* vnorm,real* flux);
 void ShallowWater_classical_SourceTerm(const real *x, const real t, const real *w, real *source);
 
 
- //! \brief a pointer to the source function
+ //! \brief a pointer to the source function for the periodic case
  //! \param[in] x : space position
  //! \param[in] t : time
   //! \param[in] w :  state
   //! \param[out] source : the source
 void ShallowWater_periodic_SourceTerm(const real *x, const real t, const real *w, real *source);
 
- //! \brief a pointer to the source function for the HLL scheme
+ //! \brief a pointer to the source function for the Steady State case
  //! \param[in] x : space position
  //! \param[in] t : time
   //! \param[in] w :  state
   //! \param[out] source : the source
-void ShallowWater_HLLWB_SourceTerm(const real *x, const real t, const real *w, real *source);
+void ShallowWater_SteadyState_SourceTerm(const real *x, const real t, const real *w, real *source);
 
 
 //! \brief init solution for x
@@ -113,9 +113,22 @@ void TestSH_equilibrium_InitData(real *x, real *w);
 void TestSH_periodic_ImposedData(const real *x, const real t, real *w);
 
 
+//! \brief imposed SteadyState solution for x
+//! \param[in] x : current position
+//! \param[in] t : current time
+//! \param[out] w : solution exact
+void TestSH_SteadyState_ImposedData(const real *x, const real t, real *w);
+
+
 //! \brief init solution for x
 //! \param[in] x : current position
 //! \param[out] w : solution exact
 void TestSH_periodic_InitData(real *x, real *w);
+
+//! \brief init a steady solution for x
+//! \param[in] x : current position
+//! \param[out] w : solution exact
+void TestSH_SteadyState_InitData(real *x, real *w);
+
 
 #endif

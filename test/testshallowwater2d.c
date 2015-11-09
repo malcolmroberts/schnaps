@@ -7,6 +7,32 @@
 #include "collision.h"
 #include "waterwave2d.h"
 
+
+//! \brief boundary rusanov flux based for SteadyState Shallow Water case
+//! \param[in] t : current time
+//! \param[in] x : current position
+//! \param[in] wL : states
+//! \param[in] vnorm : normal vector
+//! \param[out] flux : the flux
+void SteadyState_Rusanov_BoundaryFlux(real *x, real t, real *wL, real *vnorm,real *flux);
+
+//! \brief boundary HLL flux based for SteadyState Shallow Water case
+//! \param[in] t : current time
+//! \param[in] x : current position
+//! \param[in] wL : states
+//! \param[in] vnorm : normal vector
+//! \param[out] flux : the flux
+void SteadyState_HLL_BoundaryFlux(real *x, real t, real *wL, real *vnorm,real *flux);
+
+//! \brief boundary Roe flux based for SteadyState Shallow Water case
+//! \param[in] t : current time
+//! \param[in] x : current position
+//! \param[in] wL : states
+//! \param[in] vnorm : normal vector
+//! \param[out] flux : the flux
+void SteadyState_Roe_BoundaryFlux(real *x, real t, real *wL, real *vnorm,real *flux);
+
+
 //! \brief boundary rusanov flux based for periodic Shallow Water case
 //! \param[in] t : current time
 //! \param[in] x : current position
@@ -62,10 +88,12 @@ int main(void) {
     
   int resu1 =0;
   int resu2 =0;
+  int resu3 =0;
   resu1=Test_SH_equilibrium();
   resu2=Test_SH_periodic();
+  resu3=Test_SH_SteadyState();
 	 
-  if (resu1 + resu2 >1) printf("shallow water  test OK !\n");
+  if (resu1 + resu2 + resu3 >2) printf("shallow water  test OK !\n");
   else printf("shallow water test failed !\n");
 
   return !resu1;
@@ -294,7 +322,7 @@ int Test_SH_periodic(void) {
   if(dd+dd2+dd3 < tolerance){
     test3=1;     
   }
-  printf("L2 HLL error %.8e\n", dd+dd2+dd3);
+  printf("L2 Roe error %.8e\n", dd+dd2+dd3);
 
   // Save the results and the error
   /*PlotFields(0,false, &simu3, "h", "dgvisu_h.msh");
@@ -310,6 +338,133 @@ int Test_SH_periodic(void) {
   return test;
 }
 
+int Test_SH_SteadyState(void) {
+  int test1 = 0,test2 = 0,test3=0,test = 0;
+  real tmax=0.0,dt=0.0,tolerance=0.0,dd=0.0,dd2=0,dd3=0;
+
+  MacroMesh mesh;
+  ReadMacroMesh(&mesh,"../test/testcube.msh");
+  Detect2DMacroMesh(&mesh);
+  
+  real A[3][3] = {{_LENGTH_DOMAIN, 0, 0}, {0, _LENGTH_DOMAIN, 0}, {0, 0,1}};
+  real x0[3] = {0, 0, 0};
+  AffineMapMacroMesh(&mesh,A,x0);
+  BuildConnectivity(&mesh);
+
+  Model model;
+
+  int deg[]={4, 4, 0};
+  int raf[]={4, 4, 1};
+
+  assert(mesh.is2d);
+  CheckMacroMesh(&mesh, deg, raf);
+  
+
+  /******* Test for Rusanov ******/
+  model.m=6; 
+  model.NumFlux=ShallowWater_Rusanov_NumFlux;
+  model.InitData = TestSH_SteadyState_InitData;
+  model.ImposedData = TestSH_SteadyState_ImposedData;
+  model.BoundaryFlux = SteadyState_Rusanov_BoundaryFlux;
+  model.Source = ShallowWater_SteadyState_SourceTerm;
+
+  Simulation simu;
+
+  InitSimulation(&simu, &mesh, deg, raf, &model);
+  
+  tmax = 0.005;
+  simu.vmax = 1;//_SPEED_WAVE;
+  simu.cfl = 0.025;
+  RK2(&simu, tmax);
+
+  dd = L2error_onefield(&simu,0);
+  dd2 = L2error_onefield(&simu,1);
+  dd3 = L2error_onefield(&simu,2);
+  tolerance = 5e-3;
+  
+  if(dd+dd2+dd3 < tolerance){
+    test1=1;     
+  }
+  printf("L2 Rusanov error %.8e\n", dd+dd2+dd3);
+  
+  /******* Test for hLL ******/
+  model.m=6; 
+  model.NumFlux=ShallowWater_HLL_NumFlux;
+  model.InitData = TestSH_SteadyState_InitData;
+  model.ImposedData = TestSH_SteadyState_ImposedData;
+  model.BoundaryFlux = SteadyState_HLL_BoundaryFlux;
+  model.Source = ShallowWater_SteadyState_SourceTerm;
+
+  Simulation simu2;
+
+  InitSimulation(&simu2, &mesh, deg, raf, &model);
+  
+  tmax = 0.005;
+  simu2.vmax = 1;//_SPEED_WAVE;
+  simu2.cfl = 0.025;
+  RK2(&simu2, tmax);
+
+  dd = L2error_onefield(&simu2,0);
+  dd2 = L2error_onefield(&simu2,1);
+  dd3 = L2error_onefield(&simu2,2);
+  tolerance = 5e-3;
+  
+  if(dd+dd2+dd3 < tolerance){
+    test2=1;     
+  }
+  printf("L2 HLL error %.8e\n", dd+dd2+dd3);
+
+  /******* Test for Roe ******/
+   model.m=6; 
+  model.NumFlux=ShallowWater_Roe_NumFlux;
+  model.InitData = TestSH_SteadyState_InitData;
+  model.ImposedData = TestSH_SteadyState_ImposedData;
+  model.BoundaryFlux = SteadyState_Roe_BoundaryFlux;
+  model.Source = ShallowWater_SteadyState_SourceTerm;
+
+  Simulation simu3;
+
+  InitSimulation(&simu3, &mesh, deg, raf, &model);
+  
+  tmax = 0.005;
+  simu3.vmax = 1;//_SPEED_WAVE;
+  simu3.cfl = 0.025;
+  RK2(&simu3, tmax);
+
+  dd = L2error_onefield(&simu3,0);
+  dd2 = L2error_onefield(&simu3,1);
+  dd3 = L2error_onefield(&simu3,2);
+  tolerance = 5e-3;
+
+  real dd4 = L2error_onefield(&simu2,3);
+  real dd5 = L2error_onefield(&simu2,4);
+  real dd6 = L2error_onefield(&simu2,5);
+
+  printf("erreur h L2=%.12e\n", dd);
+  printf("erreur u1 L2=%.12e\n", dd2);
+  printf("erreur u2 L2=%.12e\n", dd3);
+  printf("erreur b L2=%.12e\n", dd4);
+  printf("erreur bx L2=%.12e\n", dd5);
+  printf("erreur by L2=%.12e\n", dd6);
+  
+  if(dd+dd2+dd3 < tolerance){
+    test3=1;     
+  }
+  printf("L2 Roe error %.8e\n", dd+dd2+dd3);
+
+  // Save the results and the error
+  /*PlotFields(0,false, &simu3, "h", "dgvisu_h.msh");
+  PlotFields(1,false, &simu3, "u1", "dgvisu_u1.msh");
+  PlotFields(2,false, &simu3, "u2", "dgvisu_u2.msh");*/
+
+  if(test1 +test2+test3 > 2){
+    test=1;     
+  }
+
+    FreeMacroMesh(&mesh);
+
+  return test;
+}
 
 void TestSH_equilibrium_ImposedData(const real *x, const real t, real *w) {
 
@@ -417,6 +572,77 @@ void Periodic_Roe_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
 				       real *flux) {
   real wR[6];
   TestSH_periodic_ImposedData(x , t, wR);
+  ShallowWater_Roe_NumFlux(wL, wR, vnorm, flux);
+}
+
+
+void TestSH_SteadyState_ImposedData(const real *x, const real t, real *w) {
+
+  real alpha=1.0;
+  
+  w[0] = 1.0+alpha*((x[0]-x[0]*x[0])*(x[1]-x[1]*x[1]));
+  w[1] = ((x[0]-x[0]*x[0])*(1.0-2*x[1]))*w[0];
+  w[2] = -((x[1]-x[1]*x[1])*(1.0-2*x[0]))*w[0];
+  w[3] = 0.0;
+  w[4] = 0.0;
+  w[5] = 0.0;
+   
+
+}
+
+void TestSH_SteadyState_InitData(real *x, real *w) {
+  real t = 0;
+  TestSH_SteadyState_ImposedData(x, t, w);
+}
+
+
+
+void ShallowWater_SteadyState_SourceTerm(const real *x, const real t, const real *w, real *source){
+  real g=_GRAVITY;
+  real alpha=1.0;
+  real S_11, S_12,S_13, S_21, S_22, S_23, S_factor;
+  real wexact[6];
+
+  S_factor=alpha*(x[0]-x[0]*x[0])*(x[1]-x[1]*x[1])+1.0;
+
+  S_11=(x[0]-x[0]*x[0])*(1.0-2.0*x[1])*(1.0-2.0*x[1]);
+  S_12=2.0*(x[0]-x[0]*x[0])*(x[1]-x[1]*x[1]);
+  S_13=g*alpha*(x[1]-x[1]*x[1]);
+
+  S_21=(x[1]-x[1]*x[1])*(1.0-2.0*x[0])*(1.0-2.0*x[0]);
+  S_22=2.0*(x[0]-x[0]*x[0])*(x[1]-x[1]*x[1]);
+  S_23=g*alpha*(x[0]-x[0]*x[0]);
+
+
+  source[0]= 0.0;
+  source[1]= S_factor*(1.0-2.0*x[0])*(S_11+S_12+S_13);
+  source[2]= S_factor*(1.0-2.0*x[1])*(S_21+S_22+S_23);
+  source[3]= 0.0;
+  source[4]= 0.0;
+  source[5]= 0.0;
+ 
+
+};
+
+void SteadyState_Rusanov_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
+				       real *flux) {
+  real wR[6];
+  TestSH_SteadyState_ImposedData(x , t, wR);
+  ShallowWater_Rusanov_NumFlux(wL, wR, vnorm, flux);
+}
+
+void SteadyState_HLL_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
+				       real *flux) {
+  real wR[6];
+  TestSH_SteadyState_ImposedData(x , t, wR);
+  ShallowWater_HLL_NumFlux(wL, wR, vnorm, flux);
+}
+
+
+void SteadyState_Roe_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
+				       real *flux) {
+  real wR[6];
+  TestSH_SteadyState_ImposedData(x , t, wR);
   ShallowWater_Roe_NumFlux(wL, wR, vnorm, flux);
 }
 
