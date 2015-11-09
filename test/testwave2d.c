@@ -66,7 +66,7 @@ int Test_Wave_Periodic(void) {
 
   CheckMacroMesh(&mesh, deg, raf);
   Simulation simu;
-
+  EmptySimulation(&simu);
   InitSimulation(&simu, &mesh, deg, raf, &model);
  
   real tmax = 0.025;
@@ -88,7 +88,7 @@ int Test_Wave_Periodic(void) {
   PlotFields(2,false, &simu, "v", "dgvisu_exv.msh");
 
   Simulation simu2;
-
+  EmptySimulation(&simu2);
   InitSimulation(&simu2, &mesh, deg, raf, &model);
   ThetaTimeScheme(&simu2, tmax, simu.dt);
 
@@ -143,8 +143,8 @@ int Test_Wave_Steady(void) {
   int raf[]={2, 2, 1};
   
   CheckMacroMesh(&mesh, deg, raf);
-  Simulation simu, simu2;
-
+  Simulation simu;
+  EmptySimulation(&simu);
   InitSimulation(&simu, &mesh, deg, raf, &model);
 
   real tmax = 0.01;
@@ -165,6 +165,8 @@ int Test_Wave_Steady(void) {
 
   test = test && (dd < tolerance);
 
+  Simulation simu2;
+  EmptySimulation(&simu2);
   InitSimulation(&simu2, &mesh, deg, raf, &model);
   ThetaTimeScheme(&simu2, tmax, simu.dt);
   

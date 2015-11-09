@@ -71,7 +71,7 @@ int Testrealpc(void) {
     assert(mesh.is2d);
     CheckMacroMesh(&mesh, deg, raf);
     Simulation simu;
-
+    EmptySimulation(&simu);
     InitSimulation(&simu, &mesh, deg, raf, &model);
 
     ContinuousSolver cs;
@@ -182,7 +182,7 @@ int Testrealpc(void) {
     CheckMacroMesh(&mesh, deg2, raf2);
     
     Simulation simu2;
-
+    EmptySimulation(&simu2);
     InitSimulation(&simu2, &mesh, deg2, raf2, &model2); 
     ContinuousSolver cs;
     ContinuousSolver csSolve;
