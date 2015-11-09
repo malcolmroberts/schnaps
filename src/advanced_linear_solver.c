@@ -1,4 +1,3 @@
-#include "linear_solver.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -10,6 +9,7 @@
 #include "physBased_PC.h"
 #include "advanced_linear_solver.h"
 #include "linear_solver.h"
+#include "solverpoisson.h"
 
 void Advanced_SolveLinearSolver(LinearSolver* lsol, Simulation* simu){
   
@@ -187,7 +187,7 @@ void Advanced_GMRESSolver(LinearSolver* lsol, Simulation* simu){
      Init_Parameters_PhyBasedPC(&pb_pc);
      icntl[4]  = 2;
   }
-  else if ((lsol->pc_type == JACOBI) ||(lsol->pc_type == EXACT)){
+  else if (((lsol->pc_type == JACOBI) ||(lsol->pc_type == EXACT)) ||lsol->pc_type == LO_POISSON){
     icntl[4] = 2;
   }
      
@@ -287,6 +287,9 @@ void Advanced_GMRESSolver(LinearSolver* lsol, Simulation* simu){
     }
     else if (lsol->pc_type == JACOBI){
       Jacobi_PC(lsol,loc_z,loc_x);
+    }
+    else if (lsol->pc_type == LO_POISSON){
+      LowerOrderPC_Poisson(lsol,simu,loc_z,loc_x);
     }
     else {
       Vector_copy(loc_x,loc_z,N);
@@ -480,13 +483,50 @@ void SolveJFLinearSolver(JFLinearSolver* lsol,Simulation * simu){
     lsol->sol[ivec] = work[ivec+1];                    
   }
 
-
   free(work);
   free(loc_x);
   free(loc_y);
   free(loc_z);
+}
 
 
+
+void LowerOrderPC_Poisson(LinearSolver * lsol, Simulation *simu, real* globalSol, real*globalRHS){
+  Simulation simu2;
+  int deg_lo[]={4, 0, 0};
+  int raf_lo[]={8, 1, 1};
+  
+  
+  InitSimulation(&simu2, &simu->macromesh, deg_lo, raf_lo, &simu->fd[0].model);
+  ContinuousSolver ps;
+  
+  int nb_var=1;
+  int * listvar= malloc(nb_var * sizeof(int));
+  listvar[0]=_INDEX_PHI;
+  InitContinuousSolver(&ps,&simu2,1,nb_var,listvar);
+  
+  ps.matrix_assembly=ContinuousOperator_Poisson1D;
+  ps.rhs_assembly=NULL;
+   for (int i=0;i<ps.nb_fe_nodes;i++){
+     ps.lsol.rhs[i]=globalRHS[i];
+   }
+  ps.bc_assembly= ExactDirichletContinuousMatrix;
+  ps.postcomputation_assembly=NULL;
+
+  ps.lsol.solver_type=LU;
+  ps.lsol.tol=1.0e-4;
+  ps.lsol.pc_type=NONE;
+  ps.lsol.iter_max=10000;
+  ps.lsol.restart_gmres=30;
+  ps.lsol.is_CG=true;
+
+  ps.matrix_assembly(&ps);
+  ps.bc_assembly(&ps);
+  Advanced_SolveLinearSolver(&ps.lsol,ps.simu);
+
+  for (int i=0;i<ps.nb_fe_nodes;i++){
+    globalSol[i]=ps.lsol.sol[i];
+  }
 }
 
 

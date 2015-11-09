@@ -100,6 +100,7 @@ firefox html/index.html
 #include "skyline_spu.h"
 #include "linear_solver.h"
 #include "advanced_linear_solver.h"
+#include "solvercontinuous.h"
 #ifdef _WITH_OPENCL
 #include "field_cl.h"
 #include "clinfo.h"

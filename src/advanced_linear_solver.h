@@ -91,5 +91,8 @@ void Advanced_GMRESSolver(LinearSolver* lsol, Simulation* simu);
 //! \param[in] simu contains the simuation
 void Advanced_SolveLinearSolver(LinearSolver* lsol, Simulation* simu);
 
+//! \brief Lower order preconditioner
+//! \param[in] lsol contains the matrices rhs and sol
+void LowerOrderPC_Poisson(LinearSolver * lsol, Simulation *simu, real* globalSol, real*globalRHS);
 
 #endif
