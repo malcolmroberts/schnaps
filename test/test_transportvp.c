@@ -65,6 +65,7 @@ int Test_TransportVP(void) {
 
   CheckMacroMesh(&mesh, deg, raf);
   Simulation simu;
+  EmptySimulation(&simu);
 
   InitSimulation(&simu, &mesh, deg, raf, &model);
   simu.vmax = _VMAX; // maximal wave speed

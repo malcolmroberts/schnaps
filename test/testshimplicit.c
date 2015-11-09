@@ -61,7 +61,7 @@ int Test_SH_equilibrium_Implicit(void) {
 
 
   Simulation simu;
-
+  EmptySimulation(&simu);
   InitSimulation(&simu, &mesh, deg, raf, &model);
 
   
@@ -102,6 +102,7 @@ int Test_SH_equilibrium_Implicit(void) {
   int raf2[]={8, 8, 1};
 
   Simulation simu2;
+  EmptySimulation(&simu2);
 
   InitSimulation(&simu2, &mesh, deg2, raf2, &model);
 

@@ -162,6 +162,7 @@ int Test_SH_equilibrium(void) {
   model.Source = ShallowWater_classical_SourceTerm;
 
   Simulation simu;
+  EmptySimulation(&simu);
 
   InitSimulation(&simu, &mesh, deg, raf, &model);
   
@@ -187,6 +188,7 @@ int Test_SH_equilibrium(void) {
   model.Source = ShallowWater_classical_SourceTerm;
 
   Simulation simu2;
+  EmptySimulation(&simu2);
 
   InitSimulation(&simu2, &mesh, deg, raf, &model);
   
@@ -212,6 +214,7 @@ int Test_SH_equilibrium(void) {
   model.Source = ShallowWater_classical_SourceTerm;
 
   Simulation simu3;
+  EmptySimulation(&simu3);
 
   InitSimulation(&simu3, &mesh, deg, raf, &model);
   
