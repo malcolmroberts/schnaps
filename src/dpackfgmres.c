@@ -125,10 +125,10 @@ int ErrorBlas(char *srname, int *info)
 int Compare_char(char *ca, char *cb)
 {
     /* System generated locals */
-    int ret_val;
+    int ret_val=0;
 
     /* Local variables */
-    static int inta, intb,zcode;
+    static int inta=0, intb=0,zcode=0;
 
 /*  -- LAPACK auxiliary routine (version 2.0) --   
        Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,   

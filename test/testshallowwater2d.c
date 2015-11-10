@@ -276,7 +276,7 @@ int Test_SH_periodic(void) {
   model.Source = ShallowWater_periodic_SourceTerm;
 
   Simulation simu;
-
+  EmptySimulation(&simu);
   InitSimulation(&simu, &mesh, deg, raf, &model);
   
   tmax = 0.01;
@@ -303,7 +303,7 @@ int Test_SH_periodic(void) {
   model.Source = ShallowWater_periodic_SourceTerm;
 
   Simulation simu2;
-
+  EmptySimulation(&simu2);
   InitSimulation(&simu2, &mesh, deg, raf, &model);
   
   tmax = 0.01;
@@ -330,7 +330,7 @@ int Test_SH_periodic(void) {
   model.Source = ShallowWater_periodic_SourceTerm;
 
   Simulation simu3;
-
+  EmptySimulation(&simu3);
   InitSimulation(&simu3, &mesh, deg, raf, &model);
   
   tmax = 0.01;
@@ -399,7 +399,7 @@ int Test_SH_SteadyState_UImposed(void) {
   model.Source = ShallowWater_SteadyState_U_SourceTerm;
 
   Simulation simu;
-
+  EmptySimulation(&simu);
   InitSimulation(&simu, &mesh, deg, raf, &model);
   
   tmax = 0.002;
@@ -426,7 +426,7 @@ int Test_SH_SteadyState_UImposed(void) {
   model.Source = ShallowWater_SteadyState_U_SourceTerm;
 
   Simulation simu2;
-
+  EmptySimulation(&simu2);
   InitSimulation(&simu2, &mesh, deg, raf, &model);
   
   tmax = 0.002;
@@ -453,6 +453,7 @@ int Test_SH_SteadyState_UImposed(void) {
   model.Source = ShallowWater_SteadyState_U_SourceTerm;
 
   Simulation simu3;
+  EmptySimulation(&simu3);
   InitSimulation(&simu3, &mesh, deg, raf, &model);
   
   tmax = 0.002;
@@ -510,7 +511,7 @@ int Test_SH_SteadyState_PImposed(void) {
   model.Source = ShallowWater_SteadyState_P_SourceTerm;
 
   Simulation simu;
-
+  EmptySimulation(&simu);
   InitSimulation(&simu, &mesh, deg, raf, &model);
   
   tmax = 0.002;
@@ -537,7 +538,7 @@ int Test_SH_SteadyState_PImposed(void) {
   model.Source = ShallowWater_SteadyState_P_SourceTerm;
 
   Simulation simu2;
-
+  EmptySimulation(&simu2);
   InitSimulation(&simu2, &mesh, deg, raf, &model);
   
   tmax = 0.002;
@@ -564,6 +565,7 @@ int Test_SH_SteadyState_PImposed(void) {
   model.Source = ShallowWater_SteadyState_P_SourceTerm;
 
   Simulation simu3;
+  EmptySimulation(&simu3);
   InitSimulation(&simu3, &mesh, deg, raf, &model);
   
   tmax = 0.002;

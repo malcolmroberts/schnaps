@@ -6,12 +6,15 @@
 #include "quantities_vp.h"
 #include "solverpoisson.h"
 #include "linear_solver.h"
+#include "advanced_linear_solver.h"
 
 
 void TestPoisson_ImposedData(const real x[3],const real t,real w[]);
 void TestPoisson_InitData(real x[3],real w[]);
 void TestPoisson_BoundaryFlux(real x[3],real t,real wL[],real* vnorm,
 			      real* flux);
+
+void Create_Polynome(ContinuousSolver *cs_HighOrder,int order, real * VecOut);
 
 int main(void) 
 {
@@ -29,20 +32,6 @@ int main(void)
 int Test_OrderAdaptivity(void) 
 {
   bool test = true;
-
-#ifdef PARALUTION 
-  paralution_begin();
-#endif 
-
-  // 2D meshes:
-  // test/disque2d.msh
-  // test/testdisque2d.msh
-  // test/testmacromesh.msh
-  // test/unit-cube.msh
-
-  // 3D meshes"
-  // test/testdisque.msh
-
   
   MacroMesh mesh;
   ReadMacroMesh(&mesh,"../test/testcube.msh");
@@ -52,10 +41,6 @@ int Test_OrderAdaptivity(void)
   BuildConnectivity(&mesh);
 
   Model model;
-
-
-  // num of conservative variables f(vi) for each vi, phi, E, rho, u,
-  // p, e (ou T)
   model.m=_INDEX_MAX; 
   model.NumFlux = VlasovP_Lagrangian_NumFlux;
   model.Source = VlasovP_Lagrangian_Source;
@@ -65,16 +50,13 @@ int Test_OrderAdaptivity(void)
   model.ImposedData = TestPoisson_ImposedData;
   model.Source = NULL;
  
-  int deg[]={4, 0, 0};
+  int deg[]={1, 0, 0};
   int raf[]={8, 1, 1};
     
   PrintMacroMesh(&mesh);
-  //assert(1==2);
-  //AffineMapMacroMesh(&(f.macromesh));
- 
   CheckMacroMesh(&mesh, deg, raf);
   Simulation simu;
-
+  EmptySimulation(&simu);
   InitSimulation(&simu, &mesh, deg, raf, &model);
   ContinuousSolver ps;
   
@@ -104,17 +86,56 @@ int Test_OrderAdaptivity(void)
   printf("Erreur L2=%.12e\n",errl2);
 
   test = test && (errl2 < 2e-2);
+  /*
+  ////////////////////////////////////////////////////
+  int deg_ho[]={3, 0, 0};
+  int raf_ho[]={40, 1, 1};
+  Simulation simu3;
+  EmptySimulation(&simu3);
+  InitSimulation(&simu3, &mesh, deg_ho, raf_ho, &model);
+  ContinuousSolver ps_ho;
+  int nb_var3=1;
+  int * listvar3= calloc(nb_var3,sizeof(int));
+  listvar3[0]=0;
+  InitContinuousSolver(&ps_ho,&simu3,1,nb_var3,listvar3);
+  
+  int deg_lo[]={1, 0, 0};
+  int raf_lo[]={raf_ho[0], 1, 1};
+  Simulation simu2;
+  EmptySimulation(&simu2);
+  InitSimulation(&simu2, &mesh, deg_lo, raf_lo, &model);
+  ContinuousSolver ps_lo;
+  int nb_var2=1;
+  int * listvar22= calloc(nb_var2,sizeof(int));
+  listvar22[0]=0;
+  InitContinuousSolver(&ps_lo,&simu2,1,nb_var2,listvar22);
+  
+  real * Pol=NULL;
+ 
+  real * Pol_ref=NULL;
+  
+  real * Pol_reduced=NULL;
+  
+  Pol=calloc(ps_ho.nb_fe_nodes,sizeof(real));
+  Pol_ref=calloc(ps_ho.nb_fe_nodes,sizeof(real));
+  
+  Pol_reduced=calloc(ps_lo.nb_fe_nodes,sizeof(real));
+  
+  Create_Polynome(&ps_ho,deg_ho[0],Pol);
+  Create_Polynome(&ps_ho,deg_ho[0],Pol_ref);
+     
+   Restriction1D_Pq_P1(&ps_lo,deg_ho[0],Pol,Pol_reduced);
+   Interpolation1D_P1_Pq(&ps_lo,deg_ho[0],Pol_reduced,Pol);
+   
+   real error=0;
+  for(int i=0;i<ps_ho.nb_fe_nodes;i++){
+    error=error+(Pol[i]-Pol_ref[i])*(Pol[i]-Pol_ref[i]);
+  }
+  printf("error %.8e \n",sqrt(error));
 
-  printf("Plot...\n");
-
-
-  PlotFields(_INDEX_PHI, false, &simu, NULL, "dgvisu.msh");
-  PlotFields(_INDEX_EX, false, &simu, NULL, "dgex.msh");
-
-#ifdef PARALUTION 
-  paralution_end();
-#endif
-
+  free(Pol);
+  free(Pol_ref);
+  free(Pol_reduced);*/
   FreeMacroMesh(&mesh);
 
 
@@ -158,22 +179,52 @@ void TestPoisson_BoundaryFlux(real x[3],real t,real wL[],real* vnorm,
 };
 
 
-void restriction_Pq_P1(int q, real * Polynome_q, real * Polynome_1){
-  real A[q+1][2];
-  A[0][0]=1.0;
-  A[0][1]=0.0;
-  for(int ie = 1; ie<q; ie++){  
-    A[ie][0]=0.0;
-    A[ie][1]=0.0; 
+
+
+
+void Create_Polynome(ContinuousSolver *cs_HighOrder,int order, real * VecOut){
+  field* f0 = &cs_HighOrder->simu->fd[0];
+  real Polynome[order+1];
+  real temp_poly[cs_HighOrder->nb_fe_nodes][order+1];
+
+  Polynome[0]=4.0;
+  Polynome[1]=-1.0;
+  Polynome[2]=1.0;
+  for(int i = 3; i< order+1; i++){
+    Polynome[i]=0.0;
   }
-  A[q][0]=0.0;
-  A[q][1]=1.0;
-
-  ////// in general cas least square but in this case
-
-  Polynome_1[0]=Polynome_q[0];
-  Polynome_1[1]=Polynome_q[q];
   
+  for(int ie = 0; ie< cs_HighOrder->nbel; ie++){
+    
+    int isubcell = ie % (f0->raf[0] * f0->raf[1] * f0->raf[2]);
+    int iemacro = ie / (f0->raf[0] * f0->raf[1] * f0->raf[2]);
+      
+    real wpg;
+    real xref[3], xref_begin[3], xref_end[3];
+    real dtau[3][3],codtau[3][3];   
+      
+    for(int ipg = 0;ipg < cs_HighOrder->nnodes; ipg++){
+	
+      int ipgmacro= ipg + isubcell * cs_HighOrder->nnodes;
+      
+      ref_pg_vol(f0->deg,f0->raf,ipgmacro,xref,&wpg,NULL);
+      real dtau[3][3],codtau[3][3];
+      
+      Ref2Phy(f0[iemacro].physnode,
+	      xref,NULL,0,NULL,
+	      dtau,codtau,NULL,NULL);
+      
+      int ino_dg = ipg + ie * cs_HighOrder->nnodes;
+      int ino_fe = cs_HighOrder->dg_to_fe_index[ino_dg];
+      for(int i = 0; i< order+1; i++){
+	real deg=i;
+	temp_poly[ino_fe][i]=pow(xref[0],deg)*Polynome[i];
+      }
+    }  
+  }
+  for(int iee = 0; iee<cs_HighOrder->nb_fe_nodes ; iee++){  
+    for(int i = 0; i< order+1; i++){  
+      VecOut[iee]+=temp_poly[iee][i];
+    }
+  }
 }
-
-

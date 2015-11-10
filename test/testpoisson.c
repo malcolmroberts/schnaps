@@ -74,7 +74,7 @@ int TestPoisson(void)
  
   CheckMacroMesh(&mesh, deg, raf);
   Simulation simu;
-
+  EmptySimulation(&simu);
   InitSimulation(&simu, &mesh, deg, raf, &model);
 
   ContinuousSolver ps;
@@ -90,13 +90,8 @@ int TestPoisson(void)
   ps.bc_assembly= ExactDirichletContinuousMatrix;
   ps.postcomputation_assembly=Computation_ElectricField_Poisson;
 
-#ifdef PARALUTION
-  ps.lsol.solver_type =LU;
+  ps.lsol.solver_type = GMRES;
   ps.lsol.pc_type=NONE;
-#else
-  ps.lsol.solver_type = LU;
-  ps.lsol.pc_type=NONE;
-#endif
 
   SolveContinuous2D(&ps);
 
@@ -116,7 +111,8 @@ int TestPoisson(void)
 #ifdef PARALUTION 
   paralution_end();
 #endif
-
+  
+  freeContinuousSolver(&ps);
   FreeMacroMesh(&mesh);
 
 

@@ -91,7 +91,7 @@ int TestPoisson2d(void)
   ps.lsol.solver_type = PAR_LU;
   ps.lsol.pc_type=NONE;
 #else
-  ps.lsol.solver_type = LU;
+  ps.lsol.solver_type = GMRES;
   ps.lsol.pc_type=NONE;
 #endif
 

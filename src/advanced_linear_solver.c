@@ -10,6 +10,8 @@
 #include "advanced_linear_solver.h"
 #include "linear_solver.h"
 #include "solverpoisson.h"
+#include "solvercontinuous.h"
+
 
 void Advanced_SolveLinearSolver(LinearSolver* lsol, Simulation* simu){
   
@@ -489,45 +491,6 @@ void SolveJFLinearSolver(JFLinearSolver* lsol,Simulation * simu){
   free(loc_z);
 }
 
-
-
-void LowerOrderPC_Poisson(LinearSolver * lsol, Simulation *simu, real* globalSol, real*globalRHS){
-  Simulation simu2;
-  int deg_lo[]={4, 0, 0};
-  int raf_lo[]={8, 1, 1};
-  
-  
-  InitSimulation(&simu2, &simu->macromesh, deg_lo, raf_lo, &simu->fd[0].model);
-  ContinuousSolver ps;
-  
-  int nb_var=1;
-  int * listvar= malloc(nb_var * sizeof(int));
-  listvar[0]=_INDEX_PHI;
-  InitContinuousSolver(&ps,&simu2,1,nb_var,listvar);
-  
-  ps.matrix_assembly=ContinuousOperator_Poisson1D;
-  ps.rhs_assembly=NULL;
-   for (int i=0;i<ps.nb_fe_nodes;i++){
-     ps.lsol.rhs[i]=globalRHS[i];
-   }
-  ps.bc_assembly= ExactDirichletContinuousMatrix;
-  ps.postcomputation_assembly=NULL;
-
-  ps.lsol.solver_type=LU;
-  ps.lsol.tol=1.0e-4;
-  ps.lsol.pc_type=NONE;
-  ps.lsol.iter_max=10000;
-  ps.lsol.restart_gmres=30;
-  ps.lsol.is_CG=true;
-
-  ps.matrix_assembly(&ps);
-  ps.bc_assembly(&ps);
-  Advanced_SolveLinearSolver(&ps.lsol,ps.simu);
-
-  for (int i=0;i<ps.nb_fe_nodes;i++){
-    globalSol[i]=ps.lsol.sol[i];
-  }
-}
 
 
 

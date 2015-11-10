@@ -43,6 +43,13 @@ void RobinBoundaryConditionAssembly(void * cs);
 void RobinFlux(void * cs, real * xpg, real * w, real *vnorm, real * flux);
 
 
+//! \brief Lower order preconditioner
+//! \param[in] lsol contains the matrices rhs and sol
+void LowerOrderPC_Poisson(LinearSolver * lsol, Simulation *simu, real* globalSol, real*globalRHS);
+
+void Interpolation1D_P1_Pq(ContinuousSolver *cs_LowOrder,int HighOrder, real * VecIn, real * VecOut);
+void Restriction1D_Pq_P1(ContinuousSolver *cs_LowOrder,int HighOrder, real * VecIn, real * VecOut);
+
 
 
 

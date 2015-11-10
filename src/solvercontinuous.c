@@ -29,7 +29,7 @@ int BuildFatNodeList(Simulation *simu,FatNode* fn_list){
   int ino=0;
   real* xmin=simu->macromesh.xmin;
   real* xmax=simu->macromesh.xmax;
-  int nb_dg_nodes;
+  int nb_dg_nodes=0;
   for(int ie = 0; ie < simu->macromesh.nbelems; ie++) {
     
     field *f = &simu->fd[ie];
@@ -320,7 +320,7 @@ void Source_Assembly(void * cs){
   ContinuousSolver * ps=cs;
   field* f0 = &ps->simu->fd[0];
   m=ps->nb_phy_vars;
-  
+  ////////////// FAUX BOUCLE SUR LES FACES
   for(int var =0; var < ps->nb_phy_vars; var++){  
     for (int i=0; i<ps->simu->macromesh.nboundaryfaces;i++){
       int ifa = ps->simu->macromesh.boundaryface[i];
@@ -463,10 +463,10 @@ void AllocateContinuousMatrix(void *cs){
 	  int jno_dg = jloc + ie * ps->nnodes;
 	  int ino_fe = ps->dg_to_fe_index[ino_dg];
 	  int jno_fe = ps->dg_to_fe_index[jno_dg];
-    for (int iv1=0;iv1<ps->nb_phy_vars;iv1++){
-      for (int iv2=0;iv2<ps->nb_phy_vars;iv2++){
+	  for (int iv1=0;iv1<ps->nb_phy_vars;iv1++){
+	    for (int iv2=0;iv2<ps->nb_phy_vars;iv2++){
 	      IsNonZero(&ps->lsol, ino_fe*ps->nb_phy_vars+iv1, jno_fe*ps->nb_phy_vars+iv2);
-      }
+	    }
 	  }
 	}
       }
@@ -492,7 +492,7 @@ void GenericOperator_Continuous(void * cs){
       real aloc[ps->nnodes*ps->nb_phy_vars][ps->nnodes*ps->nb_phy_vars];
       for(int iloc = 0; iloc < ps->nnodes*ps->nb_phy_vars; iloc++){
         for(int jloc = 0; jloc < ps->nnodes*ps->nb_phy_vars; jloc++){
-          aloc[iloc][jloc] = 0;
+          aloc[iloc][jloc] = 0.0;
         }
       }
 
