@@ -1,7 +1,7 @@
 #include "schnaps.h"
 #include <stdio.h>
 #include <assert.h>
-#include "test.h"
+#include "../test/test.h"
 #include "getopt.h"
 #include <stdlib.h>     /* atoi */
 #include "mhd.h"
@@ -19,22 +19,22 @@
 //}
 
 int main(int argc, char *argv[]) {
-  int resu = TestOrszagTang(argc,argv);
+  int resu = TestReconnexion(argc,argv);
   if (resu)
-    printf("OrszagTang test OK !\n");
+    printf("Reconnexion test OK !\n");
   else 
-    printf("OrszagTang test failed !\n");
+    printf("Reconnexion test failed !\n");
   return !resu;
 }
 
-int TestOrszagTang(int argc, char *argv[]) { /*
-  real cfl = 0.2;
+int TestReconnexion(int argc, char *argv[]) { /*
+  real cfl = 0.1;
   real tmax = 0.1;
   bool writemsh = false;
   real vmax = 6.0;
   bool usegpu = false;
   real dt = 0.0;
-  real periodsize = 6.2831853;
+  real periodsize = 2.;
   
   for (;;) {
     int cc = getopt(argc, argv, "c:t:w:D:P:g:s:");
@@ -79,9 +79,9 @@ int TestOrszagTang(int argc, char *argv[]) { /*
   strcpy(f.model.name,"MHD");
 
   f.model.NumFlux=MHDNumFluxRusanov;
-  f.model.BoundaryFlux=MHDBoundaryFluxOrszagTang;
-  f.model.InitData=MHDInitDataOrszagTang;
-  f.model.ImposedData=MHDImposedDataOrszagTang;
+  f.model.BoundaryFlux=MHDBoundaryFluxReconnexion;
+  f.model.InitData=MHDInitDataReconnexion;
+  f.model.ImposedData=MHDImposedDataReconnexion;
   
   char buf[1000];
   sprintf(buf, "-D _M=%d -D _PERIODX=%f -D _PERIODY=%f",
@@ -95,7 +95,7 @@ int TestOrszagTang(int argc, char *argv[]) { /*
   strcat(buf, numflux_cl_name);
   strcat(cl_buildoptions, buf);
 
-  sprintf(buf, " -D BOUNDARYFLUX=%s", "MHDBoundaryFluxOrszagTang");
+  sprintf(buf, " -D BOUNDARYFLUX=%s", "MHDBoundaryFluxReconnexion");
   strcat(cl_buildoptions, buf);
   
   // Set the global parameters for the Vlasov equation
@@ -111,7 +111,7 @@ int TestOrszagTang(int argc, char *argv[]) { /*
   //set_vlasov_params(&(f.model));
 
   // Read the gmsh file
-  ReadMacroMesh(&(f.macromesh), "../test/testOTgrid.msh");
+  ReadMacroMesh(&(f.macromesh), "../test/testrecogrid.msh");
   // Try to detect a 2d mesh
   Detect2DMacroMesh(&(f.macromesh)); 
   bool is2d=f.macromesh.is2d; 
@@ -130,7 +130,7 @@ int TestOrszagTang(int argc, char *argv[]) { /*
   // Prudence...
   CheckMacroMesh(&(f.macromesh), f.interp.interp_param + 1);
 
-  //Plotfield(0, (1==0), &f, "Rho", "dginit.msh");
+  Plotfield(5, false, &f, "By", "dginit.msh");
 
   f.vmax=vmax;
 
@@ -148,7 +148,7 @@ int TestOrszagTang(int argc, char *argv[]) { /*
     RK4(&f, tmax, dt);
   }
 
-  Plotfield(0,false,&f, "Rho", "dgvisu.msh");
+  Plotfield(5,false,&f, "By", "dgvisu.msh");
   //Gnuplot(&f,0,0.0,"data1D.dat");
 
 

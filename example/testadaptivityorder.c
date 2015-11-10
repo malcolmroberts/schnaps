@@ -1,7 +1,7 @@
 #include "schnaps.h"
 #include <stdio.h>
 #include <assert.h>
-#include "test.h"
+#include "../test/test.h"
 #include "collision.h"
 #include "quantities_vp.h"
 #include "solverpoisson.h"

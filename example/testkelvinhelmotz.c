@@ -1,7 +1,7 @@
 #include "schnaps.h"
 #include <stdio.h>
 #include <assert.h>
-#include "test.h"
+#include "../test/test.h"
 #include "getopt.h"
 #include <stdlib.h>     /* atoi */
 #include "mhd.h"
@@ -19,22 +19,22 @@
 //}
 
 int main(int argc, char *argv[]) {
-  int resu = TestDoubleTearing(argc,argv);
+  int resu = TestKelvinHelmotz(argc,argv);
   if (resu)
-    printf("DoubleTearing test OK !\n");
+    printf("KelvinHelmotz test OK !\n");
   else 
-    printf("DoubleTearing test failed !\n");
+    printf("KelvinHelmotz test failed !\n");
   return !resu;
 }
 
-int TestDoubleTearing(int argc, char *argv[]) { /*
+int TestKelvinHelmotz(int argc, char *argv[]) { /*
   real cfl = 0.1;
   real tmax = 0.1;
   bool writemsh = false;
   real vmax = 6.0;
   bool usegpu = false;
   real dt = 0.0;
-  real periodsize = 4.;
+  real periodsize = 1.;
   
   for (;;) {
     int cc = getopt(argc, argv, "c:t:w:D:P:g:s:");
@@ -79,9 +79,9 @@ int TestDoubleTearing(int argc, char *argv[]) { /*
   strcpy(f.model.name,"MHD");
 
   f.model.NumFlux=MHDNumFluxRusanov;
-  f.model.BoundaryFlux=MHDBoundaryFluxDoubleTearing;
-  f.model.InitData=MHDInitDataDoubleTearing;
-  f.model.ImposedData=MHDImposedDataDoubleTearing;
+  f.model.BoundaryFlux=MHDBoundaryFluxKelvinHelmotz;
+  f.model.InitData=MHDInitDataKelvinHelmotz;
+  f.model.ImposedData=MHDImposedDataKelvinHelmotz;
   
   char buf[1000];
   sprintf(buf, "-D _M=%d -D _PERIODX=%f -D _PERIODY=%f",
@@ -95,7 +95,7 @@ int TestDoubleTearing(int argc, char *argv[]) { /*
   strcat(buf, numflux_cl_name);
   strcat(cl_buildoptions, buf);
 
-  sprintf(buf, " -D BOUNDARYFLUX=%s", "MHDBoundaryFluxDoubleTearing");
+  sprintf(buf, " -D BOUNDARYFLUX=%s", "MHDBoundaryFluxKelvinHelmotz");
   strcat(cl_buildoptions, buf);
   
   // Set the global parameters for the Vlasov equation
@@ -111,13 +111,13 @@ int TestDoubleTearing(int argc, char *argv[]) { /*
   //set_vlasov_params(&(f.model));
 
   // Read the gmsh file
-  ReadMacroMesh(&(f.macromesh), "../test/testdoubletearinggrid.msh");
+  ReadMacroMesh(&(f.macromesh), "../test/testKHgrid.msh");
   // Try to detect a 2d mesh
   Detect2DMacroMesh(&(f.macromesh)); 
   bool is2d=f.macromesh.is2d; 
   assert(is2d);  
 
-  f.macromesh.period[1]=periodsize;
+  f.macromesh.period[0]=periodsize;
   
   // Mesh preparation
   BuildConnectivity(&(f.macromesh));
@@ -129,7 +129,7 @@ int TestDoubleTearing(int argc, char *argv[]) { /*
   // Prudence...
   CheckMacroMesh(&(f.macromesh), f.interp.interp_param + 1);
 
-  //Plotfield(5, false, &f, "By", "dginit.msh");
+  Plotfield(5, false, &f, "By", "dginit.msh");
 
   f.vmax=vmax;
 
@@ -143,10 +143,11 @@ int TestDoubleTearing(int argc, char *argv[]) { /*
     }
   else { 
     printf("Using C:\n");
+  
     RK4(&f, tmax, dt);
   }
 
-  Plotfield(2,false,&f, "P", "dgvisu.msh");
+  Plotfield(0,false,&f, "Rho", "dgvisu.msh");
   //Gnuplot(&f,0,0.0,"data1D.dat");
 
 

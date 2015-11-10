@@ -125,7 +125,6 @@ void LocalThetaTimeScheme(Simulation *simu, real tmax, real dt)
 
   real theta=0.5;
   simu->dt=dt;
-  
   int itermax=tmax / simu->dt;
   simu->itermax_rk=itermax;
   simu->tnow=0;

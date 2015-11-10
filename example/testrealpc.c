@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
-#include "test.h"
+#include "../test/test.h"
 #include "solverwave.h"
 #include "waterwave2d.h"
 #include "physBased_PC.h"

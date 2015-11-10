@@ -1,7 +1,7 @@
 #include "schnaps.h"
 #include <stdio.h>
 #include <assert.h>
-#include "test.h"
+#include "../test/test.h"
 #include "getopt.h"
 #include <stdlib.h>     /* atoi */
 #include "mhd.h"
@@ -19,20 +19,20 @@
 //}
 
 int main(int argc, char *argv[]) {
-  int resu = TestMHD(argc,argv);
+  int resu = TestOrszagTang(argc,argv);
   if (resu)
-    printf("MHD test OK !\n");
+    printf("OrszagTang test OK !\n");
   else 
-    printf("MHD test failed !\n");
+    printf("OrszagTang test failed !\n");
   return !resu;
 }
 
-int TestMHD(int argc, char *argv[]) { /*
-  real cfl = 0.1;
+int TestOrszagTang(int argc, char *argv[]) { /*
+  real cfl = 0.2;
   real tmax = 0.1;
   bool writemsh = false;
   real vmax = 6.0;
-  bool usegpu = true;
+  bool usegpu = false;
   real dt = 0.0;
   real periodsize = 6.2831853;
   
@@ -78,10 +78,10 @@ int TestMHD(int argc, char *argv[]) { /*
 
   strcpy(f.model.name,"MHD");
 
-  f.model.NumFlux=MHDNumFluxP2;
-  f.model.BoundaryFlux=MHDBoundaryFlux;
-  f.model.InitData=MHDInitData;
-  f.model.ImposedData=MHDImposedData;
+  f.model.NumFlux=MHDNumFluxRusanov;
+  f.model.BoundaryFlux=MHDBoundaryFluxOrszagTang;
+  f.model.InitData=MHDInitDataOrszagTang;
+  f.model.ImposedData=MHDImposedDataOrszagTang;
   
   char buf[1000];
   sprintf(buf, "-D _M=%d -D _PERIODX=%f -D _PERIODY=%f",
@@ -90,12 +90,12 @@ int TestMHD(int argc, char *argv[]) { /*
           periodsize);
   strcat(cl_buildoptions, buf);
 
-  sprintf(numflux_cl_name, "%s", "MHDNumFluxP2");
+  sprintf(numflux_cl_name, "%s", "MHDNumFluxRusanov");
   sprintf(buf," -D NUMFLUX=");
   strcat(buf, numflux_cl_name);
   strcat(cl_buildoptions, buf);
 
-  sprintf(buf, " -D BOUNDARYFLUX=%s", "MHDBoundaryFlux");
+  sprintf(buf, " -D BOUNDARYFLUX=%s", "MHDBoundaryFluxOrszagTang");
   strcat(cl_buildoptions, buf);
   
   // Set the global parameters for the Vlasov equation
@@ -103,17 +103,15 @@ int TestMHD(int argc, char *argv[]) { /*
   f.interp.interp_param[1] = 1; // x direction degree
   f.interp.interp_param[2] = 1; // y direction degree
   f.interp.interp_param[3] = 0; // z direction degree
-  f.interp.interp_param[4] = 4; // x direction refinement
-  f.interp.interp_param[5] = 4; // y direction refinement
+  f.interp.interp_param[4] = 10; // x direction refinement
+  f.interp.interp_param[5] = 10; // y direction refinement
   f.interp.interp_param[6] = 1; // z direction refinement
 
 
   //set_vlasov_params(&(f.model));
 
   // Read the gmsh file
-  //ReadMacroMesh(&(f.macromesh), "../test/testcartesiangrid2d2.msh");
   ReadMacroMesh(&(f.macromesh), "../test/testOTgrid.msh");
-  //ReadMacroMesh(&(f.macromesh), "../test/testcube.msh");
   // Try to detect a 2d mesh
   Detect2DMacroMesh(&(f.macromesh)); 
   bool is2d=f.macromesh.is2d; 
@@ -139,42 +137,20 @@ int TestMHD(int argc, char *argv[]) { /*
   real executiontime;
   if(usegpu) {
     printf("Using OpenCL:\n");
-    //executiontime = seconds();
-    //assert(1==2);
+
     RK4_CL(&f, tmax, dt, 0, NULL, NULL);
     CopyfieldtoCPU(&f);
     show_cl_timing(&f);
-  
-    //executiontime = seconds() - executiontime;
-    show_cl_timing(&f);
-  } else { 
+    }
+  else { 
     printf("Using C:\n");
-    //executiontime = seconds();
+  
     RK4(&f, tmax, dt);
-    //executiontime = seconds() - executiontime;
   }
 
-  Plotfield(0,false,&f, "Rho", "rho.msh");
-  Plotfield(2,false,&f, "P", "p.msh");
+  Plotfield(0,false,&f, "Rho", "dgvisu.msh");
   //Gnuplot(&f,0,0.0,"data1D.dat");
 
-
-  printf("tmax: %f, cfl: %f\n", tmax, f.model.cfl);
-
-  printf("deltax:\n");
-  printf("%f\n", f.hmin);
-
-  printf("deltat:\n");
-  printf("%f\n", dt);
-
-  printf("DOF:\n");
-  printf("%d\n", f.wsize);
-
-  printf("executiontime (s):\n");
-  printf("%f\n", executiontime);
-
-  printf("time per RK2 (s):\n");
-  printf("%f\n", executiontime / (real)f.itermax);
 
   return test; */
 }
