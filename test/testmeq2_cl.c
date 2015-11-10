@@ -21,217 +21,107 @@ real maxerr(real *a, real *b, int n)
 }
 
 int TestmEq2(void)  { 
-/*   bool test = true; */
-/*   field f; */
-/*   init_empty_field(&f); */
+  bool test = true;
+
+  // 2D meshes:
+  // test/disque2d.msh
+  // test/testdisque2d.msh
+  // test/testmacromesh.msh
+  // test/unit-cube.msh
+
+  // 3D meshes"
+  // test/testdisque.msh
+
+  char *mshname =  "../test/testcube.msh";
   
-/*   f.model.cfl = 0.05;   */
-/*   f.model.m = 2;  */
-/*   f.interp.interp_param[0] = f.model.m; */
-/*   f.interp.interp_param[1] = 1; // x direction degree */
-/*   f.interp.interp_param[2] = 1; // y direction degree */
-/*   f.interp.interp_param[3] = 0; // z direction degree */
-/*   f.interp.interp_param[4] = 1; // x direction refinement */
-/*   f.interp.interp_param[5] = 1; // y direction refinement */
-/*   f.interp.interp_param[6] = 1; // z direction refinement */
+  MacroMesh mesh;
+  ReadMacroMesh(&mesh,"../test/testcube.msh");
+  //ReadMacroMesh(&mesh,"../test/testmacromesh.msh");
+  Detect2DMacroMesh(&mesh);
+  BuildConnectivity(&mesh);
 
-/*   f.model.NumFlux = VecTransNumFlux2d; */
-/*   f.model.BoundaryFlux = VecTransBoundaryFlux2d; */
-/*   f.model.InitData = VecTransInitData2d; */
-/*   f.model.ImposedData = VecTransImposedData2d; */
-/*   f.varindex = GenericVarindex; */
+  Model model;
 
-/*   char buf[1000]; */
-/*   sprintf(buf, "-D _M=%d", f.model.m); */
-/*   strcat(cl_buildoptions, buf); */
+  model.m = 2;
 
-/*   sprintf(buf," -D NUMFLUX=%s", "VecTransNumFlux2d"); */
-/*   strcat(cl_buildoptions, buf); */
+  model.NumFlux = VecTransNumFlux2d;
+  //f.model.NumFlux = Maxwell2DNumFlux_centered;
+  model.BoundaryFlux = VecTransBoundaryFlux2d;
+  model.InitData = VecTransInitData2d;
+  model.ImposedData = VecTransImposedData2d;
+  model.Source = NULL;
 
-/*   sprintf(buf, " -D BOUNDARYFLUX=%s", "VecTransBoundaryFlux2d"); */
-/*   strcat(cl_buildoptions, buf); */
 
-/*   // Read the gmsh file */
-/*   ReadMacroMesh(&(f.macromesh), "../test/testdisque2d.msh"); */
+  int deg[]={3, 3, 0};
+  int raf[]={4, 4, 1};
 
-/*   // Try to detect a 2d mesh */
-/*   Detect2DMacroMesh(&(f.macromesh)); */
-/*   assert(f.macromesh.is2d); */
+  assert(mesh.is2d);
 
-/*   BuildConnectivity(&(f.macromesh)); */
+#ifdef _WITH_OPENCL
+  if(!cldevice_is_acceptable(nplatform_cl, ndevice_cl)) {
+    printf("OpenCL device not acceptable.\n");
+    return true;
+  }
+#endif
+  
+  CheckMacroMesh(&mesh, deg, raf);
 
-/*   //AffineMapMacroMesh(&(f.macromesh)); */
+
+
+  Simulation simu;
+  EmptySimulation(&simu);
+
+  char buf[1000];
+  sprintf(buf, "-D _M=%d", model.m);
+  strcat(cl_buildoptions, buf);
+
+  set_source_CL(&simu, "ZeroSource");
+  sprintf(numflux_cl_name, "%s", "VecTransNumFlux2d");
+  sprintf(buf," -D NUMFLUX=");
+  strcat(buf, numflux_cl_name);
+  strcat(cl_buildoptions, buf);
+
+  sprintf(buf, " -D BOUNDARYFLUX=%s", "VecTransBoundaryFlux2d");
+  strcat(cl_buildoptions, buf);
+
+
+
+  InitSimulation(&simu, &mesh, deg, raf, &model);
  
-/*   Initfield(&f); */
+  real tmax = .5;
+  simu.cfl=0.05;
+  simu.vmax=1;
+
+#if 0
+  // C version
+  RK2(&simu, tmax);
+#else
+  // OpenCL version
+  real dt = 0;
+  RK2_CL(&simu, tmax, dt, 0, 0, 0);
+
+  CopyfieldtoCPU(&simu); 
+  printf("\nOpenCL Kernel time:\n");
+  show_cl_timing(&simu);
+  printf("\n");
+#endif
+
+
+  PlotFields(0, false, &simu, NULL, "dgvisu.msh");
+  PlotFields(0, true , &simu, "error", "dgerror.msh");
+
+  real dd = 0;
+  dd = L2error(&simu);
+
+  printf("erreur L2=%f\n", dd);
+
+  real tolerance = 0.0025;
+
+  test = dd < tolerance;
   
-/*   CheckMacroMesh(&(f.macromesh), f.interp.interp_param + 1); */
-
-/*   real *dtwn_cl = f.dtwn; */
-/*   real *dtwn = calloc(f.wsize, sizeof(real)); */
-  
-/*   real err; */
-/*   real tolerance = _SMALL; */
-
-/*   printf("Test volume terms\n"); */
-  
-/*   for(int i = 0; i < f.wsize; ++i) { */
-/*     dtwn_cl[i] = 0.0; */
-/*     dtwn[i] = 0.0; */
-/*   } */
-  
-/*   f.dtwn = dtwn_cl; */
-
-/*   set_buf_to_zero_cl(&(f.dtwn_cl), f.wsize, &f, 0, NULL, NULL); */
-/*   clFinish(f.cli.commandqueue); */
-
-/*   for(int ie = 0; ie < f.macromesh.nbelems; ++ie) { */
-/*     /\* update_physnode_cl(&f, ie, f.physnode_cl, f.physnode, NULL, *\/ */
-/*     /\* 		       0, NULL, NULL); *\/ */
-/*     /\* clFinish(f.cli.commandqueue); *\/ */
-
-/*     DGVolume_CL(ie, &f, &(f.wn_cl), 0, NULL, NULL); */
-/*     clFinish(f.cli.commandqueue); */
-/*   } */
-
-/*   CopyfieldtoCPU(&f); */
-/*   clFinish(f.cli.commandqueue); */
-  
-/*   f.dtwn = dtwn; */
-/*   for(int ie = 0; ie < f.macromesh.nbelems; ++ie) { */
-/*     DGVolume(ie, &f, f.wn, f.dtwn); */
-/*   } */
-
-
-/*   const int nraf[3] = {f.interp_param[4], */
-/* 		       f.interp_param[5], */
-/* 		       f.interp_param[6]}; */
-/*   const int deg[3] = {f.interp_param[1], */
-/* 		      f.interp_param[2], */
-/* 		      f.interp_param[3]}; */
  
-/*   const int npg[3] = {deg[0] + 1, */
-/* 		      deg[1] + 1, */
-/* 		      deg[2] + 1}; */
-  
-/*   for(int ie = 0; ie < f.macromesh.nbelems; ++ie){ */
-/*     for(int ic=0;ic<nraf[0]*nraf[1]*nraf[2];++ic){ */
-/*       for(int ipg=0;ipg<npg[0]*npg[1]*npg[2];++ipg){ */
-/* 	printf("ie=%d ic=%d ipg=%d ",ie,ic,ipg); */
-/* 	for(int iv=0;iv<2;++iv){ */
-/* 	  int imem=f.varindex(f.interp_param,ie,ipg+ic*NPG(f.interp_param+1), iv);  */
-/* 	  //printf("NPG=%d\n",NPG(f.interp_param+1)); */
-/* 	  printf("iv=%d \ndtwcl=%f dtwcpu=%f\n\n",iv,dtwn_cl[imem],dtwn[imem]); */
-/* 	} */
-/*       } */
-/*     } */
-/*   } */
+  return test;
 
-
-/*   err = maxerr(dtwn, dtwn_cl, f.wsize); */
-/*   printf("\tmax error: %f\n", err); */
-/*   test = test && (err < tolerance); */
-
-/*   printf("Test flux terms\n"); */
-  
-/*   for(int i = 0; i < f.wsize; ++i) { */
-/*     dtwn_cl[i] = 0.0; */
-/*     dtwn[i] = 0.0; */
-/*   } */
-/*   f.dtwn = dtwn_cl; */
-
-/*   set_buf_to_zero_cl(&(f.dtwn_cl), f.wsize, &f, 0, NULL, NULL); */
-/*   clFinish(f.cli.commandqueue); */
-
-/*   for(int ie = 0; ie < f.macromesh.nbelems; ++ie) { */
-/*     /\* update_physnode_cl(&f, ie, f.physnode_cl, f.physnode, NULL, *\/ */
-/*     /\* 		       0, NULL, NULL); *\/ */
-/*     /\* clFinish(f.cli.commandqueue); *\/ */
-    
-/*     DGFlux_CL(&f, 0, ie, &(f.wn_cl), 0, NULL, NULL); */
-/*     clFinish(f.cli.commandqueue); */
-
-/*     DGFlux_CL(&f, 1, ie, &(f.wn_cl), 0, NULL, NULL); */
-/*     clFinish(f.cli.commandqueue); */
-
-/*     if(!f.macromesh.is2d) { */
-/*       DGFlux_CL(&f, 2, ie, &(f.wn_cl), 0, NULL, NULL); */
-/*       clFinish(f.cli.commandqueue); */
-/*     } */
-/*   } */
-/*   CopyfieldtoCPU(&f); */
-/*   clFinish(f.cli.commandqueue); */
-
-/*   f.dtwn = dtwn; */
-/*   for(int ie = 0; ie < f.macromesh.nbelems; ++ie) { */
-/*     DGSubCellInterface(ie, &f, f.wn, f.dtwn); */
-/*   } */
-
-/*   err = maxerr(dtwn, dtwn_cl, f.wsize); */
-/*   printf("\tmax error: %f\n", err); */
-/*   test = test && (err < tolerance); */
-
-/*   printf("Test macrocell interfaces\n"); */
-
-/*   for(int i = 0; i < f.wsize; ++i) { */
-/*     dtwn_cl[i] = 0.0; */
-/*     dtwn[i] = 0.0; */
-/*   } */
-
-/*   f.dtwn = dtwn_cl; */
-/*   set_buf_to_zero_cl(&(f.dtwn_cl), f.wsize, &f, 0, NULL, NULL); */
-/*   clFinish(f.cli.commandqueue); */
-/*   for(int ifa = 0; ifa < f.macromesh.nbfaces; ++ifa) { */
-/*     DGMacroCellInterface_CL(ifa, &f, &f.wn_cl, */
-/*     			    0, NULL, NULL); */
-/*     clFinish(f.cli.commandqueue); */
-/*   } */
-/*   CopyfieldtoCPU(&f); */
-/*   clFinish(f.cli.commandqueue); */
-  
-/*   f.dtwn = dtwn; */
-/*   for(int ifa = 0; ifa < f.macromesh.nbfaces; ifa++) { */
-/*     DGMacroCellInterface(ifa, &f, f.wn, f.dtwn); */
-/*   } */
-/*   err = maxerr(dtwn, dtwn_cl, f.wsize); */
-/*   printf("\tmax error: %f\n", err); */
-/*   test = test && (err < tolerance); */
-
-/*   printf("Test all terms\n"); */
-/*   for(int i = 0; i < f.wsize; ++i) { */
-/*     dtwn_cl[i] = 0.0; */
-/*     dtwn[i] = 0.0; */
-/*   } */
-  
-/*   f.dtwn = dtwn_cl; */
-/*   dtfield_CL(&f, &(f.wn_cl), 0, NULL, NULL); */
-/*   clFinish(f.cli.commandqueue); */
-  
-/*   CopyfieldtoCPU(&f); */
-/*   clFinish(f.cli.commandqueue); */
-  
-/*   f.dtwn = dtwn; */
-/*   dtfield(&f, f.wn, f.dtwn); */
-
-/*   err = maxerr(dtwn, dtwn_cl, f.wsize); */
-/*   printf("\tmax error: %f\n", err); */
-/*   test = test && (err < tolerance); */
-
-/*   //Displayfield(&f); */
- 
-/*   /\* real tmax = 0.1; *\/ */
-/*   /\* //RK2_CL(&f, tmax, 0, NULL, NULL); *\/ */
-/*   /\* CopyfieldtoCPU(&f); *\/ */
- 
-/*   /\* // Save the results and the error *\/ */
-/*    Plotfield(1, false, &f, NULL, "dgvisu.msh");  */
-/*   /\* Plotfield(0, true, &f, "error", "dgerror.msh"); *\/ */
-
-/*   /\* real dd = L2error(&f); *\/ */
-/*   /\* real tolerance = 1e-4; *\/ */
-/*   /\* test = test && (dd < tolerance); *\/ */
-/*   /\* printf("L2 error: %f\n", dd); *\/ */
-   
-/*   return test; */
 } ;
 
 int main(void) {
