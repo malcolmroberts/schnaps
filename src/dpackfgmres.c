@@ -16,9 +16,9 @@
 /* Table of constant values */
 
 static int c__1 = 1;
-static real c_b276 = 1.;
-static real c_b280 = -1.;
-static real c_b305 = 0.;
+static real c_b276 = 1.0;
+static real c_b280 = -1.0;
+static real c_b305 = 0.0;
 
 /* * */
 /* *  Copyright (C) CERFACS 1998 */
@@ -125,10 +125,10 @@ int ErrorBlas(char *srname, int *info)
 int Compare_char(char *ca, char *cb)
 {
     /* System generated locals */
-    int ret_val;
+    int ret_val=0;
 
     /* Local variables */
-    static int inta, intb,zcode;
+    static int inta=0, intb=0,zcode=0;
 
 /*  -- LAPACK auxiliary routine (version 2.0) --   
        Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,   
@@ -496,10 +496,10 @@ int MatVectorProduct(char *trans, int *m, int *n, real *
 
     if (*beta != 1.) {
 	if (*incy == 1) {
-	    if (*beta == 0.) {
+	    if (*beta == 0.0) {
 		i__1 = leny;
 		for (i = 1; i <= leny; ++i) {
-		    y[i]  = 0.;
+		    y[i]  = 0.0;
 /* L10: */
 		}
 	    } else {
@@ -1462,7 +1462,7 @@ L20:
 	    if (sa == 0. && sb == 0.) {
 	      printf(" the residual is normalised by ||b|| \n");
 	    } else {
-	      printf(" the residual is normalised by  %.2e * ||x|| + %.2e \n",sa,sb);
+	      printf(" the residual is normalised by  %.5e * ||x|| + %.5e \n",sa,sb);
 	    }
 	    spa = cntl[4];
 	    spb = cntl[5];
@@ -1470,7 +1470,7 @@ L20:
 	    if (spa == 0. && spb == 0.) {
 		printf(" the residual is normalised by ||b|| \n");
 	    } else {
-		printf(" the residual is normalised by  %.2e * ||(P2)y|| + %.2e \n",spa,spb);
+		printf(" the residual is normalised by  %.5e * ||(P2)y|| + %.5e \n",spa,spb);
 	    }
 	    printf(" Optimal size for the local workspace: %d \n",info[3]);
 	    
@@ -1854,8 +1854,8 @@ L5:
 	jh = 0;
 	bea = 0.;
 	be = 0.;
-	printf(" %d %.3e \n",jh,bea);
-        printf(" %.3e \n",be);
+	printf(" %d %.5e \n",jh,bea);
+        printf(" %.5e \n",be);
 	info[1] = 0;
 	info[2] = 0;
 	rinfo[1] = 0.;
@@ -1967,8 +1967,8 @@ L18:
 	jh = 0;
 	bea = 0.;
 	be = 0.;
-	printf(" %d %.3e \n",jh,bea);
-        printf(" %.3e \n",be);
+	printf(" %d %.5e \n",jh,bea);
+        printf(" %.5e \n",be);
 	if (iwarn != 0) {
 	    printf(" WARNING GMRES : \n");
 	    printf(" Intial residual is zero \n");
@@ -2306,12 +2306,11 @@ L46:
 L48:
     if (bea <= cntl[1] || iterout * *m + jh >= itermax) {
 	dnormres = sqrt(dot[1]);
-
 	be = dnormres / (spa * dnormx + spb);
 /* Save the backward error on a file if convergence history requested */
 	if (ihist != 0) {
 	  i__1 = iterout * *m + jh;
-	  printf("   %d      %.3e       %.3e \n",i__1,bea,be);
+	  printf("   %d      %.5e       %.5e \n",i__1,bea,be);
 	  /* io___168.ciunit = ihist;
 	    s_wsfe(&io___168);
 	    
@@ -2390,7 +2389,7 @@ L51:
 /* Save the backward error on a file if convergence history requested */
 	if (ihist != 0) {	 
 	    i__1 = iterout * *m + jh;
-	    printf("   %d      %.3e      --  \n",i__1,bea);
+	    printf("   %d      %.8e      --  \n",i__1,bea);
 	}
     }
 

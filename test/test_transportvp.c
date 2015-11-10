@@ -29,76 +29,70 @@ int main(void) {
   return !resu;
 } 
 
-int Test_TransportVP(void) {
+int Test_TransportVP(void) { 
 
   bool test = true;
 
-  field f;
-  init_empty_field(&f);
+#ifdef PARALUTION 
+  paralution_begin();
+#endif 
 
-  int vec=1;
+  MacroMesh mesh;
+  ReadMacroMesh(&mesh,"../test/testcube.msh");
+  Detect1DMacroMesh(&mesh);
   
-  f.model.m=_INDEX_MAX; // num of conservative variables f(vi) for each vi, phi, E, rho, u, p, e (ou T)
-  f.model.NumFlux=VlasovP_Lagrangian_NumFlux;
- 
-  //f.model.Source = NULL;
- 
-  f.model.InitData = Test_TransportVP_InitData;
-  f.model.ImposedData = Test_TransportVP_ImposedData;
-  f.model.BoundaryFlux = Test_TransportVP_BoundaryFlux;
-
-  f.varindex = GenericVarindex;
-    
-  f.interp.interp_param[0] = f.model.m;  // _M
-  f.interp.interp_param[1] = 2;  // x direction degree
-  f.interp.interp_param[2] = 0;  // y direction degree
-  f.interp.interp_param[3] = 0;  // z direction degree
-  f.interp.interp_param[4] = 16;  // x direction refinement
-  f.interp.interp_param[5] = 1;  // y direction refinement
-  f.interp.interp_param[6] = 1;  // z direction refinement
- // read the gmsh file
-  ReadMacroMesh(&(f.macromesh), "../test/testcube.msh");
-  // try to detect a 2d mesh
-  Detect1DMacroMesh(&(f.macromesh));
-  bool is1d = f.macromesh.is1d;
+  bool is1d = mesh.is1d;
   assert(is1d);
+  
+  real A[3][3] = {{1, 0, 0}, {0, 1, 0}, {0, 0,1}};
+  real x0[3] = {0, 0, 0};
+  AffineMapMacroMesh(&mesh,A,x0);
 
-  // mesh preparation
-  BuildConnectivity(&(f.macromesh));
+  BuildConnectivity(&mesh);
 
-  //AffineMapMacroMesh(&(f.macromesh));
- 
-  // prepare the initial fields
-  f.model.cfl = 0.05;
-  Initfield(&f);
-  f.vmax = _VMAX; // maximal wave speed
-  f.nb_diags = 3;
-  f.pre_dtfield = UpdateVlasovPoisson;
-  f.post_dtfield=NULL;
-  f.update_after_rk = PlotVlasovPoisson;
-  f.model.Source = VlasovP_Lagrangian_Source;
-  // prudence...
-  CheckMacroMesh(&(f.macromesh), f.interp.interp_param + 1);
+  Model model;
+  
+  model.m=_INDEX_MAX; // num of conservative variables f(vi) for each vi, phi, E, rho, u, p, e (ou T)
+  model.NumFlux=VlasovP_Lagrangian_NumFlux;
+  model.InitData = Test_TransportVP_InitData;
+  model.ImposedData = Test_TransportVP_ImposedData;
+  model.BoundaryFlux = Test_TransportVP_BoundaryFlux;
+  model.Source = VlasovP_Lagrangian_Source;
 
-  printf("cfl param =%f\n", f.hmin);
+
+  int deg[]={2, 0, 0};
+  int raf[]={16, 1, 1};
+
+  CheckMacroMesh(&mesh, deg, raf);
+  Simulation simu;
+  EmptySimulation(&simu);
+
+  InitSimulation(&simu, &mesh, deg, raf, &model);
+  simu.vmax = _VMAX; // maximal wave speed
+  simu.cfl=0.2;
+  simu.nb_diags = 3;
+  simu.pre_dtfields = UpdateVlasovPoisson;
+  simu.post_dtfields=NULL;
+  simu.update_after_rk = PlotVlasovPoisson;
+
 
   real tmax = 0.03;
-  real dt = set_dt(&f);
-  RK2(&f, tmax, dt);
-  //RK2(&f,0.03,0.05);
+  RK4(&simu, tmax);
 
    // save the results and the error
   int iel = 2 * _NB_ELEM_V / 3;
   int iloc = _DEG_V;
   printf("Trace vi=%f\n", -_VMAX + iel * _DV + _DV * glop(_DEG_V, iloc));
-  Plotfield(iloc + iel * _DEG_V, false, &f, "sol","dgvisu.msh");
-  Plotfield(iloc + iel * _DEG_V, true, &f, "error","dgerror.msh");
-  Plot_Energies(&f, dt);
+  PlotFields(iloc + iel * _DEG_V, false, &simu, "sol","dgvisu_kin.msh");
+  PlotFields(iloc + iel * _DEG_V, true, &simu, "error","dgerror_kin.msh");
+  Plot_Energies(&simu, simu.dt);
 
-  real dd_Kinetic = L2_Kinetic_error(&f);
+  real dd_Kinetic = L2_Kinetic_error(&simu);
   
   printf("erreur kinetic L2=%lf\n", dd_Kinetic);
   test= test && (dd_Kinetic < 1e-2);
+
+  FreeMacroMesh(&mesh);
 
   return test;
 }
@@ -144,25 +138,44 @@ void Test_TransportVP_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
   VlasovP_Lagrangian_NumFlux(wL, wR, vnorm, flux);
 }
 
-void UpdateVlasovPoisson(void *vf, real *w) {
-  field *f = vf;
+void UpdateVlasovPoisson(void *si, real *w) {
+  Simulation *simu = si;
   
   int type_bc = 1;
   real bc_l = 1;
   real bc_r = 0;
     
-  // Computation_charge_density(f,w);
+  // Computation_charge_density(simu,simu->w);
+  ContinuousSolver ps;
   
-  // Solving poisson
-  SolvePoisson1D(f,w,type_bc,bc_l,bc_r,LU,NONE);    
+  int nb_var=1;
+  int * listvar= malloc(nb_var * sizeof(int));
+  listvar[0]=_INDEX_PHI;
   
+  InitContinuousSolver(&ps,simu,1,nb_var,listvar);
+
+  ps.matrix_assembly=ContinuousOperator_Poisson1D;
+  ps.rhs_assembly=RHSPoisson_Continuous;
+  ps.bc_assembly= ExactDirichletContinuousMatrix;
+  ps.postcomputation_assembly=Computation_ElectricField_Poisson;
+
+#ifdef PARALUTION
+  ps.lsol.solver_type = PAR_LU;
+  ps.lsol.pc_type=NONE;
+#else
+  ps.lsol.solver_type = LU;
+  ps.lsol.pc_type=NONE;
+#endif
+
+  SolveContinuous2D(&ps);
+  //freeContinuousSolver(&ps);
 }
 
-void PlotVlasovPoisson(void *vf, real *w) {
+void PlotVlasovPoisson(void *si, real *w) {
   real k_energy = 0, e_energy = 0, t_energy = 0;
   
-  field *f = vf;
+  Simulation *simu = si;
   
-  Energies(f, w, k_energy, e_energy, t_energy,1);
-  vf = f;
+  Energies(simu, w, k_energy, e_energy, t_energy,1);
+  si = simu; 
 }

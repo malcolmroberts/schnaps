@@ -1,7 +1,7 @@
 #include "schnaps.h"
 #include <stdio.h>
 #include <assert.h>
-#include "test.h"
+#include "../test/test.h"
 #include "getopt.h"
 #include <stdlib.h>     /* atoi */
 #include "mhd.h"
@@ -19,22 +19,22 @@
 //}
 
 int main(int argc, char *argv[]) {
-  int resu = TestReconnexion(argc,argv);
+  int resu = TestKelvinHelmotz(argc,argv);
   if (resu)
-    printf("Reconnexion test OK !\n");
+    printf("KelvinHelmotz test OK !\n");
   else 
-    printf("Reconnexion test failed !\n");
+    printf("KelvinHelmotz test failed !\n");
   return !resu;
 }
 
-int TestReconnexion(int argc, char *argv[]) {
+int TestKelvinHelmotz(int argc, char *argv[]) { /*
   real cfl = 0.1;
   real tmax = 0.1;
   bool writemsh = false;
   real vmax = 6.0;
   bool usegpu = false;
   real dt = 0.0;
-  real periodsize = 2.;
+  real periodsize = 1.;
   
   for (;;) {
     int cc = getopt(argc, argv, "c:t:w:D:P:g:s:");
@@ -79,9 +79,9 @@ int TestReconnexion(int argc, char *argv[]) {
   strcpy(f.model.name,"MHD");
 
   f.model.NumFlux=MHDNumFluxRusanov;
-  f.model.BoundaryFlux=MHDBoundaryFluxReconnexion;
-  f.model.InitData=MHDInitDataReconnexion;
-  f.model.ImposedData=MHDImposedDataReconnexion;
+  f.model.BoundaryFlux=MHDBoundaryFluxKelvinHelmotz;
+  f.model.InitData=MHDInitDataKelvinHelmotz;
+  f.model.ImposedData=MHDImposedDataKelvinHelmotz;
   
   char buf[1000];
   sprintf(buf, "-D _M=%d -D _PERIODX=%f -D _PERIODY=%f",
@@ -95,7 +95,7 @@ int TestReconnexion(int argc, char *argv[]) {
   strcat(buf, numflux_cl_name);
   strcat(cl_buildoptions, buf);
 
-  sprintf(buf, " -D BOUNDARYFLUX=%s", "MHDBoundaryFluxReconnexion");
+  sprintf(buf, " -D BOUNDARYFLUX=%s", "MHDBoundaryFluxKelvinHelmotz");
   strcat(cl_buildoptions, buf);
   
   // Set the global parameters for the Vlasov equation
@@ -111,14 +111,13 @@ int TestReconnexion(int argc, char *argv[]) {
   //set_vlasov_params(&(f.model));
 
   // Read the gmsh file
-  ReadMacroMesh(&(f.macromesh), "../test/testrecogrid.msh");
+  ReadMacroMesh(&(f.macromesh), "../test/testKHgrid.msh");
   // Try to detect a 2d mesh
   Detect2DMacroMesh(&(f.macromesh)); 
   bool is2d=f.macromesh.is2d; 
   assert(is2d);  
 
   f.macromesh.period[0]=periodsize;
-  f.macromesh.period[1]=periodsize;
   
   // Mesh preparation
   BuildConnectivity(&(f.macromesh));
@@ -138,7 +137,7 @@ int TestReconnexion(int argc, char *argv[]) {
   if(usegpu) {
     printf("Using OpenCL:\n");
 
-    RK4_CL(&f, tmax, dt, 0, NULL, NULL);
+    RK4_CL(&f, 0.873, dt, 0, NULL, NULL);
     CopyfieldtoCPU(&f);
     show_cl_timing(&f);
     }
@@ -148,9 +147,9 @@ int TestReconnexion(int argc, char *argv[]) {
     RK4(&f, tmax, dt);
   }
 
-  Plotfield(5,false,&f, "By", "dgvisu.msh");
+  Plotfield(0,false,&f, "Rho", "dgvisu.msh");
   //Gnuplot(&f,0,0.0,"data1D.dat");
 
 
-  return test;
+  return test; */
 }

@@ -171,6 +171,20 @@ void paralution_fortran_solve(char*, char*, char*, char*, double, double, double
                               paralution::LocalMatrix<double>*, paralution::LocalVector<double>*,
                               paralution::LocalVector<double>*, int&, double&, int&);
 
+void paralution_begin(){
+ 
+
+  paralution::init_paralution();
+  paralution::info_paralution();
+
+}
+
+void paralution_end(){
+
+  paralution::stop_paralution();
+
+}
+
 
 /// Solves a linear system for given COO matrix, rhs, solution vector, solver and preconditioner.
 void paralution_fortran_solve_coo(int n, int m, int nnz, char *solver, char *mformat, char *precond, char *pformat,
@@ -178,10 +192,6 @@ void paralution_fortran_solve_coo(int n, int m, int nnz, char *solver, char *mfo
                                   double *in_rhs, double atol, double rtol, double div, int maxiter,
                                   int basis, int p, int q, double *in_x)
 {
-
-  
-  paralution::init_paralution();
-  paralution::info_paralution();
 
   paralution::LocalVector<double> paralution_x;
   paralution::LocalVector<double> paralution_rhs;
@@ -239,7 +249,8 @@ void paralution_fortran_solve_coo(int n, int m, int nnz, char *solver, char *mfo
 
   //delete [] in_x;
 
-  paralution::stop_paralution();
+
+  // paralution::stop_paralution();
 
 }
 

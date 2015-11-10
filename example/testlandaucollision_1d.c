@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
-#include "test.h"
+#include "../test/test.h"
 #include "collision.h"
 #include "quantities_vp.h"
 #include "diagnostics_vp.h"
@@ -20,7 +20,7 @@ int main(void) {
   
   // unit tests
     
-  int resu=TestLandau_Damping_1D();
+  int resu=TestLandauCollision_1D();
 	 
   if (resu) printf("landau test OK !\n");
   else printf("landau test failed !\n");
@@ -29,7 +29,7 @@ int main(void) {
 } 
 
 
-int TestLandau_Damping_1D(void) {
+int TestLandauCollision_1D(void) { /*
 
   bool test=true;
 
@@ -55,7 +55,7 @@ int TestLandau_Damping_1D(void) {
   f.interp.interp_param[1]=2;  // x direction degree
   f.interp.interp_param[2]=0;  // y direction degree
   f.interp.interp_param[3]=0;  // z direction degree
-  f.interp.interp_param[4]=24;  // x direction refinement
+  f.interp.interp_param[4]=20;  // x direction refinement
   f.interp.interp_param[5]=1;  // y direction refinement
   f.interp.interp_param[6]=1;  // z direction refinement
  // read the gmsh file
@@ -73,6 +73,8 @@ int TestLandau_Damping_1D(void) {
   // mesh preparation
   f.macromesh.period[0]=2.0*pi/k;
   BuildConnectivity(&(f.macromesh));
+
+  //AffineMapMacroMesh(&(f.macromesh));
  
   // prepare the initial fields
   f.model.cfl=0.5;
@@ -92,8 +94,8 @@ int TestLandau_Damping_1D(void) {
   printf("cfl param =%f\n",f.hmin);
   
   real dt = set_dt(&f);
-  RK4(&f,40, dt);
- 
+  RK4(&f,0.000334, dt);
+
   
    // save the results and the error
   int iel=_NB_ELEM_V/2;
@@ -106,18 +108,20 @@ int TestLandau_Damping_1D(void) {
 
   Plot_Energies(&f, dt);
 
+  
+
   test= 1;
 
-  return test;
+  return test; */
 
 }
 
-void Test_Landau_Damping_ImposedData(const real x[3], const real t, real w[])
+/* void Test_Landau_Damping_ImposedData(const real x[3], const real t, real w[])
 {
   //parameters of the case
   
   real k=0.5;
-  real eps = 0.005;
+  real eps = 0.05;
   real my_pi= 4.0*atan(1.0);
   
   for(int i=0;i<_INDEX_MAX_KIN+1;i++){
@@ -163,14 +167,19 @@ void UpdateVlasovPoisson(void* vf, real * w){
   int type_bc;
   real bc_l, bc_r;
   int itermax;
+  real gw[_INDEX_MAX];
   field* f=vf;
   type_bc=2;
   bc_l=0;
   bc_r=0;
-    
+
+
   Computation_charge_density(f,w);
   
-  SolvePoisson1D(f,w,type_bc,bc_l,bc_r,LU,NONE);    
+  SolvePoisson1D(f,w,type_bc,bc_l,bc_r,LU,NONE);
+  
+ VlasovP_Mass_modified(f,w,physic_entropy_to_distribution,gw);
+ VlasovP_Mass_modified(f,gw,distribution_to_physic_entropy,w);
   
 }
 
@@ -183,3 +192,5 @@ void PlotVlasovPoisson(void* vf, real * w){
   Charge_total(f,w,t_charge,4);
   vf=f;
 }
+
+*/

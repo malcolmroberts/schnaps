@@ -23,6 +23,15 @@ typedef struct Skyline{
   //! \brief array for the lower part of  the matrix
   real* vkgi;
 
+  //! \brief array for the upper part of  the matrix (copy used if factorized)
+  real* copy_vkgs;
+
+  //! \brief array for the diagonal part of  the matrix (size neq) (copy used if factorized)
+  real* copy_vkgd;
+
+  //! \brief array for the lower part of  the matrix (copy used if factorized)
+  real* copy_vkgi;
+
   //! \brief profile of the matrix (size neq)
   int* prof;
 
@@ -37,6 +46,9 @@ typedef struct Skyline{
 
   //! \brief true if the arrays are allocated
   bool is_alloc;
+
+  //! \brief true if the arrays of the copied matrix are allocated
+  bool copy_is_alloc;
 
   //! \brief true if the matrix is factorized
   bool is_lu;
@@ -63,6 +75,11 @@ void SwitchOn(Skyline* sky,int i,int j);
 //! \brief the nonzero positions should first be "switched on"
 //! \param[inout] sky the skyline object
 void AllocateSkyline(Skyline* sky);
+
+//! \brief allocate the variable-size arrays
+//! \brief the nonzero positions should first be "switched on"
+//! \param[inout] sky the skyline object
+void AllocateCopySkyline(Skyline* sky);
 
 //! \brief set elem (i,j) to value val
 //! \param[inout] sky the skyline object

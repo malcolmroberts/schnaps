@@ -7,6 +7,7 @@
 #include <assert.h>
 #include "simulation.h"
 #include "linear_solver.h"
+#include "advanced_linear_solver.h"
 
 
 //! \brief Construct the profile of the linear solver
@@ -14,13 +15,6 @@
 //! \param[inout] simu a simulation
 //! \param[inout] solver a linear solver
 void InitImplicitLinearSolver(Simulation *simu, LinearSolver *solver);
-
-//! \brief Construct the profile of the linear solver
-//! for the locally implicit scheme
-//! \param[inout] field a field
-void InitFieldImplicitSolver(field *fd, MatrixStorage ms);
-
-
 
 //! \brief Assembly of the DG operator into a sparse matrix
 //! computations of all the terms
@@ -208,6 +202,40 @@ void MassAssembly(Simulation *simu,  LinearSolver *solver);
 //! case of the locally implicit scheme
 //! \param[inout] field a field
 void MassLocalAssembly(field *fd);
+
+
+//! \brief initialize the struct JFLinear solver for our DG scheme
+//! for the generic implicit linear solver
+//! \param[inout] simu a simulation
+//! \param[inout] solver a Free jacobian linear solver
+void InitImplicitJFLinearSolver(Simulation *simu, JFLinearSolver *solver);
+
+//! \brief Assembly of the DG vectors for the JF solver
+//! computations of all the terms
+//! \param[inout] simu a simulation
+//! \param[inout] solver a jacobian free linear solver
+//! \param[in] theta the crank nicholson parameter
+//!  \param[in] dt time step
+void AssemblyImplicitJFLinearSolver(Simulation *simu, JFLinearSolver *solver, real dt);
+
+
+//! ADD DESCRIPTION
+void ThetaTimeScheme_WithJF(Simulation *simu, real tmax, real dt);
+
+//! \brief function which compute the implicit nonlinear vector for the Jacobian free for the sol solvector
+//! \param[i] simu a simulation
+//! \param[in] solver a linear solver
+//! \param[in] solvector a vector of unknown used to construct the nonlinear vector
+//! \param[inout] nlvector a nonlinear vector obtained at the end
+void ImplicitNonlinearVector_computation(Simulation * simu,void* lsol,real * solvector,real *nlvector);
+
+//! \brief function which compute the nonlinear vector for the theta scheme
+//! \param[i] simu a simulation
+//! \param[in] solvector a vector of unknown used to construct the nonlinear vector
+//! \param[inout] nlvector a nonlinear vector obtained at the end
+//! \param[in] theta a coefficeny
+//! \param[in] dt a time step
+void NonlinearThetaVector_assembly(Simulation * simu,real * solvector,real *nlvector,real theta, real dt);
 
 
 

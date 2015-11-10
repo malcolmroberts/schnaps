@@ -6,12 +6,18 @@
 #include <assert.h>
 #include "geometry.h"
 #include "interpolation.h"
-#include "linear_solver.h"
-#include "simulation.h"
+#include "advanced_linear_solver.h"
 
 #define _Dirichlet_Poisson_BC (1)
 #define _Periodic_Poisson_BC (2)
 
+//! \brief Scalar diffusion operator
+typedef struct SDO{
+
+  //! \brief physical coordinates of the node
+  real DO[4][4];
+
+} SDO;
 
 //! \brief a struct for sorting and pasting the
 //! nodes of the DG mesh for obtaining a FE mesh
@@ -78,28 +84,42 @@ typedef struct ContinuousSolver{
   //! \brief list of index for the variables
   int * list_of_var;
 
-  //! for dirchilet homogeneous, 2 for periodic 
+  //! \brief for Neumann (or (u,n)=0 for wave), robin ( or p imposed for wave),
   int type_bc;
 
-  //! \brief pointer on the function which assembly the rhs
-  //! \param[inout] lsol a linear solver allocate
-  //! \param[in] a continuous solver
-  void (*rhs_assembly)(void * cs,LinearSolver* lsol);
+  //! \brief Differential operator for 2d vectorial (some variables) problems
+  SDO * diff_op;
 
-  //! \brief pointer on the function which assembly the matrix
+  //! \brief FluxMatrix is the matrix of the hyperbolic model
+  real ** FluxMatrix;
+  
+  //! \brief pointer on the function which assembles the rhs
   //! \param[inout] lsol a linear solver allocate
   //! \param[in] a continuous solver
-  void (*matrix_assembly)(void * cs,LinearSolver* lsol);
+  void (*rhs_assembly)(void * cs);
+
+  //! \brief pointer on the function which assembles the matrix
+  //! \param[inout] a continuous solver
+  void (*matrix_assembly)(void * cs);
 
   //! \brief pointer on the function which assembly the post computation
   //! \param[inout] lsol a linear solver allocate
   //! \param[in] a continuous solver
-  void (*postcomputation_assembly)(void * cs,LinearSolver* lsol);
+  void (*postcomputation_assembly)(void * cs);
 
    //! \brief pointer on the function which assembly the post computation
   //! \param[inout] lsol a linear solver allocate
   //! \param[in] a continuous solver
-  void (*bc_assembly)(void * cs,LinearSolver* lsol);
+  void (*bc_assembly)(void * cs);
+
+  //! \brief pointer on the function which compute the BC flux 
+  //! \param[in] cs a continuous solver
+  //! \param[in] xpg a point of the mesh
+  //! \param[in] w a vector of unknowns
+  //! \param[in] vnorm a vector of normal
+  //! \param[inout] flux a vector of flux
+  void (*bc_flux)(void * cs, real * xpg, real * w, real *vnorm, real * flux);
+
   
 
 } ContinuousSolver;
@@ -119,8 +139,8 @@ int CompareFatNode(const void* a,const void* b);
 //! \returns the size of the list
 int BuildFatNodeList(Simulation *simu,FatNode* fn_list);
 
-//! \brief init a poisson solver
-//! \param[inout] ps a PoissonSolver struct
+//! \brief init a continuous solver
+//! \param[inout] cs a continuous Solver struct
 //! \param[in] simu a simulation
 //! \param[in] type_bc the number of bc type
 //! \param[in] nb_phy_vars the number of variable for the solver
@@ -129,26 +149,54 @@ void InitContinuousSolver(void* cs, Simulation* simu,
 
 
 //! \brief compute the discontinuous unknown using the continuous one
-//! \param[inout] lsol a linear solver allocate
 //! \param[in] a continuous solver
-void ContinuousToDiscontinuous_Copy(ContinuousSolver * cs,LinearSolver* lsol);
+void ContinuousToDiscontinuous_Copy(ContinuousSolver * cs);
 
 
 //! \brief allocate matrix for continuous solver
-//! \param[inout] lsol a linear solver allocate
-//! \param[in] a continuous solver
-void AllocateContinuousMatrix(void * cs,LinearSolver* lsol);
+//! \param[inout] cs a continuous solver
+void AllocateContinuousMatrix(void * cs);
 
-//! \brief pply dirichlet homogeneous bc for continuous solver
-//! \param[inout] lsol a linear solver allocate
-//! \param[in] a continuous solver
-void ExactDirichletContinuousMatrix(void * cs,LinearSolver* lsol);
+//! \brief apply dirichlet inhomogeneous bc for continuous solver
+//! \param[inout] cs a continuous solver
+void ExactDirichletContinuousMatrix(void * cs);
 
 
-//! \brief solve a 2D poisson problem
-//! \param[inout] ps a Poisson solver (field + linear solver + other parameters)
-//! \param[in] type_bc the boundary condition type
-//!  (1->dirichlet ; 2-> periodic)
+//! \brief apply dirichlet inhomogeneous bc for continuous solver
+//! \param[inout] cs a continuous solver
+void PenalizedDirichletContinuousMatrix(void * cs);
+
+//! \brief construct the source associated to the source of the model 
+//! \param[inout] cs a continuous solver
+void Source_Assembly(void * cs);
+
+//! \brief solve a 2D Continuous solver problem (we mus speficy the function which construct, matrice, rhs and bc)
+//! \param[inout] ps a continuous solver (field + linear solver + other parameters)
 void SolveContinuous2D(void * cs);
+
+//! \brief construct the matrix associated to a generic continuous operator 
+//! \param[inout] cs a continuous solver
+void GenericOperator_Continuous(void * cs);//,LinearSolver* lsol);
+
+//! \brief fusion the variable of the Solver L1Solver and L2Solver (contains in the L1 and L2 vectors) in the vector L
+//! \param[inout] L is a vector
+//! \param[in] L1 is a vector
+//! \param[in] L2 is a vector
+//! \param[in] L1Solver a continuous solver
+//! \param[in] L2Solver continuous solver
+void cat2CGVectors(ContinuousSolver* L1Solver,ContinuousSolver* L2Solver, real *L1, real *L2, real *L);
+
+//! \brief extract the variables of the Solver L1Solver in the L1 vector (resp variables of the Solver L2Solver in the L2 vector)
+//! \param[inout] L is a vector
+//! \param[in] L1 is a vector
+//! \param[in] L2 is a vector
+//! \param[in] L1Solver a continuous solver
+//! \param[in] L2Solver continuous solver
+void extract2CGVectors(ContinuousSolver* L1Solver,ContinuousSolver* L2Solver, real *L, real *L1, real *L2);
+
+
+//! \brief frees a ContinuousSolver object
+//! \param[in] cs: a ContinuousSolver object
+void freeContinuousSolver(ContinuousSolver* cs);
 
 #endif

@@ -30,6 +30,10 @@ int TestPoisson(void)
 {
   bool test = true;
 
+#ifdef PARALUTION 
+  paralution_begin();
+#endif 
+
   // 2D meshes:
   // test/disque2d.msh
   // test/testdisque2d.msh
@@ -70,9 +74,8 @@ int TestPoisson(void)
  
   CheckMacroMesh(&mesh, deg, raf);
   Simulation simu;
-
+  EmptySimulation(&simu);
   InitSimulation(&simu, &mesh, deg, raf, &model);
-
 
   ContinuousSolver ps;
   
@@ -81,24 +84,21 @@ int TestPoisson(void)
   listvar[0]=_INDEX_PHI;
   
   InitContinuousSolver(&ps,&simu,1,nb_var,listvar);
-  ps.matrix_assembly=MatrixPoisson_Continuous;
+
+  ps.matrix_assembly=ContinuousOperator_Poisson1D;
   ps.rhs_assembly=RHSPoisson_Continuous;
   ps.bc_assembly= ExactDirichletContinuousMatrix;
   ps.postcomputation_assembly=Computation_ElectricField_Poisson;
 
-/* #ifdef PARALUTION */
-/*   ps.lsol.solver_type = PAR_AMG; */
-/*   ps.lsol.pc_type=NONE; */
-/* #else */
-  ps.lsol.solver_type = LU;
+  ps.lsol.solver_type = GMRES;
   ps.lsol.pc_type=NONE;
-/* #endif */
 
   SolveContinuous2D(&ps);
 
+
   real errl2 = L2error(&simu);
 
-  printf("Erreur L2=%f\n",errl2);
+  printf("Erreur L2=%.12e\n",errl2);
 
   test = test && (errl2 < 2e-2);
 
@@ -108,38 +108,20 @@ int TestPoisson(void)
   PlotFields(_INDEX_PHI, false, &simu, NULL, "dgvisu.msh");
   PlotFields(_INDEX_EX, false, &simu, NULL, "dgex.msh");
 
+#ifdef PARALUTION 
+  paralution_end();
+#endif
+  
+  freeContinuousSolver(&ps);
+  FreeMacroMesh(&mesh);
+
+
+
 
   return test;
 }
 
-/* void TestPoisson_ImposedData(const real x[3], const real t, real w[]) */
-/* { */
-/*   for(int i = 0; i < _INDEX_MAX; i++){ */
-/*     w[i] = 0; */
-/*   } */
-/*   // exact value of the potential */
-/*   // and electric field */
-/*   w[_INDEX_PHI] = (x[0] * x[0] + x[1] * x[1])/4; */
-/*   w[_INDEX_EX] =  -x[0]/2; */
-/*   w[_INDEX_RHO] = -1; //rho init */
-/*   /\* w[_INDEX_PHI] = x[0] ; *\/ */
-/*   /\* w[_INDEX_EX] =  -1; *\/ */
-/*   /\* w[_INDEX_RHO] = 0; //rho init *\/ */
-/* } */
 
-/* void TestPoisson_InitData(real x[3], real w[]) */
-/* { */
-/*   real t = 0; */
-/*   TestPoisson_ImposedData(x, t, w); */
-/* } */
-
-/* void TestPoisson_BoundaryFlux(real x[3], real t, real wL[], real *vnorm,  */
-/* 			      real *flux) */
-/* { */
-/*   real wR[_INDEX_MAX]; */
-/*   TestPoisson_ImposedData(x, t, wR); */
-/*   VlasovP_Lagrangian_NumFlux(wL, wR, vnorm, flux); */
-/* } */
 void TestPoisson_ImposedData(const real x[3], const real t,real w[]){
   for(int i = 0; i < _INDEX_MAX_KIN + 1; i++){
     int j = i%_DEG_V; // local connectivity put in function

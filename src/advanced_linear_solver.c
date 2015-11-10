@@ -1,12 +1,68 @@
-#include "linear_solver.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
 #include <math.h>
 #include "skyline.h"
+#include "skyline_spu.h"
 #include "paralution_c.h"
 #include "dpackfgmres.h"
+#include "physBased_PC.h"
 #include "advanced_linear_solver.h"
+#include "linear_solver.h"
+#include "solverpoisson.h"
+#include "solvercontinuous.h"
+
+
+void Advanced_SolveLinearSolver(LinearSolver* lsol, Simulation* simu){
+  
+  assert(lsol->is_init);
+  assert(lsol->is_alloc);
+  assert(lsol->rhs);
+  assert(lsol->sol);
+
+
+  if(lsol->solver_type == LU) {
+    Skyline* sky;
+    Skyline_SPU* sky_spu;
+       switch(lsol->storage_type) {
+       case SKYLINE :
+         sky=(Skyline*)lsol->matrix;
+	 if (!sky->is_lu){
+	   FactoLU(sky);
+	  }
+	 SolveSkyline(sky,lsol->rhs,lsol->sol);
+	 break;
+
+       case SKYLINE_SPU :
+         sky_spu=(Skyline_SPU*)lsol->matrix;
+	 if (!sky_spu->is_lu){
+	   //UnRegisterSkyline_SPU(sky_spu);
+	   //FactoLU_SPU(sky_spu);
+	   printf("to do: insert factolu in the starpu system !!!!!\n");
+	   //RegisterSkyline_SPU(sky_spu);
+	  }
+	 SolveSkyline_SPU(sky_spu);
+	 break;
+      
+       default : 
+	 assert(1==2);      
+       }
+  }
+  else if(lsol->solver_type == GMRES) {
+    Advanced_GMRESSolver(lsol,simu);
+  }
+  else {
+#ifdef PARALUTION
+    Solver_Paralution(lsol);
+#else
+    printf("paralution is not build this solver is not accessible.");
+    assert(1==2);
+#endif
+  }  
+   
+}
+
+
 
 void InitJFLinearSolver(JFLinearSolver* lsol,int n,
 		      Solver* solvtyp){
@@ -22,13 +78,21 @@ void InitJFLinearSolver(JFLinearSolver* lsol,int n,
   lsol->tol=1.e-6;
   lsol->restart_gmres=1;
   lsol->iter_max=10000;
+  lsol->eps=0.000001;
 
   if (solvtyp != NULL) lsol->solver_type = *solvtyp;
+
+  lsol->rhs=calloc(n,sizeof(real));
+  lsol->sol=calloc(n,sizeof(real));
+  lsol->soln=calloc(n,sizeof(real));
 
 }
 
 void FreeJFLinearSolver(JFLinearSolver* lsol){
 
+  free(lsol->rhs);
+  free(lsol->sol);
+  free(lsol->soln);
 
 }
 
@@ -43,26 +107,32 @@ void MatVecJacobianFree(Simulation *simu,void * system,real x[],real prod[]){
   solnp=calloc(lsol->neq,sizeof(real));
   U=calloc(lsol->neq,sizeof(real));
   Up=calloc(lsol->neq,sizeof(real));
+
   
   for(i=0;i<lsol->neq;i++)
     {
 	solnp[i]=lsol->soln[i]+lsol->eps*x[i];
     }
   
-  lsol->NonlinearVector_computation(system,simu,lsol->soln,U);
-  lsol->NonlinearVector_computation(system,simu,solnp,Up);
+  lsol->NonlinearVector_computation(simu,system,lsol->soln,U);
+  lsol->NonlinearVector_computation(simu,system,solnp,Up);
   
   for(i=0;i<lsol->neq;i++)
     {
       prod[i]=(Up[i]-U[i])/lsol->eps;
     }  
-  
+
+  free(solnp);
+  free(U);
+  free(Up);
 
   
 }
 
 
-void Advanced_GMRESSolver(LinearSolver* lsol, Simulation * simu){
+
+
+void Advanced_GMRESSolver(LinearSolver* lsol, Simulation* simu){
   int revcom, colx, coly, colz, nbscal;
   int li_maxiter;
   int m,lwork,N;
@@ -84,18 +154,44 @@ void Advanced_GMRESSolver(LinearSolver* lsol, Simulation * simu){
   int res=0;
   int matvec=1, precondLeft=2, precondRight=3, dotProd=4;
 
-
   lsol->MatVecProduct=MatVect;
   
   res=init_dgmres(icntl,cntl);
-  
   icntl[3]  = 6 ;           // output unit
   icntl[7]  = lsol->iter_max; // Maximum number of iterations
   icntl[4]  = 0; //!1            // preconditioner (1) = left preconditioner
   icntl[5]  = 1; ////3            // orthogonalization scheme
   icntl[6]  = 1; //1            // initial guess  (1) = user supplied guess
-  icntl[8]  = 1; //1            
-   
+  icntl[8]  = 1; //1
+
+  PB_PC pb_pc;
+  if(lsol->pc_type == PHY_BASED_P1){
+     int mat2assemble[6] = {1, 1, 1, 1, 1, 1};
+     Init_PBPC_Wave_SchurPressure_BCVelocity(simu, &pb_pc, mat2assemble);
+     Init_Parameters_PhyBasedPC(&pb_pc);
+     icntl[4]  = 2;
+  }
+  if(lsol->pc_type == PHY_BASED_P2){
+     int mat2assemble[6] = {1, 1, 1, 1, 1, 1};
+     Init_PBPC_Wave_SchurPressure_BCPressure(simu, &pb_pc, mat2assemble);
+     Init_Parameters_PhyBasedPC(&pb_pc);
+     icntl[4]  = 2;
+  }
+  if(lsol->pc_type == PHY_BASED_U1){
+     int mat2assemble[6] = {1, 1, 1, 1, 1, 1};
+     Init_PBPC_Wave_SchurVelocity_BCVelocity(simu, &pb_pc, mat2assemble);
+     Init_Parameters_PhyBasedPC(&pb_pc);
+     icntl[4]  = 2;
+  }
+  if(lsol->pc_type == PHY_BASED_U2){
+     int mat2assemble[6] = {1, 1, 1, 1, 1, 1};
+     Init_PBPC_Wave_SchurVelocity_BCPressure(simu, &pb_pc, mat2assemble);
+     Init_Parameters_PhyBasedPC(&pb_pc);
+     icntl[4]  = 2;
+  }
+  else if (((lsol->pc_type == JACOBI) ||(lsol->pc_type == EXACT)) ||lsol->pc_type == LO_POISSON){
+    icntl[4] = 2;
+  }
      
   cntl[1]  = lsol->tol; //       ! stopping tolerance
   cntl[2]  = 1.0;
@@ -116,7 +212,7 @@ void Advanced_GMRESSolver(LinearSolver* lsol, Simulation * simu){
   else {
       m = lsol->restart_gmres;
     }
-  lwork = m*m + m*(N+5) + 5*N + m + 1 +1; //(+ one because  ) ??
+  lwork = m*m + m*(N+5) + 5*N + m +1; //(+ one because  ) ??
 
   pt_m = &m;
   pt_Size = &N;
@@ -126,13 +222,24 @@ void Advanced_GMRESSolver(LinearSolver* lsol, Simulation * simu){
   loc_x = calloc(N, sizeof(real));
   loc_y = calloc(N, sizeof(real));
   loc_z = calloc(N, sizeof(real));
+
   
   for(int ivec = 0; ivec < N; ivec++) {
     work[ivec+1]     = lsol->sol[ivec];                    
     work[N+ivec+1]    = lsol->rhs[ivec];
   }
 
-  
+
+  real * Ax2=calloc(lsol->neq,sizeof(real));
+  lsol->MatVecProduct(lsol,lsol->sol,Ax2);
+  real errorb=0;
+  real errorb2=0;
+   for(int i = 0; i < N; i++) {
+     errorb=errorb+fabs((Ax2[i]-lsol->rhs[i])*(Ax2[i]-lsol->rhs[i]));                    
+     errorb2=errorb2+fabs(lsol->sol[i]*lsol->sol[i]);                    
+  }
+  printf(" error gmres begin %.5e \n",sqrt(errorb)/(sqrt(errorb2)+1.0)); 
+
   //*****************************************
   //** Reverse communication implementation
   //*****************************************
@@ -161,7 +268,7 @@ void Advanced_GMRESSolver(LinearSolver* lsol, Simulation * simu){
      goto L10;
   }
   else if(revcom == precondLeft)  {                 // perform the matrix vector product
-    // work(colz) <-- M-1 * work(colx)  
+    // work(colz) <-- M-1 * work(colx)
     Vector_copy(loc_x,loc_z,N);
     for(int ivec = 0; ivec < N; ivec++) {
       work[colz+ivec]= loc_z[ivec];                    
@@ -170,9 +277,27 @@ void Advanced_GMRESSolver(LinearSolver* lsol, Simulation * simu){
      goto L10;
   }
 
-  else if(revcom == precondRight)  {                 // perform the matrix vector product
-    // work(colz) <-- M-1 * work(colx)  
-    Vector_copy(loc_x,loc_z,N);
+  else if(revcom == precondRight)  {
+    if(lsol->pc_type == PHY_BASED_P1 || lsol->pc_type == PHY_BASED_P2 ){
+	 PhyBased_PC_InvertSchur_CG(&pb_pc,simu,loc_z,loc_x);
+    }
+    else if(lsol->pc_type == PHY_BASED_U1 || lsol->pc_type == PHY_BASED_U2){
+	 PhyBased_PC_CG(&pb_pc,simu,loc_z,loc_x);
+    }  
+    else if(lsol->pc_type == EXACT){
+      Exact_PC(lsol,loc_z,loc_x);
+    }
+    else if (lsol->pc_type == JACOBI){
+      Jacobi_PC(lsol,loc_z,loc_x);
+    }
+    else if (lsol->pc_type == LO_POISSON){
+      LowerOrderPC_Poisson(lsol,simu,loc_z,loc_x);
+    }
+    else {
+      Vector_copy(loc_x,loc_z,N);
+    }
+
+    
     for(int ivec = 0; ivec < N; ivec++) {
       work[colz+ivec]= loc_z[ivec];                    
       work[colx+ivec]= loc_x[ivec]; 
@@ -192,11 +317,34 @@ void Advanced_GMRESSolver(LinearSolver* lsol, Simulation * simu){
   }
 
   //******************************** end of GMRES reverse communication
+
+  
   
   for(int ivec = 0; ivec < N; ivec++) {
     lsol->sol[ivec] = work[ivec+1];                    
   }
+
+  real * Ax=calloc(lsol->neq,sizeof(real));
+  lsol->MatVecProduct(lsol,lsol->sol,Ax);
+  real error=0;
+  real error2=0;
+   for(int i = 0; i < N; i++) {
+     error=error+fabs((Ax[i]-lsol->rhs[i])*(Ax[i]-lsol->rhs[i]));                    
+     error2=error2+fabs(lsol->sol[i]*lsol->sol[i]);                    
+  }
+   printf(" error gmres end %.5e \n",sqrt(error)/(sqrt(error2)+1.0)); 
   
+  
+  free(work);
+  free(loc_x);
+  free(loc_y);
+  free(loc_z);
+  if(lsol->pc_type == PHY_BASED_P1 || lsol->pc_type == PHY_BASED_P2){
+    freePB_PC(&pb_pc);
+  }
+  if(lsol->pc_type == PHY_BASED_U1 || lsol->pc_type == PHY_BASED_U2){
+    freePB_PC(&pb_pc);
+  }
 
 }
 
@@ -336,6 +484,15 @@ void SolveJFLinearSolver(JFLinearSolver* lsol,Simulation * simu){
   for(int ivec = 0; ivec < N; ivec++) {
     lsol->sol[ivec] = work[ivec+1];                    
   }
-  
 
+  free(work);
+  free(loc_x);
+  free(loc_y);
+  free(loc_z);
 }
+
+
+
+
+
+

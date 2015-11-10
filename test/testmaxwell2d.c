@@ -105,7 +105,8 @@ int TestMaxwell2D(void) {
   real tolerance = 0.0025;
 
   test = dd < tolerance;
-  
+
+  FreeMacroMesh(&mesh);
  
   return test;
 }

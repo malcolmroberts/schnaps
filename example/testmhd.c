@@ -1,7 +1,7 @@
 #include "schnaps.h"
 #include <stdio.h>
 #include <assert.h>
-#include "test.h"
+#include "../test/test.h"
 #include "getopt.h"
 #include <stdlib.h>     /* atoi */
 #include "mhd.h"
@@ -27,7 +27,7 @@ int main(int argc, char *argv[]) {
   return !resu;
 }
 
-int TestMHD(int argc, char *argv[]) {
+int TestMHD(int argc, char *argv[]) { /*
   real cfl = 0.1;
   real tmax = 0.1;
   bool writemsh = false;
@@ -176,5 +176,5 @@ int TestMHD(int argc, char *argv[]) {
   printf("time per RK2 (s):\n");
   printf("%f\n", executiontime / (real)f.itermax);
 
-  return test;
+  return test; */
 }

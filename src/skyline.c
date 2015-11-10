@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include "skyline.h"
+#include "math.h"
 
 
 int sol_(real *vkgs, real *vkgd, real *
@@ -20,6 +21,7 @@ real scal_(real *x, real *y, int *n);
 void InitSkyline(Skyline* sky, int n){
 
   sky->is_alloc=false;
+  sky->copy_is_alloc=false;
   sky->is_sym=false;
   sky->is_lu=false;
 
@@ -28,18 +30,21 @@ void InitSkyline(Skyline* sky, int n){
   sky->nmem=0;
 
   sky->vkgs=NULL;
+  sky->copy_vkgs=NULL;
 
-  sky->vkgd=malloc(n*sizeof(real));
+  sky->vkgd=calloc(n,sizeof(real));
   assert(sky->vkgd);
   for(int i=0;i<n;i++) sky->vkgd[i]=0;
+  sky->copy_vkgd=NULL;
 
   sky->vkgi=NULL;
+  sky->copy_vkgi=NULL;
 
-  sky->prof=malloc(n*sizeof(int));
+  sky->prof=calloc(n,sizeof(int));
   assert(sky->prof);
   for(int i=0;i<n;i++) sky->prof[i]=0;
 
-  sky->kld=malloc((n+1)*sizeof(int));
+  sky->kld=calloc((n+1),sizeof(int));
   assert(sky->kld);
   for(int i=0;i<n+1;i++) sky->kld[i]=0;
 
@@ -56,7 +61,7 @@ void SwitchOn(Skyline* sky,int i,int j){
 
 void AllocateSkyline(Skyline* sky){
 
-  assert(! sky->is_alloc);
+  assert(!sky->is_alloc);
 
   sky->kld[0]=0;
   for(int i=0;i<sky->neq;i++){
@@ -64,11 +69,11 @@ void AllocateSkyline(Skyline* sky){
   }
   sky->nmem=sky->kld[sky->neq];
 
-  sky->vkgs=malloc(sky->nmem * sizeof(real));
+  sky->vkgs=calloc(sky->nmem,sizeof(real));
   assert(sky->vkgs);
 
   if (! sky->is_sym){
-    sky->vkgi=malloc(sky->nmem * sizeof(real));
+    sky->vkgi=calloc(sky->nmem,sizeof(real));
     assert(sky->vkgi);
   }
   else{
@@ -86,12 +91,57 @@ void AllocateSkyline(Skyline* sky){
 
 }
 
+void AllocateCopySkyline(Skyline* sky){
+
+  assert(!sky->copy_is_alloc);
+
+  sky->copy_vkgs=calloc(sky->nmem,sizeof(real));
+  assert(sky->copy_vkgs);
+
+  if (! sky->is_sym){
+    sky->copy_vkgi=calloc(sky->nmem,sizeof(real));
+    assert(sky->copy_vkgi);
+  }
+  else{
+    sky->copy_vkgi=sky->copy_vkgs;
+  }
+
+  sky->copy_vkgd=calloc(sky->neq,sizeof(real));
+  assert(sky->copy_vkgd);
+  for(int i=0;i<sky->neq;i++) sky->copy_vkgd[i]=0;
+
+  sky->copy_is_alloc=true;
+
+  // fill with zeros
+  for(int k=0;k<sky->nmem;k++){
+    sky->copy_vkgs[k]=0;
+     if (! sky->is_sym) sky->copy_vkgi[k]=0;
+  }
+
+  // Copying right after allocating.
+  for (int i=0; i<sky->nmem; i++){
+    sky->copy_vkgs[i] = sky->vkgs[i];
+    if (!sky->is_sym) sky->copy_vkgi[i] = sky->vkgi[i];
+  }
+  for (int i=0; i<sky->neq; i++){
+    sky->copy_vkgd[i] = sky->vkgd[i];
+  }
+
+}
+
 void AddSkyline(Skyline* sky,int i,int j,real val){
 
   assert(sky->is_alloc);
-
-
-  if (i==j){
+  
+  if ((j-i > sky->prof[j] || i-j > sky->prof[i]) && (val>0.0)){
+    printf("problem of profil with add %d %d\n",i,j);
+  }
+  
+  if ((j-i > sky->prof[j] || i-j > sky->prof[i]) && val==0.0)
+    {
+      ;
+    }
+  else if (i==j){
     sky->vkgd[i]+=val;
   }
   else if (j>i){
@@ -105,6 +155,7 @@ void AddSkyline(Skyline* sky,int i,int j,real val){
     //printf("i=%d j=%d k=%d nmem=%d\n",i,j,k,sky->nmem);
     //printf("i=%d j=%d k=%d v=%f\n",i,j,k,sky->vkgi[k]);
   }
+  
 
 
 }
@@ -113,8 +164,15 @@ void SetSkyline(Skyline* sky,int i,int j,real val){
 
   assert(sky->is_alloc);
 
-
-  if (i==j){
+   if ((j-i > sky->prof[j] || i-j > sky->prof[i]) && (val>0.0)){
+     printf("problem of profil with set %d %d\n",i,j);
+    }
+  
+  if ((j-i > sky->prof[j] || i-j > sky->prof[i]) && val==0.0)
+    {
+      ;
+    }
+  else if (i==j){
     sky->vkgd[i]=val;
   }
   else if (j>i){
@@ -128,8 +186,8 @@ void SetSkyline(Skyline* sky,int i,int j,real val){
     //printf("i=%d j=%d k=%d nmem=%d\n",i,j,k,sky->nmem);
     //printf("i=%d j=%d k=%d v=%f\n",i,j,k,sky->vkgi[k]);
   }
-
-
+  
+  
 } 
 
 real GetSkyline(Skyline* sky,int i,int j){
@@ -141,7 +199,7 @@ real GetSkyline(Skyline* sky,int i,int j){
   }
 
   if (j-i > sky->prof[j] || i-j > sky->prof[i]){
-    return 0;
+    return 0.0;
   }
   else if (i==j){
     return sky->vkgd[i];
@@ -177,28 +235,30 @@ void DisplaySkyline(Skyline* sky){
 
   printf("vkgd=");
   for(int i=0;i<n;i++){
-    printf("%f ",sky->vkgd[i]);
+    printf("%.5e ",sky->vkgd[i]);
   }
   printf("\n");
-
+  
   printf("vkgs=");
   for(int i=0;i<sky->nmem;i++){
-    printf("%f ",sky->vkgs[i]);
+    printf("%.5e ",sky->vkgs[i]);
   }
   printf("\n");
 
   printf("vkgi=");
   for(int i=0;i<sky->nmem;i++){
-    printf("%f ",sky->vkgi[i]);
+    printf("%.5e ",sky->vkgi[i]);
   }
   printf("\n");
-
+  printf("\n");
+  printf("\n");
   for(int i=0;i<n;i++){
     for(int j=0;j<n;j++){
-      printf("%f ", GetSkyline(sky,i,j));
+      printf("%.3e ", GetSkyline(sky,i,j));
     }   
     printf("\n");
-  }
+    }
+  
 }
 
 
@@ -213,6 +273,9 @@ void FactoLU(Skyline* sky){
   int isol=0;
   int nsym=1;
   if (sky->is_sym) nsym=0;
+  // Allocating and storing old matrix inside copies.
+  if (!sky->copy_is_alloc) AllocateCopySkyline(sky);
+  printf("LU factorization in progress...\n");
 
   sol_(sky->vkgs,sky->vkgd, sky->vkgi,
        vfg, sky->kld, vu, sky->neq, 
@@ -225,24 +288,23 @@ void FactoLU(Skyline* sky){
 
 void MatVectSkyline(Skyline * sky, real * x, real * prod) {
 
-  assert(!sky->is_lu);
+  //assert(!sky->is_lu);
 
   int nsym=1;
   if (sky->is_sym) nsym=0;
 
   for(int i=0; i < sky->neq; i++) prod[i]=0;
-
-  
-  /* sol_(sky->vkgs,sky->vkgd, sky->vkgi, */
-  /*      vfg, sky->kld, vu, sky->neq,  */
-  /*       ifac, isol, nsym, */
-  /*      &energ, &ier); */
- 
-  mulku_(sky->vkgs, sky->vkgd, sky->vkgi,
-	 sky->kld, x, sky->neq, nsym, 
-	   prod, sky->nmem);
-
-
+  if (!sky->is_lu){
+    mulku_(sky->vkgs, sky->vkgd, sky->vkgi,
+     sky->kld, x, sky->neq, nsym, 
+       prod, sky->nmem);
+  }
+  else
+  {
+    mulku_(sky->copy_vkgs, sky->copy_vkgd, sky->copy_vkgi,
+     sky->kld, x, sky->neq, nsym, 
+       prod, sky->nmem);
+  }
 }
 
 
@@ -251,19 +313,71 @@ void SolveSkyline(Skyline* sky,real* vfg,real* vu){
   assert(sky->is_lu);
 
   real energ;
-  int ier;
+  int ier,iter;
   int ifac=0;
   int isol=1;
   int nsym=1;
+  real * vec_temp;
+  real * sol_temp;
+  real * sol_temp2;
+  int nb_iterations=2;
+
+  sol_temp=calloc(sky->neq,sizeof(real));
+  sol_temp2=calloc(sky->neq,sizeof(real));  
+  vec_temp=calloc(sky->neq,sizeof(real));
+  
   if (sky->is_sym) nsym=0;
 
   sol_(sky->vkgs,sky->vkgd, sky->vkgi,
-       vfg, sky->kld, vu, sky->neq, 
-        ifac, isol, nsym,
-       &energ, &ier);
+       vfg, sky->kld, sol_temp, sky->neq, 
+        ifac, isol, nsym,&energ, &ier);
+
+  /////////// Post treatment ////////////
+  for(iter=0;iter<nb_iterations;iter++) {
+
+    if(iter>0){
+      for(int i=0; i < sky->neq; i++){
+	sol_temp[i]=sol_temp2[i];
+      }
+    }
+       
+    MatVectSkyline(sky,sol_temp,vec_temp);
 
 
+    for(int i=0; i < sky->neq; i++){
+      vec_temp[i]=vec_temp[i]-vfg[i];
+    }
+      
+    sol_(sky->vkgs,sky->vkgd, sky->vkgi,
+	 vec_temp, sky->kld, sol_temp2, sky->neq, 
+	 ifac, isol, nsym,&energ, &ier);
+    
+    real error=0.0;
+    for(int i=0; i < sky->neq; i++){
+      error=error+fabs(sol_temp2[i]);
+    }
+    //printf("llllU %.13e %d \n",error,iter);
+    
+    for(int i=0; i < sky->neq; i++){
+      sol_temp2[i]=sol_temp[i]-sol_temp2[i];
+    }
+   
+    if(error <1.e-12 || iter==nb_iterations){
+      break;
+    }
+  }
 
+  if(iter>0){
+    for(int i=0; i < sky->neq; i++){
+      vu[i]=sol_temp2[i];
+    }
+  }
+  else
+    {
+      for(int i=0; i < sky->neq; i++){
+	vu[i]=sol_temp[i];
+      }
+   }
 }
 
 
@@ -281,6 +395,11 @@ void FreeSkyline(Skyline* sky){
   free(sky->prof);
   free(sky->kld);
 
+  if (sky->is_lu){
+    free(sky->copy_vkgs);
+    free(sky->copy_vkgd);
+  if (! sky->is_sym)  free(sky->copy_vkgi);
+  }
   sky->is_alloc=false;
   //InitSkyline(sky,sky->neq);
 
@@ -297,7 +416,7 @@ static int c__1 = 1;
 {
     /* Initialized data */
 
-    static real vzero = 0.;
+    static real vzero = 0.0;
 
     /* Format strings */
     static char fmt_8000[] = "sol pivot nul equation";
@@ -310,12 +429,12 @@ static int c__1 = 1;
 
     /* Local variables */
     static int i__;
-    static real c1, c2;
+    static real c1=0.0, c2=0.0;
     static int j1, j2, ic, ij, ik, jbk, jck, jhj, jhk, lhk, jhj1, jhk1, 
 	    lhk1;
     extern real scal_(real *, real *, int *);
     static int imin, imax, imin1;
-    static real cdiag;
+    static real cdiag=0.0;
 
 /*   resolution d'un systeme lineaire symetrique ou non. la matrice est */
 /*   stockee par ligne de ciel,en memoire dans les tables vkgs,vkgd,vkgi */
@@ -563,11 +682,11 @@ real scal_(real *x, real *y, int *n)
 {
     /* Initialized data */
 
-    static real zero = 0.;
+    static real zero = 0.0;
 
     /* System generated locals */
     int i__1;
-    real ret_val;
+    real ret_val=0.0;
 
     /* Local variables */
     static int i__;

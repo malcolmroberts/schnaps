@@ -30,6 +30,9 @@ int TestPoisson2d(void)
 {
   bool test = true;
 
+#ifdef PARALUTION 
+  paralution_begin();
+#endif   
   // 2D meshes:
   // test/disque2d.msh
   // test/testdisque2d.msh
@@ -62,7 +65,7 @@ int TestPoisson2d(void)
   model.Source = NULL;
  
   int deg[]={2, 2, 0};
-  int raf[]={2, 2, 1};
+  int raf[]={1, 1, 1};
    
  
   CheckMacroMesh(&mesh, deg, raf);
@@ -77,17 +80,18 @@ int TestPoisson2d(void)
   listvar[0]=_INDEX_PHI;
   
   InitContinuousSolver(&ps,&simu,1,nb_var,listvar);
-  ps.matrix_assembly=MatrixPoisson_Continuous;
+
+  ps.matrix_assembly=ContinuousOperator_Poisson2D;
   ps.rhs_assembly=RHSPoisson_Continuous;
   ps.bc_assembly= ExactDirichletContinuousMatrix;
   ps.postcomputation_assembly=Computation_ElectricField_Poisson;
 
 #undef PARALUTION
 #ifdef PARALUTION
-  ps.lsol.solver_type = PAR_AMG;
+  ps.lsol.solver_type = PAR_LU;
   ps.lsol.pc_type=NONE;
 #else
-  ps.lsol.solver_type = LU;
+  ps.lsol.solver_type = GMRES;
   ps.lsol.pc_type=NONE;
 #endif
 
@@ -104,6 +108,12 @@ int TestPoisson2d(void)
 
   PlotFields(_INDEX_PHI, false, &simu, NULL, "dgvisu.msh");
   PlotFields(_INDEX_EX, false, &simu, NULL, "dgex.msh");
+
+#ifdef PARALUTION 
+  paralution_end();
+#endif
+
+  FreeMacroMesh(&mesh);
 
 
   return test;

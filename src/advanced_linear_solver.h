@@ -49,9 +49,10 @@ typedef struct JFLinearSolver{
   //! \param[in] lsol the LinearSolver object containing matrix A
   //! \param[in] solvector the solution at the time n
   //! \param[out] given the nonlinear vector for the free jacobian
-  void (*NonlinearVector_computation)(void* lsol,Simulation * simu,real * solvector,real *nlvector);
+  void (*NonlinearVector_computation)(Simulation * simu,void* lsol,real * solvector,real *nlvector);
 
 } JFLinearSolver;
+
 
 
 //! \brief init the LinearSolver structure with an empty matrix
@@ -66,6 +67,7 @@ void InitJFLinearSolver(JFLinearSolver* lsol,int n,
 void FreeJFLinearSolver(JFLinearSolver* lsol);
 
 
+
 //! \brief compute a matrix vector product
 //! \param[in] system the LinearSolver object containing matrix A
 //! \param[in] f a field
@@ -75,17 +77,18 @@ void MatVecJacobianFree(Simulation * simu,void * system,real x[],real prod[]);
 
 //! \brief solve the linear system
 //! \param[inout] lsol the JFLinearSolver object
-//! \param[in] f field asscoiated
+//! \param[in] simu contains the simuation
 void SolveJFLinearSolver(JFLinearSolver* lsol,Simulation * simu);
 
 
-//! \brief solve the linear system with the GMREs of the cerfacs
-//! \param[in] lsol contains the matrices rhs and sol
+//! \brief solve the linear system with the GMREs  and with a physic solver
+//! \param[inout] lsol contains the matrices rhs and sol
+//! \param[in] simu contains the simuation
 void Advanced_GMRESSolver(LinearSolver* lsol, Simulation* simu);
 
-//! \brief Exact LU preconditioner
-//! \param[in] lsol contains the matrices rhs and sol
-void Exact_PC(LinearSolver* lsol, Simulation* simu, real* sol, real* rhs);
-
+//! \brief solve the linear system with a physic solver
+//! \param[inout] lsol contains the matrices rhs and sol
+//! \param[in] simu contains the simuation
+void Advanced_SolveLinearSolver(LinearSolver* lsol, Simulation* simu);
 
 #endif
