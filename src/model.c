@@ -64,6 +64,7 @@ imposeddataptr imposeddata(const char *name)
   return 0; 
 }
 
+#pragma start_opencl
 void TransNumFlux(real *wL, real *wR, real* vnorm, real* flux)
 {
   const real sqrt_third =  sqrt(1.0/3.0);
@@ -76,6 +77,7 @@ void TransNumFlux(real *wL, real *wR, real* vnorm, real* flux)
   real vnm = vn - vnp;
   flux[0] = vnp * wL[0] + vnm * wR[0];
 }
+#pragma end_opencl
 
 #pragma start_opencl
 void TransNumFlux2d(real *wL, real *wR, real *vnorm, real *flux)
@@ -112,12 +114,14 @@ void VecTransNumFlux2d(__private real *wL, real *wR, real *vnorm, real *flux)
 }
 #pragma end_opencl
 
+#pragma start_opencl
 void TransBoundaryFlux(real *x, real t, real *wL, real *vnorm, real *flux)
 {
   real wR[1];
   TransImposedData(x, t, wR);
   TransNumFlux(wL, wR, vnorm, flux);
 }
+#pragma end_opencl
 
 #pragma start_opencl
 void TransBoundaryFlux2d(real *x, real t, real *wL, real *vnorm, real *flux) 
@@ -171,6 +175,7 @@ void VecTransInitData2d(real *x, real *w) {
   VecTransImposedData2d(x, t, w);
 }
 
+#pragma start_opencl
 void TransImposedData(const real *x, const real t, real *w)
 {
   const real sqrt_third =  sqrt(1.0/3.0);
@@ -182,6 +187,7 @@ void TransImposedData(const real *x, const real t, real *w)
   real xx = vx - t;
   w[0] = cos(xx);
 }
+#pragma end_opencl
 
 #pragma start_opencl
 void TransImposedData2d(const real *x, const real t, real *w) 

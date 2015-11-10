@@ -39,7 +39,6 @@ int TestDtfield_CL(void){
 
   Model model;
 
-#if 1
   // 2D version
   assert(mesh.is2d);
 
@@ -55,6 +54,9 @@ int TestDtfield_CL(void){
   int deg[]={2, 2, 0};
   int raf[]={4, 4, 1};
 
+  Simulation simu;
+  EmptySimulation(&simu);
+
   char buf[1000];
   sprintf(buf, "-D _M=%d", model.m);
   strcat(cl_buildoptions, buf);
@@ -66,25 +68,8 @@ int TestDtfield_CL(void){
   strcat(cl_buildoptions, buf);
 
 
-#else
-  // 3D version
-  assert(!mesh.is2d);
-  
-  model.cfl = 0.05;
-  model.m = 1;
-  model.NumFlux = TransNumFlux;
-  model.BoundaryFlux = TestTransBoundaryFlux;
-  model.InitData = TestTransInitData;
-  model.ImposedData = TestTransImposedData;
-
-  int deg[]={2, 2, 2};
-  int raf[]={3, 3, 3};
-  
-#endif
-
   set_global_m(model.m);
 
-  Simulation simu;
 
   model.Source = OneSource;
   set_source_CL(&simu, "OneSource");
