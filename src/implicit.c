@@ -1,6 +1,7 @@
 #include "implicit.h"
 #include <stdlib.h>
 #include <string.h>
+#include "csparse.h"
 
 
 //void InternalCoupling(Simulation *simu,  LinearSolver *solver, int itest);
@@ -194,6 +195,8 @@ void LocalThetaTimeScheme(Simulation *simu, real tmax, real dt)
     /*   DisplayLinearSolver(f->solver); */
     /*   DisplayLinearSolver(f->rmat); */
     /* } */
+
+    
     
     simu->tnow += (1 - theta) * dt;
 
@@ -932,9 +935,42 @@ void get_neighbor_fluxes(field* fd, int isub){
 
 void subcell_solve(field* fd, int isub);
 
-void subcell_solve(field* fd, int isub){
+void subcell_solve(field* f, int isub){
 
 
+  const int m = f->model.m;
+
+  int deg[3] = {f->deg[0],
+		f->deg[1],
+		f->deg[2]};
+  const int npg[3] = {deg[0] + 1,
+		      deg[1] + 1,
+		      deg[2] + 1};
+  int nraf[3] = {f->raf[0],
+		 f->raf[1],
+		 f->raf[2]};
+
+  int sc_npg = npg[0] * npg[1] * npg[2];
+
+
+  const wsub_size = sc_npg * m;
+
+
+  // local "rigidity" matrix in triplet form
+  cs *T;
+
+  // assembly of the flux part of the matrix
+
+  // assembly of the volume part of the matrix
+
+  // local "rigidity" matrix in compressed-column form
+  cs *K;
+  K = cs_triplet(T);
+  cs_lusol(K,  // matrix
+	   0, // order
+	   f->res + isub * wsub_size, // rhs and solution...
+ 	   0.001   // tolerance
+	   );
 }
 
 void FieldDownwindSolve(field *fd,real theta, real dt){
