@@ -37,7 +37,7 @@ int Testrealpc(void) {
 
   bool test = true;
   real dd;
-  int test1_ok=1,test2_ok=1;
+  int test1_ok=1,test2_ok=0;
 
 #ifdef PARALUTION 
   paralution_begin();
@@ -66,7 +66,7 @@ int Testrealpc(void) {
     model.Source = SteadyStateOne_Source;
 
     int deg[]={4, 4, 0};
-    int raf[]={8, 8, 1};
+    int raf[]={16, 16, 1};
 
     assert(mesh.is2d);
     CheckMacroMesh(&mesh, deg, raf);
@@ -94,19 +94,19 @@ int Testrealpc(void) {
     int size = cs.nb_fe_dof;
     real *resCG = calloc(size, sizeof(real));
     real *wCG = calloc(size, sizeof(real));
-  
-    csSolve.lsol.solver_type=LU;//GMRES;
-    csSolve.lsol.tol=1.e-9;
-    csSolve.lsol.pc_type=NONE;//PHY_BASED_U2;//PHY_BASED_U1//JACOBI;
+    
+    csSolve.lsol.solver_type=GMRES;
+    csSolve.lsol.tol=1.e-8;
+    csSolve.lsol.pc_type=PHY_BASED_U2;
     csSolve.lsol.iter_max=2000;
-    csSolve.lsol.restart_gmres=30;
+    csSolve.lsol.restart_gmres=10;
     csSolve.lsol.is_CG=true;
 
     cs.bc_flux=Wave_BC_pressure_imposed;
     cs.bc_assembly=BoundaryConditionFriedrichsAssembly;
     csSolve.bc_flux=Wave_BC_pressure_imposed;
     csSolve.bc_assembly=BoundaryConditionFriedrichsAssembly;
-    //csSolve.rhs_assembly=Source_Assembly;
+    csSolve.rhs_assembly=Source_Assembly;
     csSolve.type_bc=2;
     
     Wave_test(&cs,-(1.0-simu.theta),simu.dt);
@@ -137,19 +137,21 @@ int Testrealpc(void) {
       for (int i=0; i<size; i++){
 	csSolve.lsol.rhs[i]=0;
       }
+
       csSolve.bc_assembly(&csSolve);
-      //csSolve.rhs_assembly(&csSolve);
-      
+      csSolve.rhs_assembly(&csSolve);
+
+
       for (int i=0; i<size; i++){
 	csSolve.lsol.rhs[i]=csSolve.lsol.rhs[i]+resCG[i]-cs.lsol.rhs[i];
       }
-      
+
        Advanced_SolveLinearSolver(&csSolve.lsol,&simu);
       
       for (int i=0; i<size; i++){
         wCG[i] = csSolve.lsol.sol[i];
       }
-       
+
       int freq = (1 >= simu.itermax_rk / 10)? 1 : simu.itermax_rk / 10;
       if (tstep % freq == 0)
         printf("t=%f iter=%d/%d dt=%f\n", simu.tnow, tstep, simu.itermax_rk, simu.dt);
@@ -287,7 +289,7 @@ void SteadyStateOne_ImposedData(const real *xy, const real t, real *w) {
   real x=xy[0];
   real y=xy[1];
 
-  w[0] = 10.0;//10
+  w[0] = 10.0+exp(x)+exp(2*y);//+x*x+y*y*y;//10
   w[1] = x*y;
   w[2] = -y*y*0.5;
 
@@ -300,8 +302,8 @@ void SteadyStateOne_Source(const real *xy, const real t, const real *w, real *S)
   real y=xy[1];
 
   S[0] = 0;
-  S[1] = 0;//exp(x);//2*x;
-  S[2] = 0;//2*exp(2*y);//3*y*y;
+  S[1] = exp(x);//2.0*x;//exp(x);
+  S[2] = 2.0*exp(2.0*y);//3.0*y*y;//2*exp(2*y);
 
   S[0] *= _SPEED_WAVE;
   S[1] *= _SPEED_WAVE;

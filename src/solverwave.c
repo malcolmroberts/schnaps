@@ -104,10 +104,16 @@ void BoundaryConditionFriedrichsAssembly(void * cs){
           
 	// the boundary flux is an affine function
 	real w0[f->model.m],flux0[f->model.m];
-	for(int ivv=0; ivv < ps->nb_phy_vars; ivv++) w0[ivv]=0;
+	
+	for(int ivv=0; ivv < ps->nb_phy_vars; ivv++){
+	  w0[ivv]=0;
+	}
+	
 	ps->bc_flux(ps,xpg,w0,vnds,flux0);
+	
 	for(int var=0; var < ps->nb_phy_vars; var++){
 	  int ipot_fe = ino_fe*ps->nb_phy_vars + var;
+	  //printf("clll %d %d  %.8e %.8e \n",ipot_fe,var,flux0[var],w0[var]);
 	  real val = flux0[var] * wpg;
 	  ps->lsol.rhs[ipot_fe] -= val;
 	}
@@ -176,7 +182,12 @@ void Wave_test(ContinuousSolver* cs,real theta, real dt){
   cs->FluxMatrix[0][1]=h;
   cs->FluxMatrix[0][2]=h;
   cs->FluxMatrix[1][0]=h;
-  cs->FluxMatrix[2][0]=h; 
+  cs->FluxMatrix[2][0]=h;
+  cs->FluxMatrix[0][0]=0.0;
+  cs->FluxMatrix[1][1]=0.0;
+  cs->FluxMatrix[1][2]=0.0;
+  cs->FluxMatrix[2][1]=0.0;
+  cs->FluxMatrix[2][2]=0.0; 
 }
 
 
@@ -271,4 +282,47 @@ void Wave_BC_pressure_imposed(void * cs, real * xpg, real * w, real *vnorm, real
   flux[0]=(BC[0][0]*w[0]+BC[0][1]*w[1]+BC[0][2]*w[2])-h*(M[0][0]*p0+M[0][1]*u0_1+M[0][2]*u0_2);
   flux[1]=(BC[1][0]*w[0]+BC[1][1]*w[1]+BC[1][2]*w[2])-h*(M[1][0]*p0+M[1][1]*u0_1+M[1][2]*u0_2);
   flux[2]=(BC[2][0]*w[0]+BC[2][1]*w[1]+BC[2][2]*w[2])-h*(M[2][0]*p0+M[2][1]*u0_1+M[2][2]*u0_2);
+
+}
+
+
+  
+void Source_Assembly(void * cs){
+  ContinuousSolver * ps=cs;
+  field* f0 = &ps->simu->fd[0];
+  real dt = ps->simu->dt;
+  
+  m=ps->nb_phy_vars;
+  for(int ie = 0; ie < ps->nbel; ie++){  
+
+    int iemacro = ie / (f0->raf[0] * f0->raf[1] * f0->raf[2]);
+    int isubcell = ie % (f0->raf[0] * f0->raf[1] * f0->raf[2]);
+    
+     for(int ipg = 0;ipg < ps->nnodes; ipg++){
+      real wpg;
+      real xref[3];
+      int ipgmacro= ipg + isubcell * ps->nnodes;
+      ref_pg_vol(f0->deg,f0->raf,ipgmacro,xref,&wpg,NULL);
+      real dtau[3][3],codtau[3][3];
+      
+      Ref2Phy(ps->simu->fd[iemacro].physnode,
+	      xref,NULL,0,NULL,
+	      dtau,codtau,NULL,NULL);
+        
+      real det = dot_product(dtau[0], codtau[0]);
+      real Source[f0->model.m];
+      real w[f0->model.m];
+      for(int var =0; var < f0->model.m; var++){
+	w[var] = f0->wn[var];
+      }
+      f0->model.Source(xref, f0->tnow,w, Source);
+    
+      int ino_dg = ipg + ie * ps->nnodes;
+      int ino_fe = ps->dg_to_fe_index[ino_dg];
+      for(int var =0; var < ps->nb_phy_vars; var++){
+	int ipot_fe = ino_fe * ps->nb_phy_vars + var;
+	ps->lsol.rhs[ipot_fe] += dt * Source[ps->list_of_var[var]] * wpg * det ;
+	}
+      }
+  }
 }

@@ -35,4 +35,8 @@ void Wave_BC_pressure_imposed(void * cs, real * xpg, real * w, real *vnorm, real
 //! \param[inout] flux a vector of flux
 void Wave_BC_normalvelocity_null(void * cs, real * xpg, real * w, real *vnorm, real * flux);
 
+//! \brief construct the source associated to the source of the model 
+//! \param[inout] cs a continuous solver
+void Source_Assembly(void * cs);
+
 #endif
