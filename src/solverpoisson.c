@@ -238,7 +238,7 @@ void RobinFlux(void * cs, real * xpg, real * w, real *vnorm, real * flux){
 void LowerOrderPC_Poisson(LinearSolver * lsol, Simulation *simu, real* globalSol, real*globalRHS){
   Simulation simu2;
   EmptySimulation(&simu2);
-  int deg_lo[]={simu->fd[0].deg[0], simu->fd[0].deg[1], simu->fd[0].deg[2]};
+  int deg_lo[]={1, simu->fd[0].deg[1], simu->fd[0].deg[2]};
   int raf_lo[]={simu->fd[0].raf[0], simu->fd[0].raf[1], simu->fd[0].raf[2]};
   int HighOrder=simu->fd[0].deg[0];
   
@@ -254,20 +254,17 @@ void LowerOrderPC_Poisson(LinearSolver * lsol, Simulation *simu, real* globalSol
   ps.rhs_assembly=NULL;
 
   /////////////////// Restriction /////////////////
-  /*real * vector_reduced=NULL;
+  real * vector_reduced=NULL;
   vector_reduced=calloc(ps.nb_fe_nodes,sizeof(real));
   Restriction1D_Pq_P1(&ps,HighOrder,globalRHS,vector_reduced);
 
    for (int i=0;i<ps.nb_fe_nodes;i++){
      ps.lsol.rhs[i]=vector_reduced[i];
-     }
+   }
 
-     free(globalRHS_reduced);*/
   
-   for (int i=0;i<ps.nb_fe_nodes;i++){
-     ps.lsol.rhs[i]=globalRHS[i];
-     }
-   /////////////////////////////////////////////// 
+   ///////////////////////////////////////////////
+   
   ps.bc_assembly= ExactDirichletContinuousMatrix;
   ps.postcomputation_assembly=NULL;
 
@@ -282,17 +279,13 @@ void LowerOrderPC_Poisson(LinearSolver * lsol, Simulation *simu, real* globalSol
   ps.bc_assembly(&ps);
   Advanced_SolveLinearSolver(&ps.lsol,ps.simu);
   
-  /////////////////////////
-  /*
-    for (int i=0;i<ps.nb_fe_nodes;i++){
-    vector_reduced[i]=ps.lsol.sol[i];
-    }
-  //Interpolation1D_P1_Pq(&ps_lo,HighOrder,vector_reduced,globalSol);
-
-  */
+  ///////////////////////// Interpolation /////////////////
   for (int i=0;i<ps.nb_fe_nodes;i++){
-    globalSol[i]=ps.lsol.sol[i];
+    vector_reduced[i]=ps.lsol.sol[i];
   }
+  Interpolation1D_P1_Pq(&ps,HighOrder,vector_reduced,globalSol);
+  free(vector_reduced);
+  //////////////////////////////////////////// /////////////////
 }
 
 

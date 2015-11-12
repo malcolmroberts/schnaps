@@ -11,7 +11,7 @@
 void EmptySimulation(Simulation *simu){
 
 #ifdef _WITH_OPENCL
-  sprintf(numflux_cl_name,"%s",""); // FIXME: move to field struct.
+   sprintf(numflux_cl_name,"%s",""); // FIXME: move to field struct.
   sprintf(cl_buildoptions,"%s",""); // FIXME: move to field struct.
   simu->sourcename_cl = malloc(1024 * sizeof(char)); // TODO set to NULL
   sprintf(simu->sourcename_cl,"%s"," "); // FIXME: remove 

@@ -51,7 +51,7 @@ int Test_OrderAdaptivity(void)
   model.Source = NULL;
  
   int deg[]={1, 0, 0};
-  int raf[]={8, 1, 1};
+  int raf[]={16, 1, 1};
     
   PrintMacroMesh(&mesh);
   CheckMacroMesh(&mesh, deg, raf);
@@ -86,9 +86,9 @@ int Test_OrderAdaptivity(void)
   printf("Erreur L2=%.12e\n",errl2);
 
   test = test && (errl2 < 2e-2);
-  /*
+  
   ////////////////////////////////////////////////////
-  int deg_ho[]={3, 0, 0};
+  /*int deg_ho[]={1, 0, 0};
   int raf_ho[]={40, 1, 1};
   Simulation simu3;
   EmptySimulation(&simu3);
@@ -137,9 +137,6 @@ int Test_OrderAdaptivity(void)
   free(Pol_ref);
   free(Pol_reduced);*/
   FreeMacroMesh(&mesh);
-
-
-
 
   return test;
 }
