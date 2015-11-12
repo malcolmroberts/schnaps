@@ -161,7 +161,7 @@ void InitContinuousSolver(void * cs, Simulation* simu,int type_bc,int nb_phy_var
 
   ps->lsol.rhs = malloc(ps->nb_fe_dof * sizeof(real));
   assert(ps->lsol.rhs);
-  ps->lsol.sol = malloc(ps->nb_fe_dof * sizeof(real));
+  ps->lsol.sol = calloc(ps->nb_fe_dof, sizeof(real));
   assert(ps->lsol.sol);
 
   AllocateContinuousMatrix(ps);

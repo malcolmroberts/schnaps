@@ -696,7 +696,7 @@ void BuildConnectivity(MacroMesh* m)
 	vnds[1]=fabs(vnds[1]);
 	vnds[2]=fabs(vnds[2]);
 	int dim=0;
-	while(Dist(vnds,diag[dim]) > 1e-2 && dim<3) dim++;
+	while(dim<3 && Dist(vnds,diag[dim]) > 1e-2) dim++;
 	//assert(dim < 3);
 	//printf("xpg_in_before=%f\n",xpg_in[dim]);
 	if (dim < 3 && m->period[dim]  > 0){
