@@ -74,9 +74,12 @@ int TestPoisson(void)
  
   CheckMacroMesh(&mesh, deg, raf);
   Simulation simu;
-
+  EmptySimulation(&simu);
+<<<<<<< Updated upstream
+=======
+  
+>>>>>>> Stashed changes
   InitSimulation(&simu, &mesh, deg, raf, &model);
-
 
   ContinuousSolver ps;
   
@@ -86,37 +89,20 @@ int TestPoisson(void)
   
   InitContinuousSolver(&ps,&simu,1,nb_var,listvar);
 
-  ps.diff_op=calloc(ps.nb_phy_vars*ps.nb_phy_vars,sizeof(SDO));
-  real D[4][4] = {{0,0,0,0},
-                 {0,1,0,0},
-                 {0,0,0,0},
-                 {0,0,0,0}};
-  for (int i=0;i<4;i++){
-    for (int j=0;j<4;j++){
-      ps.diff_op[0].DO[i][j]=D[i][j];
-    }
-  }
-
-
-  ps.matrix_assembly=GenericOperator_Continuous;
+  ps.matrix_assembly=ContinuousOperator_Poisson1D;
   ps.rhs_assembly=RHSPoisson_Continuous;
   ps.bc_assembly= ExactDirichletContinuousMatrix;
   ps.postcomputation_assembly=Computation_ElectricField_Poisson;
 
-<<<<<<< HEAD
-/* #ifdef PARALUTION */
-/*   ps.lsol.solver_type = PAR_AMG; */
-/*   ps.lsol.pc_type=NONE; */
-/* #else */
+<<<<<<< Updated upstream
 =======
 #ifdef PARALUTION
   ps.lsol.solver_type =LU;
   ps.lsol.pc_type=NONE;
 #else
->>>>>>> origin/Courtesfinal
-  ps.lsol.solver_type = LU;
+>>>>>>> Stashed changes
+  ps.lsol.solver_type = GMRES;
   ps.lsol.pc_type=NONE;
-/* #endif */
 
   SolveContinuous2D(&ps);
 
@@ -136,7 +122,8 @@ int TestPoisson(void)
 #ifdef PARALUTION 
   paralution_end();
 #endif
-
+  
+  freeContinuousSolver(&ps);
   FreeMacroMesh(&mesh);
 
 
@@ -144,6 +131,7 @@ int TestPoisson(void)
 
   return test;
 }
+
 
 void TestPoisson_ImposedData(const real x[3], const real t,real w[]){
   for(int i = 0; i < _INDEX_MAX_KIN + 1; i++){

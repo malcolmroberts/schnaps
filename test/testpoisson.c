@@ -90,8 +90,14 @@ int TestPoisson(void)
   ps.bc_assembly= ExactDirichletContinuousMatrix;
   ps.postcomputation_assembly=Computation_ElectricField_Poisson;
 
+#ifdef PARALUTION
+  ps.lsol.solver_type =LU;
+  ps.lsol.pc_type=NONE;
+#else
   ps.lsol.solver_type = GMRES;
   ps.lsol.pc_type=NONE;
+#endif 
+  
 
   SolveContinuous2D(&ps);
 

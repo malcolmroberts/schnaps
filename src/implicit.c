@@ -955,7 +955,7 @@ void subcell_solve(field* f, int isub){
   int sc_npg = npg[0] * npg[1] * npg[2];
 
 
-  const wsub_size = sc_npg * m;
+  const int wsub_size = sc_npg * m;
 
 
   // local "rigidity" matrix in triplet form
@@ -968,11 +968,11 @@ void subcell_solve(field* f, int isub){
   // local "rigidity" matrix in compressed-column form
   cs *K;
   K = cs_triplet(T);
-  cs_lusol(K,  // matrix
-	   0, // order
-	   f->res + isub * wsub_size, // rhs and solution...
- 	   0.001   // tolerance
-	   );
+  /* cs_lusol(K,  // matrix */
+  /* 	   0, // order */
+  /* 	   f->res + isub * wsub_size, // rhs and solution... */
+  /* 	   0.001   // tolerance */
+  /* 	   ); */
 }
 
 void FieldDownwindSolve(field *fd,real theta, real dt){
