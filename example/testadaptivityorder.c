@@ -51,7 +51,7 @@ int Test_OrderAdaptivity(void)
   model.Source = NULL;
  
   int deg[]={1, 0, 0};
-  int raf[]={16, 1, 1};
+  int raf[]={50, 1, 1};
     
   PrintMacroMesh(&mesh);
   CheckMacroMesh(&mesh, deg, raf);

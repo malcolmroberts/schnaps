@@ -6,10 +6,9 @@
 #include "clutils.h"
 #include <stdbool.h>
 
+#define DISABLE_PRINTF_CL
 
-#define DISABLE_PRINTF
-
-#ifdef DISABLE_PRINTF
+#ifdef DISABLE_PRINTF_CL
     #define printf(fmt, ...) (0)
 #endif
 
@@ -561,7 +560,7 @@ void print_kernel_perf(real dev_gflops, real dev_bwidth,
   } 
 }
 
-#ifdef DISABLE_PRINTF
+#ifdef DISABLE_PRINTF_CL
     #undef printf
 #endif
 
