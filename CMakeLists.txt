@@ -149,6 +149,8 @@ list(APPEND
   src/schnaps.h
   src/simulation.c
   src/simulation.h
+  src/simulation_spu.c
+  src/simulation_spu.h
   src/linear_solver.h
   src/linear_solver.c
   src/field.c

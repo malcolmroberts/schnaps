@@ -6,6 +6,14 @@
 #include "clutils.h"
 #include <stdbool.h>
 
+
+#define DISABLE_PRINTF
+
+#ifdef DISABLE_PRINTF
+    #define printf(fmt, ...) (0)
+#endif
+
+
 bool cldevice_exists(cl_platform_id *platform, cl_uint ndevice)
 {
   cl_int status;
@@ -166,6 +174,8 @@ bool cldevice_is_acceptable(cl_uint nplatform, cl_uint ndevice)
 
   return true;
 }
+
+
 
 void InitCLInfo(CLInfo *cli, int platform_num, int device_num)
 {
@@ -395,6 +405,8 @@ void InitCLInfo(CLInfo *cli, int platform_num, int device_num)
   printf("\tOpenCL Init OK\n\n");
 }
 
+
+
 void PrintCLInfo(CLInfo *cli){
   cl_int status;  // for checking OpenCL errors
   char pbuf[2000];
@@ -410,6 +422,7 @@ void PrintCLInfo(CLInfo *cli){
   printf("\tMax workgroup size: %zu\n", cli->maxworkgroupsize);
   printf("\tOpenCL extensions:\n%s\n", cli->clextensions);
 }
+
 
 void BuildKernels(CLInfo *cli, char *strprog, char *buildoptions)
 {
@@ -547,3 +560,8 @@ void print_kernel_perf(real dev_gflops, real dev_bwidth,
     printf("\tEfficiency:\t\t\t%f%%\n", 100.0 * min_time_total / total_time);
   } 
 }
+
+#ifdef DISABLE_PRINTF
+    #undef printf
+#endif
+
