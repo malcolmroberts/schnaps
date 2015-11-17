@@ -68,6 +68,12 @@ void InitInterface_SPU(Interface* inter);
 void ExtractInterface(Interface* inter, int side);
 
 //! \brief  extract the values of the neighbouring fields to the interface
+//! \param[inout] inter an Interface
+//! \param[in] side the side: left if == 0 right if ==1
+//! \param[in] w a vector with the volume data to extract
+void ExtractInterface_bis(Interface* inter, int side, real* w);
+
+//! \brief  extract the values of the neighbouring fields to the interface
 //! \brief StarPU version
 //! \param[inout] inter an interface
 //! \param[in] side the side: left if == 0 right if ==1

@@ -620,9 +620,9 @@ void DGMacroCellInterface(int locfaL,
   real *fdtwR = dtw + offsetR;
 
   // Loop over the points on a single macro cell interface.
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
+/* #ifdef _OPENMP */
+/* #pragma omp parallel for */
+/* #endif */
   for(int ipgfL = 0; ipgfL < NPGF(fL->deg, fL->raf, locfaL); ipgfL++) {
 
     real xpgref[3], xpgref_in[3], wpg;
@@ -693,6 +693,7 @@ void DGMacroCellInterface(int locfaL,
 
       fL->model.NumFlux(wL, wR, vnds, flux);
 
+	     
       // Add flux to both sides
       for(int iv = 0; iv < m; iv++) {
 	// The basis functions is also the gauss point index
@@ -700,6 +701,15 @@ void DGMacroCellInterface(int locfaL,
 	int imemR = fR->varindex(fR->deg, fR->raf,fR->model.m, ipgR, iv);
 	fdtwL[imemL] -= flux[iv] * wpg;
 	fdtwR[imemR] += flux[iv] * wpg;
+	//if (ipgL == 3 || ipgR == 3)
+	  {
+	  printf("wL=%f wR=%f vnds=%f %f %f flux=%f\n",wL[0],wR[0],
+		 vnds[0]*wpg,
+		 vnds[1]*wpg,
+		 vnds[2]*wpg,
+		 flux[0]*wpg);
+	  
+	}
       }
 
     } else { // The point is on the boundary.
@@ -710,11 +720,12 @@ void DGMacroCellInterface(int locfaL,
 
 
       fL->model.BoundaryFlux(xpg, fL->tnow, wL, vnds, flux);
+      //printf("a");
 
       for(int iv = 0; iv < m; iv++) {
 	// The basis functions is also the gauss point index
 	int imemL = fL->varindex(fL->deg, fL->raf,fL->model.m, ipgL, iv);
-	fdtwL[imemL] -= flux[iv] * wpg;
+	//fdtwL[imemL] -= flux[iv] * wpg;
       }
     }
 

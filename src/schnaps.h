@@ -104,6 +104,7 @@ firefox html/index.html
 #ifdef _WITH_OPENCL
 #include "field_cl.h"
 #include "clinfo.h"
+#include "simulation_spu.h"
 #endif
 
 #include "maxwell.h"

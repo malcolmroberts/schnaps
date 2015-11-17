@@ -298,6 +298,7 @@ void PlotFields(int typplot, int compare, Simulation* simu, char *fieldname,
 	      testpsi += psi;
 	      int vi = f->varindex(f->deg, f->raf, f->model.m, ib, typplot);
 	      value[nodecount] += psi * f->wn[vi];
+	      //printf("a");
 	    }
 	    assert(fabs(testpsi-1) < _SMALL);
 
@@ -491,7 +492,13 @@ void DtFields(Simulation *simu, real *w, real *dtw) {
 
   for(int ie = 0; ie < simu->macromesh.nbelems; ++ie) {
     simu->fd[ie].tnow = simu->tnow;
-  } 
+  }
+
+  // the field pointers must be updated
+  for(int ie = 0; ie < simu->macromesh.nbelems; ++ie) {
+    simu->fd[ie].wn = w + ie * fsize;
+    simu->fd[ie].dtwn = dtw + ie * fsize;
+  }
 
   for(int ifa = 0; ifa < simu->macromesh.nbfaces; ifa++){
     int ieL = simu->macromesh.face2elem[4 * ifa + 0];
@@ -510,18 +517,18 @@ void DtFields(Simulation *simu, real *w, real *dtw) {
     
  
     DGMacroCellInterface(locfaL,
-			 fL, offsetL, fR, offsetR,
-			 w, dtw);
+    			 fL, offsetL, fR, offsetR,
+    			 w, dtw);
   }
 
 #ifdef _OPENMP
 #pragma omp parallel for schedule(dynamic, 1)
 #endif
   for(int ie = 0; ie < simu->macromesh.nbelems; ++ie) {
-    DGSubCellInterface(simu->fd + ie, w + ie * fsize, dtw + ie * fsize);
-    DGVolume(simu->fd + ie, w + ie * fsize, dtw + ie * fsize);
-    DGSource(simu->fd + ie, w + ie * fsize, dtw + ie * fsize);
-    DGMass(simu->fd + ie, w + ie * fsize, dtw + ie * fsize);
+    /* DGSubCellInterface(simu->fd + ie, w + ie * fsize, dtw + ie * fsize); */
+    /* DGVolume(simu->fd + ie, w + ie * fsize, dtw + ie * fsize); */
+    /* DGSource(simu->fd + ie, w + ie * fsize, dtw + ie * fsize); */
+    /* DGMass(simu->fd + ie, w + ie * fsize, dtw + ie * fsize); */
 
   }
 

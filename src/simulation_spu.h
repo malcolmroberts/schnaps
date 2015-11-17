@@ -14,6 +14,20 @@ void DtFields_SPU(Simulation *simu,
 		  starpu_data_handle_t* w_handle,
 		  starpu_data_handle_t* dtw_handle);
 
+//! \brief  apply the interface fluxes to a neighbouring field
+//! \param[in] inter an Interface
+//! \param[in] side the side: left if == 0 right if ==1
+void InterfaceExplicitFlux_bis(Interface* inter, int side);
+
+//! \brief apply the Discontinuous Galerkin approximation for computing
+//! the time derivative of the fields. Works with several subcells.
+//! test version before starpu implementation
+//! \param[in] simu a simulation
+//! \param[inout] w an array to the field value
+//! \param[out] dtw an array to the time derivatives
+void DtFields_bis(Simulation *simu,
+		  real* w,
+		  real* dtw);
 
 void ZeroBuffer_SPU(starpu_data_handle_t w);
 
