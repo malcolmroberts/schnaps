@@ -5,7 +5,7 @@
 #include <math.h>
 
 
-int TestfieldDG(void){
+int TestfieldDG_SPU(void){
 
   int test = true;
 
@@ -19,11 +19,11 @@ int TestfieldDG(void){
   model.ImposedData = TestTransImposedData;
   model.Source = NULL;
 
-  int deg[]={4, 4, 4};
-  int raf[]={1, 2, 1};
-  /* int deg[]={1, 1, 1}; */
-  /* int raf[]={1, 1, 1}; */
-  
+  /* int deg[]={4, 4, 4}; */
+  /* int raf[]={1, 2, 1}; */
+  int deg[]={1, 1, 1};
+  int raf[]={1, 1, 1};
+ 
   MacroMesh mesh;
   //ReadMacroMesh(&mesh,"../test/testmacromesh.msh");
   ReadMacroMesh(&mesh,"../test/testcube2.msh");
@@ -44,12 +44,11 @@ int TestfieldDG(void){
 
   simu.tnow = 0;
 
-  DtFields(&simu, simu.w, simu.dtw);
+  DtFields_bis(&simu, simu.w, simu.dtw);
   
   DisplaySimulation(&simu);
 
-
-  PlotFields(0, false, &simu, NULL, "visu.msh");
+  PlotFields(0, false, &simu, NULL, "visu_spu.msh");
   //PlotFields(0, true, &simu, "error", "error.msh");
 
   // Test the time derivative with the exact solution
@@ -74,8 +73,8 @@ int TestfieldDG(void){
 
 int main(void) {
   // Unit tests
-  int resu = TestfieldDG();
-  if (resu) printf("field DG test OK !\n");
-  else printf("field DG test failed !\n");
+  int resu = TestfieldDG_SPU();
+  if (resu) printf("field DG SPU test OK !\n");
+  else printf("field DG SPU test failed !\n");
   return !resu;
 } 

@@ -725,7 +725,7 @@ void DGMacroCellInterface(int locfaL,
       for(int iv = 0; iv < m; iv++) {
 	// The basis functions is also the gauss point index
 	int imemL = fL->varindex(fL->deg, fL->raf,fL->model.m, ipgL, iv);
-	//fdtwL[imemL] -= flux[iv] * wpg;
+	fdtwL[imemL] -= flux[iv] * wpg;
       }
     }
 

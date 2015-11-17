@@ -495,10 +495,10 @@ void DtFields(Simulation *simu, real *w, real *dtw) {
   }
 
   // the field pointers must be updated
-  for(int ie = 0; ie < simu->macromesh.nbelems; ++ie) {
-    simu->fd[ie].wn = w + ie * fsize;
-    simu->fd[ie].dtwn = dtw + ie * fsize;
-  }
+  /* for(int ie = 0; ie < simu->macromesh.nbelems; ++ie) { */
+  /*   simu->fd[ie].wn = w + ie * fsize; */
+  /*   simu->fd[ie].dtwn = dtw + ie * fsize; */
+  /* } */
 
   for(int ifa = 0; ifa < simu->macromesh.nbfaces; ifa++){
     int ieL = simu->macromesh.face2elem[4 * ifa + 0];
@@ -525,10 +525,10 @@ void DtFields(Simulation *simu, real *w, real *dtw) {
 #pragma omp parallel for schedule(dynamic, 1)
 #endif
   for(int ie = 0; ie < simu->macromesh.nbelems; ++ie) {
-    /* DGSubCellInterface(simu->fd + ie, w + ie * fsize, dtw + ie * fsize); */
-    /* DGVolume(simu->fd + ie, w + ie * fsize, dtw + ie * fsize); */
-    /* DGSource(simu->fd + ie, w + ie * fsize, dtw + ie * fsize); */
-    /* DGMass(simu->fd + ie, w + ie * fsize, dtw + ie * fsize); */
+    DGSubCellInterface(simu->fd + ie, w + ie * fsize, dtw + ie * fsize);
+    DGVolume(simu->fd + ie, w + ie * fsize, dtw + ie * fsize);
+    DGSource(simu->fd + ie, w + ie * fsize, dtw + ie * fsize);
+    DGMass(simu->fd + ie, w + ie * fsize, dtw + ie * fsize);
 
   }
 
