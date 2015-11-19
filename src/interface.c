@@ -213,7 +213,6 @@ void ExtractInterface(Interface* inter, int side){
 				ipgv, iv);
 	int imemf = VarindexFace(npgf, fd->model.m, ipgf, iv);
 	wf[imemf] = fd->wn[imem];
-	//printf("wf=%f imem=%d\n",wf[imemf],imem);
       }
     }
   }

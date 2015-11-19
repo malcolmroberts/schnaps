@@ -701,15 +701,6 @@ void DGMacroCellInterface(int locfaL,
 	int imemR = fR->varindex(fR->deg, fR->raf,fR->model.m, ipgR, iv);
 	fdtwL[imemL] -= flux[iv] * wpg;
 	fdtwR[imemR] += flux[iv] * wpg;
-	//if (ipgL == 3 || ipgR == 3)
-	  {
-	  printf("wL=%f wR=%f vnds=%f %f %f flux=%f\n",wL[0],wR[0],
-		 vnds[0]*wpg,
-		 vnds[1]*wpg,
-		 vnds[2]*wpg,
-		 flux[0]*wpg);
-	  
-	}
       }
 
     } else { // The point is on the boundary.

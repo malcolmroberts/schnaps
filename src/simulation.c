@@ -70,13 +70,14 @@ void InitInterfaces(Simulation *simu){
 
      inter[ifa].vnds = malloc(3* sizeof(real) * npgfL);
      inter[ifa].xpg = malloc(3* sizeof(real) * npgfL);
-     
+
+     real xpgref[3], xpgref_in[3],xpg[3], xpg_in[3];
      for(int ipgf = 0; ipgf < npgfL; ipgf++){
-       real xpgref[3], xpg[3], wpg;
+       real wpg;
        real vnds[3];
        int ipgv =
 	 ref_pg_face(fL->deg, fL->raf, locfaL, ipgf,
-		     xpgref, &wpg, NULL);
+		     xpgref, &wpg, xpgref_in);
        inter[ifa].vol_indexL[ipgf] = ipgv;
        {
 	 real codtau[3][3], dtau[3][3];
@@ -85,24 +86,42 @@ void InitInterfaces(Simulation *simu){
 		 NULL, locfaL, // dpsiref, ifa
 		 xpg, dtau,
 		 codtau, NULL, vnds); // codtau, dpsi, vnds
+	 Ref2Phy(fL->physnode,
+		 xpgref_in,
+		 NULL, locfaL, // dpsiref, ifa
+		 xpg_in, dtau,
+		 codtau, NULL, vnds); // codtau, dpsi, vnds
+	 PeriodicCorrection(xpg_in,fL->period);
        }
-       /* printf("ifa=%d ieL=%d ieR=%d ipgf=%d vnds=%f %f %f\n", */
-       /* 	      ifa,ieL,ieR,ipgf,vnds[0],vnds[1],vnds[2]); */
+       /* printf("ifa=%d ieL=%d ieR=%d ipgf=%d  */
+       /*        vnds=%f %f %f xpg=%f %f %f\n", */
+       /* 	      ifa,ieL,ieR,ipgf,vnds[0],vnds[1],vnds[2], */
+       /* 	      xpg[0],xpg[1],xpg[2]); */
+       
        inter[ifa].vnds[3 * ipgf + 0] = vnds[0] * wpg;
        inter[ifa].vnds[3 * ipgf + 1] = vnds[1] * wpg;
        inter[ifa].vnds[3 * ipgf + 2] = vnds[2] * wpg;
        inter[ifa].xpg[3 * ipgf + 0] = xpg[0];
        inter[ifa].xpg[3 * ipgf + 1] = xpg[1];
        inter[ifa].xpg[3 * ipgf + 2] = xpg[2];
-     }
 
-     if (fR != NULL){
-       for(int ipgf = 0; ipgf < npgfR; ipgf++){
+       if (fR != NULL){
+	 Phy2Ref(fR->physnode, xpg_in, xpgref_in);
 	 inter[ifa].vol_indexR[ipgf] =
-	   ref_pg_face(fR->deg, fR->raf, locfaR, ipgf,
-		       NULL, NULL, NULL);
+	   ref_ipg(fR->deg, fR->raf, xpgref_in);
        }
      }
+
+     /* if (fR != NULL){ */
+     /*   for(int ipgf = 0; ipgf < npgfR; ipgf++){ */
+     /* 	 int ipgv1 = */
+     /* 	   ref_pg_face(fR->deg, fR->raf, locfaR, ipgf, */
+     /* 		       xpgref, NULL, NULL); */
+     /* 	 int ipgv2 = ref_ipg(fR->deg, fR->raf, xpgref); */
+     /* 	 assert(ipgv1 == ipgv2); */
+     /* 	 inter[ifa].vol_indexR[ipgf] = ipgv2; */
+     /*   } */
+     
 
      InitInterface_SPU(inter + ifa);
   }

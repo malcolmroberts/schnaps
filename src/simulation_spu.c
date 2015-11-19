@@ -119,8 +119,6 @@ void InterfaceExplicitFlux_bis(Interface* inter, int side){
 	vndsloc[1] = sign * inter->vnds[3 * ipgf + 1];
 	vndsloc[2] = sign * inter->vnds[3 * ipgf + 2];
 
-	//printf("sign=%d ipgL=%d ipgR=%d vndsloc=%f %f\n",sign,ipgL,ipgR,vndsloc[0],vndsloc[1]);
-
 	f->model.NumFlux(wL, wR, vndsloc, flux);
  	//printf("flux=%f %f\n",flux[0],flux[0]);
 
@@ -129,19 +127,7 @@ void InterfaceExplicitFlux_bis(Interface* inter, int side){
 	  int ipgL = index[ipgf];
 	  // The basis functions is also the gauss point index
 	  int imemL = f->varindex(f->deg, f->raf,f->model.m, ipgL, iv);
-	  f->dtwn[imemL] -= flux[iv]; //aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-	  //if (ipgL == 3)
-	    {
-	    printf("wL=%f wR=%f vnds=%f %f %f flux=%f\n",wL[0],wR[0],
-		   vndsloc[0],
-		   vndsloc[1],
-		   vndsloc[2],
-		   flux[0]);
-	  }
-	  /* real* xpg = inter->xpg + 3 * ipgf; */
-	  /* real* vnds = inter->vnds + 3 * ipgf; */
-	  /* printf("interface flux=%f xpg=%f %f vnds=%f %f\n", */
-	  /* 	 flux[0],xpg[0],xpg[1],vnds[0],vnds[1]); */
+	  f->dtwn[imemL] -= flux[iv];
 	}
       } else { // The point is on the boundary.
 
@@ -160,7 +146,7 @@ void InterfaceExplicitFlux_bis(Interface* inter, int side){
 	  int ipgL = index[ipgf];
 	  // The basis functions is also the gauss point index
 	  int imemL = f->varindex(f->deg, f->raf,f->model.m, ipgL, iv);
-	  //f->dtwn[imemL] -= flux[iv] * sign;
+	  f->dtwn[imemL] -= flux[iv] * sign;
 	  /* printf("boundary flux=%f xpg=%f %f vnds=%f %f\n", */
 	  /* 	 flux[0],xpg[0],xpg[1],vnds[0],vnds[1]); */
 	}
@@ -216,7 +202,7 @@ void DtFields_bis(Simulation *simu,
       InterfaceExplicitFlux_bis(inter, 1);
       }
       else{
-	//InterfaceExplicitFlux_bis(inter, 0);
+	InterfaceExplicitFlux_bis(inter, 0);
       //InterfaceBoundaryFlux(inter);
       }
   }
@@ -242,10 +228,10 @@ void DtFields_bis(Simulation *simu,
 #pragma omp parallel for schedule(dynamic, 1)
 #endif
   for(int ie = 0; ie < simu->macromesh.nbelems; ++ie) {
-    /* DGSubCellInterface(simu->fd + ie, w + ie * fsize, dtw + ie * fsize); */
-    /* DGVolume(simu->fd + ie, w + ie * fsize, dtw + ie * fsize); */
-    /* DGSource(simu->fd + ie, w + ie * fsize, dtw + ie * fsize); */
-    /* DGMass(simu->fd + ie, w + ie * fsize, dtw + ie * fsize); */
+    DGSubCellInterface(simu->fd + ie, w + ie * fsize, dtw + ie * fsize);
+    DGVolume(simu->fd + ie, w + ie * fsize, dtw + ie * fsize);
+    DGSource(simu->fd + ie, w + ie * fsize, dtw + ie * fsize);
+    DGMass(simu->fd + ie, w + ie * fsize, dtw + ie * fsize);
 
   }
 

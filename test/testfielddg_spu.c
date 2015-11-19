@@ -19,10 +19,10 @@ int TestfieldDG_SPU(void){
   model.ImposedData = TestTransImposedData;
   model.Source = NULL;
 
-  /* int deg[]={4, 4, 4}; */
-  /* int raf[]={1, 2, 1}; */
-  int deg[]={1, 1, 1};
-  int raf[]={1, 1, 1};
+  int deg[]={4, 4, 4};
+  int raf[]={1, 2, 1};
+  /* int deg[]={1, 1, 1}; */
+  /* int raf[]={1, 1, 1}; */
  
   MacroMesh mesh;
   //ReadMacroMesh(&mesh,"../test/testmacromesh.msh");
@@ -46,9 +46,9 @@ int TestfieldDG_SPU(void){
 
   DtFields_bis(&simu, simu.w, simu.dtw);
   
-  DisplaySimulation(&simu);
+  //DisplaySimulation(&simu);
 
-  PlotFields(0, false, &simu, NULL, "visu_spu.msh");
+  //PlotFields(0, false, &simu, NULL, "visu_spu.msh");
   //PlotFields(0, true, &simu, "error", "error.msh");
 
   // Test the time derivative with the exact solution
