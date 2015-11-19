@@ -23,7 +23,8 @@ void InitImplicitLinearSolver(Simulation *simu, LinearSolver *solver){
   MatrixStorage ms = SKYLINE;
   Solver st = LU; 
   InitLinearSolver(solver,neq,&ms,&st);
-  solver->tol=1.e-8;
+  //solver->tol=1.e-8;
+  solver->tol=_SMALL;
 
   int itest = 1;
 
@@ -2772,7 +2773,7 @@ void InitImplicitJFLinearSolver(Simulation *simu, JFLinearSolver *solver){
   solver->soln=simu->w;
   solver->iter_max=10000;
   
-  solver->tol=1.e-9;
+  solver->tol=_SMALL*10;
   solver->eps=0.00001;
 
 }

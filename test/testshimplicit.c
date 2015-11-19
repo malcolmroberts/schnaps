@@ -16,6 +16,8 @@ void ShallowWater_Rusanov_periodic_BoundaryFlux(real *x, real t, real *wL, real 
 int main(void) {
   
   // unit tests
+
+#ifdef _DOUBLE_PRECISION
     
   int resu = Test_SH_equilibrium_Implicit();
 	 
@@ -23,6 +25,11 @@ int main(void) {
   else printf("shallow water equilibrium test failed !\n");
 
   return !resu;
+
+#else
+  printf("shallow water equilibrium  test not available in single precision !\n");
+ return 0;
+#endif
 } 
 
 int Test_SH_equilibrium_Implicit(void) {
