@@ -88,6 +88,7 @@ typedef struct field {
   //! is equal to res
   //! only used in explicit schemes
   real *dtwn;
+  starpu_data_handle_t dtwn_handle;
 
   //! residual
   //! is equal to dtwn

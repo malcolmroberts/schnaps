@@ -127,6 +127,49 @@ void InitInterfaces(Simulation *simu){
   }
 }
 
+
+void InitSimulation_SPU(Simulation *simu){
+
+  if (starpu_use) {
+
+    int nbelems = simu->macromesh.nbelems;
+
+    
+
+    for(int ie = 0; ie < nbelems; ie++){
+
+      field* fd = simu->fd + ie;
+      
+      starpu_vector_data_register(&(fd->wn_handle), // mem handle
+				  0, // location: CPU
+				  (uintptr_t)(fd->wn), // vector location
+				  fd->wsize,  // size
+				  sizeof(real));  // type
+
+
+      /* if (fd->res != NULL){ */
+      /* 	starpu_vector_data_register(&(fd->res_handle), // mem handle */
+      /* 				    0, // location: CPU */
+      /* 				    (uintptr_t)(fd->res), // vector location */
+      /* 				    fd->wsize,  // size */
+      /* 				    sizeof(real));  // type */
+      /* 	///// warning: what happens if aliasing ?????????????????????? */
+      /* } */
+      
+      starpu_vector_data_register(&(fd->dtwn_handle), // mem handle
+				  0, // location: CPU
+				  (uintptr_t)(fd->dtwn), // vector location
+				  fd->wsize,  // size
+				  sizeof(real));  // type
+
+      
+    }
+    
+
+  }
+
+}
+
 void InitSimulation(Simulation *simu, MacroMesh *mesh,
 		    int *deg, int *raf, Model *model){
 
@@ -225,6 +268,7 @@ void InitSimulation(Simulation *simu, MacroMesh *mesh,
 
     InitInterfaces(simu);
 
+    InitSimulation_SPU(simu);
 
 }
 

@@ -37,6 +37,8 @@ int TestfieldDG_SPU(void){
 
   //PrintMacroMesh(&mesh);
 
+  starpu_use = true;
+
   Simulation simu;
   EmptySimulation(&simu);
   
@@ -44,7 +46,7 @@ int TestfieldDG_SPU(void){
 
   simu.tnow = 0;
 
-  DtFields_bis(&simu, simu.w, simu.dtw);
+  //DtFields_SPU(&simu);
   
   //DisplaySimulation(&simu);
 

@@ -165,16 +165,12 @@ void DtFields_bis(Simulation *simu,
 
   if(simu->pre_dtfields != NULL) {
     simu->pre_dtfields(simu, w);
-    //assert(1==2);
   }
 
 
 #ifdef _OPENMP
 #pragma omp parallel
 #endif
-
-  //real *w = simu->fd[0].wn;
-  //real *dtw = simu->fd[0].dtwn;
 
   int fsize =  simu->wsize / simu->macromesh.nbelems;
   
@@ -206,23 +202,6 @@ void DtFields_bis(Simulation *simu,
       //InterfaceBoundaryFlux(inter);
       }
   }
-  /* for(int ifa = 0; ifa < simu->macromesh.nbfaces; ifa++){ */
-  /*   int ieL = simu->macromesh.face2elem[4 * ifa + 0]; */
-  /*   int locfaL = simu->macromesh.face2elem[4 * ifa + 1]; */
-  /*   int ieR = simu->macromesh.face2elem[4 * ifa + 2]; */
-  /*   field *fL = simu->fd + ieL; */
-  /*   field *fR = NULL; */
-  /*   int offsetR = -1; */
-  /*   //printf("iel=%d ier=%d\n",ieL,ieR); */
-  /*   int offsetL = fsize * ieL; */
-  /*   if (ieR >= 0) { */
-  /*     fR = simu->fd + ieR; */
-  /*     offsetR = fsize * ieR; */
-  /*   } */
-  /*   DGMacroCellInterface(locfaL, */
-  /* 			 fL, offsetL, fR, offsetR, */
-  /* 			 w, dtw); */
-  /* } */
 
 #ifdef _OPENMP
 #pragma omp parallel for schedule(dynamic, 1)
@@ -237,12 +216,59 @@ void DtFields_bis(Simulation *simu,
 
   if(simu->post_dtfields != NULL) {
     simu->post_dtfields(simu, w);
-    //assert(1==2);
+  }
+
+}
+
+
+void DtFields_SPU(Simulation *simu,
+		  starpu_data_handle_t* w_handle,
+		  starpu_data_handle_t* dtw_handle)
+{
+
+  /* if(simu->pre_dtfields != NULL) { */
+  /*   simu->pre_dtfields(simu, w); */
+  /* } */
+
+  int fsize =  simu->wsize / simu->macromesh.nbelems;
+  
+  for(int ie = 0; ie < simu->macromesh.nbelems; ++ie) {
+    ZeroBuffer_SPU(dtw_handle[ie]);
+  }
+
+  for(int ie = 0; ie < simu->macromesh.nbelems; ++ie) {
+    simu->fd[ie].tnow = simu->tnow;
+  }
+
+    // the field pointers must be updated
+  for(int ie = 0; ie < simu->macromesh.nbelems; ++ie) {
+    simu->fd[ie].wn_handle = w_handle[ie];
+    simu->fd[ie].dtwn_handle = dtw_handle[ie];
+    simu->fd[ie].res_handle = dtw_handle[ie];
   }
 
 
-  
+  for(int ifa = 0; ifa < simu->macromesh.nbfaces; ifa++){
+    Interface* inter = simu->interface + ifa;
+    // left = 0  right = 1
+    ExtractInterface_SPU(inter, 0);
+    ExtractInterface_SPU(inter, 1);
+    if (inter->fR != NULL) {
+      InterfaceExplicitFlux_SPU(inter, 0);
+      InterfaceExplicitFlux_SPU(inter, 1);
+      }
+      else{
+	InterfaceBoundaryFlux_SPU(inter);
+      }
+  }
 
+  for(int ie = 0; ie < simu->macromesh.nbelems; ++ie) {
+    /* DGSubCellInterface_SPU(simu->fd + ie); */
+    /* DGVolume_SPU(simu->fd + ie); */
+    /* DGSource_SPU(simu->fd + ie); */
+    /* DGMass_SPU(simu->fd + ie); */
+
+  }
 
 }
 
@@ -250,59 +276,4 @@ void DtFields_bis(Simulation *simu,
 
 
 
-/* void DtFields_SPU(Simulation *simu, */
-/* 		  starpu_data_handle_t* w_handle, */
-/* 		  starpu_data_handle_t* dtw_handle) */
-/* { */
 
-/*   /\*   if(simu->pre_dtfields != NULL) { *\/ */
-/*   /\*   simu->pre_dtfields(simu, w); *\/ */
-/*   /\*   //assert(1==2); *\/ */
-/*   /\* } *\/ */
-
-/* #ifdef _OPENMP */
-/* #pragma omp parallel */
-/* #endif */
-
-/*   //real *w = simu->fd[0].wn; */
-/*   //real *dtw = simu->fd[0].dtwn; */
-
-/*   int fsize =  simu->wsize / simu->macromesh.nbelems; */
-
-/*   for(int ie = 0; ie < simu->macromesh.nbelems; ++ie) ZeroBuffer_SPU(dtw_handle[ie]); */
-
-/*   for(int ie = 0; ie < simu->macromesh.nbelems; ++ie) { */
-/*     simu->fd[ie].tnow = simu->tnow; */
-/*   }  */
-
-/*   for(int ifa = 0; ifa < simu->macromesh.nbfaces; ifa++){ */
-/*     Interface* inter = simu->interface + ifa; */
-/*     // left = 0  right = 1 */
-/*     ExtractInterface_SPU(inter, 0); */
-/*     ExtractInterface_SPU(inter, 1); */
-/*     if (inter->fR != NULL) { */
-/*       InterfaceExplicitFlux_SPU(inter, 0); */
-/*       InterfaceExplicitFlux_SPU(inter, 1); */
-/*     } */
-/*     else{ */
-/*       InterfaceBoundaryFlux_SPU(inter); */
-/*     } */
-/*   } */
-
-  
-/*   for(int ie = 0; ie < simu->macromesh.nbelems; ++ie) { */
-/*     DGSubCellInterface(simu->fd + ie, w + ie * fsize, dtw + ie * fsize); */
-/*     DGVolume(simu->fd + ie, w + ie * fsize, dtw + ie * fsize); */
-/*     DGSource(simu->fd + ie, w + ie * fsize, dtw + ie * fsize); */
-/*     DGMass(simu->fd + ie, w + ie * fsize, dtw + ie * fsize); */
-
-/*   } */
-
-/*   if(simu->post_dtfields != NULL) { */
-/*     simu->post_dtfields(simu, w); */
-/*     //assert(1==2); */
-/*   } */
-
-
-
-/* } */

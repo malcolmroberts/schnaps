@@ -160,6 +160,10 @@ void EmptySimulation(Simulation *simu);
 void InitSimulation(Simulation *simu, MacroMesh *mesh,
 		    int *deg, int *raf, Model *model);
 
+//! \brief simulation initialization.
+//! starpu related data
+//! \param[inout] simu a simulation
+void InitSimulation_SPU(Simulation *simu);
 
 //! \brief init interface structs
 //! \param[inout] simu a simulation

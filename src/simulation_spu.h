@@ -14,6 +14,27 @@ void DtFields_SPU(Simulation *simu,
 		  starpu_data_handle_t* w_handle,
 		  starpu_data_handle_t* dtw_handle);
 
+//! \brief apply the flux terms inside a macrocell
+//! StarPU version
+//! \param[inout] fd a field
+void DGSubCellInterface_SPU(field* fd);
+
+//! \brief apply the "cross" derivative terms inside a macrocell
+//! StarPU version
+//! \param[inout] fd a field
+void DGVolume_SPU(field* fd);
+
+//! \brief apply the source terms inside a macrocell
+//! StarPU version
+//! \param[inout] fd a field
+void DGSource_SPU(field* fd);
+
+//! \brief apply the inverse of the mass matrix in a macrocell
+//! StarPU version
+//! \param[inout] fd a field
+void DGMass_SPU(field* fd);
+
+
 //! \brief  apply the interface fluxes to a neighbouring field
 //! \param[in] inter an Interface
 //! \param[in] side the side: left if == 0 right if ==1
