@@ -395,6 +395,7 @@ void InterfaceExplicitFlux_C(void* buffer[], void* cl_args){
       // The basis functions is also the gauss point index
       int imemL = f->varindex(f->deg, f->raf,f->model.m, ipgL, iv);
       rhs[imemL] -= flux[iv] * f->dt;
+      printf("imem=%d res=%f\n",imemL,rhs[imemL]);
       /* real* xpg = inter->xpg + 3 * ipgf; */
       /* real* vnds = inter->vnds + 3 * ipgf; */
       /* printf("interface flux=%f xpg=%f %f vnds=%f %f\n", */
@@ -615,6 +616,8 @@ void InterfaceExplicitFlux(Interface* inter, int side){
 	  // The basis functions is also the gauss point index
 	  int imemL = f->varindex(f->deg, f->raf,f->model.m, ipgL, iv);
 	  f->solver->rhs[imemL] -= flux[iv] * f->dt;
+	  printf("imem=%d res=%f\n",imemL,f->solver->rhs[imemL]);
+	  
 	  /* real* xpg = inter->xpg + 3 * ipgf; */
 	  /* real* vnds = inter->vnds + 3 * ipgf; */
 	  /* printf("interface flux=%f xpg=%f %f vnds=%f %f\n", */

@@ -152,6 +152,7 @@ void init_empty_field(field *f)
   f->jacobian = NULL;
   f->det = NULL;
   f->store_det = false;
+  f->starpu_registered = false;
   f->wn = NULL;
   f->dtwn = NULL;
   f->res = NULL;
@@ -339,6 +340,57 @@ void Initfield(field *f, Model model,
   
 }
 
+
+void Registerfield_SPU(field *f){
+
+  if (!starpu_is_init && starpu_use){
+    int ret;
+    ret = starpu_init(NULL);
+    assert(ret != -ENODEV) ;
+    starpu_is_init = true;
+  }
+
+  if (starpu_use && !f->starpu_registered){
+
+    starpu_vector_data_register(&(f->wn_handle), // mem handle
+				0, // location: CPU
+				(uintptr_t)(f->wn), // vector location
+				f->wsize,  // size
+				sizeof(real));  // type
+
+
+    starpu_vector_data_register(&(f->dtwn_handle), // mem handle
+				0, // location: CPU
+				(uintptr_t)(f->dtwn), // vector location
+				f->wsize,  // size
+				sizeof(real));  // type
+
+    starpu_vector_data_register(&(f->res_handle), // mem handle
+				0, // location: CPU
+				(uintptr_t)(f->res), // vector location
+				f->wsize,  // size
+				sizeof(real));  // type
+    f->starpu_registered = true;
+  }
+  
+
+}
+
+void Unregisterfield_SPU(field *f){
+
+
+  if (starpu_use && f->starpu_registered){
+
+    starpu_data_unregister(f->wn_handle);
+    starpu_data_unregister(f->dtwn_handle);
+    starpu_data_unregister(f->res_handle);
+    f->starpu_registered = false;
+  }
+  
+
+}
+
+
 void Initfield_SPU(field *f){
 
   if (!starpu_is_init && starpu_use){
@@ -348,25 +400,25 @@ void Initfield_SPU(field *f){
     starpu_is_init = true;
   }
 
-  if (starpu_use){
+  /* if (starpu_use){ */
 
-    starpu_vector_data_register(&(f->wn_handle), // mem handle
-				0, // location: CPU
-				(uintptr_t)(f->wn), // vector location
-				f->wsize,  // size
-				sizeof(real));  // type
+  /*   starpu_vector_data_register(&(f->wn_handle), // mem handle */
+  /* 				0, // location: CPU */
+  /* 				(uintptr_t)(f->wn), // vector location */
+  /* 				f->wsize,  // size */
+  /* 				sizeof(real));  // type */
 
-    for(int ii=0; ii < f->wsize; ii++) f->res[ii] = 0;
+  /*   for(int ii=0; ii < f->wsize; ii++) f->res[ii] = 0; */
 
 
-    starpu_vector_data_register(&(f->res_handle), // mem handle
-				0, // location: CPU
-				(uintptr_t)(f->res), // vector location
-				f->wsize,  // size
-				sizeof(real));  // type
-    assert(f->res != NULL);
-    assert(f->res == f->dtwn);
-  }
+  /*   starpu_vector_data_register(&(f->res_handle), // mem handle */
+  /* 				0, // location: CPU */
+  /* 				(uintptr_t)(f->res), // vector location */
+  /* 				f->wsize,  // size */
+  /* 				sizeof(real));  // type */
+  /*   assert(f->res != NULL); */
+  /*   assert(f->res == f->dtwn); */
+  /* } */
   
 
 }

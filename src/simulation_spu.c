@@ -128,6 +128,7 @@ void InterfaceExplicitFlux_bis(Interface* inter, int side){
 	  // The basis functions is also the gauss point index
 	  int imemL = f->varindex(f->deg, f->raf,f->model.m, ipgL, iv);
 	  f->dtwn[imemL] -= flux[iv];
+	  printf("imem=%d res=%f\n",imemL,f->dtwn[imemL]);
 	}
       } else { // The point is on the boundary.
 
@@ -198,7 +199,7 @@ void DtFields_bis(Simulation *simu,
       InterfaceExplicitFlux_bis(inter, 1);
       }
       else{
-	InterfaceExplicitFlux_bis(inter, 0);
+	//InterfaceExplicitFlux_bis(inter, 0);
       //InterfaceBoundaryFlux(inter);
       }
   }
@@ -207,10 +208,10 @@ void DtFields_bis(Simulation *simu,
 #pragma omp parallel for schedule(dynamic, 1)
 #endif
   for(int ie = 0; ie < simu->macromesh.nbelems; ++ie) {
-    DGSubCellInterface(simu->fd + ie, w + ie * fsize, dtw + ie * fsize);
-    DGVolume(simu->fd + ie, w + ie * fsize, dtw + ie * fsize);
-    DGSource(simu->fd + ie, w + ie * fsize, dtw + ie * fsize);
-    DGMass(simu->fd + ie, w + ie * fsize, dtw + ie * fsize);
+    /* DGSubCellInterface(simu->fd + ie, w + ie * fsize, dtw + ie * fsize); */
+    /* DGVolume(simu->fd + ie, w + ie * fsize, dtw + ie * fsize); */
+    /* DGSource(simu->fd + ie, w + ie * fsize, dtw + ie * fsize); */
+    /* DGMass(simu->fd + ie, w + ie * fsize, dtw + ie * fsize); */
 
   }
 
@@ -230,6 +231,7 @@ void DtFields_SPU(Simulation *simu,
   /*   simu->pre_dtfields(simu, w); */
   /* } */
 
+
   int fsize =  simu->wsize / simu->macromesh.nbelems;
   
   for(int ie = 0; ie < simu->macromesh.nbelems; ++ie) {
@@ -244,7 +246,7 @@ void DtFields_SPU(Simulation *simu,
   for(int ie = 0; ie < simu->macromesh.nbelems; ++ie) {
     simu->fd[ie].wn_handle = w_handle[ie];
     simu->fd[ie].dtwn_handle = dtw_handle[ie];
-    simu->fd[ie].res_handle = dtw_handle[ie];
+    simu->fd[ie].res_handle = simu->res_handle[ie];
   }
 
 
@@ -258,7 +260,7 @@ void DtFields_SPU(Simulation *simu,
       InterfaceExplicitFlux_SPU(inter, 1);
       }
       else{
-	InterfaceBoundaryFlux_SPU(inter);
+  	//InterfaceBoundaryFlux_SPU(inter);
       }
   }
 

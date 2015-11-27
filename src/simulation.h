@@ -23,6 +23,14 @@ typedef struct Simulation {
   //! memory spaces for w and dtw
   real *w;
   real *dtw;
+  real *res;
+
+
+  //! array of starpu data handles
+  starpu_data_handle_t* w_handle;
+  starpu_data_handle_t* dtw_handle;
+  starpu_data_handle_t* res_handle;
+
 
   //! sum of sizes of field data
   int wsize;
@@ -160,11 +168,6 @@ void EmptySimulation(Simulation *simu);
 void InitSimulation(Simulation *simu, MacroMesh *mesh,
 		    int *deg, int *raf, Model *model);
 
-//! \brief simulation initialization.
-//! starpu related data
-//! \param[inout] simu a simulation
-void InitSimulation_SPU(Simulation *simu);
-
 //! \brief init interface structs
 //! \param[inout] simu a simulation
 void InitInterfaces(Simulation *simu);
@@ -265,4 +268,13 @@ real L2error_onefield(Simulation *simu, int nbvar);
 //! \brief frees any Simulation object
 //! \param[inout] simu: a Simulation object
 void freeSimulation(Simulation* simu);
+
+//! \brief register simulation data into starpu
+//! \param[inout] simu: a Simulation object
+void RegisterSimulation_SPU(Simulation* simu);
+
+//! \brief unregister simulation data into starpu
+//! \param[inout] simu: a Simulation object
+void UnregisterSimulation_SPU(Simulation* simu);
+
 #endif

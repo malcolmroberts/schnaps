@@ -77,7 +77,10 @@ typedef struct field {
   LinearSolver* rmat;
   Skyline_SPU* rmat_spu;
   
+  //! starpu registering flag
+  bool starpu_registered;
 
+  
   //! Size of the field buffers
   int wsize;
   //! fields at current time step
@@ -218,6 +221,14 @@ void InterpField(field *f,real* xref,real* w);
 //! \brief  display the field on screen
 //! \param[in] f the field.
 void Displayfield(field *f);
+
+//! \brief  register field data for starpuy
+//! \param[inout] f the field.
+void Registerfield_SPU(field *f);
+
+//! \brief  unregister field data for starpuy
+//! \param[inout] f the field.
+void Unregisterfield_SPU(field *f);
 
 
 #endif

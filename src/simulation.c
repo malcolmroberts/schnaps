@@ -17,8 +17,47 @@ void EmptySimulation(Simulation *simu){
   sprintf(simu->sourcename_cl,"%s"," "); // FIXME: remove 
 #endif
 
+  simu->w_handle = NULL;
+  simu->dtw_handle = NULL;
+  simu->res_handle = NULL;
+
 
 }
+
+void RegisterSimulation_SPU(Simulation *simu){
+
+  if (simu->w_handle == NULL){
+    simu->w_handle = malloc(simu->macromesh.nbelems
+			    * sizeof( starpu_data_handle_t));
+    simu->dtw_handle = malloc(simu->macromesh.nbelems
+			    * sizeof( starpu_data_handle_t));
+    simu->res_handle = malloc(simu->macromesh.nbelems
+			    * sizeof( starpu_data_handle_t));
+    for(int ie = 0; ie < simu->macromesh.nbelems; ie++) {
+      Registerfield_SPU(simu->fd + ie);
+      simu->w_handle[ie] = simu->fd[ie].wn_handle;
+      simu->dtw_handle[ie] = simu->fd[ie].dtwn_handle;
+      simu->res_handle[ie] = simu->fd[ie].res_handle;
+    }   
+  }
+}
+
+void UnregisterSimulation_SPU(Simulation *simu){
+
+  if (simu->w_handle != NULL){
+    for(int ie = 0; ie < simu->macromesh.nbelems; ie++){
+      Unregisterfield_SPU(simu->fd + ie);
+    }
+    free(simu->w_handle);
+    free(simu->dtw_handle);
+    free(simu->res_handle);
+    simu->w_handle = NULL;
+    simu->dtw_handle = NULL;
+    simu->res_handle = NULL;
+  }
+}
+
+
 
 void InitInterfaces(Simulation *simu){
 
@@ -128,48 +167,6 @@ void InitInterfaces(Simulation *simu){
 }
 
 
-void InitSimulation_SPU(Simulation *simu){
-
-  if (starpu_use) {
-
-    int nbelems = simu->macromesh.nbelems;
-
-    
-
-    for(int ie = 0; ie < nbelems; ie++){
-
-      field* fd = simu->fd + ie;
-      
-      starpu_vector_data_register(&(fd->wn_handle), // mem handle
-				  0, // location: CPU
-				  (uintptr_t)(fd->wn), // vector location
-				  fd->wsize,  // size
-				  sizeof(real));  // type
-
-
-      /* if (fd->res != NULL){ */
-      /* 	starpu_vector_data_register(&(fd->res_handle), // mem handle */
-      /* 				    0, // location: CPU */
-      /* 				    (uintptr_t)(fd->res), // vector location */
-      /* 				    fd->wsize,  // size */
-      /* 				    sizeof(real));  // type */
-      /* 	///// warning: what happens if aliasing ?????????????????????? */
-      /* } */
-      
-      starpu_vector_data_register(&(fd->dtwn_handle), // mem handle
-				  0, // location: CPU
-				  (uintptr_t)(fd->dtwn), // vector location
-				  fd->wsize,  // size
-				  sizeof(real));  // type
-
-      
-    }
-    
-
-  }
-
-}
-
 void InitSimulation(Simulation *simu, MacroMesh *mesh,
 		    int *deg, int *raf, Model *model){
 
@@ -197,9 +194,11 @@ void InitSimulation(Simulation *simu, MacroMesh *mesh,
 
   simu->w = calloc(simu->wsize, sizeof(real));
   simu->dtw = calloc(simu->wsize, sizeof(real));
+  simu->res = calloc(simu->wsize, sizeof(real));
 
   real *w = simu->w;
   real *dtw = simu->dtw;
+  real *res = simu->res;
   
   real physnode[20][3];
   
@@ -230,7 +229,10 @@ void InitSimulation(Simulation *simu, MacroMesh *mesh,
     fd[ie].store_det = true;
 
     Initfield(fd + ie, *model, physnode, deg, raf,
-	      w + ie * field_size, dtw + ie * field_size);
+	      w + ie * field_size, dtw + ie * field_size
+	      );
+
+    fd[ie].res = res + ie * field_size;
 
     simu->hmin = simu->hmin > fd[ie].hmin ? fd[ie].hmin : simu->hmin;
   }
@@ -268,7 +270,6 @@ void InitSimulation(Simulation *simu, MacroMesh *mesh,
 
     InitInterfaces(simu);
 
-    InitSimulation_SPU(simu);
 
 }
 

@@ -19,7 +19,7 @@ int TestfieldDG_SPU(void){
   model.ImposedData = TestTransImposedData;
   model.Source = NULL;
 
-  int deg[]={4, 4, 4};
+  int deg[]={1, 1, 1};
   int raf[]={1, 2, 1};
   /* int deg[]={1, 1, 1}; */
   /* int raf[]={1, 1, 1}; */
@@ -46,10 +46,19 @@ int TestfieldDG_SPU(void){
 
   simu.tnow = 0;
 
-  //DtFields_SPU(&simu);
+  RegisterSimulation_SPU(&simu);
   
-  //DisplaySimulation(&simu);
+  DtFields_SPU(&simu,simu.w_handle,simu.dtw_handle);
+  
+  UnregisterSimulation_SPU(&simu);
 
+  for(int i = 0; i < simu.wsize; i++)
+    simu.dtw[i] = simu.res[i];
+  
+  DisplaySimulation(&simu);
+
+
+  //assert(1==2);
   //PlotFields(0, false, &simu, NULL, "visu_spu.msh");
   //PlotFields(0, true, &simu, "error", "error.msh");
 
