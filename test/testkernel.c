@@ -6,7 +6,9 @@
 #include <math.h>
 
 int TestKernel(void) 
-{ /*
+{
+  return 1; // This test won't compile; please fix it!
+  /*
   bool test = true;
 
   if(!cldevice_is_acceptable(nplatform_cl, ndevice_cl)) {
@@ -119,12 +121,12 @@ int TestKernel(void)
   return test; */
 }
 
-int main(void) {
-  // Unit tests
-  int resu = TestKernel();
-  if (resu) 
+int main()
+{
+  int retval = TestKernel();
+  if (retval == 0) 
     printf("Kernel test OK !\n");
   else 
     printf("Kernel test failed !\n");
-  return !resu;
+  return retval;
 } 

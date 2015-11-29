@@ -10,6 +10,9 @@
 #endif
 int main(int argc, char *argv[]) 
 {
+  // this test fails; whoever broke it should fix it.
+  return 1;
+  
   /*  int dimension = 2; // Dimension of simulation
 #ifdef _WITH_OPENCL
   bool usegpu = true;
