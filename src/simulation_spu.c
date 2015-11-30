@@ -127,7 +127,7 @@ void InterfaceExplicitFlux_bis(Interface* inter, int side){
 	  int ipgL = index[ipgf];
 	  // The basis functions is also the gauss point index
 	  int imemL = f->varindex(f->deg, f->raf,f->model.m, ipgL, iv);
-	  f->dtwn[imemL] -= flux[iv];
+	  f->dtwn[imemL] -= flux[iv]  ;
 	  printf("imem=%d res=%f\n",imemL,f->dtwn[imemL]);
 	}
       } else { // The point is on the boundary.
@@ -139,6 +139,8 @@ void InterfaceExplicitFlux_bis(Interface* inter, int side){
 
 	//printf("tnow=%f wL=%f\n",f->tnow,wL[0]);
 	f->model.BoundaryFlux(xpg, f->tnow, wL, vnds, flux);
+	printf("wL=%f, ipgf=%d\n",wL[0], ipgf);
+	printf("flux=%f, ipgf=%d\n",flux[0], ipgf);
 	int ipgL = index[ipgf];
 	/* printf("xpg=%f %f %f vnds=%f %f %f ipgL=%d \n", */
 	/*        xpg[0], xpg[1], xpg[2], */
@@ -199,7 +201,7 @@ void DtFields_bis(Simulation *simu,
       InterfaceExplicitFlux_bis(inter, 1);
       }
       else{
-	//InterfaceExplicitFlux_bis(inter, 0);
+	InterfaceExplicitFlux_bis(inter, 0);
       //InterfaceBoundaryFlux(inter);
       }
   }
@@ -238,6 +240,8 @@ void DtFields_SPU(Simulation *simu,
     ZeroBuffer_SPU(dtw_handle[ie]);
   }
 
+  starpu_task_wait_for_all();
+  
   for(int ie = 0; ie < simu->macromesh.nbelems; ++ie) {
     simu->fd[ie].tnow = simu->tnow;
   }
@@ -260,10 +264,13 @@ void DtFields_SPU(Simulation *simu,
       DGMacroCellInterface_SPU(inter, 1);
       }
       else{
+	DGMacroCellBoundaryFlux_SPU(inter);
   	//InterfaceBoundaryFlux_SPU(inter);
       }
   }
 
+  
+  
   for(int ie = 0; ie < simu->macromesh.nbelems; ++ie) {
     /* DGSubCellInterface_SPU(simu->fd + ie); */
     /* DGVolume_SPU(simu->fd + ie); */
@@ -455,7 +462,7 @@ void DGMacroCellInterface_C(void* buffer[], void* cl_args){
       int ipgL = index[ipgf];
       // The basis functions is also the gauss point index
       int imemL = f->varindex(f->deg, f->raf,f->model.m, ipgL, iv);
-      rhs[imemL] -= flux[iv] * sign; ///* f->dt;
+      rhs[imemL] -= flux[iv] ; ///* f->dt;
       printf("imem=%d res=%f dt=%f\n",imemL,rhs[imemL],f->dt);
       /* real* xpg = inter->xpg + 3 * ipgf; */
       /* real* vnds = inter->vnds + 3 * ipgf; */
@@ -471,6 +478,143 @@ void DGMacroCellInterface_C(void* buffer[], void* cl_args){
 
 }
 
+void DGMacroCellBoundaryFlux_C(void* buffer[], void* cl_args);
+
+void DGMacroCellBoundaryFlux_SPU(Interface* inter)
+{
+
+
+  field *f;
+  int locfa;
+  starpu_data_handle_t index;
+
+  static bool is_init = false;
+  static struct starpu_codelet codelet;
+  struct starpu_task *task;
+
+  if (!is_init){
+    printf("init codelet DGMacroCellBoundaryFlux...\n");
+    is_init = true;
+    starpu_codelet_init(&codelet);
+    codelet.cpu_funcs[0] = DGMacroCellBoundaryFlux_C;
+    codelet.nbuffers = 5;
+    codelet.modes[0] = STARPU_R;  // vol_index
+    codelet.modes[1] = STARPU_R; // vnds
+    codelet.modes[2] = STARPU_R; // xpg
+    codelet.modes[3] = STARPU_R; // wL
+    codelet.modes[4] = STARPU_RW; // rhs / res
+    codelet.name="DGMacroCellBoundaryFlux";
+  }
+
+  
+  f = inter->fL;
+  locfa = inter->locfaL;
+  index = inter->vol_indexL_handle;
+
+  
+  void* arg_buffer;
+  size_t arg_buffer_size;
+
+  starpu_codelet_pack_args(&arg_buffer, &arg_buffer_size,
+			   STARPU_VALUE, f, sizeof(field),
+			   STARPU_VALUE, &locfa, sizeof(int),
+			   0);   
+    
+  task = starpu_task_create();
+  task->cl = &codelet;
+  task->cl_arg = arg_buffer;
+  task->cl_arg_size = arg_buffer_size;
+  task->handles[0] = index;
+  task->handles[1] = inter->vnds_handle;
+  task->handles[2] = inter->xpg_handle;
+  task->handles[3] = inter->wL_handle;
+  if (f->solver != NULL){
+    Skyline_SPU* sky_spu = f->solver->matrix;
+    task->handles[4] = sky_spu->rhs_handle;
+  }
+  else {
+    task->handles[4] = f->res_handle;
+  }
+  int ret = starpu_task_submit(task);
+  STARPU_CHECK_RETURN_VALUE(ret, "starpu_task_submit");
+
+  
+}
+
+void DGMacroCellBoundaryFlux_C(void* buffer[], void* cl_args){
+
+
+  field f0;
+  field *f = &f0;
+  int locfa;
+
+  starpu_codelet_unpack_args(cl_args,f,&locfa);
+  free(cl_args);
+
+  int m = f->model.m;
+
+  int buf_num=0;
+  
+  struct starpu_vector_interface *index_v =
+    (struct starpu_vector_interface *) buffer[buf_num++]; 
+  int* index = (int *)STARPU_VECTOR_GET_PTR(index_v);  
+
+  struct starpu_vector_interface *vnds_buf_v =
+    (struct starpu_vector_interface *) buffer[buf_num++]; 
+  real* vnds_buf = (real *)STARPU_VECTOR_GET_PTR(vnds_buf_v);  
+
+  struct starpu_vector_interface *xpg_buf_v =
+    (struct starpu_vector_interface *) buffer[buf_num++]; 
+  real* xpg_buf = (real *)STARPU_VECTOR_GET_PTR(xpg_buf_v);  
+
+  struct starpu_vector_interface *wL_buf_v =
+    (struct starpu_vector_interface *) buffer[buf_num++]; 
+  real* wL_buf = (real *)STARPU_VECTOR_GET_PTR(wL_buf_v);  
+
+  struct starpu_vector_interface *rhs_v =
+    (struct starpu_vector_interface *) buffer[buf_num++]; 
+  real* rhs = (real *)STARPU_VECTOR_GET_PTR(rhs_v);  
+
+  int npgf = NPGF(f->deg, f->raf, locfa);
+  for(int ipgf = 0; ipgf < npgf; ipgf++) {
+
+ 
+    real flux[m];
+    real wL[m];
+    for(int iv = 0; iv < m; iv++) {
+      int imemf = VarindexFace(npgf, m, ipgf, iv);
+      wL[iv] = wL_buf[imemf];
+    }
+
+    real* xpg = xpg_buf + 3 * ipgf;
+    real* vnds = vnds_buf + 3 * ipgf;
+
+    //printf("tnow=%f wL=%f\n",f->tnow,wL[0]);
+    f->model.BoundaryFlux(xpg, f->tnow, wL, vnds, flux);
+    printf("wL=%f, ipgf=%d\n",wL[0], ipgf);
+    printf("flux=%f, ipgf=%d\n",flux[0], ipgf);
+    int ipgL = index[ipgf];
+    /* printf("xpg=%f %f %f vnds=%f %f %f ipgL=%d \n", */
+    /*        xpg[0], xpg[1], xpg[2], */
+    /*        vnds[0], vnds[1],vnds[2], ipgL); */
+    for(int iv = 0; iv < m; iv++) {
+      int ipgL = index[ipgf];
+      // The basis functions is also the gauss point index
+      int imemL = f->varindex(f->deg, f->raf,f->model.m, ipgL, iv);
+      rhs[imemL] -= flux[iv]; 
+    }
+    
+
+  }
+
+  
+  
+
+
+
+  
+
+}
 
 
 

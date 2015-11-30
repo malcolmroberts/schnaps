@@ -72,7 +72,6 @@ void ExtractInterface_SPU(Interface* inter, int side){
     codelet.name="ExtractInterface";
   }
 
-  if (inter->fL != NULL && inter->fR != NULL) { 
 
     field *fd;
     int locfa,npgf;
@@ -82,6 +81,7 @@ void ExtractInterface_SPU(Interface* inter, int side){
     starpu_data_handle_t vol_index_handle;
 
     if (side == 0) {
+      if (inter->fL == NULL) return;
       fd = inter->fL;
       locfa = inter->locfaL;
       npgf = inter->npgL;
@@ -92,6 +92,7 @@ void ExtractInterface_SPU(Interface* inter, int side){
     }
 
     if (side == 1) {
+      if (inter->fR == NULL) return;
       fd = inter->fR;
       locfa = inter->locfaR;
       npgf = inter->npgR;
@@ -135,7 +136,7 @@ void ExtractInterface_SPU(Interface* inter, int side){
     int ret = starpu_task_submit(task);
     STARPU_CHECK_RETURN_VALUE(ret, "starpu_task_submit");
 
-  }
+  
     
 
 }
@@ -526,8 +527,6 @@ void InterfaceBoundaryFlux_C(void* buffer[], void* cl_args){
       // The basis functions is also the gauss point index
       int imemL = f->varindex(f->deg, f->raf,f->model.m, ipgL, iv);
       rhs[imemL] -= flux[iv] * f->dt;
-      /* printf("boundary flux=%f xpg=%f %f vnds=%f %f\n", */
-      /* 	 flux[0],xpg[0],xpg[1],vnds[0],vnds[1]); */
     }
     
 

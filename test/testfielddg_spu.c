@@ -19,8 +19,8 @@ int TestfieldDG_SPU(void){
   model.ImposedData = TestTransImposedData;
   model.Source = NULL;
 
-  int deg[]={1, 1, 1};
-  int raf[]={1, 2, 1};
+  int deg[]={4, 4, 4};
+  int raf[]={1, 1, 1};
   /* int deg[]={1, 1, 1}; */
   /* int raf[]={1, 1, 1}; */
  
@@ -52,10 +52,15 @@ int TestfieldDG_SPU(void){
   
   UnregisterSimulation_SPU(&simu);
 
-  for(int i = 0; i < simu.wsize; i++)
+  for(int i = 0; i < simu.wsize; i++){
     simu.dtw[i] = simu.res[i];
+    printf("i=%d dtw=%.8e\n",i,simu.dtw[i]);
+  }
+    
+
+  printf("wsize=%d %d\n",simu.wsize,model.m * mesh.nbelems * NPG(deg,raf));
   
-  DisplaySimulation(&simu);
+  //DisplaySimulation(&simu);
 
 
   //assert(1==2);
@@ -64,18 +69,17 @@ int TestfieldDG_SPU(void){
 
   // Test the time derivative with the exact solution
   real test2 = 0;
-  for(int i = 0; 
-      i < model.m * mesh.nbelems * NPG(deg,raf); 
+  for(int i = 0;
+      i < model.m * mesh.nbelems * NPG(deg,raf);
       i++){
     real errloc = fabs(4 * simu.w[i] - pow(simu.dtw[i], 2));
-    //errloc = fabs(pow(simu.dtw[i], 2));
     test2 += errloc * errloc;
     test = test && errloc < 1e-2;
     //printf("i=%d err=%f \n",i,4 * w[i] - pow(dtw[i], 2));
     //assert(test);
   }
 
-  printf("error=%f\n",sqrt(test2/ (mesh.nbelems * NPG(deg,raf)) ));
+  printf("error=%.10e\n",sqrt(test2/ (mesh.nbelems * NPG(deg,raf)) ));
 
   FreeMacroMesh(&mesh);
   
