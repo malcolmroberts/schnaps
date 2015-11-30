@@ -40,6 +40,11 @@ void DGMass_SPU(field* fd);
 //! \param[in] side the side: left if == 0 right if ==1
 void InterfaceExplicitFlux_bis(Interface* inter, int side);
 
+//! \brief  apply the interface fluxes to a neighbouring field
+//! \param[in] inter an Interface
+//! \param[in] side the side: left if == 0 right if ==1
+void DGMacroCellInterface_SPU(Interface* inter, int side);
+
 //! \brief apply the Discontinuous Galerkin approximation for computing
 //! the time derivative of the fields. Works with several subcells.
 //! test version before starpu implementation
