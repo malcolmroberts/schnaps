@@ -7,14 +7,29 @@
 //! \brief apply the Discontinuous Galerkin approximation for computing
 //! the time derivative of the fields. Works with several subcells.
 //! starpu version
-//! \param[in] simu a simulation
+//! \param[inout] simu a simulation
 //! \param[inout] w a starpu handle to the field value
 //! \param[out] dtw a starpu handle to the time derivatives
 void DtFields_SPU(Simulation *simu,
 		  starpu_data_handle_t* w_handle,
 		  starpu_data_handle_t* dtw_handle);
 
-//! \brief apply the flux terms inside a macrocell
+//! \brief RK2 integration of the DG approximation
+//! starpu version
+//! \param[inout] simu a simulation
+//! \param[in] tmax tmax
+void RK2_SPU(Simulation *simu, real tmax);
+
+//! \brief add a scaled vector to another vector
+//! wout = wout + alpha * win
+//! starpu version
+//! \param[in] alpha the scaling factor
+//! \param[in] win a handle to the scaled vector
+//! \param[out] wout a handle to the result
+void AddBuffer_SPU(real alpha, starpu_data_handle_t win,
+		   starpu_data_handle_t wout);
+
+  //! \brief apply the flux terms inside a macrocell
 //! StarPU version
 //! \param[inout] fd a field
 void DGSubCellInterface_SPU(field* fd);

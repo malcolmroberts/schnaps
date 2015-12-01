@@ -46,6 +46,70 @@ void ZeroBuffer_C(void *buffers[], void *cl_arg) {
   
 }
 
+void AddBuffer_C(void *buffers[], void *cl_arg);
+
+void AddBuffer_SPU(real alpha, starpu_data_handle_t win, starpu_data_handle_t wout){
+
+  static bool is_init = false;
+  static struct starpu_codelet codelet;
+  struct starpu_task *task;
+
+  if (!is_init){
+    printf("init codelet AddBuffer...\n");
+    is_init = true;
+    starpu_codelet_init(&codelet);
+    codelet.cpu_funcs[0] = AddBuffer_C;
+    codelet.nbuffers = 2;
+    codelet.modes[0] = STARPU_R;
+    codelet.modes[1] = STARPU_RW;
+    codelet.name="AddBuffer";
+  }
+
+  void* arg_buffer;
+  size_t arg_buffer_size;
+
+  starpu_codelet_pack_args(&arg_buffer, &arg_buffer_size,
+			   STARPU_VALUE, &alpha, sizeof(real),
+			   0);   
+
+  task = starpu_task_create();
+  task->cl = &codelet;
+  task->cl_arg = arg_buffer;
+  task->cl_arg_size = arg_buffer_size;
+  task->handles[0] = win;
+  task->handles[1] = wout;
+    
+
+  int ret = starpu_task_submit(task);
+  STARPU_CHECK_RETURN_VALUE(ret, "starpu_task_submit");
+  
+}
+
+
+void AddBuffer_C(void *buffers[], void *cl_args) {
+
+  real alpha;
+
+  starpu_codelet_unpack_args(cl_args,&alpha);
+  free(cl_args);
+  
+  struct starpu_vector_interface *win_v =
+    (struct starpu_vector_interface *) buffers[0];
+  real* win = (real *)STARPU_VECTOR_GET_PTR(win_v);
+
+  struct starpu_vector_interface *wout_v =
+    (struct starpu_vector_interface *) buffers[0];
+  real* wout = (real *)STARPU_VECTOR_GET_PTR(wout_v);
+
+  int n = STARPU_VECTOR_GET_NX(buffers[0]);
+  int np = STARPU_VECTOR_GET_NX(buffers[1]);
+
+  assert(n == np);
+
+  for(int i = 0; i < n; i++) wout[i] += alpha * win[i];
+  
+}
+
 
 void InterfaceExplicitFlux_bis(Interface* inter, int side){
 
@@ -237,7 +301,7 @@ void DtFields_SPU(Simulation *simu,
   int fsize =  simu->wsize / simu->macromesh.nbelems;
   
   for(int ie = 0; ie < simu->macromesh.nbelems; ++ie) {
-    ZeroBuffer_SPU(dtw_handle[ie]);
+    ZeroBuffer_SPU(simu->fd[ie].res_handle);
   }
 
   starpu_task_wait_for_all();
@@ -247,11 +311,17 @@ void DtFields_SPU(Simulation *simu,
   }
 
     // the field pointers must be updated
-  for(int ie = 0; ie < simu->macromesh.nbelems; ++ie) {
-    simu->fd[ie].wn_handle = w_handle[ie];
-    simu->fd[ie].dtwn_handle = dtw_handle[ie];
-    simu->fd[ie].res_handle = simu->res_handle[ie];
+  if (w_handle != NULL){
+    for(int ie = 0; ie < simu->macromesh.nbelems; ++ie) {
+      simu->fd[ie].wn_handle = w_handle[ie];
+      simu->fd[ie].dtwn_handle = dtw_handle[ie];
+      simu->fd[ie].res_handle = simu->res_handle[ie];
+    }
   }
+  else {
+    assert(dtw_handle == NULL);
+  }
+
 
 
   for(int ifa = 0; ifa < simu->macromesh.nbfaces; ifa++){
@@ -1124,7 +1194,7 @@ void DGMass_SPU(field* f)
     codelet.cpu_funcs[0] = DGMass_C;
     codelet.nbuffers = 2;
     codelet.modes[0] = STARPU_R;
-    codelet.modes[1] = STARPU_W;
+    codelet.modes[1] = STARPU_RW;
     codelet.name="DGMass";
   }
 
@@ -1195,8 +1265,69 @@ void DGMass_C(void *buffers[], void *cl_arg)
     real det = dot_product(dtau[0], codtau[0]);
     for(int iv = 0; iv < m; iv++) {
       int imem = Varindex(deg, raf, m, ipg, iv);
-      dtw[imem] = res[imem]/(wpg * det);
+      dtw[imem] = res[imem]/(wpg * det) - dtw[imem] / 2 ;
     }
   }
   
+}
+
+void RK2_SPU(Simulation *simu, real tmax){
+
+  simu->dt = Get_Dt_RK(simu);
+  real dt = simu->dt;
+
+  simu->tmax = tmax;
+
+  simu->itermax_rk = tmax / simu->dt;
+  int size_diags;
+  int freq = (1 >= simu->itermax_rk / 10)? 1 : simu->itermax_rk / 10;
+  int iter = 0;
+  
+  // FIXME: remove
+  //size_diags = simu->nb_diags * simu->itermax_rk;
+  simu->iter_time_rk = iter;
+
+   /* if(simu->nb_diags != 0) { */
+   /*   simu->Diagnostics = malloc(size_diags * sizeof(real)); */
+   /* } */
+
+  assert(starpu_use);
+  RegisterSimulation_SPU(simu);
+
+
+  while(simu->tnow < tmax) {
+    if (iter % freq == 0)
+      printf("t=%f iter=%d/%d dt=%f\n", simu->tnow, iter, simu->itermax_rk, dt);
+
+    for(int ie = 0; ie < simu->macromesh.nbelems; ++ie) {
+      ZeroBuffer_SPU(simu->fd[ie].dtwn_handle);
+    }
+    
+    DtFields_SPU(simu, NULL, NULL);
+
+    for(int ie = 0; ie < simu->macromesh.nbelems; ++ie) {
+      AddBuffer_SPU(simu->dt / 2, simu->fd[ie].dtwn_handle, simu->fd[ie].wn_handle);
+    }
+    
+    simu->tnow += 0.5 * dt;
+
+    DtFields_SPU(simu, NULL, NULL);
+
+    for(int ie = 0; ie < simu->macromesh.nbelems; ++ie) {
+      AddBuffer_SPU(simu->dt, simu->fd[ie].dtwn_handle, simu->fd[ie].wn_handle);
+    }
+
+    simu->tnow += 0.5 * dt;
+
+    /* if(simu->update_after_rk != NULL){  */
+    /*   simu->update_after_rk(simu, simu->w);  */
+    /* } */
+    
+    iter++;
+    simu->iter_time_rk = iter;
+  }
+
+  UnregisterSimulation_SPU(simu);
+
+  printf("t=%f iter=%d/%d dt=%f\n", simu->tnow, iter, simu->itermax_rk, dt);
 }

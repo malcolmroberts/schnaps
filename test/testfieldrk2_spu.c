@@ -4,7 +4,7 @@
 #include <assert.h>
 #include <math.h>
 
-int TestfieldRK2(void){
+int TestfieldRK2_SPU(void){
   bool test = true;
 
   // 2D meshes:
@@ -86,6 +86,7 @@ int TestfieldRK2(void){
 #endif
   
   CheckMacroMesh(&mesh, deg, raf);
+  starpu_use = true;
   Simulation simu;
   EmptySimulation(&simu);
 
@@ -94,7 +95,7 @@ int TestfieldRK2(void){
   real tmax = 0.25;
   simu.cfl=0.2;
   simu.vmax=1;
-  RK2(&simu,tmax);
+  RK2_SPU(&simu,tmax);
  
   PlotFields(0, false, &simu, NULL, "dgvisu.msh");
   PlotFields(0, true , &simu, "error", "dgerror.msh");
@@ -114,10 +115,10 @@ int TestfieldRK2(void){
 }
 
 int main(void) {
-  int resu = TestfieldRK2();
+  int resu = TestfieldRK2_SPU();
   if(resu) 
-    printf("field RK2 test OK !\n");
+    printf("starpu field RK2 test OK !\n");
   else 
-    printf("field RK2 test failed !\n");
+    printf("starpu field RK2 test failed !\n");
   return !resu;
 } 
