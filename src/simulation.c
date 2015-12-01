@@ -593,7 +593,6 @@ void DtFields(Simulation *simu, real *w, real *dtw) {
     DGVolume(simu->fd + ie, w + ie * fsize, dtw + ie * fsize);
     DGSource(simu->fd + ie, w + ie * fsize, dtw + ie * fsize);
     DGMass(simu->fd + ie, w + ie * fsize, dtw + ie * fsize);
-
   }
 
   if(simu->post_dtfields != NULL) {
@@ -662,10 +661,12 @@ void RK2(Simulation *simu, real tmax){
 
   simu->tmax = tmax;
 
-  simu->itermax_rk = tmax / simu->dt;
+  simu->itermax_rk = tmax / simu->dt + 1;
   int size_diags;
   int freq = (1 >= simu->itermax_rk / 10)? 1 : simu->itermax_rk / 10;
   int iter = 0;
+
+  simu->tnow = 0;
 
   real *wnp1 = calloc(simu->wsize, sizeof(real));
   assert(wnp1);
@@ -683,7 +684,14 @@ void RK2(Simulation *simu, real tmax){
       printf("t=%f iter=%d/%d dt=%f\n", simu->tnow, iter, simu->itermax_rk, dt);
 
     DtFields(simu, simu->w, simu->dtw);
+    /* for(int i=0 ; i<simu->wsize; i++) */
+    /*   printf("i=%d dtw=%f\n",i,simu->dtw[i]); */
+    /* assert(1==2); */
     RK_out(wnp1, simu->w, simu->dtw, 0.5 * dt, simu->wsize);
+    /* RK_out(simu->w, simu->w, simu->dtw, 0.5 * dt, simu->wsize); */
+    /* for(int i=0 ; i<simu->wsize; i++) */
+    /*   printf("i=%d w=%f\n",i,simu->w[i]); */
+    /* assert(1==2); */
 
     simu->tnow += 0.5 * dt;
 
@@ -692,12 +700,13 @@ void RK2(Simulation *simu, real tmax){
 
     simu->tnow += 0.5 * dt;
 
-    if(simu->update_after_rk != NULL){ 
-      simu->update_after_rk(simu, simu->w); 
+    if(simu->update_after_rk != NULL){
+      simu->update_after_rk(simu, simu->w);
     }
     
     iter++;
     simu->iter_time_rk = iter;
+
   }
   printf("t=%f iter=%d/%d dt=%f\n", simu->tnow, iter, simu->itermax_rk, dt);
   free(wnp1);

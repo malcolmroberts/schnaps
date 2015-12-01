@@ -98,7 +98,7 @@ void AddBuffer_C(void *buffers[], void *cl_args) {
   real* win = (real *)STARPU_VECTOR_GET_PTR(win_v);
 
   struct starpu_vector_interface *wout_v =
-    (struct starpu_vector_interface *) buffers[0];
+    (struct starpu_vector_interface *) buffers[1];
   real* wout = (real *)STARPU_VECTOR_GET_PTR(wout_v);
 
   int n = STARPU_VECTOR_GET_NX(buffers[0]);
@@ -192,7 +192,7 @@ void InterfaceExplicitFlux_bis(Interface* inter, int side){
 	  // The basis functions is also the gauss point index
 	  int imemL = f->varindex(f->deg, f->raf,f->model.m, ipgL, iv);
 	  f->dtwn[imemL] -= flux[iv]  ;
-	  printf("imem=%d res=%f\n",imemL,f->dtwn[imemL]);
+	  //printf("imem=%d res=%f\n",imemL,f->dtwn[imemL]);
 	}
       } else { // The point is on the boundary.
 
@@ -203,8 +203,8 @@ void InterfaceExplicitFlux_bis(Interface* inter, int side){
 
 	//printf("tnow=%f wL=%f\n",f->tnow,wL[0]);
 	f->model.BoundaryFlux(xpg, f->tnow, wL, vnds, flux);
-	printf("wL=%f, ipgf=%d\n",wL[0], ipgf);
-	printf("flux=%f, ipgf=%d\n",flux[0], ipgf);
+	//printf("wL=%f, ipgf=%d\n",wL[0], ipgf);
+	//printf("flux=%f, ipgf=%d\n",flux[0], ipgf);
 	int ipgL = index[ipgf];
 	/* printf("xpg=%f %f %f vnds=%f %f %f ipgL=%d \n", */
 	/*        xpg[0], xpg[1], xpg[2], */
@@ -533,7 +533,7 @@ void DGMacroCellInterface_C(void* buffer[], void* cl_args){
       // The basis functions is also the gauss point index
       int imemL = f->varindex(f->deg, f->raf,f->model.m, ipgL, iv);
       rhs[imemL] -= flux[iv] ; ///* f->dt;
-      printf("imem=%d res=%f dt=%f\n",imemL,rhs[imemL],f->dt);
+      //printf("imem=%d res=%f dt=%f\n",imemL,rhs[imemL],f->dt);
       /* real* xpg = inter->xpg + 3 * ipgf; */
       /* real* vnds = inter->vnds + 3 * ipgf; */
       /* printf("interface flux=%f xpg=%f %f vnds=%f %f\n", */
@@ -661,8 +661,8 @@ void DGMacroCellBoundaryFlux_C(void* buffer[], void* cl_args){
 
     //printf("tnow=%f wL=%f\n",f->tnow,wL[0]);
     f->model.BoundaryFlux(xpg, f->tnow, wL, vnds, flux);
-    printf("wL=%f, ipgf=%d\n",wL[0], ipgf);
-    printf("flux=%f, ipgf=%d\n",flux[0], ipgf);
+    //printf("wL=%f, ipgf=%d\n",wL[0], ipgf);
+    //printf("flux=%f, ipgf=%d\n",flux[0], ipgf);
     int ipgL = index[ipgf];
     /* printf("xpg=%f %f %f vnds=%f %f %f ipgL=%d \n", */
     /*        xpg[0], xpg[1], xpg[2], */
@@ -1278,7 +1278,7 @@ void RK2_SPU(Simulation *simu, real tmax){
 
   simu->tmax = tmax;
 
-  simu->itermax_rk = tmax / simu->dt;
+  simu->itermax_rk = tmax / simu->dt + 1;
   int size_diags;
   int freq = (1 >= simu->itermax_rk / 10)? 1 : simu->itermax_rk / 10;
   int iter = 0;
@@ -1290,6 +1290,8 @@ void RK2_SPU(Simulation *simu, real tmax){
    /* if(simu->nb_diags != 0) { */
    /*   simu->Diagnostics = malloc(size_diags * sizeof(real)); */
    /* } */
+
+  simu->tnow = 0;
 
   assert(starpu_use);
   RegisterSimulation_SPU(simu);
@@ -1304,11 +1306,21 @@ void RK2_SPU(Simulation *simu, real tmax){
     }
     
     DtFields_SPU(simu, NULL, NULL);
+    //UnregisterSimulation_SPU(simu);
+    /* for(int i=0 ; i<simu->wsize; i++) */
+    /*   printf("i=%d dtw=%f\n",i,simu->dtw[i]); */
+    /* assert(1==2); */
 
     for(int ie = 0; ie < simu->macromesh.nbelems; ++ie) {
-      AddBuffer_SPU(simu->dt / 2, simu->fd[ie].dtwn_handle, simu->fd[ie].wn_handle);
+      real alpha = dt/2;
+      AddBuffer_SPU(alpha, simu->fd[ie].dtwn_handle, simu->fd[ie].wn_handle);
     }
     
+    //UnregisterSimulation_SPU(simu);
+    /* for(int i=0 ; i<simu->wsize; i++) */
+    /*   //printf("i=%d w=%f\n",i,simu->w[i]+dt/2*simu->dtw[i]); */
+    /*   printf("i=%d w=%f\n",i,simu->w[i]); */
+    /* assert(1==2); */
     simu->tnow += 0.5 * dt;
 
     DtFields_SPU(simu, NULL, NULL);

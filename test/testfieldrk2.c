@@ -92,6 +92,7 @@ int TestfieldRK2(void){
   InitSimulation(&simu, &mesh, deg, raf, &model);
  
   real tmax = 0.25;
+  //tmax = 0.019;
   simu.cfl=0.2;
   simu.vmax=1;
   RK2(&simu,tmax);

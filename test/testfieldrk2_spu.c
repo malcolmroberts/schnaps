@@ -41,6 +41,7 @@ int TestfieldRK2_SPU(void){
   int raf[]={3, 3, 1};
 
   assert(mesh.is2d);
+  assert(1==2);
 #else
   // 3D version
   model.m = 1;
@@ -93,6 +94,7 @@ int TestfieldRK2_SPU(void){
   InitSimulation(&simu, &mesh, deg, raf, &model);
  
   real tmax = 0.25;
+  //tmax = 0.019;
   simu.cfl=0.2;
   simu.vmax=1;
   RK2_SPU(&simu,tmax);
