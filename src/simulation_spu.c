@@ -210,10 +210,10 @@ void DtFields_bis(Simulation *simu,
 #pragma omp parallel for schedule(dynamic, 1)
 #endif
   for(int ie = 0; ie < simu->macromesh.nbelems; ++ie) {
-    /* DGSubCellInterface(simu->fd + ie, w + ie * fsize, dtw + ie * fsize); */
-    /* DGVolume(simu->fd + ie, w + ie * fsize, dtw + ie * fsize); */
-    /* DGSource(simu->fd + ie, w + ie * fsize, dtw + ie * fsize); */
-    /* DGMass(simu->fd + ie, w + ie * fsize, dtw + ie * fsize); */
+    DGSubCellInterface(simu->fd + ie, w + ie * fsize, dtw + ie * fsize);
+    DGVolume(simu->fd + ie, w + ie * fsize, dtw + ie * fsize);
+    DGSource(simu->fd + ie, w + ie * fsize, dtw + ie * fsize);
+    DGMass(simu->fd + ie, w + ie * fsize, dtw + ie * fsize);
 
   }
 
@@ -272,10 +272,10 @@ void DtFields_SPU(Simulation *simu,
   
   
   for(int ie = 0; ie < simu->macromesh.nbelems; ++ie) {
-    /* DGSubCellInterface_SPU(simu->fd + ie); */
-    /* DGVolume_SPU(simu->fd + ie); */
-    /* DGSource_SPU(simu->fd + ie); */
-    /* DGMass_SPU(simu->fd + ie); */
+    DGSubCellInterface_SPU(simu->fd + ie);
+    DGVolume_SPU(simu->fd + ie);
+    DGSource_SPU(simu->fd + ie);
+    DGMass_SPU(simu->fd + ie);
 
   }
 
@@ -607,14 +607,596 @@ void DGMacroCellBoundaryFlux_C(void* buffer[], void* cl_args){
 
   }
 
+
+}
+
+void DGSubCellInterface_C(void *buffers[], void *cl_arg);
+
+void DGSubCellInterface_SPU(field *f){
+
+  static bool is_init = false;
+  static struct starpu_codelet codelet;
+  struct starpu_task *task;
+
+  if (!is_init){
+    printf("init codelet DGSubCellInterface...\n");
+    is_init = true;
+    starpu_codelet_init(&codelet);
+    codelet.cpu_funcs[0] = DGSubCellInterface_C;
+    codelet.nbuffers = 2;
+    codelet.modes[0] = STARPU_R;
+    codelet.modes[1] = STARPU_RW;
+    codelet.name="DGSubCellInterface";
+  }
+
+  void* arg_buffer;
+  size_t arg_buffer_size;
+   
+  starpu_codelet_pack_args(&arg_buffer, &arg_buffer_size,
+			   STARPU_VALUE, &f->model.m, sizeof(int),
+			   STARPU_VALUE, f->deg, 3 * sizeof(int),
+			   STARPU_VALUE, f->raf, 3 * sizeof(int),
+			   STARPU_VALUE, f->physnode, 60 * sizeof(real),
+			   STARPU_VALUE, &f->varindex, sizeof(varindexptr),
+			   STARPU_VALUE, &f->model.NumFlux, sizeof(fluxptr),
+			   0);
+
+
+  task = starpu_task_create();
+  task->cl = &codelet;
+  task->cl_arg = arg_buffer;
+  task->cl_arg_size = arg_buffer_size;
+  task->handles[0] = f->wn_handle;
+  task->handles[1] = f->res_handle;
+    
+
+  int ret = starpu_task_submit(task);
+  STARPU_CHECK_RETURN_VALUE(ret, "starpu_task_submit");
   
+}
+
+
+// Compute inter-subcell fluxes
+void DGSubCellInterface_C(void *buffers[], void *cl_arg) 
+{
+
+  int m;
+  int deg[3];
+  int raf[3];
+  real physnode[20][3];
+  varindexptr Varindex;
+  fluxptr NumFlux;
   
+  starpu_codelet_unpack_args(cl_arg,
+			     &m, deg, raf, physnode, &Varindex, &NumFlux);
+
+  free(cl_arg);
+
+  int npg[3] = {deg[0] + 1,
+		      deg[1] + 1,
+		      deg[2] + 1};
+
+  struct starpu_vector_interface *w_v =
+    (struct starpu_vector_interface *) buffers[0]; 
+  real* w = (real *)STARPU_VECTOR_GET_PTR(w_v);  
+
+  struct starpu_vector_interface *res_v =
+    (struct starpu_vector_interface *) buffers[1]; 
+  real* res = (real *)STARPU_VECTOR_GET_PTR(res_v);  
+
+
+  
+  // Loop on the subcells
+  for(int icL0 = 0; icL0 < raf[0]; icL0++) {
+    for(int icL1 = 0; icL1 < raf[1]; icL1++) {
+      for(int icL2 = 0; icL2 < raf[2]; icL2++) {
+
+	int icL[3] = {icL0, icL1, icL2};
+
+	// Get the left subcell id
+	int ncL = icL[0] + raf[0] * (icL[1] + raf[1] * icL[2]);
+	// First glop index in the subcell
+	int offsetL = npg[0] * npg[1] * npg[2] * ncL;
+
+	// Sweeping subcell faces in the three directions
+	for(int dim0 = 0; dim0 < 3; dim0++) { 
+	    
+	  // Compute the subface flux only if we do not touch the
+	  // subcell boundary along the current direction dim0
+	  if (icL[dim0] != raf[dim0] - 1) {
+	    int icR[3] = {icL[0], icL[1], icL[2]};
+	    // The right cell index corresponds to an increment in
+	    // the dim0 direction
+	    icR[dim0]++;
+	    int ncR = icR[0] + raf[0] * (icR[1] + raf[1] * icR[2]);
+	    int offsetR = npg[0] * npg[1] * npg[2] * ncR;
+
+	    // FIXME: write only write to L-values (and do both
+	    // faces) to parallelise better.
+
+	    const int altdim1[3] = {1, 0, 0};
+	    const int altdim2[3] = {2, 2, 1};
+
+	    // now loop on the left glops of the subface
+	    //int dim1 = (dim0 + 1)%3, dim2 = (dim0+2)%3;
+	    int dim1 = altdim1[dim0];
+	    int dim2 = altdim2[dim0];
+	    int iL[3];
+	    iL[dim0] = deg[dim0];
+	    for(iL[dim2] = 0; iL[dim2] < npg[dim2]; iL[dim2]++) {
+	      for(iL[dim1] = 0; iL[dim1] < npg[dim1]; iL[dim1]++) {
+		// find the right and left glops volume indices
+
+		int iR[3] = {iL[0], iL[1], iL[2]};
+		iR[dim0] = 0;
+
+		int ipgL = offsetL 
+		  + iL[0] + (deg[0] + 1) * (iL[1] + (deg[1] + 1) * iL[2]);
+		int ipgR = offsetR 
+		  + iR[0] + (deg[0] + 1) * (iR[1] + (deg[1] + 1) * iR[2]);
+		//printf("ipgL=%d ipgR=%d\n", ipgL, ipgR);
+
+		// Compute the normal vector for integrating on the
+		// face
+		real vnds[3];
+		{
+		  real xref[3], wpg3;
+		  ref_pg_vol(deg, raf, ipgL, xref, &wpg3, NULL);
+		  // mapping from the ref glop to the physical glop
+		  real dtau[3][3], codtau[3][3];
+		  Ref2Phy(physnode,
+			  xref,
+			  NULL, // dphiref
+			  -1,  // ifa
+			  NULL, // xphy
+			  dtau,
+			  codtau,
+			  NULL, // dphi
+			  NULL);  // vnds
+		  // we compute ourself the normal vector because we
+		  // have to take into account the subcell surface
+
+		  real h1h2 = 1. / raf[dim1] / raf[dim2];
+		  vnds[0] = codtau[0][dim0] * h1h2;
+		  vnds[1] = codtau[1][dim0] * h1h2;
+		  vnds[2] = codtau[2][dim0] * h1h2;
+		}
+
+		// numerical flux from the left and right state and
+		// normal vector
+		real wL[m], wR[m], flux[m];
+		for(int iv = 0; iv < m; iv++) {
+		  // TO DO change the Varindex signature
+		  int imemL = Varindex(deg, raf, m, ipgL, iv); 
+		  int imemR = Varindex(deg, raf, m, ipgR, iv);
+		  // end TO DO
+		  wL[iv] = w[imemL];
+		  wR[iv] = w[imemR];
+		}
+		NumFlux(wL, wR, vnds, flux);
+
+		// subcell ref surface glop weight
+		real wpg
+		  = wglop(deg[dim1], iL[dim1])
+		  * wglop(deg[dim2], iL[dim2]);
+
+		/* printf("vnds %f %f %f flux %f wpg %f\n", */
+		/* 	 vnds[0], vnds[1], vnds[2], */
+		/* 	 flux[0], wpg); */
+
+		// finally distribute the flux on the two sides
+		for(int iv = 0; iv < m; iv++) {
+		  // TO DO change the Varindex signature
+		  int imemL = Varindex(deg, raf, m, ipgL, iv);
+		  int imemR = Varindex(deg, raf, m, ipgR, iv);
+		  // end TO DO
+		  res[imemL] -= flux[iv] * wpg;
+		  res[imemR] += flux[iv] * wpg;
+		}
+
+	      }  // face yhat loop
+	    } // face xhat loop
+	  } // endif internal face
+	} // dim loop
+      } // subcell icl2 loop
+    } // subcell icl1 loop
+  } // subcell icl0 loop
+
+}
+
+// Compute the Discontinuous Galerkin volume terms, fast version
+void DGVolume_C(void *buffers[], void *cl_arg);
+
+void DGVolume_SPU(field* f)
+{
+  static bool is_init = false;
+  static struct starpu_codelet codelet;
+  struct starpu_task *task;
+
+  if (!is_init){
+    printf("init codelet DGVolume...\n");
+    is_init = true;
+    starpu_codelet_init(&codelet);
+    codelet.cpu_funcs[0] = DGVolume_C;
+    codelet.nbuffers = 2;
+    codelet.modes[0] = STARPU_R;
+    codelet.modes[1] = STARPU_RW;
+    codelet.name="DGVolume";
+  }
+
+  void* arg_buffer;
+  size_t arg_buffer_size;
+   
+  starpu_codelet_pack_args(&arg_buffer, &arg_buffer_size,
+			   STARPU_VALUE, &f->model.m, sizeof(int),
+			   STARPU_VALUE, f->deg, 3 * sizeof(int),
+			   STARPU_VALUE, f->raf, 3 * sizeof(int),
+			   STARPU_VALUE, f->physnode, 60 * sizeof(real),
+			   STARPU_VALUE, &f->varindex, sizeof(varindexptr),
+			   STARPU_VALUE, &f->model.NumFlux, sizeof(fluxptr),
+			   0);
+
+
+  task = starpu_task_create();
+  task->cl = &codelet;
+  task->cl_arg = arg_buffer;
+  task->cl_arg_size = arg_buffer_size;
+  task->handles[0] = f->wn_handle;
+  task->handles[1] = f->res_handle;
+    
+
+  int ret = starpu_task_submit(task);
+  STARPU_CHECK_RETURN_VALUE(ret, "starpu_task_submit");
 
 
 
-  
+
 
 }
 
 
 
+
+
+
+void DGVolume_C(void *buffers[], void *cl_arg) 
+{
+
+
+  int m;
+  int deg[3];
+  int raf[3];
+  real physnode[20][3];
+  varindexptr Varindex;
+  fluxptr NumFlux;
+  
+  starpu_codelet_unpack_args(cl_arg,
+			     &m, deg, raf, physnode, &Varindex, &NumFlux);
+
+  free(cl_arg);
+
+  int npg[3] = {deg[0] + 1,
+		      deg[1] + 1,
+		      deg[2] + 1};
+
+  const unsigned int sc_npg = npg[0] * npg[1] * npg[2];
+
+  struct starpu_vector_interface *w_v =
+    (struct starpu_vector_interface *) buffers[0]; 
+  real* w = (real *)STARPU_VECTOR_GET_PTR(w_v);  
+
+  struct starpu_vector_interface *res_v =
+    (struct starpu_vector_interface *) buffers[1]; 
+  real* res = (real *)STARPU_VECTOR_GET_PTR(res_v);  
+
+  // Loop on the subcells
+  for(int icL0 = 0; icL0 < raf[0]; icL0++) {
+    for(int icL1 = 0; icL1 < raf[1]; icL1++) {
+      for(int icL2 = 0; icL2 < raf[2]; icL2++) {
+
+	int icL[3] = {icL0, icL1, icL2};
+	// get the L subcell id
+	int ncL = icL[0] + raf[0] * (icL[1] + raf[1] * icL[2]);
+	// first glop index in the subcell
+	int offsetL = npg[0] * npg[1] * npg[2] * ncL;
+
+	// compute all of the xref for the subcell
+	real *xref0 = malloc(sc_npg * sizeof(real));
+	real *xref1 = malloc(sc_npg * sizeof(real));
+	real *xref2 = malloc(sc_npg * sizeof(real));
+	real *omega = malloc(sc_npg * sizeof(real));
+	int *imems = malloc(m * sc_npg * sizeof(int));
+	int pos = 0;
+	for(unsigned int p = 0; p < sc_npg; ++p) {
+	  real xref[3];
+	  real tomega;
+
+	  ref_pg_vol(deg, raf, offsetL + p, xref, &tomega, NULL);
+	  xref0[p] = xref[0];
+	  xref1[p] = xref[1];
+	  xref2[p] = xref[2];
+	  omega[p] = tomega;
+
+	  for(int im = 0; im < m; ++im) {
+	    imems[pos++] = Varindex(deg,raf,m, offsetL + p, im);
+	  }
+	}
+
+	// loop in the "cross" in the three directions
+	for(int dim0 = 0; dim0 < 3; dim0++) {
+	  //for(int dim0 = 0; dim0 < 2; dim0++) {  // TODO : return to 3d !
+	  // point p at which we compute the flux
+
+	  for(int p0 = 0; p0 < npg[0]; p0++) {
+	    for(int p1 = 0; p1 < npg[1]; p1++) {
+	      for(int p2 = 0; p2 < npg[2]; p2++) {
+		real wL[m], flux[m];
+		int p[3] = {p0, p1, p2};
+		int ipgL = offsetL + p[0] + npg[0] * (p[1] + npg[1] * p[2]);
+		for(int iv = 0; iv < m; iv++) {
+		  ///int imemL = varindex(f_interp_param, ie, ipgL, iv);
+		  wL[iv] = w[imems[m * (ipgL - offsetL) + iv]];
+		}
+		int q[3] = {p[0], p[1], p[2]};
+		// loop on the direction dim0 on the "cross"
+		for(int iq = 0; iq < npg[dim0]; iq++) {
+		  q[dim0] = (p[dim0] + iq) % npg[dim0];
+		  real dphiref[3] = {0, 0, 0};
+		  // compute grad phi_q at glop p
+		  dphiref[dim0] = dlag(deg[dim0], q[dim0], p[dim0]) 
+		    * raf[dim0];
+
+		  real xrefL[3] = {xref0[ipgL - offsetL],
+				   xref1[ipgL - offsetL],
+				   xref2[ipgL - offsetL]};
+		  real wpgL = omega[ipgL - offsetL];
+		  /* real xrefL[3], wpgL; */
+		  /* ref_pg_vol(interp_param+1,ipgL,xrefL, &wpgL, NULL); */
+
+		  // mapping from the ref glop to the physical glop
+		  real dtau[3][3], codtau[3][3], dphiL[3];
+		  Ref2Phy(physnode,
+			  xrefL,
+			  dphiref, // dphiref
+			  -1,  // ifa
+			  NULL, // xphy
+			  dtau,
+			  codtau,
+			  dphiL, // dphi
+			  NULL);  // vnds
+
+		  NumFlux(wL, wL, dphiL, flux);
+
+		  int ipgR = offsetL+q[0]+npg[0]*(q[1]+npg[1]*q[2]);
+		  for(int iv = 0; iv < m; iv++) {
+		    int imemR = Varindex(deg,raf,m, ipgR, iv);
+		    int temp = m * (ipgR - offsetL) + iv;  
+		    assert(imemR == imems[temp]);
+		    res[imems[temp]] += flux[iv] * wpgL;
+		  }
+		} // iq
+	      } // p2
+	    } // p1
+	  } // p0
+
+	} // dim loop
+
+	free(omega);
+	free(xref0);
+	free(xref1);
+	free(xref2);
+	free(imems);
+
+      } // icl2
+    } //icl1
+  } // icl0
+  
+}
+
+// Apply the source term
+void DGSource_C(void *buffers[], void *cl_arg);
+
+void DGSource_SPU(field* f)
+{
+
+  static bool is_init = false;
+  static struct starpu_codelet codelet;
+  struct starpu_task *task;
+
+  if (!is_init){
+    printf("init codelet DGSource...\n");
+    is_init = true;
+    starpu_codelet_init(&codelet);
+    codelet.cpu_funcs[0] = DGSource_C;
+    codelet.nbuffers = 2;
+    codelet.modes[0] = STARPU_R;
+    codelet.modes[1] = STARPU_RW;
+    codelet.name="DGSource";
+  }
+
+  void* arg_buffer;
+  size_t arg_buffer_size;
+   
+  starpu_codelet_pack_args(&arg_buffer, &arg_buffer_size,
+			   STARPU_VALUE, &f->model.m, sizeof(int),
+			   STARPU_VALUE, f->deg, 3 * sizeof(int),
+			   STARPU_VALUE, f->raf, 3 * sizeof(int),
+			   STARPU_VALUE, f->physnode, 60 * sizeof(real),
+			   STARPU_VALUE, &f->varindex, sizeof(varindexptr),
+			   STARPU_VALUE, &f->model.Source, sizeof(sourceptr),
+			   STARPU_VALUE, &f->tnow, sizeof(real),
+			   0);
+
+
+  task = starpu_task_create();
+  task->cl = &codelet;
+  task->cl_arg = arg_buffer;
+  task->cl_arg_size = arg_buffer_size;
+  task->handles[0] = f->wn_handle;
+  task->handles[1] = f->res_handle;
+    
+
+  int ret = starpu_task_submit(task);
+  STARPU_CHECK_RETURN_VALUE(ret, "starpu_task_submit");
+
+
+
+
+}
+
+
+
+
+
+
+
+void DGSource_C(void *buffers[], void *cl_arg) 
+{
+
+  int m;
+  int deg[3];
+  int raf[3];
+  real physnode[20][3];
+  varindexptr Varindex;
+  sourceptr Source;
+  real tnow;
+  
+  starpu_codelet_unpack_args(cl_arg,
+			     &m, deg, raf, physnode, &Varindex, &Source, &tnow);
+
+  free(cl_arg);
+
+  if (Source == NULL) {
+    return;
+  }
+
+
+  struct starpu_vector_interface *w_v =
+    (struct starpu_vector_interface *) buffers[0]; 
+  real* w = (real *)STARPU_VECTOR_GET_PTR(w_v);  
+
+  struct starpu_vector_interface *res_v =
+    (struct starpu_vector_interface *) buffers[1]; 
+  real* res = (real *)STARPU_VECTOR_GET_PTR(res_v);  
+
+  for(int ipg = 0; ipg < NPG(deg, raf); ipg++) {
+    real dtau[3][3], codtau[3][3], xpgref[3], xphy[3], wpg;
+    ref_pg_vol(deg, raf, ipg, xpgref, &wpg, NULL);
+    Ref2Phy(physnode, // phys. nodes
+	    xpgref, // xref
+	    NULL, -1, // dpsiref, ifa
+	    xphy, dtau, // xphy, dtau
+	    codtau, NULL, NULL); // codtau, dpsi, vnds
+    real det = dot_product(dtau[0], codtau[0]);  //// temp !!!!!!!!!!!!!!!
+    real wL[m], source[m];
+    for(int iv = 0; iv < m; ++iv){
+      int imem = Varindex(deg, raf, m, ipg, iv);
+      wL[iv] = w[imem];
+    }
+      
+    Source(xphy, tnow, wL, source);
+    // printf("tnow=%f\n",tnow);
+
+    for(int iv = 0; iv < m; ++iv) {
+      int imem = Varindex(deg, raf, m, ipg, iv);
+      res[imem] += source[iv] * det * wpg;
+	
+    }
+  }
+  
+}
+
+
+// Apply division by the mass matrix
+void DGMass_C(void *buffers[], void *cl_arg);
+
+void DGMass_SPU(field* f)
+{
+
+  static bool is_init = false;
+  static struct starpu_codelet codelet;
+  struct starpu_task *task;
+
+  if (!is_init){
+    printf("init codelet DGMass...\n");
+    is_init = true;
+    starpu_codelet_init(&codelet);
+    codelet.cpu_funcs[0] = DGMass_C;
+    codelet.nbuffers = 2;
+    codelet.modes[0] = STARPU_R;
+    codelet.modes[1] = STARPU_W;
+    codelet.name="DGMass";
+  }
+
+  void* arg_buffer;
+  size_t arg_buffer_size;
+   
+  starpu_codelet_pack_args(&arg_buffer, &arg_buffer_size,
+			   STARPU_VALUE, &f->model.m, sizeof(int),
+			   STARPU_VALUE, f->deg, 3 * sizeof(int),
+			   STARPU_VALUE, f->raf, 3 * sizeof(int),
+			   STARPU_VALUE, f->physnode, 60 * sizeof(real),
+			   STARPU_VALUE, &f->varindex, sizeof(varindexptr),
+			   0);
+
+
+  task = starpu_task_create();
+  task->cl = &codelet;
+  task->cl_arg = arg_buffer;
+  task->cl_arg_size = arg_buffer_size;
+  task->handles[0] = f->res_handle;
+  task->handles[1] = f->dtwn_handle;
+    
+
+  int ret = starpu_task_submit(task);
+  STARPU_CHECK_RETURN_VALUE(ret, "starpu_task_submit");
+
+
+
+
+}
+
+
+
+
+
+
+void DGMass_C(void *buffers[], void *cl_arg) 
+{
+
+  int m;
+  int deg[3];
+  int raf[3];
+  real physnode[20][3];
+  varindexptr Varindex;
+  
+  starpu_codelet_unpack_args(cl_arg,
+			     &m, deg, raf, physnode, &Varindex);
+
+  free(cl_arg);
+
+
+  struct starpu_vector_interface *res_v =
+    (struct starpu_vector_interface *) buffers[0]; 
+  real* res = (real *)STARPU_VECTOR_GET_PTR(res_v);  
+
+  struct starpu_vector_interface *dtw_v =
+    (struct starpu_vector_interface *) buffers[1]; 
+  real* dtw = (real *)STARPU_VECTOR_GET_PTR(dtw_v);  
+
+  for(int ipg = 0; ipg < NPG(deg, raf); ipg++) {
+    real dtau[3][3], codtau[3][3], xpgref[3], xphy[3], wpg;
+    ref_pg_vol(deg, raf, ipg, xpgref, &wpg, NULL);
+    Ref2Phy(physnode, // phys. nodes
+	    xpgref, // xref
+	    NULL, -1, // dpsiref, ifa
+	    xphy, dtau, // xphy, dtau
+	    codtau, NULL, NULL); // codtau, dpsi, vnds
+    real det = dot_product(dtau[0], codtau[0]);
+    for(int iv = 0; iv < m; iv++) {
+      int imem = Varindex(deg, raf, m, ipg, iv);
+      dtw[imem] = res[imem]/(wpg * det);
+    }
+  }
+  
+}

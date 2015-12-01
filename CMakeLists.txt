@@ -283,7 +283,6 @@ add_executable(
   src/schnaps.c
   )
 target_link_libraries(schnaps ${LIBS})
-add_test(schnaps schnaps)
 
 
 # Find all of the files ending in .c in the test directory

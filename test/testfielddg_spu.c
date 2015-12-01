@@ -53,7 +53,7 @@ int TestfieldDG_SPU(void){
   UnregisterSimulation_SPU(&simu);
 
   for(int i = 0; i < simu.wsize; i++){
-    simu.dtw[i] = simu.res[i];
+    //simu.dtw[i] = simu.res[i];
     printf("i=%d dtw=%.8e\n",i,simu.dtw[i]);
   }
     
