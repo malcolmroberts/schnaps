@@ -171,11 +171,6 @@ void ExactHomogeneousDirichletContinuousMatrix(void * cs);
 //! \param[inout] cs a continuous solver
 void PenalizedDirichletContinuousMatrix(void * cs);
 
-//! \brief apply dirichlet inhomogeneous bc for continuous solver
-//! \param[inout] cs a continuous solver
-void PenalizedHomogeneousDirichletContinuousMatrix(void * cs);
-
-
 //! \brief solve a 2D Continuous solver problem (we mus speficy the function which construct, matrice, rhs and bc)
 //! \param[inout] ps a continuous solver (field + linear solver + other parameters)
 void SolveContinuous2D(void * cs);

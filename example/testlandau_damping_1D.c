@@ -62,8 +62,8 @@ int TestLandau_Damping_1D(void) {
   model.Source = VlasovP_Lagrangian_Source;
 
   
-  int deg[]={2, 0, 0};
-  int raf[]={16, 1, 1};
+  int deg[]={3, 0, 0};
+  int raf[]={30, 1, 1};
 
   CheckMacroMesh(&mesh, deg, raf);
   Simulation simu;
@@ -78,7 +78,7 @@ int TestLandau_Damping_1D(void) {
   simu.update_after_rk = PlotVlasovPoisson;
  
   
-  real tmax = 1;
+  real tmax = 40;
   RK4(&simu, tmax);
 
     // save the results and the error
@@ -104,7 +104,7 @@ void Test_Landau_Damping_ImposedData(const real x[3], const real t, real w[])
   //parameters of the case
   
   real k=0.5;
-  real eps = 0.005;
+  real eps = 0.001;
   real my_pi= 4.0*atan(1.0);
   
   for(int i=0;i<_INDEX_MAX_KIN+1;i++){
@@ -163,7 +163,7 @@ void UpdateVlasovPoisson(void *si, real *w) {
 
   ps.matrix_assembly=ContinuousOperator_Poisson1D;
   ps.rhs_assembly=RHSPoisson_Continuous;
-  ps.bc_assembly= PenalizedHomogeneousDirichletContinuousMatrix;
+  ps.bc_assembly=Periodic_BoundaryCondition_Poisson1D;
   ps.postcomputation_assembly=Computation_ElectricField_Poisson;
 
   ps.lsol.solver_type = LU;

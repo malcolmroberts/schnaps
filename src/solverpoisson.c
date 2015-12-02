@@ -179,6 +179,15 @@ void RobinBoundaryConditionAssembly(void * cs){
   }
 }
 
+void Periodic_BoundaryCondition_Poisson1D(void * cs){
+  ContinuousSolver * ps=cs;
+  
+  AddLinearSolver(&ps->lsol,0,0,1e20);
+  AddLinearSolver(&ps->lsol,ps->lsol.neq-1,ps->lsol.neq-1,1e20);
+
+  ps->lsol.rhs[0]=0;
+  ps->lsol.rhs[ps->lsol.neq-1]=0;
+}  
 
 void ContinuousOperator_Poisson1D(void * cs){
   ContinuousSolver * ps=cs;  

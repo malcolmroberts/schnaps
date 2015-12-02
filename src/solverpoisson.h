@@ -30,6 +30,10 @@ void ContinuousOperator_Poisson1D(void * cs);
 //! \param[inout] a continuous solver
 void ContinuousOperator_Poisson2D(void * cs);
 
+//! \brief init the rhs for poisson solver
+//! \param[inout] a continuous solver
+void Periodic_BoundaryCondition_Poisson1D(void * cs);
+
 //! \brief compute the boundary condition for poisson solver
 //! \param[inout] a continuous solver
 void RobinBoundaryConditionAssembly(void * cs);
