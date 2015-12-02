@@ -538,7 +538,6 @@ void DtFields(Simulation *simu, real *w, real *dtw) {
 
   if(simu->pre_dtfields != NULL) {
     simu->pre_dtfields(simu, w);
-    //assert(1==2);
   }
 
 
@@ -825,8 +824,9 @@ void RK4_final_inplace(real *w, real *l1, real *l2, real *l3,
 
 real Get_Dt_RK(Simulation *simu)
 {
+   printf("mmmm %f %f %f ",simu->cfl, simu->hmin,simu->vmax);
   return simu->cfl * simu->hmin / simu->vmax; 
-  
+ 
 }
 
 

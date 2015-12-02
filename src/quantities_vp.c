@@ -19,13 +19,13 @@ void physic_entropy_to_distribution(field* f,real w,real *tw){
   }*/
 
 
-void Computation_charge_density(Simulation *simu, real * w){
+void Computation_charge_density(Simulation *simu){
 
   field * f=&simu->fd[0];
   
     for(int ipg=0;ipg<NPG(f->deg, f-> raf);ipg++){
       int imemc=f->varindex(f->deg, f->raf, f->model.m,ipg,_INDEX_RHO);
-      w[imemc]=0;
+      simu->w[imemc]=0;
   
       for(int ielv=0;ielv<_NB_ELEM_V;ielv++){
 	// loop on the local glops
@@ -34,7 +34,7 @@ void Computation_charge_density(Simulation *simu, real * w){
 	  real vi=-_VMAX+ielv*_DV+_DV*glop(_DEG_V,iloc);
 	  int ipgv=iloc+ielv*_DEG_V;
 	  int imem=f->varindex(f->deg, f->raf, f->model.m,ipg,ipgv);
-	  w[imemc]+=omega*_DV*w[imem];
+	  simu->w[imemc]+=omega*_DV*simu->w[imem];
 	}
       }
     }
@@ -43,11 +43,9 @@ void Computation_charge_density(Simulation *simu, real * w){
 }
 
 
-real Computation_charge_average(Simulation *simu,real * w) {
-  //int param[8] = {f->model.m, _DEGX, _DEGY, _DEGZ, _RAFX, _RAFY, _RAFZ, 0};
+real Computation_charge_average(Simulation *simu) {
 
   field * f=&simu->fd[0];
-  
   real average = 0;
   real rho_imem = 0;
   real size_domain = 0;
@@ -94,16 +92,10 @@ void ComputeElectricField(field* f){
 		f->deg[2] + 1};
     
   int nbel =  nraf[0] * nraf[1] * nraf[2];
-
   int nnodes = npg[0] * npg[1] * npg[2] ;
- 
   int npgmacrocell = nnodes * nraf[0] * nraf[1] * nraf[2];
 
-
-  // loop over the subcell
   for (int ie = 0; ie < nbel; ie++){
-
-    // get the physical nodes of element ie
 
     /* int iemacro = ie / (nraf[0] * nraf[1] * nraf[2]); */
     /* int isubcell = ie % (nraf[0] * nraf[1] * nraf[2]); */
@@ -141,7 +133,7 @@ void ComputeElectricField(field* f){
   }
 }
 
-void Compute_electric_field(field* f, real * w){
+/*void Compute_electric_field(field* f, real * w){
 
     
   int nraf[3] = {f->raf[0], 
@@ -181,7 +173,7 @@ void Compute_electric_field(field* f, real * w){
       }
     }
   
-}
+    }*/
 
 
 

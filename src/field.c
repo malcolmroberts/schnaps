@@ -125,16 +125,12 @@ real min_grid_spacing(field *f)
       }
     }
     hmin = hmin < vol/surf ? hmin : vol/surf;
-    //printf("vol/surf=%f npg=%d\n",vol/surf,NPG(f->deg, f->raf));
-
-  
  
   // Now take into account the polynomial degree and the refinement
   int maxd = f->deg[0];
   maxd = maxd > f->deg[1] ? maxd : f->deg[1];
   maxd = maxd > f->deg[2] ? maxd : f->deg[2];
-
-  hmin /= ((maxd + 1) * f->raf[1]);
+  hmin /= ((maxd + 1) * f->raf[0]);
 
   return hmin;
 }
@@ -324,8 +320,7 @@ void Initfield(field *f, Model model,
   // Compute cfl parameter min_i vol_i/surf_i
   f->hmin = min_grid_spacing(f);
 
-  //printf("hmin=%f\n", f->hmin);
-
+  printf("hmin=%f\n", f->hmin);
 
   
   //printf("field init done\n");

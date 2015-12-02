@@ -12,11 +12,11 @@
 #include "quantities_vp.h"
 #include "simulation.h"
 
-void Computation_charge_density(Simulation *simu , real * w);
+void Computation_charge_density(Simulation *simu);
 
-void Compute_electric_field(field * f, real * w);
+//void Compute_electric_field(field * f, real * w);
 void ComputeElectricField(field* f);
-real Computation_charge_average(Simulation *simu,real * w);
+real Computation_charge_average(Simulation *simu);
 
 //void distribution_to_physic_entropy(field* f,real w,real *tw);
 

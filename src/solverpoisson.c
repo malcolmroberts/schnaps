@@ -11,8 +11,7 @@ void Computation_ElectricField_Poisson(void * cs){
   
   ContinuousToDiscontinuous_Copy(ps);
 
-  printf("Compute electric field...\n");
-
+  // printf("Compute electric field...\n");
   
   for(int ie = 0; ie < ps->simu->macromesh.nbelems; ie++){
     ComputeElectricField(&ps->simu->fd[ie]);
@@ -27,13 +26,8 @@ void RHSPoisson_Continuous(void * cs){
 
   real charge_average;
   charge_average=0;
+  charge_average=Computation_charge_average(ps->simu);
 
-  /*if(ps->type_bc == _Periodic_Poisson_BC){
-    charge_average=Computation_charge_average(ps->simu,ps->w);
-  }
-  else {
-    charge_average=0;
-    }*/
   
   // right hand side assembly
   for(int ino = 0; ino < ps->nb_fe_dof; ino++){

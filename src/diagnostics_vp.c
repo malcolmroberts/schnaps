@@ -123,9 +123,9 @@ void Energies(Simulation *simu, real *w, real k_energy, real e_energy, real t_en
   
   t_energy = 0.5 * (e_energy + k_energy);
   
-  /* f->Diagnostics[f->iter_time + (first_diag-1) * f->itermax] = 0.5 * k_energy; */
-  /* f->Diagnostics[f->iter_time + (first_diag) * f->itermax] = 0.5 * e_energy; */
-  /* f->Diagnostics[f->iter_time + (first_diag+1) * f->itermax] = t_energy; */
+   simu->Diagnostics[simu->iter_time_rk + (first_diag-1) * simu->itermax_rk] = 0.5 * k_energy; 
+   simu->Diagnostics[simu->iter_time_rk + (first_diag) * simu->itermax_rk] = 0.5 * e_energy; 
+   simu->Diagnostics[simu->iter_time_rk + (first_diag+1) * simu->itermax_rk] = t_energy; 
 }
 
 void Charge_total(Simulation *simu, real *w, real t_charge,int first_diag) {
@@ -157,7 +157,7 @@ void Charge_total(Simulation *simu, real *w, real t_charge,int first_diag) {
     }
   
 
-    //f->Diagnostics[f->iter_time + (first_diag-1) * f->itermax] = t_charge;
+    simu->Diagnostics[simu->iter_time_rk + (first_diag-1) * simu->itermax_rk] = t_charge;
 }
 
 
@@ -167,7 +167,8 @@ void Plot_Energies(Simulation *simu, real dt) {
   FILE *Plot;
   Plot = fopen("Diagnostics.dat","w");
 
-  for(int i = 1; i < simu->itermax_rk + 1; i++){ 
+  for(int i = 1; i < simu->itermax_rk + 1; i++){
+    simu->tnow = i*dt;
     k_energy = simu->Diagnostics[i]; 
     e_energy = simu->Diagnostics[i + simu->itermax_rk]; 
     t_energy = simu->Diagnostics[i + 2 * simu->itermax_rk]; 
