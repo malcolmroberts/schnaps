@@ -79,7 +79,7 @@ int TestLandau_Damping_1D(void) {
  
   
   real tmax = 0.1;
-  RK4(&simu, tmax);
+  RK2(&simu, tmax);
 
     // save the results and the error
   int iel = 2 * _NB_ELEM_V / 3;
