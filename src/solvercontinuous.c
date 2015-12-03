@@ -530,6 +530,7 @@ void GenericOperator_Continuous(void * cs){
       }
     }
   }
+  ps->lsol.mat_is_assembly = true;
 }
 
 

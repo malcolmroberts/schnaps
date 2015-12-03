@@ -276,6 +276,7 @@ void FactoLU(Skyline* sky){
   // Allocating and storing old matrix inside copies.
   if (!sky->copy_is_alloc) AllocateCopySkyline(sky);
   printf("LU factorization in progress...\n");
+  printf("address sky=%p\n",sky);
 
   sol_(sky->vkgs,sky->vkgd, sky->vkgi,
        vfg, sky->kld, vu, sky->neq, 

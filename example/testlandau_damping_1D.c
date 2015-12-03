@@ -78,7 +78,7 @@ int TestLandau_Damping_1D(void) {
   simu.update_after_rk = PlotVlasovPoisson;
  
   
-  real tmax = 40;
+  real tmax = 0.1;
   RK4(&simu, tmax);
 
     // save the results and the error
@@ -154,21 +154,25 @@ void UpdateVlasovPoisson(void *si, real *w) {
   real bc_r = 0;
 
   Computation_charge_density(simu);
-  ContinuousSolver ps;
+  static ContinuousSolver ps;
+  static bool is_init = false;
+
+  if (!is_init){
+    is_init = true;
+    int nb_var=1;
+    int * listvar= malloc(nb_var * sizeof(int));
+    listvar[0]=_INDEX_PHI;
+    InitContinuousSolver(&ps,simu,1,nb_var,listvar);
+    
+    ps.matrix_assembly=ContinuousOperator_Poisson1D;
+    ps.rhs_assembly=RHSPoisson_Continuous;
+    ps.bc_assembly=Periodic_BoundaryCondition_Poisson1D;
+    ps.postcomputation_assembly=Computation_ElectricField_Poisson;
+    
+    ps.lsol.solver_type = LU;
+    ps.lsol.pc_type=NONE;
+  }
   
-  int nb_var=1;
-  int * listvar= malloc(nb_var * sizeof(int));
-  listvar[0]=_INDEX_PHI;
-  InitContinuousSolver(&ps,simu,1,nb_var,listvar);
-
-  ps.matrix_assembly=ContinuousOperator_Poisson1D;
-  ps.rhs_assembly=RHSPoisson_Continuous;
-  ps.bc_assembly=Periodic_BoundaryCondition_Poisson1D;
-  ps.postcomputation_assembly=Computation_ElectricField_Poisson;
-
-  ps.lsol.solver_type = LU;
-  ps.lsol.pc_type=NONE;
-
   SolveContinuous2D(&ps);
   //freeContinuousSolver(&ps);
 }
