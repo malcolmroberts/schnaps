@@ -1,5 +1,5 @@
 #include "simulation_spu.h"
-
+#include <stdlib.h>
 
 void ZeroBuffer_C(void *buffers[], void *cl_arg);
 
@@ -1179,6 +1179,7 @@ void DGSource_C(void *buffers[], void *cl_arg)
 
 // Apply division by the mass matrix
 void DGMass_C(void *buffers[], void *cl_arg);
+void DGMass_OCL(void *buffers[], void *cl_arg);
 
 void DGMass_SPU(field* f)
 {
@@ -1186,12 +1187,24 @@ void DGMass_SPU(field* f)
   static bool is_init = false;
   static struct starpu_codelet codelet;
   struct starpu_task *task;
+  static struct starpu_opencl_program opencl_program;
 
+  printf("STARPU_MAXIMPLEMENTATIONS=%d\n",STARPU_MAXIMPLEMENTATIONS);
+  printf("STARPU_USE_OPENCL=%d\n",STARPU_USE_OPENCL);
+  
   if (!is_init){
     printf("init codelet DGMass...\n");
     is_init = true;
     starpu_codelet_init(&codelet);
     codelet.cpu_funcs[0] = DGMass_C;
+    codelet.cpu_funcs[1] = NULL;
+    printf("Coucou: %s\n",cl_buildoptions);
+    int ret = starpu_opencl_load_opencl_from_file("./schnaps.cl",
+    					      &opencl_program, cl_buildoptions);
+    STARPU_CHECK_RETURN_VALUE(ret, "starpu_opencl_load_opencl_from_file");
+    assert(1==3);
+    codelet.opencl_funcs[0] =DGMass_OCL;
+    codelet.opencl_funcs[1] = NULL;
     codelet.nbuffers = 2;
     codelet.modes[0] = STARPU_R;
     codelet.modes[1] = STARPU_RW;
@@ -1220,7 +1233,6 @@ void DGMass_SPU(field* f)
 
   int ret = starpu_task_submit(task);
   STARPU_CHECK_RETURN_VALUE(ret, "starpu_task_submit");
-
 
 
 
@@ -1270,6 +1282,48 @@ void DGMass_C(void *buffers[], void *cl_arg)
   }
   
 }
+
+void DGMass_OCL(void *buffers[], void *cl_arg) 
+{
+
+  int m;
+  int deg[3];
+  int raf[3];
+  real physnode[20][3];
+  varindexptr Varindex;
+  
+  starpu_codelet_unpack_args(cl_arg,
+			     &m, deg, raf, physnode, &Varindex);
+
+  free(cl_arg);
+
+
+  struct starpu_vector_interface *res_v =
+    (struct starpu_vector_interface *) buffers[0]; 
+  real* res = (real *)STARPU_VECTOR_GET_PTR(res_v);  
+
+  struct starpu_vector_interface *dtw_v =
+    (struct starpu_vector_interface *) buffers[1]; 
+  real* dtw = (real *)STARPU_VECTOR_GET_PTR(dtw_v);  
+
+  for(int ipg = 0; ipg < NPG(deg, raf); ipg++) {
+    real dtau[3][3], codtau[3][3], xpgref[3], xphy[3], wpg;
+    ref_pg_vol(deg, raf, ipg, xpgref, &wpg, NULL);
+    Ref2Phy(physnode, // phys. nodes
+	    xpgref, // xref
+	    NULL, -1, // dpsiref, ifa
+	    xphy, dtau, // xphy, dtau
+	    codtau, NULL, NULL); // codtau, dpsi, vnds
+    real det = dot_product(dtau[0], codtau[0]);
+    for(int iv = 0; iv < m; iv++) {
+      int imem = Varindex(deg, raf, m, ipg, iv);
+      dtw[imem] = res[imem]/(wpg * det) - dtw[imem] / 2 ;
+    }
+  }
+  
+}
+
+
 
 void RK2_SPU(Simulation *simu, real tmax){
 

@@ -198,6 +198,7 @@ void TransImposedData2d(const real *x, const real t, real *w)
 }
 #pragma end_opencl
 
+#pragma start_opencl
 void TestTransBoundaryFlux(real *x, real t, 
 			       real *wL, real* vnorm,
 			       real* flux) {
@@ -205,6 +206,7 @@ void TestTransBoundaryFlux(real *x, real t,
   TestTransImposedData(x, t, wR);
   TransNumFlux(wL, wR, vnorm, flux);
 }
+#pragma end_opencl
 
 void TestTransBoundaryFlux2d(real *x, real t, real *wL,
 				 real* vnorm, real* flux) {
@@ -225,6 +227,7 @@ void TestTransInitData2d(real *x, real *w)
   TestTransImposedData2d(x, t, w);
 }
 
+#pragma start_opencl
 void TestTransImposedData(const real *x, const real t, real *w) {
   const real sqrt_third =  sqrt(1.0/3.0);
   const real transport_v[] = {sqrt_third, sqrt_third, sqrt_third};
@@ -239,6 +242,7 @@ void TestTransImposedData(const real *x, const real t, real *w) {
   w[0] = xx * xx;
   //w[0]=0;
 }
+#pragma end_opencl
 
 void TestTransImposedData2d(const real *x, const real t, real *w) {
   const real transport_v2d[] = {sqrt(0.5), sqrt(0.5), 0};

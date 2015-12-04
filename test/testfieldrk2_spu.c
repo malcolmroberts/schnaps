@@ -26,6 +26,9 @@ int TestfieldRK2_SPU(void){
 
   Model model;
 
+  Simulation simu;
+  EmptySimulation(&simu);
+
 #if 0
   // 2D version
   model.cfl = 0.05;
@@ -36,6 +39,16 @@ int TestfieldRK2_SPU(void){
   model.InitData = TransInitData2d;
   model.ImposedData = TransImposedData2d;
   model.Source = NULL;
+
+  char buf[1000];
+  sprintf(buf, "-D _M=%d", model.m);
+  strcat(cl_buildoptions, buf);
+
+  sprintf(buf," -D NUMFLUX=%s", "TransNumFlux2d");
+  strcat(cl_buildoptions, buf);
+
+  sprintf(buf, " -D BOUNDARYFLUX=%s", "TransBoundaryFlux2d");
+  strcat(cl_buildoptions, buf);
 
   int deg[]={3, 3, 0};
   int raf[]={3, 3, 1};
@@ -50,6 +63,16 @@ int TestfieldRK2_SPU(void){
   model.InitData = TestTransInitData;
   model.ImposedData = TestTransImposedData;
   model.Source = NULL;
+
+  char buf[1000];
+  sprintf(buf, "-D _M=%d", model.m);
+  strcat(cl_buildoptions, buf);
+
+  sprintf(buf," -D NUMFLUX=%s", "TransNumFlux");
+  strcat(cl_buildoptions, buf);
+
+  sprintf(buf, " -D BOUNDARYFLUX=%s", "TestTransBoundaryFlux");
+  strcat(cl_buildoptions, buf);
 
   int deg[]={3, 3, 3};
   int raf[]={1, 1, 1};
@@ -88,8 +111,6 @@ int TestfieldRK2_SPU(void){
   
   CheckMacroMesh(&mesh, deg, raf);
   starpu_use = true;
-  Simulation simu;
-  EmptySimulation(&simu);
 
   InitSimulation(&simu, &mesh, deg, raf, &model);
  

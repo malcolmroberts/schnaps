@@ -154,8 +154,10 @@ void VecTransImposedData2d(const real* x, const real t, real *w);
 //! \param[in] wL : left state
 //! \param[in] vn : normal vector
 //! \param[out] flux : the flux
+#pragma start_opencl
 void TestTransBoundaryFlux(real* x, real t, real* wL, real* vn,
 			   real* flux);
+#pragma end_opencl
 
 //! \brief The particular flux for testing the 2d transport model
 //! \param[in] x : space position
@@ -184,7 +186,9 @@ void TestTransInitData2d(real* x, real* w);
 //! \brief The particular imposed data for the transport model
 //! \param[in] x, t : space and time position
 //! \param[out] w : imposed state at point x and time t
+#pragma start_opencl
 void TestTransImposedData(const real* x, const real t, real* w);
+#pragma end_opencl
 
 //! \brief The particular imposed data for the 2d transport model
 //! \param[in] x, t : space and time position
