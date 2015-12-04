@@ -1189,8 +1189,8 @@ void DGMass_SPU(field* f)
   struct starpu_task *task;
   static struct starpu_opencl_program opencl_program;
 
-  printf("STARPU_MAXIMPLEMENTATIONS=%d\n",STARPU_MAXIMPLEMENTATIONS);
-  printf("STARPU_USE_OPENCL=%d\n",STARPU_USE_OPENCL);
+  /* printf("STARPU_MAXIMPLEMENTATIONS=%d\n",STARPU_MAXIMPLEMENTATIONS); */
+  /* printf("STARPU_USE_OPENCL=%d\n",STARPU_USE_OPENCL); */
   
   if (!is_init){
     printf("init codelet DGMass...\n");
@@ -1198,13 +1198,13 @@ void DGMass_SPU(field* f)
     starpu_codelet_init(&codelet);
     codelet.cpu_funcs[0] = DGMass_C;
     codelet.cpu_funcs[1] = NULL;
-    printf("Coucou: %s\n",cl_buildoptions);
-    int ret = starpu_opencl_load_opencl_from_file("./schnaps.cl",
-    					      &opencl_program, cl_buildoptions);
-    STARPU_CHECK_RETURN_VALUE(ret, "starpu_opencl_load_opencl_from_file");
-    assert(1==3);
-    codelet.opencl_funcs[0] =DGMass_OCL;
-    codelet.opencl_funcs[1] = NULL;
+    /* printf("Coucou: %s\n",cl_buildoptions); */
+    /* int ret = starpu_opencl_load_opencl_from_file("./schnaps.cl", */
+    /* 					      &opencl_program, cl_buildoptions); */
+    /* STARPU_CHECK_RETURN_VALUE(ret, "starpu_opencl_load_opencl_from_file"); */
+    /* assert(1==3); */
+    /* codelet.opencl_funcs[0] =DGMass_OCL; */
+    /* codelet.opencl_funcs[1] = NULL; */
     codelet.nbuffers = 2;
     codelet.modes[0] = STARPU_R;
     codelet.modes[1] = STARPU_RW;
