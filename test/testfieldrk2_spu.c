@@ -41,7 +41,7 @@ int TestfieldRK2_SPU(void){
   model.Source = NULL;
 
   char buf[1000];
-  sprintf(buf, "-D _M=%d", model.m);
+  sprintf(buf, "-D real=double -D _M=%d", model.m);
   strcat(cl_buildoptions, buf);
 
   sprintf(buf," -D NUMFLUX=%s", "TransNumFlux2d");
@@ -65,7 +65,7 @@ int TestfieldRK2_SPU(void){
   model.Source = NULL;
 
   char buf[1000];
-  sprintf(buf, "-D _M=%d", model.m);
+  sprintf(buf, "-D real=double -D _M=%d", model.m);
   strcat(cl_buildoptions, buf);
 
   sprintf(buf," -D NUMFLUX=%s", "TransNumFlux");

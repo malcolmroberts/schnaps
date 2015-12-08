@@ -1023,6 +1023,76 @@ void DGMass(__constant int *param,       // 0: interp param
   }
 }
 
+// Apply division by the mass matrix on one macrocell
+__kernel
+void DGMass(__constant int *param,       // 0: interp param
+            int ie,                      // 1: macrocel index
+            __constant real *physnodes, // 2: macrocell nodes
+            __global real *dtwn)       // 3: time derivative
+{
+  __constant real *physnode = physnodes + 60 * ie;
+  
+  int ipg = get_global_id(0);
+  int m = param[0];
+  int npg[3] = {param[1] + 1, param[2] + 1, param[3] + 1};
+  int deg[3] = {param[1] , param[2] , param[3] };
+  int nraf[3] = {param[4], param[5], param[6]};
+
+  int woffset = ie * m * NPG(deg, nraf); 
+
+  
+  int npgie = npg[0] * npg[1] * npg[2] * nraf[0] * nraf[1] * nraf[2];
+
+  //ref_pg_vol(param+1, ipg,xpgref,&wpg,NULL);
+  int ix = ipg % npg[0];
+  ipg /= npg[0];
+  int iy = ipg % npg[1];
+  ipg /= npg[1];
+  int iz = ipg % npg[2];
+  ipg /= npg[2];
+
+  int ncx = ipg % nraf[0];
+  ipg /= nraf[0];
+  int ncy = ipg % nraf[1];
+  ipg /= nraf[1];
+  int ncz = ipg;
+
+  real hx = 1.0 / (real) nraf[0];
+  real hy = 1.0 / (real) nraf[1];
+  real hz = 1.0 / (real) nraf[2];
+
+  int offset[3] = {gauss_lob_offset[param[1]] + ix,
+		   gauss_lob_offset[param[2]] + iy,
+		   gauss_lob_offset[param[3]] + iz};
+
+  real x = hx * (ncx + gauss_lob_point[offset[0]]);
+  real y = hy * (ncy + gauss_lob_point[offset[1]]);
+  real z = hz * (ncz + gauss_lob_point[offset[2]]);
+
+  real wpg = hx * hy * hz
+    * gauss_lob_weight[offset[0]]
+    * gauss_lob_weight[offset[1]]
+    * gauss_lob_weight[offset[2]];
+
+  real dtau[3][3];
+  get_dtau(x, y, z, physnode, dtau); // 1296 mults
+
+  real det
+    = dtau[0][0] * dtau[1][1] * dtau[2][2]
+    - dtau[0][0] * dtau[1][2] * dtau[2][1]
+    - dtau[1][0] * dtau[0][1] * dtau[2][2]
+    + dtau[1][0] * dtau[0][2] * dtau[2][1]
+    + dtau[2][0] * dtau[0][1] * dtau[1][2]
+    - dtau[2][0] * dtau[0][2] * dtau[1][1];
+
+  real overwpgget = 1.0 / (wpg * det);
+  int imem0 = m * (get_global_id(0) + npgie * ie);
+  __global real *dtwn0 = dtwn + imem0;
+  for(int iv = 0; iv < m; iv++) {
+    //int imem = iv + imem0;
+    dtwn0[iv] *= overwpgget; // m mults, m reads
+  }
+}
 // Compute the Discontinuous Galerkin inter-macrocells boundary terms.
 // Second implementation with a loop on the faces.
 __kernel
