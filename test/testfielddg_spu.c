@@ -19,6 +19,7 @@ int TestfieldDG_SPU(void){
   model.ImposedData = TestTransImposedData;
   model.Source = NULL;
 
+
   int deg[]={4, 4, 4};
   int raf[]={1, 1, 1};
   /* int deg[]={1, 1, 1}; */
@@ -42,6 +43,18 @@ int TestfieldDG_SPU(void){
   Simulation simu;
   EmptySimulation(&simu);
   
+  char buf[1000];
+#ifdef _DOUBLE_PRECISION
+  sprintf(buf, "-D real=double -D _M=%d", model.m);
+#else
+  sprintf(buf, "-D real=float -D _M=%d", model.m);
+#endif
+  strcat(cl_buildoptions, buf);
+  sprintf(buf," -D NUMFLUX=%s", "TransNumFlux");
+  strcat(cl_buildoptions, buf);
+  sprintf(buf, " -D BOUNDARYFLUX=%s", "TestTransBoundaryFlux");
+  strcat(cl_buildoptions, buf);
+
   InitSimulation(&simu, &mesh, deg, raf, &model);
 
   simu.tnow = 0;

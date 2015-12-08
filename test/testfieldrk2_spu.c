@@ -41,7 +41,11 @@ int TestfieldRK2_SPU(void){
   model.Source = NULL;
 
   char buf[1000];
+#ifdef _DOUBLE_PRECISION
   sprintf(buf, "-D real=double -D _M=%d", model.m);
+#else
+  sprintf(buf, "-D real=float -D _M=%d", model.m);
+#endif
   strcat(cl_buildoptions, buf);
 
   sprintf(buf," -D NUMFLUX=%s", "TransNumFlux2d");
@@ -65,7 +69,11 @@ int TestfieldRK2_SPU(void){
   model.Source = NULL;
 
   char buf[1000];
+#ifdef _DOUBLE_PRECISION
   sprintf(buf, "-D real=double -D _M=%d", model.m);
+#else
+  sprintf(buf, "-D real=float -D _M=%d", model.m);
+#endif
   strcat(cl_buildoptions, buf);
 
   sprintf(buf," -D NUMFLUX=%s", "TransNumFlux");

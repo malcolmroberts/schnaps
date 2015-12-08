@@ -1201,7 +1201,6 @@ void DGMass_SPU(field* f)
     starpu_codelet_init(&codelet);
     /* codelet.cpu_funcs[0] = DGMass_C; */
     /* codelet.cpu_funcs[1] = NULL; */
-    printf("Coucou: %s\n",cl_buildoptions);
     int ret = starpu_opencl_load_opencl_from_file("./schnaps.cl",
     					      &opencl_program, cl_buildoptions);
     STARPU_CHECK_RETURN_VALUE(ret, "starpu_opencl_load_opencl_from_file");
