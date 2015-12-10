@@ -544,11 +544,12 @@ void GraphThetaTimeSchemeSubCell_SPU(Simulation *simu, real tmax, real dt){
 	int side = simu->macromesh.edge_dir[eid];
 	int interid = simu->macromesh.edge2face[eid];
 	Interface *inter = simu->interface + interid;
+	printf("iefrom=%d ieto=%d side=%d\n",iefrom,ieto,side);
 	if (iefrom >= simu->macromesh.nbelems) {
-	  InterfaceBoundaryFlux_SPU(inter);
-	}
+	  //InterfaceBoundaryFlux_SPU(inter);
+	  InterfaceExplicitFlux(inter, 0);	}
 	else {
-	  InterfaceExplicitFlux_SPU(inter, 1 - side);
+	  InterfaceExplicitFlux(inter, 1 - side);
 	}
       }
 
@@ -564,8 +565,9 @@ void GraphThetaTimeSchemeSubCell_SPU(Simulation *simu, real tmax, real dt){
 	int side = simu->macromesh.edge_dir[eid];
 	int interid = simu->macromesh.edge2face[eid];
 	Interface *inter = simu->interface + interid;
+	printf("extract iefrom=%d ieto=%d side=%d\n",iefrom,ieto,side);
 	if (ieto < simu->macromesh.nbelems) {
-	  ExtractInterface_SPU(inter, side);
+	  ExtractInterface(inter, side);
 	}
       }     
     }
@@ -580,17 +582,17 @@ void GraphThetaTimeSchemeSubCell_SPU(Simulation *simu, real tmax, real dt){
     }
     iter++;
     if (iter == 1) {
-      starpu_task_wait_for_all();
+      //starpu_task_wait_for_all();
       printf("Elapsed time first iter=%f\n", (double) (time(NULL) -start));
     }
   }
 
-  starpu_task_wait_for_all();
+  //starpu_task_wait_for_all();
   //starpu_task_wait_for_all();
   printf("Elapsed time=%f\n", (double) (time(NULL) -start));
 
 
-  starpu_shutdown();
+  //starpu_shutdown();
 
 
   

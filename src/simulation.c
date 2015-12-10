@@ -82,6 +82,9 @@ void InitInterfaces(Simulation *simu){
      inter[ifa].fL = fL;
      inter[ifa].fR = fR;
 
+     inter[ifa].ieL = ieL;
+     inter[ifa].ieR = ieR;
+
      inter[ifa].locfaL = locfaL;
      inter[ifa].locfaR = locfaR;
 

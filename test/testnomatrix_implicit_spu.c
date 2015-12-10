@@ -84,19 +84,20 @@ int Test_NoMatrix_Implicit_SPU(void) {
   /* model.BoundaryFlux = Wave_Upwind_BoundaryFlux; */
   /* model.Source = TestSteady_Wave_Source; */
 
-  int deg[]={2, 2, 0};
-  int raf[]={3, 3, 1};
+  int deg[]={1, 1, 0};
+  int raf[]={2, 2, 1};
   
   CheckMacroMesh(&mesh, deg, raf);
   BuildMacroMeshGraph(&mesh, TestSteady_Transport_v2, deg, raf);
 
-  starpu_use = true;
+  starpu_use = false;
   
   Simulation simu;
   EmptySimulation(&simu);
 
   InitSimulation(&simu, &mesh, deg, raf, &model);
-  //DisplaySimulation(&simu);
+  PrintMacroMesh(&mesh);
+  DisplaySimulation(&simu);
 
   field* fd = simu.fd;
   real tmax = .1;
@@ -119,7 +120,7 @@ int Test_NoMatrix_Implicit_SPU(void) {
   // export STARPU_SCHED=dmda
   real dd = L2error(&simu);
   printf("erreur local implicit L2=%.12e\n", dd);
-  //PlotFields(0, false, &simu, NULL, "dgvisu.msh");
+  PlotFields(0, false, &simu, NULL, "dgvisu.msh");
   // pour gmsh sur mac: export PYTHONDIR=/usr/local/Cellar/gmsh/2.10.1/libexec
 
   test = test && (dd < 600 * _VERY_SMALL);

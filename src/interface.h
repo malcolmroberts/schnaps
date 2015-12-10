@@ -12,6 +12,13 @@ typedef struct Interface{
   //! \brief Right field
   field *fR;
 
+  //! \brief left macrocell index
+  int ieL;
+
+  //! \brief right macrocell index
+  int ieR;
+
+
   //! \brief local interface index in Left field 
   int locfaL;
 

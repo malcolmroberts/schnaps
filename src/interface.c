@@ -186,11 +186,13 @@ void ExtractInterface(Interface* inter, int side){
   field *fd;
   int locfa,npgf;
   real *wf;
+  int mod_ie;
   int* vol_index;
 
   if (side == 0) {
     fd = inter->fL;
     locfa = inter->locfaL;
+    mod_ie = inter->ieL;
     npgf = inter->npgL;
     wf = inter->wL;
     vol_index = inter->vol_indexL;
@@ -199,6 +201,7 @@ void ExtractInterface(Interface* inter, int side){
   if (side == 1) {
     fd = inter->fR;
     locfa = inter->locfaR;
+    mod_ie = inter->ieR;
     npgf = inter->npgR;
     wf = inter->wR;
     vol_index = inter->vol_indexR;
@@ -213,6 +216,7 @@ void ExtractInterface(Interface* inter, int side){
 	int imem = fd->varindex(fd->deg, fd->raf, fd->model.m,
 				ipgv, iv);
 	int imemf = VarindexFace(npgf, fd->model.m, ipgf, iv);
+	printf("extract to=%d \n",mod_ie);
 	wf[imemf] = fd->wn[imem];
       }
     }
@@ -548,6 +552,7 @@ void InterfaceExplicitFlux(Interface* inter, int side){
   field *f;
   field *fext;
   int locfa;
+  int mod_ie;
   int *index_ext;
   int *index;
 
@@ -557,6 +562,7 @@ void InterfaceExplicitFlux(Interface* inter, int side){
     f = inter->fL;
     fext = inter->fR;
     locfa = inter->locfaL;
+    mod_ie = inter->ieL;
     index_ext = inter->vol_indexR;
     index = inter->vol_indexL;
   }
@@ -564,6 +570,7 @@ void InterfaceExplicitFlux(Interface* inter, int side){
     f = inter->fR;
     fext = inter->fL;
     locfa = inter->locfaR;
+    mod_ie = inter->ieR;
     index_ext = inter->vol_indexL;
     index = inter->vol_indexR;
   }
@@ -573,6 +580,12 @@ void InterfaceExplicitFlux(Interface* inter, int side){
 
 
   if (f != NULL){
+    real* res;
+    if (f->solver != NULL){
+      res = f->solver->rhs;
+    } else {
+      res = f->res;
+    }
   
     const unsigned int m = f->model.m;
 
@@ -606,6 +619,8 @@ void InterfaceExplicitFlux(Interface* inter, int side){
 
 	//printf("sign=%d ipgL=%d ipgR=%d vndsloc=%f %f\n",sign,ipgL,ipgR,vndsloc[0],vndsloc[1]);
 
+	//assert(f != NULL);
+	
 	f->model.NumFlux(wL, wR, vndsloc, flux);
 	//printf("flux=%f %f\n",flux[0],flux[0]);
 
@@ -614,8 +629,8 @@ void InterfaceExplicitFlux(Interface* inter, int side){
 	  int ipgL = index[ipgf];
 	  // The basis functions is also the gauss point index
 	  int imemL = f->varindex(f->deg, f->raf,f->model.m, ipgL, iv);
-	  f->solver->rhs[imemL] -= flux[iv] * f->dt;
-	  printf("imem=%d res=%f\n",imemL,f->solver->rhs[imemL]);
+	  res[imemL] -= flux[iv] * f->dt;
+	  printf("imem=%d res=%f\n",imemL,res[imemL]);
 	  
 	  /* real* xpg = inter->xpg + 3 * ipgf; */
 	  /* real* vnds = inter->vnds + 3 * ipgf; */
@@ -632,14 +647,14 @@ void InterfaceExplicitFlux(Interface* inter, int side){
 	//printf("tnow=%f wL=%f\n",f->tnow,wL[0]);
 	f->model.BoundaryFlux(xpg, f->tnow, wL, vnds, flux);
 	int ipgL = index[ipgf];
-	/* printf("xpg=%f %f %f vnds=%f %f %f ipgL=%d \n", */
-	/*        xpg[0], xpg[1], xpg[2], */
-	/*        vnds[0], vnds[1],vnds[2], ipgL); */
+	printf("xpg=%f %f %f vnds=%f %f %f ipgL=%d &rhs=%p\n",
+	       xpg[0], xpg[1], xpg[2],
+	       vnds[0], vnds[1],vnds[2], ipgL,res);
 	for(int iv = 0; iv < m; iv++) {
 	  int ipgL = index[ipgf];
 	  // The basis functions is also the gauss point index
 	  int imemL = f->varindex(f->deg, f->raf,f->model.m, ipgL, iv);
-	  f->solver->rhs[imemL] -= flux[iv] * sign * f->dt;
+	  res[imemL] -= flux[iv] * sign * f->dt;
 	  /* printf("boundary flux=%f xpg=%f %f vnds=%f %f\n", */
 	  /* 	 flux[0],xpg[0],xpg[1],vnds[0],vnds[1]); */
 	}
