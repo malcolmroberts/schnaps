@@ -39,7 +39,7 @@ int Testrealpc(void) {
 
   bool test = true;
   real dd;
-  int test1_ok=1,test2_ok=1,test3_ok=0;
+  int test1_ok=1,test2_ok=0,test3_ok=0;
 
 #ifdef PARALUTION 
   paralution_begin();
@@ -88,18 +88,18 @@ int Testrealpc(void) {
 
     real theta=0.5;
     simu.theta=theta;
-    simu.dt=10;
+    simu.dt=0.001/4;
     simu.vmax=_SPEED_WAVE;
-    real tmax=5*simu.dt;
+    real tmax=0.001;//*simu.dt;
     int itermax=tmax/simu.dt;
     simu.itermax_rk=itermax;
     int size = cs.nb_fe_dof;
     real *resCG = calloc(size, sizeof(real));
     real *wCG = calloc(size, sizeof(real));
     
-    csSolve.lsol.solver_type=GMRES;
+    csSolve.lsol.solver_type=LU;//GMRES;
     csSolve.lsol.tol=1.e-8;
-    csSolve.lsol.pc_type=PHY_BASED_U2;
+    csSolve.lsol.pc_type=NONE;//PHY_BASED_U2;
     csSolve.lsol.iter_max=2000;
     csSolve.lsol.restart_gmres=10;
     csSolve.lsol.is_CG=true;

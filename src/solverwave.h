@@ -34,6 +34,14 @@ void BoundaryConditionFriedrichsAssembly(void * cs);
 //! \param[in] w a vector of unknowns
 //! \param[in] vnorm a vector of normal
 //! \param[inout] flux a vector of flux
+void Wave_BC_pressure_null(void * cs, real * xpg, real * w, real *vnorm, real * flux);
+
+//! \brief pointer on the function which compute the BC flux 
+//! \param[in] cs a continuous solver
+//! \param[in] xpg a point of the mesh
+//! \param[in] w a vector of unknowns
+//! \param[in] vnorm a vector of normal
+//! \param[inout] flux a vector of flux
 void Wave_BC_pressure_imposed(void * cs, real * xpg, real * w, real *vnorm, real * flux);
 
 //! \brief pointer on the function which compute the BC flux 

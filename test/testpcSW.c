@@ -74,7 +74,7 @@ int TestpcSW(void) {
 
   bool test = true;
   real dd;
-  int test1_ok=1,test2_ok=0;
+  int test1_ok=1,test2_ok=1;
 
 #ifdef PARALUTION
   paralution_begin();
@@ -103,7 +103,7 @@ int TestpcSW(void) {
     model.Source = ShallowWater_SteadyState_U_SourceTerm;
 
     int deg[]={4, 4, 0};
-    int raf[]={12, 12, 1};
+    int raf[]={8, 8, 1};
 
     assert(mesh.is2d);
     CheckMacroMesh(&mesh, deg, raf);
@@ -124,12 +124,12 @@ int TestpcSW(void) {
     //simu.dt=0.002/8;
     simu.vmax=1;//_SPEED_WAVE;
     simu.cfl = 0.025;
-    simu.dt = 0.0000001/2;//Get_Dt_RK(&simu)/16;
-    real tmax=0.0000001;//1*simu.dt;//0.002;
+    simu.dt = 0.001/4;//Get_Dt_RK(&simu)/16;
+    real tmax=0.001;//1*simu.dt;//0.002;
     int itermax=tmax/simu.dt;
     simu.itermax_rk=itermax;
 
-    csSolve.lsol.solver_type=LU;
+    csSolve.lsol.solver_type=GMRES;
     csSolve.lsol.tol=1.e-14;
     csSolve.lsol.pc_type=JACOBI;//PHY_BASED_U2;
     csSolve.lsol.iter_max=2000;
@@ -139,7 +139,7 @@ int TestpcSW(void) {
     csSolve.bc_flux=Wave_BC_normalvelocity_null;
     csSolve.bc_assembly=BoundaryConditionFriedrichsAssembly;
     csSolve.rhs_assembly=Source_Assembly;
-    csSolve.type_bc=2;
+    csSolve.type_bc=1;
     
     int size1varDG = csSolve.nb_dg_nodes;
     int size1varCG = csSolve.nb_fe_nodes;
@@ -214,7 +214,7 @@ int TestpcSW(void) {
     model2.Source = ShallowWater_SteadyState_P_SourceTerm;
 
     int deg2[]={4, 4, 0};
-    int raf2[]={12, 12, 1};
+    int raf2[]={16, 16, 1};
 
     assert(mesh.is2d);
     CheckMacroMesh(&mesh, deg2, raf2);
@@ -235,19 +235,19 @@ int TestpcSW(void) {
     //simu2.dt=0.002/8;
     simu2.vmax=1;//_SPEED_WAVE;
     simu2.cfl = 0.025;
-    simu2.dt = 0.0000001/2;//Get_Dt_RK(&simu2)/16;
-    real tmax=0.0000001;//1*simu2.dt;//0.002;
+    simu2.dt = 0.01;//Get_Dt_RK(&simu2)/16;
+    real tmax=0.01;//4*simu2.dt;//0.002;
     int itermax=tmax/simu2.dt;
     simu2.itermax_rk=itermax;
 
-    csSolve2.lsol.solver_type=LU;
+    csSolve2.lsol.solver_type=LU;//GMRES;
     csSolve2.lsol.tol=1.e-14;
     csSolve2.lsol.pc_type=JACOBI;//PHY_BASED_U2;
     csSolve2.lsol.iter_max=2000;
     csSolve2.lsol.restart_gmres=20;
     csSolve2.lsol.is_CG=true;
 
-    csSolve2.bc_flux=Wave_BC_pressure_imposed;
+    csSolve2.bc_flux=Wave_BC_pressure_null;
     csSolve2.bc_assembly=BoundaryConditionFriedrichsAssembly;
     csSolve2.rhs_assembly=Source_Assembly;
     csSolve2.type_bc=2;
@@ -283,6 +283,7 @@ int TestpcSW(void) {
       csSolve2.rhs_assembly(&csSolve2);
       csSolve2.bc_assembly(&csSolve2);
       Advanced_SolveLinearSolver(&csSolve2.lsol,&simu2);
+
       for (int i=0; i<sizeCG; i++){
         wCG[i] += csSolve2.lsol.sol[i];
       }
@@ -403,12 +404,26 @@ void ShallowWater_SteadyState_P_SourceTerm(const real *x, const real t, const re
   real wexact[6];
   real u01=2.0,u02=2.0; 
 
-  S_h1=1.0/sqrt(2.0*g*(1.0+(x[0]-x[0]*x[0])*(x[1]-x[1]*x[1])));
-  S_h2=u01*(1-2.0*x[0])*(x[1]-x[1]*x[1])+u02*(1-2.0*x[1])*(x[0]-x[0]*x[0]);
-  
-  source[0]= S_h1*S_h2;
-  source[1]= (1-2.0*x[0])*(x[1]-x[1]*x[1])+u01*source[0];
-  source[2]= (1-2.0*x[1])*(x[0]-x[0]*x[0])+u02*source[0];
+  real h  = sqrt(2.0/g*(1.0+(x[0]-x[0]*x[0])*(x[1]-x[1]*x[1])));
+  real hx = 0.5*(1.0-2.0*x[0])*(x[1]-x[1]*x[1])*sqrt(2.0/(g*(1.0+(x[0]-x[0]*x[0])*(x[1]-x[1]*x[1])))); 
+  real hy = 0.5*(1.0-2.0*x[1])*(x[0]-x[0]*x[0])*sqrt(2.0/(g*(1.0+(x[0]-x[0]*x[0])*(x[1]-x[1]*x[1])))); 
+  real u  = u01;
+  real ux = 0.0;
+  real uy = 0.0;
+  real v  = u02;
+  real vx = 0.0;
+  real vy = 0.0;
+
+  source[0]= h*(ux+vy) + (hx*u+hy*v);
+  source[1]= h*(u*ux+v*uy) + g*h*hx;
+  source[2]= h*(u*vx+v*vy) + g*h*hy;
+
+  //S_h1=1.0/sqrt(2.0*g*(1.0+(x[0]-x[0]*x[0])*(x[1]-x[1]*x[1])));
+  //S_h2=u01*(1-2.0*x[0])*(x[1]-x[1]*x[1])+u02*(1-2.0*x[1])*(x[0]-x[0]*x[0]);
+  //
+  //source[0]= S_h1*S_h2;
+  //source[1]= (1-2.0*x[0])*(x[1]-x[1]*x[1]);//+u01*source[0];
+  //source[2]= (1-2.0*x[1])*(x[0]-x[0]*x[0]);//+u02*source[0];
   source[3]= 0.0;
   source[4]= 0.0;
   source[5]= 0.0;

@@ -150,6 +150,7 @@ void Assembly_SW(Simulation* simu, void* solver, real* w, real theta, real dt){
         rhsloc[iloc*ps->nb_phy_vars+1] += - basisPhi_i[0] * dt * h * ( u*ux + v*uy + g*hx ) * wpg * det;
         rhsloc[iloc*ps->nb_phy_vars+2] += - basisPhi_i[0] * dt * h * ( u*vx + v*vy + g*hy ) * wpg * det;
 
+        //printf("iloc=%d, h=%.12e\n",iloc,h);
         // Building Jacobian of the problem
         real Jac[9][4][4] = {{{1+dt*theta*(ux+uy),dt*theta*u,dt*theta*v,0},
                              {0,0,0,0},
@@ -456,7 +457,7 @@ void Wave_BC_normalvelocity_null(void * cs, real * xpg, real * w, real *vnorm, r
   real M[3][3];
   real BC[3][3];
   real lambda=0;
-  real mu=1.e14;
+  real mu=1.e20;
   real p0=0,u0_1=0,u0_2=0;
 
   real h=ps->FluxMatrix[0][1]/ps->simu->vmax;
@@ -494,13 +495,47 @@ void Wave_BC_normalvelocity_null(void * cs, real * xpg, real * w, real *vnorm, r
 }
 
 
+void Wave_BC_pressure_null(void * cs, real * xpg, real * w, real *vnorm, real * flux){
+
+  ContinuousSolver * ps=cs;
+  real M[3][3];
+  real BC[3][3];
+  real lambda=+1e14;
+  real mu=0;
+  real p0=0,u0_1=0,u0_2=0;
+  real x,y;
+  x=xpg[0];
+  y=xpg[1];
+
+  real Win[ps->simu->fd[0].model.m];
+  
+  ps->simu->fd[0].model.ImposedData(xpg,ps->simu->dt,Win);
+
+  real h=ps->FluxMatrix[0][1]/ps->simu->vmax;
+
+
+  M[0][0]=lambda;
+  M[0][1]=-mu*vnorm[0];
+  M[0][2]=-mu*vnorm[1];
+  M[1][0]=0;
+  M[1][1]=0;
+  M[1][2]=0;
+  M[2][0]=0;
+  M[2][1]=0;
+  M[2][2]=0;
+
+  flux[0]=M[0][0]*w[0]+M[0][1]*w[1]+M[0][2]*w[2] - M[0][0]*p0+M[0][1]*u0_1+M[0][2]*u0_2;
+  flux[1]=0.0;
+  flux[2]=0.0;
+}
+
 
 void Wave_BC_pressure_imposed(void * cs, real * xpg, real * w, real *vnorm, real * flux){
 
   ContinuousSolver * ps=cs;
   real M[3][3];
   real BC[3][3];
-  real lambda=-10000000;
+  real lambda=-1e7;
   real mu=0;
   real p0=0,u0_1=0,u0_2=0;
   real x,y;
@@ -541,6 +576,9 @@ void Wave_BC_pressure_imposed(void * cs, real * xpg, real * w, real *vnorm, real
   flux[1]=(BC[1][0]*w[0]+BC[1][1]*w[1]+BC[1][2]*w[2])-h*(M[1][0]*p0+M[1][1]*u0_1+M[1][2]*u0_2);
   flux[2]=(BC[2][0]*w[0]+BC[2][1]*w[1]+BC[2][2]*w[2])-h*(M[2][0]*p0+M[2][1]*u0_1+M[2][2]*u0_2);
 
+  //flux[0]=M[0][0]*w[0]+M[0][1]*w[1]+M[0][2]*w[2] - M[0][0]*p0+M[0][1]*u0_1+M[0][2]*u0_2;
+  //flux[1]=0.0;
+  //flux[2]=0.0;
 }
 
 
