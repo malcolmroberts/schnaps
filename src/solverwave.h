@@ -9,7 +9,16 @@
 #include "advanced_linear_solver.h"
 #include "solvercontinuous.h"
 
-//! \brief compute the local operator fo the wave weak form
+void Assembly_SW(Simulation* simu, void* solver, real* w, real theta, real dt);
+
+//! \brief compute the local operator for the SW weak form
+//! \param[inout] cs: a ContinuousSolver object
+//! \param[in] w: stripped down (to nb_phy_vars of cs) CG version of simu->w.
+//! \param[in] theta: a coeffcient
+//! \param[in] dt: a time step
+void SW_test(ContinuousSolver* cs, real* w, real theta, real dt);
+
+//! \brief compute the local operator for the wave weak form
 //! \param[inout] cs: a ContinuousSolver object
 //! \param[in] theta: a coeffcient
 //! \param[in] dt: a time step

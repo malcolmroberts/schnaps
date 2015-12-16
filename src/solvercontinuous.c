@@ -4,7 +4,6 @@
 #include "linear_solver.h"
 #include "macromesh.h"
 
-
 int CompareFatNode(const void* a,const void* b){
 
   FatNode* fna = (FatNode*) a;
@@ -80,6 +79,7 @@ void InitContinuousSolver(void * cs, Simulation* simu,int type_bc,int nb_phy_var
   ContinuousSolver * ps=cs;
   ps->simu = simu;
 
+  ps->reset_dt=resetDt;
   ps->type_bc=type_bc;
   ps->nb_phy_vars=nb_phy_vars;
   ps->list_of_var = calloc(nb_phy_vars,sizeof(int));
@@ -562,7 +562,6 @@ void extract2CGVectors(ContinuousSolver* L1Solver,ContinuousSolver* L2Solver, re
     cc+=L1Solver->nb_phy_vars+L2Solver->nb_phy_vars;
   }
 }
-
 
 
 void freeContinuousSolver(ContinuousSolver* cs){

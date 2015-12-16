@@ -76,16 +76,18 @@ typedef struct PB_PC{
 // \brief Takes a vector in Discontinuous Galerkin, and returns the 
 // same vector projected on the Continuous Galerkin discrete space.
 // \param[in] cs: ContinuousSolver object.
+// \param[in] nbVarIn: Number of variable of rhsIn (should be >= cs->nb_phy_vars)
 // \param[in] rhsIn: Vector in DG.
 // \param[out] rhsOut: Vector in CG.
-void PiDgToCg(ContinuousSolver * cs,real * rhsIn, real * rhsOut);
+void PiDgToCg(ContinuousSolver * cs, int nbVarIn, real * rhsIn, real * rhsOut);
 
 // \brief Takes a vector in Continuous Galerkin, and returns the 
 // same vector projected on the Discontinuous Galerkin discrete space.
 // \param[in] cs: ContinuousSolver object.
+// \param[in] nbVarOut: Number of variable of rhsOut (should be >= cs->nb_phy_vars)
 // \param[in] rhsIn: Vector in CG.
 // \param[out] rhsOut: Vector in DG.
-void PiInvertCgToDg(ContinuousSolver * cs,real * rhsIn, real * rhsOut);
+void PiInvertCgToDg(ContinuousSolver * cs, int nbVarOut, real * rhsIn, real * rhsOut);
 
 
 // \brief general initialisation of the solvers for eahc sub systems of the pc

@@ -163,6 +163,10 @@ real Vector_norm2(real x[],int  N);
 //! \param[inout] lsol contains the matrices rhs and sol
 void Solver_Paralution(LinearSolver* lsol);
 
+//! \brief reset function for time-dependent problems
+//! \param[inout] lsol containes the matrices, rhs and sol
+void resetDt(LinearSolver* lsol);
+
 //! \brief solve the linear system with the GMREs of the cerfacs
 //! \param[inout] lsol contains the matrices rhs and sol
 void GMRESSolver(LinearSolver* lsol);

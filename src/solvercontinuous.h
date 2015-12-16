@@ -120,6 +120,9 @@ typedef struct ContinuousSolver{
   //! \param[inout] flux a vector of flux
   void (*bc_flux)(void * cs, real * xpg, real * w, real *vnorm, real * flux);
 
+  //! \brief Reset function for time dependent problems (matrices)
+  //! \param[inout] lsol a linear solver
+  void (*reset_dt)(LinearSolver* lsol);
   
 
 } ContinuousSolver;

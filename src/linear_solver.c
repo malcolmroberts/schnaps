@@ -251,7 +251,7 @@ void DisplayLinearSolver(LinearSolver* lsol){
 
   printf("rhs=");
   for(int i=0; i<lsol->neq; i++){
-    printf("%f ", lsol->rhs[i]);
+    printf("%.8e ", lsol->rhs[i]);
   }
 
 } 
@@ -463,7 +463,24 @@ void SolveLinearSolver(LinearSolver* lsol){
    
 }
 
+void resetDt(LinearSolver* lsol){
 
+  Skyline* sky = (Skyline*) lsol->matrix;
+
+  for (int i=0; i<lsol->neq; i++){
+    lsol->rhs[i]=0.0;
+    lsol->sol[i]=0.0;
+    for (int j=0; j<lsol->neq; j++){
+      SetLinearSolver(lsol,i,j,0.0);
+    }
+  }
+
+  lsol->rhs_is_assembly = false;
+  lsol->mat_is_assembly = false;
+  sky->is_lu = false;
+  sky->copy_is_assembly = false;
+  
+}
 
 void Solver_Paralution(LinearSolver* lsol){
   int * rows=NULL;

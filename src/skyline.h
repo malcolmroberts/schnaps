@@ -50,6 +50,9 @@ typedef struct Skyline{
   //! \brief true if the arrays of the copied matrix are allocated
   bool copy_is_alloc;
 
+  //! \brief true if the matrix has been copied
+  bool copy_is_assembly;
+
   //! \brief true if the matrix is factorized
   bool is_lu;
 
@@ -80,6 +83,10 @@ void AllocateSkyline(Skyline* sky);
 //! \brief the nonzero positions should first be "switched on"
 //! \param[inout] sky the skyline object
 void AllocateCopySkyline(Skyline* sky);
+
+//! \brief Copy skyline before LU factorization
+//! \param[inout] sky the skyline object
+void CopySkyline(Skyline* sky);
 
 //! \brief set elem (i,j) to value val
 //! \param[inout] sky the skyline object

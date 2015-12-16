@@ -117,7 +117,14 @@ void AllocateCopySkyline(Skyline* sky){
     sky->copy_vkgs[k]=0;
      if (! sky->is_sym) sky->copy_vkgi[k]=0;
   }
+  CopySkyline(sky);
 
+}
+
+void CopySkyline(Skyline* sky){
+
+  assert(sky->copy_is_alloc);
+  //assert(!sky->copy_is_assembly);
   // Copying right after allocating.
   for (int i=0; i<sky->nmem; i++){
     sky->copy_vkgs[i] = sky->vkgs[i];
@@ -126,7 +133,8 @@ void AllocateCopySkyline(Skyline* sky){
   for (int i=0; i<sky->neq; i++){
     sky->copy_vkgd[i] = sky->vkgd[i];
   }
-
+  
+  sky->copy_is_assembly = true;
 }
 
 void AddSkyline(Skyline* sky,int i,int j,real val){
@@ -275,6 +283,7 @@ void FactoLU(Skyline* sky){
   if (sky->is_sym) nsym=0;
   // Allocating and storing old matrix inside copies.
   if (!sky->copy_is_alloc) AllocateCopySkyline(sky);
+  if (sky->copy_is_alloc && !sky->copy_is_assembly) CopySkyline(sky);
   printf("LU factorization in progress...\n");
 
   sol_(sky->vkgs,sky->vkgd, sky->vkgi,
@@ -301,6 +310,8 @@ void MatVectSkyline(Skyline * sky, real * x, real * prod) {
   }
   else
   {
+    assert(sky->copy_is_alloc);
+    assert(sky->copy_is_assembly);
     mulku_(sky->copy_vkgs, sky->copy_vkgd, sky->copy_vkgi,
      sky->kld, x, sky->neq, nsym, 
        prod, sky->nmem);
@@ -337,7 +348,7 @@ void SolveSkyline(Skyline* sky,real* vfg,real* vu){
 
     if(iter>0){
       for(int i=0; i < sky->neq; i++){
-	sol_temp[i]=sol_temp2[i];
+        sol_temp[i]=sol_temp2[i];
       }
     }
        
@@ -349,8 +360,8 @@ void SolveSkyline(Skyline* sky,real* vfg,real* vu){
     }
       
     sol_(sky->vkgs,sky->vkgd, sky->vkgi,
-	 vec_temp, sky->kld, sol_temp2, sky->neq, 
-	 ifac, isol, nsym,&energ, &ier);
+         vec_temp, sky->kld, sol_temp2, sky->neq, 
+         ifac, isol, nsym,&energ, &ier);
     
     real error=0.0;
     for(int i=0; i < sky->neq; i++){

@@ -1325,7 +1325,7 @@ void reset(PB_PC* pb_pc){
 
 
 
-void PiDgToCg(ContinuousSolver * cs,real * rhsIn, real * rhsOut){
+void PiDgToCg(ContinuousSolver * cs, int nbVarIn, real * rhsIn, real * rhsOut){
   
  field* f = &cs->simu->fd[0];
 
@@ -1352,7 +1352,7 @@ void PiDgToCg(ContinuousSolver * cs,real * rhsIn, real * rhsOut){
 
  for (int i=0;i<cs->nb_dg_nodes;i++){
    for (int iv=0;iv<cs->nb_phy_vars;iv++){
-     tabvar[iv][i] = rhsIn[iv+i*cs->nb_phy_vars];
+     tabvar[iv][i] = rhsIn[cs->list_of_var[iv]+i*nbVarIn];
    }
  }
 
@@ -1411,7 +1411,7 @@ for (int ino_fe=0;ino_fe<cs->nb_fe_nodes;ino_fe++){
 
 }
 
-void PiInvertCgToDg(ContinuousSolver * cs,real * rhsIn, real * rhsOut){
+void PiInvertCgToDg(ContinuousSolver * cs, int nbVarOut, real * rhsIn, real * rhsOut){
   
  field* f = &cs->simu->fd[0];
  real ** Reconstruction;
@@ -1486,7 +1486,7 @@ for(int ie = 0; ie < cs->nbel; ie++){
 
 for (int i=0;i<cs->nb_dg_nodes;i++){
    for (int iv=0;iv<cs->nb_phy_vars;iv++){
-     rhsOut[iv+i*cs->nb_phy_vars]=tabvar_transform[iv][i];
+     rhsOut[cs->list_of_var[iv]+i*nbVarOut]=tabvar_transform[iv][i];
    }
  }
  free(coeff);

@@ -8,6 +8,8 @@
 #include "waterwave2d.h"
 #include "physBased_PC.h"
 
+#include <math.h>
+
 
 void SteadyStateOne_ImposedData(const real *x, const real t, real *w);
 void SteadyStateOne_InitData(real *x, real *w);
@@ -37,7 +39,7 @@ int Testrealpc(void) {
 
   bool test = true;
   real dd;
-  int test1_ok=1,test2_ok=0;
+  int test1_ok=1,test2_ok=1,test3_ok=0;
 
 #ifdef PARALUTION 
   paralution_begin();
@@ -114,7 +116,7 @@ int Testrealpc(void) {
     Wave_test(&csSolve,simu.theta,simu.dt);
     GenericOperator_Continuous(&csSolve);
   
-    PiDgToCg(&cs,simu.w,wCG);
+    PiDgToCg(&cs,cs.nb_phy_vars,simu.w,wCG);
 
     simu.tnow=0;
     for(int ie=0; ie < simu.macromesh.nbelems; ++ie){
@@ -156,7 +158,7 @@ int Testrealpc(void) {
       if (tstep % freq == 0)
         printf("t=%f iter=%d/%d dt=%f\n", simu.tnow, tstep, simu.itermax_rk, simu.dt);
     }
-    PiInvertCgToDg(&cs,wCG,simu.w);
+    PiInvertCgToDg(&cs,cs.nb_phy_vars,wCG,simu.w);
     dd = L2error(&simu);
 
     printf("erreur L2=%.12e\n", dd);
@@ -179,7 +181,7 @@ int Testrealpc(void) {
     model2.Source = NULL;
 
     int deg2[]={4, 4, 0};
-    int raf2[]={16, 16 , 1};
+    int raf2[]={16, 16, 1};
     assert(mesh.is2d);
     CheckMacroMesh(&mesh, deg2, raf2);
     
@@ -224,7 +226,7 @@ int Testrealpc(void) {
     Wave_test(&csSolve,simu2.theta,simu2.dt);
     GenericOperator_Continuous(&csSolve);
   
-    PiDgToCg(&cs,simu2.w,wCG);
+    PiDgToCg(&cs,cs.nb_phy_vars,simu2.w,wCG);
 
     simu2.tnow=0;
     for(int ie=0; ie < simu2.macromesh.nbelems; ++ie){
@@ -266,13 +268,141 @@ int Testrealpc(void) {
       if (tstep % freq == 0)
         printf("t=%f iter=%d/%d dt=%f\n", simu2.tnow, tstep, simu2.itermax_rk, simu2.dt);
     }
-    PiInvertCgToDg(&cs,wCG,simu2.w);
+    PiInvertCgToDg(&cs,cs.nb_phy_vars,wCG,simu2.w);
     dd = L2error(&simu2);
 
     printf("erreur L2= %.12e\n", dd);
 
     test = test && (dd<5.e-2);
     freeSimulation(&simu2);
+  }
+
+  printf("//////////////////////////////////////\n");
+  printf("TEST THREE : Constant P !\n");
+  printf("//////////////////////////////////////\n");
+  if(test3_ok==1){
+    Model model3;
+
+    model3.m = 3; 
+    model3.NumFlux=Wave_Upwind_NumFlux;
+    model3.InitData = SteadyStateTwo_InitData;
+    model3.ImposedData = SteadyStateTwo_ImposedData;
+    model3.BoundaryFlux = SteadyStateTwo_BoundaryFlux;
+    model3.Source = SteadyStateTwo_Source;
+
+    int deg[]={3, 3, 0};
+    int raf[]={2, 2, 1};
+
+    assert(mesh.is2d);
+    CheckMacroMesh(&mesh, deg, raf);
+    Simulation simu3;
+    EmptySimulation(&simu3);
+    InitSimulation(&simu3, &mesh, deg, raf, &model3);
+
+    ContinuousSolver cs;
+    ContinuousSolver csSolve;
+    int nbvar=3;
+    int *listvar=calloc(nbvar,sizeof(int));
+    listvar[0]=0;
+    listvar[1]=1;
+    listvar[2]=2;
+    InitContinuousSolver(&cs,&simu3,1,nbvar,listvar);
+    InitContinuousSolver(&csSolve,&simu3,1,nbvar,listvar);
+
+    real theta=0.5;
+    simu3.theta=theta;
+    simu3.dt=0.2;
+    simu3.vmax=_SPEED_WAVE;
+    real tmax=2*simu3.dt;
+    int itermax=tmax/simu3.dt;
+    simu3.itermax_rk=itermax;
+    int size = cs.nb_fe_dof;
+    real *resCG = calloc(size, sizeof(real));
+    real *wCG = calloc(size, sizeof(real));
+    
+    csSolve.lsol.solver_type=LU;//GMRES;
+    csSolve.lsol.tol=1.e-8;
+    csSolve.lsol.pc_type=NONE;//PHY_BASED_U2;
+    csSolve.lsol.iter_max=2000;
+    csSolve.lsol.restart_gmres=10;
+    csSolve.lsol.is_CG=true;
+
+    cs.bc_flux=Wave_BC_normalvelocity_null;//pressure_imposed;
+    cs.bc_assembly=BoundaryConditionFriedrichsAssembly;
+    csSolve.bc_flux=Wave_BC_normalvelocity_null;//pressure_imposed;
+    csSolve.bc_assembly=BoundaryConditionFriedrichsAssembly;
+    csSolve.rhs_assembly=Source_Assembly;
+    csSolve.type_bc=2;
+    
+    Wave_test(&cs,-(1.0-simu3.theta),simu3.dt);
+    GenericOperator_Continuous(&cs);
+    Wave_test(&csSolve,simu3.theta,simu3.dt);
+    printf("Pouet\n");
+    GenericOperator_Continuous(&csSolve);
+  
+    PiDgToCg(&cs,cs.nb_phy_vars,simu3.w,wCG);
+
+    simu3.tnow=0;
+    for(int ie=0; ie < simu3.macromesh.nbelems; ++ie){
+      simu3.fd[ie].tnow=simu3.tnow;
+    } 
+
+    for(int tstep=0;tstep<simu3.itermax_rk;tstep++){
+
+      //printf("Woop!\n");
+      //for (int i=0; i<size/3; i++){
+      //  printf("i=%d, h=%.8e, u=%.8e, v=%.8e\n",i, wCG[3*i], wCG[3*i+1], wCG[3*i+2]);
+      //}
+      for (int i=0; i<size; i++){
+	cs.lsol.rhs[i]=0;
+      }
+      cs.bc_assembly(&cs);
+      MatVect(&cs.lsol,wCG,resCG);
+  
+      simu3.tnow=simu3.tnow+simu3.dt;
+      for(int ie=0; ie < simu3.macromesh.nbelems; ++ie){
+        simu3.fd[ie].tnow=simu3.tnow;
+      }
+
+      for (int i=0; i<size; i++){
+	csSolve.lsol.rhs[i]=0;
+      }
+
+      csSolve.bc_assembly(&csSolve);
+      csSolve.rhs_assembly(&csSolve);
+
+
+      for (int i=0; i<size; i++){
+	csSolve.lsol.rhs[i]=csSolve.lsol.rhs[i]+resCG[i]-cs.lsol.rhs[i];
+      }
+
+      //DisplayLinearSolver(&csSolve.lsol);
+      for (int i=0; i<size; i++){
+        for (int j=0; j<size; j++){
+          real val = GetLinearSolver(&csSolve.lsol,i,j);
+          if (fabs(val)>1e-16) printf("val[%d,%d]=%.8e\n",i,j,val);
+        }
+      }
+      for (int i=0; i<size; i++){
+        if (fabs(csSolve.lsol.rhs[i])>1e-16) printf("rhs[%d]=%.8e\n",i,csSolve.lsol.rhs[i]);
+      }
+      Advanced_SolveLinearSolver(&csSolve.lsol,&simu3);
+      
+      for (int i=0; i<size; i++){
+        wCG[i] = csSolve.lsol.sol[i];
+      }
+
+      int freq = (1 >= simu3.itermax_rk / 10)? 1 : simu3.itermax_rk / 10;
+      if (tstep % freq == 0)
+        printf("t=%f iter=%d/%d dt=%f\n", simu3.tnow, tstep, simu3.itermax_rk, simu3.dt);
+    }
+    PiInvertCgToDg(&cs,cs.nb_phy_vars,wCG,simu3.w);
+    dd = L2error(&simu3);
+
+    printf("erreur L2=%.12e\n", dd);
+
+    test = test && (dd<2.e-2);
+    freeSimulation(&simu3);
   }
 
 #ifdef PARALUTION 
@@ -350,6 +480,44 @@ void Wave_Upwind_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
 }
 
 
+void SteadyStateTwo_ImposedData(const real *xy, const real t, real *w) {
+
+  real x=xy[0];
+  real y=xy[1];
+
+  w[0] = 1.0;//10.0+exp(x)+exp(2*y);//+x*x+y*y*y;//10
+  w[1] = 0.0;//x*y;
+  w[2] = 0.0;//-y*y*0.5;
+
+}
+
+
+void SteadyStateTwo_Source(const real *xy, const real t, const real *w, real *S){
+
+  real x=xy[0];
+  real y=xy[1];
+
+  S[0] = 0;
+  S[1] = 0.0;//exp(x);//2.0*x;//exp(x);
+  S[2] = 0.0;//2.0*exp(2.0*y);//3.0*y*y;//2*exp(2*y);
+
+  S[0] *= _SPEED_WAVE;
+  S[1] *= _SPEED_WAVE;
+  S[2] *= _SPEED_WAVE;
+
+}
+
+void SteadyStateTwo_InitData(real *x, real *w) {
+  real t = 0;
+  SteadyStateTwo_ImposedData(x, t, w);
+}
+
+void SteadyStateTwo_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
+    real *flux) {
+  real wR[3];
+  SteadyStateTwo_ImposedData(x , t, wR);
+  Wave_Upwind_NumFlux(wL, wR, vnorm, flux);
+}
 
 
 

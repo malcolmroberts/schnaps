@@ -119,6 +119,8 @@ int Test_Wave_Periodic(void);
 
 int Testrealpc(void);
 
+int TestpcSW(void);
+
 int Test_OrderAdaptivity(void);
 
 
