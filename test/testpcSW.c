@@ -103,7 +103,7 @@ int TestpcSW(void) {
     model.Source = ShallowWater_SteadyState_U_SourceTerm;
 
     int deg[]={4, 4, 0};
-    int raf[]={8, 8, 1};
+    int raf[]={4, 4, 1};
 
     assert(mesh.is2d);
     CheckMacroMesh(&mesh, deg, raf);
@@ -124,12 +124,12 @@ int TestpcSW(void) {
     //simu.dt=0.002/8;
     simu.vmax=1;//_SPEED_WAVE;
     simu.cfl = 0.025;
-    simu.dt = 0.001/4;//Get_Dt_RK(&simu)/16;
-    real tmax=0.001;//1*simu.dt;//0.002;
+    simu.dt = 10.0;//0.01/2;//Get_Dt_RK(&simu)/16;
+    real tmax=10.0;//0.01;//1*simu.dt;//0.002;
     int itermax=tmax/simu.dt;
     simu.itermax_rk=itermax;
 
-    csSolve.lsol.solver_type=GMRES;
+    csSolve.lsol.solver_type=LU;
     csSolve.lsol.tol=1.e-14;
     csSolve.lsol.pc_type=JACOBI;//PHY_BASED_U2;
     csSolve.lsol.iter_max=2000;
@@ -214,7 +214,7 @@ int TestpcSW(void) {
     model2.Source = ShallowWater_SteadyState_P_SourceTerm;
 
     int deg2[]={4, 4, 0};
-    int raf2[]={16, 16, 1};
+    int raf2[]={4, 4, 1};
 
     assert(mesh.is2d);
     CheckMacroMesh(&mesh, deg2, raf2);
@@ -235,7 +235,7 @@ int TestpcSW(void) {
     //simu2.dt=0.002/8;
     simu2.vmax=1;//_SPEED_WAVE;
     simu2.cfl = 0.025;
-    simu2.dt = 0.01;//Get_Dt_RK(&simu2)/16;
+    simu2.dt = 0.01/8;//Get_Dt_RK(&simu2)/16;
     real tmax=0.01;//4*simu2.dt;//0.002;
     int itermax=tmax/simu2.dt;
     simu2.itermax_rk=itermax;
@@ -321,7 +321,7 @@ int TestpcSW(void) {
 
 void TestSH_SteadyState_U_ImposedData(const real *x, const real t, real *w) {
   real alpha=1.0; 
-  real p = 2;
+  real p = 3;
   w[0] = 1.0+alpha*(pow(x[0],p)-pow(x[0],2*p))*(pow(x[1],p)-pow(x[1],2*p));
   w[1] =  (x[0]-x[0]*x[0])*(1.0-2.0*x[1]);
   w[2] = -(x[1]-x[1]*x[1])*(1.0-2.0*x[0]);
@@ -338,11 +338,11 @@ void TestSH_SteadyState_U_InitData(real *x, real *w) {
 void ShallowWater_SteadyState_U_SourceTerm(const real *x, const real t, const real *w, real *source){
   real g=_GRAVITY;
   real alpha=1.0;
-  real p = 2;
+  real p = 3;
   real S_11, S_12,S_13, S_21, S_22, S_23, S_factor;
   real wexact[6];
 
-  real h  = 1.0+alpha*(x[0]-x[0]*x[0])*(x[1]-x[1]*x[1]);
+  real h  = 1.0+alpha*(pow(x[0],p)-pow(x[0],2*p))*(pow(x[1],p)-pow(x[1],2*p));
   real hx = alpha * p * ( pow(x[1],p)-pow(x[1],2*p) ) * ( pow(x[0],p-1)-2.0*pow(x[0],2*p-1) );
   real hy = alpha * p * ( pow(x[0],p)-pow(x[0],2*p) ) * ( pow(x[1],p-1)-2.0*pow(x[1],2*p-1) );
   real u  = (x[0]-x[0]*x[0])*(1.0-2.0*x[1]);
