@@ -37,10 +37,6 @@ void Assembly_SW(Simulation* simu, void* solver, real* w, real theta, real dt){
         }
       }
     }
-    real sourceLocH[ps->nnodes];
-    for(int iloc = 0; iloc < ps->nnodes; iloc++){
-      sourceLocH[iloc] = 0.0;
-    }
     
     // Computation of the variable and its derivatives for each Gauss point
     for(int iloc = 0; iloc < ps->nnodes; iloc++){
@@ -53,14 +49,6 @@ void Assembly_SW(Simulation* simu, void* solver, real* w, real theta, real dt){
 
       int ipgmacro = iloc + isubcell * ps->nnodes;
       ref_pg_vol(f0->deg,f0->raf,ipgmacro,xref,&wpg,NULL);
-
-      real Source[f0->model.m];
-      real wS[f0->model.m];
-      for(int var =0; var < f0->model.m; var++){
-	wS[var] = f0->wn[var];
-      }
-      f0->model.Source(xref, f0->tnow, wS, Source);
-      sourceLocH[iloc] = Source[ps->list_of_var[0]];
       
       // Loop on variables
       for(int iv=0; iv<ps->nb_phy_vars; iv++){

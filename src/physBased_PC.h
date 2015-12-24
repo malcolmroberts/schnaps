@@ -66,8 +66,48 @@ typedef struct PB_PC{
 
   //! \brief provides the implementation of each operator of the corresponding system's Schur decomposition.
   //! \param[inout] pb_pc: a PB_PC object.
-  //! \param[in] offset: An integer pointing to the "j" component of the variables.
-  void (*mat_assembly)(void* pb_pc, int offset);
+  //! \param[in] cs: a ContinuousSolver object.
+  void (*mat_assembly)(void* pb_pc, ContinuousSolver* cs);
+
+  //! \brief provides the implementation of the local matrices of the corresponding system's Schur decomposition
+  //! \param[inout] pb_pc: a PB_PC object.
+  //! \param[in] var: an array of varialbes and their derivatives.
+  void (*loc_mat_assembly)(void* pb_pc, real* var);
+
+  //! \brief provides the implementation of the rhs of the corresponding system's Schur decomposition.
+  //! \param[inout] pb_pc: a PB_PC object.
+  //! \param[in] cs: a ContinuousSolver object.
+  void (*rhs_assembly)(void* pb_pc, ContinuousSolver* cs);
+
+  //! \brief provides the implementation of the local right-hand sides of the corresponding system's Schur decomposition
+  //! \param[inout] pb_pc: a PB_PC object.
+  //! \param[in] var: an array of varialbes and their derivatives.
+  //! \param[in] coeff: a weighting coefficient
+  //! \param[out] loc_rhs: a local array for right-hand side.
+  void (*loc_rhs_assembly)(void* pb_pc, real* var, real coeff, real* loc_rhs);
+
+  //! \brief provides the implementation of the boundary conditions for the rhs
+  //! \param[inout] cs: a ContinuousSolver object.
+  void (*bc_assembly)(void* cs);
+
+  //! \brief provides the implementation of the local source terms for the rhs
+  //! \param[in] cs: a ContinuousSolver object
+  //! \param[in] xpg: the real coordinates of the Gauss point
+  //! \param[in] w: the "imposedData" value at the Gauss point
+  //! \param[in] vnorm: the normal to the cell
+  //! \param[out] flux: the value of the flux on the boundary
+  void (*loc_bc_assembly)(void* cs, real* xpg, real* w, real* vnorm, real* flux);
+
+  //! \brief provides the implementation of the source terms for the rhs
+  //! \param[inout] cs: a ContinuousSolver object.
+  void (*source_assembly)(void* cs);
+
+  //! \brief provides the implementation of the preconditioner main iteration process.
+  //! \param[inout] pb_pc: a PB_PC object
+  //! \param[in] simu: a simulation object
+  //! \param[out] globalSol: the solution after one preconditioner solve
+  //! \param[in] globalRHS: Right-hand side of the system at the current time.
+  void (*solvePC)(void* pb_pc, Simulation* simu, real* globalSol, real* globalRHS);
 
   LinearSolver Schur2;
 
@@ -94,31 +134,6 @@ void PiInvertCgToDg(ContinuousSolver * cs, int nbVarOut, real * rhsIn, real * rh
 // \param[inout] pb_pc: Physics-based Preconditioner object.
 void Init_Parameters_PhyBasedPC(PB_PC* pb_pc);
 
-
-// \brief Initialize the physics-based preconditioner with schur on the velocity boundary condition (u,n)=0
-// \param[in] simu: Simulation object containing some run-related variables
-// \param[inout] pb_pc: Physics-based Preconditioner object.
-// \param[in] list_mat2assembly: Integer array. Tells which matrices shall be assembled.
-void Init_PBPC_Wave_SchurVelocity_BCVelocity(Simulation *simu, PB_PC* pb_pc, int* list_mat2assemble);
-
-// \brief Initialize the physics-based preconditioner with schur on the velocity boundary condition p=g
-// \param[in] simu: Simulation object containing some run-related variables
-// \param[inout] pb_pc: Physics-based Preconditioner object.
-// \param[in] list_mat2assembly: Integer array. Tells which matrices shall be assembled.
-void Init_PBPC_Wave_SchurVelocity_BCPressure(Simulation *simu, PB_PC* pb_pc, int* list_mat2assemble);
-
-// \brief Initialize the physics-based preconditioner with schur on the pressure with boundary condition (u,n)=0
-// \param[in] simu: Simulation object containing some run-related variables
-// \param[inout] pb_pc: Physics-based Preconditioner object.
-// \param[in] list_mat2assembly: Integer array. Tells which matrices shall be assembled.
-void Init_PBPC_Wave_SchurPressure_BCVelocity(Simulation *simu, PB_PC* pb_pc, int* list_mat2assemble);
-
-// \brief Initialize the physics-based preconditioner with schur on the pressure with boundary condition p=g
-// \param[in] simu: Simulation object containing some run-related variables
-// \param[inout] pb_pc: Physics-based Preconditioner object.
-// \param[in] list_mat2assembly: Integer array. Tells which matrices shall be assembled.
-void Init_PBPC_Wave_SchurPressure_BCPressure(Simulation *simu, PB_PC* pb_pc, int* list_mat2assemble);
-
 // \brief Initialize Generic matrices for differential opertors -> Has to be tuned to the considered problem.
 // Schur decomposition is given by the following definition of the matrices:
 // |  D   |  U1    U2 |
@@ -143,27 +158,34 @@ void InitMat_ContinuousSolver(PB_PC* pb_pc, real Dmat[4][4], real L1Mat[4][4], r
 // \param[inout] globalSol a solution of the preconditioner.
 // \param[in] globalRHS a Right-hand-side containing all explicit and source terms.
 // \param[in] simu a simulation
-void PhyBased_PC_CG(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*globalRHS);
+void PhyBased_PC_CG(void* pb_pc, Simulation *simu, real* globalSol, real*globalRHS);
 
 // \brief Physics-based CG preconditioner for CG problem with schur on pressure
 // \param[in] pb_pc a Physics-based preconditioner (Schur pressure)
 // \param[inout] globalSol a solution of the preconditioner.
 // \param[in] globalRHS a Right-hand-side containing all explicit and source terms.
 // \param[in] simu a simulation
-void PhyBased_PC_InvertSchur_CG(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*globalRHS);
+void PhyBased_PC_InvertSchur_CG(void* pb_pc, Simulation *simu, real* globalSol, real*globalRHS);
 
 
 // \brief Frees any PB_PC object
 // \param[inout] pb_pc a PhysicsBased_PreConditioner 
 void freePB_PC(PB_PC* pb_pc);
 
-// \brief Function assembling all differential operator matrices (schur of the velocity)
-// \param[in] pb_pc: The working preconditioner.
-void GenericOperator_PBPC_Velocity(PB_PC* pb_pc);
+// \brief Function assembling all differential operator matrices for non linear cases (variable dependent)
+// \param[inout] pb_pc: The working preconditioner.
+// \param[in] cs: a ContinuousSolver object containing the solution at current time.
+void GenericOperator_PBPC_NonLinear(void* pb_pc, ContinuousSolver* cs);
 
-// \brief Function assembling all differential operator matrices (schur of the pressure)
-// \param[in] pb_pc: The working preconditioner.
-void GenericOperator_PBPC_Pressure(PB_PC* pb_pc);
+// \brief Function assembling RHS of the system for non linear cases (variable dependent)
+// \param[inout] pb_pc: The working preconditioner.
+// \param[in] cs: a ContinuousSolver object containing the solution at current time.
+void GenericRHS_PBPC_NonLinear(void* pb_pc, ContinuousSolver* cs);
+
+// \brief Function assembling all differential operator matrices
+// \param[inout] pb_pc: The working preconditioner.
+// \param[in] cs: a ContinuousSolver object.
+void GenericOperator_PBPC(void* pb_pc, ContinuousSolver* cs);
 
 // \brief Function resetting all but problem matrices.
 // \param[in] pb_pc: The working preconditioner.
