@@ -238,7 +238,7 @@ void Schur_ASF(void* pb_pc, real* var){
   real vy = var[10];
   real vz = var[11];
 
-  real DMat[4][4]  = {{1,0,0,0},
+  real DMat[4][4]  = {{1.0+theta*dt*(ux+vy),theta*dt*u,theta*dt*v,0},
                       {0,0,0,0},
                       {0,0,0,0},
                       {0,0,0,0}};

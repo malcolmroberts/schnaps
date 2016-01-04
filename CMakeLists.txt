@@ -197,6 +197,10 @@ list(APPEND
   src/solvercontinuous.c
   src/physBased_PC.h
   src/physBased_PC.c
+  src/pcWave.h
+  src/pcWave.c
+  src/pcSW.h
+  src/pcSW.c
   src/solverpoisson.h
   src/solverpoisson.c
   src/solverwave.h

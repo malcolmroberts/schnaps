@@ -111,7 +111,7 @@ void Init_PBPC_Wave_SchurVelocity_BCPressure(Simulation *simu, PB_PC* pb_pc, int
       if (U2Mat != NULL) pb_pc->U2.diff_op[0].DO[i][j] = U2Mat[i][j];
     }
   }
-  // Assembling all operators' matrices
+  // Assembling every operator's matrices
   pb_pc->mat_assembly = GenericOperator_PBPC;
   pb_pc->mat_assembly(pb_pc, NULL);
 
@@ -266,11 +266,8 @@ void Init_PBPC_Wave_SchurVelocity_BCVelocity(Simulation *simu, PB_PC* pb_pc, int
   pb_pc->mat_assembly(pb_pc, NULL);
 
   // For the Schur the the condition is Neumann
-  
   pb_pc->D.bc_flux=NULL;
   pb_pc->D.bc_assembly=NULL;
-  pb_pc->Schur.bc_flux=NULL;
-  pb_pc->Schur.bc_assembly=NULL;
 
   pb_pc->Schur.bc_flux=Dirichlet_Velocity;
   pb_pc->Schur.bc_assembly=BoundaryConditionFriedrichsAssembly;

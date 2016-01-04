@@ -399,11 +399,11 @@ void GenericOperator_PBPC_NonLinear(void* pb_pc, ContinuousSolver* cs){
                 for (int i=0; i<4; i++){
                   res[i]=0;
                   for (int j=0; j<4; j++){
-                    res[i]+=basisPhi_j[j]*cs->diff_op[0].DO[i][j];
+                    res[i]+=basisPhi_j[j]*cs->diff_op[2*iv1+iv2].DO[i][j];
                   }
                 }
                 val = dot_product(basisPhi_i, res) * wpg * det  ;
-                AddLinearSolver(&cs->lsol,ino_fe*cs->nb_phy_vars,jno_fe*cs->nb_phy_vars,val);
+                AddLinearSolver(&cs->lsol,ino_fe*cs->nb_phy_vars+iv1,jno_fe*cs->nb_phy_vars+iv2,val);
               } // end for iv1
             } // end for iv2
 
@@ -414,11 +414,11 @@ void GenericOperator_PBPC_NonLinear(void* pb_pc, ContinuousSolver* cs){
                 for (int i=0; i<4; i++){
                   res[i]=0;
                   for (int j=0; j<4; j++){
-                    res[i]+=basisPhi_j[j]*cs->diff_op[0].DO[i][j];
+                    res[i]+=basisPhi_j[j]*cs->diff_op[2*iv1+iv2].DO[i][j];
                   }
                 }
                 val = dot_product(basisPhi_i, res) * wpg * det  ;
-                AddLinearSolver(&cs->lsol,ino_fe*cs->nb_phy_vars,jno_fe*cs->nb_phy_vars,val);
+                AddLinearSolver(&cs->lsol,ino_fe*cs->nb_phy_vars+iv1,jno_fe*cs->nb_phy_vars+iv2,val);
               } // end for iv1
             } // end for iv2
 
@@ -429,11 +429,11 @@ void GenericOperator_PBPC_NonLinear(void* pb_pc, ContinuousSolver* cs){
                 for (int i=0; i<4; i++){
                   res[i]=0;
                   for (int j=0; j<4; j++){
-                    res[i]+=basisPhi_j[j]*cs->diff_op[0].DO[i][j];
+                    res[i]+=basisPhi_j[j]*cs->diff_op[2*iv1+iv2].DO[i][j];
                   }
                 }
                 val = dot_product(basisPhi_i, res) * wpg * det  ;
-                AddLinearSolver(&cs->lsol,ino_fe*cs->nb_phy_vars,jno_fe*cs->nb_phy_vars,val);
+                AddLinearSolver(&cs->lsol,ino_fe*cs->nb_phy_vars+iv1,jno_fe*cs->nb_phy_vars+iv2,val);
               } // end for iv1
             } // end for iv2
 
@@ -444,11 +444,11 @@ void GenericOperator_PBPC_NonLinear(void* pb_pc, ContinuousSolver* cs){
                 for (int i=0; i<4; i++){
                   res[i]=0;
                   for (int j=0; j<4; j++){
-                    res[i]+=basisPhi_j[j]*cs->diff_op[0].DO[i][j];
+                    res[i]+=basisPhi_j[j]*cs->diff_op[2*iv1+iv2].DO[i][j];
                   }
                 }
                 val = dot_product(basisPhi_i, res) * wpg * det  ;
-                AddLinearSolver(&cs->lsol,ino_fe*cs->nb_phy_vars,jno_fe*cs->nb_phy_vars,val);
+                AddLinearSolver(&cs->lsol,ino_fe*cs->nb_phy_vars+iv1,jno_fe*cs->nb_phy_vars+iv2,val);
               } // end for iv1
             } // end for iv2
 
@@ -459,11 +459,11 @@ void GenericOperator_PBPC_NonLinear(void* pb_pc, ContinuousSolver* cs){
                 for (int i=0; i<4; i++){
                   res[i]=0;
                   for (int j=0; j<4; j++){
-                    res[i]+=basisPhi_j[j]*cs->diff_op[0].DO[i][j];
+                    res[i]+=basisPhi_j[j]*cs->diff_op[2*iv1+iv2].DO[i][j];
                   }
                 }
                 val = dot_product(basisPhi_i, res) * wpg * det  ;
-                AddLinearSolver(&cs->lsol,ino_fe*cs->nb_phy_vars,jno_fe*cs->nb_phy_vars,val);
+                AddLinearSolver(&cs->lsol,ino_fe*cs->nb_phy_vars+iv1,jno_fe*cs->nb_phy_vars+iv2,val);
               } // end for iv1
             } // end for iv2
 
@@ -574,11 +574,11 @@ void GenericOperator_PBPC(void* pb_pc, ContinuousSolver* cs){
                 for (int i=0; i<4; i++){
                   res[i]=0;
                   for (int j=0; j<4; j++){
-                    res[i]+=basisPhi_j[j]*cs->diff_op[0].DO[i][j];
+                    res[i]+=basisPhi_j[j]*cs->diff_op[2*iv1+iv2].DO[i][j];
                   }
                 }
                 val = dot_product(basisPhi_i, res) * wpg * det  ;
-                AddLinearSolver(&cs->lsol,ino_fe*cs->nb_phy_vars,jno_fe*cs->nb_phy_vars,val);
+                AddLinearSolver(&cs->lsol,ino_fe*cs->nb_phy_vars+iv1,jno_fe*cs->nb_phy_vars+iv2,val);
               } // end for iv1
             } // end for iv2
 
@@ -589,11 +589,11 @@ void GenericOperator_PBPC(void* pb_pc, ContinuousSolver* cs){
                 for (int i=0; i<4; i++){
                   res[i]=0;
                   for (int j=0; j<4; j++){
-                    res[i]+=basisPhi_j[j]*cs->diff_op[0].DO[i][j];
+                    res[i]+=basisPhi_j[j]*cs->diff_op[2*iv1+iv2].DO[i][j];
                   }
                 }
                 val = dot_product(basisPhi_i, res) * wpg * det  ;
-                AddLinearSolver(&cs->lsol,ino_fe*cs->nb_phy_vars,jno_fe*cs->nb_phy_vars,val);
+                AddLinearSolver(&cs->lsol,ino_fe*cs->nb_phy_vars+iv1,jno_fe*cs->nb_phy_vars+iv2,val);
               } // end for iv1
             } // end for iv2
 
@@ -604,11 +604,11 @@ void GenericOperator_PBPC(void* pb_pc, ContinuousSolver* cs){
                 for (int i=0; i<4; i++){
                   res[i]=0;
                   for (int j=0; j<4; j++){
-                    res[i]+=basisPhi_j[j]*cs->diff_op[0].DO[i][j];
+                    res[i]+=basisPhi_j[j]*cs->diff_op[2*iv1+iv2].DO[i][j];
                   }
                 }
                 val = dot_product(basisPhi_i, res) * wpg * det  ;
-                AddLinearSolver(&cs->lsol,ino_fe*cs->nb_phy_vars,jno_fe*cs->nb_phy_vars,val);
+                AddLinearSolver(&cs->lsol,ino_fe*cs->nb_phy_vars+iv1,jno_fe*cs->nb_phy_vars+iv2,val);
               } // end for iv1
             } // end for iv2
 
@@ -619,11 +619,11 @@ void GenericOperator_PBPC(void* pb_pc, ContinuousSolver* cs){
                 for (int i=0; i<4; i++){
                   res[i]=0;
                   for (int j=0; j<4; j++){
-                    res[i]+=basisPhi_j[j]*cs->diff_op[0].DO[i][j];
+                    res[i]+=basisPhi_j[j]*cs->diff_op[2*iv1+iv2].DO[i][j];
                   }
                 }
                 val = dot_product(basisPhi_i, res) * wpg * det  ;
-                AddLinearSolver(&cs->lsol,ino_fe*cs->nb_phy_vars,jno_fe*cs->nb_phy_vars,val);
+                AddLinearSolver(&cs->lsol,ino_fe*cs->nb_phy_vars+iv1,jno_fe*cs->nb_phy_vars+iv2,val);
               } // end for iv1
             } // end for iv2
 
@@ -634,11 +634,11 @@ void GenericOperator_PBPC(void* pb_pc, ContinuousSolver* cs){
                 for (int i=0; i<4; i++){
                   res[i]=0;
                   for (int j=0; j<4; j++){
-                    res[i]+=basisPhi_j[j]*cs->diff_op[0].DO[i][j];
+                    res[i]+=basisPhi_j[j]*cs->diff_op[2*iv1+iv2].DO[i][j];
                   }
                 }
                 val = dot_product(basisPhi_i, res) * wpg * det  ;
-                AddLinearSolver(&cs->lsol,ino_fe*cs->nb_phy_vars,jno_fe*cs->nb_phy_vars,val);
+                AddLinearSolver(&cs->lsol,ino_fe*cs->nb_phy_vars+iv1,jno_fe*cs->nb_phy_vars+iv2,val);
               } // end for iv1
             } // end for iv2
 
