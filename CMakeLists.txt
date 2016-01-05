@@ -62,6 +62,7 @@ IF(USE_STARPU)# set with: cmake . -DUSE_STARPU:BOOL=ON
     if(STARPU_FOUND)
       MESSAGE("StarPU found")
       INCLUDE_DIRECTORIES(${STARPU_INCLUDE_DIRS})
+      LINK_DIRECTORIES(${STARPU_LIBRARY_DIRS})
     else()
       MESSAGE("StarPU not found")
     endif(STARPU_FOUND)
