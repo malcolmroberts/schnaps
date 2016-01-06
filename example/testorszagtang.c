@@ -42,7 +42,7 @@ int TestOrszagTang(int argc, char *argv[]) {
 
 
   MacroMesh mesh;
-  char *mshname =  "../test/disque2d.msh";
+  char *mshname =  "../test/testOTgrid.msh";
   
   ReadMacroMesh(&mesh, mshname);
   Detect2DMacroMesh(&mesh);
@@ -50,12 +50,12 @@ int TestOrszagTang(int argc, char *argv[]) {
   assert(is2d);  
 
   real periodsize = 6.2831853;
-  //mesh.period[0]=periodsize;
-  //mesh.period[1]=periodsize;
+  mesh.period[0]=periodsize;
+  mesh.period[1]=periodsize;
 
   BuildConnectivity(&mesh);
   int deg[]={1, 1, 0};
-  int raf[]={10, 10, 1};
+  int raf[]={50, 50, 1};
   CheckMacroMesh(&mesh, deg, raf);
 
   Model model;
@@ -92,7 +92,7 @@ int TestOrszagTang(int argc, char *argv[]) {
 
   InitSimulation(&simu, &mesh, deg, raf, &model);
  
-  real tmax = 0.1;
+  real tmax = 1.0;
   simu.vmax = 6.0;
   real dt = 0;
   RK2_CL(&simu, tmax, dt,  0, NULL, NULL);
