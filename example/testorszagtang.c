@@ -54,8 +54,8 @@ int TestOrszagTang(int argc, char *argv[]) {
   mesh.period[1]=periodsize;
 
   BuildConnectivity(&mesh);
-  int deg[]={1, 1, 0};
-  int raf[]={50, 50, 1};
+  int deg[]={3, 3, 0};
+  int raf[]={40, 40, 1};
   CheckMacroMesh(&mesh, deg, raf);
 
   Model model;
@@ -95,7 +95,7 @@ int TestOrszagTang(int argc, char *argv[]) {
   real tmax = 1.0;
   simu.vmax = 6.0;
   real dt = 0;
-  RK2_CL(&simu, tmax, dt,  0, NULL, NULL);
+  RK4_CL(&simu, tmax, dt,  0, NULL, NULL);
   
   CopyfieldtoCPU(&simu);
  
@@ -104,6 +104,11 @@ int TestOrszagTang(int argc, char *argv[]) {
 
   return test;
 }
+
+
+
+
+
 
   /*
   real cfl = 0.2;
