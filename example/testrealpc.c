@@ -37,7 +37,7 @@ int Testrealpc(void) {
 
   bool test = true;
   real dd;
-  int test1_ok=1,test2_ok=0;
+  int test1_ok=1,test2_ok=1;
 
 #ifdef PARALUTION 
   paralution_begin();

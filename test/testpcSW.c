@@ -109,7 +109,7 @@ int TestpcSW(void) {
     model.Source = ShallowWater_SteadyState_U_SourceTerm;
 
     int deg[]={4, 4, 0};
-    int raf[]={8, 8, 1};
+    int raf[]={12, 12, 1};
 
     assert(mesh.is2d);
     CheckMacroMesh(&mesh, deg, raf);
@@ -130,8 +130,8 @@ int TestpcSW(void) {
     //simu.dt=0.002/8;
     simu.vmax=1;//_SPEED_WAVE;
     simu.cfl = 0.025;
-    simu.dt = 1.0/1;//Get_Dt_RK(&simu)/16;
-    real tmax=1.0;
+    simu.dt = 0.5/1;//Get_Dt_RK(&simu)/16;
+    real tmax=4;
     int itermax=tmax/simu.dt;
     simu.itermax_rk=itermax;
 
@@ -223,7 +223,7 @@ int TestpcSW(void) {
     model2.Source = ShallowWater_SteadyState_P_SourceTerm;
 
     int deg2[]={4, 4, 0};
-    int raf2[]={8, 8, 1};
+    int raf2[]={12, 12, 1};
 
     assert(mesh.is2d);
     CheckMacroMesh(&mesh, deg2, raf2);
@@ -244,8 +244,8 @@ int TestpcSW(void) {
     //simu2.dt=0.002/8;
     simu2.vmax=1;//_SPEED_WAVE;
     simu2.cfl = 0.025;
-    simu2.dt = 0.01/1;//Get_Dt_RK(&simu2)/16;
-    real tmax= 0.01;//4*simu2.dt;//0.002;
+    simu2.dt = 0.5/1;//Get_Dt_RK(&simu2)/16;
+    real tmax= 4;//4*simu2.dt;//0.002;
     int itermax=tmax/simu2.dt;
     simu2.itermax_rk=itermax;
 
@@ -334,7 +334,7 @@ int TestpcSW(void) {
     model3.Source = ShallowWater_SteadyState_U_SourceTerm;
 
     int deg3[]={4, 4, 0};
-    int raf3[]={8, 8, 1};
+    int raf3[]={12, 12, 1};
 
     assert(mesh.is2d);
     CheckMacroMesh(&mesh, deg3, raf3);
@@ -352,9 +352,9 @@ int TestpcSW(void) {
 
     real theta=0.5;
     simu3.theta=theta;
-    simu3.dt=1.0/1;
+    simu3.dt=0.5/1;
     simu3.vmax=_SPEED_WAVE;
-    real tmax=1.0;//1*simu3.dt;
+    real tmax=4;//1*simu3.dt;
     int itermax=tmax/simu3.dt;
     simu3.itermax_rk=itermax;
     
@@ -477,7 +477,7 @@ int TestpcSW(void) {
     model4.Source = ShallowWater_SteadyState_P_SourceTerm;
 
     int deg4[]={4, 4, 0};
-    int raf4[]={8, 8, 1};
+    int raf4[]={12, 12, 1};
 
     assert(mesh.is2d);
     CheckMacroMesh(&mesh, deg4, raf4);
@@ -495,9 +495,9 @@ int TestpcSW(void) {
 
     real theta=0.5;
     simu4.theta=theta;
-    simu4.dt = 0.01/1;
+    simu4.dt = 0.5/1;
     simu4.vmax=_SPEED_WAVE;
-    real tmax= 0.01;//1*simu4.dt;
+    real tmax= 4;//1*simu4.dt;
     int itermax=tmax/simu4.dt;
     simu4.itermax_rk=itermax;
     
