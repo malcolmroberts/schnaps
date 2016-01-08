@@ -18,11 +18,9 @@ se placer dans le dossier SCHNAPS
 
 puis:
 
-cmake .
-
-make
-
-ctest
+  cmake .
+  make
+  ctest
 
 une série de tests démarre. Il est conseillé de faire repasser ces
 tests après toute modification du code.
