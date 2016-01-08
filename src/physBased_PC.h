@@ -34,7 +34,7 @@ typedef struct PB_PC{
   //! \brief Schur ContinuousSolver (matrix from Schur decomposition)
   ContinuousSolver Schur;
 
-  //! \brief Right-hand side for the prediciton step of the preconditioner
+  //! \brief Right-hand side for the prediction step of the preconditioner
   real *rhs_prediction;
   //! \brief Right-hand side for the propagation (middle) step of the preconditioner
   real *rhs_propagation;
@@ -129,6 +129,12 @@ void PiDgToCg(ContinuousSolver * cs, int nbVarIn, real * rhsIn, real * rhsOut);
 // \param[out] rhsOut: Vector in DG.
 void PiInvertCgToDg(ContinuousSolver * cs, int nbVarOut, real * rhsIn, real * rhsOut);
 
+//! \brief Initialization of the preconditioner.
+//! \param[inout] pb_pc: the precondition to be initialized
+//! \param[in] lsol: the linear solver object of the problem
+//! \param[in] simu: the simulation object of the problem
+//! \param[in] mat2assemble: an integer array
+void GlobalInit_PBPC(PB_PC* pb_pc, LinearSolver* lsol, Simulation* simu, int* mat2assemble);
 
 // \brief general initialisation of the solvers for eahc sub systems of the pc
 // \param[inout] pb_pc: Physics-based Preconditioner object.

@@ -9,6 +9,7 @@
 typedef enum MatrixStorage{SKYLINE,CSR,SKYLINE_SPU} MatrixStorage;
 typedef enum Solver{LU,GMRES,PAR_GMRES,PAR_FGMRES,PAR_CG,PAR_BICGSTAB,PAR_AMG,PAR_LU,PAR_QR} Solver;
 typedef enum PC{NONE,JACOBI,PAR_JACOBI,PAR_ILU,PAR_MULTICOLOREDSGS,PAR_MULTICOLOREDGS,PAR_MULTICOLOREDILU,PAR_AMG_PC,PAR_ELIMI,PHY_BASED_P1,PHY_BASED_P2,PHY_BASED_U1,PHY_BASED_U2,EXACT,LO_POISSON} PC;
+typedef enum Problem{WAVE, SW} Problem;
 
 //! class for managing linear solvers
 typedef struct LinearSolver{
@@ -32,6 +33,8 @@ typedef struct LinearSolver{
   bool rhs_is_assembly;
   //! solver type;
   Solver solver_type;
+  //! \brief Problem type (e.g. Shallow water or wave)
+  Problem problem_type;
   //! solver type;
   bool is_CG;
   //! name of the storage method;

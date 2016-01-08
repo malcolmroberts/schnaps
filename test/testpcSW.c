@@ -80,7 +80,7 @@ int TestpcSW(void) {
 
   bool test = true;
   real dd;
-  int test1_ok=1,test2_ok=1,test3_ok=1,test4_ok=1;
+  int test1_ok=1,test2_ok=0,test3_ok=1,test4_ok=0;
 
 #ifdef PARALUTION
   paralution_begin();
@@ -109,7 +109,7 @@ int TestpcSW(void) {
     model.Source = ShallowWater_SteadyState_U_SourceTerm;
 
     int deg[]={4, 4, 0};
-    int raf[]={12, 12, 1};
+    int raf[]={4, 4, 1};
 
     assert(mesh.is2d);
     CheckMacroMesh(&mesh, deg, raf);
@@ -130,14 +130,15 @@ int TestpcSW(void) {
     //simu.dt=0.002/8;
     simu.vmax=1;//_SPEED_WAVE;
     simu.cfl = 0.025;
-    simu.dt = 0.5/1;//Get_Dt_RK(&simu)/16;
-    real tmax=4;
+    simu.dt = 0.01;//Get_Dt_RK(&simu)/16;
+    real tmax=0.01;
     int itermax=tmax/simu.dt;
     simu.itermax_rk=itermax;
 
-    cs.lsol.solver_type=LU;
+    cs.lsol.problem_type=SW;
+    cs.lsol.solver_type=LU;//GMRES;
     cs.lsol.tol=1.e-14;
-    cs.lsol.pc_type=NONE;//PHY_BASED_U2;
+    cs.lsol.pc_type=PHY_BASED_U1;
     cs.lsol.iter_max=2000;
     cs.lsol.restart_gmres=20;
     cs.lsol.is_CG=true;
@@ -175,10 +176,20 @@ int TestpcSW(void) {
       }
 
       SW_test(&cs,wCG,simu.theta,simu.dt);
+      //MatVect(&cs.lsol,wCG,resCG);
       cs.rhs_assembly(&cs);
       cs.bc_assembly(&cs);
+      for (int i=0; i<sizeCG; i++){
+        cs.lsol.sol[i] = wCG[i];
+        //cs.lsol.rhs[i] += resCG[i];
+      }
+      //printf("RHS!!\n");
       //for (int i=0; i<size1varCG; i++){
       //  printf("i=%d, h=%.8e, u=%.8e, v=%.8e\n",i,cs.lsol.rhs[3*i],cs.lsol.rhs[3*i+1],cs.lsol.rhs[3*i+2]);
+      //}
+      //printf("SOL!!\n");
+      //for (int i=0; i<size1varCG; i++){
+      //  printf("i=%d, h=%.8e, u=%.8e, v=%.8e\n",i,cs.lsol.sol[3*i],cs.lsol.sol[3*i+1],cs.lsol.sol[3*i+2]);
       //}
       Advanced_SolveLinearSolver(&cs.lsol,&simu);
 
@@ -249,9 +260,10 @@ int TestpcSW(void) {
     int itermax=tmax/simu2.dt;
     simu2.itermax_rk=itermax;
 
+    cs2.lsol.problem_type=SW;
     cs2.lsol.solver_type=LU;//GMRES;
     cs2.lsol.tol=1.e-14;
-    cs2.lsol.pc_type=NONE;//PHY_BASED_U2;
+    cs2.lsol.pc_type=PHY_BASED_U2;
     cs2.lsol.iter_max=2000;
     cs2.lsol.restart_gmres=20;
     cs2.lsol.is_CG=true;
@@ -291,6 +303,9 @@ int TestpcSW(void) {
       SW_test(&cs2,wCG,simu2.theta,simu2.dt);
       cs2.rhs_assembly(&cs2);
       cs2.bc_assembly(&cs2);
+      for (int i=0; i<sizeCG; i++){
+        cs2.lsol.sol[i] = wCG[i];
+      }
       Advanced_SolveLinearSolver(&cs2.lsol,&simu2);
 
       for (int i=0; i<sizeCG; i++){
@@ -334,7 +349,7 @@ int TestpcSW(void) {
     model3.Source = ShallowWater_SteadyState_U_SourceTerm;
 
     int deg3[]={4, 4, 0};
-    int raf3[]={12, 12, 1};
+    int raf3[]={4, 4, 1};
 
     assert(mesh.is2d);
     CheckMacroMesh(&mesh, deg3, raf3);
@@ -352,15 +367,16 @@ int TestpcSW(void) {
 
     real theta=0.5;
     simu3.theta=theta;
-    simu3.dt=0.5/1;
+    simu3.dt=0.5;
     simu3.vmax=_SPEED_WAVE;
-    real tmax=4;//1*simu3.dt;
+    real tmax=0.5;//1*simu3.dt;
     int itermax=tmax/simu3.dt;
     simu3.itermax_rk=itermax;
     
+    cs3.lsol.problem_type=SW;
     cs3.lsol.solver_type=LU;//GMRES;
     cs3.lsol.tol=1.e-8;
-    cs3.lsol.pc_type=NONE;//PHY_BASED_U2;
+    cs3.lsol.pc_type=PHY_BASED_U1;
     cs3.lsol.iter_max=2000;
     cs3.lsol.restart_gmres=10;
     cs3.lsol.is_CG=true;
@@ -381,8 +397,9 @@ int TestpcSW(void) {
 
     PB_PC pb_pc;    
     int mat2assemble[6] = {1, 1, 1, 1, 1, 1};
-    Init_PBPC_SW_SchurVelocity_BCVelocity(&simu3, &pb_pc, mat2assemble);
-    Init_Parameters_PhyBasedPC(&pb_pc);
+    GlobalInit_PBPC(&pb_pc, &cs3.lsol, &simu3, mat2assemble);
+    //Init_PBPC_SW_SchurVelocity_BCVelocity(&simu3, &pb_pc, mat2assemble);
+    //Init_Parameters_PhyBasedPC(&pb_pc);
   
     real h=simu3.vmax*simu3.dt*simu3.theta;
     cs3.FluxMatrix = calloc(cs3.nb_phy_vars,sizeof(real));
@@ -426,19 +443,15 @@ int TestpcSW(void) {
       pb_pc.rhs_assembly(&pb_pc,&cs3);
       pb_pc.source_assembly(&cs3);
       pb_pc.bc_assembly(&cs3);
-
-      //for (int i=0; i<size1varCG; i++){
-      //  printf("i=%d, h=%.8e, u=%.8e, v=%.8e\n",i,cs3.lsol.rhs[3*i],cs3.lsol.rhs[3*i+1],cs3.lsol.rhs[3*i+2]);
-      //}
+      for (int i=0; i<sizeCG; i++){
+        cs3.lsol.sol[i] = wCG[i];
+      }
 
       pb_pc.solvePC(&pb_pc,&simu3,cs3.lsol.sol,cs3.lsol.rhs);
 
       for (int i=0; i<sizeCG; i++){
         wCG[i] += cs3.lsol.sol[i];
       }
-      //for (int i=0; i<size1varCG; i++){
-      //  printf("i=%d, dh=%.8e, du=%.8e, dv=%.8e\n",i,cs3.lsol.sol[3*i],cs3.lsol.sol[3*i+1],cs3.lsol.sol[3*i+2]);
-      //}
 
       int freq = (1 >= simu3.itermax_rk / 10)? 1 : simu3.itermax_rk / 10;
       if (tstep % freq == 0)
@@ -503,11 +516,12 @@ int TestpcSW(void) {
     
     cs4.lsol.solver_type=LU;//GMRES;
     cs4.lsol.tol=1.e-8;
-    cs4.lsol.pc_type=NONE;//PHY_BASED_U2;
+    cs4.lsol.pc_type=PHY_BASED_U2;
     cs4.lsol.iter_max=2000;
     cs4.lsol.restart_gmres=10;
     cs4.lsol.is_CG=true;
 
+    cs4.lsol.problem_type=SW;
     cs4.bc_flux=Wave_BC_pressure_null;
     cs4.bc_assembly=BoundaryConditionFriedrichsAssembly;
     cs4.rhs_assembly=Source_Assembly;
@@ -569,6 +583,9 @@ int TestpcSW(void) {
       pb_pc.rhs_assembly(&pb_pc,&cs4);
       pb_pc.source_assembly(&cs4);
       pb_pc.bc_assembly(&cs4);
+      for (int i=0; i<sizeCG; i++){
+        cs4.lsol.sol[i] = wCG[i];
+      }
 
       //for (int i=0; i<size1varCG; i++){
       //  printf("i=%d, h=%.8e, u=%.8e, v=%.8e\n",i,cs4.lsol.rhs[3*i],cs4.lsol.rhs[3*i+1],cs4.lsol.rhs[3*i+2]);
