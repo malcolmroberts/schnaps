@@ -17,7 +17,7 @@ int TestfieldRK2_SPU(void){
   // test/testdisque.msh
 
   char *mshname =  "../test/disque2d.msh";
-  
+
   MacroMesh mesh;
   ReadMacroMesh(&mesh,"../test/testdisque.msh");
   //ReadMacroMesh(&mesh,"../test/testcube2.msh");
@@ -116,18 +116,18 @@ int TestfieldRK2_SPU(void){
     return true;
   }
 #endif
-  
+
   CheckMacroMesh(&mesh, deg, raf);
   starpu_use = true;
 
   InitSimulation(&simu, &mesh, deg, raf, &model);
- 
+
   real tmax = 0.25;
-  //tmax = 0.019;
+  //tmax = 0.006848;
   simu.cfl=0.2;
   simu.vmax=1;
   RK2_SPU(&simu,tmax);
- 
+
   PlotFields(0, false, &simu, NULL, "dgvisu.msh");
   PlotFields(0, true , &simu, "error", "dgerror.msh");
 
@@ -141,15 +141,15 @@ int TestfieldRK2_SPU(void){
   test = dd < tolerance;
 
   FreeMacroMesh(&mesh);
-  
+
   return test;
 }
 
 int main(void) {
   int resu = TestfieldRK2_SPU();
-  if(resu) 
+  if(resu)
     printf("starpu field RK2 test OK !\n");
-  else 
+  else
     printf("starpu field RK2 test failed !\n");
   return !resu;
-} 
+}

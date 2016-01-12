@@ -14,7 +14,7 @@ void EmptySimulation(Simulation *simu){
    sprintf(numflux_cl_name,"%s",""); // FIXME: move to field struct.
   sprintf(cl_buildoptions,"%s",""); // FIXME: move to field struct.
   simu->sourcename_cl = malloc(1024 * sizeof(char)); // TODO set to NULL
-  sprintf(simu->sourcename_cl,"%s"," "); // FIXME: remove 
+  sprintf(simu->sourcename_cl,"%s"," "); // FIXME: remove
 #endif
 
   simu->w_handle = NULL;
@@ -38,7 +38,7 @@ void RegisterSimulation_SPU(Simulation *simu){
       simu->w_handle[ie] = simu->fd[ie].wn_handle;
       simu->dtw_handle[ie] = simu->fd[ie].dtwn_handle;
       simu->res_handle[ie] = simu->fd[ie].res_handle;
-    }   
+    }
   }
 }
 
@@ -100,7 +100,7 @@ void InitInterfaces(Simulation *simu){
      inter[ifa].wsizeL = npgfL * fL->model.m;
      inter[ifa].wsizeR = 0;
      if (fR != NULL) inter[ifa].wsizeR = npgfR * fR->model.m;
-     
+
      inter[ifa].wL = calloc(inter[ifa].wsizeL, sizeof(real));
      inter[ifa].wR = NULL;
      if (npgfR > 0)  inter[ifa].wR =
@@ -139,7 +139,7 @@ void InitInterfaces(Simulation *simu){
        /*        vnds=%f %f %f xpg=%f %f %f\n", */
        /* 	      ifa,ieL,ieR,ipgf,vnds[0],vnds[1],vnds[2], */
        /* 	      xpg[0],xpg[1],xpg[2]); */
-       
+
        inter[ifa].vnds[3 * ipgf + 0] = vnds[0] * wpg;
        inter[ifa].vnds[3 * ipgf + 1] = vnds[1] * wpg;
        inter[ifa].vnds[3 * ipgf + 2] = vnds[2] * wpg;
@@ -163,7 +163,7 @@ void InitInterfaces(Simulation *simu){
      /* 	 assert(ipgv1 == ipgv2); */
      /* 	 inter[ifa].vol_indexR[ipgf] = ipgv2; */
      /*   } */
-     
+
 
      InitInterface_SPU(inter + ifa);
   }
@@ -202,9 +202,9 @@ void InitSimulation(Simulation *simu, MacroMesh *mesh,
   real *w = simu->w;
   real *dtw = simu->dtw;
   real *res = simu->res;
-  
+
   real physnode[20][3];
-  
+
   simu->hmin = FLT_MAX;
 
 #ifdef _WITH_OPENCL
@@ -267,7 +267,7 @@ void InitSimulation(Simulation *simu, MacroMesh *mesh,
 
     init_field_cl(simu);
 
-    
+
   }
 #endif // _WITH_OPENCL
 
@@ -293,7 +293,7 @@ void DisplaySimulation(Simulation *simu){
 void PlotFields(int typplot, int compare, Simulation* simu, char *fieldname,
 	       char *filename) {
 
-  real hexa64ref[3 * 64] = { 
+  real hexa64ref[3 * 64] = {
     0, 0, 3, 3, 0, 3, 3, 3, 3, 0, 3, 3, 0, 0, 0, 3, 0, 0, 3, 3, 0, 0, 3, 0,
     1, 0, 3, 2, 0, 3, 0, 1, 3, 0, 2, 3, 0, 0, 2, 0, 0, 1, 3, 1, 3, 3, 2, 3,
     3, 0, 2, 3, 0, 1, 2, 3, 3, 1, 3, 3, 3, 3, 2, 3, 3, 1, 0, 3, 2, 0, 3, 1,
@@ -305,16 +305,16 @@ void PlotFields(int typplot, int compare, Simulation* simu, char *fieldname,
   for(int i = 0; i < 3 * 64; ++i)
     hexa64ref[i] /= 3.0;
 
- 
+
   FILE * gmshfile;
   gmshfile = fopen(filename, "w" );
 
   //int param[8] = {f->model.m, _DEGX, _DEGY, _DEGZ, _RAFX, _RAFY, _RAFZ, 0};
   int nraf[3] = {simu->fd[0].raf[0],
-		 simu->fd[0].raf[1], 
+		 simu->fd[0].raf[1],
 		 simu->fd[0].raf[2]};
   int deg[3] = {simu->fd[0].deg[0],
-		simu->fd[0].deg[1], 
+		simu->fd[0].deg[1],
 		simu->fd[0].deg[2]};
   // Refinement size in each direction
   real hh[3] = {1.0 / nraf[0], 1.0 / nraf[1], 1.0 / nraf[2]};
@@ -333,7 +333,7 @@ void PlotFields(int typplot, int compare, Simulation* simu, char *fieldname,
   int npgv = NPG(deg, nraf);
   for(int i = 0; i < simu->macromesh.nbelems; i++) {
     // Get the nodes of element L
- 
+
     field *f = simu->fd + i;
     // Loop on the macro elem subcells
     int icL[3];
@@ -346,7 +346,7 @@ void PlotFields(int typplot, int compare, Simulation* simu, char *fieldname,
 	    real Xr[3] = { hh[0] * (icL[0] + hexa64ref[3 * ino + 0]),
 			     hh[1] * (icL[1] + hexa64ref[3 * ino + 1]),
 			     hh[2] * (icL[2] + hexa64ref[3 * ino + 2]) };
-	    
+
 	    for(int ii = 0; ii < 3; ii++) {
 	      assert(Xr[ii] < 1 +  1e-10);
 	      assert(Xr[ii] > -1e-10);
@@ -389,7 +389,7 @@ void PlotFields(int typplot, int compare, Simulation* simu, char *fieldname,
 
   // Elements
   fprintf(gmshfile, "$Elements\n");
-  fprintf(gmshfile, "%d\n", 
+  fprintf(gmshfile, "%d\n",
 	  simu->macromesh.nbelems * nraf[0] * nraf[1] * nraf[2]);
 
   int elm_type = 92;
@@ -434,7 +434,7 @@ void PlotFields(int typplot, int compare, Simulation* simu, char *fieldname,
   fprintf(gmshfile, "1\n");
   if(fieldname == NULL)
     fprintf(gmshfile, "\"field %d\"\n", typplot);
-  else 
+  else
     fprintf(gmshfile, "\"field: %s\"\n", fieldname);
 
   real t = 0;
@@ -512,13 +512,13 @@ void PlotFields(int typplot, int compare, Simulation* simu, char *fieldname,
 }
 
 void freeSimulation(Simulation* simu){
-  
+
   for(int i=0;i<simu->macromesh.nbelems;i++){
     simu->fd[i].wn=NULL;
     simu->fd[i].dtwn=NULL;
   }
-  
-  
+
+
   free(simu->w);   //Already freed in field.
   free(simu->dtw); //Already freed in field.
   free(simu->fd);
@@ -529,8 +529,8 @@ void freeSimulation(Simulation* simu){
   if(simu->pic != NULL){
     free(simu->pic);
   }
-  
-  
+
+
 
 }
 
@@ -552,7 +552,7 @@ void DtFields(Simulation *simu, real *w, real *dtw) {
   //real *dtw = simu->fd[0].dtwn;
 
   int fsize =  simu->wsize / simu->macromesh.nbelems;
-  
+
   for(int iw = 0; iw < simu->wsize; iw++)
     dtw[iw] = 0;
 
@@ -579,9 +579,9 @@ void DtFields(Simulation *simu, real *w, real *dtw) {
       fR = simu->fd + ieR;
       offsetR = fsize * ieR;
     }
-         
-    
- 
+
+
+
     DGMacroCellInterface(locfaL,
     			 fL, offsetL, fR, offsetR,
     			 w, dtw);
@@ -590,11 +590,26 @@ void DtFields(Simulation *simu, real *w, real *dtw) {
 #ifdef _OPENMP
 #pragma omp parallel for schedule(dynamic, 1)
 #endif
+  //printf("STEP ---------------------------------------------------\n");
   for(int ie = 0; ie < simu->macromesh.nbelems; ++ie) {
+    //DisplayArray(w + ie * fsize, fsize, "wn_INI");
+    //DisplayArray(dtw + ie * fsize, fsize, "res_INI");
+
     DGSubCellInterface(simu->fd + ie, w + ie * fsize, dtw + ie * fsize);
+
+    //DisplayArray(dtw + ie * fsize, fsize, "res_SCI");
+
     DGVolume(simu->fd + ie, w + ie * fsize, dtw + ie * fsize);
+
+    //DisplayArray(dtw + ie * fsize, fsize, "res_VOL");
+
     DGSource(simu->fd + ie, w + ie * fsize, dtw + ie * fsize);
+
+    //DisplayArray(dtw + ie * fsize, fsize, "res_SOU");
+
     DGMass(simu->fd + ie, w + ie * fsize, dtw + ie * fsize);
+
+    //DisplayArray(dtw + ie * fsize, fsize, "res_MAS");
   }
 
   if(simu->post_dtfields != NULL) {
@@ -624,7 +639,7 @@ real L2error(Simulation *simu) {
       real wex[f->model.m];
       real wpg, det;
       // Compute wpg, det, and the exact solution
-      { 
+      {
 	real xphy[3], xpgref[3];
 	real dtau[3][3], codtau[3][3];
 	// Get the coordinates of the Gauss point
@@ -705,7 +720,7 @@ void RK2(Simulation *simu, real tmax){
     if(simu->update_after_rk != NULL){
       simu->update_after_rk(simu, simu->w);
     }
-    
+
     iter++;
     simu->iter_time_rk = iter;
 
@@ -736,13 +751,13 @@ void RK4(Simulation *simu, real tmax)
   l1 = calloc(simu->wsize, sizeof(real));
   l2 = calloc(simu->wsize, sizeof(real));
   l3 = calloc(simu->wsize, sizeof(real));
-  
+
   size_diags = simu->nb_diags * simu->itermax_rk;
   simu->iter_time_rk = iter;
-  
+
     if(simu->nb_diags != 0)
     simu->Diagnostics = malloc(size_diags * sizeof(real));
-  
+
   while(simu->tnow < tmax) {
     if (iter % freq == 0)
       printf("t=%f iter=%d/%d dt=%f\n", simu->tnow, iter, simu->itermax_rk, dt);
@@ -767,11 +782,11 @@ void RK4(Simulation *simu, real tmax)
     DtFields(simu, l3, simu->dtw);
     RK4_final_inplace(simu->w, l1, l2, l3, simu->dtw, dt, simu->wsize);
 
-    
-     if(simu->update_after_rk != NULL){ 
-      simu->update_after_rk(simu, simu->w); 
+
+     if(simu->update_after_rk != NULL){
+      simu->update_after_rk(simu, simu->w);
     }
-    
+
     iter++;
      simu->iter_time_rk=iter;
   }
@@ -783,7 +798,7 @@ void RK4(Simulation *simu, real tmax)
 }
 
 // An out-of-place RK step
-void RK_out(real *dest, real *fwn, real *fdtwn, const real dt, 
+void RK_out(real *dest, real *fwn, real *fdtwn, const real dt,
 	    const int sizew)
 {
 #ifdef _OPENMP
@@ -806,7 +821,7 @@ void RK_in(real *fwnp1, real *fdtwn, const real dt, const int sizew)
   }
 }
 
-void RK4_final_inplace(real *w, real *l1, real *l2, real *l3, 
+void RK4_final_inplace(real *w, real *l1, real *l2, real *l3,
 		       real *dtw, const real dt, const int sizew)
 {
   const real b = -1.0 / 3.0;
@@ -815,7 +830,7 @@ void RK4_final_inplace(real *w, real *l1, real *l2, real *l3,
 #pragma omp parallel for
 #endif
   for(int i = 0; i < sizew; ++i) {
-    w[i] = 
+    w[i] =
       b * w[i] +
       a[0] * l1[i] +
       a[1] * l2[i] +
@@ -828,11 +843,14 @@ void RK4_final_inplace(real *w, real *l1, real *l2, real *l3,
 real Get_Dt_RK(Simulation *simu)
 {
    printf("mmmm %f %f %f ",simu->cfl, simu->hmin,simu->vmax);
-  return simu->cfl * simu->hmin / simu->vmax; 
- 
+  return simu->cfl * simu->hmin / simu->vmax;
+
 }
 
 
-
-
-
+void DisplayArray(real* array,
+                  size_t size,
+                  const char* name) {
+  for (int i = 0; i < size; ++i)
+    printf("%s[%d]: %f\n", name, i , array[i]);
+}

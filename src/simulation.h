@@ -61,17 +61,17 @@ typedef struct Simulation {
   int nb_diags;
   //! table for diagnostics
   real *Diagnostics;
- 
 
-  //! \brief Pointer to a generic function called before computing dtfield. 
+
+  //! \brief Pointer to a generic function called before computing dtfield.
   //! \param[inout] si a simulation (to be converted from void*)
   void (*pre_dtfields)(void *si, real *w);
 
-  //! \brief Pointer to a generic function called after computing dtfield. 
+  //! \brief Pointer to a generic function called after computing dtfield.
   //! \param[inout] si a simulation (to be converted from void*)
   void (*post_dtfields)(void *si, real *w);
 
-  //! \brief generic update function called 
+  //! \brief generic update function called
   //! \brief called at each runge-kutta sustep
   //! \param[inout] si a simulation (to be converted from void*)
   //! \param[in] elem macro element index
@@ -116,19 +116,19 @@ typedef struct Simulation {
   // OpenCL events
 
   // set_buf_to_zero event
-  cl_event clv_zbuf; 
-  
+  cl_event clv_zbuf;
+
   // Subcell mass events
-  cl_event *clv_mass; 
+  cl_event *clv_mass;
 
   // Subcell flux events
   cl_event *clv_flux0, *clv_flux1, *clv_flux2;
 
   // Subcell volume events
-  cl_event *clv_volume; 
+  cl_event *clv_volume;
 
   // Subcell volume events
-  cl_event *clv_source; 
+  cl_event *clv_source;
 
   // Macrocell interface events
   cl_event *clv_mci;
@@ -146,15 +146,15 @@ typedef struct Simulation {
   cl_ulong rk_time;
 
   // OpenCL roofline measurements
-  unsigned long int flops_vol, flops_flux, flops_mass; 
-  unsigned long int reads_vol, reads_flux, reads_mass; 
+  unsigned long int flops_vol, flops_flux, flops_mass;
+  unsigned long int reads_vol, reads_flux, reads_mass;
 #endif
 
 
 } Simulation;
 
 
-//! \brief create an empty simulation in a coherent state 
+//! \brief create an empty simulation in a coherent state
 //! \param[inout] simu a simulation
 void EmptySimulation(Simulation *simu);
 
@@ -162,8 +162,8 @@ void EmptySimulation(Simulation *simu);
 //! Computation of the initial data at each glop.
 //! \param[inout] simu a simulation
 //! \param[in] mesh a macromesh
-//! \param[in] deg degrees parameters 
-//! \param[in] raf refinements parameters 
+//! \param[in] deg degrees parameters
+//! \param[in] raf refinements parameters
 //! \param[in] model a model
 void InitSimulation(Simulation *simu, MacroMesh *mesh,
 		    int *deg, int *raf, Model *model);
@@ -177,7 +177,7 @@ void InitInterfaces(Simulation *simu);
 //! \param[inout] simu A simulation
 void DtFields(Simulation *simu, real *w, real *dtw);
 
-//! \brief compute the time step of the RK scheme 
+//! \brief compute the time step of the RK scheme
 //! respecting a cfl condition
 //! \param[inout] simu A simulation
 real Get_Dt_RK(Simulation *simu);
@@ -188,7 +188,7 @@ real Get_Dt_RK(Simulation *simu);
 //! \param[in] fdtwn time derivative of the field
 //! \param[in] dt time step
 //! \param[in] sizew size of the field buffer
-void RK_out(real *fwnp1, real *fwn, real *fdtwn, const real dt, 
+void RK_out(real *fwnp1, real *fwn, real *fdtwn, const real dt,
 	    const int sizew);
 
 //! \brief An in-place RK stage
@@ -206,7 +206,7 @@ void RK_in(real *fwnp1, real *fdtwn, const real dt, const int sizew);
 //! \param[in] dtw last rk4 vector
 //! \param[in] dt time step
 //! \param[in] sizew size of the field buffer
-void RK4_final_inplace(real *w, real *l1, real *l2, real *l3, 
+void RK4_final_inplace(real *w, real *l1, real *l2, real *l3,
 		       real *dtw, const real dt, const int sizew);
 
 //! \brief Time integration by a second order Runge-Kutta algorithm
@@ -239,7 +239,7 @@ void RK4(Simulation *simu, real tmax);
 //! \param[in] simu a simulation
 //! \param[in] fieldname name of the plotted data
 //! \param[in] filename the path to the gmsh visualization file.
-void PlotFields(int typplot, int compare, Simulation *simu, char *fieldname, 
+void PlotFields(int typplot, int compare, Simulation *simu, char *fieldname,
 		char *filename);
 
 //! \brief  list the valeus of the simulation
@@ -276,5 +276,13 @@ void RegisterSimulation_SPU(Simulation* simu);
 //! \brief unregister simulation data into starpu
 //! \param[inout] simu: a Simulation object
 void UnregisterSimulation_SPU(Simulation* simu);
+
+//! \brief Display an array
+//! \param[in] array a real array
+//! \param[in] size array size
+//! \param[in] name an array name (appears on every line: make it short)
+void DisplayArray(real* array,
+                  size_t size,
+                  const char* name);
 
 #endif

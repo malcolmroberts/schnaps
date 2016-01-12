@@ -4,6 +4,13 @@
 #include "simulation.h"
 #include <starpu.h>
 
+//! \brief Display a starpu data handle on runtime
+//! The function calls starpu_task_wait_for_all before display.
+//! \param[in] handle a starpu handle
+//! \param[in] name a starpu handle name (appears on every line: make it short)
+void DisplayHandle_SPU(starpu_data_handle_t handle,
+                       const char* name);
+
 //! \brief apply the Discontinuous Galerkin approximation for computing
 //! the time derivative of the fields. Works with several subcells.
 //! starpu version
