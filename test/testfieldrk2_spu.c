@@ -84,6 +84,7 @@ int TestfieldRK2_SPU(void){
 
   int deg[]={3, 3, 3};
   int raf[]={1, 1, 1};
+  //int raf[]={2, 2, 2};
 
 #endif
 
@@ -119,6 +120,7 @@ int TestfieldRK2_SPU(void){
 
   CheckMacroMesh(&mesh, deg, raf);
   starpu_use = true;
+  starpu_ocl_use = true;
 
   InitSimulation(&simu, &mesh, deg, raf, &model);
 

@@ -13,7 +13,7 @@ void InitInterface_SPU(Interface* inter){
   if (starpu_use){
 
 
-  
+
     starpu_vector_data_register(&(inter->vol_indexL_handle), // mem handle
 				0, // location: CPU
 				(uintptr_t)(inter->vol_indexL), // vector location
@@ -53,7 +53,8 @@ void InitInterface_SPU(Interface* inter){
 }
 
 void ExtractInterface_C(void* buffer[], void* cl_args);
-  
+void ExtractInterface_OCL(void* buffer[], void* cl_args);
+
 void ExtractInterface_SPU(Interface* inter, int side){
 
   static bool is_init = false;
@@ -65,6 +66,19 @@ void ExtractInterface_SPU(Interface* inter, int side){
     is_init = true;
     starpu_codelet_init(&codelet);
     codelet.cpu_funcs[0] = ExtractInterface_C;
+    codelet.cpu_funcs[1] = NULL;
+    if (starpu_ocl_use) {
+      if (!opencl_program_is_init) {
+        opencl_program_is_init = true;
+        printf("load OpenCL program...\n");
+        int ret = starpu_opencl_load_opencl_from_file("./schnaps.cl",
+                                                      &opencl_program,
+                                                      cl_buildoptions);
+        STARPU_CHECK_RETURN_VALUE(ret, "starpu_opencl_load_opencl_from_file");
+      }
+      codelet.opencl_funcs[0] = ExtractInterface_OCL;
+      codelet.opencl_funcs[1] = NULL;
+    }
     codelet.nbuffers = 3;
     codelet.modes[0] = STARPU_W;  // wface
     codelet.modes[1] = STARPU_R; // wvol
@@ -101,10 +115,10 @@ void ExtractInterface_SPU(Interface* inter, int side){
       vol_index = inter->vol_indexR;
       vol_index_handle = inter->vol_indexR_handle;
     }
-  
+
     assert(side ==1 || side == 0);
 
-  
+
 
     void* arg_buffer;
     size_t arg_buffer_size;
@@ -115,9 +129,9 @@ void ExtractInterface_SPU(Interface* inter, int side){
 			     STARPU_VALUE, fd->raf, 3 * sizeof(int),
 			     STARPU_VALUE, &fd->varindex, sizeof(varindexptr),
 			     STARPU_VALUE, &npgf, sizeof(int),
-			     0);   
+			     0);
 
-    
+
     task = starpu_task_create();
     task->cl = &codelet;
     task->cl_arg = arg_buffer;
@@ -136,15 +150,15 @@ void ExtractInterface_SPU(Interface* inter, int side){
     int ret = starpu_task_submit(task);
     STARPU_CHECK_RETURN_VALUE(ret, "starpu_task_submit");
 
-  
-    
+
+
 
 }
 
 void ExtractInterface_C(void* buffer[], void* cl_args){
 
   int npgf;
-  int m;  
+  int m;
   int deg[3];
   int raf[3];
   varindexptr Varindex;
@@ -153,20 +167,20 @@ void ExtractInterface_C(void* buffer[], void* cl_args){
 			     &m, deg, raf, &Varindex,
 			     &npgf);
   free(cl_args);
- 
+
 
   struct starpu_vector_interface *wf_v =
-    (struct starpu_vector_interface *) buffer[0]; 
-  real* wf = (real *)STARPU_VECTOR_GET_PTR(wf_v);  
+    (struct starpu_vector_interface *) buffer[0];
+  real* wf = (real *)STARPU_VECTOR_GET_PTR(wf_v);
 
   struct starpu_vector_interface *wn_v =
-    (struct starpu_vector_interface *) buffer[1]; 
-  real* wn = (real *)STARPU_VECTOR_GET_PTR(wn_v);  
-  
+    (struct starpu_vector_interface *) buffer[1];
+  real* wn = (real *)STARPU_VECTOR_GET_PTR(wn_v);
+
   struct starpu_vector_interface *vol_index_v =
-    (struct starpu_vector_interface *) buffer[2]; 
-  int* vol_index = (int *)STARPU_VECTOR_GET_PTR(vol_index_v);  
-  
+    (struct starpu_vector_interface *) buffer[2];
+  int* vol_index = (int *)STARPU_VECTOR_GET_PTR(vol_index_v);
+
   for(int ipgf = 0; ipgf < npgf; ipgf++){
     int ipgv = vol_index[ipgf];
     for(int iv=0; iv < m; iv++){
@@ -178,6 +192,81 @@ void ExtractInterface_C(void* buffer[], void* cl_args){
     }
   }
 
+}
+
+
+void ExtractInterface_OCL(void* buffers[], void* cl_args){
+
+  int npgf;
+  int m;
+  int deg[3];
+  int raf[3];
+  varindexptr Varindex;
+
+  starpu_codelet_unpack_args(cl_args,
+			     &m, deg, raf, &Varindex,
+			     &npgf);
+  free(cl_args);
+
+  int buf_num=0;
+  cl_mem wf = (cl_mem)STARPU_VECTOR_GET_DEV_HANDLE(buffers[buf_num++]);
+  cl_mem wn = (cl_mem)STARPU_VECTOR_GET_DEV_HANDLE(buffers[buf_num++]);
+  cl_mem index = (cl_mem)STARPU_VECTOR_GET_DEV_HANDLE(buffers[buf_num++]);
+
+
+  int id = starpu_worker_get_id();
+  int devid = starpu_worker_get_devid(id);
+  cl_context context;
+  starpu_opencl_get_context(devid, &context);
+  cl_event event;
+
+  cl_kernel kernel;
+  cl_command_queue queue;
+
+  cl_int status = starpu_opencl_load_kernel(&kernel, &queue,
+                                            &opencl_program, "ExtractInterface",
+                                            devid);
+  if (status != CL_SUCCESS) STARPU_OPENCL_REPORT_ERROR(status);
+
+  cl_mem deg_cl = clCreateBuffer(context,
+                                 CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
+                                 sizeof(int) * 3,
+                                 deg,
+                                 &status);
+  if (status != CL_SUCCESS) STARPU_OPENCL_REPORT_ERROR(status);
+
+  cl_mem raf_cl = clCreateBuffer(context,
+                                 CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
+                                 sizeof(int) * 3,
+                                 raf,
+                                 &status);
+  if (status != CL_SUCCESS) STARPU_OPENCL_REPORT_ERROR(status);
+
+
+  int narg = 0;
+  status = clSetKernelArg(kernel, narg++, sizeof(int), &m);
+  status |= clSetKernelArg(kernel, narg++, sizeof(cl_mem), &deg_cl);
+  status |= clSetKernelArg(kernel, narg++, sizeof(cl_mem), &raf_cl);
+  status |= clSetKernelArg(kernel, narg++, sizeof(cl_mem), &index);
+  status |= clSetKernelArg(kernel, narg++, sizeof(cl_mem), &wn);
+  status |= clSetKernelArg(kernel, narg++, sizeof(cl_mem), &wf);
+  if (status != CL_SUCCESS) STARPU_OPENCL_REPORT_ERROR(status);
+  assert(status >= CL_SUCCESS);
+
+  // Number of glops on the macrocell interface
+  size_t wsize = npgf;
+
+  status = clEnqueueNDRangeKernel(queue,
+                                  kernel,
+                                  1, // cl_uint work_dim,
+                                  NULL, // global_work_offset,
+                                  &wsize, // global_work_size,
+                                  NULL, // local_work_size,
+                                  0,
+                                  NULL, // *wait_list,
+                                  &event); // *event
+  if (status != CL_SUCCESS) STARPU_OPENCL_REPORT_ERROR(status);
+  assert(status >= CL_SUCCESS);
 }
 
 
@@ -206,7 +295,7 @@ void ExtractInterface(Interface* inter, int side){
     wf = inter->wR;
     vol_index = inter->vol_indexR;
   }
-  
+
   assert(side ==1 || side == 0);
 
   if (fd !=NULL){
@@ -221,7 +310,7 @@ void ExtractInterface(Interface* inter, int side){
       }
     }
   }
-    
+
 
 }
 
@@ -258,7 +347,7 @@ void InterfaceExplicitFlux_SPU(Interface* inter, int side)
   }
 
   const int sign = 1 - 2 * side;
-  
+
   if (side == 0) {
     f = inter->fL;
     fext = inter->fR;
@@ -281,7 +370,7 @@ void InterfaceExplicitFlux_SPU(Interface* inter, int side)
 
 
   if (f != NULL && fext != NULL){
-  
+
     const unsigned int m = f->model.m;
 
     void* arg_buffer;
@@ -292,9 +381,9 @@ void InterfaceExplicitFlux_SPU(Interface* inter, int side)
 			     STARPU_VALUE, fext, sizeof(field),
 			     STARPU_VALUE, &locfa, sizeof(int),
 			     STARPU_VALUE, &sign, sizeof(int),
-			     0);   
+			     0);
     //printf("sizeof_field=%d\n", (int) sizeof(field));
-    
+
     task = starpu_task_create();
     task->cl = &codelet;
     task->cl_arg = arg_buffer;
@@ -314,7 +403,7 @@ void InterfaceExplicitFlux_SPU(Interface* inter, int side)
     int ret = starpu_task_submit(task);
     STARPU_CHECK_RETURN_VALUE(ret, "starpu_task_submit");
 
-  
+
   }
 }
 
@@ -334,44 +423,44 @@ void InterfaceExplicitFlux_C(void* buffer[], void* cl_args){
 
 
   int buf_num=0;
-  
+
   struct starpu_vector_interface *index_ext_v =
-    (struct starpu_vector_interface *) buffer[buf_num++]; 
-  int* index_ext = (int *)STARPU_VECTOR_GET_PTR(index_ext_v);  
+    (struct starpu_vector_interface *) buffer[buf_num++];
+  int* index_ext = (int *)STARPU_VECTOR_GET_PTR(index_ext_v);
 
   struct starpu_vector_interface *index_v =
-    (struct starpu_vector_interface *) buffer[buf_num++]; 
-  int* index = (int *)STARPU_VECTOR_GET_PTR(index_v);  
+    (struct starpu_vector_interface *) buffer[buf_num++];
+  int* index = (int *)STARPU_VECTOR_GET_PTR(index_v);
 
   struct starpu_vector_interface *vnds_buf_v =
-    (struct starpu_vector_interface *) buffer[buf_num++]; 
-  real* vnds_buf = (real *)STARPU_VECTOR_GET_PTR(vnds_buf_v);  
+    (struct starpu_vector_interface *) buffer[buf_num++];
+  real* vnds_buf = (real *)STARPU_VECTOR_GET_PTR(vnds_buf_v);
 
   struct starpu_vector_interface *xpg_buf_v =
-    (struct starpu_vector_interface *) buffer[buf_num++]; 
-  real* xpg_buf = (real *)STARPU_VECTOR_GET_PTR(xpg_buf_v);  
+    (struct starpu_vector_interface *) buffer[buf_num++];
+  real* xpg_buf = (real *)STARPU_VECTOR_GET_PTR(xpg_buf_v);
 
   struct starpu_vector_interface *wn_ext_v =
-    (struct starpu_vector_interface *) buffer[buf_num++]; 
-  real* wn_ext = (real *)STARPU_VECTOR_GET_PTR(wn_ext_v);  
+    (struct starpu_vector_interface *) buffer[buf_num++];
+  real* wn_ext = (real *)STARPU_VECTOR_GET_PTR(wn_ext_v);
 
   struct starpu_vector_interface *rhs_v =
-    (struct starpu_vector_interface *) buffer[buf_num++]; 
-  real* rhs = (real *)STARPU_VECTOR_GET_PTR(rhs_v);  
-  
+    (struct starpu_vector_interface *) buffer[buf_num++];
+  real* rhs = (real *)STARPU_VECTOR_GET_PTR(rhs_v);
+
 
   int npgf = NPGF(f->deg, f->raf, locfa);
   int m = fext->model.m;
-  
+
   for(int ipgf = 0; ipgf < npgf; ipgf++) {
 
- 
+
     real flux[m];
     real wL[m];
     for(int iv = 0; iv < m; iv++) {
       wL[iv] = 0;
     }
- 
+
     real wR[m];
     int ipgR = index_ext[ipgf];
     int ipgL = index[ipgf];
@@ -384,7 +473,7 @@ void InterfaceExplicitFlux_C(void* buffer[], void* cl_args){
 
     // int_dL F(wL, wR, grad phi_ib)
     real vndsloc[3];
-	
+
     vndsloc[0] = sign * vnds_buf[3 * ipgf + 0];
     vndsloc[1] = sign * vnds_buf[3 * ipgf + 1];
     vndsloc[2] = sign * vnds_buf[3 * ipgf + 2];
@@ -394,7 +483,7 @@ void InterfaceExplicitFlux_C(void* buffer[], void* cl_args){
     f->model.NumFlux(wL, wR, vndsloc, flux);
     //printf("flux=%f %f\n",flux[0],flux[0]);
 
-    // Add flux  to the selected side 
+    // Add flux  to the selected side
     for(int iv = 0; iv < m; iv++) {
       int ipgL = index[ipgf];
       // The basis functions is also the gauss point index
@@ -409,8 +498,8 @@ void InterfaceExplicitFlux_C(void* buffer[], void* cl_args){
 
   }
 
-  
-  
+
+
 
 
 }
@@ -443,21 +532,21 @@ void InterfaceBoundaryFlux_SPU(Interface* inter)
     codelet.name="InterfaceBoundaryFlux";
   }
 
-  
+
   f = inter->fL;
   locfa = inter->locfaL;
   index = inter->vol_indexL_handle;
 
 
-  
+
   void* arg_buffer;
   size_t arg_buffer_size;
 
   starpu_codelet_pack_args(&arg_buffer, &arg_buffer_size,
 			   STARPU_VALUE, f, sizeof(field),
 			   STARPU_VALUE, &locfa, sizeof(int),
-			   0);   
-    
+			   0);
+
   task = starpu_task_create();
   task->cl = &codelet;
   task->cl_arg = arg_buffer;
@@ -475,7 +564,7 @@ void InterfaceBoundaryFlux_SPU(Interface* inter)
   int ret = starpu_task_submit(task);
   STARPU_CHECK_RETURN_VALUE(ret, "starpu_task_submit");
 
-  
+
 }
 
 void InterfaceBoundaryFlux_C(void* buffer[], void* cl_args){
@@ -491,32 +580,32 @@ void InterfaceBoundaryFlux_C(void* buffer[], void* cl_args){
   int m = f->model.m;
 
   int buf_num=0;
-  
+
   struct starpu_vector_interface *index_v =
-    (struct starpu_vector_interface *) buffer[buf_num++]; 
-  int* index = (int *)STARPU_VECTOR_GET_PTR(index_v);  
+    (struct starpu_vector_interface *) buffer[buf_num++];
+  int* index = (int *)STARPU_VECTOR_GET_PTR(index_v);
 
   struct starpu_vector_interface *vnds_buf_v =
-    (struct starpu_vector_interface *) buffer[buf_num++]; 
-  real* vnds_buf = (real *)STARPU_VECTOR_GET_PTR(vnds_buf_v);  
+    (struct starpu_vector_interface *) buffer[buf_num++];
+  real* vnds_buf = (real *)STARPU_VECTOR_GET_PTR(vnds_buf_v);
 
   struct starpu_vector_interface *xpg_buf_v =
-    (struct starpu_vector_interface *) buffer[buf_num++]; 
-  real* xpg_buf = (real *)STARPU_VECTOR_GET_PTR(xpg_buf_v);  
+    (struct starpu_vector_interface *) buffer[buf_num++];
+  real* xpg_buf = (real *)STARPU_VECTOR_GET_PTR(xpg_buf_v);
 
   struct starpu_vector_interface *rhs_v =
-    (struct starpu_vector_interface *) buffer[buf_num++]; 
-  real* rhs = (real *)STARPU_VECTOR_GET_PTR(rhs_v);  
-  
+    (struct starpu_vector_interface *) buffer[buf_num++];
+  real* rhs = (real *)STARPU_VECTOR_GET_PTR(rhs_v);
+
   for(int ipgf = 0; ipgf < NPGF(f->deg, f->raf, locfa); ipgf++) {
 
- 
+
     real flux[m];
     real wL[m];
     for(int iv = 0; iv < m; iv++) {
       wL[iv] = 0;
     }
- 
+
     real* xpg = xpg_buf + 3 * ipgf;
     real* vnds = vnds_buf + 3 * ipgf;
 
@@ -532,16 +621,16 @@ void InterfaceBoundaryFlux_C(void* buffer[], void* cl_args){
       int imemL = f->varindex(f->deg, f->raf,f->model.m, ipgL, iv);
       rhs[imemL] -= flux[iv] * f->dt;
     }
-    
+
 
   }
 
-  
-  
 
 
 
-  
+
+
+
 
 }
 
@@ -557,7 +646,7 @@ void InterfaceExplicitFlux(Interface* inter, int side){
   int *index;
 
   const int sign = 1 - 2 * side;
-  
+
   if (side == 0) {
     f = inter->fL;
     fext = inter->fR;
@@ -586,20 +675,20 @@ void InterfaceExplicitFlux(Interface* inter, int side){
     } else {
       res = f->res;
     }
-  
+
     const unsigned int m = f->model.m;
 
     //printf("locfa=%d \n",locfa);
 
     for(int ipgf = 0; ipgf < NPGF(f->deg, f->raf, locfa); ipgf++) {
 
- 
+
       real flux[m];
       real wL[m];
       for(int iv = 0; iv < m; iv++) {
 	wL[iv] = 0;
       }
- 
+
       if (fext != NULL) {  // the right element exists
 	real wR[m];
 	int ipgR = index_ext[ipgf];
@@ -612,7 +701,7 @@ void InterfaceExplicitFlux(Interface* inter, int side){
 
 	// int_dL F(wL, wR, grad phi_ib)
 	real vndsloc[3];
-	
+
 	vndsloc[0] = sign * inter->vnds[3 * ipgf + 0];
 	vndsloc[1] = sign * inter->vnds[3 * ipgf + 1];
 	vndsloc[2] = sign * inter->vnds[3 * ipgf + 2];
@@ -620,18 +709,18 @@ void InterfaceExplicitFlux(Interface* inter, int side){
 	//printf("sign=%d ipgL=%d ipgR=%d vndsloc=%f %f\n",sign,ipgL,ipgR,vndsloc[0],vndsloc[1]);
 
 	//assert(f != NULL);
-	
+
 	f->model.NumFlux(wL, wR, vndsloc, flux);
 	//printf("flux=%f %f\n",flux[0],flux[0]);
 
-	// Add flux  to the selected side 
+	// Add flux  to the selected side
 	for(int iv = 0; iv < m; iv++) {
 	  int ipgL = index[ipgf];
 	  // The basis functions is also the gauss point index
 	  int imemL = f->varindex(f->deg, f->raf,f->model.m, ipgL, iv);
 	  res[imemL] -= flux[iv] * f->dt;
 	  printf("imem=%d res=%f\n",imemL,res[imemL]);
-	  
+
 	  /* real* xpg = inter->xpg + 3 * ipgf; */
 	  /* real* vnds = inter->vnds + 3 * ipgf; */
 	  /* printf("interface flux=%f xpg=%f %f vnds=%f %f\n", */
@@ -662,7 +751,6 @@ void InterfaceExplicitFlux(Interface* inter, int side){
 
     }
 
-  
+
   }
 }
-

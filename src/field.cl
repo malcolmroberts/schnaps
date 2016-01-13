@@ -1259,6 +1259,27 @@ void DGMassRes(int m,
 }
 
 
+__kernel
+void ExtractInterface(int m,
+                      __constant int *c_deg,
+                      __constant int *c_raf,
+                      __global int *index,       // current macrocell face to volume index
+                      __global real *wn,         // current field values
+                      __global real *wf          // output field values of interface
+                      )
+{
+  // Face glop
+  const int ipgf = get_global_id(0);
+
+  const int ipgv = index[ipgf];
+  for (int iv = 0; iv < _M; ++iv) {
+    const int imem = VARINDEX(c_deg, c_raf, _M, ipgv, iv);
+    const int jmem = VARINDEX(c_deg, c_raf, _M, ipgf, iv);
+    wf[jmem] = wn[imem];
+  }
+}
+
+
 // Compute the Discontinuous Galerkin inter-macrocells boundary terms.
 // Second implementation with a loop on the faces.
 __kernel
@@ -1359,6 +1380,50 @@ void DGMacroCellInterface(__constant int *param,        // 0: interp param
 }
 
 
+__kernel
+void DGMacroCellInterfaceRes(int m,
+                             __constant int *c_deg,
+                             __constant int *c_raf,
+                             int sign,                  // sign that indicates the selected side
+                             __global int *index,       // current macrocell face to volume index
+                             __global real *wn,         // current field values
+                             __global real *wn_ext,     // neighboring field values
+                             __global real *vnds_buf,   // normal vectors buffer
+                             __global real *res         // residual
+                             )
+{
+  // Face glop
+  const int ipgf = get_global_id(0);
+
+  // Left and right fields
+  real wL[_M];
+  real wR[_M];
+  for (int iv = 0; iv < _M; ++iv) {
+    // Face fields are stored with the volumic varindex in these vectors
+    const int imem = VARINDEX(c_deg, c_raf, _M, ipgf, iv);
+    wL[iv] = wn[imem];
+    wR[iv] = wn_ext[imem];
+  }
+
+  // Normal vector
+  real vnds[3];
+  vnds[0] = sign * vnds_buf[3 * ipgf + 0];
+  vnds[1] = sign * vnds_buf[3 * ipgf + 1];
+  vnds[2] = sign * vnds_buf[3 * ipgf + 2];
+
+  // Flux
+  real flux[_M];
+  NUMFLUX(wL, wR, vnds, flux);
+
+  // Add flux to the selected side
+  const int ipgL = index[ipgf];
+  for (int iv = 0; iv < _M; ++iv) {
+    const int imem = VARINDEX(c_deg, c_raf, _M, ipgL, iv);
+    res[imem] -= flux[iv];
+  }
+}
+
+
 // Compute the Discontinuous Galerkin inter-macrocells boundary terms.
 // Second implementation with a loop on the faces.
 __kernel
@@ -1418,6 +1483,52 @@ void DGBoundary(__constant int *param,      // 0: interp param
   __global real *dtwn0 = dtwn + imemL0;
   for(int iv = 0; iv < m; ++iv) {
     dtwn0[iv] -= flux[iv] * wpg;
+  }
+}
+
+
+__kernel
+void DGBoundaryRes(int m,
+                   __constant int *c_deg,
+                   __constant int *c_raf,
+                   real tnow,                 // current time
+                   __global int *index,       // current macrocell face to volume index
+                   __global real *wn,         // current field values
+                   __global real *xpg_buf,    // reference coordinates buffer
+                   __global real *vnds_buf,   // normal vectors buffer
+                   __global real *res         // residual
+                   )
+{
+  // Face glop
+  const int ipgf = get_global_id(0);
+
+  // Left and right fields
+  real wL[_M];
+  for (int iv = 0; iv < _M; ++iv) {
+    // Face fields are stored with the volumic varindex in these vectors
+    const int imem = VARINDEX(c_deg, c_raf, _M, ipgf, iv);
+    wL[iv] = wn[imem];
+  }
+
+  // Reference coordinates
+  const real xpg[3] = {xpg_buf[3 * ipgf + 0],
+                       xpg_buf[3 * ipgf + 1],
+                       xpg_buf[3 * ipgf + 2]};
+
+  // Normal vector
+  const real vnds[3] = {vnds_buf[3 * ipgf + 0],
+                        vnds_buf[3 * ipgf + 1],
+                        vnds_buf[3 * ipgf + 2]};
+
+  // Flux
+  real flux[_M];
+  BOUNDARYFLUX(xpg, tnow, wL, vnds, flux);
+
+  // Add flux to the selected side
+  const int ipgL = index[ipgf];
+  for (int iv = 0; iv < _M; ++iv) {
+    int imem = VARINDEX(c_deg, c_raf, _M, ipgL, iv);
+    res[imem] -= flux[iv];
   }
 }
 

@@ -52,6 +52,7 @@ int TestfieldRK2(void){
 
   int deg[]={3, 3, 3};
   int raf[]={1, 1, 1};
+  //int raf[]={2, 2, 2};
 
 #endif
 

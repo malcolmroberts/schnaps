@@ -15,12 +15,12 @@ SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 # -D_SCHNAPS_DIR=${PROJECT_SOURCE_DIR} -O3 -g  ")
 #set(CMAKE_C_FLAGS " -std=c99 -D_DOUBLE_PRECISION -D_SCHNAPS_DIR=${PROJECT_SOURCE_DIR} -O3 -g  ")
 set(CMAKE_C_FLAGS " -std=gnu99 -D_SCHNAPS_DIR=${PROJECT_SOURCE_DIR} -O3 ")
-#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_DOUBLE_PRECISION")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_DOUBLE_PRECISION")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -g")
 
 # needed for mac
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -lsuitesparseconfig")  
-set(CMAKE_CXX_FLAGS "-lsuitesparseconfig")  
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -lsuitesparseconfig")
+set(CMAKE_CXX_FLAGS "-lsuitesparseconfig")
 
 MESSAGE(Compil. options: ${CMAKE_C_FLAGS})
 
@@ -57,10 +57,12 @@ IF(USE_STARPU)# set with: cmake . -DUSE_STARPU:BOOL=ON
   MESSAGE("Compiling with StarPU Library")
   if(STARPU_INCDIR)
     INCLUDE_DIRECTORIES(${STARPU_INCDIR})
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_WITH_STARPU")
   else()
     find_package (STARPU REQUIRED COMPONENTS HWLOC MPI)
     if(STARPU_FOUND)
       MESSAGE("StarPU found")
+      set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_WITH_STARPU")
       INCLUDE_DIRECTORIES(${STARPU_INCLUDE_DIRS})
       LINK_DIRECTORIES(${STARPU_LIBRARY_DIRS})
     else()
@@ -331,5 +333,3 @@ foreach(example IN LISTS examplelist)
     )
   target_link_libraries(${example} ${LIBS})
 endforeach(example)
-
-
