@@ -17,7 +17,7 @@ int TestfieldRK2(void){
   // test/testdisque.msh
 
   char *mshname =  "../test/disque2d.msh";
-  
+
   MacroMesh mesh;
   ReadMacroMesh(&mesh,"../test/testdisque.msh");
   //ReadMacroMesh(&mesh,"../test/testcube2.msh");
@@ -84,19 +84,19 @@ int TestfieldRK2(void){
     return true;
   }
 #endif
-  
+
   CheckMacroMesh(&mesh, deg, raf);
   Simulation simu;
   EmptySimulation(&simu);
 
   InitSimulation(&simu, &mesh, deg, raf, &model);
- 
+
   real tmax = 0.25;
-  //tmax = 0.019;
+  //tmax = 0.006848;
   simu.cfl=0.2;
   simu.vmax=1;
   RK2(&simu,tmax);
- 
+
   PlotFields(0, false, &simu, NULL, "dgvisu.msh");
   PlotFields(0, true , &simu, "error", "dgerror.msh");
 
@@ -110,15 +110,15 @@ int TestfieldRK2(void){
   test = dd < tolerance;
 
   FreeMacroMesh(&mesh);
-  
+
   return test;
 }
 
 int main(void) {
   int resu = TestfieldRK2();
-  if(resu) 
+  if(resu)
     printf("field RK2 test OK !\n");
-  else 
+  else
     printf("field RK2 test failed !\n");
   return !resu;
-} 
+}

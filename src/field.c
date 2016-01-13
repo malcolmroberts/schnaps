@@ -12,7 +12,7 @@
 #include "solverpoisson.h"
 #include "model.h"
 
-#ifdef _WITH_OPENCL 
+#ifdef _WITH_OPENCL
 #include "clutils.h"
 #include "clinfo.h"
 #endif
@@ -29,7 +29,7 @@
 #pragma start_opencl
 int GenericVarindex(__constant int *deg, __constant int *raf, int m,
 		    int ipg, int iv) {
- 
+
   return iv + m * ipg;
 // int npg = (deg[0] + 1) * (deg[1] + 1) * (deg[2] + 1)
   // * raf[0] * raf[1] * raf[2];
@@ -52,7 +52,7 @@ int GenericVarindex_CG(__constant int *deg, __constant int *raf, int m,
 #pragma start_opencl
 int GenericVarindex3d(int m, int *nx, int *nc,
 		      int elem,
-		      int iv, int *ix, int *ic) 
+		      int iv, int *ix, int *ic)
 {
   // NB: passing nx and nx separately may allow one to deal with faces better.
   // Also, keeping the values in registers is theoretically faster than
@@ -62,17 +62,17 @@ int GenericVarindex3d(int m, int *nx, int *nc,
   // int nc[3] = {param[4], param[5], param[6]};
 
   // number of glops in subcell
-  int npgc = nx[0] * nx[1] * nx[2]; 
+  int npgc = nx[0] * nx[1] * nx[2];
   // number of glops in macrocell:
-  int npg = nc[0] * nc[1] * nc[2] * npgc; 
-  
-  // index in subcell: 
-  int ipgc = ix[0] + nx[0] * (ix[1] + nx[1] * ix[2]); 
+  int npg = nc[0] * nc[1] * nc[2] * npgc;
+
+  // index in subcell:
+  int ipgc = ix[0] + nx[0] * (ix[1] + nx[1] * ix[2]);
   // index of subcell in macrocell:
   int nsubcell = ic[0] + nc[0] * (ic[1] + nc[1] * ic[2]);
 
   // index of point in macrocell:
-  int ipg = ipgc + npgc * nsubcell; 
+  int ipg = ipgc + npgc * nsubcell;
   return iv + m * (ipg + npg * elem);
 }
 #pragma end_opencl
@@ -125,7 +125,7 @@ real min_grid_spacing(field *f)
       }
     }
     hmin = hmin < vol/surf ? hmin : vol/surf;
- 
+
   // Now take into account the polynomial degree and the refinement
   int maxd = f->deg[0];
   maxd = maxd > f->deg[1] ? maxd : f->deg[1];
@@ -161,7 +161,7 @@ void init_empty_field(field *f)
 
 void init_data(field *f)
 {
-   
+
     for(int ipg = 0; ipg < NPG(f->deg, f->raf); ipg++) {
       real xpg[3];
       real xref[3], omega;
@@ -186,16 +186,16 @@ void init_data(field *f)
 		f->dtwn[imem] = 0;
       }
     }
-  
+
 }
 
 #ifdef _WITH_OPENCL
-void set_physnodes_cl(Simulation *simu) 
+void set_physnodes_cl(Simulation *simu)
 {
   const int nmacro = simu->macromesh.nbelems;
   real buf_size = sizeof(real) * 60 * nmacro;
   real *physnode = malloc(buf_size);
-  
+
   for(int ie = 0; ie < nmacro; ++ie) {
     int ie20 = 20 * ie;
     for(int inoloc = 0; inoloc < 20; ++inoloc) {
@@ -207,7 +207,7 @@ void set_physnodes_cl(Simulation *simu)
       iphysnode[2] = nodeino[2];
     }
   }
-  
+
   cl_int status;
   status = clEnqueueWriteBuffer(simu->cli.commandqueue,
   				simu->physnodes_cl, // cl_mem buffer,
@@ -218,23 +218,23 @@ void set_physnodes_cl(Simulation *simu)
   				0, 0, 0);
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
   assert(status >= CL_SUCCESS);
-  
+
   free(physnode);
 
 
 }
 #endif
 
-void Initfield(field *f, Model model, 
+void Initfield(field *f, Model model,
 	       real physnode[][3], int *deg, int *raf, real *w, real* dtw) {
   //int param[8]={f->model.m,_DEGX,_DEGY,_DEGZ,_RAFX,_RAFY,_RAFZ,0};
-  
+
   //f->vmax = 1.0; // FIXME: make this variable ??????
 
   f->model = model;
 
   f->interp.m = model.m;
-  
+
   f->interp.deg[0] = deg[0];
   f->interp.deg[1] = deg[1];
   f->interp.deg[2] = deg[2];
@@ -322,7 +322,7 @@ void Initfield(field *f, Model model,
 
   printf("hmin=%f\n", f->hmin);
 
-  
+
   //printf("field init done\n");
   // default values for the linear solvers: not used
   f->solver = NULL;
@@ -330,9 +330,9 @@ void Initfield(field *f, Model model,
   f->solver_spu = NULL;
   f->rmat_spu = NULL;
 
-  // starpu registration (must be called after init_data) 
+  // starpu registration (must be called after init_data)
   Initfield_SPU(f);
-  
+
 }
 
 
@@ -367,7 +367,7 @@ void Registerfield_SPU(field *f){
 				sizeof(real));  // type
     f->starpu_registered = true;
   }
-  
+
 
 }
 
@@ -381,7 +381,7 @@ void Unregisterfield_SPU(field *f){
     starpu_data_unregister(f->res_handle);
     f->starpu_registered = false;
   }
-  
+
 
 }
 
@@ -414,12 +414,12 @@ void Initfield_SPU(field *f){
   /*   assert(f->res != NULL); */
   /*   assert(f->res == f->dtwn); */
   /* } */
-  
+
 
 }
 
 // This is the destructor for a field
-void free_field(field *f) 
+void free_field(field *f)
 {
 
 #ifdef _WITH_OPENCL
@@ -461,7 +461,7 @@ void Displayfield(field *f) {
 	printf("%f ", f->wn[imem]);
       }
       printf("\n");
-    
+
   }
 };
 
@@ -501,14 +501,14 @@ void Gnuplot(Simulation *simu,int dir, real fixval, char* filename) {
       }
     }
 }
-  
+
   fclose(gmshfile);
 };
 
 
 
 // Compute inter-subcell fluxes
-void DGSubCellInterface(field *f, real *w, real *dtw) 
+void DGSubCellInterface(field *f, real *w, real *dtw)
 {
 
 
@@ -536,8 +536,8 @@ void DGSubCellInterface(field *f, real *w, real *dtw)
 	int offsetL = npg[0] * npg[1] * npg[2] * ncL;
 
 	// Sweeping subcell faces in the three directions
-	for(int dim0 = 0; dim0 < 3; dim0++) { 
-	    
+	for(int dim0 = 0; dim0 < 3; dim0++) {
+
 	  // Compute the subface flux only if we do not touch the
 	  // subcell boundary along the current direction dim0
 	  if (icL[dim0] != nraf[dim0] - 1) {
@@ -567,9 +567,9 @@ void DGSubCellInterface(field *f, real *w, real *dtw)
 		int iR[3] = {iL[0], iL[1], iL[2]};
 		iR[dim0] = 0;
 
-		int ipgL = offsetL 
+		int ipgL = offsetL
 		  + iL[0] + (deg[0] + 1) * (iL[1] + (deg[1] + 1) * iL[2]);
-		int ipgR = offsetR 
+		int ipgR = offsetR
 		  + iR[0] + (deg[0] + 1) * (iR[1] + (deg[1] + 1) * iR[2]);
 		//printf("ipgL=%d ipgR=%d\n", ipgL, ipgR);
 
@@ -604,7 +604,7 @@ void DGSubCellInterface(field *f, real *w, real *dtw)
 		real wL[m], wR[m], flux[m];
 		for(int iv = 0; iv < m; iv++) {
 		  // TO DO change the varindex signature
-		  int imemL = f->varindex(f->deg, f->raf, f->model.m, ipgL, iv); 
+		  int imemL = f->varindex(f->deg, f->raf, f->model.m, ipgL, iv);
 		  int imemR = f->varindex(f->deg, f->raf, f->model.m, ipgR, iv);
 		  // end TO DO
 		  wL[iv] = w[imemL];
@@ -646,9 +646,9 @@ void DGSubCellInterface(field *f, real *w, real *dtw)
 // Second implementation with a loop on the faces.
 void DGMacroCellInterface(int locfaL,
 			  field *fL, int offsetL, field *fR, int offsetR,
-			  real *w, real *dtw) 
+			  real *w, real *dtw)
 {
-  
+
   const unsigned int m = fL->model.m;
 
 
@@ -740,7 +740,7 @@ void DGMacroCellInterface(int locfaL,
 
       fL->model.NumFlux(wL, wR, vnds, flux);
 
-	     
+
       // Add flux to both sides
       for(int iv = 0; iv < m; iv++) {
 	// The basis functions is also the gauss point index
@@ -769,11 +769,11 @@ void DGMacroCellInterface(int locfaL,
 
   }
 
-  
+
 }
 
 // Apply division by the mass matrix
-void DGMass(field *f, real *w, real *dtw) 
+void DGMass(field *f, real *w, real *dtw)
 {
 
   int m = f->model.m;
@@ -792,11 +792,11 @@ void DGMass(field *f, real *w, real *dtw)
       dtw[imem] /= (wpg * det);
     }
   }
-  
+
 }
 
 // Apply the source term
-void DGSource(field *f, real *w, real *dtw) 
+void DGSource(field *f, real *w, real *dtw)
 {
   if (f->model.Source == NULL) {
     return;
@@ -818,21 +818,21 @@ void DGSource(field *f, real *w, real *dtw)
       int imem = f->varindex(f->deg, f->raf, f->model.m, ipg, iv);
       wL[iv] = w[imem];
     }
-      
+
     f->model.Source(xphy, f->tnow, wL, source);
     // printf("tnow=%f\n",f->tnow);
 
     for(int iv = 0; iv < m; ++iv) {
       int imem = f->varindex(f->deg, f->raf, f->model.m, ipg, iv);
       dtw[imem] += source[iv] * det * wpg;
-	
+
     }
   }
-  
+
 }
 
 // Compute the Discontinuous Galerkin volume terms, fast version
-void DGVolume(field *f, real *w, real *dtw) 
+void DGVolume(field *f, real *w, real *dtw)
 {
 
 
@@ -904,7 +904,7 @@ void DGVolume(field *f, real *w, real *dtw)
 		  q[dim0] = (p[dim0] + iq) % npg[dim0];
 		  real dphiref[3] = {0, 0, 0};
 		  // compute grad phi_q at glop p
-		  dphiref[dim0] = dlag(deg[dim0], q[dim0], p[dim0]) 
+		  dphiref[dim0] = dlag(deg[dim0], q[dim0], p[dim0])
 		    * nraf[dim0];
 
 		  real xrefL[3] = {xref0[ipgL - offsetL],
@@ -931,7 +931,7 @@ void DGVolume(field *f, real *w, real *dtw)
 		  int ipgR = offsetL+q[0]+npg[0]*(q[1]+npg[1]*q[2]);
 		  for(int iv = 0; iv < m; iv++) {
 		    int imemR = f->varindex(f->deg,f->raf,f->model.m, ipgR, iv);
-		    int temp = m * (ipgR - offsetL) + iv;  
+		    int temp = m * (ipgR - offsetL) + iv;
 		    assert(imemR == imems[temp]);
 		    dtw[imems[temp]] += flux[iv] * wpgL;
 		  }
@@ -951,7 +951,7 @@ void DGVolume(field *f, real *w, real *dtw)
       } // icl2
     } //icl1
   } // icl0
-  
+
 }
 
 //cmake . -DUSE_OPENCL:BOOL=OFF
@@ -986,7 +986,7 @@ real L2error_onefield(Simulation *simu, int nbfield) {
       real wex[f->model.m];
       real wpg, det;
       // Compute wpg, det, and the exact solution
-      { 
+      {
 	real xphy[3], xpgref[3];
 	real dtau[3][3], codtau[3][3];
 	// Get the coordinates of the Gauss point
@@ -1030,13 +1030,13 @@ void InterpField(field *f, real *xref, real *w){
     is[ii] = xref[ii] * nraf[ii];
     assert(is[ii] < nraf[ii] && is[ii]>= 0);
   }
-  
+
   int npgv = NPG(deg, nraf);
   // TODO: loop only on non zero basis function
   for(int ib = 0; ib < npgv; ib++) {
     real psi;
     psi_ref_subcell(deg, nraf, is, ib, xref, &psi, NULL);
-    
+
     for(int iv=0;iv<f->model.m;iv++){
       int imem = f->varindex(deg, nraf, f->model.m, ib, iv);
       w[iv] += psi * f->wn[imem];
