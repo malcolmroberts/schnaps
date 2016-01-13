@@ -55,7 +55,7 @@ int TestKelvinHelmotz(int argc, char *argv[]) {
 
   BuildConnectivity(&mesh);
   int deg[]={1, 1, 0};
-  int raf[]={50, 50, 1};
+  int raf[]={20, 20, 1};
   CheckMacroMesh(&mesh, deg, raf);
 
   Model model;
@@ -95,12 +95,13 @@ int TestKelvinHelmotz(int argc, char *argv[]) {
   real tmax = 0.1;
   simu.vmax = 6.0;
   real dt = 0;
-  RK2_CL(&simu, tmax, dt,  0, NULL, NULL);
+
+  RK4_CL(&simu, tmax, dt,  0, NULL, NULL);
   
   CopyfieldtoCPU(&simu);
- 
-  PlotFields(0, false, &simu, NULL, "dgvisu.msh");
+
   show_cl_timing(&simu);
+  PlotFields(0, false, &simu, NULL, "dgvisu.msh");
 
   return test;
 
