@@ -27,7 +27,87 @@ int main(int argc, char *argv[]) {
   return !resu;
 }
 
-int TestMHD1D(int argc, char *argv[]) { /*
+int TestMHD1D(int argc, char *argv[]) {
+
+
+  int test = true;
+
+  if(!cldevice_is_acceptable(nplatform_cl, ndevice_cl)) {
+    printf("OpenCL device not acceptable.\n");
+    return true;
+  }
+
+  Simulation simu;
+  EmptySimulation(&simu);
+
+
+  MacroMesh mesh;
+  char *mshname =  "../test/testcartesiangrid1d.msh";
+  
+  ReadMacroMesh(&mesh, mshname);
+  Detect1DMacroMesh(&mesh);
+  bool is1d=mesh.is1d; 
+  assert(is1d);  
+
+  real periodsize = 10.;
+  mesh.period[0]=periodsize;
+
+  BuildConnectivity(&mesh);
+  int deg[]={1, 0, 0};
+  int raf[]={10, 1, 1};
+  CheckMacroMesh(&mesh, deg, raf);
+
+  Model model;
+
+  real cfl = 0.2;
+
+  simu.cfl = cfl;
+  model.m = 9;
+
+  strcpy(model.name,"MHD");
+
+  model.NumFlux=MHDNumFluxRusanov;
+  model.BoundaryFlux=MHDBoundaryFlux;
+  model.InitData=MHDInitData;
+  model.ImposedData=MHDImposedData;
+  model.Source = NULL;
+  
+  char buf[1000];
+  sprintf(buf, "-D _M=%d -D _PERIODX=%f -D _PERIODY=%f",
+          model.m,
+          periodsize,
+          periodsize);
+  strcat(cl_buildoptions, buf);
+
+  sprintf(numflux_cl_name, "%s", "MHDNumFluxRusanov");
+  sprintf(buf," -D NUMFLUX=");
+  strcat(buf, numflux_cl_name);
+  strcat(cl_buildoptions, buf);
+
+  sprintf(buf, " -D BOUNDARYFLUX=%s -cl-fast-relaxed-math", "MHDBoundaryFlux");
+  strcat(cl_buildoptions, buf);
+
+
+
+  InitSimulation(&simu, &mesh, deg, raf, &model);
+ 
+  real tmax = 1.0;
+  simu.vmax = 6.0;
+  real dt = 0;
+  RK4_CL(&simu, tmax, dt,  0, NULL, NULL);
+  //RK4(&simu, tmax);
+  
+  CopyfieldtoCPU(&simu);
+ 
+  show_cl_timing(&simu);
+  PlotFields(0, false, &simu, NULL, "dgvisu.msh");
+
+  return test;
+  
+
+}
+
+  /*
   real cfl = 0.2;
   real tmax = 1.0;
   bool writemsh = false;
@@ -168,4 +248,4 @@ int TestMHD1D(int argc, char *argv[]) { /*
   printf("%f\n", executiontime / (real)f.itermax);
 
   return test; */
-}
+

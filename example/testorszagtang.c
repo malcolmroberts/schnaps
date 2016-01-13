@@ -54,8 +54,8 @@ int TestOrszagTang(int argc, char *argv[]) {
   mesh.period[1]=periodsize;
 
   BuildConnectivity(&mesh);
-  int deg[]={3, 3, 0};
-  int raf[]={40, 40, 1};
+  int deg[]={2, 2, 0};
+  int raf[]={53, 53, 1};
   CheckMacroMesh(&mesh, deg, raf);
 
   Model model;
@@ -85,7 +85,7 @@ int TestOrszagTang(int argc, char *argv[]) {
   strcat(buf, numflux_cl_name);
   strcat(cl_buildoptions, buf);
 
-  sprintf(buf, " -D BOUNDARYFLUX=%s", "MHDBoundaryFluxOrszagTang");
+  sprintf(buf, " -D BOUNDARYFLUX=%s -cl-fast-relaxed-math", "MHDBoundaryFluxOrszagTang");
   strcat(cl_buildoptions, buf);
 
 
@@ -96,11 +96,12 @@ int TestOrszagTang(int argc, char *argv[]) {
   simu.vmax = 6.0;
   real dt = 0;
   RK4_CL(&simu, tmax, dt,  0, NULL, NULL);
+  //RK4(&simu, tmax);
   
   CopyfieldtoCPU(&simu);
  
-  PlotFields(0, false, &simu, NULL, "dgvisu.msh");
   show_cl_timing(&simu);
+  PlotFields(0, false, &simu, NULL, "dgvisu.msh");
 
   return test;
 }

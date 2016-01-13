@@ -14,7 +14,7 @@ SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 #set(CMAKE_C_FLAGS " -std=c99 -lumfpack -lamd -lblas -lsuitesparseconfig -lcholmod -lcolamd -D_DOUBLE_PRECISION
 # -D_SCHNAPS_DIR=${PROJECT_SOURCE_DIR} -O3 -g  ")
 #set(CMAKE_C_FLAGS " -std=c99 -D_DOUBLE_PRECISION -D_SCHNAPS_DIR=${PROJECT_SOURCE_DIR} -O3 -g  ")
-set(CMAKE_C_FLAGS " -std=gnu99 -D_SCHNAPS_DIR=${PROJECT_SOURCE_DIR} -O3 ")
+set(CMAKE_C_FLAGS " -std=gnu99 -D_SCHNAPS_DIR=${PROJECT_SOURCE_DIR} -O3 -march=native ")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_DOUBLE_PRECISION")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -g")
 
@@ -333,3 +333,5 @@ foreach(example IN LISTS examplelist)
     )
   target_link_libraries(${example} ${LIBS})
 endforeach(example)
+
+

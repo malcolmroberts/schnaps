@@ -55,7 +55,7 @@ int TestReconnexion(int argc, char *argv[]) {
   mesh.period[1]=periodsize;
 
   BuildConnectivity(&mesh);
-  int deg[]={2, 2, 0};
+  int deg[]={1, 1, 0};
   int raf[]={20, 20, 1};
   CheckMacroMesh(&mesh, deg, raf);
 
@@ -93,15 +93,15 @@ int TestReconnexion(int argc, char *argv[]) {
 
   InitSimulation(&simu, &mesh, deg, raf, &model);
  
-  real tmax = 1.0;
+  real tmax = 0.1;
   simu.vmax = 6.0;
   real dt = 0;
   RK4_CL(&simu, tmax, dt,  0, NULL, NULL);
   
   CopyfieldtoCPU(&simu);
- 
+
+  show_cl_timing(&simu);  
   PlotFields(5, false, &simu, NULL, "dgvisu.msh");
-  show_cl_timing(&simu);
 
   return test;
 
