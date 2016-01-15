@@ -38,7 +38,15 @@ void Init_PBPC_Wave_SchurVelocity_BCPressure(Simulation *simu, PB_PC* pb_pc, int
   listvarSchur[0]=1;
   listvarSchur[1]=2;
 
+  int nb_var_full = 3;
+  int * listvarGlobal = calloc(nb_var_full, sizeof(int));
+  listvarGlobal[0]=0;
+  listvarGlobal[1]=1;
+  listvarGlobal[2]=2;
+
   // Initializing all solvers 
+  InitContinuousSolver(&pb_pc->fullSolver,simu,1,nb_var_full,listvarGlobal);
+  free(listvarGlobal);
   InitContinuousSolver(&pb_pc->D,simu,1,nb_varD,listvarD);
   free(listvarD);
   InitContinuousSolver(&pb_pc->L1,simu,1,nb_varL1,listvarL1);
@@ -98,6 +106,13 @@ void Init_PBPC_Wave_SchurVelocity_BCPressure(Simulation *simu, PB_PC* pb_pc, int
   pb_pc->U1.diff_op = calloc(pb_pc->U1.nb_phy_vars*pb_pc->U1.nb_phy_vars,sizeof(SDO));
   pb_pc->U2.diff_op = calloc(pb_pc->U2.nb_phy_vars*pb_pc->U2.nb_phy_vars,sizeof(SDO));
 
+  pb_pc->D.lsol.mat_is_assembly = false;
+  pb_pc->L1.lsol.mat_is_assembly = false;
+  pb_pc->L2.lsol.mat_is_assembly = false;
+  pb_pc->U1.lsol.mat_is_assembly = false;
+  pb_pc->U2.lsol.mat_is_assembly = false;
+  pb_pc->Schur.lsol.mat_is_assembly = false;
+
   // Applying these matrices inside the different ContinuousSolver
   for (int i=0; i<4; i++){
     for (int j=0; j<4; j++){
@@ -132,7 +147,6 @@ void Init_PBPC_Wave_SchurVelocity_BCPressure(Simulation *simu, PB_PC* pb_pc, int
   pb_pc->L2.bc_assembly=BoundaryConditionFriedrichsAssembly;
   pb_pc->U2.bc_flux=BoundaryTerm_Yderivative;
   pb_pc->U2.bc_assembly=BoundaryConditionFriedrichsAssembly;
-
  
   pb_pc->U2.bc_assembly(&pb_pc->U2);
   pb_pc->U1.bc_assembly(&pb_pc->U1);
@@ -188,7 +202,15 @@ void Init_PBPC_Wave_SchurVelocity_BCVelocity(Simulation *simu, PB_PC* pb_pc, int
   listvarSchur[0]=1;
   listvarSchur[1]=2;
 
+  int nb_var_full = 3;
+  int * listvarGlobal = calloc(nb_var_full, sizeof(int));
+  listvarGlobal[0]=0;
+  listvarGlobal[1]=1;
+  listvarGlobal[2]=2;
+
   // Initializing all solvers 
+  InitContinuousSolver(&pb_pc->fullSolver,simu,1,nb_var_full,listvarGlobal);
+  free(listvarGlobal);
   InitContinuousSolver(&pb_pc->D,simu,1,nb_varD,listvarD);
   free(listvarD);
   InitContinuousSolver(&pb_pc->L1,simu,1,nb_varL1,listvarL1);
@@ -247,6 +269,13 @@ void Init_PBPC_Wave_SchurVelocity_BCVelocity(Simulation *simu, PB_PC* pb_pc, int
   pb_pc->L2.diff_op = calloc(pb_pc->L2.nb_phy_vars*pb_pc->L2.nb_phy_vars,sizeof(SDO));
   pb_pc->U1.diff_op = calloc(pb_pc->U1.nb_phy_vars*pb_pc->U1.nb_phy_vars,sizeof(SDO));
   pb_pc->U2.diff_op = calloc(pb_pc->U2.nb_phy_vars*pb_pc->U2.nb_phy_vars,sizeof(SDO));
+
+  pb_pc->D.lsol.mat_is_assembly = false;
+  pb_pc->L1.lsol.mat_is_assembly = false;
+  pb_pc->L2.lsol.mat_is_assembly = false;
+  pb_pc->U1.lsol.mat_is_assembly = false;
+  pb_pc->U2.lsol.mat_is_assembly = false;
+  pb_pc->Schur.lsol.mat_is_assembly = false;
 
   // Applying these matrices inside the different ContinuousSolver
   for (int i=0; i<4; i++){
@@ -340,8 +369,15 @@ void Init_PBPC_Wave_SchurPressure_BCVelocity(Simulation *simu, PB_PC* pb_pc, int
   int * listvarSchur = calloc(nb_varSchur,sizeof(int));
   listvarSchur[0]=0;
 
+  int nb_var_full = 3;
+  int * listvarGlobal = calloc(nb_var_full, sizeof(int));
+  listvarGlobal[0]=0;
+  listvarGlobal[1]=1;
+  listvarGlobal[2]=2;
 
   // Initializing all solvers 
+  InitContinuousSolver(&pb_pc->fullSolver,simu,1,nb_var_full,listvarGlobal);
+  free(listvarGlobal);
   InitContinuousSolver(&pb_pc->D,simu,1,nb_varD,listvarD);
   free(listvarD);
   InitContinuousSolver(&pb_pc->L1,simu,1,nb_varL1,listvarL1);
@@ -400,6 +436,13 @@ void Init_PBPC_Wave_SchurPressure_BCVelocity(Simulation *simu, PB_PC* pb_pc, int
   pb_pc->L2.diff_op = calloc(pb_pc->L2.nb_phy_vars*pb_pc->L2.nb_phy_vars,sizeof(SDO));
   pb_pc->U1.diff_op = calloc(pb_pc->U1.nb_phy_vars*pb_pc->U1.nb_phy_vars,sizeof(SDO));
   pb_pc->U2.diff_op = calloc(pb_pc->U2.nb_phy_vars*pb_pc->U2.nb_phy_vars,sizeof(SDO));
+
+  pb_pc->D.lsol.mat_is_assembly = false;
+  pb_pc->L1.lsol.mat_is_assembly = false;
+  pb_pc->L2.lsol.mat_is_assembly = false;
+  pb_pc->U1.lsol.mat_is_assembly = false;
+  pb_pc->U2.lsol.mat_is_assembly = false;
+  pb_pc->Schur.lsol.mat_is_assembly = false;
   
   // Applying these matrices inside the different ContinuousSolver
   for (int i=0; i<4; i++){
@@ -495,8 +538,15 @@ void Init_PBPC_Wave_SchurPressure_BCPressure(Simulation *simu, PB_PC* pb_pc, int
   int * listvarSchur = calloc(nb_varSchur,sizeof(int));
   listvarSchur[0]=0;
 
+  int nb_var_full = 3;
+  int * listvarGlobal = calloc(nb_var_full, sizeof(int));
+  listvarGlobal[0]=0;
+  listvarGlobal[1]=1;
+  listvarGlobal[2]=2;
 
   // Initializing all solvers 
+  InitContinuousSolver(&pb_pc->fullSolver,simu,1,nb_var_full,listvarGlobal);
+  free(listvarGlobal);
   InitContinuousSolver(&pb_pc->D,simu,1,nb_varD,listvarD);
   free(listvarD);
   InitContinuousSolver(&pb_pc->L1,simu,1,nb_varL1,listvarL1);
@@ -555,6 +605,13 @@ void Init_PBPC_Wave_SchurPressure_BCPressure(Simulation *simu, PB_PC* pb_pc, int
   pb_pc->L2.diff_op = calloc(pb_pc->L2.nb_phy_vars*pb_pc->L2.nb_phy_vars,sizeof(SDO));
   pb_pc->U1.diff_op = calloc(pb_pc->U1.nb_phy_vars*pb_pc->U1.nb_phy_vars,sizeof(SDO));
   pb_pc->U2.diff_op = calloc(pb_pc->U2.nb_phy_vars*pb_pc->U2.nb_phy_vars,sizeof(SDO));
+
+  pb_pc->D.lsol.mat_is_assembly = false;
+  pb_pc->L1.lsol.mat_is_assembly = false;
+  pb_pc->L2.lsol.mat_is_assembly = false;
+  pb_pc->U1.lsol.mat_is_assembly = false;
+  pb_pc->U2.lsol.mat_is_assembly = false;
+  pb_pc->Schur.lsol.mat_is_assembly = false;
   
   // Applying these matrices inside the different ContinuousSolver
   for (int i=0; i<4; i++){

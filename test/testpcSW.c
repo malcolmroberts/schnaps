@@ -109,7 +109,7 @@ int TestpcSW(void) {
     model.Source = ShallowWater_SteadyState_U_SourceTerm;
 
     int deg[]={4, 4, 0};
-    int raf[]={4, 4, 1};
+    int raf[]={24, 24, 1};
 
     assert(mesh.is2d);
     CheckMacroMesh(&mesh, deg, raf);
@@ -130,16 +130,16 @@ int TestpcSW(void) {
     //simu.dt=0.002/8;
     simu.vmax=1;//_SPEED_WAVE;
     simu.cfl = 0.025;
-    simu.dt = 0.01;//Get_Dt_RK(&simu)/16;
-    real tmax=0.01;
+    simu.dt = 1.0;//Get_Dt_RK(&simu)/16;
+    real tmax=5.0;//*simu.dt;//0.1;
     int itermax=tmax/simu.dt;
     simu.itermax_rk=itermax;
 
     cs.lsol.problem_type=SW;
-    cs.lsol.solver_type=LU;//GMRES;
-    cs.lsol.tol=1.e-14;
+    cs.lsol.solver_type=GMRES;
+    cs.lsol.tol=1.e-9;
     cs.lsol.pc_type=PHY_BASED_U1;
-    cs.lsol.iter_max=2000;
+    cs.lsol.iter_max=10000;
     cs.lsol.restart_gmres=20;
     cs.lsol.is_CG=true;
 
@@ -176,23 +176,20 @@ int TestpcSW(void) {
       }
 
       SW_test(&cs,wCG,simu.theta,simu.dt);
-      //MatVect(&cs.lsol,wCG,resCG);
       cs.rhs_assembly(&cs);
       cs.bc_assembly(&cs);
       for (int i=0; i<sizeCG; i++){
         cs.lsol.sol[i] = wCG[i];
-        //cs.lsol.rhs[i] += resCG[i];
       }
-      //printf("RHS!!\n");
       //for (int i=0; i<size1varCG; i++){
-      //  printf("i=%d, h=%.8e, u=%.8e, v=%.8e\n",i,cs.lsol.rhs[3*i],cs.lsol.rhs[3*i+1],cs.lsol.rhs[3*i+2]);
+      //  printf("i=%d, h=%.8e, u=%.8e, v=%.8e\n", i, cs.lsol.rhs[3*i], cs.lsol.rhs[3*i+1], cs.lsol.rhs[3*i+2]);
       //}
-      //printf("SOL!!\n");
-      //for (int i=0; i<size1varCG; i++){
-      //  printf("i=%d, h=%.8e, u=%.8e, v=%.8e\n",i,cs.lsol.sol[3*i],cs.lsol.sol[3*i+1],cs.lsol.sol[3*i+2]);
-      //}
+      //DisplayLinearSolver(&cs.lsol);
       Advanced_SolveLinearSolver(&cs.lsol,&simu);
 
+      //for (int i=0; i<size1varCG; i++){
+      //  printf("i=%d, h=%.8e, u=%.8e, v=%.8e\n",i,wCG[3*i],wCG[3*i+1],wCG[3*i+2]);
+      //}
       for (int i=0; i<sizeCG; i++){
         wCG[i] += cs.lsol.sol[i];
       }
@@ -256,7 +253,7 @@ int TestpcSW(void) {
     simu2.vmax=1;//_SPEED_WAVE;
     simu2.cfl = 0.025;
     simu2.dt = 0.5/1;//Get_Dt_RK(&simu2)/16;
-    real tmax= 4;//4*simu2.dt;//0.002;
+    real tmax= 1*simu2.dt;//0.002;
     int itermax=tmax/simu2.dt;
     simu2.itermax_rk=itermax;
 
@@ -348,7 +345,7 @@ int TestpcSW(void) {
     model3.BoundaryFlux = SteadyState_U_Rusanov_BoundaryFlux;
     model3.Source = ShallowWater_SteadyState_U_SourceTerm;
 
-    int deg3[]={4, 4, 0};
+    int deg3[]={2, 2, 0};
     int raf3[]={4, 4, 1};
 
     assert(mesh.is2d);
@@ -367,24 +364,24 @@ int TestpcSW(void) {
 
     real theta=0.5;
     simu3.theta=theta;
-    simu3.dt=0.5;
     simu3.vmax=_SPEED_WAVE;
-    real tmax=0.5;//1*simu3.dt;
+    simu3.dt = 10.0/8;//Get_Dt_RK(&simu)/16;
+    real tmax=10.0;//1.0*simu.dt;//0.1;
     int itermax=tmax/simu3.dt;
     simu3.itermax_rk=itermax;
     
-    cs3.lsol.problem_type=SW;
     cs3.lsol.solver_type=LU;//GMRES;
     cs3.lsol.tol=1.e-8;
-    cs3.lsol.pc_type=PHY_BASED_U1;
+    cs3.lsol.pc_type=PHY_BASED_U2;
     cs3.lsol.iter_max=2000;
     cs3.lsol.restart_gmres=10;
     cs3.lsol.is_CG=true;
 
-    cs3.bc_flux=Wave_BC_normalvelocity_null;
+    cs3.lsol.problem_type=SW;
+    cs3.bc_flux=Wave_BC_pressure_null;
     cs3.bc_assembly=BoundaryConditionFriedrichsAssembly;
     cs3.rhs_assembly=Source_Assembly;
-    cs3.type_bc=1;
+    cs3.type_bc=2;
 
     int size1varDG = cs3.nb_dg_nodes;
     int size1varCG = cs3.nb_fe_nodes;
@@ -398,8 +395,6 @@ int TestpcSW(void) {
     PB_PC pb_pc;    
     int mat2assemble[6] = {1, 1, 1, 1, 1, 1};
     GlobalInit_PBPC(&pb_pc, &cs3.lsol, &simu3, mat2assemble);
-    //Init_PBPC_SW_SchurVelocity_BCVelocity(&simu3, &pb_pc, mat2assemble);
-    //Init_Parameters_PhyBasedPC(&pb_pc);
   
     real h=simu3.vmax*simu3.dt*simu3.theta;
     cs3.FluxMatrix = calloc(cs3.nb_phy_vars,sizeof(real));
@@ -431,6 +426,7 @@ int TestpcSW(void) {
     for(int tstep=0;tstep<simu3.itermax_rk;tstep++){
 
       cs3.reset_dt(&cs3.lsol);
+      reset(&pb_pc);
 
       simu3.tnow=simu3.tnow+simu3.dt;
       for(int ie=0; ie < simu3.macromesh.nbelems; ++ie){
@@ -438,19 +434,34 @@ int TestpcSW(void) {
       }
       for (int i=0; i<sizeCG; i++){
         cs3.lsol.sol[i] = wCG[i];
+        pb_pc.fullSolver.lsol.sol[i] = wCG[i];
       }
 
-      pb_pc.rhs_assembly(&pb_pc,&cs3);
-      pb_pc.source_assembly(&cs3);
-      pb_pc.bc_assembly(&cs3);
-      for (int i=0; i<sizeCG; i++){
-        cs3.lsol.sol[i] = wCG[i];
-      }
+      //printf("Blank!\n");
+      //for (int i=0; i<size1varCG; i++){
+      //  printf("i=%d, h=%.8e, u=%.8e, v=%.8e\n", i, pb_pc.fullSolver.lsol.rhs[3*i], pb_pc.fullSolver.lsol.rhs[3*i+1], pb_pc.fullSolver.lsol.rhs[3*i+2]);
+      //}
+      pb_pc.rhs_assembly(&pb_pc,&pb_pc.fullSolver);
+      //printf("RHS!\n");
+      //for (int i=0; i<size1varCG; i++){
+      //  printf("i=%d, h=%.8e, u=%.8e, v=%.8e\n", i, pb_pc.fullSolver.lsol.rhs[3*i], pb_pc.fullSolver.lsol.rhs[3*i+1], pb_pc.fullSolver.lsol.rhs[3*i+2]);
+      //}
+      pb_pc.source_assembly(&pb_pc.fullSolver);
+      //printf("Source!\n");
+      //for (int i=0; i<size1varCG; i++){
+      //  printf("i=%d, h=%.8e, u=%.8e, v=%.8e\n", i, pb_pc.fullSolver.lsol.rhs[3*i], pb_pc.fullSolver.lsol.rhs[3*i+1], pb_pc.fullSolver.lsol.rhs[3*i+2]);
+      //}
+      pb_pc.bc_assembly(&pb_pc.fullSolver);
+      printf("BC!\n");
+      //for (int i=0; i<size1varCG; i++){
+      //  printf("i=%d, h=%.8e, u=%.8e, v=%.8e\n", i, pb_pc.fullSolver.lsol.rhs[3*i], pb_pc.fullSolver.lsol.rhs[3*i+1], pb_pc.fullSolver.lsol.rhs[3*i+2]);
+      //}
+      pb_pc.mat_assembly(&pb_pc, &pb_pc.fullSolver);
 
-      pb_pc.solvePC(&pb_pc,&simu3,cs3.lsol.sol,cs3.lsol.rhs);
+      pb_pc.solvePC(&pb_pc,&simu3,pb_pc.fullSolver.lsol.sol,pb_pc.fullSolver.lsol.rhs);
 
       for (int i=0; i<sizeCG; i++){
-        wCG[i] += cs3.lsol.sol[i];
+        wCG[i] += pb_pc.fullSolver.lsol.sol[i];
       }
 
       int freq = (1 >= simu3.itermax_rk / 10)? 1 : simu3.itermax_rk / 10;
@@ -510,7 +521,7 @@ int TestpcSW(void) {
     simu4.theta=theta;
     simu4.dt = 0.5/1;
     simu4.vmax=_SPEED_WAVE;
-    real tmax= 4;//1*simu4.dt;
+    real tmax= 1*simu4.dt;
     int itermax=tmax/simu4.dt;
     simu4.itermax_rk=itermax;
     
@@ -538,8 +549,9 @@ int TestpcSW(void) {
 
     PB_PC pb_pc;    
     int mat2assemble[6] = {1, 1, 1, 1, 1, 1};
-    Init_PBPC_SW_SchurVelocity_BCPressure(&simu4, &pb_pc, mat2assemble);
-    Init_Parameters_PhyBasedPC(&pb_pc);
+    GlobalInit_PBPC(&pb_pc, &cs4.lsol, &simu4, mat2assemble);
+    //Init_PBPC_SW_SchurVelocity_BCPressure(&simu4, &pb_pc, mat2assemble);
+    //Init_Parameters_PhyBasedPC(&pb_pc);
   
     real h=simu4.vmax*simu4.dt*simu4.theta;
     cs4.FluxMatrix = calloc(cs4.nb_phy_vars,sizeof(real));
@@ -571,6 +583,7 @@ int TestpcSW(void) {
     for(int tstep=0;tstep<simu4.itermax_rk;tstep++){
 
       cs4.reset_dt(&cs4.lsol);
+      reset(&pb_pc);
 
       simu4.tnow=simu4.tnow+simu4.dt;
       for(int ie=0; ie < simu4.macromesh.nbelems; ++ie){
@@ -578,27 +591,19 @@ int TestpcSW(void) {
       }
       for (int i=0; i<sizeCG; i++){
         cs4.lsol.sol[i] = wCG[i];
+        pb_pc.fullSolver.lsol.sol[i] = wCG[i];
       }
 
-      pb_pc.rhs_assembly(&pb_pc,&cs4);
-      pb_pc.source_assembly(&cs4);
-      pb_pc.bc_assembly(&cs4);
-      for (int i=0; i<sizeCG; i++){
-        cs4.lsol.sol[i] = wCG[i];
-      }
+      pb_pc.rhs_assembly(&pb_pc,&pb_pc.fullSolver);//cs4);
+      pb_pc.source_assembly(&pb_pc.fullSolver);//cs4);
+      pb_pc.bc_assembly(&pb_pc.fullSolver);//cs4);
+      pb_pc.mat_assembly(&pb_pc, &pb_pc.fullSolver);//cs4);
 
-      //for (int i=0; i<size1varCG; i++){
-      //  printf("i=%d, h=%.8e, u=%.8e, v=%.8e\n",i,cs4.lsol.rhs[3*i],cs4.lsol.rhs[3*i+1],cs4.lsol.rhs[3*i+2]);
-      //}
-
-      pb_pc.solvePC(&pb_pc,&simu4,cs4.lsol.sol,cs4.lsol.rhs);
+      pb_pc.solvePC(&pb_pc,&simu4,pb_pc.fullSolver.lsol.sol,pb_pc.fullSolver.lsol.rhs);//cs4.lsol.sol,cs4.lsol.rhs);
 
       for (int i=0; i<sizeCG; i++){
-        wCG[i] += cs4.lsol.sol[i];
+        wCG[i] += pb_pc.fullSolver.lsol.sol[i];//cs4.lsol.sol[i];
       }
-      //for (int i=0; i<size1varCG; i++){
-      //  printf("i=%d, dh=%.8e, du=%.8e, dv=%.8e\n",i,cs4.lsol.sol[3*i],cs4.lsol.sol[3*i+1],cs4.lsol.sol[3*i+2]);
-      //}
 
       int freq = (1 >= simu4.itermax_rk / 10)? 1 : simu4.itermax_rk / 10;
       if (tstep % freq == 0)
@@ -632,11 +637,12 @@ int TestpcSW(void) {
 
 
 void TestSH_SteadyState_U_ImposedData(const real *x, const real t, real *w) {
-  real alpha = 1.0; 
+  real alpha = 0.1;
+  real beta = 0.01;
   real p = 3;
   w[0] = 1.0+alpha*(pow(x[0],p)-pow(x[0],2*p))*(pow(x[1],p)-pow(x[1],2*p));
-  w[1] =  (x[0]-x[0]*x[0])*(1.0-2.0*x[1]);
-  w[2] = -(x[1]-x[1]*x[1])*(1.0-2.0*x[0]);
+  w[1] =  beta * (x[0]-x[0]*x[0])*(1.0-2.0*x[1]);
+  w[2] = -beta * (x[1]-x[1]*x[1])*(1.0-2.0*x[0]);
   w[3] = 0.0;
   w[4] = 0.0;
   w[5] = 0.0;
@@ -649,7 +655,8 @@ void TestSH_SteadyState_U_InitData(real *x, real *w) {
 
 void ShallowWater_SteadyState_U_SourceTerm(const real *x, const real t, const real *w, real *source){
   real g=_GRAVITY;
-  real alpha = 1.0;
+  real alpha = 0.1;
+  real beta = 0.01;
   real p = 3;
   real S_11, S_12,S_13, S_21, S_22, S_23, S_factor;
   real wexact[6];
@@ -657,12 +664,12 @@ void ShallowWater_SteadyState_U_SourceTerm(const real *x, const real t, const re
   real h  = 1.0+alpha*(pow(x[0],p)-pow(x[0],2*p))*(pow(x[1],p)-pow(x[1],2*p));
   real hx = alpha * p * ( pow(x[1],p)-pow(x[1],2*p) ) * ( pow(x[0],p-1)-2.0*pow(x[0],2*p-1) );
   real hy = alpha * p * ( pow(x[0],p)-pow(x[0],2*p) ) * ( pow(x[1],p-1)-2.0*pow(x[1],2*p-1) );
-  real u  = (x[0]-x[0]*x[0])*(1.0-2.0*x[1]);
-  real ux = (1.0-2.0*x[0])*(1.0-2.0*x[1]);
-  real uy = -2.0*(x[0]-x[0]*x[0]);
-  real v  = -(x[1]-x[1]*x[1])*(1.0-2.0*x[0]);
-  real vx = 2.0*(x[1]-x[1]*x[1]);
-  real vy = -(1.0-2.0*x[0])*(1.0-2.0*x[1]);
+  real u  = beta * (x[0]-x[0]*x[0])*(1.0-2.0*x[1]);
+  real ux = beta * (1.0-2.0*x[0])*(1.0-2.0*x[1]);
+  real uy = -beta * 2.0*(x[0]-x[0]*x[0]);
+  real v  = -beta * (x[1]-x[1]*x[1])*(1.0-2.0*x[0]);
+  real vx = beta * 2.0*(x[1]-x[1]*x[1]);
+  real vy = -beta * (1.0-2.0*x[0])*(1.0-2.0*x[1]);
 
   source[0]= h*(ux+vy) + (hx*u+hy*v);
   source[1]= h*(u*ux+v*uy) + g*h*hx;
@@ -760,4 +767,16 @@ void SteadyState_P_Roe_BoundaryFlux(real *x, real t, real *wL, real *vnorm, real
   ShallowWater_Roe_NumFlux(wL, wR, vnorm, flux);
 }
 
+
+#include "implicit.h"
+#include "schnaps.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <assert.h>
+#include "../test/test.h"
+#include "solverwave.h"
+#include "waterwave2d.h"
+#include "physBased_PC.h"
+#include <math.h>
+#include "pcSW.h"
 

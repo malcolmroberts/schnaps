@@ -34,6 +34,9 @@ typedef struct PB_PC{
   //! \brief Schur ContinuousSolver (matrix from Schur decomposition)
   ContinuousSolver Schur;
 
+  //! \brief ContinuousSolver containing the full model
+  ContinuousSolver fullSolver;
+
   //! \brief Right-hand side for the prediction step of the preconditioner
   real *rhs_prediction;
   //! \brief Right-hand side for the propagation (middle) step of the preconditioner
@@ -221,7 +224,6 @@ void Dirichlet_Velocity(void * cs, real * xpg, real * w, real *vnorm, real * flu
 //! \param[inout] flux a vector of flux
 void BoundaryTerm_Yderivative(void * cs, real * xpg, real * w, real *vnorm, real * flux);
 
-
 //! \brief pointer on the function which compute the BC flux for the operator dy 
 //! \param[in] cs a continuous solver
 //! \param[in] xpg a point of the mesh
@@ -229,5 +231,9 @@ void BoundaryTerm_Yderivative(void * cs, real * xpg, real * w, real *vnorm, real
 //! \param[in] vnorm a vector of normal
 //! \param[inout] flux a vector of flux
 void BoundaryTerm_Xderivative(void * cs, real * xpg, real * w, real *vnorm, real * flux);
+
+//! \brief assemble boundaries for the preconditioner
+//! \param[inout] pb_pc the physics-based preconditioner
+void boundary_assembly(PB_PC* pb_pc);
 
 #endif

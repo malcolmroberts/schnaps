@@ -502,7 +502,7 @@ void Wave_BC_pressure_null(void * cs, real * xpg, real * w, real *vnorm, real * 
   ContinuousSolver * ps=cs;
   real M[3][3];
   real BC[3][3];
-  real lambda=+1e14;
+  real lambda=-1e7;
   real mu=0;
   real p0=0,u0_1=0,u0_2=0;
   real x,y;

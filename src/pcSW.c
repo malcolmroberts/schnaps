@@ -40,7 +40,15 @@ void Init_PBPC_SW_SchurVelocity_BCPressure(Simulation *simu, PB_PC* pb_pc, int* 
   listvarSchur[0]=1;
   listvarSchur[1]=2;
 
+  int nb_var_full = 3;
+  int * listvarGlobal = calloc(nb_var_full, sizeof(int));
+  listvarGlobal[0]=0;
+  listvarGlobal[1]=1;
+  listvarGlobal[2]=2;
+
   // Initializing all solvers 
+  InitContinuousSolver(&pb_pc->fullSolver,simu,1,nb_var_full,listvarGlobal);
+  free(listvarGlobal);
   InitContinuousSolver(&pb_pc->D,simu,1,nb_varD,listvarD);
   free(listvarD);
   InitContinuousSolver(&pb_pc->L1,simu,1,nb_varL1,listvarL1);
@@ -54,6 +62,23 @@ void Init_PBPC_SW_SchurVelocity_BCPressure(Simulation *simu, PB_PC* pb_pc, int* 
   InitContinuousSolver(&pb_pc->Schur,simu,1,nb_varSchur,listvarSchur);
   free(listvarSchur);
 
+  real h=simu->vmax*simu->dt*simu->theta;
+  pb_pc->fullSolver.FluxMatrix = calloc(pb_pc->fullSolver.nb_phy_vars,sizeof(real));
+  for (int i=0; i<pb_pc->fullSolver.nb_phy_vars; i++){
+    pb_pc->fullSolver.FluxMatrix[i] = calloc(pb_pc->fullSolver.nb_phy_vars,sizeof(real));
+  }
+  for (int i=0; i<pb_pc->fullSolver.nb_phy_vars; i++){
+    for (int j=0; j<pb_pc->fullSolver.nb_phy_vars; j++){
+      pb_pc->fullSolver.FluxMatrix[i][j] = 0.0;
+    }
+  }
+
+  pb_pc->fullSolver.FluxMatrix[0][1]=h;
+  pb_pc->fullSolver.FluxMatrix[0][2]=h;
+  pb_pc->fullSolver.FluxMatrix[1][0]=h;
+  pb_pc->fullSolver.FluxMatrix[2][0]=h;
+  pb_pc->fullSolver.lsol.mat_is_assembly = false;
+
   pb_pc->D.diff_op = calloc(pb_pc->D.nb_phy_vars*pb_pc->D.nb_phy_vars,sizeof(SDO));
   pb_pc->Schur.diff_op = calloc(pb_pc->Schur.nb_phy_vars*pb_pc->Schur.nb_phy_vars,sizeof(SDO));
   pb_pc->L1.diff_op = calloc(pb_pc->L1.nb_phy_vars*pb_pc->L1.nb_phy_vars,sizeof(SDO));
@@ -61,7 +86,14 @@ void Init_PBPC_SW_SchurVelocity_BCPressure(Simulation *simu, PB_PC* pb_pc, int* 
   pb_pc->U1.diff_op = calloc(pb_pc->U1.nb_phy_vars*pb_pc->U1.nb_phy_vars,sizeof(SDO));
   pb_pc->U2.diff_op = calloc(pb_pc->U2.nb_phy_vars*pb_pc->U2.nb_phy_vars,sizeof(SDO));
 
-  // Assigning function to build all operators' matrices
+  pb_pc->D.lsol.mat_is_assembly = false;
+  pb_pc->L1.lsol.mat_is_assembly = false;
+  pb_pc->L2.lsol.mat_is_assembly = false;
+  pb_pc->U1.lsol.mat_is_assembly = false;
+  pb_pc->U2.lsol.mat_is_assembly = false;
+  pb_pc->Schur.lsol.mat_is_assembly = false;
+
+  // Assigning function to build every operator's matrix
   pb_pc->mat_assembly = GenericOperator_PBPC_NonLinear;
   pb_pc->loc_mat_assembly = Schur_ESF;
   pb_pc->rhs_assembly = GenericRHS_PBPC_NonLinear;
@@ -69,6 +101,7 @@ void Init_PBPC_SW_SchurVelocity_BCPressure(Simulation *simu, PB_PC* pb_pc, int* 
   pb_pc->bc_assembly = BoundaryConditionFriedrichsAssembly;
   pb_pc->loc_bc_assembly = Wave_BC_normalvelocity_null;
   pb_pc->source_assembly = Source_Assembly;
+  pb_pc->fullSolver.bc_flux = Wave_BC_normalvelocity_null;
 
   // For the Schur the the condition is Neumann
   pb_pc->Schur.bc_flux=NULL;
@@ -76,7 +109,6 @@ void Init_PBPC_SW_SchurVelocity_BCPressure(Simulation *simu, PB_PC* pb_pc, int* 
   
   pb_pc->D.bc_flux=RobinFlux_SchurPressure;
   pb_pc->D.bc_assembly=RobinBoundaryConditionAssembly;
-  pb_pc->D.bc_assembly(&pb_pc->D);
 
   pb_pc->L1.bc_flux=BoundaryTerm_Xderivative;
   pb_pc->L1.bc_assembly=BoundaryConditionFriedrichsAssembly;
@@ -87,12 +119,6 @@ void Init_PBPC_SW_SchurVelocity_BCPressure(Simulation *simu, PB_PC* pb_pc, int* 
   pb_pc->L2.bc_assembly=BoundaryConditionFriedrichsAssembly;
   pb_pc->U2.bc_flux=BoundaryTerm_Yderivative;
   pb_pc->U2.bc_assembly=BoundaryConditionFriedrichsAssembly;
-
- 
-  pb_pc->U2.bc_assembly(&pb_pc->U2);
-  pb_pc->U1.bc_assembly(&pb_pc->U1);
-  pb_pc->L2.bc_assembly(&pb_pc->L2);
-  pb_pc->L1.bc_assembly(&pb_pc->L1);
 
   pb_pc->Schur.lsol.MatVecProduct=MatVect;
   pb_pc->L1.lsol.MatVecProduct=MatVect;
@@ -143,7 +169,15 @@ void Init_PBPC_SW_SchurVelocity_BCVelocity(Simulation *simu, PB_PC* pb_pc, int* 
   listvarSchur[0]=1;
   listvarSchur[1]=2;
 
+  int nb_var_full = 3;
+  int * listvarGlobal = calloc(nb_var_full, sizeof(int));
+  listvarGlobal[0]=0;
+  listvarGlobal[1]=1;
+  listvarGlobal[2]=2;
+
   // Initializing all solvers 
+  InitContinuousSolver(&pb_pc->fullSolver,simu,1,nb_var_full,listvarGlobal);
+  free(listvarGlobal);
   InitContinuousSolver(&pb_pc->D,simu,1,nb_varD,listvarD);
   free(listvarD);
   InitContinuousSolver(&pb_pc->L1,simu,1,nb_varL1,listvarL1);
@@ -164,6 +198,30 @@ void Init_PBPC_SW_SchurVelocity_BCVelocity(Simulation *simu, PB_PC* pb_pc, int* 
   pb_pc->U1.diff_op = calloc(pb_pc->U1.nb_phy_vars*pb_pc->U1.nb_phy_vars,sizeof(SDO));
   pb_pc->U2.diff_op = calloc(pb_pc->U2.nb_phy_vars*pb_pc->U2.nb_phy_vars,sizeof(SDO));
 
+  real h=simu->vmax*simu->dt*simu->theta;
+  pb_pc->fullSolver.FluxMatrix = calloc(pb_pc->fullSolver.nb_phy_vars,sizeof(real));
+  for (int i=0; i<pb_pc->fullSolver.nb_phy_vars; i++){
+    pb_pc->fullSolver.FluxMatrix[i] = calloc(pb_pc->fullSolver.nb_phy_vars,sizeof(real));
+  }
+  for (int i=0; i<pb_pc->fullSolver.nb_phy_vars; i++){
+    for (int j=0; j<pb_pc->fullSolver.nb_phy_vars; j++){
+      pb_pc->fullSolver.FluxMatrix[i][j] = 0.0;
+    }
+  }
+
+  pb_pc->fullSolver.FluxMatrix[0][1]=h;
+  pb_pc->fullSolver.FluxMatrix[0][2]=h;
+  pb_pc->fullSolver.FluxMatrix[1][0]=h;
+  pb_pc->fullSolver.FluxMatrix[2][0]=h;
+  pb_pc->fullSolver.lsol.mat_is_assembly = false;
+
+  pb_pc->D.lsol.mat_is_assembly = false;
+  pb_pc->L1.lsol.mat_is_assembly = false;
+  pb_pc->L2.lsol.mat_is_assembly = false;
+  pb_pc->U1.lsol.mat_is_assembly = false;
+  pb_pc->U2.lsol.mat_is_assembly = false;
+  pb_pc->Schur.lsol.mat_is_assembly = false;
+
   // Assigning function to build all operators' matrices
   pb_pc->mat_assembly = GenericOperator_PBPC_NonLinear;
   pb_pc->loc_mat_assembly = Schur_ESF;
@@ -172,17 +230,15 @@ void Init_PBPC_SW_SchurVelocity_BCVelocity(Simulation *simu, PB_PC* pb_pc, int* 
   pb_pc->bc_assembly = BoundaryConditionFriedrichsAssembly;
   pb_pc->loc_bc_assembly = Wave_BC_normalvelocity_null;
   pb_pc->source_assembly = Source_Assembly;
+  pb_pc->fullSolver.bc_flux = Wave_BC_normalvelocity_null;
 
   // For the Schur the the condition is Neumann
-  
+
   pb_pc->D.bc_flux=NULL;
   pb_pc->D.bc_assembly=NULL;
-  pb_pc->Schur.bc_flux=NULL;
-  pb_pc->Schur.bc_assembly=NULL;
 
   pb_pc->Schur.bc_flux=Dirichlet_Velocity;
   pb_pc->Schur.bc_assembly=BoundaryConditionFriedrichsAssembly;
-  pb_pc->Schur.bc_assembly(&pb_pc->Schur);
 
   pb_pc->L1.bc_flux=BoundaryTerm_Xderivative;
   pb_pc->L1.bc_assembly=BoundaryConditionFriedrichsAssembly;
@@ -193,12 +249,6 @@ void Init_PBPC_SW_SchurVelocity_BCVelocity(Simulation *simu, PB_PC* pb_pc, int* 
   pb_pc->L2.bc_assembly=BoundaryConditionFriedrichsAssembly;
   pb_pc->U2.bc_flux=BoundaryTerm_Yderivative;
   pb_pc->U2.bc_assembly=BoundaryConditionFriedrichsAssembly;
-
- 
-  pb_pc->U2.bc_assembly(&pb_pc->U2);
-  pb_pc->U1.bc_assembly(&pb_pc->U1);
-  pb_pc->L2.bc_assembly(&pb_pc->L2);
-  pb_pc->L1.bc_assembly(&pb_pc->L1);
 
   pb_pc->Schur.lsol.MatVecProduct=MatVect;
   pb_pc->L1.lsol.MatVecProduct=MatVect;
@@ -266,13 +316,15 @@ void Schur_ESF(void* pb_pc, real* var){
                             {0,0,0,0}},
 
                            {{theta*dt*h*uy - theta*dt*(u*ux+v*uy)*theta*dt*hy,
-                             0,            - theta*dt*(u*ux+v*vy)*theta*dt*h ,0},
+                             0,
+                                           - theta*dt*(u*ux+v*uy)*theta*dt*h ,0},
                             {theta*theta*dt*dt*g*h*hy,0,theta*theta*dt*dt*g*h*h,0},
                             {0,0,0,0},
                             {0,0,0,0}},
 
                            {{theta*dt*h*vx - theta*dt*(u*vx+v*vy)*theta*dt*hx,
-                             0,            - theta*dt*(u*vx+v*vy)*theta*dt*h ,0},
+                                           - theta*dt*(u*vx+v*vy)*theta*dt*h ,
+                            0,0},
                             {0,0,0,0},
                             {theta*theta*dt*dt*g*h*hx,theta*theta*dt*dt*g*h*h,0,0},
                             {0,0,0,0}},
@@ -290,16 +342,19 @@ void Schur_ESF(void* pb_pc, real* var){
   //                          {theta*theta*dt*dt*h*hx,theta*theta*dt*dt*h*h,0,0},
   //                          {0,0,0,0},
   //                          {0,0,0,0}},
+
   //                         {{theta*dt*h*uy - (u+theta*dt*(u*ux+v*uy))*theta*dt*hy,
   //                           0,            - (u+theta*dt*(u*ux+v*vy))*theta*dt*h ,0},
   //                          {theta*theta*dt*dt*h*hy,0,theta*theta*dt*dt*h*h,0},
   //                          {0,0,0,0},
   //                          {0,0,0,0}},
+
   //                         {{theta*dt*h*vx - (v+theta*dt*(u*vx+v*vy))*theta*dt*hx,
   //                           0,            - (v+theta*dt*(u*vx+v*vy))*theta*dt*h ,0},
   //                          {0,0,0,0},
   //                          {theta*theta*dt*dt*h*hx,theta*theta*dt*dt*h*h,0,0},
   //                          {0,0,0,0}},
+
   //                         {{h + theta*dt*h*vy - (v+theta*dt*(u*vx+v*vy))*theta*dt*hy
   //                             , theta*dt*h*u
   //                             , theta*dt*h*v  - (v+theta*dt*(u*vx+v*vy))*theta*dt*h , 0},

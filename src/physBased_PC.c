@@ -31,7 +31,7 @@ void GlobalInit_PBPC(PB_PC* pb_pc, LinearSolver* lsol, Simulation* simu, int* ma
       else{
         printf("Please, provide the implementation of the specified problem, or choose a different one.\n");
         exit(1);}
-       break;
+      break;
      
     case PHY_BASED_U1:
       if(lsol->problem_type == WAVE){
@@ -41,7 +41,7 @@ void GlobalInit_PBPC(PB_PC* pb_pc, LinearSolver* lsol, Simulation* simu, int* ma
       else{
         printf("Please, provide the implementation of the specified problem, or choose a different one.\n");
         exit(1);}
-       break;
+      break;
 
     case PHY_BASED_U2:
       if(lsol->problem_type == WAVE){
@@ -51,7 +51,7 @@ void GlobalInit_PBPC(PB_PC* pb_pc, LinearSolver* lsol, Simulation* simu, int* ma
       else{
         printf("Please, provide the implementation of the specified problem, or choose a different one.\n");
         exit(1);}
-       break;
+      break;
 
     default: printf("No preconditioner was specified. Aborting...\n");
              exit(1);
@@ -87,24 +87,6 @@ void Init_Parameters_PhyBasedPC(PB_PC* pb_pc){
 void PhyBased_PC_CG(void* pb_pc, Simulation *simu, real* globalSol, real*globalRHS){
   
   PB_PC* pc = (PB_PC*) pb_pc;
-  // 0)1) Reset everything (needed for time evolution)
-  reset(pc);
-
-  ContinuousSolver waveSolver;
-  int nb_var = 3;
-  int * listvarGlobal = calloc(nb_var, sizeof(int));
-  listvarGlobal[0]=0;
-  listvarGlobal[1]=1;
-  listvarGlobal[2]=2;
-  InitContinuousSolver(&waveSolver,simu,1,nb_var,listvarGlobal);
-  free(listvarGlobal);
-
-  for (int i=0; i<waveSolver.nb_fe_dof; i++){
-    waveSolver.lsol.sol[i]=globalSol[i];
-  }
-
-  // Assembling each operator's matrix
-  if(pc->nonlinear == 1) pc->mat_assembly(pc, &waveSolver);
 
   // 1) PREDICTION STEP
 
@@ -119,6 +101,7 @@ void PhyBased_PC_CG(void* pb_pc, Simulation *simu, real* globalSol, real*globalR
     pc->D.lsol.rhs[i] = globalRHS[i*3];
   }
   //printf("Solution...\n");
+  //DisplayLinearSolver(&pc->D.lsol);
   Advanced_SolveLinearSolver(&pc->D.lsol,simu);
 
  
@@ -140,6 +123,7 @@ void PhyBased_PC_CG(void* pb_pc, Simulation *simu, real* globalSol, real*globalR
     pc->Schur.lsol.rhs[i*2+1] = globalRHS[i*3+2] - pc->L2.lsol.sol[i];
   }
   
+  //DisplayLinearSolver(&pc->Schur.lsol);
   Advanced_SolveLinearSolver(&pc->Schur.lsol,simu);
 
   // 3) CORRECTION STEP
@@ -163,13 +147,13 @@ void PhyBased_PC_CG(void* pb_pc, Simulation *simu, real* globalSol, real*globalR
     pc->D.lsol.rhs[i] += - pc->U1.lsol.sol[i] - pc->U2.lsol.sol[i];
   }
   //printf("Solution...\n");
+  //DisplayLinearSolver(&pc->D.lsol);
   Advanced_SolveLinearSolver(&pc->D.lsol,simu);
   
  
   // 4) OUTPUT STEP Final concatenation
   cat2CGVectors(&pc->D,&pc->Schur,pc->D.lsol.sol,pc->Schur.lsol.sol,globalSol);
 
-  freeContinuousSolver(&waveSolver);
   free(solU1);
   free(solU2);
 }
@@ -181,22 +165,6 @@ void PhyBased_PC_CG(void* pb_pc, Simulation *simu, real* globalSol, real*globalR
 void PhyBased_PC_InvertSchur_CG(void* pb_pc, Simulation *simu, real* globalSol, real* globalRHS){
   
   PB_PC* pc = (PB_PC*) pb_pc;
-  reset(pc);
-
-  ContinuousSolver waveSolver;
-  int nb_var = 3;
-  int * listvarGlobal = calloc(nb_var, sizeof(int));
-  listvarGlobal[0]=0;
-  listvarGlobal[1]=1;
-  listvarGlobal[2]=2;
-  InitContinuousSolver(&waveSolver,simu,1,nb_var,listvarGlobal);
-  free(listvarGlobal);
-
-  for (int i=0; i<waveSolver.nb_fe_dof; i++){
-    waveSolver.lsol.sol[i]=globalSol[i];
-  }
-  // Assembling each operator's matrix
-  if(pc->nonlinear == 1) pc->mat_assembly(pc, &waveSolver);
 
   // 1) PREDICTION STEP
   printf(" prediction\n");
@@ -273,7 +241,6 @@ void PhyBased_PC_InvertSchur_CG(void* pb_pc, Simulation *simu, real* globalSol, 
   // 4) OUTPUT STEP Final concatenation
   cat2CGVectors(&pc->D,&pc->Schur,pc->D.lsol.sol,pc->Schur.lsol.sol,globalSol);
 
-  freeContinuousSolver(&waveSolver);
   free(solU1);
   free(solU2);
 }
@@ -284,6 +251,9 @@ void GenericOperator_PBPC_NonLinear(void* pb_pc, ContinuousSolver* cs){
   PB_PC* pc = (PB_PC*) pb_pc;
   int nnodes = pc->D.nnodes;
   field* f0 = &pc->D.simu->fd[0];
+  // TODO This boolean is currently useless, since we rebuild all the matrices
+  // at each time-step. It is even unclear if in every stage of the process
+  // these booleans are not overwritten...
   bool assembled = pc->D.lsol.mat_is_assembly && 
                    pc->L1.lsol.mat_is_assembly &&
                    pc->L2.lsol.mat_is_assembly &&
@@ -400,9 +370,9 @@ void GenericOperator_PBPC_NonLinear(void* pb_pc, ContinuousSolver* cs){
           basisPhi_i[2]=dphi_i[1]/det;
           basisPhi_i[3]=dphi_i[2]/det;
 
-          //////////////////////////////
-          ///// BUILDING MATRICES //////
-          //////////////////////////////
+          ////////////////////////////////////
+          ///// BUILDING LOCAL MATRICES //////
+          ////////////////////////////////////
           real h  = var[0][0][iloc];
           real hx = var[0][1][iloc];
           real hy = var[0][2][iloc];
@@ -442,6 +412,9 @@ void GenericOperator_PBPC_NonLinear(void* pb_pc, ContinuousSolver* cs){
             real res[4];
             ContinuousSolver * cs;
 
+            /////////////////////////////////////
+            ///// BUILDING GLOBAL MATRICES //////
+            /////////////////////////////////////
             // Building D Matrix
             cs = &pc->D;
             for (int iv1=0; iv1<cs->nb_phy_vars; iv1++){
@@ -456,6 +429,7 @@ void GenericOperator_PBPC_NonLinear(void* pb_pc, ContinuousSolver* cs){
                 AddLinearSolver(&cs->lsol,ino_fe*cs->nb_phy_vars+iv1,jno_fe*cs->nb_phy_vars+iv2,val);
               } // end for iv1
             } // end for iv2
+            
 
             // Building L1 Matrix
             cs = &pc->L1;
@@ -537,6 +511,12 @@ void GenericOperator_PBPC_NonLinear(void* pb_pc, ContinuousSolver* cs){
       } // end for ipg
     } // end for ie
   } // end if assembled
+
+  // Applying boundaries right after building the preconditioner matrices, because there is no 
+  // need to differ them (RHS is built otherwise, and bcs are applied for them too) 
+  // -> Check penalization parameters to be corresponding one to another between preconditioner
+  // and full problem.
+  boundary_assembly(pc);
 }
 
 
@@ -691,7 +671,6 @@ void GenericOperator_PBPC(void* pb_pc, ContinuousSolver* cs){
                 AddLinearSolver(&cs->lsol,ino_fe*cs->nb_phy_vars+iv1,jno_fe*cs->nb_phy_vars+iv2,val);
               } // end for iv1
             } // end for iv2
-
 
             // Building Schur Matrix
             cs = &pc->Schur;
@@ -873,6 +852,7 @@ void freePB_PC(PB_PC* pb_pc){
   freeContinuousSolver(&pb_pc->U1);
   freeContinuousSolver(&pb_pc->U2);
   freeContinuousSolver(&pb_pc->Schur);
+  freeContinuousSolver(&pb_pc->fullSolver);
   free(pb_pc->rhs_prediction);
   free(pb_pc->rhs_propagation);
   free(pb_pc->rhs_correction);
@@ -881,33 +861,57 @@ void freePB_PC(PB_PC* pb_pc){
 
 void reset(PB_PC* pb_pc){
   
-  for (int i=0;i<pb_pc->D.nb_fe_nodes; i++){
-    // resetting sols
-    for(int ivar=0;ivar<pb_pc->D.nb_phy_vars; ivar++){
-      pb_pc->D.lsol.sol[i*pb_pc->D.nb_phy_vars+ivar]=0;
-      pb_pc->D.lsol.rhs[i*pb_pc->D.nb_phy_vars+ivar]=0;
-    }
-     for(int ivar=0;ivar<pb_pc->L1.nb_phy_vars; ivar++){
-      pb_pc->L1.lsol.sol[i*pb_pc->L1.nb_phy_vars+ivar]=0;
-      pb_pc->L1.lsol.rhs[i*pb_pc->L1.nb_phy_vars+ivar]=0;
-    }
-     for(int ivar=0;ivar<pb_pc->L2.nb_phy_vars; ivar++){
-      pb_pc->L2.lsol.sol[i*pb_pc->L2.nb_phy_vars+ivar]=0;
-      pb_pc->L2.lsol.rhs[i*pb_pc->L2.nb_phy_vars+ivar]=0;
-    }
-     for(int ivar=0;ivar<pb_pc->U1.nb_phy_vars; ivar++){
-      pb_pc->U1.lsol.sol[i*pb_pc->U1.nb_phy_vars+ivar]=0;
-      pb_pc->U1.lsol.rhs[i*pb_pc->U1.nb_phy_vars+ivar]=0;
-    }
-     for(int ivar=0;ivar<pb_pc->U2.nb_phy_vars; ivar++){
-      pb_pc->U2.lsol.sol[i*pb_pc->U2.nb_phy_vars+ivar]=0;
-      pb_pc->U2.lsol.rhs[i*pb_pc->U2.nb_phy_vars+ivar]=0;
-    }
-     for(int ivar=0;ivar<pb_pc->Schur.nb_phy_vars; ivar++){
-      pb_pc->Schur.lsol.sol[i*pb_pc->Schur.nb_phy_vars+ivar]=0;
-      pb_pc->Schur.lsol.rhs[i*pb_pc->Schur.nb_phy_vars+ivar]=0;
-    }
+  for (int i=0;i<pb_pc->D.nb_fe_dof; i++){
+    pb_pc->D.lsol.sol[i] = 0.0;
+    pb_pc->D.lsol.rhs[i] = 0.0;
   }
+  for (int i=0;i<pb_pc->L1.nb_fe_dof; i++){
+    pb_pc->L1.lsol.sol[i] = 0.0;
+    pb_pc->L1.lsol.rhs[i] = 0.0;
+  }
+  for (int i=0;i<pb_pc->L2.nb_fe_dof; i++){
+    pb_pc->L2.lsol.sol[i] = 0.0;
+    pb_pc->L2.lsol.rhs[i] = 0.0;
+  }
+  for (int i=0;i<pb_pc->U1.nb_fe_dof; i++){
+    pb_pc->U1.lsol.sol[i] = 0.0;
+    pb_pc->U1.lsol.rhs[i] = 0.0;
+  }
+  for (int i=0;i<pb_pc->U2.nb_fe_dof; i++){
+    pb_pc->U2.lsol.sol[i] = 0.0;
+    pb_pc->U2.lsol.rhs[i] = 0.0;
+  }
+  for (int i=0;i<pb_pc->Schur.nb_fe_dof; i++){
+    pb_pc->Schur.lsol.sol[i] = 0.0;
+    pb_pc->Schur.lsol.rhs[i] = 0.0;
+  }
+  //for (int i=0;i<pb_pc->D.nb_fe_nodes; i++){
+  //  // resetting sols
+  //  for(int ivar=0;ivar<pb_pc->D.nb_phy_vars; ivar++){
+  //    pb_pc->D.lsol.sol[i*pb_pc->D.nb_phy_vars+ivar]=0;
+  //    pb_pc->D.lsol.rhs[i*pb_pc->D.nb_phy_vars+ivar]=0;
+  //  }
+  //   for(int ivar=0;ivar<pb_pc->L1.nb_phy_vars; ivar++){
+  //    pb_pc->L1.lsol.sol[i*pb_pc->L1.nb_phy_vars+ivar]=0;
+  //    pb_pc->L1.lsol.rhs[i*pb_pc->L1.nb_phy_vars+ivar]=0;
+  //  }
+  //   for(int ivar=0;ivar<pb_pc->L2.nb_phy_vars; ivar++){
+  //    pb_pc->L2.lsol.sol[i*pb_pc->L2.nb_phy_vars+ivar]=0;
+  //    pb_pc->L2.lsol.rhs[i*pb_pc->L2.nb_phy_vars+ivar]=0;
+  //  }
+  //   for(int ivar=0;ivar<pb_pc->U1.nb_phy_vars; ivar++){
+  //    pb_pc->U1.lsol.sol[i*pb_pc->U1.nb_phy_vars+ivar]=0;
+  //    pb_pc->U1.lsol.rhs[i*pb_pc->U1.nb_phy_vars+ivar]=0;
+  //  }
+  //   for(int ivar=0;ivar<pb_pc->U2.nb_phy_vars; ivar++){
+  //    pb_pc->U2.lsol.sol[i*pb_pc->U2.nb_phy_vars+ivar]=0;
+  //    pb_pc->U2.lsol.rhs[i*pb_pc->U2.nb_phy_vars+ivar]=0;
+  //  }
+  //   for(int ivar=0;ivar<pb_pc->Schur.nb_phy_vars; ivar++){
+  //    pb_pc->Schur.lsol.sol[i*pb_pc->Schur.nb_phy_vars+ivar]=0;
+  //    pb_pc->Schur.lsol.rhs[i*pb_pc->Schur.nb_phy_vars+ivar]=0;
+  //  }
+  //}
   
   if (pb_pc->nonlinear){
     pb_pc->D.reset_dt(&pb_pc->D.lsol);
@@ -1091,7 +1095,7 @@ for (int i=0;i<cs->nb_dg_nodes;i++){
 
 void RobinFlux_SchurPressure(void * cs, real * xpg, real * w, real *vnorm, real * flux){
   ContinuousSolver * ps=cs;
-  real lambda=-10000000;
+  real lambda=-1e7;
   real Coef_diff=0;
   real p0=0;
   real Win[ps->simu->fd[0].model.m];
@@ -1171,4 +1175,15 @@ void BoundaryTerm_Yderivative(void * cs, real * xpg, real * w, real *vnorm, real
   Coef_diff=ps->simu->dt*ps->simu->vmax*ps->simu->theta;
   // term c dt theta n2
   flux[0]= Coef_diff * w[0] * vnorm[1];
+}
+
+// This function is there only to ease the writing (since some of the 
+// boundaries are not applied in some cases.
+void boundary_assembly(PB_PC* pb_pc){
+  if (    pb_pc->D.bc_assembly != NULL)     pb_pc->D.bc_assembly(&pb_pc->D);
+  if (   pb_pc->L1.bc_assembly != NULL)    pb_pc->L1.bc_assembly(&pb_pc->L1);
+  if (   pb_pc->L2.bc_assembly != NULL)    pb_pc->L2.bc_assembly(&pb_pc->L2);
+  if (   pb_pc->U1.bc_assembly != NULL)    pb_pc->U1.bc_assembly(&pb_pc->U1);
+  if (   pb_pc->U2.bc_assembly != NULL)    pb_pc->U2.bc_assembly(&pb_pc->U2);
+  if (pb_pc->Schur.bc_assembly != NULL) pb_pc->Schur.bc_assembly(&pb_pc->Schur);
 }

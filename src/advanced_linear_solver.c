@@ -170,6 +170,15 @@ void Advanced_GMRESSolver(LinearSolver* lsol, Simulation* simu){
      lsol->pc_type == PHY_BASED_U1 || lsol->pc_type == PHY_BASED_U2){
     int mat2assemble[6] = {1, 1, 1, 1, 1, 1};
     GlobalInit_PBPC(&pb_pc, lsol, simu, mat2assemble);
+
+    // We need to give the preconditioner the raw solution to build
+    // each matrix of the process.
+    for (int i=0; i<pb_pc.fullSolver.nb_fe_dof; i++){
+      pb_pc.fullSolver.lsol.sol[i] = lsol->sol[i];
+    }
+    // Assembling each operator's matrix
+    if(pb_pc.nonlinear == 1) pb_pc.mat_assembly(&pb_pc, &pb_pc.fullSolver);
+
     icntl[4]  = 2;
   }
   else if (((lsol->pc_type == JACOBI) ||(lsol->pc_type == EXACT)) ||lsol->pc_type == LO_POISSON){
@@ -263,7 +272,7 @@ void Advanced_GMRESSolver(LinearSolver* lsol, Simulation* simu){
   else if(revcom == precondRight)  {
     if(lsol->pc_type == PHY_BASED_P1 || lsol->pc_type == PHY_BASED_P2 ||
        lsol->pc_type == PHY_BASED_U1 || lsol->pc_type == PHY_BASED_U2){
-         pb_pc.solvePC(&pb_pc,simu,loc_z,loc_x);
+      pb_pc.solvePC(&pb_pc,simu,loc_z,loc_x);
     }
     else if(lsol->pc_type == EXACT){
       Exact_PC(lsol,loc_z,loc_x);
@@ -320,6 +329,9 @@ void Advanced_GMRESSolver(LinearSolver* lsol, Simulation* simu){
   free(loc_x);
   free(loc_y);
   free(loc_z);
+  // The preconditioner is freed every time we exit the GMRES iteration process.
+  // One could keep it from time-step to time-step and free only when exit time
+  // is reached.
   if(lsol->pc_type == PHY_BASED_P1 || lsol->pc_type == PHY_BASED_P2 ||
      lsol->pc_type == PHY_BASED_U1 || lsol->pc_type == PHY_BASED_U2){
     freePB_PC(&pb_pc);
