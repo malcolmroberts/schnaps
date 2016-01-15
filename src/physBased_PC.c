@@ -8,17 +8,17 @@
 
 void Init_Parameters_PhyBasedPC(PB_PC* pb_pc){
 
-  pb_pc->solver_prediction=LU;
-  pb_pc->solver_propagation=LU;
-  pb_pc->solver_correction=LU;
+  pb_pc->solver_prediction=LU;//PAR_CG;
+  pb_pc->solver_propagation=LU;//PAR_CG;
+  pb_pc->solver_correction=LU;//PAR_CG;
 
-  pb_pc->pc_prediction=NONE;
-  pb_pc->pc_propagation=NONE;
-  pb_pc->pc_correction=NONE;
+  pb_pc->pc_prediction=LU;//PAR_JACOBI;
+  pb_pc->pc_propagation=LU;//PAR_JACOBI;//MULTICOLOREDGS;//PAR_ILU;//JACOBI;
+  pb_pc->pc_correction=LU;//PAR_JACOBI;
 
-  pb_pc->tol_prediction=1.e-8;
-  pb_pc->tol_propagation=1.e-8;
-  pb_pc->tol_correction=1.e-8;
+  pb_pc->tol_prediction=1.e-9;
+  pb_pc->tol_propagation=1e-9;
+  pb_pc->tol_correction=1.e-9;
 
   pb_pc->itermax_prediction=1000;
   pb_pc->itermax_propagation=1000;
@@ -66,9 +66,7 @@ void PhyBased_PC_CG(void* pb_pc, Simulation *simu, real* globalSol, real*globalR
   }
   //printf("Solution...\n");
   Advanced_SolveLinearSolver(&pc->D.lsol,simu);
-  /*for (int i=0;i<pc->D.nb_fe_nodes;i++){
-    printf("1) P[%d] = %8e\n", i, pc->D.lsol.sol[i]);
-    }*/
+
  
   // 2) PROPAGATION STEP
 
@@ -89,9 +87,6 @@ void PhyBased_PC_CG(void* pb_pc, Simulation *simu, real* globalSol, real*globalR
   }
   
   Advanced_SolveLinearSolver(&pc->Schur.lsol,simu);
-  /* for (int i=0;i<pc->D.nb_fe_nodes;i++){
-    printf("2) U[%d] = %8e, V[%d] = %8e\n", i, pc->Schur.lsol.sol[i*2], i, pc->Schur.lsol.sol[i*2+1]);
-    }*/
 
   // 3) CORRECTION STEP
   // Extracting both U1 and U2 from the previous solution of the propagation step
@@ -115,10 +110,6 @@ void PhyBased_PC_CG(void* pb_pc, Simulation *simu, real* globalSol, real*globalR
   }
   //printf("Solution...\n");
   Advanced_SolveLinearSolver(&pc->D.lsol,simu);
-
-  /*for (int i=0;i<pc->D.nb_fe_nodes;i++){
-    printf("Prout Schur U : P[%d] = %8e, U[%d] = %8e, V[%d] = %8e\n", i, pc->D.lsol.sol[i], i, pc->Schur.lsol.sol[2*i], i, pc->Schur.lsol.sol[2*i+1]);
-  }*/
   
  
   // 4) OUTPUT STEP Final concatenation
@@ -128,6 +119,9 @@ void PhyBased_PC_CG(void* pb_pc, Simulation *simu, real* globalSol, real*globalR
   free(solU1);
   free(solU2);
 }
+
+
+
 
 
 void PhyBased_PC_InvertSchur_CG(void* pb_pc, Simulation *simu, real* globalSol, real* globalRHS){
@@ -151,6 +145,7 @@ void PhyBased_PC_InvertSchur_CG(void* pb_pc, Simulation *simu, real* globalSol, 
   if(pc->nonlinear == 1) pc->mat_assembly(pc, &waveSolver);
 
   // 1) PREDICTION STEP
+  printf(" prediction\n");
   pc->D.lsol.solver_type=pc->solver_prediction;
   pc->D.lsol.tol=pc->tol_prediction;
   pc->D.lsol.pc_type=pc->pc_prediction;
@@ -169,6 +164,7 @@ void PhyBased_PC_InvertSchur_CG(void* pb_pc, Simulation *simu, real* globalSol, 
     }*/
 
   // 2) PROPAGATION STEP
+   printf(" propagation\n");
   pc->Schur.lsol.solver_type=pc->solver_propagation;
   pc->Schur.lsol.tol=pc->tol_propagation;
   pc->Schur.lsol.pc_type=pc->pc_propagation;
@@ -196,7 +192,7 @@ void PhyBased_PC_InvertSchur_CG(void* pb_pc, Simulation *simu, real* globalSol, 
 
   
   // 3) CORRECTION STEP
-
+ printf(" correction\n");
   pc->D.lsol.solver_type=pc->solver_correction;
   pc->D.lsol.tol=pc->tol_correction;
   pc->D.lsol.pc_type=pc->pc_correction;
@@ -1061,19 +1057,42 @@ void RobinFlux_SchurPressure(void * cs, real * xpg, real * w, real *vnorm, real 
 
 void Dirichlet_Velocity(void * cs, real * xpg, real * w, real *vnorm, real * flux){
   ContinuousSolver * ps=cs;
-  real mu=1.0e14;//15;
+  real mu=-1.0e21;//15;
   real Coef_diff=0;
   real u0_1 = 0;
   real u0_2 = 0;
   real Win[3];
+  int angle=0;
 
-  Coef_diff=ps->simu->dt*ps->simu->vmax*ps->simu->theta;
+  if(xpg[0]== 0.0 && xpg[1]== 0.0) { angle=1; }
+  if(xpg[0]== 0.0 && xpg[1]== 1.0) { angle=1; }
+  if(xpg[0]== 1.0 && xpg[1]== 0.0) { angle=1; }
+  if(xpg[0]== 1.0 && xpg[1]== 1.0) { angle=1; }
 
-  flux[0]= mu * (w[0]*vnorm[0]*vnorm[0] + w[1]*vnorm[0]*vnorm[1])
-   - mu * (u0_1*vnorm[0]*vnorm[0] + u0_2*vnorm[0]*vnorm[1]);
-  flux[1]=  mu * (w[0]*vnorm[0]*vnorm[1] + w[1]*vnorm[1]*vnorm[1])
-  -  mu * (u0_1*vnorm[0]*vnorm[1] + u0_2*vnorm[1]*vnorm[1]);
-   
+  if(angle ==0){
+    Coef_diff=ps->simu->dt*ps->simu->vmax*ps->simu->theta;
+    flux[0]= mu * (w[0]*vnorm[0]*vnorm[0] + w[1]*vnorm[0]*vnorm[1])
+      - mu * (u0_1*vnorm[0]*vnorm[0] + u0_2*vnorm[0]*vnorm[1]);
+    flux[1]=  mu * (w[0]*vnorm[1]*vnorm[0] + w[1]*vnorm[1]*vnorm[1])
+      -  mu * (u0_1*vnorm[1]*vnorm[0] + u0_2*vnorm[1]*vnorm[1]);
+   }
+  else {
+    flux[0]= mu * w[0] - mu * u0_1;
+    flux[1]= mu * w[1] - mu * u0_2;
+  }
+ 
+}
+
+void Dirichlet_vorticity(void * cs, real * xpg, real * w, real *vnorm, real * flux){
+  ContinuousSolver * ps=cs;
+  real mu=-1.0e21;//15;
+  real Coef_diff=0;
+  real w_0 = 0;
+
+  int angle=0;
+
+  flux[0]= mu * w[0] - mu * w_0;
+
  
 }
 

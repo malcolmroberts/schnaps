@@ -504,6 +504,10 @@ void Solver_Paralution(LinearSolver* lsol){
   real norm_rhs=0;
   real a_tol=0,r_tol=0,div_tol=1.e+8;
 
+  clock_t start, end;
+  double cpu_time_copy;
+  start = clock();
+  
   storage="CSR";
   norm_rhs=Vector_norm2(lsol->rhs,lsol->neq);
   a_tol=lsol->tol*(1.0+1.e-20*norm_rhs);
@@ -585,7 +589,7 @@ void Solver_Paralution(LinearSolver* lsol){
   }
 
 
-
+ 
   
  switch(lsol->storage_type) {
   case SKYLINE :
@@ -630,6 +634,10 @@ void Solver_Paralution(LinearSolver* lsol){
     for(int i=0;i<nnz;i++){
       mat_coefs[i] = (real) coefs[i];
     }
+
+    end = clock();
+    cpu_time_copy = ((double) (end - start)) / CLOCKS_PER_SEC;
+    printf(" copy time %f \n",cpu_time_copy);
     
 #ifdef PARALUTION
     paralution_fortran_solve_coo(n,n,nnz,solver,storage,pc,storage,

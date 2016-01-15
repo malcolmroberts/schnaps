@@ -7,7 +7,7 @@
 #include "solverwave.h"
 #include "waterwave2d.h"
 #include "physBased_PC.h"
-
+#include <time.h>
 
 void SteadyStateOne_ImposedData(const real *x, const real t, real *w);
 void SteadyStateOne_InitData(real *x, real *w);
@@ -37,7 +37,9 @@ int Testrealpc(void) {
 
   bool test = true;
   real dd;
-  int test1_ok=1,test2_ok=1;
+  int test1_ok=0,test2_ok=1;
+  clock_t start, end, start_tot, end_tot;
+  double cpu_time_used, cpu_average;
 
 #ifdef PARALUTION 
   paralution_begin();
@@ -179,7 +181,7 @@ int Testrealpc(void) {
     model2.Source = NULL;
 
     int deg2[]={4, 4, 0};
-    int raf2[]={16, 16 , 1};
+    int raf2[]={32, 32 , 1};
     assert(mesh.is2d);
     CheckMacroMesh(&mesh, deg2, raf2);
     
@@ -195,11 +197,11 @@ int Testrealpc(void) {
     listvar[2]=2;
     InitContinuousSolver(&cs,&simu2,1,nbvar,listvar);
     InitContinuousSolver(&csSolve,&simu2,1,nbvar,listvar);
-
-    simu2.theta=0.5;
-    simu2.dt=10;
+    start_tot = clock();
+    simu2.theta=0.5;//0.0;
+    simu2.dt=1.0;//0.0025;
     simu2.vmax=_SPEED_WAVE;
-    real tmax2=1*simu2.dt;//;0.5;
+    real tmax2=5*simu2.dt;//;0.5;
     int itermax2=tmax2/simu2.dt;
     simu2.itermax_rk=itermax2;
     int size = cs.nb_fe_dof;
@@ -207,8 +209,8 @@ int Testrealpc(void) {
     real *wCG = calloc(size, sizeof(real));
 
     csSolve.lsol.solver_type=GMRES;
-    csSolve.lsol.tol=1.0e-9;
-    csSolve.lsol.pc_type=PHY_BASED_P1;
+    csSolve.lsol.tol=1.0e-9;/* ; */
+    csSolve.lsol.pc_type=PHY_BASED_U1_MOD;
     csSolve.lsol.iter_max=100;
     csSolve.lsol.restart_gmres=30;
     csSolve.lsol.is_CG=true;
@@ -235,6 +237,8 @@ int Testrealpc(void) {
       csSolve.lsol.sol[i]=wCG[i];
     }
 
+    cpu_average = 0.0;
+    
     for(int tstep=0;tstep<simu2.itermax_rk;tstep++){
       for (int i=0; i<size; i++){
 	cs.lsol.rhs[i]=0;
@@ -255,8 +259,15 @@ int Testrealpc(void) {
       for (int i=0; i<size; i++){
 	csSolve.lsol.rhs[i]=csSolve.lsol.rhs[i]+resCG[i]-cs.lsol.rhs[i];
       }
-   
+
+     
+      start = clock();
       Advanced_SolveLinearSolver(&csSolve.lsol,&simu2);
+      end = clock();
+      cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
+      printf(" time solve %f \n",cpu_time_used);
+      cpu_average = cpu_average + cpu_time_used;
+	
       
       for (int i=0; i<size; i++){
         wCG[i] = csSolve.lsol.sol[i];
@@ -266,6 +277,14 @@ int Testrealpc(void) {
       if (tstep % freq == 0)
         printf("t=%f iter=%d/%d dt=%f\n", simu2.tnow, tstep, simu2.itermax_rk, simu2.dt);
     }
+
+    end_tot = clock();
+      cpu_time_used = ((double) (end_tot - start_tot)) / CLOCKS_PER_SEC;
+      printf("total time solve %f \n",cpu_time_used);
+      cpu_average = cpu_average + cpu_time_used;
+      
+    printf(" cpu time average %f \n",cpu_average/simu2.itermax_rk);
+    
     PiInvertCgToDg(&cs,model2.m,wCG,simu2.w);
     dd = L2error(&simu2);
 

@@ -203,31 +203,15 @@ void paralution_fortran_solve_coo(int n, int m, int nnz, char *solver, char *mfo
   int iter=0;
   double resnorm = 0.;
   int err=0;
+  clock_t start, end;
+  double cpu_time_used;
 
-  //paralution::allocate_host(nnz, &row);
-  //paralution::allocate_host(nnz, &col);
-  //paralution::allocate_host(nnz, &val);
-
-  //double *in_rhs = NULL;
-  //double *in_x = NULL;
-  //paralution::allocate_host(m, &in_rhs);
-  // paralution::allocate_host(n, &in_x);
-
-  //for (int i=0; i<m; ++i)
-  //  in_rhs[i] = fortran_rhs[i];
-  //for (int i=0; i<n; ++i)
-  // in_x[i] = fortran_x[i];
-
+  double T1,T2;
+  T1=paralution::paralution_time();
+  
   paralution_rhs.SetDataPtr(&in_rhs, "Imported Fortran rhs", m);
   paralution_x.SetDataPtr(&in_x, "Imported Fortran x", n);
 
-  // Copy matrix so we can convert it to any other format without breaking the fortran code
-  // for (int i=0; i<nnz; ++i) {
-    // Shift row and col index since Fortran arrays start at 1
-  // row[i] = fortran_row[i];
-  // col[i] = fortran_col[i];
-  // val[i] = fortran_val[i];
-  //}
 
   // Allocate paralution data structures
   paralution_mat.SetDataPtrCOO(&row, &col, &val, "Imported Fortran COO Matrix", nnz, n, m);  
@@ -235,6 +219,10 @@ void paralution_fortran_solve_coo(int n, int m, int nnz, char *solver, char *mfo
 
 
   paralution_mat.info();
+
+     
+  T2=paralution::paralution_time();
+  std::cout<<" time copy dans para "<<(T2-T1)/1000000<<std::endl;
 
   paralution_fortran_solve(solver, mformat, precond, pformat, atol, rtol, div, maxiter, basis, p, q,
                            &paralution_mat, &paralution_rhs, &paralution_x, iter, resnorm, err);
@@ -302,7 +290,7 @@ void paralution_fortran_solve_csr(int n, int m, int nnz, char *solver, char *mfo
 
   // Allocate paralution data structures
   paralution_mat.SetDataPtrCSR(&row_offset, &col, &val, "Imported Fortran CSR Matrix", nnz, n, m);
-  paralution_mat.info();
+  //paralution_mat.info();
 
   paralution_fortran_solve(solver, mformat, precond, pformat, atol, rtol, div, maxiter, basis, p, q,
                            &paralution_mat, &paralution_rhs, &paralution_x, iter, resnorm, err);
@@ -337,7 +325,9 @@ void paralution_fortran_solve(char *solver, char *mformat, char *precond, char *
   _precond_type pprecond;
   paralution::_matrix_format matformat;
   paralution::_matrix_format preformat;
-  
+  double T01,T02;
+    T01=paralution::paralution_time();
+    
   // Prepare solver type
   if      ( std::string(solver) == "BiCGStab" )   psolver = BiCGStab;
   else if ( std::string(solver) == "CG" )         psolver = CG;
@@ -537,48 +527,44 @@ void paralution_fortran_solve(char *solver, char *mformat, char *precond, char *
       break;
   }
 
+   T02=paralution::paralution_time();
+    std::cout<<" time init paralution "<<(T02-T01)/1000000<<std::endl;
 
- 
+   double T1,T2;
+     T1=paralution::paralution_time();
   if(psolver !=LU && psolver !=QR ) {
     ls->SetOperator(*mat);
     ls->Init(atol, rtol, div, maxiter);
 
-    ls->MoveToAccelerator();
-    mat->MoveToAccelerator();
-    x->MoveToAccelerator();
-    rhs->MoveToAccelerator();
-    
-     double T1,T2;
-    T1=paralution::paralution_time();
+    //ls->MoveToAccelerator();
+    //mat->MoveToAccelerator();
+    //x->MoveToAccelerator();
+    //rhs->MoveToAccelerator();
+
     ls->Build();
-    T2=paralution::paralution_time();
-    std::cout<<" time "<<(T2-T1)/1000000<<std::endl;
+
 
   }
   else
     {
       ls_exact->SetOperator(*mat);
    
-      ls_exact->MoveToAccelerator();
-      mat->MoveToAccelerator();
-      x->MoveToAccelerator();
-      rhs->MoveToAccelerator();
-      
-      double T1,T2;
-      T1=paralution::paralution_time();
+      //ls_exact->MoveToAccelerator();
+      //mat->MoveToAccelerator();
+      //x->MoveToAccelerator();
+      //rhs->MoveToAccelerator();     
+     
       ls_exact->Build();
-      T2=paralution::paralution_time();
-      std::cout<<" time "<<(T2-T1)/1000000<<std::endl;
 
     } 
 
   //ls->Verbose(2);
-  x->Zeros();
-  x->info();
-  rhs->info();
-  mat->info();
+  //x->info();
+  //rhs->info();
+  //mat->info();
 
   if(psolver !=LU && psolver !=QR) {
+
     ls->Solve(*rhs, x);
     
     iter = ls->GetIterationCount();
@@ -600,7 +586,9 @@ void paralution_fortran_solve(char *solver, char *mformat, char *precond, char *
 
       ls_exact->Clear();
       delete ls_exact;
-    } 
+    }
+    T2=paralution::paralution_time();
+    std::cout<<" solve paralution "<<(T2-T1)/1000000<<std::endl;
 
 }
 

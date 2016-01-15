@@ -445,7 +445,7 @@ void Wave_BC_normalvelocity_null(void * cs, real * xpg, real * w, real *vnorm, r
   real M[3][3];
   real BC[3][3];
   real lambda=0;
-  real mu=1.e20;
+  real mu=-1.e21;
   real p0=0,u0_1=0,u0_2=0;
 
   real h=ps->FluxMatrix[0][1]/ps->simu->vmax;
@@ -475,11 +475,25 @@ void Wave_BC_normalvelocity_null(void * cs, real * xpg, real * w, real *vnorm, r
   flux[1]=(BC[1][0]*w[0]+BC[1][1]*w[1]+BC[1][2]*w[2])-h*(M[1][0]*p0+M[1][1]*u0_1+M[1][2]*u0_2);
   flux[2]=(BC[2][0]*w[0]+BC[2][1]*w[1]+BC[2][2]*w[2])-h*(M[2][0]*p0+M[2][1]*u0_1+M[2][2]*u0_2);
 
-  flux[1]= 0;
-  flux[1]= mu * (w[1]*vnorm[0]*vnorm[0] + w[2]*vnorm[0]*vnorm[1])
-   - mu * (u0_1*vnorm[0]*vnorm[0] + u0_2*vnorm[0]*vnorm[1]);
-  flux[2]=  mu * (w[1]*vnorm[0]*vnorm[1] + w[2]*vnorm[1]*vnorm[1])
-  -  mu * (u0_1*vnorm[0]*vnorm[1] + u0_2*vnorm[1]*vnorm[1]);
+  int angle=0;
+
+  if(xpg[0]== 0.0 && xpg[1]== 0.0) { angle=1; }
+  if(xpg[0]== 0.0 && xpg[1]== 1.0) { angle=1; }
+  if(xpg[0]== 1.0 && xpg[1]== 0.0) { angle=1; }
+  if(xpg[0]== 1.0 && xpg[1]== 1.0) { angle=1; }
+
+  if(angle ==0){
+    flux[0]= 0.0;
+    flux[1]= mu * (w[1]*vnorm[0]*vnorm[0] + w[2]*vnorm[0]*vnorm[1])
+      - mu * (u0_1*vnorm[0]*vnorm[0] + u0_2*vnorm[0]*vnorm[1]);
+    flux[2]=  mu * (w[1]*vnorm[1]*vnorm[0] + w[2]*vnorm[1]*vnorm[1])
+      -  mu * (u0_1*vnorm[1]*vnorm[0] + u0_2*vnorm[1]*vnorm[1]);
+   }
+  else {
+    flux[0]= 0.0;
+    flux[1]= mu * w[1] - mu * u0_1;
+    flux[2]= mu * w[2] - mu * u0_2;
+  }
 }
 
 
