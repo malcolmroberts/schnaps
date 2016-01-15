@@ -6,10 +6,12 @@
 #include "solvercontinuous.h"
 #include "physBased_PC.h"
 
+typedef enum SW_OP{ID, ASF, ESF, AAF, EAF} SW_OP;
+
 //! \brief Initialize the physics-based preconditioner with schur on the velocity boundary condition (u,n)=0
 //! \param[in] simu: Simulation object containing some run-related variables
 //! \param[inout] pb_pc: Physics-based Preconditioner object.
-//! \param[in] list_mat2assembly: Integer array. Tells which matrices shall be assembled.
+//! \param[in] list_mat2assemble: Integer array. Tells which matrices shall be assembled.
 void Init_PBPC_SW_SchurVelocity_BCVelocity(Simulation *simu, PB_PC* pb_pc, int* list_mat2assemble);
 
 //! \brief Initialize the physics-based preconditioner with schur on the velocity boundary condition p=g
@@ -30,10 +32,15 @@ void Init_PBPC_SW_SchurPressure_BCVelocity(Simulation *simu, PB_PC* pb_pc, int* 
 //! \param[in] list_mat2assembly: Integer array. Tells which matrices shall be assembled.
 void Init_PBPC_SW_SchurPressure_BCPressure(Simulation *simu, PB_PC* pb_pc, int* list_mat2assemble);
 
-//! \brief Implementation of local matrices
+//! \brief Implementation of local matrices in the Slow Flow Approximation paradigm
 //! \param[inout] pb_pc: Physics-Based PreConditioner object.
 //! \param[in] var: Local values of the variables and their derivatives.
 void Schur_ASF(void* pb_pc, real* var);
+
+//! \brief Implementation of local matrices in the Exact Slow Flow paradigm
+//! \param[inout] pb_pc: Physics-Based PreConditioner object.
+//! \param[in] var: Local values of the variables and their derivatives.
+void Schur_ESF(void* pb_pc, real* var);
 
 //! \brief Implementation of the full RHS for SW
 //! \param[inout] pb_pc: Physics-Based PreConditioner object.

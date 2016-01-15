@@ -5,6 +5,60 @@
 #include "linear_solver.h"
 #include "physBased_PC.h"
 #include <unistd.h>
+#include "pcSW.h"
+#include "pcWave.h"
+
+void GlobalInit_PBPC(PB_PC* pb_pc, LinearSolver* lsol, Simulation* simu, int* mat2assemble){
+
+  switch(lsol->pc_type){
+    case PHY_BASED_P1: 
+      if(lsol->problem_type == WAVE){
+        Init_PBPC_Wave_SchurPressure_BCVelocity(simu, pb_pc, mat2assemble);}
+      else if(lsol->problem_type == SW){
+        printf("The Shallow Water problem has no implementation of the Schur on the pressure. Please, choose another preconditioner!\n");
+        exit(1);}//Init_PBPC_SW_SchurPressure_BCVelocity(simu, pb_pc, mat2assemble);}
+      else{
+        printf("Please, provide the implementation of the specified problem, or choose a different one.\n");
+        exit(1);}
+      break;
+
+    case PHY_BASED_P2:
+      if(lsol->problem_type == WAVE){
+        Init_PBPC_Wave_SchurPressure_BCPressure(simu, pb_pc, mat2assemble);}
+      else if(lsol->problem_type == SW){
+        printf("The Shallow Water problem has no implementation of the Schur on the pressure. Please, choose another preconditioner!\n");
+        exit(1);}//Init_PBPC_SW_SchurPressure_BCVelocity(simu, pb_pc, mat2assemble);}
+      else{
+        printf("Please, provide the implementation of the specified problem, or choose a different one.\n");
+        exit(1);}
+       break;
+     
+    case PHY_BASED_U1:
+      if(lsol->problem_type == WAVE){
+        Init_PBPC_Wave_SchurVelocity_BCVelocity(simu, pb_pc, mat2assemble);}
+      else if(lsol->problem_type == SW){
+        Init_PBPC_SW_SchurVelocity_BCVelocity(simu, pb_pc, mat2assemble);}
+      else{
+        printf("Please, provide the implementation of the specified problem, or choose a different one.\n");
+        exit(1);}
+       break;
+
+    case PHY_BASED_U2:
+      if(lsol->problem_type == WAVE){
+        Init_PBPC_Wave_SchurVelocity_BCPressure(simu, pb_pc, mat2assemble);}
+      else if(lsol->problem_type == SW){
+        Init_PBPC_SW_SchurVelocity_BCPressure(simu, pb_pc, mat2assemble);}
+      else{
+        printf("Please, provide the implementation of the specified problem, or choose a different one.\n");
+        exit(1);}
+       break;
+
+    default: printf("No preconditioner was specified. Aborting...\n");
+             exit(1);
+  }
+
+  Init_Parameters_PhyBasedPC(pb_pc);
+}
 
 void Init_Parameters_PhyBasedPC(PB_PC* pb_pc){
 
