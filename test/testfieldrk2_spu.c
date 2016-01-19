@@ -19,8 +19,8 @@ int TestfieldRK2_SPU(void){
   char *mshname =  "../test/disque2d.msh";
 
   MacroMesh mesh;
-  ReadMacroMesh(&mesh,"../test/testdisque.msh");
-  //ReadMacroMesh(&mesh,"../test/testcube2.msh");
+  //ReadMacroMesh(&mesh,"../test/testdisque.msh");
+  ReadMacroMesh(&mesh,"../test/testcube2.msh");
   //Detect2DMacroMesh(&mesh);
   BuildConnectivity(&mesh);
 
@@ -82,8 +82,8 @@ int TestfieldRK2_SPU(void){
   sprintf(buf, " -D BOUNDARYFLUX=%s", "TestTransBoundaryFlux");
   strcat(cl_buildoptions, buf);
 
-  int deg[]={3, 3, 3};
-  int raf[]={1, 1, 1};
+  int deg[]={2, 1, 1};
+  int raf[]={2, 1, 1};
   //int raf[]={2, 2, 2};
 
 #endif
@@ -125,7 +125,7 @@ int TestfieldRK2_SPU(void){
   InitSimulation(&simu, &mesh, deg, raf, &model);
 
   real tmax = 0.25;
-  //tmax = 0.006848;
+  tmax = 0.00666;
   simu.cfl=0.2;
   simu.vmax=1;
   RK2_SPU(&simu,tmax);
@@ -136,7 +136,7 @@ int TestfieldRK2_SPU(void){
   real dd = 0;
   dd = L2error(&simu);
 
-  printf("erreur L2=%f\n", dd);
+  printf("erreur L2=%.12f\n", dd);
 
   real tolerance = 0.0025;
 

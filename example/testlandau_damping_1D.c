@@ -63,7 +63,7 @@ int TestLandau_Damping_1D(void) {
 
   
   int deg[]={3, 0, 0};
-  int raf[]={30, 1, 1};
+  int raf[]={16, 1, 1};
 
   CheckMacroMesh(&mesh, deg, raf);
   Simulation simu;
@@ -78,7 +78,7 @@ int TestLandau_Damping_1D(void) {
   simu.update_after_rk = PlotVlasovPoisson;
  
   
-  real tmax = 0.1;
+  real tmax = 20;
   RK2(&simu, tmax);
 
     // save the results and the error

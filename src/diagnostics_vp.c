@@ -157,7 +157,7 @@ void Charge_total(Simulation *simu, real *w, real t_charge,int first_diag) {
     }
   
 
-    simu->Diagnostics[simu->iter_time_rk + (first_diag-1) * simu->itermax_rk] = t_charge;
+    simu->Diagnostics[simu->iter_time_rk + (first_diag+2) * simu->itermax_rk] = t_charge;
 }
 
 

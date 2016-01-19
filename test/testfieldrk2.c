@@ -20,7 +20,7 @@ int TestfieldRK2(void){
 
   MacroMesh mesh;
   ReadMacroMesh(&mesh,"../test/testdisque.msh");
-  //ReadMacroMesh(&mesh,"../test/testcube2.msh");
+  ReadMacroMesh(&mesh,"../test/testcube2.msh");
   //Detect2DMacroMesh(&mesh);
   BuildConnectivity(&mesh);
 
@@ -50,8 +50,8 @@ int TestfieldRK2(void){
   model.ImposedData = TestTransImposedData;
   model.Source = NULL;
 
-  int deg[]={3, 3, 3};
-  int raf[]={1, 1, 1};
+  int deg[]={2, 1, 1};
+  int raf[]={2, 1, 1};
   //int raf[]={2, 2, 2};
 
 #endif
