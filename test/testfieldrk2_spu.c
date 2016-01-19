@@ -120,6 +120,7 @@ int TestfieldRK2_SPU(void){
 
   CheckMacroMesh(&mesh, deg, raf);
   starpu_use = true;
+  starpu_c_use = true;
   starpu_ocl_use = true;
 
   InitSimulation(&simu, &mesh, deg, raf, &model);

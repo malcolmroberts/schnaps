@@ -5,6 +5,7 @@ int ndevice_cl = 0;
 
 bool starpu_is_init = false;
 bool starpu_use = false;
+bool starpu_c_use = false;
 bool starpu_ocl_use = false;
 
 // OpenCL program for StarPU

@@ -40,6 +40,8 @@ char cl_buildoptions[1024];
 
 extern bool starpu_is_init;
 extern bool starpu_use;
+// Use of c kernels when use of starpu
+extern bool starpu_c_use;
 // Use of opencl kernels when use of starpu
 extern bool starpu_ocl_use;
 
