@@ -95,7 +95,7 @@ void Init_PBPC_SW_SchurVelocity_BCPressure(Simulation *simu, PB_PC* pb_pc, int* 
 
   // Assigning function to build every operator's matrix
   pb_pc->mat_assembly = GenericOperator_PBPC_NonLinear;
-  pb_pc->loc_mat_assembly = Schur_ESF;
+  pb_pc->loc_mat_assembly = Schur_ASF;
   pb_pc->rhs_assembly = GenericRHS_PBPC_NonLinear;
   pb_pc->loc_rhs_assembly = SW_RHS;
   pb_pc->bc_assembly = BoundaryConditionFriedrichsAssembly;
@@ -224,7 +224,7 @@ void Init_PBPC_SW_SchurVelocity_BCVelocity(Simulation *simu, PB_PC* pb_pc, int* 
 
   // Assigning function to build all operators' matrices
   pb_pc->mat_assembly = GenericOperator_PBPC_NonLinear;
-  pb_pc->loc_mat_assembly = Schur_ESF;
+  pb_pc->loc_mat_assembly = Schur_ASF;
   pb_pc->rhs_assembly = GenericRHS_PBPC_NonLinear;
   pb_pc->loc_rhs_assembly = SW_RHS;
   pb_pc->bc_assembly = BoundaryConditionFriedrichsAssembly;
@@ -241,14 +241,14 @@ void Init_PBPC_SW_SchurVelocity_BCVelocity(Simulation *simu, PB_PC* pb_pc, int* 
   pb_pc->Schur.bc_assembly=BoundaryConditionFriedrichsAssembly;
 
   pb_pc->L1.bc_flux=BoundaryTerm_Xderivative;
-  pb_pc->L1.bc_assembly=BoundaryConditionFriedrichsAssembly;
+  pb_pc->L1.bc_assembly=NULL;//BoundaryConditionFriedrichsAssembly;
   pb_pc->U1.bc_flux=BoundaryTerm_Xderivative;
-  pb_pc->U1.bc_assembly=BoundaryConditionFriedrichsAssembly;
+  pb_pc->U1.bc_assembly=NULL;//BoundaryConditionFriedrichsAssembly;
 
   pb_pc->L2.bc_flux=BoundaryTerm_Yderivative;
-  pb_pc->L2.bc_assembly=BoundaryConditionFriedrichsAssembly;
+  pb_pc->L2.bc_assembly=NULL;//BoundaryConditionFriedrichsAssembly;
   pb_pc->U2.bc_flux=BoundaryTerm_Yderivative;
-  pb_pc->U2.bc_assembly=BoundaryConditionFriedrichsAssembly;
+  pb_pc->U2.bc_assembly=NULL;//BoundaryConditionFriedrichsAssembly;
 
   pb_pc->Schur.lsol.MatVecProduct=MatVect;
   pb_pc->L1.lsol.MatVecProduct=MatVect;
@@ -267,7 +267,7 @@ void Init_PBPC_SW_SchurVelocity_BCVelocity(Simulation *simu, PB_PC* pb_pc, int* 
 
 }
 
-void Schur_ESF(void* pb_pc, real* var){
+void Schur_ASF(void* pb_pc, real* var){
 
   PB_PC* pc = (PB_PC*) pb_pc;
 
@@ -292,11 +292,11 @@ void Schur_ESF(void* pb_pc, real* var){
                       {0,0,0,0},
                       {0,0,0,0},
                       {0,0,0,0}};
-  real L1Mat[4][4] = {{u+theta*dt*g*hx+theta*dt*(u*ux+v*uy),theta*dt*g*h,0,0},
+  real L1Mat[4][4] = {{0*u+theta*dt*g*hx+theta*dt*(u*ux+v*uy),theta*dt*g*h,0,0},
                       {0,0,0,0},
                       {0,0,0,0},
                       {0,0,0,0}};
-  real L2Mat[4][4] = {{v+theta*dt*g*hy+theta*dt*(u*vx+v*vy),0,theta*dt*g*h,0},
+  real L2Mat[4][4] = {{0*v+theta*dt*g*hy+theta*dt*(u*vx+v*vy),0,theta*dt*g*h,0},
                       {0,0,0,0},
                       {0,0,0,0},
                       {0,0,0,0}};
@@ -308,33 +308,55 @@ void Schur_ESF(void* pb_pc, real* var){
                       {0,0,0,0},
                       {0,0,0,0},
                       {0,0,0,0}};
-  real SchurMat[4][4][4] ={{{h + theta*dt*h*ux - theta*dt*(u*ux+v*uy)*theta*dt*hx 
-                               , theta*dt*h*u  - theta*dt*(u*ux+v*uy)*theta*dt*h 
-                               , theta*dt*h*v , 0},
-                            {theta*theta*dt*dt*g*h*hx,theta*theta*dt*dt*g*h*h,0,0},
+
+
+  real SchurMat[4][4][4] ={{{h + theta*dt*h*ux, theta*dt*h*u, theta*dt*h*v , 0},
+                            {0*theta*theta*dt*dt*g*h*hx,theta*theta*dt*dt*g*h*h,0,0},
                             {0,0,0,0},
                             {0,0,0,0}},
 
-                           {{theta*dt*h*uy - theta*dt*(u*ux+v*uy)*theta*dt*hy,
-                             0,
-                                           - theta*dt*(u*ux+v*uy)*theta*dt*h ,0},
-                            {theta*theta*dt*dt*g*h*hy,0,theta*theta*dt*dt*g*h*h,0},
+                           {{theta*dt*h*uy, 0, 0 ,0},
+                            {0*theta*theta*dt*dt*g*h*hy,0,theta*theta*dt*dt*g*h*h,0},
                             {0,0,0,0},
                             {0,0,0,0}},
 
-                           {{theta*dt*h*vx - theta*dt*(u*vx+v*vy)*theta*dt*hx,
-                                           - theta*dt*(u*vx+v*vy)*theta*dt*h ,
-                            0,0},
+                           {{theta*dt*h*vx,0, 0,0},
                             {0,0,0,0},
-                            {theta*theta*dt*dt*g*h*hx,theta*theta*dt*dt*g*h*h,0,0},
+                            {0*theta*theta*dt*dt*g*h*hx,theta*theta*dt*dt*g*h*h,0,0},
                             {0,0,0,0}},
 
-                           {{h + theta*dt*h*vy - theta*dt*(u*vx+v*vy)*theta*dt*hy
-                               , theta*dt*h*u
-                               , theta*dt*h*v  - theta*dt*(u*vx+v*vy)*theta*dt*h , 0},
+                           {{h + theta*dt*h*vy, theta*dt*h*u, theta*dt*h*v, 0},
                             {0,0,0,0},
-                            {theta*theta*dt*dt*g*h*hy,0,theta*theta*dt*dt*g*h*h,0},
+                            {0*theta*theta*dt*dt*g*h*hy,0,theta*theta*dt*dt*g*h*h,0},
                             {0,0,0,0}}};
+  
+  // real SchurMat[4][4][4] ={{{h + theta*dt*h*ux - theta*dt*(u*ux+v*uy)*theta*dt*hx 
+  //                           , theta*dt*h*u  - theta*dt*(u*ux+v*uy)*theta*dt*h 
+  //                           , theta*dt*h*v , 0},
+  //                        {theta*theta*dt*dt*g*h*hx,theta*theta*dt*dt*g*h*h,0,0},
+  //                        {0,0,0,0},
+  //                        {0,0,0,0}},
+
+  //                       {{theta*dt*h*uy - theta*dt*(u*ux+v*uy)*theta*dt*hy,
+  //                         0,
+  //                                       - theta*dt*(u*ux+v*uy)*theta*dt*h ,0},
+  //                        {theta*theta*dt*dt*g*h*hy,0,theta*theta*dt*dt*g*h*h,0},
+  //                        {0,0,0,0},
+  //                        {0,0,0,0}},
+
+  //                       {{theta*dt*h*vx - theta*dt*(u*vx+v*vy)*theta*dt*hx,
+  //                                       - theta*dt*(u*vx+v*vy)*theta*dt*h ,
+  //                        0,0},
+  //                        {0,0,0,0},
+  //                        {theta*theta*dt*dt*g*h*hx,theta*theta*dt*dt*g*h*h,0,0},
+  //                        {0,0,0,0}},
+  //
+  //                         {{h + theta*dt*h*vy - theta*dt*(u*vx+v*vy)*theta*dt*hy
+  //                            , theta*dt*h*u
+  //                             , theta*dt*h*v  - theta*dt*(u*vx+v*vy)*theta*dt*h , 0},
+  //                         {0,0,0,0},
+  //                          {theta*theta*dt*dt*g*h*hy,0,theta*theta*dt*dt*g*h*h,0},
+  //                         {0,0,0,0}}};
 
   //real SchurMat[4][4][4] ={{{h + theta*dt*h*ux - (u+theta*dt*(u*ux+v*uy))*theta*dt*hx 
   //                             , theta*dt*h*u  - (u+theta*dt*(u*ux+v*uy))*theta*dt*h 
@@ -398,82 +420,6 @@ void Schur_ESF(void* pb_pc, real* var){
   }
 }
 
-void Schur_ASF(void* pb_pc, real* var){
-
-  PB_PC* pc = (PB_PC*) pb_pc;
-
-  real theta = pc->D.simu->theta;
-  real dt = pc->D.simu->dt;
-  real g = _GRAVITY;
-
-  real h  = var[0];
-  real hx = var[1];
-  real hy = var[2];
-  real hz = var[3];
-  real u  = var[4];
-  real ux = var[5];
-  real uy = var[6];
-  real uz = var[7];
-  real v  = var[8];
-  real vx = var[9];
-  real vy = var[10];
-  real vz = var[11];
-
-  real DMat[4][4]  = {{1.0+theta*dt*(ux+vy),theta*dt*u,theta*dt*v,0},
-                      {0,0,0,0},
-                      {0,0,0,0},
-                      {0,0,0,0}};
-  real L1Mat[4][4] = {{u+theta*dt*g*hx+theta*dt*(u*ux+v*uy),theta*dt*g*h,0,0},
-                      {0,0,0,0},
-                      {0,0,0,0},
-                      {0,0,0,0}};
-  real L2Mat[4][4] = {{v+theta*dt*g*hy+theta*dt*(u*vx+v*vy),0,theta*dt*g*h,0},
-                      {0,0,0,0},
-                      {0,0,0,0},
-                      {0,0,0,0}};
-  real U1Mat[4][4] = {{theta*dt*hx,theta*dt*h,0,0},
-                      {0,0,0,0},
-                      {0,0,0,0},
-                      {0,0,0,0}};
-  real U2Mat[4][4] = {{theta*dt*hy,0,theta*dt*h,0},
-                      {0,0,0,0},
-                      {0,0,0,0},
-                      {0,0,0,0}};
-  real SchurMat[4][4][4] ={{{h + theta*dt*h*ux
-                               , theta*dt*h*u
-                               , theta*dt*h*v , 0},
-                            {theta*theta*dt*dt*h*hx,theta*theta*dt*dt*h*h,0,0},
-                            {0,0,0,0},
-                            {0,0,0,0}},
-                           {{theta*dt*h*uy,0,0,0},
-                            {theta*theta*dt*dt*h*hy,0,theta*theta*dt*dt*h*h,0},
-                            {0,0,0,0},
-                            {0,0,0,0}},
-                           {{theta*dt*h*vx,0,0,0},
-                            {0,0,0,0},
-                            {theta*theta*dt*dt*h*hx,theta*theta*dt*dt*h*h,0,0},
-                            {0,0,0,0}},
-                           {{h + theta*dt*h*vy
-                               , theta*dt*h*u
-                               , theta*dt*h*v , 0},
-                            {0,0,0,0},
-                            {theta*theta*dt*dt*h*hy,0,theta*theta*dt*dt*h*h,0},
-                            {0,0,0,0}}};
-
-  // Applying these matrices inside the different ContinuousSolver
-  for (int i=0; i<4; i++){
-    for (int j=0; j<4; j++){
-      for (int k=0; k<4; k++){
-        if (SchurMat != NULL) pc->Schur.diff_op[k].DO[i][j] = SchurMat[k][i][j];
-      }
-      if (DMat  != NULL)  pc->D.diff_op[0].DO[i][j] = DMat[i][j];
-      if (L1Mat != NULL) pc->L1.diff_op[0].DO[i][j] = L1Mat[i][j];
-      if (L2Mat != NULL) pc->L2.diff_op[0].DO[i][j] = L2Mat[i][j];
-      if (U1Mat != NULL) pc->U1.diff_op[0].DO[i][j] = U1Mat[i][j];
-      if (U2Mat != NULL) pc->U2.diff_op[0].DO[i][j] = U2Mat[i][j];
-    }
-  }
-}
 
 // coeff = dt*det*wpg*basisPhi_i[0]
 void SW_RHS(void* pb_pc, real* var, real coeff, real* loc_rhs){

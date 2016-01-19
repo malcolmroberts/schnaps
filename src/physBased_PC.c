@@ -66,12 +66,12 @@ void Init_Parameters_PhyBasedPC(PB_PC* pb_pc){
   pb_pc->solver_propagation=LU;//PAR_CG;
   pb_pc->solver_correction=LU;//PAR_CG;
 
-  pb_pc->pc_prediction=LU;//PAR_JACOBI;
-  pb_pc->pc_propagation=LU;//PAR_JACOBI;//MULTICOLOREDGS;//PAR_ILU;//JACOBI;
-  pb_pc->pc_correction=LU;//PAR_JACOBI;
+  pb_pc->pc_prediction=PAR_JACOBI;
+  pb_pc->pc_propagation=PAR_JACOBI;//MULTICOLOREDGS;//PAR_ILU;//JACOBI;
+  pb_pc->pc_correction=PAR_JACOBI;
 
   pb_pc->tol_prediction=1.e-9;
-  pb_pc->tol_propagation=1e-9;
+  pb_pc->tol_propagation=1e-10;
   pb_pc->tol_correction=1.e-9;
 
   pb_pc->itermax_prediction=1000;
@@ -273,7 +273,6 @@ void GenericOperator_PBPC_NonLinear(void* pb_pc, ContinuousSolver* cs){
       int iemacro = ie / (f0->raf[0] * f0->raf[1] * f0->raf[2]);
       int isubcell = ie % (f0->raf[0] * f0->raf[1] * f0->raf[2]);
 
-
       // Build Derivatives
       // value = 0, dx = 1, dy = 2, dz = 3
       real var[ps->nb_phy_vars][4][ps->nnodes]; 
@@ -313,7 +312,7 @@ void GenericOperator_PBPC_NonLinear(void* pb_pc, ContinuousSolver* cs){
             real det = dot_product(dtau[0], codtau[0]);
             basisPhi_j[1]=dphi_j[0]/det;
             basisPhi_j[2]=dphi_j[1]/det;
-            basisPhi_j[3]=dphi_j[2]/det;
+            basisPhi_j[3]=dphi_j[2]/det;	    
             for (int i=1;i<4;i++){
               var[iv][i][iloc] += basisPhi_j[i]*ps->lsol.sol[iv+jGauss_fe*ps->nb_phy_vars];
             } // end for i (derivative)
@@ -1115,7 +1114,7 @@ void RobinFlux_SchurPressure(void * cs, real * xpg, real * w, real *vnorm, real 
 
 void Dirichlet_Velocity(void * cs, real * xpg, real * w, real *vnorm, real * flux){
   ContinuousSolver * ps=cs;
-  real mu=-1.0e21;//15;
+  real mu=1.0e20;//15;
   real Coef_diff=0;
   real u0_1 = 0;
   real u0_2 = 0;
@@ -1143,7 +1142,7 @@ void Dirichlet_Velocity(void * cs, real * xpg, real * w, real *vnorm, real * flu
 
 void Dirichlet_vorticity(void * cs, real * xpg, real * w, real *vnorm, real * flux){
   ContinuousSolver * ps=cs;
-  real mu=-1.0e21;//15;
+  real mu=1.0e21;//15;
   real Coef_diff=0;
   real w_0 = 0;
 

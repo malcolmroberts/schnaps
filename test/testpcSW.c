@@ -80,7 +80,9 @@ int TestpcSW(void) {
 
   bool test = true;
   real dd;
-  int test1_ok=1,test2_ok=0,test3_ok=1,test4_ok=0;
+   clock_t start, end, start_tot, end_tot;
+  double cpu_time_used, cpu_average;
+  int test1_ok=1,test2_ok=0,test3_ok=0,test4_ok=0;
 
 #ifdef PARALUTION
   paralution_begin();
@@ -109,7 +111,7 @@ int TestpcSW(void) {
     model.Source = ShallowWater_SteadyState_U_SourceTerm;
 
     int deg[]={4, 4, 0};
-    int raf[]={24, 24, 1};
+    int raf[]={32, 32, 1};
 
     assert(mesh.is2d);
     CheckMacroMesh(&mesh, deg, raf);
@@ -127,11 +129,10 @@ int TestpcSW(void) {
 
     real theta=0.5;
     simu.theta=theta;
-    //simu.dt=0.002/8;
     simu.vmax=1;//_SPEED_WAVE;
     simu.cfl = 0.025;
     simu.dt = 1.0;//Get_Dt_RK(&simu)/16;
-    real tmax=5.0;//*simu.dt;//0.1;
+    real tmax=5.0*simu.dt;//0.1;
     int itermax=tmax/simu.dt;
     simu.itermax_rk=itermax;
 
@@ -140,7 +141,7 @@ int TestpcSW(void) {
     cs.lsol.tol=1.e-9;
     cs.lsol.pc_type=PHY_BASED_U1;
     cs.lsol.iter_max=10000;
-    cs.lsol.restart_gmres=20;
+    cs.lsol.restart_gmres=30;
     cs.lsol.is_CG=true;
 
     cs.bc_flux=Wave_BC_normalvelocity_null;
@@ -185,7 +186,12 @@ int TestpcSW(void) {
       //  printf("i=%d, h=%.8e, u=%.8e, v=%.8e\n", i, cs.lsol.rhs[3*i], cs.lsol.rhs[3*i+1], cs.lsol.rhs[3*i+2]);
       //}
       //DisplayLinearSolver(&cs.lsol);
+      start = clock();
       Advanced_SolveLinearSolver(&cs.lsol,&simu);
+       end = clock();
+      cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
+      printf(" time solve %f \n",cpu_time_used);
+      cpu_average = cpu_average + cpu_time_used;
 
       //for (int i=0; i<size1varCG; i++){
       //  printf("i=%d, h=%.8e, u=%.8e, v=%.8e\n",i,wCG[3*i],wCG[3*i+1],wCG[3*i+2]);
@@ -637,9 +643,9 @@ int TestpcSW(void) {
 
 
 void TestSH_SteadyState_U_ImposedData(const real *x, const real t, real *w) {
-  real alpha = 0.1;
-  real beta = 0.01;
-  real p = 3;
+  real alpha = 1.0;
+  real beta = 10;
+  real p = 2;
   w[0] = 1.0+alpha*(pow(x[0],p)-pow(x[0],2*p))*(pow(x[1],p)-pow(x[1],2*p));
   w[1] =  beta * (x[0]-x[0]*x[0])*(1.0-2.0*x[1]);
   w[2] = -beta * (x[1]-x[1]*x[1])*(1.0-2.0*x[0]);
@@ -650,14 +656,18 @@ void TestSH_SteadyState_U_ImposedData(const real *x, const real t, real *w) {
 
 void TestSH_SteadyState_U_InitData(real *x, real *w) {
   real t = 0;
+  real pi=4.0*atan(1.0);
   TestSH_SteadyState_U_ImposedData(x, t, w);
+  w[0] = w[0];
+  w[1] = w[1]+0.00001*sin(2*pi*x[0])*sin(2*pi*x[1]);
+  w[2] = w[2]+0.00001*sin(2*pi*x[0])*sin(2*pi*x[1]);
 }
 
 void ShallowWater_SteadyState_U_SourceTerm(const real *x, const real t, const real *w, real *source){
   real g=_GRAVITY;
-  real alpha = 0.1;
-  real beta = 0.01;
-  real p = 3;
+  real alpha = 1.0;
+  real beta = 10;
+  real p = 2;
   real S_11, S_12,S_13, S_21, S_22, S_23, S_factor;
   real wexact[6];
 

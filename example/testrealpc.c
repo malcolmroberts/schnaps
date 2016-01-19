@@ -184,7 +184,7 @@ int Testrealpc(void) {
     model2.Source = NULL;
 
     int deg2[]={4, 4, 0};
-    int raf2[]={32,32 , 1};
+    int raf2[]={24,24 , 1};
 
     assert(mesh.is2d);
     CheckMacroMesh(&mesh, deg2, raf2);
@@ -203,7 +203,7 @@ int Testrealpc(void) {
     InitContinuousSolver(&csSolve,&simu2,1,nbvar,listvar);
     start_tot = clock();
     simu2.theta=0.5;//0.0;
-    simu2.dt=1.0;//0.0025;
+    simu2.dt=10.0;//0.0025;
     simu2.vmax=_SPEED_WAVE;
     real tmax2=5*simu2.dt;//;0.5;
     int itermax2=tmax2/simu2.dt;

@@ -445,7 +445,7 @@ void Wave_BC_normalvelocity_null(void * cs, real * xpg, real * w, real *vnorm, r
   real M[3][3];
   real BC[3][3];
   real lambda=0;
-  real mu=-1.e21;
+  real mu= 1.e20;
   real p0=0,u0_1=0,u0_2=0;
 
   real h=ps->FluxMatrix[0][1]/ps->simu->vmax;

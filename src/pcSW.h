@@ -37,10 +37,6 @@ void Init_PBPC_SW_SchurPressure_BCPressure(Simulation *simu, PB_PC* pb_pc, int* 
 //! \param[in] var: Local values of the variables and their derivatives.
 void Schur_ASF(void* pb_pc, real* var);
 
-//! \brief Implementation of local matrices in the Exact Slow Flow paradigm
-//! \param[inout] pb_pc: Physics-Based PreConditioner object.
-//! \param[in] var: Local values of the variables and their derivatives.
-void Schur_ESF(void* pb_pc, real* var);
 
 //! \brief Implementation of the full RHS for SW
 //! \param[inout] pb_pc: Physics-Based PreConditioner object.
