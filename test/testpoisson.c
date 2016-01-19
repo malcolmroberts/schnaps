@@ -94,7 +94,8 @@ int TestPoisson(void)
   ps.lsol.solver_type =LU;
   ps.lsol.pc_type=NONE;
 #else
-  ps.lsol.solver_type = GMRES;
+  //ps.lsol.solver_type = GMRES;
+  ps.lsol.solver_type = LU;
   ps.lsol.pc_type=NONE;
 #endif 
   

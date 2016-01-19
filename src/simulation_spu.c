@@ -28,8 +28,10 @@ void ZeroBuffer_SPU(starpu_data_handle_t w){
     printf("init codelet ZeroBuffer...\n");
     is_init = true;
     starpu_codelet_init(&codelet);
-    codelet.cpu_funcs[0] = ZeroBuffer_C;
-    codelet.cpu_funcs[1] = NULL;
+    if (starpu_c_use) {
+      codelet.cpu_funcs[0] = ZeroBuffer_C;
+      codelet.cpu_funcs[1] = NULL;
+    }
     if (starpu_ocl_use) {
       if (!opencl_program_is_init) {
         opencl_program_is_init = true;
@@ -44,7 +46,7 @@ void ZeroBuffer_SPU(starpu_data_handle_t w){
     }
     codelet.nbuffers = 1;
     codelet.modes[0] = STARPU_W;
-    codelet.name="Zero Buffer";
+    codelet.name="ZeroBuffer";
   }
 
 
@@ -127,8 +129,10 @@ void AddBuffer_SPU(real alpha, starpu_data_handle_t win, starpu_data_handle_t wo
     printf("init codelet AddBuffer...\n");
     is_init = true;
     starpu_codelet_init(&codelet);
-    codelet.cpu_funcs[0] = AddBuffer_C;
-    codelet.cpu_funcs[1] = NULL;
+    if (starpu_c_use) {
+      codelet.cpu_funcs[0] = AddBuffer_C;
+      codelet.cpu_funcs[1] = NULL;
+    }
     if (starpu_ocl_use) {
       if (!opencl_program_is_init) {
         opencl_program_is_init = true;
@@ -463,7 +467,7 @@ void DtFields_SPU(Simulation *simu,
     // left = 0  right = 1
     ExtractInterface_SPU(inter, 0);
     ExtractInterface_SPU(inter, 1);
-    
+
     if (inter->fR != NULL) {
       // FIXME: significant increase of error when coupling L and R (10**3)
       // Apply to L alone is ok, apply to R alone is ok, apply on L + R is KO
@@ -487,11 +491,11 @@ void DtFields_SPU(Simulation *simu,
 
     //DisplayHandle_SPU(simu->fd[ie].res_handle, "res_SCI");
 
-    //DGVolume_SPU(simu->fd + ie);
+    DGVolume_SPU(simu->fd + ie);
 
     //DisplayHandle_SPU(simu->fd[ie].res_handle, "res_VOL");
 
-    //DGSource_SPU(simu->fd + ie);
+    DGSource_SPU(simu->fd + ie);
 
     //DisplayHandle_SPU(simu->fd[ie].res_handle, "res_SOU");
 
@@ -689,8 +693,8 @@ void DGMacroCellInterface_SPU(Interface* inter, int side)
     printf("init codelet DGMacroCellInterface...\n");
     is_init = true;
     starpu_codelet_init(&codelet);
-    /* codelet.cpu_funcs[0] = DGMacroCellInterface_C; */
-    /* codelet.cpu_funcs[1] = NULL; */
+    codelet.cpu_funcs[0] = DGMacroCellInterface_C;
+    codelet.cpu_funcs[1] = NULL;
     if (starpu_ocl_use) {
       if (!opencl_program_is_init) {
         opencl_program_is_init = true;
@@ -954,18 +958,18 @@ void DGMacroCellBoundaryFlux_SPU(Interface* inter)
     starpu_codelet_init(&codelet);
     codelet.cpu_funcs[0] = DGMacroCellBoundaryFlux_C;
     codelet.cpu_funcs[1] = NULL;
-    /* if (starpu_ocl_use) { */
-    /*   if (!opencl_program_is_init) { */
-    /*     opencl_program_is_init = true; */
-    /*     printf("load OpenCL program...\n"); */
-    /*     int ret = starpu_opencl_load_opencl_from_file("./schnaps.cl", */
-    /*                                                   &opencl_program, */
-    /*                                                   cl_buildoptions); */
-    /*     STARPU_CHECK_RETURN_VALUE(ret, "starpu_opencl_load_opencl_from_file"); */
-    /*   } */
-    /*   codelet.opencl_funcs[0] = DGMacroCellBoundaryFlux_OCL; */
-    /*   codelet.opencl_funcs[1] = NULL; */
-    /* } */
+    if (starpu_ocl_use) {
+      if (!opencl_program_is_init) {
+        opencl_program_is_init = true;
+        printf("load OpenCL program...\n");
+        int ret = starpu_opencl_load_opencl_from_file("./schnaps.cl",
+                                                      &opencl_program,
+                                                      cl_buildoptions);
+        STARPU_CHECK_RETURN_VALUE(ret, "starpu_opencl_load_opencl_from_file");
+      }
+      codelet.opencl_funcs[0] = DGMacroCellBoundaryFlux_OCL;
+      codelet.opencl_funcs[1] = NULL;
+    }
     codelet.nbuffers = 5;
     codelet.modes[0] = STARPU_R;  // vol_index
     codelet.modes[1] = STARPU_R; // vnds
@@ -1482,8 +1486,10 @@ void DGVolume_SPU(field* f)
     printf("init codelet DGVolume...\n");
     is_init = true;
     starpu_codelet_init(&codelet);
-    codelet.cpu_funcs[0] = DGVolume_C;
-    codelet.cpu_funcs[1] = NULL;
+    if (starpu_c_use) {
+      codelet.cpu_funcs[0] = DGVolume_C;
+      codelet.cpu_funcs[1] = NULL;
+    }
     if (starpu_ocl_use) {
       if (!opencl_program_is_init) {
         opencl_program_is_init = true;
@@ -1665,8 +1671,7 @@ void DGVolume_C(void *buffers[], void *cl_arg)
 
 
 
-void DGVolume_OCL(void *buffers[], void *cl_arg)
-{
+void DGVolume_OCL(void *buffers[], void *cl_arg) {
 
   int m;
   int deg[3];
@@ -1694,8 +1699,7 @@ void DGVolume_OCL(void *buffers[], void *cl_arg)
   cl_command_queue queue;
 
   cl_int status = starpu_opencl_load_kernel(&kernel, &queue,
-                                            //&opencl_program, "DGVolumeRes",
-                                            &opencl_program, "DGVolume",
+                                            &opencl_program, "DGVolumeRes",
                                             devid);
   if (status != CL_SUCCESS) STARPU_OPENCL_REPORT_ERROR(status);
 
@@ -1706,40 +1710,22 @@ void DGVolume_OCL(void *buffers[], void *cl_arg)
                                       &status);
   if (status != CL_SUCCESS) STARPU_OPENCL_REPORT_ERROR(status);
 
-  cl_mem deg_cl = clCreateBuffer(context,
-                                 CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
-                                 sizeof(int) * 3,
-                                 deg,
-                                 &status);
-  if (status != CL_SUCCESS) STARPU_OPENCL_REPORT_ERROR(status);
-
-  cl_mem raf_cl = clCreateBuffer(context,
-                                 CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
-                                 sizeof(int) * 3,
-                                 raf,
-                                 &status);
-  if (status != CL_SUCCESS) STARPU_OPENCL_REPORT_ERROR(status);
-
-  // Debug
   int param[7] = {m, deg[0], deg[1], deg[2], raf[0], raf[1], raf[2]};
   cl_mem param_cl = clCreateBuffer(context,
-                                 CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
-                                 sizeof(int) * 7,
-                                 param,
-                                 &status);
+                                   CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
+                                   sizeof(int) * 7,
+                                   param,
+                                   &status);
   if (status != CL_SUCCESS) STARPU_OPENCL_REPORT_ERROR(status);
 
-   size_t wsize = NPG(deg, raf);
+  int ie = 0;
+
+  size_t wsize = NPG(deg, raf);
   size_t lsize = (deg[0] + 1) * (deg[1] + 1) * (deg[2] + 1);
 
   int narg = 0;
-  // Debug
-  int ie = 0;
-  //status = clSetKernelArg(kernel, narg++, sizeof(int), &m);
   status = clSetKernelArg(kernel, narg++, sizeof(cl_mem), &param_cl);
   status |= clSetKernelArg(kernel, narg++, sizeof(int), &ie);
-  //status |= clSetKernelArg(kernel, narg++, sizeof(cl_mem), &deg_cl);
-  //status |= clSetKernelArg(kernel, narg++, sizeof(cl_mem), &raf_cl);
   status |= clSetKernelArg(kernel, narg++, sizeof(cl_mem), &physnode_cl);
   status |= clSetKernelArg(kernel, narg++, sizeof(cl_mem), &w);
   status |= clSetKernelArg(kernel, narg++, sizeof(cl_mem), &res);
@@ -1996,18 +1982,18 @@ void DGMass_SPU(field* f)
     starpu_codelet_init(&codelet);
     codelet.cpu_funcs[0] = DGMass_C;
     codelet.cpu_funcs[1] = NULL;
-    /* if (starpu_ocl_use) { */
-    /*   if (!opencl_program_is_init) { */
-    /*     opencl_program_is_init = true; */
-    /*     printf("load OpenCL program...\n"); */
-    /*     int ret = starpu_opencl_load_opencl_from_file("./schnaps.cl", */
-    /*                                                   &opencl_program, */
-    /*                                                   cl_buildoptions); */
-    /*     STARPU_CHECK_RETURN_VALUE(ret, "starpu_opencl_load_opencl_from_file"); */
-    /*   } */
-    /*   codelet.opencl_funcs[0] = DGMass_OCL; */
-    /*   codelet.opencl_funcs[1] = NULL; */
-    /* } */
+    if (starpu_ocl_use) {
+      if (!opencl_program_is_init) {
+        opencl_program_is_init = true;
+        printf("load OpenCL program...\n");
+        int ret = starpu_opencl_load_opencl_from_file("./schnaps.cl",
+                                                      &opencl_program,
+                                                      cl_buildoptions);
+        STARPU_CHECK_RETURN_VALUE(ret, "starpu_opencl_load_opencl_from_file");
+      }
+      codelet.opencl_funcs[0] = DGMass_OCL;
+      codelet.opencl_funcs[1] = NULL;
+    }
     codelet.nbuffers = 2;
     codelet.modes[0] = STARPU_R;
     codelet.modes[1] = STARPU_RW;

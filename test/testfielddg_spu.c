@@ -3,9 +3,11 @@
 #include<stdio.h>
 #include <assert.h>
 #include <math.h>
+#include <stdlib.h>
 
 
 int TestfieldDG_SPU(void){
+
 
   int test = true;
 
@@ -38,7 +40,8 @@ int TestfieldDG_SPU(void){
 
   //PrintMacroMesh(&mesh);
 
-  starpu_use = true;
+
+  putenv("STARPU_NOPENCL=0");
 
   Simulation simu;
   EmptySimulation(&simu);
@@ -54,6 +57,10 @@ int TestfieldDG_SPU(void){
   strcat(cl_buildoptions, buf);
   sprintf(buf, " -D BOUNDARYFLUX=%s", "TestTransBoundaryFlux");
   strcat(cl_buildoptions, buf);
+
+  starpu_use = true;
+  starpu_c_use = true;
+  starpu_ocl_use = true;
 
   InitSimulation(&simu, &mesh, deg, raf, &model);
 

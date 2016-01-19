@@ -65,8 +65,8 @@ void ExtractInterface_SPU(Interface* inter, int side){
     printf("init codelet ExtractInterface...\n");
     is_init = true;
     starpu_codelet_init(&codelet);
-    /* codelet.cpu_funcs[0] = ExtractInterface_C; */
-    /* codelet.cpu_funcs[1] = NULL; */
+    codelet.cpu_funcs[0] = ExtractInterface_C;
+    codelet.cpu_funcs[1] = NULL;
     if (starpu_ocl_use) {
       if (!opencl_program_is_init) {
         opencl_program_is_init = true;

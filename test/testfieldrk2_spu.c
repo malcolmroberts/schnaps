@@ -3,6 +3,7 @@
 #include<stdio.h>
 #include <assert.h>
 #include <math.h>
+#include <stdlib.h>
 
 int TestfieldRK2_SPU(void){
   bool test = true;
@@ -15,6 +16,10 @@ int TestfieldRK2_SPU(void){
 
   // 3D meshes"
   // test/testdisque.msh
+
+
+  putenv("STARPU_NOPENCL=0");
+
 
   char *mshname =  "../test/disque2d.msh";
 
@@ -120,6 +125,7 @@ int TestfieldRK2_SPU(void){
 
   CheckMacroMesh(&mesh, deg, raf);
   starpu_use = true;
+  starpu_c_use = true;
   starpu_ocl_use = true;
 
   InitSimulation(&simu, &mesh, deg, raf, &model);
@@ -138,7 +144,7 @@ int TestfieldRK2_SPU(void){
 
   printf("erreur L2=%.12f\n", dd);
 
-  real tolerance = 0.0025;
+  real tolerance = 0.0026;
 
   test = dd < tolerance;
 
