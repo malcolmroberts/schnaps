@@ -66,7 +66,7 @@ int TestPoisson(void)
   model.Source = NULL;
  
   int deg[]={3, 0, 0};
-  int raf[]={3, 1, 1};
+  int raf[]={30, 1, 1};
     
   PrintMacroMesh(&mesh);
   //assert(1==2);
