@@ -110,6 +110,7 @@ void Energies(Simulation *simu, real *w, real k_energy, real e_energy, real t_en
 	+ dtau[0][1] * codtau[0][1]
 	+ dtau[0][2] * codtau[0][2]; 
       real wn[f->model.m];
+      //printf("m=%d imax=%d\n",f->model.m,_INDEX_MAX + 1);
       for(int iv = 0; iv < _INDEX_MAX + 1; iv++){ 
 	int imem = f->varindex(f->deg,f->raf, f->model.m, ipg, iv);
 	wn[iv] = w[imem];
@@ -157,17 +158,17 @@ void Charge_total(Simulation *simu, real *w, real t_charge,int first_diag) {
     }
   
 
-    simu->Diagnostics[simu->iter_time_rk + (first_diag+2) * simu->itermax_rk] = t_charge;
+    simu->Diagnostics[simu->iter_time_rk + (first_diag-1) * simu->itermax_rk] = t_charge;
 }
 
 
-void Plot_Energies(Simulation *simu, real dt) { 
+void Plot_Energies(Simulation *simu, real dt) {
   int nb_diag = 0; 
   real e_energy = 0, k_energy = 0, t_energy = 0,t_charge=0; 
   FILE *Plot;
   Plot = fopen("Diagnostics.dat","w");
 
-  for(int i = 1; i < simu->itermax_rk + 1; i++){
+  for(int i = 1; i < simu->itermax_rk ; i++){
     simu->tnow = i*dt;
     k_energy = simu->Diagnostics[i]; 
     e_energy = simu->Diagnostics[i + simu->itermax_rk]; 

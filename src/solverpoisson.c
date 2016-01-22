@@ -23,11 +23,6 @@ void RHSPoisson_Continuous(void * cs){
   ContinuousSolver * ps=cs;
   
   field* f0 = &ps->simu->fd[0];
-
-  real charge_average;
-  charge_average=0;
-  charge_average=Computation_charge_average(ps->simu);
-
   
   // right hand side assembly
   for(int ino = 0; ino < ps->nb_fe_dof; ino++){
@@ -58,7 +53,7 @@ void RHSPoisson_Continuous(void * cs){
 			      ilocmacro,_INDEX_RHO) ;
 	//+ iemacro * NPG(f0->deg,f0->raf) * f0->model.m ;
       real rho = ps->simu->fd[iemacro].wn[imem];
-      ps->lsol.rhs[ino_fe] += (rho-charge_average)  * wpg * det ; // TODO: put the actual charge	
+      ps->lsol.rhs[ino_fe] += rho * wpg * det ; 
       surf += wpg * det ;  
     }
  
@@ -181,6 +176,41 @@ void RobinBoundaryConditionAssembly(void * cs){
 
 void Periodic_BoundaryCondition_Poisson1D(void * cs){
   ContinuousSolver * ps=cs;
+  field* f0 = &ps->simu->fd[0];
+
+  real charge_average;
+  charge_average=0;
+  charge_average=Computation_charge_average(ps->simu);
+
+  real surf = 0;
+
+  for(int ie = 0; ie < ps->nbel; ie++){  
+
+    int iemacro = ie / (f0->raf[0] * f0->raf[1] * f0->raf[2]);
+    int isubcell = ie % (f0->raf[0] * f0->raf[1] * f0->raf[2]);  
+ 
+    for(int iloc = 0; iloc < ps->nnodes; iloc++){
+      real wpg;
+      real xref[3];
+      //int ipgmacro = ipg + isubcell * nnodes;
+      int ilocmacro = iloc + isubcell * ps->nnodes;
+      ref_pg_vol(f0->deg,f0->raf,ilocmacro,xref,&wpg,NULL);
+      real dtau[3][3],codtau[3][3];
+      Ref2Phy(ps->simu->fd[iemacro].physnode,
+	      xref,NULL,0,NULL,
+	      dtau,codtau,NULL,NULL);
+      real det = dot_product(dtau[0], codtau[0]);	
+      int ino_dg = iloc + ie * ps->nnodes;
+      int ino_fe = ps->dg_to_fe_index[ino_dg];
+      int imem = f0->varindex(f0->deg,f0->raf,f0->model.m,
+			      ilocmacro,_INDEX_RHO) ;
+	//+ iemacro * NPG(f0->deg,f0->raf) * f0->model.m ;
+      real rho = ps->simu->fd[iemacro].wn[imem];
+      ps->lsol.rhs[ino_fe] -= charge_average * wpg * det ; 
+      surf += wpg * det ;  
+    }
+ 
+  }
   
   AddLinearSolver(&ps->lsol,0,0,1e20);
   AddLinearSolver(&ps->lsol,ps->lsol.neq-1,ps->lsol.neq-1,1e20);

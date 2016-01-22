@@ -54,7 +54,7 @@ int TestLandau_Damping_1D(void) {
   
   Model model;
   
-  model.m=_INDEX_MAX; // num of conservative variables f(vi) for each vi, phi, E, rho, u, p, e (ou T)
+  model.m=_INDEX_MAX + 1; // num of conservative variables f(vi) for each vi, phi, E, rho, u, p, e (ou T)
   model.NumFlux=VlasovP_Lagrangian_NumFlux;
   model.InitData =Test_Landau_Damping_InitData;
   model.ImposedData = Test_Landau_Damping_ImposedData;
@@ -63,7 +63,7 @@ int TestLandau_Damping_1D(void) {
 
   
   int deg[]={3, 0, 0};
-  int raf[]={16, 1, 1};
+  int raf[]={24, 1, 1};
 
   CheckMacroMesh(&mesh, deg, raf);
   Simulation simu;
@@ -71,14 +71,14 @@ int TestLandau_Damping_1D(void) {
 
   InitSimulation(&simu, &mesh, deg, raf, &model);
   simu.vmax = _VMAX; // maximal wave speed
-  simu.cfl=0.5;
+  simu.cfl=0.25;
   simu.nb_diags = 4;
   simu.pre_dtfields = UpdateVlasovPoisson;
   simu.post_dtfields=NULL;
   simu.update_after_rk = PlotVlasovPoisson;
  
   
-  real tmax = 20;
+  real tmax = 30;
   RK2(&simu, tmax);
 
     // save the results and the error
