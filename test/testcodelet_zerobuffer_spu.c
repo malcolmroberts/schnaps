@@ -48,13 +48,13 @@ int TestCodelet_ZeroBuffer_SPU(void){
   printf("OCL workers                : %d\n", nb_ocl);
   printf("CUDA workers               : %d\n", starpu_cuda_worker_get_count());
   printf("MIC workers                : %d\n", starpu_mic_worker_get_count());
-
+  
   // Loop over workers to submit tasks
   for (int wid = 0; wid < nb_workers; ++wid) {
     // Create context with a single worker
-    unsigned int ctxid = starpu_sched_ctx_create(&wid, 1, "ctx", NULL);
+    unsigned int ctxid = starpu_sched_ctx_create(&wid, 1, "ctx", STARPU_SCHED_CTX_POLICY_NAME, "prio", NULL);
     starpu_sched_ctx_set_context(&ctxid);
-
+  
     // Create data handle (init and register)
     for (int i = 0; i < size; ++i) buffer[i] = i;
     starpu_data_handle_t handle;
@@ -68,7 +68,7 @@ int TestCodelet_ZeroBuffer_SPU(void){
     starpu_data_prefetch_on_node(handle, 0, 0);
     starpu_data_unregister(handle);
     for (int i = 0; i < size; ++i) test &= (abs(buffer[i]) < _VERY_SMALL);
-
+    
     // Delete context
     starpu_sched_ctx_delete(ctxid);
   }

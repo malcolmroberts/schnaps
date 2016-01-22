@@ -34,7 +34,7 @@ void ZeroBuffer_SPU(starpu_data_handle_t w){
     }
     if (starpu_ocl_use) {
       if (!opencl_program_is_init) {
-        opencl_program_is_init = true;
+	opencl_program_is_init = true;
         printf("load OpenCL program...\n");
         int ret = starpu_opencl_load_opencl_from_file("./schnaps.cl",
                                                       &opencl_program,
