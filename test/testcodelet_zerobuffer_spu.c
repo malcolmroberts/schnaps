@@ -20,9 +20,10 @@ int TestCodelet_ZeroBuffer_SPU(void){
 
 
   // Data buffer
-  const int size = 1000;
+  const int size = 10000000;
   real* buffer = calloc(size, sizeof(real));
 
+  putenv("STARPU_NCUDA=0");
   // Init StarPU
   test &= (starpu_init(NULL) != -ENODEV);
 
