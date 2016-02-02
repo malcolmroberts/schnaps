@@ -64,3 +64,29 @@ doxygen doxyschnaps
  *
  *
  */
+
+Installation de StarPU:
+
+Télécharger FxT
+mkdir /usr/local/fxtdir
+cd FxT
+./bootstrap
+export FXTDIR=/usr/local/fxtdir
+./configure --prefix=$FXTDIR
+make -j4
+make install
+
+Télécharger StarPU a partir de la base svn (voir site StarPU)
+brew 
+cd StarPu/
+mkdir build
+./autogen.sh
+(installer les paquets brew manquants)
+../configure --with-fxt=$FXTDIR
+make -j4
+make check (facultatif)
+make install
+
+Désactiver les codelets opencl (éventuellement)
+export STARPU_NOPENCL=0
+
