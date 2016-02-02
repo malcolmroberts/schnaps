@@ -90,3 +90,7 @@ make install
 Désactiver les codelets opencl (éventuellement)
 export STARPU_NOPENCL=0
 
+Télécharger VITE a partir de la base svn (voir site vite trace)
+brew install graphviz
+
+
