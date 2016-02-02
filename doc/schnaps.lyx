@@ -1,5 +1,5 @@
-#LyX 2.0 created this file. For more info see http://www.lyx.org/
-\lyxformat 413
+#LyX 2.1 created this file. For more info see http://www.lyx.org/
+\lyxformat 474
 \begin_document
 \begin_header
 \textclass article
@@ -19,13 +19,13 @@
 \font_roman default
 \font_sans default
 \font_typewriter default
+\font_math auto
 \font_default_family default
 \use_non_tex_fonts false
 \font_sc false
 \font_osf false
 \font_sf_scale 100
 \font_tt_scale 100
-
 \graphics default
 \default_output_format default
 \output_sync 0
@@ -45,15 +45,24 @@
 \pdf_pdfusetitle true
 \papersize a4paper
 \use_geometry true
-\use_amsmath 1
-\use_esint 1
-\use_mhchem 1
-\use_mathdots 1
+\use_package amsmath 1
+\use_package amssymb 1
+\use_package cancel 1
+\use_package esint 1
+\use_package mathdots 1
+\use_package mathtools 1
+\use_package mhchem 1
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
 \cite_engine basic
+\cite_engine_type default
+\biblio_style plain
 \use_bibtopic false
 \use_indices false
 \paperorientation portrait
 \suppress_date false
+\justification true
 \use_refstyle 1
 \index Index
 \shortcut idx
@@ -82,7 +91,7 @@
 
 \begin_layout Standard
 \begin_inset FormulaMacro
-\renewcommand{\nraf}{\text{{nraf}}}
+\newcommand{\nraf}{\text{{nraf}}}
 {\mathrm{nraf}}
 \end_inset
 
@@ -90,8 +99,7 @@
 \end_layout
 
 \begin_layout Title
-SCHNAPS: une bibliothèque pour la résolution numérique des lois de conservation
- sur ordinateur massivement multicoeur
+SCHNAPS: Solveur Conservatif Hyperbolique Non-linéaire Appliqué aux PlaSmas
 \end_layout
 
 \begin_layout Author
@@ -125,10 +133,9 @@ Solveur Conservatif Hyperbolique Non-linéaire Appliqué aux PlasmaS
 \end_inset
 
 .
- Il s'agit d'une bibliothèque de classes C pour résoudre numériquement des
- systèmes de lois de conservation sur des ordinateurs massivement parallèles,
- avec plusieurs niveaux de parallélisme, par exemple un gros cluster de
- GPU.
+ Il s'agit d'une bibliothèque C99 pour résoudre numériquement des systèmes
+ de lois de conservation sur des ordinateurs massivement parallèles, avec
+ plusieurs niveaux de parallélisme, par exemple un gros cluster de GPU.
 \end_layout
 
 \begin_layout Standard
@@ -708,13 +715,13 @@ Comme
 \end_inset
 
 .
- Par conséquent, comme dans la méthode des volumes finis, nous devons introduire
+ Par conséquent, comme dans la méthode des volumes finis, nous devons utiliser
  un flux numérique 
 \begin_inset Formula $F(W_{L},W_{R},n_{LR})$
 \end_inset
 
-.
- Généralement, le flux numérique satisfait deux conditions
+, introduit dans la section précédente.
+ Le flux numérique satisfait souvent les deux conditions
 \end_layout
 
 \begin_deeper
@@ -773,7 +780,7 @@ reference "eq:DG"
 \begin_inset Formula $F(W_{L},W_{R},n_{LR})$
 \end_inset
 
- par un flux frontière
+ par le flux frontière
 \begin_inset Formula 
 \[
 F_{b}(W_{L},n_{LR}).
@@ -826,6 +833,15 @@ reference "sub:Documentation"
 \end_inset
 
 ).
+\end_layout
+
+\begin_layout Subsection
+StarPU
+\end_layout
+
+\begin_layout Standard
+Afin d'exploiter les architectures d'ordinateurs hybrides les plus récentes,
+ il est indispensable de pouvoir soumettre de fa
 \end_layout
 
 \begin_layout Subsection
@@ -960,7 +976,7 @@ Toutes ces informations sont données dans des fonctions SCHNAPS, car elles
 \end_layout
 
 \begin_layout Subsection
-Sous-domaines
+Macrocellules et champs
 \end_layout
 
 \begin_layout Standard
@@ -991,10 +1007,6 @@ sous-domaines
 \begin_layout Standard
 S'il n'y a qu'un seul sous-domaine, SCHNAPS peut fonctionner sans la bibliothèqu
 e MPI.
-\end_layout
-
-\begin_layout Subsection
-Zones
 \end_layout
 
 \begin_layout Standard
@@ -1207,7 +1219,7 @@ status open
 \end_inset
 
 
-\begin_inset Caption
+\begin_inset Caption Standard
 
 \begin_layout Plain Layout
 \begin_inset CommandInset label
@@ -1678,7 +1690,7 @@ end{tikzpicture}
 \begin_layout Plain Layout
 \noindent
 \align center
-\begin_inset Caption
+\begin_inset Caption Standard
 
 \begin_layout Plain Layout
 Cube de référence.
@@ -2090,7 +2102,7 @@ end{tikzpicture}
 \begin_layout Plain Layout
 \noindent
 \align center
-\begin_inset Caption
+\begin_inset Caption Standard
 
 \begin_layout Plain Layout
 Cube de référence.
@@ -2468,7 +2480,7 @@ reference "sub:elem_geom"
 \left\{ \begin{array}{lcl}
 i(\mathrm{axis\_permut}(\texttt{ifa},0)) & = & i'(0),\\
 i(\mathrm{axis\_permut}(\texttt{ifa},1)) & = & i'(1),\\
-i(\mathrm{axis\_permut}(\texttt{ifa},2)) & = & \mathrm{axis\_permut}(\texttt{ifa},3)\, d(\mathrm{axis\_permut}(\texttt{ifa},3)).
+i(\mathrm{axis\_permut}(\texttt{ifa},2)) & = & \mathrm{axis\_permut}(\texttt{ifa},3)\,d(\mathrm{axis\_permut}(\texttt{ifa},3)).
 \end{array}\right.
 \]
 
@@ -2595,7 +2607,7 @@ Dans le détail, on a
 \left\{ \begin{array}{lcl}
 i(\mathrm{axis\_permut}(\texttt{ifa},0)) & = & i'(0),\\
 i(\mathrm{axis\_permut}(\texttt{ifa},1)) & = & i'(1),\\
-i(\mathrm{axis\_permut}(\texttt{ifa},2)) & = & \mathrm{axis\_permut}(\texttt{ifa},3)\, d(\mathrm{axis\_permut}(\texttt{ifa},3)).
+i(\mathrm{axis\_permut}(\texttt{ifa},2)) & = & \mathrm{axis\_permut}(\texttt{ifa},3)\,d(\mathrm{axis\_permut}(\texttt{ifa},3)).
 \end{array}\right.
 \]
 
