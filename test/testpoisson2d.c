@@ -8,10 +8,10 @@
 #include "linear_solver.h"
 
 
-void TestPoisson_ImposedData(const real x[3],const real t,real w[]);
-void TestPoisson_InitData(real x[3],real w[]);
-void TestPoisson_BoundaryFlux(real x[3],real t,real wL[],real* vnorm,
-			      real* flux);
+void TestPoisson_ImposedData(const schnaps_real x[3],const schnaps_real t,schnaps_real w[]);
+void TestPoisson_InitData(schnaps_real x[3],schnaps_real w[]);
+void TestPoisson_BoundaryFlux(schnaps_real x[3],schnaps_real t,schnaps_real wL[],schnaps_real* vnorm,
+			      schnaps_real* flux);
 
 int main(void) 
 {
@@ -97,7 +97,7 @@ int TestPoisson2d(void)
 
   SolveContinuous2D(&ps);
 
-  real errl2 = L2error(&simu);
+  schnaps_real errl2 = L2error(&simu);
 
   printf("Erreur L2=%f\n",errl2);
 
@@ -119,7 +119,7 @@ int TestPoisson2d(void)
   return test;
 }
 
-void TestPoisson_ImposedData(const real x[3], const real t, real w[])
+void TestPoisson_ImposedData(const schnaps_real x[3], const schnaps_real t, schnaps_real w[])
 {
   for(int i = 0; i < _INDEX_MAX; i++){
     w[i] = 0;
@@ -134,16 +134,16 @@ void TestPoisson_ImposedData(const real x[3], const real t, real w[])
   /* w[_INDEX_RHO] = 0; //rho init */
 }
 
-void TestPoisson_InitData(real x[3], real w[])
+void TestPoisson_InitData(schnaps_real x[3], schnaps_real w[])
 {
-  real t = 0;
+  schnaps_real t = 0;
   TestPoisson_ImposedData(x, t, w);
 }
 
-void TestPoisson_BoundaryFlux(real x[3], real t, real wL[], real *vnorm, 
-			      real *flux)
+void TestPoisson_BoundaryFlux(schnaps_real x[3], schnaps_real t, schnaps_real wL[], schnaps_real *vnorm, 
+			      schnaps_real *flux)
 {
-  real wR[_INDEX_MAX];
+  schnaps_real wR[_INDEX_MAX];
   TestPoisson_ImposedData(x, t, wR);
   VlasovP_Lagrangian_NumFlux(wL, wR, vnorm, flux);
 }

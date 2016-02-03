@@ -73,7 +73,7 @@ int TestMaxwell3D(void) {
 
   InitSimulation(&simu, &mesh, deg, raf, &model);
  
-  real tmax = .1;
+  schnaps_real tmax = .1;
   simu.cfl=0.2;
   simu.vmax=1;
 
@@ -82,7 +82,7 @@ int TestMaxwell3D(void) {
   RK4(&simu, tmax);
 #else
   // OpenCL version
-  real dt = 0;
+  schnaps_real dt = 0;
   RK4_CL(&simu, tmax, dt, 0, 0, 0);
 
   CopyfieldtoCPU(&simu); 
@@ -95,12 +95,12 @@ int TestMaxwell3D(void) {
   //PlotFields(0, false, &simu, NULL, "dgvisu.msh");
   //PlotFields(0, true , &simu, "error", "dgerror.msh");
 
-  real dd = 0;
+  schnaps_real dd = 0;
   dd = L2error(&simu);
 
   printf("erreur L2=%f\n", dd);
 
-  real tolerance = 0.0025;
+  schnaps_real tolerance = 0.0025;
   tolerance = 0.08;
   test = dd < tolerance;
   

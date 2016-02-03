@@ -29,7 +29,7 @@ void RHSPoisson_Continuous(void * cs){
     ps->lsol.rhs[ino] = 0;
   }
 
-  real surf = 0;
+  schnaps_real surf = 0;
 
   for(int ie = 0; ie < ps->nbel; ie++){  
 
@@ -37,22 +37,22 @@ void RHSPoisson_Continuous(void * cs){
     int isubcell = ie % (f0->raf[0] * f0->raf[1] * f0->raf[2]);  
  
     for(int iloc = 0; iloc < ps->nnodes; iloc++){
-      real wpg;
-      real xref[3];
+      schnaps_real wpg;
+      schnaps_real xref[3];
       //int ipgmacro = ipg + isubcell * nnodes;
       int ilocmacro = iloc + isubcell * ps->nnodes;
       ref_pg_vol(f0->deg,f0->raf,ilocmacro,xref,&wpg,NULL);
-      real dtau[3][3],codtau[3][3];
-      Ref2Phy(ps->simu->fd[iemacro].physnode,
+      schnaps_real dtau[3][3],codtau[3][3];
+      schnaps_ref2phy(ps->simu->fd[iemacro].physnode,
 	      xref,NULL,0,NULL,
 	      dtau,codtau,NULL,NULL);
-      real det = dot_product(dtau[0], codtau[0]);	
+      schnaps_real det = dot_product(dtau[0], codtau[0]);	
       int ino_dg = iloc + ie * ps->nnodes;
       int ino_fe = ps->dg_to_fe_index[ino_dg];
       int imem = f0->varindex(f0->deg,f0->raf,f0->model.m,
 			      ilocmacro,_INDEX_RHO) ;
 	//+ iemacro * NPG(f0->deg,f0->raf) * f0->model.m ;
-      real rho = ps->simu->fd[iemacro].wn[imem];
+      schnaps_real rho = ps->simu->fd[iemacro].wn[imem];
       ps->lsol.rhs[ino_fe] += rho * wpg * det ; 
       surf += wpg * det ;  
     }
@@ -77,7 +77,7 @@ void RobinBoundaryConditionAssembly(void * cs){
 	field *f = &ps->simu->fd[ie];
 	
 	for(int ipglf = 0;ipglf < NPGF(f->deg,f->raf,locfaL); ipglf++){
-	  real xpgref[3], xpgref_in[3], wpg;
+	  schnaps_real xpgref[3], xpgref_in[3], wpg;
 
 
 	  // Get the coordinates of the Gauss point and coordinates of a
@@ -86,17 +86,17 @@ void RobinBoundaryConditionAssembly(void * cs){
 	  int ino_dg = ipg + ie * ps->npgmacrocell;
 	  int ino_fe = ps->dg_to_fe_index[ino_dg];
 	  // Normal vector at gauss point ipgL
-	  real vnds[3], xpg[3];
+	  schnaps_real vnds[3], xpg[3];
 	  {
-	    real dtau[3][3], codtau[3][3];
-	    Ref2Phy(f->physnode,
+	    schnaps_real dtau[3][3], codtau[3][3];
+	    schnaps_ref2phy(f->physnode,
 		    xpgref,
 		    NULL, locfaL, // dpsiref, ifa
 		    xpg, dtau,
 		    codtau, NULL, vnds); // codtau, dpsi, vnds
 	  }
 	  // the boundary flux is an affine function
-	  real flux0[m], wL[m];
+	  schnaps_real flux0[m], wL[m];
 	  for(int iv = 0; iv < m; iv++) {
 	    wL[iv] = 0;
 	  }
@@ -110,14 +110,14 @@ void RobinBoundaryConditionAssembly(void * cs){
 	      wL[iv] = (iv == iv1);
 	    }
 	    
-	    real flux[m];
+	    schnaps_real flux[m];
 	    ps->bc_flux(ps,xpg,wL,vnds,flux);
 	    
 	    for(int iv2 = 0; iv2 < m; iv2++) {
 	      // The basis functions is also the gauss point index
 	      //int imem2 = fL->varindex(fL->deg, fL->raf,fL->model.m, ipgL, iv2) + offsetL;
 	      int ipot_fe2 = ino_fe*ps->nb_phy_vars + iv2;
-	      real val =  (flux[iv2]-flux0[iv2]) * wpg;
+	      schnaps_real val =  (flux[iv2]-flux0[iv2]) * wpg;
 	      AddLinearSolver(&ps->lsol, ipot_fe2, ipot_fe1, val);
 	    }
 	  }	    
@@ -140,7 +140,7 @@ void RobinBoundaryConditionAssembly(void * cs){
       field *f = &ps->simu->fd[ie];
 
       for(int ipglf = 0;ipglf < NPGF(f->deg,f->raf,locfaL); ipglf++){
-	real xpgref[3], xpgref_in[3], wpg;
+	schnaps_real xpgref[3], xpgref_in[3], wpg;
           
 	// Get the coordinates of the Gauss point and coordinates of a
 	// point slightly inside the opposite element in xref_in
@@ -148,10 +148,10 @@ void RobinBoundaryConditionAssembly(void * cs){
 	int ino_dg = ipg + ie * ps->npgmacrocell;
 	int ino_fe = ps->dg_to_fe_index[ino_dg];
 	// Normal vector at gauss point ipgL
-	real vnds[3], xpg[3];
+	schnaps_real vnds[3], xpg[3];
 	{
-	  real dtau[3][3], codtau[3][3];
-	  Ref2Phy(f->physnode,
+	  schnaps_real dtau[3][3], codtau[3][3];
+	  schnaps_ref2phy(f->physnode,
 		  xpgref,
 		  NULL, locfaL, // dpsiref, ifa
 		  xpg, dtau,
@@ -159,14 +159,14 @@ void RobinBoundaryConditionAssembly(void * cs){
 	}
           
 	// the boundary flux is an affine function
-	real w0[f->model.m],flux0[f->model.m];
+	schnaps_real w0[f->model.m],flux0[f->model.m];
 	for(int ivv=0; ivv < ps->nb_phy_vars; ivv++) w0[ivv]=0;
 	ps->bc_flux(ps,xpg,w0,vnds,flux0);
 	for(int var=0; var < ps->nb_phy_vars; var++){
 	  int ipot = f->varindex(f->deg,f->raf,f->model.m,
 				  ipg,ps->list_of_var[var]);
 	  int ipot_fe = ino_fe*ps->nb_phy_vars + var;
-	  real val = flux0[ps->list_of_var[var]] * wpg;
+	  schnaps_real val = flux0[ps->list_of_var[var]] * wpg;
 	  ps->lsol.rhs[ipot_fe] -= val;
 	}
       }	    
@@ -178,11 +178,11 @@ void Periodic_BoundaryCondition_Poisson1D(void * cs){
   ContinuousSolver * ps=cs;
   field* f0 = &ps->simu->fd[0];
 
-  real charge_average;
+  schnaps_real charge_average;
   charge_average=0;
   charge_average=Computation_charge_average(ps->simu);
 
-  real surf = 0;
+  schnaps_real surf = 0;
 
   for(int ie = 0; ie < ps->nbel; ie++){  
 
@@ -190,22 +190,22 @@ void Periodic_BoundaryCondition_Poisson1D(void * cs){
     int isubcell = ie % (f0->raf[0] * f0->raf[1] * f0->raf[2]);  
  
     for(int iloc = 0; iloc < ps->nnodes; iloc++){
-      real wpg;
-      real xref[3];
+      schnaps_real wpg;
+      schnaps_real xref[3];
       //int ipgmacro = ipg + isubcell * nnodes;
       int ilocmacro = iloc + isubcell * ps->nnodes;
       ref_pg_vol(f0->deg,f0->raf,ilocmacro,xref,&wpg,NULL);
-      real dtau[3][3],codtau[3][3];
-      Ref2Phy(ps->simu->fd[iemacro].physnode,
+      schnaps_real dtau[3][3],codtau[3][3];
+      schnaps_ref2phy(ps->simu->fd[iemacro].physnode,
 	      xref,NULL,0,NULL,
 	      dtau,codtau,NULL,NULL);
-      real det = dot_product(dtau[0], codtau[0]);	
+      schnaps_real det = dot_product(dtau[0], codtau[0]);	
       int ino_dg = iloc + ie * ps->nnodes;
       int ino_fe = ps->dg_to_fe_index[ino_dg];
       int imem = f0->varindex(f0->deg,f0->raf,f0->model.m,
 			      ilocmacro,_INDEX_RHO) ;
 	//+ iemacro * NPG(f0->deg,f0->raf) * f0->model.m ;
-      real rho = ps->simu->fd[iemacro].wn[imem];
+      schnaps_real rho = ps->simu->fd[iemacro].wn[imem];
       ps->lsol.rhs[ino_fe] -= charge_average * wpg * det ; 
       surf += wpg * det ;  
     }
@@ -222,7 +222,7 @@ void Periodic_BoundaryCondition_Poisson1D(void * cs){
 void ContinuousOperator_Poisson1D(void * cs){
   ContinuousSolver * ps=cs;  
   ps->diff_op=calloc(ps->nb_phy_vars*ps->nb_phy_vars,sizeof(SDO));
-  real D[4][4] = {{0,0,0,0},
+  schnaps_real D[4][4] = {{0,0,0,0},
                  {0,1,0,0},
                  {0,0,0,0},
                  {0,0,0,0}};
@@ -237,7 +237,7 @@ void ContinuousOperator_Poisson1D(void * cs){
 void ContinuousOperator_Poisson2D(void * cs){
   ContinuousSolver * ps=cs;
   ps->diff_op=calloc(ps->nb_phy_vars*ps->nb_phy_vars,sizeof(SDO));
-  real D[4][4] = {{0,0,0,0},
+  schnaps_real D[4][4] = {{0,0,0,0},
                  {0,1,0,0},
                  {0,0,1,0},
                  {0,0,0,0}};
@@ -250,12 +250,12 @@ void ContinuousOperator_Poisson2D(void * cs){
 }
 
 
-void RobinFlux(void * cs, real * xpg, real * w, real *vnorm, real * flux){
+void RobinFlux(void * cs, schnaps_real * xpg, schnaps_real * w, schnaps_real *vnorm, schnaps_real * flux){
   ContinuousSolver * ps=cs;
-  real alpha=-10000000;
-  real beta=0;
-  real p0=0;
-  real Win[3];
+  schnaps_real alpha=-10000000;
+  schnaps_real beta=0;
+  schnaps_real p0=0;
+  schnaps_real Win[3];
     
   ps->simu->fd[0].model.ImposedData(xpg,ps->simu->dt,Win);
   p0=Win[0];
@@ -268,7 +268,7 @@ void RobinFlux(void * cs, real * xpg, real * w, real *vnorm, real * flux){
 
 
 
-void LowerOrderPC_Poisson(LinearSolver * lsol, Simulation *simu, real* globalSol, real*globalRHS){
+void LowerOrderPC_Poisson(LinearSolver * lsol, Simulation *simu, schnaps_real* globalSol, schnaps_real*globalRHS){
   Simulation simu2;
   EmptySimulation(&simu2);
   int deg_lo[]={1, simu->fd[0].deg[1], simu->fd[0].deg[2]};
@@ -287,8 +287,8 @@ void LowerOrderPC_Poisson(LinearSolver * lsol, Simulation *simu, real* globalSol
   ps.rhs_assembly=NULL;
 
   /////////////////// Restriction /////////////////
-  real * vector_reduced=NULL;
-  vector_reduced=calloc(ps.nb_fe_nodes,sizeof(real));
+  schnaps_real * vector_reduced=NULL;
+  vector_reduced=calloc(ps.nb_fe_nodes,sizeof(schnaps_real));
   Restriction1D_Pq_P1(&ps,HighOrder,globalRHS,vector_reduced);
 
    for (int i=0;i<ps.nb_fe_nodes;i++){
@@ -322,9 +322,9 @@ void LowerOrderPC_Poisson(LinearSolver * lsol, Simulation *simu, real* globalSol
 }
 
 
-void Interpolation1D_P1_Pq(ContinuousSolver *cs_LowOrder,int HighOrder, real * VecIn, real * VecOut){
+void Interpolation1D_P1_Pq(ContinuousSolver *cs_LowOrder,int HighOrder, schnaps_real * VecIn, schnaps_real * VecOut){
   field* f0 = &cs_LowOrder->simu->fd[0];
-  real Polynome_1[2];
+  schnaps_real Polynome_1[2];
 
   Simulation simu;
   EmptySimulation(&simu);
@@ -346,31 +346,31 @@ void Interpolation1D_P1_Pq(ContinuousSolver *cs_LowOrder,int HighOrder, real * V
     int isubcell = ie % (f0->raf[0] * f0->raf[1] * f0->raf[2]);
     int iemacro = ie / (f0->raf[0] * f0->raf[1] * f0->raf[2]);
 
-    real wpg;
-    real xref[3], xref_begin[3], xref_end[3];
-    real dtau[3][3],codtau[3][3];
+    schnaps_real wpg;
+    schnaps_real xref[3], xref_begin[3], xref_end[3];
+    schnaps_real dtau[3][3],codtau[3][3];
     int ipgmacro_begin = isubcell * cs_HighOrder.nnodes;
     int ipgmacro_end = cs_HighOrder.nnodes - 1 + isubcell * cs_HighOrder.nnodes;
 
     ref_pg_vol(deg_ho,raf_ho,ipgmacro_begin,xref_begin,&wpg,NULL);
-    Ref2Phy(f0[iemacro].physnode,
+    schnaps_ref2phy(f0[iemacro].physnode,
 	       xref_begin,NULL,0,NULL,
 	       dtau,codtau,NULL,NULL);
 
     ref_pg_vol(deg_ho,raf_ho,ipgmacro_end,xref_end,&wpg,NULL);
-    Ref2Phy(f0[iemacro].physnode,
+    schnaps_ref2phy(f0[iemacro].physnode,
 	       xref_end,NULL,0,NULL,
 	       dtau,codtau,NULL,NULL);
 
-    real h=xref_end[0]-xref_begin[0];    
+    schnaps_real h=xref_end[0]-xref_begin[0];    
     
     for(int ipg = 0;ipg < cs_HighOrder.nnodes; ipg++){
  
       int ino_dg= ipg + isubcell * cs_HighOrder.nnodes;
  
       ref_pg_vol(deg_ho,raf_ho,ino_dg,xref,&wpg,NULL);
-      real dtau[3][3],codtau[3][3];    
-      Ref2Phy(f0[iemacro].physnode,
+      schnaps_real dtau[3][3],codtau[3][3];    
+      schnaps_ref2phy(f0[iemacro].physnode,
 	       xref,NULL,0,NULL,
 	       dtau,codtau,NULL,NULL);
       
@@ -380,7 +380,7 @@ void Interpolation1D_P1_Pq(ContinuousSolver *cs_LowOrder,int HighOrder, real * V
   }
 }
 
-void Restriction1D_Pq_P1(ContinuousSolver *cs_LowOrder,int HighOrder, real * VecIn, real * VecOut){
+void Restriction1D_Pq_P1(ContinuousSolver *cs_LowOrder,int HighOrder, schnaps_real * VecIn, schnaps_real * VecOut){
   field* f0 = &cs_LowOrder->simu->fd[0];
 
   Simulation simu;

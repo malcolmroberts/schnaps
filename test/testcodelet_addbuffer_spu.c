@@ -21,9 +21,9 @@ int TestCodelet_AddBuffer_SPU(void){
 
   // Data buffer
   const int size = 1000;
-  const real alpha = 3.14123456789123456789123456789123456789123456879;
-  real* buffer_in = calloc(size, sizeof(real));
-  real* buffer_out = calloc(size, sizeof(real));
+  const schnaps_real alpha = 3.14123456789123456789123456789123456789123456879;
+  schnaps_real* buffer_in = calloc(size, sizeof(schnaps_real));
+  schnaps_real* buffer_out = calloc(size, sizeof(schnaps_real));
 
   // Init StarPU
   test &= (starpu_init(NULL) != -ENODEV);
@@ -63,9 +63,9 @@ int TestCodelet_AddBuffer_SPU(void){
       buffer_out[i] = i;
     }
     starpu_data_handle_t handle_in;
-    starpu_vector_data_register(&handle_in, 0, (uintptr_t) buffer_in, size, sizeof(real));
+    starpu_vector_data_register(&handle_in, 0, (uintptr_t) buffer_in, size, sizeof(schnaps_real));
     starpu_data_handle_t handle_out;
-    starpu_vector_data_register(&handle_out, 0, (uintptr_t) buffer_out, size, sizeof(real));
+    starpu_vector_data_register(&handle_out, 0, (uintptr_t) buffer_out, size, sizeof(schnaps_real));
 
     // Task
     AddBuffer_SPU(alpha, handle_in, handle_out);

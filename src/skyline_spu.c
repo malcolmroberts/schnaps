@@ -5,16 +5,16 @@
 #include "skyline_spu.h"
 
 
-int sol_spu(real *vkgs, real *vkgd, real *
-	vkgi, real *vfg, int *kld, real *vu, int neq, 
-	 int ifac, int isol, int nsym, real *
+int sol_spu(schnaps_real *vkgs, schnaps_real *vkgd, schnaps_real *
+	vkgi, schnaps_real *vfg, int *kld, schnaps_real *vu, int neq, 
+	 int ifac, int isol, int nsym, schnaps_real *
 	 energ, int *ier);
 
-int mulku_spu(real *vkgs, real *vkgd, real *
-	vkgi, int *kld, real *vfg, int neq, int nsym, 
-	   real *vres, int nsky);
+int mulku_spu(schnaps_real *vkgs, schnaps_real *vkgd, schnaps_real *
+	vkgi, int *kld, schnaps_real *vfg, int neq, int nsym, 
+	   schnaps_real *vres, int nsky);
 
-real scal_spu(real *x, real *y, int *n);
+schnaps_real scal_spu(schnaps_real *x, schnaps_real *y, int *n);
 
 
 void InitSkyline_SPU(Skyline_SPU* sky, int n){
@@ -37,7 +37,7 @@ void InitSkyline_SPU(Skyline_SPU* sky, int n){
 
   sky->vkgs=NULL;
 
-  sky->vkgd=malloc(n*sizeof(real));
+  sky->vkgd=malloc(n*sizeof(schnaps_real));
   assert(sky->vkgd);
   for(int i=0;i<n;i++) sky->vkgd[i]=0;
 
@@ -51,10 +51,10 @@ void InitSkyline_SPU(Skyline_SPU* sky, int n){
   assert(sky->kld);
   for(int i=0;i<n+1;i++) sky->kld[i]=0;
 
-  sky->sol = malloc(n * sizeof(real));
+  sky->sol = malloc(n * sizeof(schnaps_real));
   for(int i=0;i<n;i++) sky->sol[i]=0;
 
-  sky->rhs = malloc(n * sizeof(real));
+  sky->rhs = malloc(n * sizeof(schnaps_real));
   for(int i=0;i<n;i++) sky->rhs[i]=0;
 }
 
@@ -77,11 +77,11 @@ void AllocateSkyline_SPU(Skyline_SPU* sky){
   }
   sky->nmem=sky->kld[sky->neq];
 
-  sky->vkgs=malloc(sky->nmem * sizeof(real));
+  sky->vkgs=malloc(sky->nmem * sizeof(schnaps_real));
   assert(sky->vkgs);
 
   if (! sky->is_sym){
-    sky->vkgi=malloc(sky->nmem * sizeof(real));
+    sky->vkgi=malloc(sky->nmem * sizeof(schnaps_real));
     assert(sky->vkgi);
   }
   else{
@@ -99,7 +99,7 @@ void AllocateSkyline_SPU(Skyline_SPU* sky){
 
 }
 
-void AddSkyline_SPU(Skyline_SPU* sky,int i,int j,real val){
+void AddSkyline_SPU(Skyline_SPU* sky,int i,int j,schnaps_real val){
 
   assert(sky->is_alloc);
 
@@ -122,7 +122,7 @@ void AddSkyline_SPU(Skyline_SPU* sky,int i,int j,real val){
 
 }
 
-void SetSkyline_SPU(Skyline_SPU* sky,int i,int j,real val){
+void SetSkyline_SPU(Skyline_SPU* sky,int i,int j,schnaps_real val){
 
   assert(sky->is_alloc);
 
@@ -145,7 +145,7 @@ void SetSkyline_SPU(Skyline_SPU* sky,int i,int j,real val){
 
 } 
 
-real GetSkyline_SPU(Skyline_SPU* sky,int i,int j){
+schnaps_real GetSkyline_SPU(Skyline_SPU* sky,int i,int j){
 
   if (sky->is_sym && i>j){
     int temp=i;
@@ -221,9 +221,9 @@ void DisplaySkyline_SPU(Skyline_SPU* sky){
 
 void FactoLU_SPU(Skyline_SPU* sky){
 
-  real* vfg=NULL;
-  real* vu=NULL;
-  real energ;
+  schnaps_real* vfg=NULL;
+  schnaps_real* vu=NULL;
+  schnaps_real energ;
   int ier;
   int ifac=1;
   int isol=0;
@@ -249,28 +249,28 @@ void RegisterSkyline_SPU(Skyline_SPU* sky){
 				0, // location: CPU
 				(uintptr_t)(sky->rhs), // vector location
 				sky->neq,  // size
-				sizeof(real));  // type
+				sizeof(schnaps_real));  // type
 
     starpu_vector_data_register(&(sky->sol_handle), // mem handle
 				0, // location: CPU
 				(uintptr_t)(sky->sol), // vector location
 				sky->neq,  // size
-				sizeof(real));  // type
+				sizeof(schnaps_real));  // type
     starpu_vector_data_register(&(sky->vkgs_handle), // mem handle
 				0, // location: CPU
 				(uintptr_t)(sky->vkgs), // vector location
 				sky->nmem,  // size
-				sizeof(real));  // type
+				sizeof(schnaps_real));  // type
     starpu_vector_data_register(&(sky->vkgd_handle), // mem handle
 				0, // location: CPU
 				(uintptr_t)(sky->vkgd), // vector location
 				sky->neq,  // size
-				sizeof(real));  // type
+				sizeof(schnaps_real));  // type
     starpu_vector_data_register(&(sky->vkgi_handle), // mem handle
 				0, // location: CPU
 				(uintptr_t)(sky->vkgi), // vector location
 				sky->nmem,  // size
-				sizeof(real));  // type
+				sizeof(schnaps_real));  // type
     starpu_vector_data_register(&(sky->kld_handle), // mem handle
 				0, // location: CPU
 				(uintptr_t)(sky->kld), // vector location
@@ -370,15 +370,15 @@ void MatVectSkyline_C(void* buffer[], void* cl_args) {
   
   struct starpu_vector_interface *vkgs_v =
     (struct starpu_vector_interface *) buffer[nbuf++]; 
-  real* vkgs  = (real *)STARPU_VECTOR_GET_PTR(vkgs_v);  
+  schnaps_real* vkgs  = (schnaps_real *)STARPU_VECTOR_GET_PTR(vkgs_v);  
 
   struct starpu_vector_interface *vkgd_v =
     (struct starpu_vector_interface *) buffer[nbuf++]; 
-  real* vkgd = (real *)STARPU_VECTOR_GET_PTR(vkgd_v);  
+  schnaps_real* vkgd = (schnaps_real *)STARPU_VECTOR_GET_PTR(vkgd_v);  
 
   struct starpu_vector_interface *vkgi_v =
     (struct starpu_vector_interface *) buffer[nbuf++]; 
-  real* vkgi = (real *)STARPU_VECTOR_GET_PTR(vkgi_v);  
+  schnaps_real* vkgi = (schnaps_real *)STARPU_VECTOR_GET_PTR(vkgi_v);  
 
   struct starpu_vector_interface *kld_v =
     (struct starpu_vector_interface *) buffer[nbuf++]; 
@@ -386,11 +386,11 @@ void MatVectSkyline_C(void* buffer[], void* cl_args) {
 
   struct starpu_vector_interface *sol_v =
     (struct starpu_vector_interface *) buffer[nbuf++]; 
-  real* sol = (real *)STARPU_VECTOR_GET_PTR(sol_v);  
+  schnaps_real* sol = (schnaps_real *)STARPU_VECTOR_GET_PTR(sol_v);  
 
   struct starpu_vector_interface *rhs_v =
     (struct starpu_vector_interface *) buffer[nbuf++]; 
-  real* rhs = (real *)STARPU_VECTOR_GET_PTR(rhs_v);  
+  schnaps_real* rhs = (schnaps_real *)STARPU_VECTOR_GET_PTR(rhs_v);  
 
   
   for(int i=0; i < neq; i++) rhs[i]=0;
@@ -466,7 +466,7 @@ void SolveSkyline_SPU(Skyline_SPU* sky){
 
 void SolveSkyline_C(void* buffer[], void* cl_args){
 
-  real energ;
+  schnaps_real energ;
   int ier;
   int ifac=0;
   int isol=1;
@@ -478,15 +478,15 @@ void SolveSkyline_C(void* buffer[], void* cl_args){
   
   struct starpu_vector_interface *vkgs_v =
     (struct starpu_vector_interface *) buffer[nbuf++]; 
-  real* vkgs  = (real *)STARPU_VECTOR_GET_PTR(vkgs_v);  
+  schnaps_real* vkgs  = (schnaps_real *)STARPU_VECTOR_GET_PTR(vkgs_v);  
 
   struct starpu_vector_interface *vkgd_v =
     (struct starpu_vector_interface *) buffer[nbuf++]; 
-  real* vkgd = (real *)STARPU_VECTOR_GET_PTR(vkgd_v);  
+  schnaps_real* vkgd = (schnaps_real *)STARPU_VECTOR_GET_PTR(vkgd_v);  
 
   struct starpu_vector_interface *vkgi_v =
     (struct starpu_vector_interface *) buffer[nbuf++]; 
-  real* vkgi = (real *)STARPU_VECTOR_GET_PTR(vkgi_v);  
+  schnaps_real* vkgi = (schnaps_real *)STARPU_VECTOR_GET_PTR(vkgi_v);  
 
   struct starpu_vector_interface *kld_v =
     (struct starpu_vector_interface *) buffer[nbuf++]; 
@@ -494,11 +494,11 @@ void SolveSkyline_C(void* buffer[], void* cl_args){
 
   struct starpu_vector_interface *sol_v =
     (struct starpu_vector_interface *) buffer[nbuf++]; 
-  real* sol = (real *)STARPU_VECTOR_GET_PTR(sol_v);  
+  schnaps_real* sol = (schnaps_real *)STARPU_VECTOR_GET_PTR(sol_v);  
 
   struct starpu_vector_interface *rhs_v =
     (struct starpu_vector_interface *) buffer[nbuf++]; 
-  real* rhs = (real *)STARPU_VECTOR_GET_PTR(rhs_v);  
+  schnaps_real* rhs = (schnaps_real *)STARPU_VECTOR_GET_PTR(rhs_v);  
   
 
   sol_spu(vkgs,vkgd, vkgi,
@@ -534,14 +534,14 @@ void FreeSkyline_SPU(Skyline_SPU* sky){
 
 static int c__1 = 1;
 
-/* Subroutine */ int sol_spu(real *vkgs, real *vkgd, real *
-	vkgi, real *vfg, int *kld, real *vu, int neq, 
-	 int ifac, int isol, int nsym, real *
+/* Subroutine */ int sol_spu(schnaps_real *vkgs, schnaps_real *vkgd, schnaps_real *
+	vkgi, schnaps_real *vfg, int *kld, schnaps_real *vu, int neq, 
+	 int ifac, int isol, int nsym, schnaps_real *
 	energ, int *ier)
 {
     /* Initialized data */
 
-    static real vzero = 0.;
+    static schnaps_real vzero = 0.;
 
     /* Format strings */
     static char fmt_8000[] = "sol pivot nul equation";
@@ -554,12 +554,12 @@ static int c__1 = 1;
 
     /* Local variables */
     static int i__;
-    static real c1, c2;
+    static schnaps_real c1, c2;
     static int j1, j2, ic, ij, ik, jbk, jck, jhj, jhk, lhk, jhj1, jhk1, 
 	    lhk1;
-    extern real scal_spu(real *, real *, int *);
+    extern schnaps_real scal_spu(schnaps_real *, schnaps_real *, int *);
     static int imin, imax, imin1;
-    static real cdiag;
+    static schnaps_real cdiag;
 
 /*   resolution d'un systeme lineaire symetrique ou non. la matrice est */
 /*   stockee par ligne de ciel,en memoire dans les tables vkgs,vkgd,vkgi */
@@ -803,15 +803,15 @@ L9999:
 /* ===========================   fin du module sol    ================== */
 } /* sol_spu */
 
-real scal_spu(real *x, real *y, int *n)
+schnaps_real scal_spu(schnaps_real *x, schnaps_real *y, int *n)
 {
     /* Initialized data */
 
-    static real zero = 0.;
+    static schnaps_real zero = 0.;
 
     /* System generated locals */
     int i__1;
-    real ret_val;
+    schnaps_real ret_val;
 
     /* Local variables */
     static int i__;
@@ -848,15 +848,15 @@ real scal_spu(real *x, real *y, int *n)
 
 //#include "f2c.h"
 
-/* Subroutine */ int mulku_spu(real *vkgs, real *vkgd, real *
-	vkgi, int *kld, real *vfg, int neq, int nsym, 
-	real *vres, int nsky)
+/* Subroutine */ int mulku_spu(schnaps_real *vkgs, schnaps_real *vkgd, schnaps_real *
+	vkgi, int *kld, schnaps_real *vfg, int neq, int nsym, 
+	schnaps_real *vres, int nsky)
 {
     /* System generated locals */
     int i__1, i__2;
 
     /* Local variables */
-    static real c__;
+    static schnaps_real c__;
     static int j, i0, i1, ij, ik, jhk, lhk, jhk1;
     //extern real scal_spu(real *, real *, int *);
 

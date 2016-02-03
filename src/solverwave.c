@@ -22,7 +22,7 @@ void BoundaryConditionFriedrichsAssembly(void * cs){
 	field *f = &ps->simu->fd[ie];
 	
 	for(int ipglf = 0;ipglf < NPGF(f->deg,f->raf,locfaL); ipglf++){
-	  real xpgref[3], xpgref_in[3], wpg;
+	  schnaps_real xpgref[3], xpgref_in[3], wpg;
 
 
 	  // Get the coordinates of the Gauss point and coordinates of a
@@ -31,17 +31,17 @@ void BoundaryConditionFriedrichsAssembly(void * cs){
 	  int ino_dg = ipg + ie * ps->npgmacrocell;
 	  int ino_fe = ps->dg_to_fe_index[ino_dg];
 	  // Normal vector at gauss point ipgL
-	  real vnds[3], xpg[3];
+	  schnaps_real vnds[3], xpg[3];
 	  {
-	    real dtau[3][3], codtau[3][3];
-	    Ref2Phy(f->physnode,
+	    schnaps_real dtau[3][3], codtau[3][3];
+	    schnaps_ref2phy(f->physnode,
 		    xpgref,
 		    NULL, locfaL, // dpsiref, ifa
 		    xpg, dtau,
 		    codtau, NULL, vnds); // codtau, dpsi, vnds
 	  }
 	  // the boundary flux is an affine function
-	  real flux0[m], wL[m];
+	  schnaps_real flux0[m], wL[m];
 	  for(int iv = 0; iv < m; iv++) {
 	    wL[iv] = 0;
 	  }
@@ -56,14 +56,14 @@ void BoundaryConditionFriedrichsAssembly(void * cs){
 	      wL[iv] = (iv == iv1);
 	    }
 	    
-	    real flux[m];
+	    schnaps_real flux[m];
 	    ps->bc_flux(ps,xpg,wL,vnds,flux);
 	    
 	    for(int iv2 = 0; iv2 < m; iv2++) {
 	      // The basis functions is also the gauss point index
 	      //int imem2 = fL->varindex(fL->deg, fL->raf,fL->model.m, ipgL, iv2) + offsetL;
 	      int ipot_fe2 = ino_fe*ps->nb_phy_vars + iv2;
-	      real val =  (flux[iv2]-flux0[iv2]) * wpg;
+	      schnaps_real val =  (flux[iv2]-flux0[iv2]) * wpg;
 	      AddLinearSolver(&ps->lsol, ipot_fe2, ipot_fe1, val);
 	    }
 	  }	    
@@ -84,7 +84,7 @@ void BoundaryConditionFriedrichsAssembly(void * cs){
       field *f = &ps->simu->fd[ie];
 
       for(int ipglf = 0;ipglf < NPGF(f->deg,f->raf,locfaL); ipglf++){
-	real xpgref[3], xpgref_in[3], wpg;
+	schnaps_real xpgref[3], xpgref_in[3], wpg;
           
 	// Get the coordinates of the Gauss point and coordinates of a
 	// point slightly inside the opposite element in xref_in
@@ -92,10 +92,10 @@ void BoundaryConditionFriedrichsAssembly(void * cs){
 	int ino_dg = ipg + ie * ps->npgmacrocell;
 	int ino_fe = ps->dg_to_fe_index[ino_dg];
 	// Normal vector at gauss point ipgL
-	real vnds[3], xpg[3];
+	schnaps_real vnds[3], xpg[3];
 	{
-	  real dtau[3][3], codtau[3][3];
-	  Ref2Phy(f->physnode,
+	  schnaps_real dtau[3][3], codtau[3][3];
+	  schnaps_ref2phy(f->physnode,
 		  xpgref,
 		  NULL, locfaL, // dpsiref, ifa
 		  xpg, dtau,
@@ -103,7 +103,7 @@ void BoundaryConditionFriedrichsAssembly(void * cs){
 	}
           
 	// the boundary flux is an affine function
-	real w0[f->model.m],flux0[f->model.m];
+	schnaps_real w0[f->model.m],flux0[f->model.m];
 	
 	for(int ivv=0; ivv < ps->nb_phy_vars; ivv++){
 	  w0[ivv]=0;
@@ -114,7 +114,7 @@ void BoundaryConditionFriedrichsAssembly(void * cs){
 	for(int var=0; var < ps->nb_phy_vars; var++){
 	  int ipot_fe = ino_fe*ps->nb_phy_vars + var;
 	  //printf("clll %d %d  %.8e %.8e \n",ipot_fe,var,flux0[var],w0[var]);
-	  real val = flux0[var] * wpg;
+	  schnaps_real val = flux0[var] * wpg;
 	  ps->lsol.rhs[ipot_fe] -= val;
 	}
       }	    
@@ -124,11 +124,11 @@ void BoundaryConditionFriedrichsAssembly(void * cs){
 
 
 
-void Wave_test(ContinuousSolver* cs,real theta, real dt){
-  real h=cs->simu->vmax*dt*theta;
-  real tab[4][4];
+void Wave_test(ContinuousSolver* cs,schnaps_real theta, schnaps_real dt){
+  schnaps_real h=cs->simu->vmax*dt*theta;
+  schnaps_real tab[4][4];
   
-  real waveMat[9][4][4] ={{{1.0,0,0,0},
+  schnaps_real waveMat[9][4][4] ={{{1.0,0,0,0},
                            {0,0,0,0},
                            {0,0,0,0},
                            {0,0,0,0}},
@@ -175,9 +175,9 @@ void Wave_test(ContinuousSolver* cs,real theta, real dt){
     }
   }
 
-  cs->FluxMatrix = calloc(cs->nb_phy_vars,sizeof(real));
+  cs->FluxMatrix = calloc(cs->nb_phy_vars,sizeof(schnaps_real));
   for (int i=0; i<cs->nb_phy_vars; i++){
-    cs->FluxMatrix[i] = calloc(cs->nb_phy_vars,sizeof(real));
+    cs->FluxMatrix[i] = calloc(cs->nb_phy_vars,sizeof(schnaps_real));
   }
   cs->FluxMatrix[0][1]=h;
   cs->FluxMatrix[0][2]=h;
@@ -191,16 +191,16 @@ void Wave_test(ContinuousSolver* cs,real theta, real dt){
 }
 
 
-void Wave_BC_normalvelocity_null(void * cs, real * xpg, real * w, real *vnorm, real * flux){
+void Wave_BC_normalvelocity_null(void * cs, schnaps_real * xpg, schnaps_real * w, schnaps_real *vnorm, schnaps_real * flux){
 
   ContinuousSolver * ps=cs;
-  real M[3][3];
-  real BC[3][3];
-  real lambda=0;
-  real mu=1.e14;
-  real p0=0,u0_1=0,u0_2=0;
+  schnaps_real M[3][3];
+  schnaps_real BC[3][3];
+  schnaps_real lambda=0;
+  schnaps_real mu=1.e14;
+  schnaps_real p0=0,u0_1=0,u0_2=0;
 
-  real h=ps->FluxMatrix[0][1]/ps->simu->vmax;
+  schnaps_real h=ps->FluxMatrix[0][1]/ps->simu->vmax;
   
   M[0][0]=0;//lambda;
   M[0][1]=0;//-mu*vnorm[0];
@@ -237,26 +237,26 @@ void Wave_BC_normalvelocity_null(void * cs, real * xpg, real * w, real *vnorm, r
 
 
 
-void Wave_BC_pressure_imposed(void * cs, real * xpg, real * w, real *vnorm, real * flux){
+void Wave_BC_pressure_imposed(void * cs, schnaps_real * xpg, schnaps_real * w, schnaps_real *vnorm, schnaps_real * flux){
 
   ContinuousSolver * ps=cs;
-  real M[3][3];
-  real BC[3][3];
-  real lambda=-10000000;
-  real mu=0;
-  real p0=0,u0_1=0,u0_2=0;
-  real x,y;
+  schnaps_real M[3][3];
+  schnaps_real BC[3][3];
+  schnaps_real lambda=-10000000;
+  schnaps_real mu=0;
+  schnaps_real p0=0,u0_1=0,u0_2=0;
+  schnaps_real x,y;
   x=xpg[0];
   y=xpg[1];
 
-  real Win[3];
+  schnaps_real Win[3];
   
   ps->simu->fd[0].model.ImposedData(xpg,ps->simu->dt,Win);
   p0=Win[0];
   u0_1=Win[1];
   u0_2=Win[2];
 
-  real h=ps->FluxMatrix[0][1]/ps->simu->vmax;
+  schnaps_real h=ps->FluxMatrix[0][1]/ps->simu->vmax;
 
 
   M[0][0]=lambda;
@@ -290,7 +290,7 @@ void Wave_BC_pressure_imposed(void * cs, real * xpg, real * w, real *vnorm, real
 void Source_Assembly(void * cs){
   ContinuousSolver * ps=cs;
   field* f0 = &ps->simu->fd[0];
-  real dt = ps->simu->dt;
+  schnaps_real dt = ps->simu->dt;
   
   m=ps->nb_phy_vars;
   for(int ie = 0; ie < ps->nbel; ie++){  
@@ -299,19 +299,19 @@ void Source_Assembly(void * cs){
     int isubcell = ie % (f0->raf[0] * f0->raf[1] * f0->raf[2]);
     
      for(int ipg = 0;ipg < ps->nnodes; ipg++){
-      real wpg;
-      real xref[3];
+      schnaps_real wpg;
+      schnaps_real xref[3];
       int ipgmacro= ipg + isubcell * ps->nnodes;
       ref_pg_vol(f0->deg,f0->raf,ipgmacro,xref,&wpg,NULL);
-      real dtau[3][3],codtau[3][3];
+      schnaps_real dtau[3][3],codtau[3][3];
       
-      Ref2Phy(ps->simu->fd[iemacro].physnode,
+      schnaps_ref2phy(ps->simu->fd[iemacro].physnode,
 	      xref,NULL,0,NULL,
 	      dtau,codtau,NULL,NULL);
         
-      real det = dot_product(dtau[0], codtau[0]);
-      real Source[f0->model.m];
-      real w[f0->model.m];
+      schnaps_real det = dot_product(dtau[0], codtau[0]);
+      schnaps_real Source[f0->model.m];
+      schnaps_real w[f0->model.m];
       for(int var =0; var < f0->model.m; var++){
 	w[var] = f0->wn[var];
       }

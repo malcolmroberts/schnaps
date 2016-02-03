@@ -7,13 +7,13 @@
 #include "collision.h"
 #include "waterwave2d.h"
 
-void TestSteady_Wave_ImposedData(const real *x, const real t, real *w);
-void TestSteady_Wave_InitData(real *x, real *w);
-void TestSteady_Wave_Source(const real *xy, const real t, const real *w, real *S);
-void Wave_Steady_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
-			      real *flux);
-void Wave_Periodic_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
-				real *flux);
+void TestSteady_Wave_ImposedData(const schnaps_real *x, const schnaps_real t, schnaps_real *w);
+void TestSteady_Wave_InitData(schnaps_real *x, schnaps_real *w);
+void TestSteady_Wave_Source(const schnaps_real *xy, const schnaps_real t, const schnaps_real *w, schnaps_real *S);
+void Wave_Steady_BoundaryFlux(schnaps_real *x, schnaps_real t, schnaps_real *wL, schnaps_real *vnorm,
+			      schnaps_real *flux);
+void Wave_Periodic_BoundaryFlux(schnaps_real *x, schnaps_real t, schnaps_real *wL, schnaps_real *vnorm,
+				schnaps_real *flux);
 
 
 int main(void) {
@@ -43,8 +43,8 @@ int Test_Wave_Periodic(void) {
   ReadMacroMesh(&mesh,"../test/testcube.msh");
   Detect2DMacroMesh(&mesh);
   
-  real A[3][3] = {{_LENGTH_DOMAIN, 0, 0}, {0, _LENGTH_DOMAIN, 0}, {0, 0,1}};
-  real x0[3] = {0, 0, 0};
+  schnaps_real A[3][3] = {{_LENGTH_DOMAIN, 0, 0}, {0, _LENGTH_DOMAIN, 0}, {0, 0,1}};
+  schnaps_real x0[3] = {0, 0, 0};
   AffineMapMacroMesh(&mesh,A,x0);
 
   BuildConnectivity(&mesh);
@@ -69,17 +69,17 @@ int Test_Wave_Periodic(void) {
   EmptySimulation(&simu);
   InitSimulation(&simu, &mesh, deg, raf, &model);
  
-  real tmax = 0.025;
+  schnaps_real tmax = 0.025;
   simu.cfl=0.2;
   simu.vmax=_SPEED_WAVE;
   RK4(&simu,tmax);
 
-  real dd = 0;
+  schnaps_real dd = 0;
   dd = L2error(&simu);
 
   printf("erreur L2=%.12e\n", dd);
 
-  real tolerance = 0.002;
+  schnaps_real tolerance = 0.002;
 
   test = test && (dd < tolerance);
 
@@ -124,8 +124,8 @@ int Test_Wave_Steady(void) {
   ReadMacroMesh(&mesh,"../test/testcube.msh");
   Detect2DMacroMesh(&mesh);
   
-  real A[3][3] = {{_LENGTH_DOMAIN, 0, 0}, {0, _LENGTH_DOMAIN, 0}, {0, 0,1}};
-  real x0[3] = {0, 0, 0};
+  schnaps_real A[3][3] = {{_LENGTH_DOMAIN, 0, 0}, {0, _LENGTH_DOMAIN, 0}, {0, 0,1}};
+  schnaps_real x0[3] = {0, 0, 0};
   AffineMapMacroMesh(&mesh,A,x0);
 
   BuildConnectivity(&mesh);
@@ -147,12 +147,12 @@ int Test_Wave_Steady(void) {
   EmptySimulation(&simu);
   InitSimulation(&simu, &mesh, deg, raf, &model);
 
-  real tmax = 0.01;
+  schnaps_real tmax = 0.01;
   simu.cfl=0.2;
   simu.vmax=_SPEED_WAVE;
   RK4(&simu,tmax);
  
-  real dd = 0;
+  schnaps_real dd = 0;
   dd = L2error(&simu);
 
   printf("erreur explicit L2=%.12e\n", dd);
@@ -161,7 +161,7 @@ int Test_Wave_Steady(void) {
   PlotFields(1,false, &simu, "u", "dgvisu_exu.msh");
   PlotFields(2,false, &simu, "v", "dgvisu_exv.msh");
 
-  real tolerance = 0.0000001;
+  schnaps_real tolerance = 0.0000001;
 
   test = test && (dd < tolerance);
 
@@ -189,11 +189,11 @@ int Test_Wave_Steady(void) {
   return test;
 }
 
-void TestPeriodic_Wave_ImposedData(const real *x, const real t, real *w) {
-  real pi=4.0*atan(1.0);
-  real L=_LENGTH_DOMAIN;
-  real Coef=(2.0*pi)/L;
-  real a=_SPEED_WAVE;
+void TestPeriodic_Wave_ImposedData(const schnaps_real *x, const schnaps_real t, schnaps_real *w) {
+  schnaps_real pi=4.0*atan(1.0);
+  schnaps_real L=_LENGTH_DOMAIN;
+  schnaps_real Coef=(2.0*pi)/L;
+  schnaps_real a=_SPEED_WAVE;
 
   w[0] = -a*Coef*sqrt(2.0)*sin(a*Coef*sqrt(2.0)*t)*cos(Coef*x[0])*cos(Coef*x[1]);
   w[1] = a*Coef*cos(Coef*a*sqrt(2.0)*t)*sin(Coef*x[0])*cos(Coef*x[1]);
@@ -202,24 +202,24 @@ void TestPeriodic_Wave_ImposedData(const real *x, const real t, real *w) {
 
 }
 
-void TestPeriodic_Wave_InitData(real *x, real *w) {
-  real t = 0;
+void TestPeriodic_Wave_InitData(schnaps_real *x, schnaps_real *w) {
+  schnaps_real t = 0;
   TestPeriodic_Wave_ImposedData(x, t, w);
 }
 
 
-void Wave_Periodic_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
-				       real *flux) {
-  real wR[3];
+void Wave_Periodic_BoundaryFlux(schnaps_real *x, schnaps_real t, schnaps_real *wL, schnaps_real *vnorm,
+				       schnaps_real *flux) {
+  schnaps_real wR[3];
   TestPeriodic_Wave_ImposedData(x , t, wR);
   Wave_Upwind_NumFlux(wL, wR, vnorm, flux);
 }
 
 
-void TestSteady_Wave_ImposedData(const real *xy, const real t, real *w) {
+void TestSteady_Wave_ImposedData(const schnaps_real *xy, const schnaps_real t, schnaps_real *w) {
 
-  real x=xy[0];
-  real y=xy[1];
+  schnaps_real x=xy[0];
+  schnaps_real y=xy[1];
 
 
   w[0] = x*(1-x)*y*(1-y)+1;
@@ -230,10 +230,10 @@ void TestSteady_Wave_ImposedData(const real *xy, const real t, real *w) {
 }
 
 
-void TestSteady_Wave_Source(const real *xy, const real t, const real *w, real *S){
+void TestSteady_Wave_Source(const schnaps_real *xy, const schnaps_real t, const schnaps_real *w, schnaps_real *S){
   
-  real x=xy[0];
-  real y=xy[1];
+  schnaps_real x=xy[0];
+  schnaps_real y=xy[1];
 
   S[0] = 2*(1-2*x)*(y*(1-y))+3*(1-2*y)*(x*(1-x));
   S[1] = (1-2*x)*(y*(1-y));
@@ -245,15 +245,15 @@ void TestSteady_Wave_Source(const real *xy, const real t, const real *w, real *S
 
 }
 
-void TestSteady_Wave_InitData(real *x, real *w) {
-  real t = 0;
+void TestSteady_Wave_InitData(schnaps_real *x, schnaps_real *w) {
+  schnaps_real t = 0;
   TestSteady_Wave_ImposedData(x, t, w);
 }
 
 
-void Wave_Steady_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
-				       real *flux) {
-  real wR[3];
+void Wave_Steady_BoundaryFlux(schnaps_real *x, schnaps_real t, schnaps_real *wL, schnaps_real *vnorm,
+				       schnaps_real *flux) {
+  schnaps_real wR[3];
   TestSteady_Wave_ImposedData(x , t, wR);
   Wave_Upwind_NumFlux(wL, wR, vnorm, flux);
 }

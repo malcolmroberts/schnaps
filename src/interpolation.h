@@ -56,12 +56,12 @@ typedef struct Interpolation{
   int (*NPGF)(int deg[], int raf[],int ifa);
 
   void (*ref_pg_vol)(int* deg,int *raf,int ipg,
-		real* xpg,real* wpg,real* xpg_in);
+		schnaps_real* xpg,schnaps_real* wpg,schnaps_real* xpg_in);
 
-  int (*ref_ipg)(__constant int* deg, __constant int* raf,real* xref);
+  int (*ref_ipg)(__constant int* deg, __constant int* raf,schnaps_real* xref);
 
-  int (*ref_pg_face)(int* deg, int *raf,int ifa,int ipgf,real* xpg,real* wpg,
-		 real* xpgin);
+  int (*ref_pg_face)(int* deg, int *raf,int ifa,int ipgf,schnaps_real* xpg,schnaps_real* wpg,
+		 schnaps_real* xpgin);
 
 } Interpolation;
 
@@ -106,7 +106,7 @@ int NPGF_CG(int deg[], int raf[],int ifa);
 //! \param[in] xpg_in same as xpg but slightly moved such
 //! that the resulting point is in the interior of the ref. element
 void ref_pg_vol(int* deg,int *raf,int ipg,
-		real* xpg,real* wpg,real* xpg_in);
+		schnaps_real* xpg,schnaps_real* wpg,schnaps_real* xpg_in);
 
 //! \brief return the reference coordinates xpg[3] and weight wpg of the GLOP ipg
 //! \param[in] deg degrees list
@@ -117,7 +117,7 @@ void ref_pg_vol(int* deg,int *raf,int ipg,
 //! \param[in] xpg_in same as xpg but slightly moved such
 //! that the resulting point is in the interior of the ref. element
 void ref_pg_vol_CG(int* deg,int *raf,int ipg,
-		real* xpg,real* wpg,real* xpg_in);
+		schnaps_real* xpg,schnaps_real* wpg,schnaps_real* xpg_in);
 
 //! \brief from a reference point find the nearest
 //! gauss point
@@ -125,7 +125,7 @@ void ref_pg_vol_CG(int* deg,int *raf,int ipg,
 //! \param[in] raf refinements list
 //! \param[in] xref  reference Gauss point coordinates
 //! \return Gauss point index
-int ref_ipg(__constant int* deg, __constant int* raf,real* xref);
+int ref_ipg(__constant int* deg, __constant int* raf,schnaps_real* xref);
 
 //! \brief from a reference point find the nearest
 //! gauss point in the continuous macrocell
@@ -134,7 +134,7 @@ int ref_ipg(__constant int* deg, __constant int* raf,real* xref);
 //! \param[in] xref  reference Gauss point coordinates
 //! \return Gauss point index
 #pragma start_opencl
-int ref_ipg_CG(__constant int* deg, __constant int* raf,real* xref);
+int ref_ipg_CG(__constant int* deg, __constant int* raf,schnaps_real* xref);
 #pragma end_opencl
 
 //! \brief compute the position xpg of glop ipg in the local
@@ -150,8 +150,8 @@ int ref_ipg_CG(__constant int* deg, __constant int* raf,real* xref);
 //! \param[out] xpgin same as xpg but slightly moved such
 //! that the resulting point is in the interior of the ref. element
 //! returns the volume index of the face gauss point
-int ref_pg_face(int* deg, int *raf,int ifa,int ipgf,real* xpg,real* wpg,
-		 real* xpgin);
+int ref_pg_face(int* deg, int *raf,int ifa,int ipgf,schnaps_real* xpg,schnaps_real* wpg,
+		 schnaps_real* xpgin);
 
 //! \brief compute the position xpg of glop ipg in the local
 //! numbering on face ifa. If xpgin is not NULL also compute
@@ -166,8 +166,8 @@ int ref_pg_face(int* deg, int *raf,int ifa,int ipgf,real* xpg,real* wpg,
 //! \param[out] xpgin same as xpg but slightly moved such
 //! that the resulting point is in the interior of the ref. element
 //! returns the volume index of the face gauss point
-int ref_pg_face_CG(int* deg, int *raf,int ifa,int ipgf,real* xpg,real* wpg,
-		 real* xpgin);
+int ref_pg_face_CG(int* deg, int *raf,int ifa,int ipgf,schnaps_real* xpg,schnaps_real* wpg,
+		 schnaps_real* xpgin);
 
 //! \brief return the value and the gradient of the basis
 //! functions.
@@ -180,7 +180,7 @@ int ref_pg_face_CG(int* deg, int *raf,int ifa,int ipgf,real* xpg,real* wpg,
 //! \param[in] xref position of a point in the reference element
 //! \param[out] psi value of the basis function
 //! \param[out] dpsiref gradient of the basis function in the reference element
-void psi_ref(int *deg, int *raf, int ib, real* xref, real* psi, real* dpsiref);
+void psi_ref(int *deg, int *raf, int ib, schnaps_real* xref, schnaps_real* psi, schnaps_real* dpsiref);
 
 //! \brief  gradient of a basis function at a given glop 
 //! \param[in] deg degrees parameters 
@@ -188,7 +188,7 @@ void psi_ref(int *deg, int *raf, int ib, real* xref, real* psi, real* dpsiref);
 //! \param[in] ib basis function index
 //! \param[in] ipg glop index
 //! \param[out] dpsiref gradient of the basis function in the reference element
-void grad_psi_pg(int *deg, int *raf,int ib,int ipg,real* dpsiref);
+void grad_psi_pg(int *deg, int *raf,int ib,int ipg,schnaps_real* dpsiref);
 
 //! \brief  gradient of a basis function at a given glop
 //! continuous version
@@ -197,7 +197,7 @@ void grad_psi_pg(int *deg, int *raf,int ib,int ipg,real* dpsiref);
 //! \param[in] ib basis function index
 //! \param[in] ipg glop index
 //! \param[out] dpsiref gradient of the basis function in the reference element
-void grad_psi_pg_CG(int *deg, int *raf,int ib,int ipg,real* dpsiref);
+void grad_psi_pg_CG(int *deg, int *raf,int ib,int ipg,schnaps_real* dpsiref);
 
 //! \brief  gradient of a basis function at a given glop in a given subcell
 //! \param[in] deg degrees parameters 
@@ -207,13 +207,13 @@ void grad_psi_pg_CG(int *deg, int *raf,int ib,int ipg,real* dpsiref);
 //! \param[in] xref position of a point in the reference element
 //! \param[out] psi value of the basis function
 //! \param[out] dpsiref gradient of the basis function in the reference element
-void psi_ref_subcell(int *deg, int *raf, int* is,int ib, real* xref, real* psi, real* dpsiref);
+void psi_ref_subcell(int *deg, int *raf, int* is,int ib, schnaps_real* xref, schnaps_real* psi, schnaps_real* dpsiref);
 
 //! \brief return the 1d ith GLOP position for degree deg
 //! \param[in] deg degree
 //! \param[in] i GLOP 1D index
 //! \returns the position in [0,1]
-real glop(int deg,int i);
+schnaps_real glop(int deg,int i);
 
 //! \brief compute 3d glop and subcell indices from the index
 //! of the glop in the macrocell
@@ -244,7 +244,7 @@ void xyz_to_ipg(const int *raf, const int *deg, const int *ic, const int *ix,
 //! \param[in] i GLOP 1D index
 //! \returns the weight
 #pragma start_opencl
-real wglop(int deg,int i);
+schnaps_real wglop(int deg,int i);
 #pragma end_opencl
 
 //! \brief return the 1d derivative of lagrange polynomial ib at glop ipg
@@ -253,7 +253,7 @@ real wglop(int deg,int i);
 //! \param[in] ipg index of the Gauss point where the derivative is computed
 //! \returns the value of the derivative
 #pragma start_opencl
-real dlag(int deg,int ib,int ipg);
+schnaps_real dlag(int deg,int ib,int ipg);
 #pragma end_opencl
 
 
@@ -263,8 +263,8 @@ real dlag(int deg,int ib,int ipg);
 //! \param[in] deg polynomial degree
 //! \param[in] ii index of the Lagrange polynomial
 //! \param[in] x position where to compute p
-void lagrange_polynomial(real* p,const real* subdiv,
-			 int deg,int ii,real x);
+void lagrange_polynomial(schnaps_real* p,const schnaps_real* subdiv,
+			 int deg,int ii,schnaps_real x);
 
 
 //! \brief return the derivative of a 1D lagrange polynomial
@@ -273,8 +273,8 @@ void lagrange_polynomial(real* p,const real* subdiv,
 //! \param[in] deg polynomial degree
 //! \param[in] ii index of the Lagrange polynomial
 //! \param[in] x position where to compute dp
-void dlagrange_polynomial(real* dp,const real* subdiv,
-			  int deg,int ii,real x);
+void dlagrange_polynomial(schnaps_real* dp,const schnaps_real* subdiv,
+			  int deg,int ii,schnaps_real x);
 
 
 

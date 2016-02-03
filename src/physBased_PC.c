@@ -146,7 +146,7 @@
 //}
 
 void Init_PBPC_Wave_SchurVelocity_BCPressure(Simulation *simu, PB_PC* pb_pc, int* list_mat2assemble){
-  real tab[4][4];
+  schnaps_real tab[4][4];
   // system is linear
   pb_pc->nonlinear=0;
 
@@ -193,28 +193,28 @@ void Init_PBPC_Wave_SchurVelocity_BCPressure(Simulation *simu, PB_PC* pb_pc, int
   free(listvarSchur);
 
   // Local operator matrices to build global Differential operators (Schur, Laplacian...)
-  real h=simu->dt*simu->theta*simu->vmax;
-  real DMat[4][4]  = {{1,0,0,0},
+  schnaps_real h=simu->dt*simu->theta*simu->vmax;
+  schnaps_real DMat[4][4]  = {{1,0,0,0},
                       {0,0,0,0},
                       {0,0,0,0},
                       {0,0,0,0}};
-  real L1Mat[4][4] = {{0,0,0,0},
+  schnaps_real L1Mat[4][4] = {{0,0,0,0},
                       {-h,0,0,0},
                       {0,0,0,0},
                       {0,0,0,0}};
-  real L2Mat[4][4] = {{0,0,0,0},
+  schnaps_real L2Mat[4][4] = {{0,0,0,0},
                       {0,0,0,0},
                       {-h,0,0,0},
                       {0,0,0,0}};
-  real U1Mat[4][4] = {{0,0,0,0},
+  schnaps_real U1Mat[4][4] = {{0,0,0,0},
                       {-h,0,0,0},
                       {0,0,0,0},
                       {0,0,0,0}};
-  real U2Mat[4][4] = {{0,0,0,0},
+  schnaps_real U2Mat[4][4] = {{0,0,0,0},
                       {0,0,0,0},
                       {-h,0,0,0},
                       {0,0,0,0}};
-  real SchurMat[4][4][4] ={{{1,0,0,0},
+  schnaps_real SchurMat[4][4][4] ={{{1,0,0,0},
                             {0,h*h,0,0},
                             {0,0,0,0},
                             {0,0,0,0}},
@@ -286,14 +286,14 @@ void Init_PBPC_Wave_SchurVelocity_BCPressure(Simulation *simu, PB_PC* pb_pc, int
   pb_pc->U2.lsol.MatVecProduct=MatVect;
 
   //// Allocating all sub-equations right-hand sides
-  pb_pc->rhs_prediction = calloc(pb_pc->D.lsol.neq,sizeof(real));
-  pb_pc->rhs_propagation = calloc(pb_pc->Schur.lsol.neq,sizeof(real));
-  pb_pc->rhs_correction = calloc(pb_pc->D.lsol.neq,sizeof(real));
+  pb_pc->rhs_prediction = calloc(pb_pc->D.lsol.neq,sizeof(schnaps_real));
+  pb_pc->rhs_propagation = calloc(pb_pc->Schur.lsol.neq,sizeof(schnaps_real));
+  pb_pc->rhs_correction = calloc(pb_pc->D.lsol.neq,sizeof(schnaps_real));
 
 }
 
 void Init_PBPC_Wave_SchurVelocity_BCVelocity(Simulation *simu, PB_PC* pb_pc, int* list_mat2assemble){
-  real tab[4][4];
+  schnaps_real tab[4][4];
   // system is linear
   pb_pc->nonlinear=0;
 
@@ -340,28 +340,28 @@ void Init_PBPC_Wave_SchurVelocity_BCVelocity(Simulation *simu, PB_PC* pb_pc, int
   free(listvarSchur);
 
   // Local operator matrices to build global Differential operators (Schur, Laplacian...)
-  real h=simu->dt*simu->theta*simu->vmax;
-  real DMat[4][4]  = {{1,0,0,0},
+  schnaps_real h=simu->dt*simu->theta*simu->vmax;
+  schnaps_real DMat[4][4]  = {{1,0,0,0},
                       {0,0,0,0},
                       {0,0,0,0},
                       {0,0,0,0}};
-  real L1Mat[4][4] = {{0,0,0,0},
+  schnaps_real L1Mat[4][4] = {{0,0,0,0},
                       {-h,0,0,0},
                       {0,0,0,0},
                       {0,0,0,0}};
-  real L2Mat[4][4] = {{0,0,0,0},
+  schnaps_real L2Mat[4][4] = {{0,0,0,0},
                       {0,0,0,0},
                       {-h,0,0,0},
                       {0,0,0,0}};
-  real U1Mat[4][4] = {{0,0,0,0},
+  schnaps_real U1Mat[4][4] = {{0,0,0,0},
                       {-h,0,0,0},
                       {0,0,0,0},
                       {0,0,0,0}};
-  real U2Mat[4][4] = {{0,0,0,0},
+  schnaps_real U2Mat[4][4] = {{0,0,0,0},
                       {0,0,0,0},
                       {-h,0,0,0},
                       {0,0,0,0}};
-  real SchurMat[4][4][4] ={{{1,0,0,0},
+  schnaps_real SchurMat[4][4][4] ={{{1,0,0,0},
                             {0,h*h,0,0},
                             {0,0,0,0},
                             {0,0,0,0}},
@@ -436,9 +436,9 @@ void Init_PBPC_Wave_SchurVelocity_BCVelocity(Simulation *simu, PB_PC* pb_pc, int
   pb_pc->U2.lsol.MatVecProduct=MatVect;
 
   //// Allocating all sub-equations right-hand sides
-  pb_pc->rhs_prediction = calloc(pb_pc->D.lsol.neq,sizeof(real));
-  pb_pc->rhs_propagation = calloc(pb_pc->Schur.lsol.neq,sizeof(real));
-  pb_pc->rhs_correction = calloc(pb_pc->D.lsol.neq,sizeof(real));
+  pb_pc->rhs_prediction = calloc(pb_pc->D.lsol.neq,sizeof(schnaps_real));
+  pb_pc->rhs_propagation = calloc(pb_pc->Schur.lsol.neq,sizeof(schnaps_real));
+  pb_pc->rhs_correction = calloc(pb_pc->D.lsol.neq,sizeof(schnaps_real));
 
 }
 
@@ -492,28 +492,28 @@ void Init_PBPC_Wave_SchurPressure_BCVelocity(Simulation *simu, PB_PC* pb_pc, int
   free(listvarSchur);
 
   // Local operator matrices to build global Differential operators (Schur, Laplacian...)
-  real h=simu->dt*simu->theta*simu->vmax;
-  real SchurMat[4][4]  = {{1.0,0,0,0},
+  schnaps_real h=simu->dt*simu->theta*simu->vmax;
+  schnaps_real SchurMat[4][4]  = {{1.0,0,0,0},
 			  {0,h*h,0,0},
 			  {0,0,h*h,0},
 			  {0,0,0,0}};
-  real L1Mat[4][4] = {{0,0,0,0},
+  schnaps_real L1Mat[4][4] = {{0,0,0,0},
                       {-h,0,0,0},
                       {0,0,0,0},
                       {0,0,0,0}};
-  real L2Mat[4][4] = {{0,0,0,0},
+  schnaps_real L2Mat[4][4] = {{0,0,0,0},
                       {0,0,0,0},
                       {-h,0,0,0},
                       {0,0,0,0}};
-  real U1Mat[4][4] = {{0,0,0,0},
+  schnaps_real U1Mat[4][4] = {{0,0,0,0},
                       {-h,0,0,0},
                       {0,0,0,0},
                       {0,0,0,0}};
-  real U2Mat[4][4] = {{0,0,0,0},
+  schnaps_real U2Mat[4][4] = {{0,0,0,0},
                       {0,0,0,0},
                       {-h,0,0,0},
                       {0,0,0,0}};
-  real DMat[4][4][4] ={{{1.0,0,0,0},
+  schnaps_real DMat[4][4][4] ={{{1.0,0,0,0},
 			{0,0,0,0},
 			{0,0,0,0},
 			{0,0,0,0}},
@@ -588,9 +588,9 @@ void Init_PBPC_Wave_SchurPressure_BCVelocity(Simulation *simu, PB_PC* pb_pc, int
   pb_pc->U2.lsol.MatVecProduct=MatVect;
 
   //// Allocating all sub-equations right-hand sides
-  pb_pc->rhs_prediction = calloc(pb_pc->D.lsol.neq,sizeof(real));
-  pb_pc->rhs_propagation = calloc(pb_pc->Schur.lsol.neq,sizeof(real));
-  pb_pc->rhs_correction = calloc(pb_pc->D.lsol.neq,sizeof(real));
+  pb_pc->rhs_prediction = calloc(pb_pc->D.lsol.neq,sizeof(schnaps_real));
+  pb_pc->rhs_propagation = calloc(pb_pc->Schur.lsol.neq,sizeof(schnaps_real));
+  pb_pc->rhs_correction = calloc(pb_pc->D.lsol.neq,sizeof(schnaps_real));
 
 }
 
@@ -643,28 +643,28 @@ void Init_PBPC_Wave_SchurPressure_BCPressure(Simulation *simu, PB_PC* pb_pc, int
   free(listvarSchur);
 
   // Local operator matrices to build global Differential operators (Schur, Laplacian...)
-  real h=simu->dt*simu->theta*simu->vmax;
-  real SchurMat[4][4]  = {{1.0,0,0,0},
+  schnaps_real h=simu->dt*simu->theta*simu->vmax;
+  schnaps_real SchurMat[4][4]  = {{1.0,0,0,0},
 			  {0,h*h,0,0},
 			  {0,0,h*h,0},
 			  {0,0,0,0}};
-  real L1Mat[4][4] = {{0,0,0,0},
+  schnaps_real L1Mat[4][4] = {{0,0,0,0},
                       {-h,0,0,0},
                       {0,0,0,0},
                       {0,0,0,0}};
-  real L2Mat[4][4] = {{0,0,0,0},
+  schnaps_real L2Mat[4][4] = {{0,0,0,0},
                       {0,0,0,0},
                       {-h,0,0,0},
                       {0,0,0,0}};
-  real U1Mat[4][4] = {{0,0,0,0},
+  schnaps_real U1Mat[4][4] = {{0,0,0,0},
                       {-h,0,0,0},
                       {0,0,0,0},
                       {0,0,0,0}};
-  real U2Mat[4][4] = {{0,0,0,0},
+  schnaps_real U2Mat[4][4] = {{0,0,0,0},
                       {0,0,0,0},
                       {-h,0,0,0},
                       {0,0,0,0}};
-  real DMat[4][4][4] ={{{1.0,0,0,0},
+  schnaps_real DMat[4][4][4] ={{{1.0,0,0,0},
 			{0,0,0,0},
 			{0,0,0,0},
 			{0,0,0,0}},
@@ -734,9 +734,9 @@ void Init_PBPC_Wave_SchurPressure_BCPressure(Simulation *simu, PB_PC* pb_pc, int
   pb_pc->U2.lsol.MatVecProduct=MatVect;
 
   //// Allocating all sub-equations right-hand sides
-  pb_pc->rhs_prediction = calloc(pb_pc->D.lsol.neq,sizeof(real));
-  pb_pc->rhs_propagation = calloc(pb_pc->Schur.lsol.neq,sizeof(real));
-  pb_pc->rhs_correction = calloc(pb_pc->D.lsol.neq,sizeof(real));
+  pb_pc->rhs_prediction = calloc(pb_pc->D.lsol.neq,sizeof(schnaps_real));
+  pb_pc->rhs_propagation = calloc(pb_pc->Schur.lsol.neq,sizeof(schnaps_real));
+  pb_pc->rhs_correction = calloc(pb_pc->D.lsol.neq,sizeof(schnaps_real));
 }
 
 
@@ -766,7 +766,7 @@ void Init_Parameters_PhyBasedPC(PB_PC* pb_pc){
 }
 
 
-void PhyBased_PC_CG(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*globalRHS){
+void PhyBased_PC_CG(PB_PC* pb_pc, Simulation *simu, schnaps_real* globalSol, schnaps_real*globalRHS){
   
   // 0)1) Reset everything (needed for time evolution)
   reset(pb_pc);
@@ -832,8 +832,8 @@ void PhyBased_PC_CG(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*global
 
   // 3) CORRECTION STEP
   // Extracting both U1 and U2 from the previous solution of the propagation step
-  real *solU1=calloc(pb_pc->U1.nb_fe_nodes, sizeof(real));
-  real *solU2=calloc(pb_pc->U2.nb_fe_nodes, sizeof(real));
+  schnaps_real *solU1=calloc(pb_pc->U1.nb_fe_nodes, sizeof(schnaps_real));
+  schnaps_real *solU2=calloc(pb_pc->U2.nb_fe_nodes, sizeof(schnaps_real));
   extract2CGVectors(&pb_pc->U1,&pb_pc->U2,pb_pc->Schur.lsol.sol,solU1,solU2);
 
   pb_pc->D.lsol.solver_type=pb_pc->solver_correction;
@@ -867,7 +867,7 @@ void PhyBased_PC_CG(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*global
 }
 
 
-void PhyBased_PC_InvertSchur_CG(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*globalRHS){
+void PhyBased_PC_InvertSchur_CG(PB_PC* pb_pc, Simulation *simu, schnaps_real* globalSol, schnaps_real*globalRHS){
   reset(pb_pc);
 
   // Assembling all operators' matrices
@@ -913,8 +913,8 @@ void PhyBased_PC_InvertSchur_CG(PB_PC* pb_pc, Simulation *simu, real* globalSol,
   pb_pc->Schur.lsol.iter_max=pb_pc->itermax_propagation;
   pb_pc->Schur.lsol.restart_gmres=pb_pc->restart_propagation;
 
-  real *solU1=calloc(pb_pc->U1.nb_fe_nodes, sizeof(real));
-  real *solU2=calloc(pb_pc->U2.nb_fe_nodes, sizeof(real));
+  schnaps_real *solU1=calloc(pb_pc->U1.nb_fe_nodes, sizeof(schnaps_real));
+  schnaps_real *solU2=calloc(pb_pc->U2.nb_fe_nodes, sizeof(schnaps_real));
   extract2CGVectors(&pb_pc->U1,&pb_pc->U2,pb_pc->D.lsol.sol,solU1,solU2);
   
   // Parsing L1P, L2P into the "sol" of L1 and L2 (since it is unused).
@@ -992,26 +992,26 @@ void GenericOperator_PBPC_Velocity(PB_PC* pb_pc){
       int isubcell = ie % (f0->raf[0] * f0->raf[1] * f0->raf[2]);
         
       for(int ipg = 0;ipg < nnodes; ipg++){
-        real wpg;
-        real xref[3];
+        schnaps_real wpg;
+        schnaps_real xref[3];
         int ipgmacro = ipg + isubcell * nnodes;
         
         ref_pg_vol(f0->deg,f0->raf,ipgmacro,xref,&wpg,NULL);
         
         for(int iloc = 0; iloc < nnodes; iloc++){
-          real dtau[3][3],codtau[3][3];
-          real dphiref_i[3],dphiref_j[3];
-          real dphi_i[3],dphi_j[3];
-          real basisPhi_i[4], basisPhi_j[4];
+          schnaps_real dtau[3][3],codtau[3][3];
+          schnaps_real dphiref_i[3],dphiref_j[3];
+          schnaps_real dphi_i[3],dphi_j[3];
+          schnaps_real basisPhi_i[4], basisPhi_j[4];
           int ilocmacro = iloc + isubcell * nnodes;
           int ino_dg = iloc + ie * nnodes;
           int ino_fe = dg_to_fe_index[ino_dg];
           grad_psi_pg(f0->deg,f0->raf,ilocmacro,ipgmacro,dphiref_i);
-          Ref2Phy(pb_pc->D.simu->fd[iemacro].physnode,
+          schnaps_ref2phy(pb_pc->D.simu->fd[iemacro].physnode,
                   xref,dphiref_i,0,NULL,
                   dtau,codtau,dphi_i,NULL);
         
-          real det = dot_product(dtau[0], codtau[0]);
+          schnaps_real det = dot_product(dtau[0], codtau[0]);
           if (ilocmacro==ipgmacro){
             basisPhi_i[0]=1;
           }
@@ -1027,7 +1027,7 @@ void GenericOperator_PBPC_Velocity(PB_PC* pb_pc){
             int jno_dg = jloc + ie * nnodes;
             int jno_fe = dg_to_fe_index[jno_dg];
             grad_psi_pg(f0->deg,f0->raf,jlocmacro,ipgmacro,dphiref_j);
-            Ref2Phy(pb_pc->D.simu->fd[iemacro].physnode,
+            schnaps_ref2phy(pb_pc->D.simu->fd[iemacro].physnode,
                     xref,dphiref_j,0,NULL,
                     dtau,codtau,dphi_j,NULL);
             if (jlocmacro==ipgmacro){
@@ -1040,8 +1040,8 @@ void GenericOperator_PBPC_Velocity(PB_PC* pb_pc){
             basisPhi_j[1]=dphi_j[0]/det;
             basisPhi_j[2]=dphi_j[1]/det;
             basisPhi_j[3]=dphi_j[2]/det;
-            real val;
-            real res[4];
+            schnaps_real val;
+            schnaps_real res[4];
             ContinuousSolver * cs ;
 
             // Building D Matrix
@@ -1147,26 +1147,26 @@ void GenericOperator_PBPC_Pressure(PB_PC* pb_pc){
       int isubcell = ie % (f0->raf[0] * f0->raf[1] * f0->raf[2]);
         
       for(int ipg = 0;ipg < nnodes; ipg++){
-        real wpg;
-        real xref[3];
+        schnaps_real wpg;
+        schnaps_real xref[3];
         int ipgmacro = ipg + isubcell * nnodes;
         
         ref_pg_vol(f0->deg,f0->raf,ipgmacro,xref,&wpg,NULL);
         
         for(int iloc = 0; iloc < nnodes; iloc++){
-          real dtau[3][3],codtau[3][3];
-          real dphiref_i[3],dphiref_j[3];
-          real dphi_i[3],dphi_j[3];
-          real basisPhi_i[4], basisPhi_j[4];
+          schnaps_real dtau[3][3],codtau[3][3];
+          schnaps_real dphiref_i[3],dphiref_j[3];
+          schnaps_real dphi_i[3],dphi_j[3];
+          schnaps_real basisPhi_i[4], basisPhi_j[4];
           int ilocmacro = iloc + isubcell * nnodes;
           int ino_dg = iloc + ie * nnodes;
           int ino_fe = dg_to_fe_index[ino_dg];
           grad_psi_pg(f0->deg,f0->raf,ilocmacro,ipgmacro,dphiref_i);
-          Ref2Phy(pb_pc->D.simu->fd[iemacro].physnode,
+          schnaps_ref2phy(pb_pc->D.simu->fd[iemacro].physnode,
                   xref,dphiref_i,0,NULL,
                   dtau,codtau,dphi_i,NULL);
         
-          real det = dot_product(dtau[0], codtau[0]);
+          schnaps_real det = dot_product(dtau[0], codtau[0]);
           if (ilocmacro==ipgmacro){
             basisPhi_i[0]=1;
           }
@@ -1182,7 +1182,7 @@ void GenericOperator_PBPC_Pressure(PB_PC* pb_pc){
             int jno_dg = jloc + ie * nnodes;
             int jno_fe = dg_to_fe_index[jno_dg];
             grad_psi_pg(f0->deg,f0->raf,jlocmacro,ipgmacro,dphiref_j);
-            Ref2Phy(pb_pc->D.simu->fd[iemacro].physnode,
+            schnaps_ref2phy(pb_pc->D.simu->fd[iemacro].physnode,
                     xref,dphiref_j,0,NULL,
                     dtau,codtau,dphi_j,NULL);
             if (jlocmacro==ipgmacro){
@@ -1195,8 +1195,8 @@ void GenericOperator_PBPC_Pressure(PB_PC* pb_pc){
             basisPhi_j[1]=dphi_j[0]/det;
             basisPhi_j[2]=dphi_j[1]/det;
             basisPhi_j[3]=dphi_j[2]/det;
-            real val;
-            real res[4];
+            schnaps_real val;
+            schnaps_real res[4];
             ContinuousSolver * cs ;
 
             // Building D Matrix
@@ -1325,28 +1325,28 @@ void reset(PB_PC* pb_pc){
 
 
 
-void PiDgToCg(ContinuousSolver * cs,real * rhsIn, real * rhsOut){
+void PiDgToCg(ContinuousSolver * cs,schnaps_real * rhsIn, schnaps_real * rhsOut){
   
  field* f = &cs->simu->fd[0];
 
- real ** Restriction;
- real **tabvar;
- real **tabvar_transform;
- real* coeff = calloc(cs->nb_fe_nodes, sizeof(real));
+ schnaps_real ** Restriction;
+ schnaps_real **tabvar;
+ schnaps_real **tabvar_transform;
+ schnaps_real* coeff = calloc(cs->nb_fe_nodes, sizeof(schnaps_real));
 
- Restriction = calloc(cs->nb_fe_nodes,sizeof(real*));
+ Restriction = calloc(cs->nb_fe_nodes,sizeof(schnaps_real*));
  for (int i=0;i<cs->nb_fe_nodes;i++){
-   Restriction[i] = calloc(cs->nb_dg_nodes,sizeof(real));
+   Restriction[i] = calloc(cs->nb_dg_nodes,sizeof(schnaps_real));
  }
  
- tabvar = calloc(cs->nb_phy_vars,sizeof(real*));
+ tabvar = calloc(cs->nb_phy_vars,sizeof(schnaps_real*));
  for (int i=0;i<cs->nb_phy_vars;i++){
-   tabvar[i] = calloc(cs->nb_dg_nodes,sizeof(real));
+   tabvar[i] = calloc(cs->nb_dg_nodes,sizeof(schnaps_real));
  }
 
- tabvar_transform = calloc(cs->nb_phy_vars,sizeof(real*));
+ tabvar_transform = calloc(cs->nb_phy_vars,sizeof(schnaps_real*));
  for (int i=0;i<cs->nb_phy_vars;i++){
-   tabvar_transform[i] = calloc(cs->nb_fe_nodes,sizeof(real));
+   tabvar_transform[i] = calloc(cs->nb_fe_nodes,sizeof(schnaps_real));
  }
 
 
@@ -1368,15 +1368,15 @@ for (int ino_fe=0;ino_fe<cs->nb_fe_nodes;ino_fe++){
     int isubcell = ie % (f->raf[0] * f->raf[1] * f->raf[2]);
     
     for(int iloc = 0; iloc < cs->nnodes; iloc++){
-      real wpg;
-      real xref[3];
+      schnaps_real wpg;
+      schnaps_real xref[3];
       int ilocmacro = iloc + isubcell * cs->nnodes;
       ref_pg_vol(f->deg,f->raf,ilocmacro,xref,&wpg,NULL);
-      real dtau[3][3],codtau[3][3];
-      Ref2Phy(cs->simu->fd[iemacro].physnode,
+      schnaps_real dtau[3][3],codtau[3][3];
+      schnaps_ref2phy(cs->simu->fd[iemacro].physnode,
 	      xref,NULL,0,NULL,
 	      dtau,codtau,NULL,NULL);
-      real det = dot_product(dtau[0], codtau[0]);	
+      schnaps_real det = dot_product(dtau[0], codtau[0]);	
       int ino_dg = iloc + ie * cs->nnodes;
       int ino_fe = cs->dg_to_fe_index[ino_dg];
       Restriction[ino_fe][ino_dg]= wpg * det; // We need to multiply by the member of dg node for 1 fe node.
@@ -1411,27 +1411,27 @@ for (int ino_fe=0;ino_fe<cs->nb_fe_nodes;ino_fe++){
 
 }
 
-void PiInvertCgToDg(ContinuousSolver * cs,real * rhsIn, real * rhsOut){
+void PiInvertCgToDg(ContinuousSolver * cs,schnaps_real * rhsIn, schnaps_real * rhsOut){
   
  field* f = &cs->simu->fd[0];
- real ** Reconstruction;
- real **tabvar;
- real **tabvar_transform;
- real* coeff = calloc(cs->nb_dg_nodes, sizeof(real));
+ schnaps_real ** Reconstruction;
+ schnaps_real **tabvar;
+ schnaps_real **tabvar_transform;
+ schnaps_real* coeff = calloc(cs->nb_dg_nodes, sizeof(schnaps_real));
 
- Reconstruction = calloc(cs->nb_dg_nodes,sizeof(real*));
+ Reconstruction = calloc(cs->nb_dg_nodes,sizeof(schnaps_real*));
  for (int i=0;i<cs->nb_dg_nodes;i++){
-   Reconstruction[i] = calloc(cs->nb_fe_nodes,sizeof(real));
+   Reconstruction[i] = calloc(cs->nb_fe_nodes,sizeof(schnaps_real));
  }
  
- tabvar = calloc(cs->nb_phy_vars,sizeof(real*));
+ tabvar = calloc(cs->nb_phy_vars,sizeof(schnaps_real*));
  for (int i=0;i<cs->nb_phy_vars;i++){
-   tabvar[i] = calloc(cs->nb_fe_nodes,sizeof(real));
+   tabvar[i] = calloc(cs->nb_fe_nodes,sizeof(schnaps_real));
  }
 
- tabvar_transform = calloc(cs->nb_phy_vars,sizeof(real*));
+ tabvar_transform = calloc(cs->nb_phy_vars,sizeof(schnaps_real*));
  for (int i=0;i<cs->nb_phy_vars;i++){
-   tabvar_transform[i] = calloc(cs->nb_dg_nodes,sizeof(real));
+   tabvar_transform[i] = calloc(cs->nb_dg_nodes,sizeof(schnaps_real));
  }
 
  for (int i=0;i<cs->nb_fe_nodes;i++){
@@ -1452,15 +1452,15 @@ for(int ie = 0; ie < cs->nbel; ie++){
     int isubcell = ie % (f->raf[0] * f->raf[1] * f->raf[2]);
     
     for(int iloc = 0; iloc < cs->nnodes; iloc++){
-      real wpg;
-      real xref[3];
+      schnaps_real wpg;
+      schnaps_real xref[3];
       int ilocmacro = iloc + isubcell * cs->nnodes;
       ref_pg_vol(f->deg,f->raf,ilocmacro,xref,&wpg,NULL);
-      real dtau[3][3],codtau[3][3];
-      Ref2Phy(cs->simu->fd[iemacro].physnode,
+      schnaps_real dtau[3][3],codtau[3][3];
+      schnaps_ref2phy(cs->simu->fd[iemacro].physnode,
 	      xref,NULL,0,NULL,
 	      dtau,codtau,NULL,NULL);
-      real det = dot_product(dtau[0], codtau[0]);	
+      schnaps_real det = dot_product(dtau[0], codtau[0]);	
       int ino_dg = iloc + ie * cs->nnodes;
       int ino_fe = cs->dg_to_fe_index[ino_dg];
       Reconstruction[ino_dg][ino_fe]= wpg * det; // We need to multiply by the member of dg node for 1 fe node.
@@ -1493,12 +1493,12 @@ for (int i=0;i<cs->nb_dg_nodes;i++){
 }
 
 
-void RobinFlux_SchurPressure(void * cs, real * xpg, real * w, real *vnorm, real * flux){
+void RobinFlux_SchurPressure(void * cs, schnaps_real * xpg, schnaps_real * w, schnaps_real *vnorm, schnaps_real * flux){
   ContinuousSolver * ps=cs;
-  real lambda=-10000000;
-  real Coef_diff=0;
-  real p0=0;
-  real Win[3];
+  schnaps_real lambda=-10000000;
+  schnaps_real Coef_diff=0;
+  schnaps_real p0=0;
+  schnaps_real Win[3];
     
   ps->simu->fd[0].model.ImposedData(xpg,ps->simu->dt,Win);
   p0=Win[0];
@@ -1513,13 +1513,13 @@ void RobinFlux_SchurPressure(void * cs, real * xpg, real * w, real *vnorm, real 
   flux[0]=ps->simu->vmax * lambda* Coef_diff * w[0];//- ps->simu->vmax * Coef_diff * p0;
 }
 
-void Dirichlet_Velocity(void * cs, real * xpg, real * w, real *vnorm, real * flux){
+void Dirichlet_Velocity(void * cs, schnaps_real * xpg, schnaps_real * w, schnaps_real *vnorm, schnaps_real * flux){
   ContinuousSolver * ps=cs;
-  real mu=1.0e14;//15;
-  real Coef_diff=0;
-  real u0_1 = 0;
-  real u0_2 = 0;
-  real Win[3];
+  schnaps_real mu=1.0e14;//15;
+  schnaps_real Coef_diff=0;
+  schnaps_real u0_1 = 0;
+  schnaps_real u0_2 = 0;
+  schnaps_real Win[3];
 
   Coef_diff=ps->simu->dt*ps->simu->vmax*ps->simu->theta;
 
@@ -1532,22 +1532,22 @@ void Dirichlet_Velocity(void * cs, real * xpg, real * w, real *vnorm, real * flu
 }
 
 
-void BoundaryTerm_Xderivative(void * cs, real * xpg, real * w, real *vnorm, real * flux){
+void BoundaryTerm_Xderivative(void * cs, schnaps_real * xpg, schnaps_real * w, schnaps_real *vnorm, schnaps_real * flux){
   ContinuousSolver * ps=cs;
-  real lambda=0;
-  real Coef_diff=0;
-  real p0=0;
+  schnaps_real lambda=0;
+  schnaps_real Coef_diff=0;
+  schnaps_real p0=0;
 
   Coef_diff=ps->simu->dt*ps->simu->vmax*ps->simu->theta;
   // term c dt theta n1
   flux[0]= Coef_diff * w[0] * vnorm[0];
 }
 
-void BoundaryTerm_Yderivative(void * cs, real * xpg, real * w, real *vnorm, real * flux){
+void BoundaryTerm_Yderivative(void * cs, schnaps_real * xpg, schnaps_real * w, schnaps_real *vnorm, schnaps_real * flux){
   ContinuousSolver * ps=cs; 
-  real lambda=0;
-  real Coef_diff=0;
-  real p0=0;
+  schnaps_real lambda=0;
+  schnaps_real Coef_diff=0;
+  schnaps_real p0=0;
 
   Coef_diff=ps->simu->dt*ps->simu->vmax*ps->simu->theta;
   // term c dt theta n2

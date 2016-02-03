@@ -25,7 +25,7 @@ void DtFields_SPU(Simulation *simu,
 //! starpu version
 //! \param[inout] simu a simulation
 //! \param[in] tmax tmax
-void RK2_SPU(Simulation *simu, real tmax);
+void RK2_SPU(Simulation *simu, schnaps_real tmax);
 
 //! \brief add a scaled vector to another vector
 //! wout = wout + alpha * win
@@ -33,7 +33,7 @@ void RK2_SPU(Simulation *simu, real tmax);
 //! \param[in] alpha the scaling factor
 //! \param[in] win a handle to the scaled vector
 //! \param[out] wout a handle to the result
-void AddBuffer_SPU(real alpha, starpu_data_handle_t win,
+void AddBuffer_SPU(schnaps_real alpha, starpu_data_handle_t win,
 		   starpu_data_handle_t wout);
 
   //! \brief apply the flux terms inside a macrocell
@@ -82,8 +82,8 @@ void DGMacroCellBoundaryFlux_SPU(Interface* inter);
 //! \param[inout] w an array to the field value
 //! \param[out] dtw an array to the time derivatives
 void DtFields_bis(Simulation *simu,
-		  real* w,
-		  real* dtw);
+		  schnaps_real* w,
+		  schnaps_real* dtw);
 
 void ZeroBuffer_SPU(starpu_data_handle_t w);
 

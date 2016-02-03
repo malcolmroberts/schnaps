@@ -16,9 +16,9 @@
 /* Table of constant values */
 
 static int c__1 = 1;
-static real c_b276 = 1.0;
-static real c_b280 = -1.0;
-static real c_b305 = 0.0;
+static schnaps_real c_b276 = 1.0;
+static schnaps_real c_b280 = -1.0;
+static schnaps_real c_b305 = 0.0;
 
 /* * */
 /* *  Copyright (C) CERFACS 1998 */
@@ -208,8 +208,8 @@ e
 
 
 
-int gcopy(int *n, real *dx, int *incx, 
-	  real *dy, int *incy){
+int gcopy(int *n, schnaps_real *dx, int *incx, 
+	  schnaps_real *dy, int *incy){
   int i__1;
   static int i, m, ix, iy, mp1;
 
@@ -272,8 +272,8 @@ L40:
 
 
 
-int gconstantmut(int *n, real *da, real *dx, 
-	int *incx, real *dy, int *incy)
+int gconstantmut(int *n, schnaps_real *da, schnaps_real *dx, 
+	int *incx, schnaps_real *dy, int *incy)
 {
     int i__1;
     static int i, m, ix, iy, mp1;
@@ -338,9 +338,9 @@ L40:
 
 
 
-int MatVectorProduct(char *trans, int *m, int *n, real *
-	alpha, real *a, int *lda, real *x, int *incx, 
-	real *beta, real *y, int *incy)
+int MatVectorProduct(char *trans, int *m, int *n, schnaps_real *
+	alpha, schnaps_real *a, int *lda, schnaps_real *x, int *incx, 
+	schnaps_real *beta, schnaps_real *y, int *incy)
 {
 
     /* System generated locals */
@@ -348,7 +348,7 @@ int MatVectorProduct(char *trans, int *m, int *n, real *
 
     /* Local variables */
     static int info;
-    static real temp;
+    static schnaps_real temp;
     static int lenx, leny, i, j;
     static int ix, iy, jx, jy, kx, ky;
 
@@ -453,7 +453,7 @@ int MatVectorProduct(char *trans, int *m, int *n, real *
 	info = 2;
     } else if (*n < 0) {
 	info = 3;
-    } else if (*lda < fmax((real)1,(real)(*m))) {
+    } else if (*lda < fmax((schnaps_real)1,(schnaps_real)(*m))) {
 	info = 6;
     } else if (*incx == 0) {
 	info = 8;
@@ -605,20 +605,20 @@ int MatVectorProduct(char *trans, int *m, int *n, real *
 } 
 
 
-real gnorm2(int *n, real *x, int *incx){
+schnaps_real gnorm2(int *n, schnaps_real *x, int *incx){
 
 #define abs(x) ((x) >= 0 ? (x) : -(x))
   
     /* System generated locals */
     int i__1, i__2;
-    real ret_val, d__1;
+    schnaps_real ret_val, d__1;
     //real sqrt(real);
 
 
     /* Local variables */
-    static real norm, scale, absxi;
+    static schnaps_real norm, scale, absxi;
     static int ix;
-    static real ssq;
+    static schnaps_real ssq;
 
     //  -- This version written on 25-October-1982.   
     //   Modified on 14-October-1993 to inline the call to DLASSQ.   
@@ -661,13 +661,13 @@ real gnorm2(int *n, real *x, int *incx){
 }
 
 int UpperLowerSolver(char *uplo, char *trans, char *diag, int *n, 
-		     real *a, int *lda, real *x, int *incx){
+		     schnaps_real *a, int *lda, schnaps_real *x, int *incx){
     /* System generated locals */
     int i__1, i__2;
 
     /* Local variables */
     static int info;
-    static real temp;
+    static schnaps_real temp;
     static int i, j;
     static int ix, jx, kx;
     static int nounit;
@@ -778,7 +778,7 @@ int UpperLowerSolver(char *uplo, char *trans, char *diag, int *n,
 	info = 3;
     } else if (*n < 0) {
 	info = 4;
-    } else if (*lda < fmax((real)1,(real)(*n))) {
+    } else if (*lda < fmax((schnaps_real)1,(schnaps_real)(*n))) {
 	info = 6;
     } else if (*incx == 0) {
 	info = 8;
@@ -966,24 +966,24 @@ int UpperLowerSolver(char *uplo, char *trans, char *diag, int *n,
 }
 
 
-real Sign(real *a, real *b){
-real x;
+schnaps_real Sign(schnaps_real *a, schnaps_real *b){
+schnaps_real x;
  x = (*a >= 0 ? *a : - *a);
  return( *b >= 0 ? x : -x);
 }
 
-int GivensRot(real *da, real *db, real *c, 
-	real *s){
+int GivensRot(schnaps_real *da, schnaps_real *db, schnaps_real *c, 
+	schnaps_real *s){
   
-  static real c_b4 = 1.;
+  static schnaps_real c_b4 = 1.;
     /* System generated locals */
-    real d__1, d__2;
+    schnaps_real d__1, d__2;
     /* Builtin functions */
     //real sqrt(real), d_sign(real *, real *);
 
 
     /* Local variables */
-    static real r, scale, z, roe;
+    static schnaps_real r, scale, z, roe;
     
 /*     construct givens plane rotation.   
        jack dongarra, linpack, 3/11/78. */
@@ -1023,14 +1023,14 @@ L20:
     return 0;
 }
 
-int PlaneRotation(int *n, real *dx, int *incx, 
-	real *dy, int *incy, real *c, real *s)
+int PlaneRotation(int *n, schnaps_real *dx, int *incx, 
+	schnaps_real *dy, int *incy, schnaps_real *c, schnaps_real *s)
 {
     /* System generated locals */
     int i__1;
     /* Local variables */
     static int i;
-    static real dtemp;
+    static schnaps_real dtemp;
     static int ix, iy;
 
 /*     applies a plane rotation.   
@@ -1080,13 +1080,13 @@ L20:
 }
 
 /* Subroutine */ int drive_dgmres(int *n, int *nloc, int *m, 
-	int *lwork, real *work, int *irc, int *icntl, 
-	real *cntl, int *info, real *rinfo){
+	int *lwork, schnaps_real *work, int *irc, int *icntl, 
+	schnaps_real *cntl, int *info, schnaps_real *rinfo){
     /* Initialized data */
     static int icheck = 0;
 
     /* System generated locals */
-    real r__1;
+    schnaps_real r__1;
     
     /* Builtin functions */
     //real sqrt(real);
@@ -1094,10 +1094,10 @@ L20:
 
     /* Local variables */
     static int xcurrent, ycurrent;
-    static real sa, sb;
-    static real rc, rn, rx;
+    static schnaps_real sa, sb;
+    static schnaps_real rc, rn, rx;
     static int newrestart;
-    static real spa, spb;
+    static schnaps_real spa, spb;
     static int ierr, bptr, hptr, vptr, wptr, xptr, r0ptr, iwarn, ihist;
     static int rotcos, dotptr, rotsin, comprsd, sizewrk;
 
@@ -1365,9 +1365,9 @@ L20:
 	    }
 	    if (*lwork < sizewrk && *n == *nloc) {
 /* Compute the maximum size of the m according to the memory space */
-	        rn = (real) (*n);
+	        rn = (schnaps_real) (*n);
 		rx = rn + 5.f;
-		rc = rn * 5.f + 1 - (real) (*lwork);
+		rc = rn * 5.f + 1 - (schnaps_real) (*lwork);
 
 /* Update the linear part of the second order equation to be solved */
 		if (icntl[5] == 2 || icntl[5] == 3) {
@@ -1511,11 +1511,11 @@ return 0;
 } 
 
 
-/* Subroutine */ int dgmres_(int *n, int *m, real *b, 
-	real *x, real *h__, real *w, real *r0, 
-	real *v, real *dot, real *ycurrent, real *
-	xcurrent, real *rotsin, real *rotcos, int *irc, 
-	int *icntl, real *cntl, int *info, real *rinfo)
+/* Subroutine */ int dgmres_(int *n, int *m, schnaps_real *b, 
+	schnaps_real *x, schnaps_real *h__, schnaps_real *w, schnaps_real *r0, 
+	schnaps_real *v, schnaps_real *dot, schnaps_real *ycurrent, schnaps_real *
+	xcurrent, schnaps_real *rotsin, schnaps_real *rotcos, int *irc, 
+	int *icntl, schnaps_real *cntl, int *info, schnaps_real *rinfo)
 {
     /* Initialized data */
    
@@ -1523,24 +1523,24 @@ return 0;
 
     /* System generated locals */
     int h_dim1, h_offset, v_dim1, v_offset, i__1;
-    real d__1, d__2;
+    schnaps_real d__1, d__2;
 
     /* Builtin functions */
     //real sqrt(real);
 
 
     /* Local variables */
-    static real auxhjp1j, dnormres;
+    static schnaps_real auxhjp1j, dnormres;
     static int typeprec, j, initguess;
-    static real be, bn;
+    static schnaps_real be, bn;
     static int jh;
-    static real sa, sb, bea, dvi, spa, spb, aux, beta, truenormres, 
+    static schnaps_real sa, sb, bea, dvi, spa, spb, aux, beta, truenormres, 
 	    dloo, temp;
     static int bptr;
     static int hptr, vptr, wptr, xptr, yptr;
     static int r0ptr;
     static int iwarn, ihist;
-    static real auxhjj, dnormw, dnormx;
+    static schnaps_real auxhjj, dnormw, dnormx;
     static int northo, dotptr, xcuptr, comprsd, itermax, iorthog, iterout;
 
 
@@ -2515,7 +2515,7 @@ L68:
 
 
 
-/* Subroutine */ int init_dgmres(int *icntl, real *cntl)
+/* Subroutine */ int init_dgmres(int *icntl, schnaps_real *cntl)
 {
 
 /*  Purpose */

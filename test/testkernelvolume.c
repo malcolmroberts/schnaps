@@ -87,10 +87,10 @@ int TestKernelVolume(void){
   DisplaySimulation(&simu);
 
   // save the dtwn pointer
-  real *dtwn_cl = simu.dtw;
+  schnaps_real *dtwn_cl = simu.dtw;
 
   // malloc a new dtwn.
-  simu.dtw = calloc(simu.wsize, sizeof(real));
+  simu.dtw = calloc(simu.wsize, sizeof(schnaps_real));
  
   int fsize =  simu.wsize / simu.macromesh.nbelems;
 
@@ -102,7 +102,7 @@ int TestKernelVolume(void){
   DisplaySimulation(&simu);
 
   //check that the results are the same
-  real maxerr = 0.0;
+  schnaps_real maxerr = 0.0;
   printf("\nDifference\tC\t\tOpenCL\n");
   for(int i = 0; i < simu.wsize; ++i) {
     printf("%f\t%f\t%f\n", simu.dtw[i] - dtwn_cl[i], simu.dtw[i], dtwn_cl[i]);
@@ -110,7 +110,7 @@ int TestKernelVolume(void){
   }
   printf("max error: %f\n",maxerr);
 
-  real tolerance = _SMALL;
+  schnaps_real tolerance = _SMALL;
 
   test = (maxerr < tolerance);
 

@@ -30,25 +30,25 @@ void InitInterface_SPU(Interface* inter){
 				0, // location: CPU
 				(uintptr_t)(inter->wL), // vector location
 				inter->wsizeL,  // size
-				sizeof(real));  // type
+				sizeof(schnaps_real));  // type
 
     starpu_vector_data_register(&(inter->wR_handle), // mem handle
 				0, // location: CPU
 				(uintptr_t)(inter->wR), // vector location
 				inter->wsizeR,  // size
-				sizeof(real));  // type
+				sizeof(schnaps_real));  // type
 
     starpu_vector_data_register(&(inter->vnds_handle), // mem handle
 				0, // location: CPU
 				(uintptr_t)(inter->vnds), // vector location
 				inter->npgL * 3,  // size  !!!!!!!!!!! same for left and right ????
-				sizeof(real));  // type
+				sizeof(schnaps_real));  // type
 
     starpu_vector_data_register(&(inter->xpg_handle), // mem handle
 				0, // location: CPU
 				(uintptr_t)(inter->xpg), // vector location
 				inter->npgL * 3,  // size  !!!!!!!!!!! same for left and right ????
-				sizeof(real));  // type
+				sizeof(schnaps_real));  // type
   }
 }
 
@@ -89,7 +89,7 @@ void ExtractInterface_SPU(Interface* inter, int side){
 
     field *fd;
     int locfa,npgf;
-    real *wf;
+    schnaps_real *wf;
     starpu_data_handle_t wf_handle;
     int* vol_index;
     starpu_data_handle_t vol_index_handle;
@@ -171,11 +171,11 @@ void ExtractInterface_C(void* buffer[], void* cl_args){
 
   struct starpu_vector_interface *wf_v =
     (struct starpu_vector_interface *) buffer[0];
-  real* wf = (real *)STARPU_VECTOR_GET_PTR(wf_v);
+  schnaps_real* wf = (schnaps_real *)STARPU_VECTOR_GET_PTR(wf_v);
 
   struct starpu_vector_interface *wn_v =
     (struct starpu_vector_interface *) buffer[1];
-  real* wn = (real *)STARPU_VECTOR_GET_PTR(wn_v);
+  schnaps_real* wn = (schnaps_real *)STARPU_VECTOR_GET_PTR(wn_v);
 
   struct starpu_vector_interface *vol_index_v =
     (struct starpu_vector_interface *) buffer[2];
@@ -274,7 +274,7 @@ void ExtractInterface(Interface* inter, int side){
 
   field *fd;
   int locfa,npgf;
-  real *wf;
+  schnaps_real *wf;
   int mod_ie;
   int* vol_index;
 
@@ -434,19 +434,19 @@ void InterfaceExplicitFlux_C(void* buffer[], void* cl_args){
 
   struct starpu_vector_interface *vnds_buf_v =
     (struct starpu_vector_interface *) buffer[buf_num++];
-  real* vnds_buf = (real *)STARPU_VECTOR_GET_PTR(vnds_buf_v);
+  schnaps_real* vnds_buf = (schnaps_real *)STARPU_VECTOR_GET_PTR(vnds_buf_v);
 
   struct starpu_vector_interface *xpg_buf_v =
     (struct starpu_vector_interface *) buffer[buf_num++];
-  real* xpg_buf = (real *)STARPU_VECTOR_GET_PTR(xpg_buf_v);
+  schnaps_real* xpg_buf = (schnaps_real *)STARPU_VECTOR_GET_PTR(xpg_buf_v);
 
   struct starpu_vector_interface *wn_ext_v =
     (struct starpu_vector_interface *) buffer[buf_num++];
-  real* wn_ext = (real *)STARPU_VECTOR_GET_PTR(wn_ext_v);
+  schnaps_real* wn_ext = (schnaps_real *)STARPU_VECTOR_GET_PTR(wn_ext_v);
 
   struct starpu_vector_interface *rhs_v =
     (struct starpu_vector_interface *) buffer[buf_num++];
-  real* rhs = (real *)STARPU_VECTOR_GET_PTR(rhs_v);
+  schnaps_real* rhs = (schnaps_real *)STARPU_VECTOR_GET_PTR(rhs_v);
 
 
   int npgf = NPGF(f->deg, f->raf, locfa);
@@ -455,13 +455,13 @@ void InterfaceExplicitFlux_C(void* buffer[], void* cl_args){
   for(int ipgf = 0; ipgf < npgf; ipgf++) {
 
 
-    real flux[m];
-    real wL[m];
+    schnaps_real flux[m];
+    schnaps_real wL[m];
     for(int iv = 0; iv < m; iv++) {
       wL[iv] = 0;
     }
 
-    real wR[m];
+    schnaps_real wR[m];
     int ipgR = index_ext[ipgf];
     int ipgL = index[ipgf];
     for(int iv = 0; iv < m; iv++) {
@@ -472,7 +472,7 @@ void InterfaceExplicitFlux_C(void* buffer[], void* cl_args){
     }
 
     // int_dL F(wL, wR, grad phi_ib)
-    real vndsloc[3];
+    schnaps_real vndsloc[3];
 
     vndsloc[0] = sign * vnds_buf[3 * ipgf + 0];
     vndsloc[1] = sign * vnds_buf[3 * ipgf + 1];
@@ -587,27 +587,27 @@ void InterfaceBoundaryFlux_C(void* buffer[], void* cl_args){
 
   struct starpu_vector_interface *vnds_buf_v =
     (struct starpu_vector_interface *) buffer[buf_num++];
-  real* vnds_buf = (real *)STARPU_VECTOR_GET_PTR(vnds_buf_v);
+  schnaps_real* vnds_buf = (schnaps_real *)STARPU_VECTOR_GET_PTR(vnds_buf_v);
 
   struct starpu_vector_interface *xpg_buf_v =
     (struct starpu_vector_interface *) buffer[buf_num++];
-  real* xpg_buf = (real *)STARPU_VECTOR_GET_PTR(xpg_buf_v);
+  schnaps_real* xpg_buf = (schnaps_real *)STARPU_VECTOR_GET_PTR(xpg_buf_v);
 
   struct starpu_vector_interface *rhs_v =
     (struct starpu_vector_interface *) buffer[buf_num++];
-  real* rhs = (real *)STARPU_VECTOR_GET_PTR(rhs_v);
+  schnaps_real* rhs = (schnaps_real *)STARPU_VECTOR_GET_PTR(rhs_v);
 
   for(int ipgf = 0; ipgf < NPGF(f->deg, f->raf, locfa); ipgf++) {
 
 
-    real flux[m];
-    real wL[m];
+    schnaps_real flux[m];
+    schnaps_real wL[m];
     for(int iv = 0; iv < m; iv++) {
       wL[iv] = 0;
     }
 
-    real* xpg = xpg_buf + 3 * ipgf;
-    real* vnds = vnds_buf + 3 * ipgf;
+    schnaps_real* xpg = xpg_buf + 3 * ipgf;
+    schnaps_real* vnds = vnds_buf + 3 * ipgf;
 
     //printf("tnow=%f wL=%f\n",f->tnow,wL[0]);
     f->model.BoundaryFlux(xpg, f->tnow, wL, vnds, flux);
@@ -669,7 +669,7 @@ void InterfaceExplicitFlux(Interface* inter, int side){
 
 
   if (f != NULL){
-    real* res;
+    schnaps_real* res;
     if (f->solver != NULL){
       res = f->solver->rhs;
     } else {
@@ -683,14 +683,14 @@ void InterfaceExplicitFlux(Interface* inter, int side){
     for(int ipgf = 0; ipgf < NPGF(f->deg, f->raf, locfa); ipgf++) {
 
 
-      real flux[m];
-      real wL[m];
+      schnaps_real flux[m];
+      schnaps_real wL[m];
       for(int iv = 0; iv < m; iv++) {
 	wL[iv] = 0;
       }
 
       if (fext != NULL) {  // the right element exists
-	real wR[m];
+	schnaps_real wR[m];
 	int ipgR = index_ext[ipgf];
 	int ipgL = index[ipgf];
 	for(int iv = 0; iv < m; iv++) {
@@ -700,7 +700,7 @@ void InterfaceExplicitFlux(Interface* inter, int side){
 	}
 
 	// int_dL F(wL, wR, grad phi_ib)
-	real vndsloc[3];
+	schnaps_real vndsloc[3];
 
 	vndsloc[0] = sign * inter->vnds[3 * ipgf + 0];
 	vndsloc[1] = sign * inter->vnds[3 * ipgf + 1];
@@ -730,8 +730,8 @@ void InterfaceExplicitFlux(Interface* inter, int side){
 
 
 	assert(sign == 1);
-	real* xpg = inter->xpg + 3 * ipgf;
-	real* vnds = inter->vnds + 3 * ipgf;
+	schnaps_real* xpg = inter->xpg + 3 * ipgf;
+	schnaps_real* vnds = inter->vnds + 3 * ipgf;
 
 	//printf("tnow=%f wL=%f\n",f->tnow,wL[0]);
 	f->model.BoundaryFlux(xpg, f->tnow, wL, vnds, flux);

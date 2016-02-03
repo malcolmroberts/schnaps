@@ -7,7 +7,7 @@
 
 #pragma start_opencl
 //! Gauss LObatto Points (GLOP) up to order 4
-__constant real gauss_lob_point[] = {
+__constant schnaps_real gauss_lob_point[] = {
   0.5,
   0,
   1,
@@ -26,7 +26,7 @@ __constant real gauss_lob_point[] = {
 };
 
 //! GLOP weights up to order 4
-__constant real gauss_lob_weight[] = {
+__constant schnaps_real gauss_lob_weight[] = {
   1,
   0.5,
   0.5,
@@ -48,7 +48,7 @@ __constant real gauss_lob_weight[] = {
 //! data for a given degree in the previous arrays
 __constant int gauss_lob_offset[] = {0, 1, 3, 6, 10};
 
-__constant real gauss_lob_dpsi[] = {
+__constant schnaps_real gauss_lob_dpsi[] = {
   0.0,
   -1.,
   -1.,
@@ -116,16 +116,16 @@ __constant int gauss_lob_dpsi_offset[] = {0, 1, 5, 14, 30};
 //! \param[in] deg degree
 //! \param[in] i glop index
 //! \returns the glop weight
-real wglop(int deg, int i) {
+schnaps_real wglop(int deg, int i) {
   return gauss_lob_weight[gauss_lob_offset[deg] + i];
 }
 
-real glop(int deg, int i){
+schnaps_real glop(int deg, int i){
   return gauss_lob_point[gauss_lob_offset[deg] + i];
 }
 
-void lagrange_polynomial(real* p, const real* subdiv,
-			 int deg, int ii, real x) {
+void lagrange_polynomial(schnaps_real* p, const schnaps_real* subdiv,
+			 int deg, int ii, schnaps_real x) {
   *p = 1;
   const int npg = deg + 1;
   for(int j = 0; j < npg; j++) {
@@ -135,15 +135,15 @@ void lagrange_polynomial(real* p, const real* subdiv,
   }
 }
 
-void dlagrange_polynomial(real* dp, const real* subdiv,
-			  int deg, int i, real x) {
-  real xj;
+void dlagrange_polynomial(schnaps_real* dp, const schnaps_real* subdiv,
+			  int deg, int i, schnaps_real x) {
+  schnaps_real xj;
   *dp = 0;
   const int npg = deg + 1;
   for(int k = 0; k < npg; k++) {
     if (k != (i)) {
-      real xk = (subdiv)[k];
-      real dploc = ((real)1) / ((subdiv)[i] -  xk);
+      schnaps_real xk = (subdiv)[k];
+      schnaps_real dploc = ((schnaps_real)1) / ((subdiv)[i] -  xk);
       for(int j=0;j<(deg)+1;j++) {
 	if (j != (i) && j != k) {
 	  xj = (subdiv)[j];
@@ -244,9 +244,9 @@ void ipg_to_xyz(const int *raf, const int *deg, int *ic, int *ix,
 
 // From a reference point find the nearest gauss point
 // Warning: works only  degree 1,2 or 3
-int ref_ipg(int *deg, int *nraf, real *xref) {
+int ref_ipg(int *deg, int *nraf, schnaps_real *xref) {
 
-  real hh[3] = {1./nraf[0],1./nraf[1],1./nraf[2]};
+  schnaps_real hh[3] = {1./nraf[0],1./nraf[1],1./nraf[2]};
 
   int ic[3],ix[3];
 
@@ -283,9 +283,9 @@ int ref_ipg(int *deg, int *nraf, real *xref) {
 } // ref_ipg
 
 
-int ref_ipg_CG(int *deg, int *nraf, real *xref) {
+int ref_ipg_CG(int *deg, int *nraf, schnaps_real *xref) {
 
-  real hh[3] = {1./nraf[0],1./nraf[1],1./nraf[2]};
+  schnaps_real hh[3] = {1./nraf[0],1./nraf[1],1./nraf[2]};
 
   int ic[3],ix[3];
 
@@ -331,7 +331,7 @@ int ref_ipg_CG(int *deg, int *nraf, real *xref) {
   return ipg;
 } // ref_ipg_CG
 
-void ref_pg_vol(int *deg, int *nraf, int ipg, real *xpg, real *wpg, real *xpg_in) {
+void ref_pg_vol(int *deg, int *nraf, int ipg, schnaps_real *xpg, schnaps_real *wpg, schnaps_real *xpg_in) {
 
   int offset[3];
 
@@ -340,9 +340,9 @@ void ref_pg_vol(int *deg, int *nraf, int ipg, real *xpg, real *wpg, real *xpg_in
 
   ipg_to_xyz(nraf,deg,ic,ix,&ipg);
 
-  real hx = 1 / (real) nraf[0];
-  real hy =1 / (real) nraf[1];
-  real hz = 1 / (real) nraf[2];
+  schnaps_real hx = 1 / (schnaps_real) nraf[0];
+  schnaps_real hy =1 / (schnaps_real) nraf[1];
+  schnaps_real hz = 1 / (schnaps_real) nraf[2];
 
   //printf("h=%f %f %f\n",hx,hy,hz);
 
@@ -362,7 +362,7 @@ void ref_pg_vol(int *deg, int *nraf, int ipg, real *xpg, real *wpg, real *xpg_in
 		     gauss_lob_weight[offset[2]];
 
   if (xpg_in !=0) {
-    real small = _SMALL;
+    schnaps_real small = _SMALL;
     xpg_in[0] = xpg[0];
     xpg_in[1] = xpg[1];
     xpg_in[2] = xpg[2];
@@ -380,10 +380,10 @@ void ref_pg_vol(int *deg, int *nraf, int ipg, real *xpg, real *wpg, real *xpg_in
   }
 }
 
-void ref_pg_vol_CG(int *deg, int *nraf, int ipg, real *xpg, real *wpg, real *xpg_in) {
+void ref_pg_vol_CG(int *deg, int *nraf, int ipg, schnaps_real *xpg, schnaps_real *wpg, schnaps_real *xpg_in) {
 
   int offset[3], irefx[3], ic[3], ix[3];
-  real hx[3];
+  schnaps_real hx[3];
   
   int nx[3] = {
     deg[0] * nraf[0] + 1,
@@ -391,9 +391,9 @@ void ref_pg_vol_CG(int *deg, int *nraf, int ipg, real *xpg, real *wpg, real *xpg
     deg[2] * nraf[2] + 1};
 
 
-  hx[0] = 1 / (real) nraf[0];
-  hx[1] = 1 / (real) nraf[1];
-  hx[2] = 1 / (real) nraf[2];
+  hx[0] = 1 / (schnaps_real) nraf[0];
+  hx[1] = 1 / (schnaps_real) nraf[1];
+  hx[2] = 1 / (schnaps_real) nraf[2];
 
   //printf("h=%f %f %f\n",hx,hy,hz);
 
@@ -434,7 +434,7 @@ void ref_pg_vol_CG(int *deg, int *nraf, int ipg, real *xpg, real *wpg, real *xpg
 		     gauss_lob_weight[offset[2]];
 
   if (xpg_in != NULL) {
-    real small = 1e-5;
+    schnaps_real small = 1e-5;
     xpg_in[0] = xpg[0];
     xpg_in[1] = xpg[1];
     xpg_in[2] = xpg[2];
@@ -462,7 +462,7 @@ void ref_pg_vol_CG(int *deg, int *nraf, int ipg, real *xpg, real *wpg, real *xpg
 // ipg on the face ifa.
 // and returns the index of the volume gauss point
 int ref_pg_face(int deg3d[], int nraf3d[], int ifa, int ipg, 
-		 real *xpg, real *wpg, real *xpgin) {
+		 schnaps_real *xpg, schnaps_real *wpg, schnaps_real *xpgin) {
   // For each face, give the dimension index i
   const int axis_permut[6][4] = { {0, 2, 1, 0},
 				  {1, 2, 0, 1},
@@ -472,7 +472,7 @@ int ref_pg_face(int deg3d[], int nraf3d[], int ifa, int ipg,
 				  {1, 0, 2, 0} };
 
   int deg[3], offset[2],nraf[3];
-  real h[3];
+  schnaps_real h[3];
   int ipgxyz[3], ncpgxyz[3];
   //int ipgf=ipg;
 
@@ -498,15 +498,15 @@ int ref_pg_face(int deg3d[], int nraf3d[], int ifa, int ipg,
 
   // Compute permuted indices of the subface
   int ncx = ipg % nraf[0];
-  h[0] = 1.0 / (real) nraf[0];
+  h[0] = 1.0 / (schnaps_real) nraf[0];
   ipg /= nraf[0];
 
   int ncy = ipg;
-  h[1] = 1.0 / (real) nraf[1];
+  h[1] = 1.0 / (schnaps_real) nraf[1];
 
   // Equals 0 or nraf-1 depending on the face
   int ncz = axis_permut[ifa][3] * (nraf[2] - 1);
-  h[2] = 1.0 / (real) nraf[2];
+  h[2] = 1.0 / (schnaps_real) nraf[2];
 
   // Compute non permuted indices for points and subfaces
   ipgxyz[axis_permut[ifa][0]] = ix;
@@ -544,8 +544,8 @@ int ref_pg_face(int deg3d[], int nraf3d[], int ifa, int ipg,
   // If xpgin exists, compute a point slightly INSIDE the opposite
   // subcell along the face.
   if(xpgin != NULL) {
-    real small = 1e-3;//0.001
-    real vsmall = 1e-5;//0.000001;
+    schnaps_real small = 1e-3;//0.001
+    schnaps_real vsmall = 1e-5;//0.000001;
 
     xpgin[axis_permut[ifa][0]] = h[0] * (ncx + gauss_lob_point[offset[0]]);
     xpgin[axis_permut[ifa][1]] = h[1] * (ncy + gauss_lob_point[offset[1]]);
@@ -577,7 +577,7 @@ int ref_pg_face(int deg3d[], int nraf3d[], int ifa, int ipg,
 // ipg on the face ifa.
 // and returns the index of the volume gauss point
 int ref_pg_face_CG(int deg3d[], int nraf3d[], int ifa, int ipg, 
-		 real *xpg, real *wpg, real *xpgin) {
+		 schnaps_real *xpg, schnaps_real *wpg, schnaps_real *xpgin) {
   // For each face, give the dimension index i
   const int axis_permut[6][4] = { {0, 2, 1, 0},
 				  {1, 2, 0, 1},
@@ -587,10 +587,10 @@ int ref_pg_face_CG(int deg3d[], int nraf3d[], int ifa, int ipg,
 				  {1, 0, 2, 0} };
 
   int deg[3], offset[2],nraf[3];
-  real h[3];
-  h[0] = 1.0 / (real) nraf[0];
-  h[1] = 1.0 / (real) nraf[1];
-  h[2] = 1.0 / (real) nraf[2];
+  schnaps_real h[3];
+  h[0] = 1.0 / (schnaps_real) nraf[0];
+  h[1] = 1.0 / (schnaps_real) nraf[1];
+  h[2] = 1.0 / (schnaps_real) nraf[2];
 
   int ipgxyz[3], ncpgxyz[3];
   //int ipgf=ipg;
@@ -688,8 +688,8 @@ int ref_pg_face_CG(int deg3d[], int nraf3d[], int ifa, int ipg,
   // If xpgin exists, compute a point slightly INSIDE the opposite
   // subcell along the face.
   if(xpgin != NULL) {
-    real small = 1e-4;//0.001
-    real vsmall = 1e-6;//0.000001;
+    schnaps_real small = 1e-4;//0.001
+    schnaps_real vsmall = 1e-6;//0.000001;
 
     xpgin[axis_permut[ifa][0]] = h[0] * (ncx + gauss_lob_point[offset[0]]);
     xpgin[axis_permut[ifa][1]] = h[1] * (ncy + gauss_lob_point[offset[1]]);
@@ -719,7 +719,7 @@ int ref_pg_face_CG(int deg3d[], int nraf3d[], int ifa, int ipg,
 
 
 // return the 1d derivative of lagrange polynomial ib at glop ipg
-real dlag(int deg, int ib, int ipg) 
+schnaps_real dlag(int deg, int ib, int ipg) 
 {
   return gauss_lob_dpsi[gauss_lob_dpsi_offset[deg] + ib * (deg + 1) + ipg];
 }
@@ -728,11 +728,11 @@ real dlag(int deg, int ib, int ipg)
 // ib at point xref[3].
 // Warning: the value of the gradient is not reliable if xref is on
 // the boundary of a subcell (because the gradient is discontinuous)
-void psi_ref(int *deg, int *nraf, int ib, real *xref, real *psi, real *dpsi)
+void psi_ref(int *deg, int *nraf, int ib, schnaps_real *xref, schnaps_real *psi, schnaps_real *dpsi)
 {
-  real dpsibx;
-  real dpsiby;
-  real dpsibz;
+  schnaps_real dpsibx;
+  schnaps_real dpsiby;
+  schnaps_real dpsibz;
 
   int offset[3];
 
@@ -755,19 +755,19 @@ void psi_ref(int *deg, int *nraf, int ib, real *xref, real *psi, real *dpsi)
   /* ib /= (deg[2] + 1); */
 
   /* int ncbx= ib % nraf[0]; */
-  real hx=1 / (real) nraf[0];
+  schnaps_real hx=1 / (schnaps_real) nraf[0];
   //ib /= nraf[0];
 
   //int ncby= ib % nraf[1];
-  real hy=1 / (real) nraf[1];
+  schnaps_real hy=1 / (schnaps_real) nraf[1];
   //ib /= nraf[1];
 
   //int ncbz= ib;
-  real hz=1 / (real) nraf[2];
+  schnaps_real hz=1 / (schnaps_real) nraf[2];
 
-  real psibx = 0;
-  real psiby = 0;
-  real psibz = 0;
+  schnaps_real psibx = 0;
+  schnaps_real psiby = 0;
+  schnaps_real psibz = 0;
 
   lagrange_polynomial(&psibx, gauss_lob_point + offset[0],
                       deg[0], ix[0], xref[0]/hx-ic[0]);
@@ -809,10 +809,10 @@ void psi_ref(int *deg, int *nraf, int ib, real *xref, real *psi, real *dpsi)
 // ib at point xref[3] given the subcell indices is[3].
 // The computation is reliable.
 void psi_ref_subcell(int *deg, int *nraf, int *is, int ib,
-		     real *xref, real *psi, real *dpsi) {
-  real dpsibx;
-  real dpsiby;
-  real dpsibz;
+		     schnaps_real *xref, schnaps_real *psi, schnaps_real *dpsi) {
+  schnaps_real dpsibx;
+  schnaps_real dpsiby;
+  schnaps_real dpsibz;
 
 
   int offset[3];
@@ -827,16 +827,16 @@ void psi_ref_subcell(int *deg, int *nraf, int *is, int ib,
 
   ipg_to_xyz(nraf,deg,ic,ix,&ib);
 
-  real hx=1 / (real) nraf[0];
-  real hy=1 / (real) nraf[1];
-  real hz=1 / (real) nraf[2];
+  schnaps_real hx=1 / (schnaps_real) nraf[0];
+  schnaps_real hy=1 / (schnaps_real) nraf[1];
+  schnaps_real hz=1 / (schnaps_real) nraf[2];
 
   int is_in_subcell= (ic[0] == is[0]) && (ic[1] == is[1])
     && (ic[2] == is[2]);
 
-  real psibx = 0;
-  real psiby = 0;
-  real psibz = 0;
+  schnaps_real psibx = 0;
+  schnaps_real psiby = 0;
+  schnaps_real psibz = 0;
 
   lagrange_polynomial(&psibx, gauss_lob_point + offset[0],
                       deg[0], ix[0], xref[0]/hx-ic[0]);
@@ -869,7 +869,7 @@ void psi_ref_subcell(int *deg, int *nraf, int *is, int ib,
 
 // Return the gradient dpsi[0..2] of the basis function ib at GLOP
 // ipg.
-void grad_psi_pg(int *deg, int *nraf, int ib, int ipg, real *dpsi) {
+void grad_psi_pg(int *deg, int *nraf, int ib, int ipg, schnaps_real *dpsi) {
   int offset[3];
 
   // glop 3d indices
@@ -892,15 +892,15 @@ void grad_psi_pg(int *deg, int *nraf, int ib, int ipg, real *dpsi) {
 
   // // indices of each subcell and space step in each direction
   // int ncpgx= ipg % nraf[0];
-  real hx=1 / (real) nraf[0];
+  schnaps_real hx=1 / (schnaps_real) nraf[0];
   // ipg /= nraf[0];
 
   // int ncpgy= ipg % nraf[1];
-  real hy=1 / (real) nraf[1];
+  schnaps_real hy=1 / (schnaps_real) nraf[1];
   // ipg /= nraf[1];
 
   // int ncpgz= ipg;
-  real hz=1 / (real) nraf[2];
+  schnaps_real hz=1 / (schnaps_real) nraf[2];
 
   // basis functions indices
   // int ibx = ib % (deg[0] + 1);
@@ -927,7 +927,7 @@ void grad_psi_pg(int *deg, int *nraf, int ib, int ipg, real *dpsi) {
 
   // Computation of the value of the interpolation polynomial gradient
   
-  real psibx,psiby,psibz,dpsibx,dpsiby,dpsibz;
+  schnaps_real psibx,psiby,psibz,dpsibx,dpsiby,dpsibz;
 
   psibx = (ix[0] == ibx[0]) * (ic[0] == ibc[0]);
   dpsibx = (ic[0] == ibc[0]) * gauss_lob_dpsi[offset[0]+ibx[0]*(deg[0]+1)+ix[0]] / hx;

@@ -21,7 +21,7 @@ typedef int (*varindexptr)(int*, int*, int, int, int);
 //! solution of a DG approximation
 typedef struct field {
   //! Physical nodes of the macrocell
-  real physnode[20][3];
+  schnaps_real physnode[20][3];
   
   //! Physical and numerical model
   Model model;
@@ -41,24 +41,24 @@ typedef struct field {
   int id;
   
   //! Current time and time steps
-  real tnow;
-  real dt;
+  schnaps_real tnow;
+  schnaps_real dt;
 
   //! Crank-Nicholson parameter
-  real theta;
+  schnaps_real theta;
 
   //! ref length of the mesh subcells
-  real hmin;
+  schnaps_real hmin;
 
   //! two arrays for storing jacobians and det at glops
   //! NULL if store_det is false
-  real *jacobian;
-  real *det;
+  schnaps_real *jacobian;
+  schnaps_real *det;
   bool store_det;
 
   //! period in each direction
   //! if negative: non-periodic computation (default)
-  real period[3];
+  schnaps_real period[3];
 
 
   //! PIC struct pointer (=NULL if not used)
@@ -84,28 +84,28 @@ typedef struct field {
   //! Size of the field buffers
   int wsize;
   //! fields at current time step
-  real *wn;
+  schnaps_real *wn;
   starpu_data_handle_t wn_handle;
   
   //! Time derivative of the field
   //! is equal to res
   //! only used in explicit schemes
-  real *dtwn;
+  schnaps_real *dtwn;
   starpu_data_handle_t dtwn_handle;
 
   //! residual
   //! is equal to dtwn
   //! only used in implicit schemes
-  real *res;
+  schnaps_real *res;
   starpu_data_handle_t res_handle;
 
   //! \brief Pointer to a generic function called before computing dtfield. 
   //! \param[inout] f a field (to be converted from void*)
-  void (*pre_dtfield)(void *f, real *w);
+  void (*pre_dtfield)(void *f, schnaps_real *w);
 
   //! \brief Pointer to a generic function called after computing dtfield. 
   //! \param[inout] f a field (to be converted from void*)
-  void (*post_dtfield)(void *f, real *w);
+  void (*post_dtfield)(void *f, schnaps_real *w);
 
   //! \brief generic update function called 
   //! \brief called at each runge-kutta sustep
@@ -113,7 +113,7 @@ typedef struct field {
   //! \param[in] elem macro element index
   //! \param[in] ipg glop index
   //! \param[in] iv field component index
-  void (*update_after_rk)(void *f, real *w);
+  void (*update_after_rk)(void *f, schnaps_real *w);
 
   //! \brief Memory arrangement of field components
   //! \param[in] param interpolation parameters
@@ -159,7 +159,7 @@ int GenericVarindex_CG(__constant int *deg, __constant int *raf, int m,
 //! \param[in] raf refinements parameters 
 //! \param[in] w a pointer to field value (if NULL memory will be allocated)
 //! \param[inout] dtw a pointer to derivatives (if NULL memory will be allocated)
-void Initfield(field *f, Model m, real physnode[][3], int *deg, int *raf, real *w, real* dtw);
+void Initfield(field *f, Model m, schnaps_real physnode[][3], int *deg, int *raf, schnaps_real *w, schnaps_real* dtw);
 
 //! \brief clean empty field initialization
 //! \param[inout] f a field
@@ -183,23 +183,23 @@ void Freefield(field *f);
 //! \param[out] dtw time derivative of the field data w
 void DGMacroCellInterface(int locfaL,
 			  field *fL, int offsetL, field *fR, int offsetR,
-			  real *w, real *dtw);
+			  schnaps_real *w, schnaps_real *dtw);
 
 //! \brief compute the Discontinuous Galerkin volume terms
 //! \param[in] f a field
-void DGVolume(field *f, real *w, real *dtw);
+void DGVolume(field *f, schnaps_real *w, schnaps_real *dtw);
 
 //! \brief compute the Discontinuous Galerkin inter-subcells terms
 //! \param[in] f a field
-void DGSubCellInterface(field *f, real *w, real *dtw);
+void DGSubCellInterface(field *f, schnaps_real *w, schnaps_real *dtw);
 
 //! \brief  apply the DG mass term
 //! \param[in] f a field
-void DGMass(field *f, real *w, real *dtw);
+void DGMass(field *f, schnaps_real *w, schnaps_real *dtw);
 
 //! \brief Add the source term
 //! \param[in] f a field
-void DGSource(field *f, real *w, real *dtw);
+void DGSource(field *f, schnaps_real *w, schnaps_real *dtw);
 
 /* //! \brief save the results in the gmsh format */
 /* //! \param[in] typplot index of the field variable to plot. */
@@ -216,7 +216,7 @@ void DGSource(field *f, real *w, real *dtw);
 //! \param[in] ie the macrocell index
 //! \param[in] xref reference coordinates
 //! \param[out] w the m field values
-void InterpField(field *f,real* xref,real* w);
+void InterpField(field *f,schnaps_real* xref,schnaps_real* w);
 
 //! \brief  display the field on screen
 //! \param[in] f the field.

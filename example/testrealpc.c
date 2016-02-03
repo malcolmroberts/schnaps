@@ -9,16 +9,16 @@
 #include "physBased_PC.h"
 
 
-void SteadyStateOne_ImposedData(const real *x, const real t, real *w);
-void SteadyStateOne_InitData(real *x, real *w);
-void SteadyStateOne_Source(const real *xy, const real t, const real *w, real *S);
-void SteadyStateOne_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
-    real *flux);
-void SteadyStateTwo_ImposedData(const real *x, const real t, real *w);
-void SteadyStateTwo_InitData(real *x, real *w);
-void SteadyStateTwo_Source(const real *xy, const real t, const real *w, real *S);
-void SteadyStateTwo_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
-    real *flux);
+void SteadyStateOne_ImposedData(const schnaps_real *x, const schnaps_real t, schnaps_real *w);
+void SteadyStateOne_InitData(schnaps_real *x, schnaps_real *w);
+void SteadyStateOne_Source(const schnaps_real *xy, const schnaps_real t, const schnaps_real *w, schnaps_real *S);
+void SteadyStateOne_BoundaryFlux(schnaps_real *x, schnaps_real t, schnaps_real *wL, schnaps_real *vnorm,
+    schnaps_real *flux);
+void SteadyStateTwo_ImposedData(const schnaps_real *x, const schnaps_real t, schnaps_real *w);
+void SteadyStateTwo_InitData(schnaps_real *x, schnaps_real *w);
+void SteadyStateTwo_Source(const schnaps_real *xy, const schnaps_real t, const schnaps_real *w, schnaps_real *S);
+void SteadyStateTwo_BoundaryFlux(schnaps_real *x, schnaps_real t, schnaps_real *wL, schnaps_real *vnorm,
+    schnaps_real *flux);
 void Generic(ContinuousSolver *cs);
 
 int main(void) {
@@ -36,7 +36,7 @@ int main(void) {
 int Testrealpc(void) {
 
   bool test = true;
-  real dd;
+  schnaps_real dd;
   int test1_ok=1,test2_ok=0;
 
 #ifdef PARALUTION 
@@ -47,8 +47,8 @@ int Testrealpc(void) {
   ReadMacroMesh(&mesh,"../test/testcube.msh");
   Detect2DMacroMesh(&mesh);
 
-  real A[3][3] = {{_LENGTH_DOMAIN, 0, 0}, {0, _LENGTH_DOMAIN, 0}, {0, 0,1}};
-  real x0[3] = {0, 0, 0};
+  schnaps_real A[3][3] = {{_LENGTH_DOMAIN, 0, 0}, {0, _LENGTH_DOMAIN, 0}, {0, 0,1}};
+  schnaps_real x0[3] = {0, 0, 0};
   AffineMapMacroMesh(&mesh,A,x0);
   BuildConnectivity(&mesh);
   
@@ -84,16 +84,16 @@ int Testrealpc(void) {
     InitContinuousSolver(&cs,&simu,1,nbvar,listvar);
     InitContinuousSolver(&csSolve,&simu,1,nbvar,listvar);
 
-    real theta=0.5;
+    schnaps_real theta=0.5;
     simu.theta=theta;
     simu.dt=10;
     simu.vmax=_SPEED_WAVE;
-    real tmax=5*simu.dt;
+    schnaps_real tmax=5*simu.dt;
     int itermax=tmax/simu.dt;
     simu.itermax_rk=itermax;
     int size = cs.nb_fe_dof;
-    real *resCG = calloc(size, sizeof(real));
-    real *wCG = calloc(size, sizeof(real));
+    schnaps_real *resCG = calloc(size, sizeof(schnaps_real));
+    schnaps_real *wCG = calloc(size, sizeof(schnaps_real));
     
     csSolve.lsol.solver_type=GMRES;
     csSolve.lsol.tol=1.e-8;
@@ -199,12 +199,12 @@ int Testrealpc(void) {
     simu2.theta=0.5;
     simu2.dt=10;
     simu2.vmax=_SPEED_WAVE;
-    real tmax2=1*simu2.dt;//;0.5;
+    schnaps_real tmax2=1*simu2.dt;//;0.5;
     int itermax2=tmax2/simu2.dt;
     simu2.itermax_rk=itermax2;
     int size = cs.nb_fe_dof;
-    real *resCG = calloc(size, sizeof(real));
-    real *wCG = calloc(size, sizeof(real));
+    schnaps_real *resCG = calloc(size, sizeof(schnaps_real));
+    schnaps_real *wCG = calloc(size, sizeof(schnaps_real));
 
     csSolve.lsol.solver_type=GMRES;
     csSolve.lsol.tol=1.0e-9;
@@ -284,10 +284,10 @@ int Testrealpc(void) {
 
 
 
-void SteadyStateOne_ImposedData(const real *xy, const real t, real *w) {
+void SteadyStateOne_ImposedData(const schnaps_real *xy, const schnaps_real t, schnaps_real *w) {
 
-  real x=xy[0];
-  real y=xy[1];
+  schnaps_real x=xy[0];
+  schnaps_real y=xy[1];
 
   w[0] = 10.0+exp(x)+exp(2*y);//+x*x+y*y*y;//10
   w[1] = x*y;
@@ -296,10 +296,10 @@ void SteadyStateOne_ImposedData(const real *xy, const real t, real *w) {
 }
 
 
-void SteadyStateOne_Source(const real *xy, const real t, const real *w, real *S){
+void SteadyStateOne_Source(const schnaps_real *xy, const schnaps_real t, const schnaps_real *w, schnaps_real *S){
 
-  real x=xy[0];
-  real y=xy[1];
+  schnaps_real x=xy[0];
+  schnaps_real y=xy[1];
 
   S[0] = 0;
   S[1] = exp(x);//2.0*x;//exp(x);
@@ -311,23 +311,23 @@ void SteadyStateOne_Source(const real *xy, const real t, const real *w, real *S)
 
 }
 
-void SteadyStateOne_InitData(real *x, real *w) {
-  real t = 0;
+void SteadyStateOne_InitData(schnaps_real *x, schnaps_real *w) {
+  schnaps_real t = 0;
   SteadyStateOne_ImposedData(x, t, w);
 }
 
-void SteadyStateOne_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
-    real *flux) {
-  real wR[3];
+void SteadyStateOne_BoundaryFlux(schnaps_real *x, schnaps_real t, schnaps_real *wL, schnaps_real *vnorm,
+    schnaps_real *flux) {
+  schnaps_real wR[3];
   SteadyStateOne_ImposedData(x , t, wR);
   Wave_Upwind_NumFlux(wL, wR, vnorm, flux);
 }
 
-void TestPeriodic_Wave_ImposedData(const real *x, const real t, real *w) {
-  real pi=4.0*atan(1.0);
-  real L=_LENGTH_DOMAIN;
-  real Coef=(2.0*pi)/L;
-  real a=_SPEED_WAVE;
+void TestPeriodic_Wave_ImposedData(const schnaps_real *x, const schnaps_real t, schnaps_real *w) {
+  schnaps_real pi=4.0*atan(1.0);
+  schnaps_real L=_LENGTH_DOMAIN;
+  schnaps_real Coef=(2.0*pi)/L;
+  schnaps_real a=_SPEED_WAVE;
 
   w[0] = -a*Coef*sqrt(2.0)*sin(a*Coef*sqrt(2.0)*t)*cos(Coef*x[0])*cos(Coef*x[1]);
   w[1] = a*Coef*cos(Coef*a*sqrt(2.0)*t)*sin(Coef*x[0])*cos(Coef*x[1]);
@@ -336,15 +336,15 @@ void TestPeriodic_Wave_ImposedData(const real *x, const real t, real *w) {
 
 }
 
-void TestPeriodic_Wave_InitData(real *x, real *w) {
-  real t = 0;
+void TestPeriodic_Wave_InitData(schnaps_real *x, schnaps_real *w) {
+  schnaps_real t = 0;
   TestPeriodic_Wave_ImposedData(x, t, w);
 }
 
 
-void Wave_Upwind_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
-    real *flux) {
-  real wR[3];
+void Wave_Upwind_BoundaryFlux(schnaps_real *x, schnaps_real t, schnaps_real *wL, schnaps_real *vnorm,
+    schnaps_real *flux) {
+  schnaps_real wR[3];
   TestPeriodic_Wave_ImposedData(x , t, wR);
   Wave_Upwind_NumFlux(wL, wR, vnorm, flux);
 }

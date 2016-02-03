@@ -30,18 +30,18 @@ typedef struct Geom{
 
   // some pointers to particular functions
   //! \brief pointer to particular Ref2Phy mapping
-  void (*Ref2Phy)(real physnode[][3],
-                      real xref[3],
-                      real dphiref[3],
+  void (*Ref2Phy)(schnaps_real physnode[][3],
+                      schnaps_real xref[3],
+                      schnaps_real dphiref[3],
                       int ifa,
-                      real xphy[3],
-                      real dtau[3][3],
-                      real codtau[3][3],
-                      real dphi[3],
-                      real vnds[3]);
+                      schnaps_real xphy[3],
+                      schnaps_real dtau[3][3],
+                      schnaps_real codtau[3][3],
+                      schnaps_real dphi[3],
+                      schnaps_real vnds[3]);
 
   //! \brief pointer to a particular Phy2Ref inverse mapping
-  void (*Phy2Ref)(real physnode[][3],real xphy[3],real xref[3]);
+  void (*Phy2Ref)(schnaps_real physnode[][3],schnaps_real xphy[3],schnaps_real xref[3]);
 } Geom;
 
 
@@ -58,15 +58,15 @@ typedef struct Geom{
 //! \param[out] codtau: comatrix of dtau (optional)
 //! \param[out] dphi: gradient of the function in the physical frame (optional)
 //! \param[out] vnds: normal vector times the elementary surface ds (optional)
-void Ref2Phy(real physnode[20][3],
-             real xref[3],
-             real dphiref[3],
+void schnaps_ref2phy(schnaps_real physnode[20][3],
+             schnaps_real xref[3],
+             schnaps_real dphiref[3],
              int ifa,
-             real xphy[3],
-             real dtau[3][3],
-             real codtau[3][3],
-             real dphi[3],
-             real vnds[3]);
+             schnaps_real xphy[3],
+             schnaps_real dtau[3][3],
+             schnaps_real codtau[3][3],
+             schnaps_real dphi[3],
+             schnaps_real vnds[3]);
 
 //! \brief mapping tau from the reference point to the physical point.
 //! Data encapsulation for more simplicity
@@ -79,14 +79,14 @@ void GeomRef2Phy(Geom* g);
 //! \param[in] physnode : coordinates of physical nodes
 //! \param[in] xphy : coordinates of the mapped point in the physical frame
 //! \param[out] xref: coordinates of the mapped point in the reference frame
-void Phy2Ref(real physnode[20][3],real xphy[3],real xref[3]);
+void schnaps_phy2ref(schnaps_real physnode[20][3],schnaps_real xphy[3],schnaps_real xref[3]);
 
 //! \brief inverse mapping tau from the physical point to the reference point.
 //! more robust version of the function (Newton's method + homotopy)
 //! \param[in] physnode : coordinates of physical nodes
 //! \param[in] xphy : coordinates of the mapped point in the physical frame
 //! \param[out] xref: coordinates of the mapped point in the reference frame
-void RobustPhy2Ref(real physnode[20][3],real xphy[3],real xref[3]);
+void RobustPhy2Ref(schnaps_real physnode[20][3],schnaps_real xphy[3],schnaps_real xref[3]);
 
 //! \brief inverse mapping tau from the physical point to the reference point.
 //! Function with encapsulation
@@ -96,16 +96,16 @@ void RobustPhy2Ref(real physnode[20][3],real xphy[3],real xref[3]);
 //! \brief dot product between two vectors
 //! \param[in] a, b : the two points
 //! \return the dot product
-real dot_product(real a[3], real b[3]);
+schnaps_real dot_product(schnaps_real a[3], schnaps_real b[3]);
 
 //! \brief Length of a vector
 //! \param[in] a: the vector
 //! \return The length of the vector
-real norm(real a[3]);
+schnaps_real norm(schnaps_real a[3]);
 
 //! \brief normalize a vector
 //! \param[inout] a: the vector
-void Normalize(real a[3]);
+void Normalize(schnaps_real a[3]);
 
 //! \brief periodic correction
 //! \param[inout] xyz: the vector to be put inside the periodic box
@@ -113,7 +113,7 @@ void Normalize(real a[3]);
 //! if period[dim]<0 -> non periodic in direction dim
 //! the box is of the form [0,period[0]]x[0,period[1]]x[0,period[2]]
 #pragma start_opencl
-void PeriodicCorrection(real xyz[3],real period[3]);
+void PeriodicCorrection(schnaps_real xyz[3],schnaps_real period[3]);
 #pragma end_opencl
 
 //! \brief periodic correction
@@ -122,16 +122,16 @@ void PeriodicCorrection(real xyz[3],real period[3]);
 //! \param[in] xmin  lower bounds of the box in each direction
 //! \param[in] xmax  upper bounds of the box in each direction
 //! if period[dim]<0 -> non periodic in direction dim
-void PeriodicCorrectionB(real xyz[3],real period[3],real xmin[3], real xmax[3]);
+void PeriodicCorrectionB(schnaps_real xyz[3],schnaps_real period[3],schnaps_real xmin[3], schnaps_real xmax[3]);
 
 //! \brief distance between two points
 //! \param[in] a, b : the two points
 //! \return the distance
-real Dist(real a[3], real b[3]);
+schnaps_real Dist(schnaps_real a[3], schnaps_real b[3]);
 
 
 //! \brief point coordinates on standard output
 //! \param[in] x : the point
-void PrintPoint(real x[3]);
+void PrintPoint(schnaps_real x[3]);
 
 #endif

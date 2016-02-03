@@ -28,7 +28,7 @@
 //! \param[in] wL,wR : left and right states
 //! \param[in] vn : normal vector
 //! \param[out] flux : the flux
-void Gyro_Lagrangian_NumFlux(real wL[],real wR[],real vn[3],real* flux);
+void Gyro_Lagrangian_NumFlux(schnaps_real wL[],schnaps_real wR[],schnaps_real vn[3],schnaps_real* flux);
 
 //! \brief particular boundary flux for the gyro model
 //! \param[in] x : space position
@@ -36,42 +36,42 @@ void Gyro_Lagrangian_NumFlux(real wL[],real wR[],real vn[3],real* flux);
 //! \param[in] wL : left state
 //! \param[in] vn : normal vector
 //! \param[out] flux : the flux
-void Gyro_Lagrangian_BoundaryFlux(real* x,real t,real* wL,real* vn,
-			   real* flux);
+void Gyro_Lagrangian_BoundaryFlux(schnaps_real* x,schnaps_real t,schnaps_real* wL,schnaps_real* vn,
+			   schnaps_real* flux);
 
 //! \brief particular init data for the gyro model
 //! \param[in] x : space position
 //! \param[out] w : init state at point x
-void GyroInitData(real* x,real* w);
+void GyroInitData(schnaps_real* x,schnaps_real* w);
 
 //! \brief particular imposed data for the  gyro model
 //! \param[in] x  space position
 //! \param[in] t time
 //! \param[out] w  init state at point x
-void GyroImposedData(const real* x, const real t,real* w);
+void GyroImposedData(const schnaps_real* x, const schnaps_real t,schnaps_real* w);
 
 //! \brief particular imposed data for the  gyro model
 //! \param[in] x  space
 //! \param[in] t time
 //! \param[in] v  velocity
 //! \returns value of the distribution function
-real Gyro_ImposedKinetic_Data(const real* x, const real t,real v);
+schnaps_real Gyro_ImposedKinetic_Data(const schnaps_real* x, const schnaps_real t,schnaps_real v);
 
 //! \brief compute gyro L2 error in x and v
 //! \param[in] f : a field
-real GyroL2_Kinetic_error(field* f);
+schnaps_real GyroL2_Kinetic_error(field* f);
 
 //! \brief compute square of velocity L2 error
 //! \param[in] x,t : space and time position
 //! \param[in] w : values of f at glops
-real GyroL2VelError(real* x,real t,real *w);
+schnaps_real GyroL2VelError(schnaps_real* x,schnaps_real t,schnaps_real *w);
 
 //! \brief compute compute the source term of the collision
 //! model: electric force + true collisions
-void GyroSource(const real *x, const real t, const real *w, real *source);
+void GyroSource(const schnaps_real *x, const schnaps_real t, const schnaps_real *w, schnaps_real *source);
 
 //! \brief gnuplot file for the distribution function
 //! \param[in] w : values of f at glops
-void Velocity_distribution_plot(real *w);
+void Velocity_distribution_plot(schnaps_real *w);
 
 #endif

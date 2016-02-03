@@ -27,7 +27,7 @@ int Testfield(void){
 
   field f;
 
-  real physnode[20][3];
+  schnaps_real physnode[20][3];
 
   for(int inoloc = 0; inoloc < 20; inoloc++) {
     int ino = mesh.elem2node[20 * 0 + inoloc];
@@ -42,10 +42,10 @@ int Testfield(void){
 
   int ipg = 4;
 
-  real xref[3],xphy[3],wtest[1];
+  schnaps_real xref[3],xphy[3],wtest[1];
 
   ref_pg_vol(f.deg, f.raf, ipg, xref, NULL, NULL);
-  Ref2Phy(f.physnode,
+  schnaps_ref2phy(f.physnode,
 	  xref,
 	  NULL, -1, // dphiref, ifa
 	  xphy, NULL,

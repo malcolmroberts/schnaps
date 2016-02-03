@@ -14,7 +14,7 @@
 //! \param[inout] f a field
 void CopyfieldtoCPU(Simulation *simu);
 
-void update_physnode_cl(Simulation *simu, int ie, cl_mem physnode_cl, real *physnode,
+void update_physnode_cl(Simulation *simu, int ie, cl_mem physnode_cl, schnaps_real *physnode,
 			cl_ulong *time,
 			cl_uint nwait, cl_event *wait, cl_event *done);
 void set_source_CL(Simulation *simu, char *sourcename_cl);
@@ -43,9 +43,9 @@ void set_physnodes_cl(Simulation *simu);
 //! time integration by a second order Runge-Kutta algorithm
 //! \param[inout] f a field
 //! \param[in] tmax physical duration of the simulation
-void RK2_CL(Simulation *simu, real tmax, real dt,
+void RK2_CL(Simulation *simu, schnaps_real tmax, schnaps_real dt,
 	    cl_uint nwait, cl_event *wait, cl_event *done);
-void RK4_CL(Simulation *simu, real tmax, real dt,
+void RK4_CL(Simulation *simu, schnaps_real tmax, schnaps_real dt,
 	    cl_uint nwait, cl_event *wait, cl_event *done);
 
 #endif // _WITH_OPENCL

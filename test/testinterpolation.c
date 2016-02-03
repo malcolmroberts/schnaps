@@ -21,7 +21,7 @@ int main(void) {
 int TestInterpolation(void){
   int test = true;
   // reference element
-  real physnode[20][3];
+  schnaps_real physnode[20][3];
   physnode[0][0] = 0.;
   physnode[0][1] = 0;
   physnode[0][2] = 0;
@@ -87,8 +87,8 @@ int TestInterpolation(void){
   // for more generality
   //real A[3][3]={{1,2,1},{0,-1,4},{7,8,-5}};
   //real x0[3]={0,0,0};
-  real A[3][3]={{1,0,0},{0,1,0},{0,0,1}};
-  real x0[3]={0,0,0};
+  schnaps_real A[3][3]={{1,0,0},{0,1,0},{0,0,1}};
+  schnaps_real x0[3]={0,0,0};
   for(int i = 0; i < 20; i++){
     AffineMap(&(physnode[i][0]),A,x0);
   }
@@ -111,7 +111,7 @@ int TestInterpolation(void){
   nraf[1]=2;
   nraf[2]=1;
 
-  real xref[3], xin[3], wpg;
+  schnaps_real xref[3], xin[3], wpg;
 
   for(int ipg=0; ipg < NPG_CG(deg, nraf); ipg++){
     ref_pg_vol_CG(deg, nraf, ipg, xref, &wpg, xin);
@@ -139,13 +139,13 @@ int TestInterpolation(void){
     nraf[1] = deg[4];
     nraf[2] = deg[5];
 
-    real xref1[3], xref2[3], xphy[3], xref_in[3];
+    schnaps_real xref1[3], xref2[3], xphy[3], xref_in[3];
 
     for(int ipg = 0; ipg < NPG(deg,nraf); ipg++){
-      real wpg;
+      schnaps_real wpg;
       ref_pg_vol(deg, nraf, ipg, xref1, &wpg, xref_in);
       //printf("xref_in %f %f %f \n",xref_in[0],xref_in[1],xref_in[2]);
-      Ref2Phy(physnode,
+      schnaps_ref2phy(physnode,
 	      xref_in,
 	      0,
 	      -1,
@@ -155,17 +155,17 @@ int TestInterpolation(void){
 	      0,
 	      0);
    
-      Phy2Ref(physnode, xphy, xref2);
+      schnaps_phy2ref(physnode, xphy, xref2);
       test = test && (ipg == ref_ipg(deg, nraf, xref2));
       //printf("ipg=%d ipg2=%d\n",ipg,ref_ipg(deg,xref2));
       assert(test);
     }
 
     for(int ipg = 0; ipg < NPG_CG(deg,nraf); ipg++){
-      real wpg;
+      schnaps_real wpg;
       ref_pg_vol_CG(deg, nraf, ipg, xref1, &wpg, xref_in);
       //printf("xref_in %f %f %f \n",xref_in[0],xref_in[1],xref_in[2]);
-      Ref2Phy(physnode,
+      schnaps_ref2phy(physnode,
 	      xref_in,
 	      0,
 	      -1,
@@ -175,7 +175,7 @@ int TestInterpolation(void){
 	      0,
 	      0);
    
-      Phy2Ref(physnode, xphy, xref2);
+      schnaps_phy2ref(physnode, xphy, xref2);
       test = test && (ipg == ref_ipg_CG(deg, nraf, xref2));
       //printf("ipg=%d ipg2=%d\n",ipg,ref_ipg(deg,xref2));
       assert(test);
@@ -236,13 +236,13 @@ int TestInterpolation(void){
     nraf[1]=deg[4];
     nraf[2]=deg[5];
 
-    real xref1[3],xref2[3],xphy[3],xref_in[3];
+    schnaps_real xref1[3],xref2[3],xphy[3],xref_in[3];
     for(int ifa=0;ifa<6;ifa++){
       for(int ipgf=0;ipgf<NPGF(deg, nraf, ifa);ipgf++){
-	real wpg;
+	schnaps_real wpg;
 	int ipg = ref_pg_face(deg, nraf,ifa,ipgf,xref1,&wpg,NULL);
 	ref_pg_vol(deg, nraf,ipg,xref1,&wpg,xref_in);
-	Ref2Phy(physnode,
+	schnaps_ref2phy(physnode,
 		xref_in,
 		0,
 		-1,
@@ -251,7 +251,7 @@ int TestInterpolation(void){
 		0,
 		0,
 		0);
-	Phy2Ref(physnode,xphy,xref2);
+	schnaps_phy2ref(physnode,xphy,xref2);
 	test=test &&(ipg==ref_ipg(deg,nraf,xref2));
 	assert(test);
       }
@@ -272,13 +272,13 @@ int TestInterpolation(void){
     nraf[1]=2;
     nraf[2]=1;
 
-    real xref1[3],xref2[3],xphy[3],xref_in[3];
+    schnaps_real xref1[3],xref2[3],xphy[3],xref_in[3];
     for(int ifa=0;ifa<6;ifa++){
       for(int ipgf=0;ipgf<NPGF_CG(deg, nraf, ifa);ipgf++){
-	real wpg;
+	schnaps_real wpg;
 	int ipg = ref_pg_face_CG(deg, nraf,ifa,ipgf,xref1,&wpg,NULL);
 	ref_pg_vol_CG(deg, nraf,ipg,xref1,&wpg,xref_in);
-	Ref2Phy(physnode,
+	schnaps_ref2phy(physnode,
 		xref_in,
 		0,
 		-1,
@@ -287,7 +287,7 @@ int TestInterpolation(void){
 		0,
 		0,
 		0);
-	Phy2Ref(physnode,xphy,xref2);
+	schnaps_phy2ref(physnode,xphy,xref2);
 	test=test && (ipg == ref_ipg_CG(deg, nraf, xref2));
 	printf("ipgf=%d ipg=%d ref_ipg=%d\n\n",ipgf,ipg,ref_ipg_CG(deg, nraf, xref2));
 	assert(test);
@@ -323,46 +323,46 @@ int TestInterpolation(void){
 	// two arbitrary polynomials
 
 	npg = NPG(deg,nraf);
-	real f[npg];
-	real g[npg];
-	real xref[3],omega;
+	schnaps_real f[npg];
+	schnaps_real g[npg];
+	schnaps_real xref[3],omega;
 
 
 	// Define test functions f and g
 	for(int ipg = 0; ipg < npg; ipg++){
 	  ref_pg_vol(deg, nraf, ipg, xref, &omega,NULL);
-	  real xphy[3];
-	  real dtau[3][3], codtau[3][3];
-	  Ref2Phy(physnode, xref, NULL, -1,
+	  schnaps_real xphy[3];
+	  schnaps_real dtau[3][3], codtau[3][3];
+	  schnaps_ref2phy(physnode, xref, NULL, -1,
 		  xphy, dtau, codtau, NULL, NULL);
 	  //f[ipg] = pow(xphy[1],(real) d1);
-	  f[ipg] = pow(xref[1], (real) d1);
+	  f[ipg] = pow(xref[1], (schnaps_real) d1);
 	  //printf("%d %f\n",ipg,f[ipg]);
 	  //g[ipg] = pow(xphy[0],(real) d0)*pow(xphy[1],(real) d1);//xphy[0] ;
-	  g[ipg] = pow(xref[0], (real) d0) * pow(xref[1], 2.0 * d1);//xphy[0] ;
+	  g[ipg] = pow(xref[0], (schnaps_real) d0) * pow(xref[1], 2.0 * d1);//xphy[0] ;
 	}
 
 	// Computation of the two integrants of green's formula
 	// k corresponds to x, y or z
 	int k = 2;
-	real int_dfg = 0;
-	real int_fdg = 0;
+	schnaps_real int_dfg = 0;
+	schnaps_real int_fdg = 0;
 	// Loop on  Gauss-Lobatto points for the computation
 	// of derivative of f against g
 	for(int ipg = 0; ipg < npg; ipg++){
-	  real dkf = 0;
-	  real dphiref[3];
-	  real dphi[3];
+	  schnaps_real dkf = 0;
+	  schnaps_real dphiref[3];
+	  schnaps_real dphi[3];
 	  //printf(" ipg= %d \n", ipg);
 	  for(int l = 0; l < npg; l++){
 	    grad_psi_pg(deg, nraf, l, ipg, dphiref);
 	    ref_pg_vol(deg, nraf, ipg, xref, &omega, NULL);
-	    real xphy[3];
-	    real dtau[3][3], codtau[3][3];
-	    Ref2Phy(physnode, xref, dphiref, -1,
+	    schnaps_real xphy[3];
+	    schnaps_real dtau[3][3], codtau[3][3];
+	    schnaps_ref2phy(physnode, xref, dphiref, -1,
 		    xphy, dtau, codtau, dphi, NULL);
 	    //printf("ipg= %d xphy=%f\n", l,xphy[0]);
-	    real det 
+	    schnaps_real det 
 	      = dtau[0][0] * codtau[0][0]
 	      + dtau[0][1] * codtau[0][1]
 	      + dtau[0][2] * codtau[0][2];
@@ -370,12 +370,12 @@ int TestInterpolation(void){
 		
 	  }
 	  ref_pg_vol(deg, nraf, ipg, xref, &omega,NULL);
-	  real xphy[3];
-	  real dtau[3][3], codtau[3][3];
-	  Ref2Phy(physnode, xref, NULL, -1,
+	  schnaps_real xphy[3];
+	  schnaps_real dtau[3][3], codtau[3][3];
+	  schnaps_ref2phy(physnode, xref, NULL, -1,
 		  xphy, dtau, codtau, NULL, NULL);
 	  //printf(" x=%f f=%f dkf= %f\n",xphy[0],f[ipg],dkf);
-	  real det
+	  schnaps_real det
 	    = dtau[0][0] * codtau[0][0]
 	    + dtau[0][1] * codtau[0][1]
 	    + dtau[0][2] * codtau[0][2];
@@ -384,31 +384,31 @@ int TestInterpolation(void){
 	}
 	// Loop on  Gauss-Lobatto points for the computation
 	// of f against derivative of g
-	real sum_wpg = 0;
+	schnaps_real sum_wpg = 0;
 	for(int ipg = 0;ipg < npg; ipg++){
-	  real dkg = 0;
-	  real dphi[3], dphiref[3];
+	  schnaps_real dkg = 0;
+	  schnaps_real dphi[3], dphiref[3];
 	  for(int l = 0; l < npg; l++){
 	    grad_psi_pg(deg, nraf, l, ipg, dphiref);
 	    ref_pg_vol(deg, nraf, ipg, xref, &omega,NULL);
-	    real xphy[3];
-	    real dtau[3][3], codtau[3][3];
-	    Ref2Phy(physnode, xref, dphiref, -1,
+	    schnaps_real xphy[3];
+	    schnaps_real dtau[3][3], codtau[3][3];
+	    schnaps_ref2phy(physnode, xref, dphiref, -1,
 		    xphy, dtau, codtau, dphi, NULL);
 	    //printf("ipg= %d xphy=%f\n", l,xphy[0]);
-	    real det
+	    schnaps_real det
 	      = dtau[0][0] * codtau[0][0]
 	      + dtau[0][1] * codtau[0][1]
 	      + dtau[0][2] * codtau[0][2];
 	    dkg += dphi[k] * g[l] / det;
 	  }
 	  ref_pg_vol(deg, nraf, ipg, xref, &omega,NULL);
-	  real xphy[3];
-	  real dtau[3][3], codtau[3][3];
-	  Ref2Phy(physnode, xref, NULL, -1,
+	  schnaps_real xphy[3];
+	  schnaps_real dtau[3][3], codtau[3][3];
+	  schnaps_ref2phy(physnode, xref, NULL, -1,
 		  xphy, dtau, codtau, NULL, NULL);
 	  //printf("  dkf = %.2e dkf_ex = %.2e\n", dkf, pow(xref[0],d-1)*d);
-	  real det
+	  schnaps_real det
 	    = dtau[0][0] * codtau[0][0]
 	    + dtau[0][1] * codtau[0][1]
 	    + dtau[0][2] * codtau[0][2];
@@ -419,17 +419,17 @@ int TestInterpolation(void){
 	printf("  derivative of f against g = %f\n", int_dfg);
 	printf("  f against derivative of g = %f\n", int_fdg);
  
-	real int_fgn = 0;
+	schnaps_real int_fgn = 0;
 	// add the boundary term: integral on the faces
 	// of f * g * normal  ds
 	for(int ifa=0;ifa<6;ifa++){
-	  real xphy[3], vnds[3];
-	  real dtau[3][3], codtau[3][3];
+	  schnaps_real xphy[3], vnds[3];
+	  schnaps_real dtau[3][3], codtau[3][3];
 	  int npg_f = NPGF(deg, nraf, ifa);
 	  for(int ipgf = 0; ipgf < npg_f; ipgf++){
 	    int ninvol = ref_pg_face(deg, nraf, ifa, ipgf, xref, &omega, NULL);
  	
-	    Ref2Phy(physnode, xref, NULL, ifa,
+	    schnaps_ref2phy(physnode, xref, NULL, ifa,
 		    xphy, dtau, codtau, NULL, vnds);
 	    int_fgn += f[ninvol] * g[ninvol] * vnds[k] * omega;
 	  }

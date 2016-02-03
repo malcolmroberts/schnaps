@@ -21,7 +21,7 @@ int TestCodelet_ZeroBuffer_SPU(void){
 
   // Data buffer
   const int size = 10000000;
-  real* buffer = calloc(size, sizeof(real));
+  schnaps_real* buffer = calloc(size, sizeof(schnaps_real));
 
   putenv("STARPU_NCUDA=0");
   // Init StarPU
@@ -59,7 +59,7 @@ int TestCodelet_ZeroBuffer_SPU(void){
     // Create data handle (init and register)
     for (int i = 0; i < size; ++i) buffer[i] = i;
     starpu_data_handle_t handle;
-    starpu_vector_data_register(&handle, 0, (uintptr_t) buffer, size, sizeof(real));
+    starpu_vector_data_register(&handle, 0, (uintptr_t) buffer, size, sizeof(schnaps_real));
 
     // Task
     ZeroBuffer_SPU(handle);

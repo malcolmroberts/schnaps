@@ -24,9 +24,9 @@ char cl_buildoptions[1024];
 #define __private
 
 #ifndef _DOUBLE_PRECISION
-#define real float
+#define schnaps_real float
 #else
-#define real double
+#define schnaps_real double
 #endif
 
 #ifndef _DOUBLE_PRECISION
