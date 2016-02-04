@@ -14,11 +14,19 @@ git clone git+ssh://<gforge_account_name>\@scm.gforge.inria.fr//gitroot/schnaps/
 Accès lecture seule:
 git clone https://gforge.inria.fr/git/schnaps/schnaps.git
 
-se placer dans le dossier SCHNAPS
+se placer dans le dossier schnaps
+
+créer un dossier
+
+mkdir build
+
+se placer dans ce dossier
+
+cd build
 
 puis:
 
-cmake .
+cmake ..
 
 make
 
@@ -26,6 +34,10 @@ ctest
 
 une série de tests démarre. Il est conseillé de faire repasser ces
 tests après toute modification du code.
+
+Si certains tests StarPU ne passent pas, désactiver les codelets OpenCL et CUDA avant de lancer ctest:
+
+export STARPU_NOPENCL=0 ; export STARPU_NCUDA=0
 
 Pour lancer schnaps:
 
@@ -36,7 +48,11 @@ gmsh disque.geo -3
 ./schnaps
 
 Cet exemple consiste à résoudre l'équation de transport à
-l'intérieur d'un cylindre. La visualisation  des résultats
+l'intérieur d'un cylindre.
+
+(Edit: en ce moment cet exemple est désactivé) 
+
+La visualisation  des résultats
 utilise gmsh
 
 gmsh dgvisu.msh
@@ -65,8 +81,9 @@ doxygen doxyschnaps
  *
  */
 
-Installation de StarPU:
+Installation de StarPU (préalable à l'installation de schnaps)
 
+Facultatif (permet de visualiser les traces starpu):
 Télécharger FxT
 mkdir /usr/local/fxtdir
 cd FxT
@@ -76,21 +93,50 @@ export FXTDIR=/usr/local/fxtdir
 make -j4
 make install
 
+Indispensable:
 Télécharger StarPU a partir de la base svn (voir site StarPU)
 brew 
 cd StarPu/
 mkdir build
 ./autogen.sh
 (installer les paquets brew manquants)
+Si Fxt a été installé:
 ../configure --with-fxt=$FXTDIR
+sinon:
+../configure
 make -j4
 make check (facultatif)
 make install
 
-Désactiver les codelets opencl (éventuellement)
-export STARPU_NOPENCL=0
+Remarque: il y a une limitation de taille des kernels opencl dans StarPU qui est corrigée avec ce patch:
 
-Télécharger VITE a partir de la base svn (voir site vite trace)
-brew install graphviz
+---------------------------------------------------------------
+
+Index: src/drivers/opencl/driver_opencl_utils.c
+===================================================================
+--- src/drivers/opencl/driver_opencl_utils.c    (révision 16654)
++++ src/drivers/opencl/driver_opencl_utils.c    (copie de travail)
+@@ -364,7 +364,7 @@
+     char located_file_name[1024];
+     char located_dir_name[1024];
+     char new_build_options[1024];
+-    char opencl_program_source[16384];
++    char opencl_program_source[131072];
+
+     // Do not try to load and compile the file if there is no devices
+     nb_devices = starpu_opencl_worker_get_count();
+
+
+-----------------------------------------------------------------------
+
+
+
+Désactiver les codelets opencl et cuda (éventuellement)
+export STARPU_NOPENCL=0 
+export STARPU_NCUDA=0 
+
+Pour visualiser les traces, télécharger et compiler VITE a partir de la base svn
+(voir site http://vite.gforge.inria.fr/)
+Installer graphviz pour visualiser les graphes de tâche.
 
 
