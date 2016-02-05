@@ -38,6 +38,26 @@ char cl_buildoptions[1024];
 #endif
 
 
+typedef struct KineticData{
+  int nb_elem_v;
+  int deg_v;
+  int mv;
+  int index_max_kin;
+  int index_rho;
+  int index_phi;
+  int index_ex;
+  int index_ey;
+  int index_ez;
+  int index_max;
+  schnaps_real vmax;
+  schnaps_real dv;
+} KineticData;
+
+
+extern KineticData schnaps_kinetic_data;
+
+void InitKineticData(KineticData *kd, int nbelemv, int degv); 
+
 extern bool starpu_is_init;
 extern bool starpu_use;
 // Use of c kernels when use of starpu

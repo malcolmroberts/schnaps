@@ -5,7 +5,6 @@
 #include "gyro.h"
 
 
-
 int main(void) {
   
   // unit tests
@@ -33,8 +32,8 @@ int TestGyro(void) {
   int vec=1;
   
     
-  int deg[]={3, 3, 3};
-  int raf[]={2, 2, 2};
+  int deg[]={1, 1, 1};
+  int raf[]={1, 1, 1};
 
   CheckMacroMesh(&mesh, deg, raf);
 
@@ -44,23 +43,31 @@ int TestGyro(void) {
   
   Model model;
 
-  printf("_MV=%d\n",_MV);
-  printf("_INDEX_MAX=%d\n",_INDEX_MAX);
-  printf("_INDEX_MAX_KIN=%d\n",_INDEX_MAX_KIN);
+  //extern KineticData  schnaps_kinetic_data;
+  
+  KineticData *kd = &schnaps_kinetic_data;
+  // nbelemv = 10
+  // deg_v = 4
+  InitKineticData(&schnaps_kinetic_data,10,4);
+  
+  printf("_MV=%d\n",kd->mv);
+  printf("_INDEX_MAX=%d\n",kd->index_max);
+  printf("_INDEX_MAX_KIN=%d\n",kd->index_max_kin);
 
-  model.m=_INDEX_MAX; // num of conservative variables
-  model.NumFlux=Gyro_Upwind_NumFlux;
+  model.m= kd->index_max; // num of conservative variables
+  //model.NumFlux=Gyro_Upwind_NumFlux;
+  model.NumFlux=GyroZeroNumFlux;
   //model.NumFlux=NULL;
-  model.BoundaryFlux=Gyro_Lagrangian_BoundaryFlux;
+  model.BoundaryFlux=GyroBoundaryFlux;
   model.InitData=GyroInitData;
   model.ImposedData=GyroImposedData;
-  model.Source = NULL;
-  //model.Source = GyroSource;
+  //model.Source = NULL;
+  model.Source = GyroSource;
 
 
   InitSimulation(&simu, &mesh, deg, raf, &model);
 
-  simu.vmax = _VMAX; // maximal wave speed 
+  simu.vmax = kd->vmax; // maximal wave speed 
   //f.macromesh.is1d=true;
   //f.is1d=true;
 
@@ -69,7 +76,7 @@ int TestGyro(void) {
   // up to final time = 1.
   simu.cfl=0.2;
   schnaps_real dt = 0;
-  schnaps_real tmax = 0.1;
+  schnaps_real tmax = 1;
   RK4(&simu,tmax);
  
   // save the results and the error
@@ -83,8 +90,8 @@ int TestGyro(void) {
   //printf("erreur kinetic L2=%lf\n",dd_Kinetic);
   printf("erreur L2=%lf\n",dd);
   printf("tnow is  %lf\n",simu.tnow);
-  //Velocity_distribution_plot(f.wn);
-  test= test && (dd<3e-4);
+  Velocity_distribution_plot(simu.w);
+  test= test && (dd < 0.005);
 
 
   return test; 

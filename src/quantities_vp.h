@@ -9,7 +9,6 @@
 #include "interpolation.h"
 #include "geometry.h"
 #include "skyline.h"
-#include "quantities_vp.h"
 #include "simulation.h"
 
 void Computation_charge_density(Simulation *simu);

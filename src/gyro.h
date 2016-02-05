@@ -6,18 +6,18 @@
 // The use of defines to set varialbes is going to cause massive
 // problems with maintainability.  Please stop doing this.
 
-#define _NB_ELEM_V 1
-#define _DEG_V 1
+/* #define _NB_ELEM_V 1 */
+/* #define _DEG_V 1 */
 
-#define _MV (_NB_ELEM_V *  _DEG_V + 1)
-#define _INDEX_MAX_KIN (_MV-1)
-#define _INDEX_PHI (_MV)
-#define _INDEX_EX (_MV+1)
-#define _INDEX_EY (_MV+2)
-#define _INDEX_EZ (_MV+3)
-#define _INDEX_MAX (_MV+4)
-#define _VMAX 6.
-#define _DV (2*_VMAX / _NB_ELEM_V)
+/* #define _MV (_NB_ELEM_V *  _DEG_V + 1) */
+/* #define _INDEX_MAX_KIN (_MV-1) */
+/* #define _INDEX_PHI (_MV) */
+/* #define _INDEX_EX (_MV+1) */
+/* #define _INDEX_EY (_MV+2) */
+/* #define _INDEX_EZ (_MV+3) */
+/* #define _INDEX_MAX (_MV+4) */
+/* #define _VMAX 6. */
+/* #define _DV (2*_VMAX / _NB_ELEM_V) */
 
 
 #include "model.h"
@@ -28,14 +28,21 @@
 //! \param[in] wL,wR : left and right states
 //! \param[in] vn : normal vector
 //! \param[out] flux : the flux
-void Gyro_Upwind_NumFlux(schnaps_real wL[],schnaps_real wR[],
+void GyroUpwindNumFlux(schnaps_real wL[],schnaps_real wR[],
 			       schnaps_real vn[3],schnaps_real* flux);
 
 //! \brief particular flux for the gyro model
 //! \param[in] wL,wR : left and right states
 //! \param[in] vn : normal vector
 //! \param[out] flux : the flux
-void Gyro_Lagrangian_NumFlux(schnaps_real wL[],schnaps_real wR[],
+void GyroCenteredNumFlux(schnaps_real wL[],schnaps_real wR[],
+			     schnaps_real vn[3],schnaps_real* flux);
+
+//! \brief particular flux for the gyro model
+//! \param[in] wL,wR : left and right states
+//! \param[in] vn : normal vector
+//! \param[out] flux : the flux
+void GyroZeroNumFlux(schnaps_real wL[],schnaps_real wR[],
 			     schnaps_real vn[3],schnaps_real* flux);
 
 //! \brief particular boundary flux for the gyro model
@@ -44,7 +51,7 @@ void Gyro_Lagrangian_NumFlux(schnaps_real wL[],schnaps_real wR[],
 //! \param[in] wL : left state
 //! \param[in] vn : normal vector
 //! \param[out] flux : the flux
-void Gyro_Lagrangian_BoundaryFlux(schnaps_real* x,schnaps_real t,schnaps_real* wL,schnaps_real* vn,
+void GyroBoundaryFlux(schnaps_real* x,schnaps_real t,schnaps_real* wL,schnaps_real* vn,
 			   schnaps_real* flux);
 
 //! \brief particular init data for the gyro model
@@ -63,7 +70,7 @@ void GyroImposedData(const schnaps_real* x, const schnaps_real t,schnaps_real* w
 //! \param[in] t time
 //! \param[in] v  velocity
 //! \returns value of the distribution function
-schnaps_real Gyro_ImposedKinetic_Data(const schnaps_real* x, const schnaps_real t,schnaps_real v);
+schnaps_real GyroImposedKineticData(const schnaps_real* x, const schnaps_real t,schnaps_real v);
 
 //! \brief compute gyro L2 error in x and v
 //! \param[in] f : a field
@@ -81,5 +88,11 @@ void GyroSource(const schnaps_real *x, const schnaps_real t, const schnaps_real 
 //! \brief gnuplot file for the distribution function
 //! \param[in] w : values of f at glops
 void Velocity_distribution_plot(schnaps_real *w);
+
+
+//! \brief charge computation, quasineutrality and electric field
+//! \param[inout] si : a simulation (as a void pointer)
+//! \param[inout] w : a field
+void UpdateGyroPoisson(void *si, schnaps_real *w);
 
 #endif
