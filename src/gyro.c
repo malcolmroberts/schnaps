@@ -42,9 +42,40 @@ void Gyro_Lagrangian_NumFlux(schnaps_real wL[],schnaps_real wR[],schnaps_real* v
     schnaps_real flux2 = -E_x*wm;
     schnaps_real v =-_VMAX+ nel*_DV +
       _DV* glop(_DEG_V,j); // gauss_lob_point[j]
+
+    //printf("v=%f\n",v);
     schnaps_real flux3 =v*wm;
   
     flux[i] = vnorm[0]*flux1+vnorm[1]*flux2+vnorm[2]*flux3-eps*(wR[i]-wL[i])/2;
+    
+  }
+  flux[_INDEX_PHI] =0;
+  flux[_INDEX_EX]=0;
+  flux[_INDEX_EY]=0;
+  flux[_INDEX_EZ]=0;
+}
+
+void Gyro_Upwind_NumFlux(schnaps_real wL[],schnaps_real wR[],schnaps_real* vnorm,schnaps_real* flux){
+  /* real E_x =0; //firstly consider the electric field is const */
+  /* real E_y =1; */
+  schnaps_real E_x =wL[_INDEX_EX];
+  schnaps_real E_y =wL[_INDEX_EY];
+  
+  for(int i=0;i<_INDEX_MAX_KIN+1;i++){
+    schnaps_real vn = E_y * vnorm[0] - E_x *vnorm[1];    
+
+    int j=i%_DEG_V; // local connectivity put in function
+    int nel=i/_DEG_V; // element num (TODO : function)  
+    schnaps_real v =-_VMAX+ nel*_DV +
+      _DV* glop(_DEG_V,j); // gauss_lob_point[j]
+
+    vn += v * vnorm[2];
+
+    schnaps_real vnp = vn > 0 ? vn : 0;
+    schnaps_real vnm = vn - vnp;
+    //printf("v=%f\n",v);
+    flux[i] = vnp * wL[i] + vnm * wR[i];
+  
   }
   flux[_INDEX_PHI] =0;
   flux[_INDEX_EX]=0;
@@ -80,7 +111,7 @@ void Gyro_Lagrangian_BoundaryFlux(schnaps_real x[3],schnaps_real t,schnaps_real 
 {
   schnaps_real wR[_INDEX_MAX];
   GyroImposedData(x,t,wR);
-  Gyro_Lagrangian_NumFlux(wL,wR,vnorm,flux);
+  Gyro_Upwind_NumFlux(wL,wR,vnorm,flux);
 }
 
 void GyroInitData(schnaps_real x[3],schnaps_real w[]){
@@ -95,6 +126,8 @@ void GyroImposedData(const schnaps_real x[3], const schnaps_real t, schnaps_real
     int nel=i/_DEG_V; // element num (TODO : function)
 
     schnaps_real vi = (-_VMAX+nel*_DV + _DV* glop(_DEG_V,j));
+
+    //printf("vi=%f\n",vi);
     //w[i]=cos(x[0]-vi*t);
     schnaps_real pi=4*atan(1.);
     schnaps_real xi = x[0]-t;

@@ -32,24 +32,30 @@ int TestGyro(void) {
 
   int vec=1;
   
+    
+  int deg[]={3, 3, 3};
+  int raf[]={2, 2, 2};
+
+  CheckMacroMesh(&mesh, deg, raf);
+
+  Simulation simu;
+  EmptySimulation(&simu);
+
+  
   Model model;
 
+  printf("_MV=%d\n",_MV);
+  printf("_INDEX_MAX=%d\n",_INDEX_MAX);
+  printf("_INDEX_MAX_KIN=%d\n",_INDEX_MAX_KIN);
+
   model.m=_INDEX_MAX; // num of conservative variables
-  model.NumFlux=Gyro_Lagrangian_NumFlux;
+  model.NumFlux=Gyro_Upwind_NumFlux;
   //model.NumFlux=NULL;
   model.BoundaryFlux=Gyro_Lagrangian_BoundaryFlux;
   model.InitData=GyroInitData;
   model.ImposedData=GyroImposedData;
   model.Source = NULL;
   //model.Source = GyroSource;
-    
-  int deg[]={1, 1, 1};
-  int raf[]={1, 1, 1};
-
-  CheckMacroMesh(&mesh, deg, raf);
-
-  Simulation simu;
-  EmptySimulation(&simu);
 
 
   InitSimulation(&simu, &mesh, deg, raf, &model);
@@ -63,12 +69,12 @@ int TestGyro(void) {
   // up to final time = 1.
   simu.cfl=0.2;
   schnaps_real dt = 0;
-  schnaps_real tmax = 0.;
-  RK2(&simu,tmax);
+  schnaps_real tmax = 0.1;
+  RK4(&simu,tmax);
  
   // save the results and the error
-  PlotFields(0,(1==0),&simu,"sol","dgvisu.msh");
-  //Plotfield(0,(1==1),&f,"error","dgerror.msh");
+  PlotFields(1,(1==0),&simu,"sol","dgvisu.msh");
+  PlotFields(1,(1==1),&simu,"error","dgerror.msh");
 
   double dd=L2error(&simu);
   //double dd_l2_vel =GyroL2VelError(&f)

@@ -6,8 +6,8 @@
 // The use of defines to set varialbes is going to cause massive
 // problems with maintainability.  Please stop doing this.
 
-#define _NB_ELEM_V 4
-#define _DEG_V 2
+#define _NB_ELEM_V 1
+#define _DEG_V 1
 
 #define _MV (_NB_ELEM_V *  _DEG_V + 1)
 #define _INDEX_MAX_KIN (_MV-1)
@@ -28,7 +28,15 @@
 //! \param[in] wL,wR : left and right states
 //! \param[in] vn : normal vector
 //! \param[out] flux : the flux
-void Gyro_Lagrangian_NumFlux(schnaps_real wL[],schnaps_real wR[],schnaps_real vn[3],schnaps_real* flux);
+void Gyro_Upwind_NumFlux(schnaps_real wL[],schnaps_real wR[],
+			       schnaps_real vn[3],schnaps_real* flux);
+
+//! \brief particular flux for the gyro model
+//! \param[in] wL,wR : left and right states
+//! \param[in] vn : normal vector
+//! \param[out] flux : the flux
+void Gyro_Lagrangian_NumFlux(schnaps_real wL[],schnaps_real wR[],
+			     schnaps_real vn[3],schnaps_real* flux);
 
 //! \brief particular boundary flux for the gyro model
 //! \param[in] x : space position
