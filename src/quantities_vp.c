@@ -18,7 +18,7 @@ void physic_entropy_to_distribution(field* f,real w,real *tw){
   *tw=exp(w)-1;
   }*/
 
-
+// TODO: replace the following function by compute_charge_density below
 void Computation_charge_density(Simulation *simu){
 
   field * f=&simu->fd[0];
@@ -39,6 +39,31 @@ void Computation_charge_density(Simulation *simu){
       }
     }
   
+  
+}
+
+void compute_charge_density(Simulation *simu){
+
+  KineticData *kd = &schnaps_kinetic_data;
+  for(int ie = 0; ie < simu->macromesh.nbelems; ie++){
+    field * f = simu->fd + ie; 
+  
+    for(int ipg=0;ipg<NPG(f->deg, f-> raf);ipg++){
+      int imemc=f->varindex(f->deg, f->raf, f->model.m,ipg,kd->index_rho);
+      f->wn[imemc]=0;
+  
+      for(int ielv=0;ielv<kd->nb_elem_v;ielv++){
+	// loop on the local glops
+	for(int iloc=0;iloc<kd->deg_v+1;iloc++){
+	  schnaps_real omega=wglop(kd->deg_v,iloc);
+	  schnaps_real vi=-kd->vmax+ielv*kd->dv+kd->dv*glop(kd->deg_v,iloc);
+	  int ipgv=iloc+ielv*kd->deg_v;
+	  int imem=f->varindex(f->deg, f->raf, f->model.m,ipg,ipgv);
+	  f->wn[imemc]+=omega*kd->dv*simu->w[imem];
+	}
+      }
+    }
+  }
   
 }
 

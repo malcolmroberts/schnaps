@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include "../test/test.h"
+#include "quantities_vp.h"
 #include "gyro.h"
 
 
@@ -67,7 +68,7 @@ int TestGyro(void) {
 
   InitSimulation(&simu, &mesh, deg, raf, &model);
 
-  //simu.pre_dtfields = UpdateGyroPoisson;
+  simu.pre_dtfields = UpdateGyroPoisson;
    simu.vmax = kd->vmax; // maximal wave speed 
   //f.macromesh.is1d=true;
   //f.is1d=true;
@@ -77,11 +78,12 @@ int TestGyro(void) {
   // up to final time = 1.
   simu.cfl=0.2;
   schnaps_real dt = 0;
-  schnaps_real tmax = 1;
+  schnaps_real tmax = 0;
   RK4(&simu,tmax);
- 
+  compute_charge_density(&simu);
   // save the results and the error
   PlotFields(1,(1==0),&simu,"sol","dgvisu.msh");
+  PlotFields(kd->index_rho,(1==0),&simu,"sol","dgvisu.msh");
   PlotFields(1,(1==1),&simu,"error","dgerror.msh");
 
   double dd=L2error(&simu);
