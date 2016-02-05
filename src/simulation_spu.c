@@ -1,6 +1,19 @@
 #include "simulation_spu.h"
 #include <stdlib.h>
 
+#define LOAD_OPENCL_PROGRAM_SPU()                               \
+  if (!opencl_program_is_init) {                                \
+    opencl_program_is_init = true;                              \
+    printf("load OpenCL program...\n");                         \
+    STARPU_CHECK_RETURN_VALUE(                                  \
+        starpu_opencl_load_opencl_from_file(                    \
+            "./schnaps.cl",                                     \
+            &opencl_program,                                    \
+            cl_buildoptions),                                   \
+        "starpu_opencl_load_opencl_from_file");                 \
+  }
+
+
 
 void DisplayHandle_SPU(starpu_data_handle_t handle,
                        const char* name) {
@@ -15,238 +28,553 @@ void DisplayHandle_SPU(starpu_data_handle_t handle,
     printf("%s[%d]: %f\n", name, i , ptr[i]);
 }
 
-void ZeroBuffer_C(void *buffers[], void *cl_arg);
-void ZeroBuffer_OCL(void *buffers[], void *cl_arg);
 
-void ZeroBuffer_SPU(starpu_data_handle_t w){
 
-  static bool is_init = false;
-  static struct starpu_codelet codelet;
+void ZeroBuffer_SPU(starpu_data_handle_t handle) {
   struct starpu_task *task;
 
-  if (!is_init){
-    printf("init codelet ZeroBuffer...\n");
-    is_init = true;
-    starpu_codelet_init(&codelet);
-    if (starpu_c_use) {
-      codelet.cpu_funcs[0] = ZeroBuffer_C;
-      codelet.cpu_funcs[1] = NULL;
-    }
-    if (starpu_ocl_use) {
-      if (!opencl_program_is_init) {
-	opencl_program_is_init = true;
-        printf("load OpenCL program...\n");
-        int ret = starpu_opencl_load_opencl_from_file("./schnaps.cl",
-                                                      &opencl_program,
-                                                      cl_buildoptions);
-        STARPU_CHECK_RETURN_VALUE(ret, "starpu_opencl_load_opencl_from_file");
-      }
-      codelet.opencl_funcs[0] = ZeroBuffer_OCL;
-      codelet.opencl_funcs[1] = NULL;
-    }
-    codelet.nbuffers = 1;
-    codelet.modes[0] = STARPU_W;
-    codelet.name="ZeroBuffer";
-  }
-
-
   task = starpu_task_create();
-  task->cl = &codelet;
+  task->cl = ZeroBuffer_codelet();
   task->cl_arg = NULL;
   task->cl_arg_size = 0;
-  task->handles[0] = w;
+  task->handles[0] = handle;
 
-
-  int ret = starpu_task_submit(task);
-  STARPU_CHECK_RETURN_VALUE(ret, "starpu_task_submit");
-
+  STARPU_CHECK_RETURN_VALUE(
+      starpu_task_submit(task),
+      "starpu_task_submit");
 }
 
+void ZeroBuffer_C(void *buffers[], void *cl_args);
+void ZeroBuffer_OCL(void *buffers[], void *cl_args);
 
-void ZeroBuffer_C(void *buffers[], void *cl_arg) {
+struct starpu_codelet* ZeroBuffer_codelet() {
+  static bool is_init = false;
+  static struct starpu_codelet codelet;
 
-  struct starpu_vector_interface *w_v =
-    (struct starpu_vector_interface *) buffers[0];
+  if (!is_init) {
+    is_init = true;
+    starpu_codelet_init(&codelet);
 
-  int n = STARPU_VECTOR_GET_NX(buffers[0]);
+    codelet.name = "ZeroBuffer";
+    printf("init codelet %s...\n", codelet.name);
 
-  real* w = (real *)STARPU_VECTOR_GET_PTR(w_v);
+    codelet.nbuffers = 1;
+    codelet.modes[0] = STARPU_W;
 
-  for(int i = 0; i < n; i++) w[i] = 0;
+    if (starpu_c_use) {
+      size_t ncodelet = 0;
+      codelet.cpu_funcs[ncodelet++] = ZeroBuffer_C;
+      codelet.cpu_funcs[ncodelet++] = NULL;
+    }
 
+    if (starpu_ocl_use) {
+      LOAD_OPENCL_PROGRAM_SPU();
+
+      size_t ncodelet = 0;
+      codelet.opencl_funcs[ncodelet++] = ZeroBuffer_OCL;
+      codelet.opencl_funcs[ncodelet++] = NULL;
+    }
+  }
+
+  return &codelet;
 }
 
-void ZeroBuffer_OCL(void *buffers[], void *cl_arg) {
+void ZeroBuffer_C(void *buffers[], void *cl_args) {
+  real* buffer = (real *)STARPU_VECTOR_GET_PTR((struct starpu_vector_interface *)buffers[0]);
+  size_t size = STARPU_VECTOR_GET_NX(buffers[0]);
 
-  cl_mem w = (cl_mem)STARPU_VECTOR_GET_DEV_HANDLE(buffers[0]);
-  size_t n = STARPU_VECTOR_GET_NX(buffers[0]);
+  for (size_t i = 0; i < size; i++) buffer[i] = 0;
+}
 
+void ZeroBuffer_OCL(void *buffers[], void *cl_args) {
+  cl_mem buffer = (cl_mem)STARPU_VECTOR_GET_DEV_HANDLE(buffers[0]);
+  size_t size = STARPU_VECTOR_GET_NX(buffers[0]);
 
-  int id = starpu_worker_get_id();
-  int devid = starpu_worker_get_devid(id);
+  int devid = starpu_worker_get_devid(starpu_worker_get_id());
   cl_context context;
   starpu_opencl_get_context(devid, &context);
-  cl_event event;
 
   cl_kernel kernel;
   cl_command_queue queue;
-
   cl_int status = starpu_opencl_load_kernel(&kernel, &queue,
-                                            &opencl_program, "set_buffer_to_zero",
+                                            &opencl_program,
+                                            "set_buffer_to_zero",
                                             devid);
   if (status != CL_SUCCESS) STARPU_OPENCL_REPORT_ERROR(status);
 
   int narg = 0;
-  status = clSetKernelArg(kernel, narg++, sizeof(cl_mem), &w);
+  status = clSetKernelArg(kernel, narg++, sizeof(cl_mem), &buffer);
   if (status != CL_SUCCESS) STARPU_OPENCL_REPORT_ERROR(status);
-  assert(status >= CL_SUCCESS);
 
-  status = clEnqueueNDRangeKernel(queue,
-				  kernel,
-				  1, // cl_uint work_dim,
-				  NULL, // global_work_offset,
-				  &n, // global_work_size,
-				  NULL, // local_work_size,
-				  0,
-				  NULL, // *wait_list,
-				  &event); // *event
+  cl_event event;
+  status = clEnqueueNDRangeKernel(queue, kernel,
+                                  1, // work_dim
+                                  NULL, // *global_work_offset
+                                  &size, // *global_work_size
+                                  NULL, // *local_work_size
+                                  0, // num_events_in_wait_list
+                                  NULL, // *wait_list
+                                  &event); // *event
   if (status != CL_SUCCESS) STARPU_OPENCL_REPORT_ERROR(status);
-  assert(status >= CL_SUCCESS);
 }
 
 
-void AddBuffer_C(void *buffers[], void *cl_arg);
-void AddBuffer_OCL(void *buffers[], void *cl_arg);
 
-// compute wout = wout + alpha * win
-void AddBuffer_SPU(real alpha, starpu_data_handle_t win, starpu_data_handle_t wout){
-
-  static bool is_init = false;
-  static struct starpu_codelet codelet;
+void AddBuffer_SPU(real alpha,
+                   starpu_data_handle_t handle_in,
+                   starpu_data_handle_t handle_out) {
   struct starpu_task *task;
 
-  if (!is_init){
-    printf("init codelet AddBuffer...\n");
+  void* args;
+  size_t arg_size;
+
+  starpu_codelet_pack_args(&args, &arg_size,
+			   STARPU_VALUE, &alpha, sizeof(real),
+			   NULL);
+
+  task = starpu_task_create();
+  task->cl = AddBuffer_codelet();
+  task->cl_arg = args;
+  task->cl_arg_size = arg_size;
+  task->handles[0] = handle_in;
+  task->handles[1] = handle_out;
+
+  STARPU_CHECK_RETURN_VALUE(
+      starpu_task_submit(task),
+      "starpu_task_submit");
+}
+
+void AddBuffer_C(void *buffers[], void *cl_args);
+void AddBuffer_OCL(void *buffers[], void *cl_args);
+
+struct starpu_codelet* AddBuffer_codelet() {
+  static bool is_init = false;
+  static struct starpu_codelet codelet;
+
+  if (!is_init) {
     is_init = true;
     starpu_codelet_init(&codelet);
-    if (starpu_c_use) {
-      codelet.cpu_funcs[0] = AddBuffer_C;
-      codelet.cpu_funcs[1] = NULL;
-    }
-    if (starpu_ocl_use) {
-      if (!opencl_program_is_init) {
-        opencl_program_is_init = true;
-        printf("load OpenCL program...\n");
-        int ret = starpu_opencl_load_opencl_from_file("./schnaps.cl",
-                                                      &opencl_program,
-                                                      cl_buildoptions);
-        STARPU_CHECK_RETURN_VALUE(ret, "starpu_opencl_load_opencl_from_file");
-      }
-      codelet.opencl_funcs[0] = AddBuffer_OCL;
-      codelet.opencl_funcs[1] = NULL;
-    }
+
+    codelet.name = "AddBuffer";
+    printf("init codelet %s...\n", codelet.name);
+
     codelet.nbuffers = 2;
     codelet.modes[0] = STARPU_R;
     codelet.modes[1] = STARPU_RW;
-    codelet.name="AddBuffer";
+
+    if (starpu_c_use) {
+      size_t ncodelet = 0;
+      codelet.cpu_funcs[ncodelet++] = AddBuffer_C;
+      codelet.cpu_funcs[ncodelet++] = NULL;
+    }
+
+    if (starpu_ocl_use) {
+      LOAD_OPENCL_PROGRAM_SPU();
+
+      size_t ncodelet = 0;
+      codelet.opencl_funcs[ncodelet++] = AddBuffer_OCL;
+      codelet.opencl_funcs[ncodelet++] = NULL;
+    }
   }
 
-  void* arg_buffer;
-  size_t arg_buffer_size;
-
-  starpu_codelet_pack_args(&arg_buffer, &arg_buffer_size,
-			   STARPU_VALUE, &alpha, sizeof(real),
-			   0);
-
-  task = starpu_task_create();
-  task->cl = &codelet;
-  task->cl_arg = arg_buffer;
-  task->cl_arg_size = arg_buffer_size;
-  task->handles[0] = win;
-  task->handles[1] = wout;
-
-
-  int ret = starpu_task_submit(task);
-  STARPU_CHECK_RETURN_VALUE(ret, "starpu_task_submit");
-
+  return &codelet;
 }
-
 
 void AddBuffer_C(void *buffers[], void *cl_args) {
-
   real alpha;
 
-  starpu_codelet_unpack_args(cl_args,&alpha);
+  starpu_codelet_unpack_args(cl_args, &alpha);
   free(cl_args);
 
-  struct starpu_vector_interface *win_v =
-    (struct starpu_vector_interface *) buffers[0];
-  real* win = (real *)STARPU_VECTOR_GET_PTR(win_v);
+  real* buffer_in = (real *)STARPU_VECTOR_GET_PTR((struct starpu_vector_interface *)buffers[0]);
+  real* buffer_out = (real *)STARPU_VECTOR_GET_PTR((struct starpu_vector_interface *)buffers[1]);
 
-  struct starpu_vector_interface *wout_v =
-    (struct starpu_vector_interface *) buffers[1];
-  real* wout = (real *)STARPU_VECTOR_GET_PTR(wout_v);
+  size_t size_in = STARPU_VECTOR_GET_NX(buffers[0]);
+  size_t size_out = STARPU_VECTOR_GET_NX(buffers[1]);
 
-  int n = STARPU_VECTOR_GET_NX(buffers[0]);
-  int np = STARPU_VECTOR_GET_NX(buffers[1]);
+  assert(size_in == size_out);
 
-  assert(n == np);
-
-  for(int i = 0; i < n; i++) wout[i] += alpha * win[i];
-
+  for (size_t i = 0; i < size_in; i++) buffer_out[i] += alpha * buffer_in[i];
 }
 
-
 void AddBuffer_OCL(void *buffers[], void *cl_args) {
-
   real alpha;
 
-  starpu_codelet_unpack_args(cl_args,&alpha);
+  starpu_codelet_unpack_args(cl_args, &alpha);
   free(cl_args);
 
-  cl_mem win = (cl_mem)STARPU_VECTOR_GET_DEV_HANDLE(buffers[0]);
-  size_t n = STARPU_VECTOR_GET_NX(buffers[0]);
+  cl_mem buffer_in = (cl_mem)STARPU_VECTOR_GET_DEV_HANDLE(buffers[0]);
+  cl_mem buffer_out = (cl_mem)STARPU_VECTOR_GET_DEV_HANDLE(buffers[1]);
 
-  cl_mem wout = (cl_mem)STARPU_VECTOR_GET_DEV_HANDLE(buffers[1]);
-  size_t np = STARPU_VECTOR_GET_NX(buffers[1]);
+  size_t size_in = STARPU_VECTOR_GET_NX(buffers[0]);
+  size_t size_out = STARPU_VECTOR_GET_NX(buffers[1]);
 
-  assert(n == np);
+  assert(size_in == size_out);
 
-
-  int id = starpu_worker_get_id();
-  int devid = starpu_worker_get_devid(id);
+  int devid = starpu_worker_get_devid(starpu_worker_get_id());
   cl_context context;
   starpu_opencl_get_context(devid, &context);
-  cl_event event;
 
   cl_kernel kernel;
   cl_command_queue queue;
-
   cl_int status = starpu_opencl_load_kernel(&kernel, &queue,
-                                            &opencl_program, "AddBuffer",
+                                            &opencl_program,
+                                            "AddBuffer",
                                             devid);
   if (status != CL_SUCCESS) STARPU_OPENCL_REPORT_ERROR(status);
 
   int narg = 0;
   status = clSetKernelArg(kernel, narg++, sizeof(real), &alpha);
-  status |= clSetKernelArg(kernel, narg++, sizeof(cl_mem), &win);
-  status |= clSetKernelArg(kernel, narg++, sizeof(cl_mem), &wout);
+  status |= clSetKernelArg(kernel, narg++, sizeof(cl_mem), &buffer_in);
+  status |= clSetKernelArg(kernel, narg++, sizeof(cl_mem), &buffer_out);
   if (status != CL_SUCCESS) STARPU_OPENCL_REPORT_ERROR(status);
-  assert(status >= CL_SUCCESS);
 
-  status = clEnqueueNDRangeKernel(queue,
-				  kernel,
-				  1, // cl_uint work_dim,
-				  NULL, // global_work_offset,
-				  &n, // global_work_size,
-				  NULL, // local_work_size,
-				  0,
-				  NULL, // *wait_list,
-				  &event); // *event
+  cl_event event;
+  status = clEnqueueNDRangeKernel(queue, kernel,
+                                  1, // work_dim
+                                  NULL, // *global_work_offset
+                                  &size_in, // *global_work_size
+                                  NULL, // *local_work_size
+                                  0, // num_events_in_wait_list
+                                  NULL, // *wait_list
+                                  &event); // *event
   if (status != CL_SUCCESS) STARPU_OPENCL_REPORT_ERROR(status);
-  assert(status >= CL_SUCCESS);
+}
+
+
+
+void DGVolume_SPU(field* f) {
+  struct starpu_task *task;
+
+  void* args;
+  size_t arg_size;
+
+  starpu_codelet_pack_args(&args, &arg_size,
+			   STARPU_VALUE, &f->model.m, sizeof(int),
+			   STARPU_VALUE, f->deg, 3 * sizeof(int),
+			   STARPU_VALUE, f->raf, 3 * sizeof(int),
+			   STARPU_VALUE, f->physnode, 60 * sizeof(real),
+			   STARPU_VALUE, &f->varindex, sizeof(varindexptr),
+			   STARPU_VALUE, &f->model.NumFlux, sizeof(fluxptr),
+			   NULL);
+
+  task = starpu_task_create();
+  task->cl = DGVolume_codelet();
+  task->cl_arg = args;
+  task->cl_arg_size = arg_size;
+  task->handles[0] = f->wn_handle;
+  task->handles[1] = f->res_handle;
+
+  STARPU_CHECK_RETURN_VALUE(
+      starpu_task_submit(task),
+      "starpu_task_submit");
+}
+
+void DGVolume_C(void *buffers[], void *cl_args);
+void DGVolume_OCL(void *buffers[], void *cl_args);
+void DGVolume3D_OCL(void *buffers[], void *cl_args);
+
+struct starpu_codelet* DGVolume_codelet() {
+  static bool is_init = false;
+  static struct starpu_codelet codelet;
+
+  if (!is_init) {
+    is_init = true;
+    starpu_codelet_init(&codelet);
+
+    codelet.name = "DGVolume";
+    printf("init codelet %s...\n", codelet.name);
+
+    codelet.nbuffers = 2;
+    codelet.modes[0] = STARPU_R;
+    codelet.modes[1] = STARPU_RW;
+
+    if (starpu_c_use) {
+      size_t ncodelet = 0;
+      codelet.cpu_funcs[ncodelet++] = DGVolume_C;
+      codelet.cpu_funcs[ncodelet++] = NULL;
+    }
+
+    if (starpu_ocl_use) {
+      LOAD_OPENCL_PROGRAM_SPU();
+
+      size_t ncodelet = 0;
+      codelet.opencl_funcs[ncodelet++] = DGVolume_OCL;
+      codelet.opencl_funcs[ncodelet++] = DGVolume3D_OCL;
+      codelet.opencl_funcs[ncodelet++] = NULL;
+    }
+  }
+
+  return &codelet;
+}
+
+void DGVolume_C(void *buffers[], void *cl_args) {
+  int m;
+  int deg[3];
+  int raf[3];
+  real physnode[20][3];
+  varindexptr Varindex;
+  fluxptr NumFlux;
+
+  starpu_codelet_unpack_args(cl_args,
+			     &m, deg, raf, physnode,
+                             &Varindex, &NumFlux);
+  free(cl_args);
+
+  real* w = (real *)STARPU_VECTOR_GET_PTR((struct starpu_vector_interface *)buffers[0]);
+  real* res = (real *)STARPU_VECTOR_GET_PTR((struct starpu_vector_interface *)buffers[1]);
+
+
+  int npg[3] = {deg[0] + 1, deg[1] + 1, deg[2] + 1};
+  const unsigned int npg_subcell = npg[0] * npg[1] * npg[2];
+
+  // Loop on the subcells
+  for(int icL0 = 0; icL0 < raf[0]; icL0++) {
+    for(int icL1 = 0; icL1 < raf[1]; icL1++) {
+      for(int icL2 = 0; icL2 < raf[2]; icL2++) {
+
+	int icL[3] = {icL0, icL1, icL2};
+	// get the L subcell id
+	int ncL = icL[0] + raf[0] * (icL[1] + raf[1] * icL[2]);
+	// first glop index in the subcell
+	int offsetL = npg[0] * npg[1] * npg[2] * ncL;
+
+	// compute all of the xref for the subcell
+	real *xref0 = malloc(npg_subcell * sizeof(real));
+	real *xref1 = malloc(npg_subcell * sizeof(real));
+	real *xref2 = malloc(npg_subcell * sizeof(real));
+	real *omega = malloc(npg_subcell * sizeof(real));
+	int *imems = malloc(m * npg_subcell * sizeof(int));
+	int pos = 0;
+	for(unsigned int p = 0; p < npg_subcell; ++p) {
+	  real xref[3];
+	  real tomega;
+
+	  ref_pg_vol(deg, raf, offsetL + p, xref, &tomega, NULL);
+	  xref0[p] = xref[0];
+	  xref1[p] = xref[1];
+	  xref2[p] = xref[2];
+	  omega[p] = tomega;
+
+	  for(int im = 0; im < m; ++im) {
+	    imems[pos++] = Varindex(deg,raf,m, offsetL + p, im);
+	  }
+	}
+
+	// loop in the "cross" in the three directions
+	for(int dim0 = 0; dim0 < 3; dim0++) {
+	  //for(int dim0 = 0; dim0 < 2; dim0++) {  // TODO : return to 3d !
+	  // point p at which we compute the flux
+
+	  for(int p0 = 0; p0 < npg[0]; p0++) {
+	    for(int p1 = 0; p1 < npg[1]; p1++) {
+	      for(int p2 = 0; p2 < npg[2]; p2++) {
+		real wL[m], flux[m];
+		int p[3] = {p0, p1, p2};
+		int ipgL = offsetL + p[0] + npg[0] * (p[1] + npg[1] * p[2]);
+		for(int iv = 0; iv < m; iv++) {
+		  ///int imemL = varindex(f_interp_param, ie, ipgL, iv);
+		  wL[iv] = w[imems[m * (ipgL - offsetL) + iv]];
+		}
+		int q[3] = {p[0], p[1], p[2]};
+		// loop on the direction dim0 on the "cross"
+		for(int iq = 0; iq < npg[dim0]; iq++) {
+		  q[dim0] = (p[dim0] + iq) % npg[dim0];
+		  real dphiref[3] = {0, 0, 0};
+		  // compute grad phi_q at glop p
+		  dphiref[dim0] = dlag(deg[dim0], q[dim0], p[dim0])
+		    * raf[dim0];
+
+		  real xrefL[3] = {xref0[ipgL - offsetL],
+				   xref1[ipgL - offsetL],
+				   xref2[ipgL - offsetL]};
+		  real wpgL = omega[ipgL - offsetL];
+
+		  // mapping from the ref glop to the physical glop
+		  real dtau[3][3], codtau[3][3], dphiL[3];
+		  Ref2Phy(physnode,
+			  xrefL,
+			  dphiref, // dphiref
+			  -1,  // ifa
+			  NULL, // xphy
+			  dtau,
+			  codtau,
+			  dphiL, // dphi
+			  NULL);  // vnds
+
+		  NumFlux(wL, wL, dphiL, flux);
+
+		  int ipgR = offsetL+q[0]+npg[0]*(q[1]+npg[1]*q[2]);
+		  for(int iv = 0; iv < m; iv++) {
+		    int imemR = Varindex(deg,raf,m, ipgR, iv);
+		    int temp = m * (ipgR - offsetL) + iv;
+		    assert(imemR == imems[temp]);
+		    res[imems[temp]] += flux[iv] * wpgL;
+		  }
+		} // iq
+	      } // p2
+	    } // p1
+	  } // p0
+
+	} // dim loop
+
+	free(omega);
+	free(xref0);
+	free(xref1);
+	free(xref2);
+	free(imems);
+
+      } // icl2
+    } //icl1
+  } // icl0
 
 }
+
+void DGVolume_OCL(void *buffers[], void *cl_args) {
+  int m;
+  int deg[3];
+  int raf[3];
+  real physnode[20][3];
+  varindexptr Varindex;
+  fluxptr NumFlux;
+
+  starpu_codelet_unpack_args(cl_args,
+			     &m, deg, raf, physnode,
+                             &Varindex, &NumFlux);
+  free(cl_args);
+
+  cl_mem w = (cl_mem)STARPU_VECTOR_GET_DEV_HANDLE(buffers[0]);
+  cl_mem res = (cl_mem)STARPU_VECTOR_GET_DEV_HANDLE(buffers[1]);
+
+  int devid = starpu_worker_get_devid(starpu_worker_get_id());
+  cl_context context;
+  starpu_opencl_get_context(devid, &context);
+
+  cl_kernel kernel;
+  cl_command_queue queue;
+  cl_int status = starpu_opencl_load_kernel(&kernel, &queue,
+                                            &opencl_program,
+                                            "DGVolume",
+                                            devid);
+  if (status != CL_SUCCESS) STARPU_OPENCL_REPORT_ERROR(status);
+
+  cl_mem physnode_cl = clCreateBuffer(context,
+                                      CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
+                                      60 * sizeof(real),
+                                      physnode,
+                                      &status);
+  if (status != CL_SUCCESS) STARPU_OPENCL_REPORT_ERROR(status);
+
+  int param[7] = {m, deg[0], deg[1], deg[2], raf[0], raf[1], raf[2]};
+  cl_mem param_cl = clCreateBuffer(context,
+                                   CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
+                                   7 * sizeof(int),
+                                   param,
+                                   &status);
+  if (status != CL_SUCCESS) STARPU_OPENCL_REPORT_ERROR(status);
+
+  int ie = 0;
+
+  size_t wsize = NPG(deg, raf);
+  size_t lsize = (deg[0] + 1) * (deg[1] + 1) * (deg[2] + 1);
+
+  int narg = 0;
+  status = clSetKernelArg(kernel, narg++, sizeof(cl_mem), &param_cl);
+  status |= clSetKernelArg(kernel, narg++, sizeof(int), &ie);
+  status |= clSetKernelArg(kernel, narg++, sizeof(cl_mem), &physnode_cl);
+  status |= clSetKernelArg(kernel, narg++, sizeof(cl_mem), &w);
+  status |= clSetKernelArg(kernel, narg++, sizeof(cl_mem), &res);
+  status |= clSetKernelArg(kernel, narg++, sizeof(real) * 2 * lsize * m, NULL);
+  if (status != CL_SUCCESS) STARPU_OPENCL_REPORT_ERROR(status);
+
+  cl_event event;
+  status = clEnqueueNDRangeKernel(queue, kernel,
+                                  1, // work_dim
+                                  NULL, // *global_work_offset
+                                  &wsize, // *global_work_size
+                                  &lsize, // *local_work_size
+                                  0, // num_events_in_wait_list
+                                  NULL, // *wait_list
+                                  &event); // *event
+  if (status != CL_SUCCESS) STARPU_OPENCL_REPORT_ERROR(status);
+}
+
+void DGVolume3D_OCL(void *buffers[], void *cl_args) {
+  int m;
+  int deg[3];
+  int raf[3];
+  real physnode[20][3];
+  varindexptr Varindex;
+  fluxptr NumFlux;
+
+  starpu_codelet_unpack_args(cl_args,
+			     &m, deg, raf, physnode,
+                             &Varindex, &NumFlux);
+  free(cl_args);
+
+  cl_mem w = (cl_mem)STARPU_VECTOR_GET_DEV_HANDLE(buffers[0]);
+  cl_mem res = (cl_mem)STARPU_VECTOR_GET_DEV_HANDLE(buffers[1]);
+
+  int devid = starpu_worker_get_devid(starpu_worker_get_id());
+  cl_context context;
+  starpu_opencl_get_context(devid, &context);
+
+  cl_kernel kernel;
+  cl_command_queue queue;
+  cl_int status = starpu_opencl_load_kernel(&kernel, &queue,
+                                            &opencl_program,
+                                            "DGVolume3D",
+                                            devid);
+  if (status != CL_SUCCESS) STARPU_OPENCL_REPORT_ERROR(status);
+
+  cl_mem physnode_cl = clCreateBuffer(context,
+                                      CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
+                                      60 * sizeof(real),
+                                      physnode,
+                                      &status);
+  if (status != CL_SUCCESS) STARPU_OPENCL_REPORT_ERROR(status);
+
+  int param[7] = {m, deg[0], deg[1], deg[2], raf[0], raf[1], raf[2]};
+  cl_mem param_cl = clCreateBuffer(context,
+                                   CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
+                                   7 * sizeof(int),
+                                   param,
+                                   &status);
+  if (status != CL_SUCCESS) STARPU_OPENCL_REPORT_ERROR(status);
+
+  int ie = 0;
+
+  size_t wsize[3] = {
+    raf[0] * (deg[0] + 1),
+    raf[1] * (deg[1] + 1),
+    raf[2] * (deg[2] + 1),
+  };
+  size_t lsize[3] = {
+    deg[0] + 1,
+    deg[1] + 1,
+    deg[2] + 1,
+  };
+
+  int narg = 0;
+  status = clSetKernelArg(kernel, narg++, sizeof(cl_mem), &param_cl);
+  status |= clSetKernelArg(kernel, narg++, sizeof(int), &ie);
+  status |= clSetKernelArg(kernel, narg++, sizeof(cl_mem), &physnode_cl);
+  status |= clSetKernelArg(kernel, narg++, sizeof(cl_mem), &w);
+  status |= clSetKernelArg(kernel, narg++, sizeof(cl_mem), &res);
+  if (status != CL_SUCCESS) STARPU_OPENCL_REPORT_ERROR(status);
+
+  cl_event event;
+  status = clEnqueueNDRangeKernel(queue, kernel,
+                                  3, // work_dim
+                                  NULL, // *global_work_offset
+                                  wsize, // *global_work_size
+                                  lsize, // *local_work_size
+                                  0, // num_events_in_wait_list
+                                  NULL, // *wait_list
+                                  &event); // *event
+  if (status != CL_SUCCESS) STARPU_OPENCL_REPORT_ERROR(status);
+}
+
 
 
 void InterfaceExplicitFlux_bis(Interface* inter, int side){
@@ -1468,285 +1796,6 @@ void DGSubCellInterface_OCL(void *buffers[], void *cl_arg)
 
     }
   }
-}
-
-
-
-// Compute the Discontinuous Galerkin volume terms, fast version
-void DGVolume_C(void *buffers[], void *cl_arg);
-void DGVolume_OCL(void *buffers[], void *cl_arg);
-
-void DGVolume_SPU(field* f)
-{
-  static bool is_init = false;
-  static struct starpu_codelet codelet;
-  struct starpu_task *task;
-
-  if (!is_init){
-    printf("init codelet DGVolume...\n");
-    is_init = true;
-    starpu_codelet_init(&codelet);
-    if (starpu_c_use) {
-      codelet.cpu_funcs[0] = DGVolume_C;
-      codelet.cpu_funcs[1] = NULL;
-    }
-    if (starpu_ocl_use) {
-      if (!opencl_program_is_init) {
-        opencl_program_is_init = true;
-        printf("load OpenCL program...\n");
-        int ret = starpu_opencl_load_opencl_from_file("./schnaps.cl",
-                                                      &opencl_program,
-                                                      cl_buildoptions);
-        STARPU_CHECK_RETURN_VALUE(ret, "starpu_opencl_load_opencl_from_file");
-      }
-      codelet.opencl_funcs[0] = DGVolume_OCL;
-      codelet.opencl_funcs[1] = NULL;
-    }
-    codelet.nbuffers = 2;
-    codelet.modes[0] = STARPU_R;
-    codelet.modes[1] = STARPU_RW;
-    codelet.name="DGVolume";
-  }
-
-  void* arg_buffer;
-  size_t arg_buffer_size;
-
-  starpu_codelet_pack_args(&arg_buffer, &arg_buffer_size,
-			   STARPU_VALUE, &f->model.m, sizeof(int),
-			   STARPU_VALUE, f->deg, 3 * sizeof(int),
-			   STARPU_VALUE, f->raf, 3 * sizeof(int),
-			   STARPU_VALUE, f->physnode, 60 * sizeof(real),
-			   STARPU_VALUE, &f->varindex, sizeof(varindexptr),
-			   STARPU_VALUE, &f->model.NumFlux, sizeof(fluxptr),
-			   0);
-
-
-  task = starpu_task_create();
-  task->cl = &codelet;
-  task->cl_arg = arg_buffer;
-  task->cl_arg_size = arg_buffer_size;
-  task->handles[0] = f->wn_handle;
-  task->handles[1] = f->res_handle;
-
-
-  int ret = starpu_task_submit(task);
-  STARPU_CHECK_RETURN_VALUE(ret, "starpu_task_submit");
-
-
-}
-
-
-
-void DGVolume_C(void *buffers[], void *cl_arg)
-{
-
-
-  int m;
-  int deg[3];
-  int raf[3];
-  real physnode[20][3];
-  varindexptr Varindex;
-  fluxptr NumFlux;
-
-  starpu_codelet_unpack_args(cl_arg,
-			     &m, deg, raf, physnode, &Varindex, &NumFlux);
-
-  free(cl_arg);
-
-  int npg[3] = {deg[0] + 1,
-		      deg[1] + 1,
-		      deg[2] + 1};
-
-  const unsigned int sc_npg = npg[0] * npg[1] * npg[2];
-
-  struct starpu_vector_interface *w_v =
-    (struct starpu_vector_interface *) buffers[0];
-  real* w = (real *)STARPU_VECTOR_GET_PTR(w_v);
-
-  struct starpu_vector_interface *res_v =
-    (struct starpu_vector_interface *) buffers[1];
-  real* res = (real *)STARPU_VECTOR_GET_PTR(res_v);
-
-  // Loop on the subcells
-  for(int icL0 = 0; icL0 < raf[0]; icL0++) {
-    for(int icL1 = 0; icL1 < raf[1]; icL1++) {
-      for(int icL2 = 0; icL2 < raf[2]; icL2++) {
-
-	int icL[3] = {icL0, icL1, icL2};
-	// get the L subcell id
-	int ncL = icL[0] + raf[0] * (icL[1] + raf[1] * icL[2]);
-	// first glop index in the subcell
-	int offsetL = npg[0] * npg[1] * npg[2] * ncL;
-
-	// compute all of the xref for the subcell
-	real *xref0 = malloc(sc_npg * sizeof(real));
-	real *xref1 = malloc(sc_npg * sizeof(real));
-	real *xref2 = malloc(sc_npg * sizeof(real));
-	real *omega = malloc(sc_npg * sizeof(real));
-	int *imems = malloc(m * sc_npg * sizeof(int));
-	int pos = 0;
-	for(unsigned int p = 0; p < sc_npg; ++p) {
-	  real xref[3];
-	  real tomega;
-
-	  ref_pg_vol(deg, raf, offsetL + p, xref, &tomega, NULL);
-	  xref0[p] = xref[0];
-	  xref1[p] = xref[1];
-	  xref2[p] = xref[2];
-	  omega[p] = tomega;
-
-	  for(int im = 0; im < m; ++im) {
-	    imems[pos++] = Varindex(deg,raf,m, offsetL + p, im);
-	  }
-	}
-
-	// loop in the "cross" in the three directions
-	for(int dim0 = 0; dim0 < 3; dim0++) {
-	  //for(int dim0 = 0; dim0 < 2; dim0++) {  // TODO : return to 3d !
-	  // point p at which we compute the flux
-
-	  for(int p0 = 0; p0 < npg[0]; p0++) {
-	    for(int p1 = 0; p1 < npg[1]; p1++) {
-	      for(int p2 = 0; p2 < npg[2]; p2++) {
-		real wL[m], flux[m];
-		int p[3] = {p0, p1, p2};
-		int ipgL = offsetL + p[0] + npg[0] * (p[1] + npg[1] * p[2]);
-		for(int iv = 0; iv < m; iv++) {
-		  ///int imemL = varindex(f_interp_param, ie, ipgL, iv);
-		  wL[iv] = w[imems[m * (ipgL - offsetL) + iv]];
-		}
-		int q[3] = {p[0], p[1], p[2]};
-		// loop on the direction dim0 on the "cross"
-		for(int iq = 0; iq < npg[dim0]; iq++) {
-		  q[dim0] = (p[dim0] + iq) % npg[dim0];
-		  real dphiref[3] = {0, 0, 0};
-		  // compute grad phi_q at glop p
-		  dphiref[dim0] = dlag(deg[dim0], q[dim0], p[dim0])
-		    * raf[dim0];
-
-		  real xrefL[3] = {xref0[ipgL - offsetL],
-				   xref1[ipgL - offsetL],
-				   xref2[ipgL - offsetL]};
-		  real wpgL = omega[ipgL - offsetL];
-
-		  // mapping from the ref glop to the physical glop
-		  real dtau[3][3], codtau[3][3], dphiL[3];
-		  Ref2Phy(physnode,
-			  xrefL,
-			  dphiref, // dphiref
-			  -1,  // ifa
-			  NULL, // xphy
-			  dtau,
-			  codtau,
-			  dphiL, // dphi
-			  NULL);  // vnds
-
-		  NumFlux(wL, wL, dphiL, flux);
-
-		  int ipgR = offsetL+q[0]+npg[0]*(q[1]+npg[1]*q[2]);
-		  for(int iv = 0; iv < m; iv++) {
-		    int imemR = Varindex(deg,raf,m, ipgR, iv);
-		    int temp = m * (ipgR - offsetL) + iv;
-		    assert(imemR == imems[temp]);
-		    res[imems[temp]] += flux[iv] * wpgL;
-		  }
-		} // iq
-	      } // p2
-	    } // p1
-	  } // p0
-
-	} // dim loop
-
-	free(omega);
-	free(xref0);
-	free(xref1);
-	free(xref2);
-	free(imems);
-
-      } // icl2
-    } //icl1
-  } // icl0
-
-}
-
-
-
-void DGVolume_OCL(void *buffers[], void *cl_arg) {
-
-  int m;
-  int deg[3];
-  int raf[3];
-  real physnode[20][3];
-  varindexptr Varindex;
-  fluxptr NumFlux;
-
-  starpu_codelet_unpack_args(cl_arg,
-			     &m, deg, raf, physnode, &Varindex, &NumFlux);
-
-  free(cl_arg);
-
-  cl_mem w = (cl_mem)STARPU_VECTOR_GET_DEV_HANDLE(buffers[0]);
-  cl_mem res = (cl_mem)STARPU_VECTOR_GET_DEV_HANDLE(buffers[1]);
-
-
-  int id = starpu_worker_get_id();
-  int devid = starpu_worker_get_devid(id);
-  cl_context context;
-  starpu_opencl_get_context(devid, &context);
-  cl_event event;
-
-  cl_kernel kernel;
-  cl_command_queue queue;
-
-  cl_int status = starpu_opencl_load_kernel(&kernel, &queue,
-                                            &opencl_program, "DGVolumeRes",
-                                            devid);
-  if (status != CL_SUCCESS) STARPU_OPENCL_REPORT_ERROR(status);
-
-  cl_mem physnode_cl = clCreateBuffer(context,
-                                      CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
-                                      sizeof(real) * 60,
-                                      physnode,
-                                      &status);
-  if (status != CL_SUCCESS) STARPU_OPENCL_REPORT_ERROR(status);
-
-  int param[7] = {m, deg[0], deg[1], deg[2], raf[0], raf[1], raf[2]};
-  cl_mem param_cl = clCreateBuffer(context,
-                                   CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
-                                   sizeof(int) * 7,
-                                   param,
-                                   &status);
-  if (status != CL_SUCCESS) STARPU_OPENCL_REPORT_ERROR(status);
-
-  int ie = 0;
-
-  size_t wsize = NPG(deg, raf);
-  size_t lsize = (deg[0] + 1) * (deg[1] + 1) * (deg[2] + 1);
-
-  int narg = 0;
-  status = clSetKernelArg(kernel, narg++, sizeof(cl_mem), &param_cl);
-  status |= clSetKernelArg(kernel, narg++, sizeof(int), &ie);
-  status |= clSetKernelArg(kernel, narg++, sizeof(cl_mem), &physnode_cl);
-  status |= clSetKernelArg(kernel, narg++, sizeof(cl_mem), &w);
-  status |= clSetKernelArg(kernel, narg++, sizeof(cl_mem), &res);
-  status |= clSetKernelArg(kernel, narg++, sizeof(real) * 2 * lsize * m, NULL);
-  if (status != CL_SUCCESS) STARPU_OPENCL_REPORT_ERROR(status);
-  assert(status >= CL_SUCCESS);
-
-
-  status = clEnqueueNDRangeKernel(queue,
-				  kernel,
-				  1, // cl_uint work_dim,
-				  NULL, // global_work_offset,
-				  &wsize, // global_work_size,
-				  &lsize, // local_work_size,
-				  0,
-				  NULL, // *wait_list,
-				  &event); // *event
-  if (status != CL_SUCCESS) STARPU_OPENCL_REPORT_ERROR(status);
-  assert(status >= CL_SUCCESS);
-
-
 }
 
 

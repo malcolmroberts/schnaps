@@ -10,7 +10,6 @@
 #define _PERIODZ -1
 #endif
 
-
 real dlag(int deg, int ib, int ipg) {
   return gauss_lob_dpsi[gauss_lob_dpsi_offset[deg] + ib * (deg + 1) + ipg];
 }
@@ -928,9 +927,9 @@ void DGVolume(__constant int *param,     // 0: interp param
       }
 #else
       int ipgR = ipg(npg, q, icell);
-      int imemR0 =  VARINDEX(param + 1, param + 4, m, ipgR, iv) + woffset;
+      int imemR0 =  VARINDEX(param + 1, param + 4, m, ipgR, 0) + woffset;
       //VARINDEX(param, ie, ipgR, 0);
-      __global double *dtwn0 = dtwn + imemR0;
+      __global real *dtwn0 = dtwn + imemR0;
       for(int iv = 0; iv < m; iv++) {
      	dtwn0[iv] += flux[iv] * wpg;
       }
@@ -958,6 +957,79 @@ void DGVolume(__constant int *param,     // 0: interp param
 #else
 
 #endif
+}
+
+
+__kernel
+void DGVolume3D(__constant int *param,      // 0: interp param (m, deg, raf)
+                int ie,                     // 1: macrocel index
+                __constant real *physnodes, // 2: macrocell nodes
+                __global real *wn,          // 3: field values
+                __global real *dtwn         // 4: time derivative
+                ) {
+
+  __constant real *physnode = physnodes + ie * 60;
+
+  const int deg[3] = {param[1], param[2], param[3]};
+  const int raf[3] = {param[4], param[5], param[6]};
+  const int npg[3] = {deg[0] + 1, deg[1] + 1, deg[2] + 1};
+
+  const int woffset = ie * _M * NPG(deg, raf);
+
+  // Subcell id
+  const int ic[3] = {
+    get_group_id(0),
+    get_group_id(1),
+    get_group_id(2),
+  };
+  const int icell = ic[0] + raf[0] * (ic[1] + raf[1] * ic[2]);
+
+  // Gauss point id
+  const int ipL[3] = {
+    get_local_id(0),
+    get_local_id(1),
+    get_local_id(2),
+  };
+  const int ipgL = ipg(npg, ipL, icell);
+
+  // Reference coordinates
+  real xpg[3];
+  real wpg;
+  ref_pg_vol(deg, raf, ipgL, xpg, &wpg);
+
+  // Codtau
+  real codtau[3][3];
+  real dtau[3][3];
+  get_dtau(xpg[0], xpg[1], xpg[2], physnode, dtau); // 1296 mults
+  compute_codtau(dtau, codtau);
+
+  // Field
+  real w[_M];
+  for (int iv = 0; iv < _M; iv++)
+    w[iv] = wn[VARINDEX(param + 1, param + 4, _M, ipgL, iv) + woffset];
+
+  // Flux
+  real flux[_M];
+  // Loop over the dimensions
+  for (int dim = 0; dim < 3; dim++) {
+    int ipR[3] = {ipL[0], ipL[1], ipL[2]};
+
+    // Loop over the "cross" points
+    for (int ip = 0; ip < npg[dim]; ip++) {
+      ipR[dim] = (ipL[dim] + ip) % npg[dim];
+
+      real dphi[3];
+      const real dphiref = dlag(deg[dim], ipR[dim], ipL[dim]) * raf[dim];
+      for (int i = 0; i < 3; i++)
+	dphi[i] = codtau[i][dim] * dphiref;
+
+      NUMFLUX(w, w, dphi, flux);
+
+      const int ipgR = ipg(npg, ipR, icell);
+      for (int iv = 0; iv < _M; iv++)
+        dtwn[VARINDEX(param + 1, param + 4, _M, ipgR, iv) + woffset] += flux[iv] * wpg;
+    }
+  }
 }
 
 
