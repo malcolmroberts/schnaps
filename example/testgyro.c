@@ -67,7 +67,8 @@ int TestGyro(void) {
 
   InitSimulation(&simu, &mesh, deg, raf, &model);
 
-  simu.vmax = kd->vmax; // maximal wave speed 
+  //simu.pre_dtfields = UpdateGyroPoisson;
+   simu.vmax = kd->vmax; // maximal wave speed 
   //f.macromesh.is1d=true;
   //f.is1d=true;
 
