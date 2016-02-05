@@ -11,9 +11,9 @@
 #include <time.h>
 #define _XOPEN_SOURCE 700
 
-real maxerr(real *a, real *b, int n) 
+schnaps_real maxerr(schnaps_real *a, schnaps_real *b, int n) 
 {
-  real err = 0.0;
+  schnaps_real err = 0.0;
   for(int i = 0; i < n; ++i) {
     err = fmax(fabs(a[i] - b[i]), err);
   }
@@ -88,7 +88,7 @@ int TestmEq2(void)  {
 
   InitSimulation(&simu, &mesh, deg, raf, &model);
  
-  real tmax = .5;
+  schnaps_real tmax = .5;
   simu.cfl=0.05;
   simu.vmax=1;
 
@@ -97,7 +97,7 @@ int TestmEq2(void)  {
   RK2(&simu, tmax);
 #else
   // OpenCL version
-  real dt = 0;
+  schnaps_real dt = 0;
   RK2_CL(&simu, tmax, dt, 0, 0, 0);
 
   CopyfieldtoCPU(&simu); 
@@ -110,12 +110,12 @@ int TestmEq2(void)  {
   PlotFields(0, false, &simu, NULL, "dgvisu.msh");
   PlotFields(0, true , &simu, "error", "dgerror.msh");
 
-  real dd = 0;
+  schnaps_real dd = 0;
   dd = L2error(&simu);
 
   printf("erreur L2=%f\n", dd);
 
-  real tolerance = 0.0025;
+  schnaps_real tolerance = 0.0025;
 
   test = dd < tolerance;
   

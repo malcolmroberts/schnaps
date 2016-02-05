@@ -1,5 +1,7 @@
 #!/bin/sh
 #exit
+echo "Find an Apple system..."
+
 rm -f schnaps.cl
 touch schnaps.cl
 

@@ -82,9 +82,9 @@ int TestfieldRK2_CL(void){
   //AffineMapMacroMesh(&(simu.macromesh));
   InitSimulation(&simu, &mesh, deg, raf, &model);
  
-  real tmax = 0.1;
+  schnaps_real tmax = 0.1;
   simu.vmax = 1;
-  real dt = 0;
+  schnaps_real dt = 0;
   RK2_CL(&simu, tmax, dt,  0, NULL, NULL);
   
   CopyfieldtoCPU(&simu);
@@ -92,13 +92,13 @@ int TestfieldRK2_CL(void){
   PlotFields(0, false, &simu, NULL, "dgvisu.msh");
   //Plotfield(0, true , &simu, "error", "dgerror.msh");
 
-  real dd = L2error(&simu);
+  schnaps_real dd = L2error(&simu);
 
   printf("L2 error: %f\n", dd);
 
   show_cl_timing(&simu);
 
-  real tolerance = 0.007;
+  schnaps_real tolerance = 0.007;
 
   test = dd < tolerance;
   

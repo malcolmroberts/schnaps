@@ -46,19 +46,19 @@ typedef struct Interface{
   int wsizeR;
 
   //! \brief Left conservative glops data
-  real *wL;
+  schnaps_real *wL;
   starpu_data_handle_t wL_handle;
   
   //! \brief Right conservative glops data
-  real *wR;
+  schnaps_real *wR;
   starpu_data_handle_t wR_handle;
   
   //! \brief weighted normal vectors at interface glops 
-  real *vnds;
+  schnaps_real *vnds;
   starpu_data_handle_t vnds_handle;
   
   //! \brief  glops coordinates 
-  real *xpg;
+  schnaps_real *xpg;
   starpu_data_handle_t xpg_handle;
 
 
@@ -78,7 +78,7 @@ void ExtractInterface(Interface* inter, int side);
 //! \param[inout] inter an Interface
 //! \param[in] side the side: left if == 0 right if ==1
 //! \param[in] w a vector with the volume data to extract
-void ExtractInterface_bis(Interface* inter, int side, real* w);
+void ExtractInterface_bis(Interface* inter, int side, schnaps_real* w);
 
 //! \brief  extract the values of the neighbouring fields to the interface
 //! \brief StarPU version
@@ -109,7 +109,7 @@ void InterfaceBoundaryFlux_SPU(Interface* inter);
 //! \param[in] side the side: left if == 0 right if ==1
 //! \param[in] theta Cranck-Nicolson parameter
 //! \param[in] dt time step
-void InterfaceLocalAssembly(Interface *inter,  real theta, real dt);
+void InterfaceLocalAssembly(Interface *inter,  schnaps_real theta, schnaps_real dt);
 
 //! \brief  varindex function of the interface
 //! \param[in] npg number of interface Gauss points

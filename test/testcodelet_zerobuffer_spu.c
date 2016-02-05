@@ -9,12 +9,12 @@ bool submit_task() {
 
   // Data buffer
   const int size = 1000000;
-  real* buffer = calloc(size, sizeof(real));
+  schnaps_real* buffer = calloc(size, sizeof(schnaps_real));
 
   // Create data handle (init and register)
   for (int i = 0; i < size; ++i) buffer[i] = i;
   starpu_data_handle_t handle;
-  starpu_vector_data_register(&handle, 0, (uintptr_t) buffer, size, sizeof(real));
+  starpu_vector_data_register(&handle, 0, (uintptr_t) buffer, size, sizeof(schnaps_real));
 
   // Task
   ZeroBuffer_SPU(handle);
@@ -40,9 +40,9 @@ int TestCodelet_ZeroBuffer_SPU() {
   sprintf(cl_buildoptions, "%s", "");
   char buf[1000];
 #ifdef _DOUBLE_PRECISION
-  sprintf(buf, "-D real=double");
+  sprintf(buf, "-D schnaps_real=double");
 #else
-  sprintf(buf, "-D real=float");
+  sprintf(buf, "-D schnaps_real=float");
 #endif
   strcat(cl_buildoptions, buf);
 

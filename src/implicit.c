@@ -76,7 +76,7 @@ void InitFieldImplicitSolver(field *fd, MatrixStorage ms){
 
 
 
-void AssemblyImplicitLinearSolver(Simulation *simu, LinearSolver *solver,real theta, real dt){
+void AssemblyImplicitLinearSolver(Simulation *simu, LinearSolver *solver,schnaps_real theta, schnaps_real dt){
 
   if(solver->mat_is_assembly == false){
     MassAssembly(simu, solver);
@@ -97,7 +97,7 @@ void AssemblyImplicitLinearSolver(Simulation *simu, LinearSolver *solver,real th
 }
 
 
-void AssemblyFieldImplicitSolver(field *fd,real theta, real dt)
+void AssemblyFieldImplicitSolver(field *fd,schnaps_real theta, schnaps_real dt)
 {
 
   if(fd->solver->mat_is_assembly == false){
@@ -122,10 +122,10 @@ void AssemblyFieldImplicitSolver(field *fd,real theta, real dt)
   /* assert(1==2); */
 }
 
-void LocalThetaTimeScheme(Simulation *simu, real tmax, real dt)
+void LocalThetaTimeScheme(Simulation *simu, schnaps_real tmax, schnaps_real dt)
 {
 
-  real theta=0.5;
+  schnaps_real theta=0.5;
   simu->dt=dt;
   int itermax=tmax / simu->dt;
   simu->itermax_rk=itermax;
@@ -224,9 +224,9 @@ void LocalThetaTimeScheme(Simulation *simu, real tmax, real dt)
   
 }
  
-void LocalThetaTimeScheme_SPU(Simulation *simu, real tmax, real dt){
+void LocalThetaTimeScheme_SPU(Simulation *simu, schnaps_real tmax, schnaps_real dt){
 
-  real theta=0.5;
+  schnaps_real theta=0.5;
   simu->dt=dt;
   
   int itermax=tmax / simu->dt;
@@ -344,9 +344,9 @@ void LocalThetaTimeScheme_SPU(Simulation *simu, real tmax, real dt){
 };
 
 
-void GraphThetaTimeScheme_SPU(Simulation *simu, real tmax, real dt){
+void GraphThetaTimeScheme_SPU(Simulation *simu, schnaps_real tmax, schnaps_real dt){
 
-  real theta=0.5;
+  schnaps_real theta=0.5;
   simu->dt=dt;
   
   int itermax=tmax / simu->dt;
@@ -486,9 +486,9 @@ void GraphThetaTimeScheme_SPU(Simulation *simu, real tmax, real dt){
   
 };
 
-void GraphThetaTimeSchemeSubCell_SPU(Simulation *simu, real tmax, real dt){
+void GraphThetaTimeSchemeSubCell_SPU(Simulation *simu, schnaps_real tmax, schnaps_real dt){
 
-  real theta=0.5;
+  schnaps_real theta=0.5;
   simu->dt=dt;
   
   int itermax=tmax / simu->dt;
@@ -599,10 +599,10 @@ void GraphThetaTimeSchemeSubCell_SPU(Simulation *simu, real tmax, real dt){
 };
 
 
-void  build_subcells_downwind_graph(field *fd, real vit[3], int *);
+void  build_subcells_downwind_graph(field *fd, schnaps_real vit[3], int *);
 
 
-void  build_subcells_downwind_graph(field *f, real vit[3], int* subcell_order){
+void  build_subcells_downwind_graph(field *f, schnaps_real vit[3], int* subcell_order){
 
 
   int nraf[3] = {f->raf[0],
@@ -688,15 +688,15 @@ void  build_subcells_downwind_graph(field *f, real vit[3], int* subcell_order){
 	    
 	      // Compute the normal vector for integrating on the
 	      // face
-	      real vnds[3];
+	      schnaps_real vnds[3];
 	      {
-		real xref[3], wpg3;
+		schnaps_real xref[3], wpg3;
 		// change the glop index if we are on the first cell
 		if (is_first) ipgL = ipgR;
 		ref_pg_vol(f->deg, f->raf, ipgL, xref, &wpg3, NULL);
 		// mapping from the ref glop to the physical glop
-		real dtau[3][3], codtau[3][3];
-		Ref2Phy(f->physnode,
+		schnaps_real dtau[3][3], codtau[3][3];
+		schnaps_ref2phy(f->physnode,
 			xref,
 			NULL, // dphiref
 			-1,  // ifa
@@ -708,14 +708,14 @@ void  build_subcells_downwind_graph(field *f, real vit[3], int* subcell_order){
 		// we compute ourself the normal vector because we
 		// have to take into account the subcell surface
 	      
-		real h1h2 = 1. / nraf[dim1] / nraf[dim2];
+		schnaps_real h1h2 = 1. / nraf[dim1] / nraf[dim2];
 		vnds[0] = - codtau[0][dim0] * h1h2;
 		vnds[1] = - codtau[1][dim0] * h1h2;
 		vnds[2] = - codtau[2][dim0] * h1h2;
 	      }
 
 	    
-	      real v_dot_n = vnds[0] * vit[0] + vnds[1] * vit[1] + vnds[2] * vit[2];
+	      schnaps_real v_dot_n = vnds[0] * vit[0] + vnds[1] * vit[1] + vnds[2] * vit[2];
 	    
 	    
 
@@ -874,14 +874,14 @@ void get_neighbor_fluxes(field* fd, int isub){
 	    
 	    // Compute the normal vector for integrating on the
 	    // face
-	    real vnds[3];
+	    schnaps_real vnds[3];
 	    {
-	      real xref[3], wpg3;
+	      schnaps_real xref[3], wpg3;
 	      // change the glop index if we are on the first cell
 	      ref_pg_vol(deg, nraf, ipgL, xref, &wpg3, NULL);
 	      // mapping from the ref glop to the physical glop
-	      real dtau[3][3], codtau[3][3];
-	      Ref2Phy(fd->physnode,
+	      schnaps_real dtau[3][3], codtau[3][3];
+	      schnaps_ref2phy(fd->physnode,
 		      xref,
 		      NULL, // dphiref
 		      -1,  // ifa
@@ -893,14 +893,14 @@ void get_neighbor_fluxes(field* fd, int isub){
 	      // we compute ourself the normal vector because we
 	      // have to take into account the subcell surface
 	      
-	      real h1h2 = 1. / nraf[dim1] / nraf[dim2];
+	      schnaps_real h1h2 = 1. / nraf[dim1] / nraf[dim2];
 	      vnds[0] = codtau[0][dim0] * h1h2;
 	      vnds[1] = codtau[1][dim0] * h1h2;
 	      vnds[2] = codtau[2][dim0] * h1h2;
 	    }
 	    // numerical flux from the left and right state and
 	    // normal vector
-	    real wL[m], wR[m], flux[m];
+	    schnaps_real wL[m], wR[m], flux[m];
 	    for(int iv = 0; iv < m; iv++) {
 	      int imemL = fd->varindex(deg, nraf, m, ipgL, iv); 
 	      int imemR = fd->varindex(deg, nraf, m, ipgR, iv);
@@ -912,7 +912,7 @@ void get_neighbor_fluxes(field* fd, int isub){
 	    fd->model.NumFlux(wL, wR, vnds, flux);
 
 	    // subcell ref surface glop weight
-	    real wpg
+	    schnaps_real wpg
 	      = wglop(deg[dim1], iL[dim1])
 	      * wglop(deg[dim2], iL[dim2]);
 
@@ -978,11 +978,11 @@ void subcell_solve(field* f, int isub){
   /* 	   ); */
 }
 
-void FieldDownwindSolve(field *fd,real theta, real dt){
+void FieldDownwindSolve(field *fd,schnaps_real theta, schnaps_real dt){
 
 
   // build the downwind graph
-  real vit[3] = {1, 1, 0};
+  schnaps_real vit[3] = {1, 1, 0};
 
   int nraf[3] = {fd->raf[0],
 		 fd->raf[1],
@@ -1017,19 +1017,19 @@ void FieldDownwindSolve(field *fd,real theta, real dt){
 
 
 
-void ThetaTimeScheme(Simulation *simu, real tmax, real dt){
+void ThetaTimeScheme(Simulation *simu, schnaps_real tmax, schnaps_real dt){
 
   LinearSolver solver_implicit;
   LinearSolver solver_explicit;  
 
-  real theta=0.5;
+  schnaps_real theta=0.5;
   simu->dt=dt;
   
   int itermax=tmax/simu->dt;
   simu->itermax_rk=itermax;
   InitImplicitLinearSolver(simu, &solver_implicit);
   InitImplicitLinearSolver(simu, &solver_explicit);
-  real *res = calloc(simu->wsize, sizeof(real));
+  schnaps_real *res = calloc(simu->wsize, sizeof(schnaps_real));
 
   simu->tnow=0;
   for(int ie=0; ie < simu->macromesh.nbelems; ++ie){
@@ -1436,7 +1436,7 @@ void FluxLocalCoupling(field *f,int itest)
 }
   
 
-void InternalLocalAssembly(field *f, real theta, real dt)
+void InternalLocalAssembly(field *f, schnaps_real theta, schnaps_real dt)
 {
     
   const int m = f->model.m;
@@ -1466,15 +1466,15 @@ void InternalLocalAssembly(field *f, real theta, real dt)
 	int offsetL = npg[0] * npg[1] * npg[2] * ncL;
 	  
 	// compute all of the xref for the subcell
-	real *xref0 = malloc(sc_npg * sizeof(real));
-	real *xref1 = malloc(sc_npg * sizeof(real));
-	real *xref2 = malloc(sc_npg * sizeof(real));
-	real *omega = malloc(sc_npg * sizeof(real));
+	schnaps_real *xref0 = malloc(sc_npg * sizeof(schnaps_real));
+	schnaps_real *xref1 = malloc(sc_npg * sizeof(schnaps_real));
+	schnaps_real *xref2 = malloc(sc_npg * sizeof(schnaps_real));
+	schnaps_real *omega = malloc(sc_npg * sizeof(schnaps_real));
 	int *imems = malloc(m * sc_npg * sizeof(int));
 	int pos = 0;
 	for(unsigned int p = 0; p < sc_npg; ++p) {
-	  real xref[3];
-	  real tomega;
+	  schnaps_real xref[3];
+	  schnaps_real tomega;
 	    
 	  ref_pg_vol(f->deg, f->raf, offsetL + p, xref, &tomega, NULL);
 	  xref0[p] = xref[0];
@@ -1495,28 +1495,28 @@ void InternalLocalAssembly(field *f, real theta, real dt)
 	  for(int p0 = 0; p0 < npg[0]; p0++) {
 	    for(int p1 = 0; p1 < npg[1]; p1++) {
 	      for(int p2 = 0; p2 < npg[2]; p2++) {
-		real wL[m], flux[m];
+		schnaps_real wL[m], flux[m];
 		int p[3] = {p0, p1, p2};
 		int ipgL = offsetL + p[0] + npg[0] * (p[1] + npg[1] * p[2]);
 		int q[3] = {p[0], p[1], p[2]};
 		// loop on the direction dim0 on the "cross"
 		for(int iq = 0; iq < npg[dim0]; iq++) {
 		  q[dim0] = (p[dim0] + iq) % npg[dim0];
-		  real dphiref[3] = {0, 0, 0};
+		  schnaps_real dphiref[3] = {0, 0, 0};
 		  // compute grad phi_q at glop p
 		  dphiref[dim0] = dlag(deg[dim0], q[dim0], p[dim0]) 
 		    * nraf[dim0];
 		    
-		  real xrefL[3] = {xref0[ipgL - offsetL],
+		  schnaps_real xrefL[3] = {xref0[ipgL - offsetL],
 				   xref1[ipgL - offsetL],
 				   xref2[ipgL - offsetL]};
-		  real wpgL = omega[ipgL - offsetL];
+		  schnaps_real wpgL = omega[ipgL - offsetL];
 		  /* real xrefL[3], wpgL; */
 		  /* ref_pg_vol(f->interp_param+1,ipgL,xrefL, &wpgL, NULL); */
 
 		  // mapping from the ref glop to the physical glop
-		  real dtau[3][3], codtau[3][3], dphiL[3];
-		  Ref2Phy(f->physnode,
+		  schnaps_real dtau[3][3], codtau[3][3], dphiL[3];
+		  schnaps_ref2phy(f->physnode,
 			  xrefL,
 			  dphiref, // dphiref
 			  -1,  // ifa
@@ -1537,7 +1537,7 @@ void InternalLocalAssembly(field *f, real theta, real dt)
 
 		    int ipgR = offsetL+q[0]+npg[0]*(q[1]+npg[1]*q[2]);
 		    for(int iv2 = 0; iv2 < m; iv2++) {
-		      real val =  - flux[iv2] * wpgL;
+		      schnaps_real val =  - flux[iv2] * wpgL;
 		      int imemR = f->varindex(f->deg,f->raf,f->model.m, ipgR, iv2);
 		      /* AddLinearSolver(f->solver, imemR, imemL, theta * dt * val); */
 		      /* AddLinearSolver(f->rmat, imemR, imemL, - dt * val); */
@@ -1568,7 +1568,7 @@ void InternalLocalAssembly(field *f, real theta, real dt)
 }
 
 
-void InternalAssembly(Simulation *simu,  LinearSolver *solver,real theta, real dt){
+void InternalAssembly(Simulation *simu,  LinearSolver *solver,schnaps_real theta, schnaps_real dt){
 
   for(int ie = 0; ie < simu->macromesh.nbelems; ie++){
     field *f = simu->fd + ie;
@@ -1601,15 +1601,15 @@ void InternalAssembly(Simulation *simu,  LinearSolver *solver,real theta, real d
 	  int offsetL = npg[0] * npg[1] * npg[2] * ncL;
 	  
 	  // compute all of the xref for the subcell
-	  real *xref0 = malloc(sc_npg * sizeof(real));
-	  real *xref1 = malloc(sc_npg * sizeof(real));
-	  real *xref2 = malloc(sc_npg * sizeof(real));
-	  real *omega = malloc(sc_npg * sizeof(real));
+	  schnaps_real *xref0 = malloc(sc_npg * sizeof(schnaps_real));
+	  schnaps_real *xref1 = malloc(sc_npg * sizeof(schnaps_real));
+	  schnaps_real *xref2 = malloc(sc_npg * sizeof(schnaps_real));
+	  schnaps_real *omega = malloc(sc_npg * sizeof(schnaps_real));
 	  int *imems = malloc(m * sc_npg * sizeof(int));
 	  int pos = 0;
 	  for(unsigned int p = 0; p < sc_npg; ++p) {
-	    real xref[3];
-	    real tomega;
+	    schnaps_real xref[3];
+	    schnaps_real tomega;
 	    
 	    ref_pg_vol(f->deg, f->raf, offsetL + p, xref, &tomega, NULL);
 	    xref0[p] = xref[0];
@@ -1630,28 +1630,28 @@ void InternalAssembly(Simulation *simu,  LinearSolver *solver,real theta, real d
 	    for(int p0 = 0; p0 < npg[0]; p0++) {
 	      for(int p1 = 0; p1 < npg[1]; p1++) {
 		for(int p2 = 0; p2 < npg[2]; p2++) {
-		  real wL[m], flux[m];
+		  schnaps_real wL[m], flux[m];
 		  int p[3] = {p0, p1, p2};
 		  int ipgL = offsetL + p[0] + npg[0] * (p[1] + npg[1] * p[2]);
 		  int q[3] = {p[0], p[1], p[2]};
 		  // loop on the direction dim0 on the "cross"
 		  for(int iq = 0; iq < npg[dim0]; iq++) {
 		    q[dim0] = (p[dim0] + iq) % npg[dim0];
-		    real dphiref[3] = {0, 0, 0};
+		    schnaps_real dphiref[3] = {0, 0, 0};
 		    // compute grad phi_q at glop p
 		    dphiref[dim0] = dlag(deg[dim0], q[dim0], p[dim0]) 
 		      * nraf[dim0];
 		    
-		    real xrefL[3] = {xref0[ipgL - offsetL],
+		    schnaps_real xrefL[3] = {xref0[ipgL - offsetL],
 				     xref1[ipgL - offsetL],
 				     xref2[ipgL - offsetL]};
-		    real wpgL = omega[ipgL - offsetL];
+		    schnaps_real wpgL = omega[ipgL - offsetL];
 		    /* real xrefL[3], wpgL; */
 		    /* ref_pg_vol(f->interp_param+1,ipgL,xrefL, &wpgL, NULL); */
 
 		    // mapping from the ref glop to the physical glop
-		    real dtau[3][3], codtau[3][3], dphiL[3];
-		    Ref2Phy(f->physnode,
+		    schnaps_real dtau[3][3], codtau[3][3], dphiL[3];
+		    schnaps_ref2phy(f->physnode,
 			    xrefL,
 			    dphiref, // dphiref
 			    -1,  // ifa
@@ -1672,7 +1672,7 @@ void InternalAssembly(Simulation *simu,  LinearSolver *solver,real theta, real d
 
 		      int ipgR = offsetL+q[0]+npg[0]*(q[1]+npg[1]*q[2]);
 		      for(int iv2 = 0; iv2 < m; iv2++) {
-			real val = theta * dt * flux[iv2] * wpgL;
+			schnaps_real val = theta * dt * flux[iv2] * wpgL;
 			int imemR = f->varindex(f->deg,f->raf,f->model.m, ipgR, iv2) + offsetw;
 			AddLinearSolver(solver, imemR, imemL,-val);
 		      }
@@ -1699,7 +1699,7 @@ void InternalAssembly(Simulation *simu,  LinearSolver *solver,real theta, real d
 
 }
 
-void FluxLocalAssembly(field* f,real theta, real dt)
+void FluxLocalAssembly(field* f,schnaps_real theta, schnaps_real dt)
 {
 
     
@@ -1770,13 +1770,13 @@ void FluxLocalAssembly(field* f,real theta, real dt)
 
 		// Compute the normal vector for integrating on the
 		// face
-		real vnds[3];
+		schnaps_real vnds[3];
 		{
-		  real xref[3], wpg3;
+		  schnaps_real xref[3], wpg3;
 		  ref_pg_vol(f->deg, f->raf, ipgL, xref, &wpg3, NULL);
 		  // mapping from the ref glop to the physical glop
-		  real dtau[3][3], codtau[3][3];
-		  Ref2Phy(f->physnode,
+		  schnaps_real dtau[3][3], codtau[3][3];
+		  schnaps_ref2phy(f->physnode,
 			  xref,
 			  NULL, // dphiref
 			  -1,  // ifa
@@ -1788,21 +1788,21 @@ void FluxLocalAssembly(field* f,real theta, real dt)
 		  // we compute ourself the normal vector because we
 		  // have to take into account the subcell surface
 
-		  real h1h2 = 1. / nraf[dim1] / nraf[dim2];
+		  schnaps_real h1h2 = 1. / nraf[dim1] / nraf[dim2];
 		  vnds[0] = codtau[0][dim0] * h1h2;
 		  vnds[1] = codtau[1][dim0] * h1h2;
 		  vnds[2] = codtau[2][dim0] * h1h2;
 		}
 
 
-		real wpg
+		schnaps_real wpg
 		  = wglop(deg[dim1], iL[dim1])
 		  * wglop(deg[dim2], iL[dim2]);
 		  
 		  
 		// numerical flux from the left and right state and
 		// normal vector
-		real wL[m], wR[m], flux[m];
+		schnaps_real wL[m], wR[m], flux[m];
 
 		for (int iv1 = 0; iv1 < m; iv1++){
 
@@ -1818,7 +1818,7 @@ void FluxLocalAssembly(field* f,real theta, real dt)
 
 		  for(int iv2 = 0; iv2 < m; iv2++) {
 		    int imem2 = f->varindex(f->deg, f->raf, f->model.m, ipgL, iv2);		  
-		    real val = flux[iv2] * wpg;		      
+		    schnaps_real val = flux[iv2] * wpg;		      
 		    /* AddLinearSolver(f->solver, imem2, imem1, theta * dt * val); */
 		    /* AddLinearSolver(f->rmat, imem2, imem1, -dt * val); */
 		    AddLinearSolver(f->solver, imem2, imem1, theta * dt * val);
@@ -1843,7 +1843,7 @@ void FluxLocalAssembly(field* f,real theta, real dt)
 
 		  for(int iv2 = 0; iv2 < m; iv2++) {
 		    int imem2 = f->varindex(f->deg, f->raf, f->model.m, ipgL, iv2);
-		    real val =  flux[iv2] * wpg;
+		    schnaps_real val =  flux[iv2] * wpg;
 		    /* AddLinearSolver(f->solver, imem2, imem1, theta * dt * val); */
 		    /* AddLinearSolver(f->rmat, imem2, imem1, -dt * val); */
 		    AddLinearSolver(f->solver, imem2, imem1, theta * dt * val);
@@ -1869,7 +1869,7 @@ void FluxLocalAssembly(field* f,real theta, real dt)
   
 }
 
-void FluxAssembly(Simulation *simu, LinearSolver *solver,real theta, real dt){
+void FluxAssembly(Simulation *simu, LinearSolver *solver,schnaps_real theta, schnaps_real dt){
 
 
   for(int ie = 0; ie < simu->macromesh.nbelems; ie++){
@@ -1943,13 +1943,13 @@ void FluxAssembly(Simulation *simu, LinearSolver *solver,real theta, real dt){
 
 		  // Compute the normal vector for integrating on the
 		  // face
-		  real vnds[3];
+		  schnaps_real vnds[3];
 		  {
-		    real xref[3], wpg3;
+		    schnaps_real xref[3], wpg3;
 		    ref_pg_vol(f->deg, f->raf, ipgL, xref, &wpg3, NULL);
 		    // mapping from the ref glop to the physical glop
-		    real dtau[3][3], codtau[3][3];
-		    Ref2Phy(f->physnode,
+		    schnaps_real dtau[3][3], codtau[3][3];
+		    schnaps_ref2phy(f->physnode,
 			    xref,
 			    NULL, // dphiref
 			    -1,  // ifa
@@ -1961,21 +1961,21 @@ void FluxAssembly(Simulation *simu, LinearSolver *solver,real theta, real dt){
 		    // we compute ourself the normal vector because we
 		    // have to take into account the subcell surface
 
-		    real h1h2 = 1. / nraf[dim1] / nraf[dim2];
+		    schnaps_real h1h2 = 1. / nraf[dim1] / nraf[dim2];
 		    vnds[0] = codtau[0][dim0] * h1h2;
 		    vnds[1] = codtau[1][dim0] * h1h2;
 		    vnds[2] = codtau[2][dim0] * h1h2;
 		  }
 
 
-		  real wpg
+		  schnaps_real wpg
 		    = wglop(deg[dim1], iL[dim1])
 		    * wglop(deg[dim2], iL[dim2]);
 		  
 		  
 		  // numerical flux from the left and right state and
 		  // normal vector
-		  real wL[m], wR[m], flux[m];
+		  schnaps_real wL[m], wR[m], flux[m];
 
 		  for (int iv1 = 0; iv1 < m; iv1++){
 
@@ -1991,7 +1991,7 @@ void FluxAssembly(Simulation *simu, LinearSolver *solver,real theta, real dt){
 
 		    for(int iv2 = 0; iv2 < m; iv2++) {
 		      int imem2 = f->varindex(f->deg, f->raf, f->model.m, ipgL, iv2)+offsetw;		  
-		      real val = theta * dt * flux[iv2] * wpg;		      
+		      schnaps_real val = theta * dt * flux[iv2] * wpg;		      
 		      AddLinearSolver(solver, imem2, imem1, val);
 		      
 		      imem2 = f->varindex(f->deg, f->raf, f->model.m, ipgR, iv2)+offsetw;
@@ -2010,7 +2010,7 @@ void FluxAssembly(Simulation *simu, LinearSolver *solver,real theta, real dt){
 
 		    for(int iv2 = 0; iv2 < m; iv2++) {
 		      int imem2 = f->varindex(f->deg, f->raf, f->model.m, ipgL, iv2)+offsetw;
-		      real val = theta * dt * flux[iv2] * wpg;
+		      schnaps_real val = theta * dt * flux[iv2] * wpg;
 		      AddLinearSolver(solver, imem2, imem1, val);
 		    
 		      imem2 = f->varindex(f->deg, f->raf, f->model.m, ipgR, iv2)+offsetw;		    
@@ -2046,17 +2046,17 @@ void MassLocalAssembly(field *f)
 
 
   for(int ipg = 0; ipg < NPG(f->deg, f->raf); ipg++) {
-    real dtau[3][3], codtau[3][3], xpgref[3], xphy[3], wpg;
+    schnaps_real dtau[3][3], codtau[3][3], xpgref[3], xphy[3], wpg;
     ref_pg_vol(f->deg, f->raf, ipg, xpgref, &wpg, NULL);
-    Ref2Phy(f->physnode, // phys. nodes
+    schnaps_ref2phy(f->physnode, // phys. nodes
 	    xpgref, // xref
 	    NULL, -1, // dpsiref, ifa
 	    xphy, dtau, // xphy, dtau
 	    codtau, NULL, NULL); // codtau, dpsi, vnds
-    real det = dot_product(dtau[0], codtau[0]);
+    schnaps_real det = dot_product(dtau[0], codtau[0]);
     for(int iv1 = 0; iv1 < m; iv1++) {
       int imem = f->varindex(deg, nraf, m, ipg, iv1);
-      real val = wpg * det;
+      schnaps_real val = wpg * det;
       AddLinearSolver(f->solver, imem, imem,val);
       AddLinearSolver(f->rmat, imem, imem,  val);
       //printf("val local imp =%f\n",val);
@@ -2087,17 +2087,17 @@ void MassAssembly(Simulation *simu,  LinearSolver *solver){
 
 
     for(int ipg = 0; ipg < NPG(f->deg, f->raf); ipg++) {
-      real dtau[3][3], codtau[3][3], xpgref[3], xphy[3], wpg;
+      schnaps_real dtau[3][3], codtau[3][3], xpgref[3], xphy[3], wpg;
       ref_pg_vol(f->deg, f->raf, ipg, xpgref, &wpg, NULL);
-      Ref2Phy(f->physnode, // phys. nodes
+      schnaps_ref2phy(f->physnode, // phys. nodes
 	      xpgref, // xref
 	      NULL, -1, // dpsiref, ifa
 	      xphy, dtau, // xphy, dtau
 	      codtau, NULL, NULL); // codtau, dpsi, vnds
-      real det = dot_product(dtau[0], codtau[0]);
+      schnaps_real det = dot_product(dtau[0], codtau[0]);
       for(int iv1 = 0; iv1 < m; iv1++) {
 	int imem = f->varindex(deg, nraf, m, ipg, iv1)+offsetw;
-	real val = wpg * det;
+	schnaps_real val = wpg * det;
 	AddLinearSolver(solver, imem, imem,val);
       }
     }
@@ -2109,7 +2109,7 @@ void MassAssembly(Simulation *simu,  LinearSolver *solver){
 }
 void SourceLocalAssembly_C(void *buffers[], void *cl_arg);
 
-void SourceLocalAssembly_SPU(field *f, real theta, real dt){
+void SourceLocalAssembly_SPU(field *f, schnaps_real theta, schnaps_real dt){
 
   f->dt = dt;  
   f->theta = theta;
@@ -2156,12 +2156,12 @@ void SourceLocalAssembly_SPU(field *f, real theta, real dt){
 			     STARPU_VALUE, &f->model.m, sizeof(int),
 			     STARPU_VALUE, f->deg, 3 * sizeof(int),
 			     STARPU_VALUE, f->raf, 3 * sizeof(int),
-			     STARPU_VALUE, f->physnode, 60 * sizeof(real),
+			     STARPU_VALUE, f->physnode, 60 * sizeof(schnaps_real),
 			     STARPU_VALUE, &f->varindex, sizeof(varindexptr),
 			     STARPU_VALUE, &f->model.Source, sizeof(sourceptr),
-			     STARPU_VALUE, &f->tnow, sizeof(real),
-			     STARPU_VALUE, &dt, sizeof(real),
-			     STARPU_VALUE, &theta, sizeof(real),
+			     STARPU_VALUE, &f->tnow, sizeof(schnaps_real),
+			     STARPU_VALUE, &dt, sizeof(schnaps_real),
+			     STARPU_VALUE, &theta, sizeof(schnaps_real),
 			     0);
 
 
@@ -2186,7 +2186,7 @@ void SourceLocalAssembly_SPU(field *f, real theta, real dt){
 }
 
 
-void SourceLocalAssembly(field *f, real theta, real dt){
+void SourceLocalAssembly(field *f, schnaps_real theta, schnaps_real dt){
 
   f->dt = dt;  
   f->theta = theta;
@@ -2197,21 +2197,21 @@ void SourceLocalAssembly(field *f, real theta, real dt){
     const int m = f->model.m;
   
     for(int ipg = 0; ipg < NPG(f->deg, f->raf); ipg++) {
-      real dtau[3][3], codtau[3][3], xpgref[3], xphy[3], wpg;
+      schnaps_real dtau[3][3], codtau[3][3], xpgref[3], xphy[3], wpg;
       ref_pg_vol(f->deg, f->raf, ipg, xpgref, &wpg, NULL);
-      Ref2Phy(f->physnode, // phys. nodes
+      schnaps_ref2phy(f->physnode, // phys. nodes
 	      xpgref, // xref
 	      NULL, -1, // dpsiref, ifa
 	      xphy, dtau, // xphy, dtau
 	      codtau, NULL, NULL); // codtau, dpsi, vnds
-      real det = dot_product(dtau[0], codtau[0]);
-      real wL[m], source[m];
+      schnaps_real det = dot_product(dtau[0], codtau[0]);
+      schnaps_real wL[m], source[m];
       // we should extract wL and add a buffer to the codelet TODO
       f->model.Source(xphy, f->tnow, wL, source);
 
       for(int iv1 = 0; iv1 < m; iv1++) {
 	int imem = f->varindex(f->deg, f->raf, m, ipg, iv1);
-	real val = source[iv1] * wpg * det;
+	schnaps_real val = source[iv1] * wpg * det;
 	f->solver->rhs[imem] += f->theta * f->dt * val;
       }
     }
@@ -2228,8 +2228,8 @@ void SourceLocalAssembly_C(void *buffers[], void *cl_arg) {
   int m;
   int deg[3];
   int raf[3];
-  real physnode[20][3];
-  real tnow,dt,theta;
+  schnaps_real physnode[20][3];
+  schnaps_real tnow,dt,theta;
   varindexptr Varindex;
   sourceptr Source;
   
@@ -2241,29 +2241,29 @@ void SourceLocalAssembly_C(void *buffers[], void *cl_arg) {
     
   struct starpu_vector_interface *rhs_v =
     (struct starpu_vector_interface *) buffers[0]; 
-  real* rhs = (real *)STARPU_VECTOR_GET_PTR(rhs_v);  
+  schnaps_real* rhs = (schnaps_real *)STARPU_VECTOR_GET_PTR(rhs_v);  
 
   for(int ipg = 0; ipg < NPG(deg, raf); ipg++) {
-    real dtau[3][3], codtau[3][3], xpgref[3], xphy[3], wpg;
+    schnaps_real dtau[3][3], codtau[3][3], xpgref[3], xphy[3], wpg;
     ref_pg_vol(deg, raf, ipg, xpgref, &wpg, NULL);
-    Ref2Phy(physnode, // phys. nodes
+    schnaps_ref2phy(physnode, // phys. nodes
 	    xpgref, // xref
 	    NULL, -1, // dpsiref, ifa
 	    xphy, dtau, // xphy, dtau
 	    codtau, NULL, NULL); // codtau, dpsi, vnds
-    real det = dot_product(dtau[0], codtau[0]);
-    real wL[m], source[m];
+    schnaps_real det = dot_product(dtau[0], codtau[0]);
+    schnaps_real wL[m], source[m];
     Source(xphy, tnow, wL, source);
 
     for(int iv1 = 0; iv1 < m; iv1++) {
       int imem = Varindex(deg, raf, m, ipg, iv1);
-      real val = source[iv1] * wpg * det;
+      schnaps_real val = source[iv1] * wpg * det;
       rhs[imem] += theta * dt * val;
     }
   }
 }	
 
-void SourceAssembly(Simulation *simu,  LinearSolver *solver, real theta, real dt){
+void SourceAssembly(Simulation *simu,  LinearSolver *solver, schnaps_real theta, schnaps_real dt){
 
    if(simu->fd[0].model.Source != NULL) {
     for(int ie = 0; ie < simu->macromesh.nbelems; ie++){
@@ -2282,15 +2282,15 @@ void SourceAssembly(Simulation *simu,  LinearSolver *solver, real theta, real dt
 
 
       for(int ipg = 0; ipg < NPG(f->deg, f->raf); ipg++) {
-	real dtau[3][3], codtau[3][3], xpgref[3], xphy[3], wpg;
+	schnaps_real dtau[3][3], codtau[3][3], xpgref[3], xphy[3], wpg;
 	ref_pg_vol(f->deg, f->raf, ipg, xpgref, &wpg, NULL);
-	Ref2Phy(f->physnode, // phys. nodes
+	schnaps_ref2phy(f->physnode, // phys. nodes
 		xpgref, // xref
 		NULL, -1, // dpsiref, ifa
 		xphy, dtau, // xphy, dtau
 		codtau, NULL, NULL); // codtau, dpsi, vnds
-	real det = dot_product(dtau[0], codtau[0]);
-	real wL[m], source[m];
+	schnaps_real det = dot_product(dtau[0], codtau[0]);
+	schnaps_real wL[m], source[m];
 	/* for(int iv = 0; iv < m; ++iv){ */
 	/* 	int imem = f->varindex(f->deg, f->raf, f->model.m, ipg, iv); */
 	/* 	wL[iv] = w[imem]; */
@@ -2299,7 +2299,7 @@ void SourceAssembly(Simulation *simu,  LinearSolver *solver, real theta, real dt
 
 	for(int iv1 = 0; iv1 < m; iv1++) {
 	  int imem = f->varindex(deg, nraf, m, ipg, iv1)+offsetw;
-	  real val = theta * dt * source[iv1] * wpg * det;
+	  schnaps_real val = theta * dt * source[iv1] * wpg * det;
 	  solver->rhs[imem] += val;
 	}
       }
@@ -2327,17 +2327,17 @@ void SourceAssembly(Simulation *simu,  LinearSolver *solver, real theta, real dt
       // Loop over the points on a single macro cell interface.
       for(int ipgfL = 0; ipgfL < NPGF(fL->deg, fL->raf, locfaL); ipgfL++) {
 	
-	real xpgref[3], xpgref_in[3], wpg;
+	schnaps_real xpgref[3], xpgref_in[3], wpg;
 	
 	// Get the coordinates of the Gauss point and coordinates of a
 	// point slightly inside the opposite element in xref_in
 	int ipgL = ref_pg_face(fL->deg, fL->raf, locfaL, ipgfL, xpgref, &wpg, xpgref_in);
 	
 	// Normal vector at gauss point ipgL
-	real vnds[3], xpg[3];
+	schnaps_real vnds[3], xpg[3];
 	{
-	  real dtau[3][3], codtau[3][3];
-	  Ref2Phy(fL->physnode,
+	  schnaps_real dtau[3][3], codtau[3][3];
+	  schnaps_ref2phy(fL->physnode,
 		  xpgref,
 		  NULL, locfaL, // dpsiref, ifa
 		  xpg, dtau,
@@ -2345,7 +2345,7 @@ void SourceAssembly(Simulation *simu,  LinearSolver *solver, real theta, real dt
 	}
 	
 	// the boundary flux is an affine function
-	real flux0[m], wL[m];
+	schnaps_real flux0[m], wL[m];
 	for(int iv = 0; iv < m; iv++) {
 	  wL[iv] = 0;
 	}
@@ -2354,7 +2354,7 @@ void SourceAssembly(Simulation *simu,  LinearSolver *solver, real theta, real dt
 	
 	for(int iv2 = 0; iv2 < m; iv2++) {
 	  int imem2 = fL->varindex(fL->deg, fL->raf,fL->model.m, ipgL, iv2)+offsetL;
-	  real val = theta *dt * flux0[iv2] * wpg;
+	  schnaps_real val = theta *dt * flux0[iv2] * wpg;
 	  solver->rhs[imem2] -= val;
 	}
       }
@@ -2398,17 +2398,17 @@ void InterfaceCoupling(Simulation *simu,  LinearSolver *solver, int itest)
 #endif
     for(int ipgfL = 0; ipgfL < NPGF(fL->deg, fL->raf, locfaL); ipgfL++) {
 
-      real xpgref[3], xpgref_in[3], wpg;
+      schnaps_real xpgref[3], xpgref_in[3], wpg;
     
       // Get the coordinates of the Gauss point and coordinates of a
       // point slightly inside the opposite element in xref_in
       int ipgL = ref_pg_face(fL->deg, fL->raf, locfaL, ipgfL, xpgref, &wpg, xpgref_in);
     
       // Normal vector at gauss point ipgL
-      real vnds[3], xpg[3];
+      schnaps_real vnds[3], xpg[3];
       {
-	real dtau[3][3], codtau[3][3];
-	Ref2Phy(fL->physnode,
+	schnaps_real dtau[3][3], codtau[3][3];
+	schnaps_ref2phy(fL->physnode,
 		xpgref,
 		NULL, locfaL, // dpsiref, ifa
 		xpg, dtau,
@@ -2416,16 +2416,16 @@ void InterfaceCoupling(Simulation *simu,  LinearSolver *solver, int itest)
       }
     
       if (fR != NULL) {  // the right element exists
-	real xrefL[3];
+	schnaps_real xrefL[3];
 	{
-	  real xpg_in[3];
-	  Ref2Phy(fL->physnode,
+	  schnaps_real xpg_in[3];
+	  schnaps_ref2phy(fL->physnode,
 		  xpgref_in,
 		  NULL, -1, // dpsiref, ifa
 		  xpg_in, NULL,
 		  NULL, NULL, NULL); // codtau, dpsi, vnds
 	  PeriodicCorrection(xpg_in,fL->period);
-	  Phy2Ref(fR->physnode, xpg_in, xrefL);
+	  schnaps_phy2ref(fR->physnode, xpg_in, xrefL);
 	
 	}
       
@@ -2488,7 +2488,7 @@ void InterfaceCoupling(Simulation *simu,  LinearSolver *solver, int itest)
 /* void DGMacroCellInterface(int locfaL, */
 /* 			  field *fL, int offsetL, field *fR, int offsetR, */
 /* 			  real *w, real *dtw)  */
-void InterfaceAssembly(Simulation *simu,  LinearSolver *solver,real theta, real dt)
+void InterfaceAssembly(Simulation *simu,  LinearSolver *solver,schnaps_real theta, schnaps_real dt)
 {
 
   int fsize =  simu->wsize / simu->macromesh.nbelems;
@@ -2517,17 +2517,17 @@ void InterfaceAssembly(Simulation *simu,  LinearSolver *solver,real theta, real 
 #endif
     for(int ipgfL = 0; ipgfL < NPGF(fL->deg, fL->raf, locfaL); ipgfL++) {
 
-      real xpgref[3], xpgref_in[3], wpg;
+      schnaps_real xpgref[3], xpgref_in[3], wpg;
     
       // Get the coordinates of the Gauss point and coordinates of a
       // point slightly inside the opposite element in xref_in
       int ipgL = ref_pg_face(fL->deg, fL->raf, locfaL, ipgfL, xpgref, &wpg, xpgref_in);
     
       // Normal vector at gauss point ipgL
-      real vnds[3], xpg[3];
+      schnaps_real vnds[3], xpg[3];
       {
-	real dtau[3][3], codtau[3][3];
-	Ref2Phy(fL->physnode,
+	schnaps_real dtau[3][3], codtau[3][3];
+	schnaps_ref2phy(fL->physnode,
 		xpgref,
 		NULL, locfaL, // dpsiref, ifa
 		xpg, dtau,
@@ -2535,25 +2535,25 @@ void InterfaceAssembly(Simulation *simu,  LinearSolver *solver,real theta, real 
       }
     
       if (fR != NULL) {  // the right element exists
-	real xrefL[3];
+	schnaps_real xrefL[3];
 	{
-	  real xpg_in[3];
-	  Ref2Phy(fL->physnode,
+	  schnaps_real xpg_in[3];
+	  schnaps_ref2phy(fL->physnode,
 		  xpgref_in,
 		  NULL, -1, // dpsiref, ifa
 		  xpg_in, NULL,
 		  NULL, NULL, NULL); // codtau, dpsi, vnds
 	  PeriodicCorrection(xpg_in,fL->period);
-	  Phy2Ref(fR->physnode, xpg_in, xrefL);
+	  schnaps_phy2ref(fR->physnode, xpg_in, xrefL);
 	
 	}
       
 	int ipgR = ref_ipg(fR->deg,fR->raf, xrefL);
 
 
-	real flux[m];
-	real wL[m];
-	real wR[m];
+	schnaps_real flux[m];
+	schnaps_real wL[m];
+	schnaps_real wR[m];
 
 	for (int iv1 = 0; iv1 < m; iv1++){
 
@@ -2573,7 +2573,7 @@ void InterfaceAssembly(Simulation *simu,  LinearSolver *solver,real theta, real 
 
 	  for(int iv2 = 0; iv2 < m; iv2++) {
 	    int imem2 = fL->varindex(fL->deg, fL->raf, fL->model.m, ipgL, iv2) + offsetL;		  
-	    real val = theta * dt * flux[iv2] * wpg;		      
+	    schnaps_real val = theta * dt * flux[iv2] * wpg;		      
 	    AddLinearSolver(solver, imem2, imem1, val);
 		      
 	    imem2 = fR->varindex(fR->deg, fR->raf, fR->model.m, ipgR, iv2) + offsetR;
@@ -2592,7 +2592,7 @@ void InterfaceAssembly(Simulation *simu,  LinearSolver *solver,real theta, real 
 
 	  for(int iv2 = 0; iv2 < m; iv2++) {
 	    int imem2 = fL->varindex(fL->deg, fL->raf, fL->model.m, ipgL, iv2) + offsetL;
-	    real val = theta * dt * flux[iv2] * wpg;
+	    schnaps_real val = theta * dt * flux[iv2] * wpg;
 	    AddLinearSolver(solver, imem2, imem1, val);
 		    
 	    imem2 = fR->varindex(fR->deg, fR->raf, fR->model.m, ipgR, iv2) + offsetR;		    
@@ -2604,7 +2604,7 @@ void InterfaceAssembly(Simulation *simu,  LinearSolver *solver,real theta, real 
       } else { // The point is on the boundary.
 
 	// the boundary flux is an affine function
-	real flux0[m], wL[m];
+	schnaps_real flux0[m], wL[m];
 	for(int iv = 0; iv < m; iv++) {
 	  wL[iv] = 0;
 	}
@@ -2623,13 +2623,13 @@ void InterfaceAssembly(Simulation *simu,  LinearSolver *solver,real theta, real 
 	    wL[iv] = (iv == iv1);
 	  }
 
-	  real flux[m];
+	  schnaps_real flux[m];
 	  fL->model.BoundaryFlux(xpg, fL->tnow, wL, vnds, flux);
 
 	  for(int iv2 = 0; iv2 < m; iv2++) {
 	    // The basis functions is also the gauss point index
 	    int imem2 = fL->varindex(fL->deg, fL->raf,fL->model.m, ipgL, iv2) + offsetL;
-	    real val = theta *dt * (flux[iv2]-flux0[iv2]) * wpg;		    
+	    schnaps_real val = theta *dt * (flux[iv2]-flux0[iv2]) * wpg;		    
 	    AddLinearSolver(solver, imem2, imem1, val);
 	  }
 	} // iv1
@@ -2644,7 +2644,7 @@ void InterfaceAssembly(Simulation *simu,  LinearSolver *solver,real theta, real 
 }
 
 
-void InterfaceLocalAssembly(Interface *inter,  real theta, real dt)
+void InterfaceLocalAssembly(Interface *inter,  schnaps_real theta, schnaps_real dt)
 {
 
 
@@ -2658,11 +2658,11 @@ void InterfaceLocalAssembly(Interface *inter,  real theta, real dt)
     
   for(int ipgf = 0; ipgf < NPGF(fL->deg, fL->raf, locfaL); ipgf++) {
 
-    real xpgref[3], xpgref_in[3], wpg;
+    schnaps_real xpgref[3], xpgref_in[3], wpg;
     
     int ipgL = inter->vol_indexL[ipgf];
-    real* vnds = inter->vnds + 3 * ipgf;
-    real* xpg = inter->xpg + 3 * ipgf;
+    schnaps_real* vnds = inter->vnds + 3 * ipgf;
+    schnaps_real* xpg = inter->xpg + 3 * ipgf;
 
     int offsetL = 0;
     int offsetR = 0;
@@ -2670,9 +2670,9 @@ void InterfaceLocalAssembly(Interface *inter,  real theta, real dt)
     if (fR != NULL) {
 
       int ipgR = inter->vol_indexR[ipgf];
-      real flux[m];
-      real wL[m];
-      real wR[m];
+      schnaps_real flux[m];
+      schnaps_real wL[m];
+      schnaps_real wR[m];
 
       for (int iv1 = 0; iv1 < m; iv1++){
 
@@ -2692,7 +2692,7 @@ void InterfaceLocalAssembly(Interface *inter,  real theta, real dt)
 
 	for(int iv2 = 0; iv2 < m; iv2++) {
 	  int imem2 = fL->varindex(fL->deg, fL->raf, fL->model.m, ipgL, iv2) + offsetL;		  
-	  real val =  flux[iv2];		      
+	  schnaps_real val =  flux[iv2];		      
 	  AddLinearSolver(fL->solver, imem2, imem1, theta * dt * val);
 	  AddLinearSolver(fL->rmat, imem2, imem1, -(1-theta) * dt * val);
 		      
@@ -2710,7 +2710,7 @@ void InterfaceLocalAssembly(Interface *inter,  real theta, real dt)
 	for(int iv2 = 0; iv2 < m; iv2++) {
 		    
 	  int imem2 = fR->varindex(fR->deg, fR->raf, fR->model.m, ipgR, iv2) + offsetR;		    
-	  real val =  flux[iv2];		    
+	  schnaps_real val =  flux[iv2];		    
 	  AddLinearSolver(fR->solver, imem2, imem1, theta * dt * (-val));
 	  AddLinearSolver(fR->rmat, imem2, imem1, -(1-theta) * dt * (-val));
 	}
@@ -2720,7 +2720,7 @@ void InterfaceLocalAssembly(Interface *inter,  real theta, real dt)
 
 	
       // the boundary flux is an affine function
-      real flux0[m], wL[m];
+      schnaps_real flux0[m], wL[m];
       for(int iv = 0; iv < m; iv++) {
 	wL[iv] = 0;
       }
@@ -2733,13 +2733,13 @@ void InterfaceLocalAssembly(Interface *inter,  real theta, real dt)
 	  wL[iv] = (iv == iv1);
 	}
 
-	real flux[m];
+	schnaps_real flux[m];
 	fL->model.BoundaryFlux(xpg, fL->tnow, wL, vnds, flux);
 
 	for(int iv2 = 0; iv2 < m; iv2++) {
 	  // The basis functions is also the gauss point index
 	  int imem2 = fL->varindex(fL->deg, fL->raf,fL->model.m, ipgL, iv2);
-	  real val =  (flux[iv2]-flux0[iv2]);		    
+	  schnaps_real val =  (flux[iv2]-flux0[iv2]);		    
 	  AddLinearSolver(fL->solver, imem2, imem1, theta * dt * val);
 	  AddLinearSolver(fL->rmat, imem2, imem1,  -(1-theta) * dt * val);
 	  //printf("val=%f",val);
@@ -2754,7 +2754,7 @@ void InterfaceLocalAssembly(Interface *inter,  real theta, real dt)
 }
 
 
-void FieldResidual(field *fd,real theta, real dt){
+void FieldResidual(field *fd,schnaps_real theta, schnaps_real dt){
 
   DGSubCellInterface(fd, fd->wn, fd->res);
   DGVolume(fd, fd->wn, fd->res);
@@ -2780,7 +2780,7 @@ void InitImplicitJFLinearSolver(Simulation *simu, JFLinearSolver *solver){
 
 }
 
-void ImplicitNonlinearVector_computation(Simulation * simu,void* lsol,real * solvector,real *nlvector){
+void ImplicitNonlinearVector_computation(Simulation * simu,void* lsol,schnaps_real * solvector,schnaps_real *nlvector){
 
   
   NonlinearThetaVector_assembly(simu,solvector,nlvector,simu->theta,simu->dt);
@@ -2788,12 +2788,12 @@ void ImplicitNonlinearVector_computation(Simulation * simu,void* lsol,real * sol
 }
 
 
-void AssemblyImplicitJFLinearSolver(Simulation *simu, JFLinearSolver *solver, real dt){
-  real * rhs_implicit;
-  real * rhs_explicit;
+void AssemblyImplicitJFLinearSolver(Simulation *simu, JFLinearSolver *solver, schnaps_real dt){
+  schnaps_real * rhs_implicit;
+  schnaps_real * rhs_explicit;
   
-  rhs_implicit = calloc(simu->wsize, sizeof(real));
-  rhs_explicit = calloc(simu->wsize, sizeof(real));
+  rhs_implicit = calloc(simu->wsize, sizeof(schnaps_real));
+  rhs_explicit = calloc(simu->wsize, sizeof(schnaps_real));
 
   NonlinearThetaVector_assembly(simu,simu->w,rhs_explicit,-(1.0-simu->theta),simu->dt);
   
@@ -2815,11 +2815,11 @@ void AssemblyImplicitJFLinearSolver(Simulation *simu, JFLinearSolver *solver, re
 
 }
 
-void ThetaTimeScheme_WithJF(Simulation *simu, real tmax, real dt){
+void ThetaTimeScheme_WithJF(Simulation *simu, schnaps_real tmax, schnaps_real dt){
 
   JFLinearSolver solver_implicit;
 
-  real theta=0.5;
+  schnaps_real theta=0.5;
   simu->dt=dt;
   simu->theta=theta;
   
@@ -2851,7 +2851,7 @@ void ThetaTimeScheme_WithJF(Simulation *simu, real tmax, real dt){
 
 }
 
-void NonlinearThetaVector_assembly(Simulation * simu,real * solvector,real *nlvector,real theta, real dt){
+void NonlinearThetaVector_assembly(Simulation * simu,schnaps_real * solvector,schnaps_real *nlvector,schnaps_real theta, schnaps_real dt){
   const unsigned int m = simu->fd[0].model.m;
     int fsize =  simu->wsize / simu->macromesh.nbelems;
 
@@ -2873,28 +2873,28 @@ void NonlinearThetaVector_assembly(Simulation * simu,real * solvector,real *nlve
       offsetR = fsize * ieR;
     }
     
-    real *fwL = solvector + offsetL;
-    real *fwR = solvector + offsetR;
+    schnaps_real *fwL = solvector + offsetL;
+    schnaps_real *fwR = solvector + offsetR;
     
-    real *nlvL = nlvector + offsetL;
-    real *nlvR = nlvector + offsetR;
+    schnaps_real *nlvL = nlvector + offsetL;
+    schnaps_real *nlvR = nlvector + offsetR;
     
     for(int ipgfL = 0; ipgfL < NPGF(fL->deg, fL->raf, locfaL); ipgfL++) {
       
-      real xpgref[3], xpgref_in[3], wpg;
+      schnaps_real xpgref[3], xpgref_in[3], wpg;
 
       // Get the coordinates of the Gauss point and coordinates of a
       // point slightly inside the opposite element in xref_in
       int ipgL = ref_pg_face(fL->deg, fL->raf, locfaL, ipgfL, xpgref, &wpg, xpgref_in);
       
-      real flux[m];
-      real wL[m];
+      schnaps_real flux[m];
+      schnaps_real wL[m];
       
       // Normal vector at gauss point ipgL
-      real vnds[3], xpg[3];
+      schnaps_real vnds[3], xpg[3];
       {
-	real dtau[3][3], codtau[3][3];
-	Ref2Phy(fL->physnode,
+	schnaps_real dtau[3][3], codtau[3][3];
+	schnaps_ref2phy(fL->physnode,
 		xpgref,
 		NULL, locfaL, // dpsiref, ifa
 		xpg, dtau,
@@ -2902,22 +2902,22 @@ void NonlinearThetaVector_assembly(Simulation * simu,real * solvector,real *nlve
       }
 
       if (fR != NULL) {  // the right element exists
-	real xrefL[3];
+	schnaps_real xrefL[3];
 	{
-	  real xpg_in[3];
-	  Ref2Phy(fL->physnode,
+	  schnaps_real xpg_in[3];
+	  schnaps_ref2phy(fL->physnode,
 		  xpgref_in,
 		  NULL, -1, // dpsiref, ifa
 		  xpg_in, NULL,
 		  NULL, NULL, NULL); // codtau, dpsi, vnds
 	  PeriodicCorrection(xpg_in,fL->period);
-	  Phy2Ref(fR->physnode, xpg_in, xrefL);
+	  schnaps_phy2ref(fR->physnode, xpg_in, xrefL);
 
 	}
 	
 	int ipgR = ref_ipg(fR->deg,fR->raf, xrefL);
 	
-	real wR[m];
+	schnaps_real wR[m];
 	for(int iv = 0; iv < m; iv++) {
 	  int imemL = fL->varindex(fL->deg, fL->raf,fL->model.m, ipgL, iv);
 	  wL[iv] = fwL[imemL];
@@ -2963,8 +2963,8 @@ void NonlinearThetaVector_assembly(Simulation * simu,real * solvector,real *nlve
 
   for(int ie = 0; ie < simu->macromesh.nbelems; ++ie) {
     field * f = simu->fd + ie;
-    real * w = solvector + ie * fsize;
-    real * nlv = nlvector + ie * fsize;
+    schnaps_real * w = solvector + ie * fsize;
+    schnaps_real * nlv = nlvector + ie * fsize;
 
     const int nraf[3] = {f->raf[0],
 		       f->raf[1],
@@ -3032,13 +3032,13 @@ void NonlinearThetaVector_assembly(Simulation * simu,real * solvector,real *nlve
 		  
 		  // Compute the normal vector for integrating on the
 		  // face
-		  real vnds[3];
+		  schnaps_real vnds[3];
 		  {
-		    real xref[3], wpg3;
+		    schnaps_real xref[3], wpg3;
 		    ref_pg_vol(f->deg, f->raf, ipgL, xref, &wpg3, NULL);
 		    // mapping from the ref glop to the physical glop
-		    real dtau[3][3], codtau[3][3];
-		    Ref2Phy(f->physnode,
+		    schnaps_real dtau[3][3], codtau[3][3];
+		    schnaps_ref2phy(f->physnode,
 			    xref,
 			  NULL, // dphiref
 			    -1,  // ifa
@@ -3050,7 +3050,7 @@ void NonlinearThetaVector_assembly(Simulation * simu,real * solvector,real *nlve
 		    // we compute ourself the normal vector because we
 		    // have to take into account the subcell surface
 		    
-		    real h1h2 = 1. / nraf[dim1] / nraf[dim2];
+		    schnaps_real h1h2 = 1. / nraf[dim1] / nraf[dim2];
 		    vnds[0] = codtau[0][dim0] * h1h2;
 		    vnds[1] = codtau[1][dim0] * h1h2;
 		    vnds[2] = codtau[2][dim0] * h1h2;
@@ -3058,7 +3058,7 @@ void NonlinearThetaVector_assembly(Simulation * simu,real * solvector,real *nlve
 
 		  // numerical flux from the left and right state and
 		  // normal vector
-		  real wL[m], wR[m], flux[m];
+		  schnaps_real wL[m], wR[m], flux[m];
 		  for(int iv = 0; iv < m; iv++) {
 		    // TO DO change the varindex signature
 		    int imemL = f->varindex(f->deg, f->raf, f->model.m, ipgL, iv); 
@@ -3070,7 +3070,7 @@ void NonlinearThetaVector_assembly(Simulation * simu,real * solvector,real *nlve
 		  f->model.NumFlux(wL, wR, vnds, flux);
 		  
 		  // subcell ref surface glop weight
-		  real wpg
+		  schnaps_real wpg
 		  = wglop(deg[dim1], iL[dim1])
 		    * wglop(deg[dim2], iL[dim2]);
 		  
@@ -3096,15 +3096,15 @@ void NonlinearThetaVector_assembly(Simulation * simu,real * solvector,real *nlve
 	  } // dim loop
 
           /////////// We compute the volume term - F(uL) in the subs-cell//////  
-	real *xref0 = malloc(sc_npg * sizeof(real));
-	real *xref1 = malloc(sc_npg * sizeof(real));
-	real *xref2 = malloc(sc_npg * sizeof(real));
-	real *omega = malloc(sc_npg * sizeof(real));
+	schnaps_real *xref0 = malloc(sc_npg * sizeof(schnaps_real));
+	schnaps_real *xref1 = malloc(sc_npg * sizeof(schnaps_real));
+	schnaps_real *xref2 = malloc(sc_npg * sizeof(schnaps_real));
+	schnaps_real *omega = malloc(sc_npg * sizeof(schnaps_real));
 	int *imems = malloc(m * sc_npg * sizeof(int));
 	int pos = 0;
 	for(unsigned int p = 0; p < sc_npg; ++p) {
-	  real xref[3];
-	  real tomega;
+	  schnaps_real xref[3];
+	  schnaps_real tomega;
 
 	  ref_pg_vol(f->deg, f->raf, offsetL + p, xref, &tomega, NULL);
 	  xref0[p] = xref[0];
@@ -3125,7 +3125,7 @@ void NonlinearThetaVector_assembly(Simulation * simu,real * solvector,real *nlve
 	  for(int p0 = 0; p0 < npg[0]; p0++) {
 	    for(int p1 = 0; p1 < npg[1]; p1++) {
 	      for(int p2 = 0; p2 < npg[2]; p2++) {
-		real wL[m], flux[m];
+		schnaps_real wL[m], flux[m];
 		int p[3] = {p0, p1, p2};
 		int ipgL = offsetL + p[0] + npg[0] * (p[1] + npg[1] * p[2]);
 		for(int iv = 0; iv < m; iv++) {
@@ -3136,21 +3136,21 @@ void NonlinearThetaVector_assembly(Simulation * simu,real * solvector,real *nlve
 		// loop on the direction dim0 on the "cross"
 		for(int iq = 0; iq < npg[dim0]; iq++) {
 		  q[dim0] = (p[dim0] + iq) % npg[dim0];
-		  real dphiref[3] = {0, 0, 0};
+		  schnaps_real dphiref[3] = {0, 0, 0};
 		  // compute grad phi_q at glop p
 		  dphiref[dim0] = dlag(deg[dim0], q[dim0], p[dim0]) 
 		    * nraf[dim0];
 
-		  real xrefL[3] = {xref0[ipgL - offsetL],
+		  schnaps_real xrefL[3] = {xref0[ipgL - offsetL],
 				   xref1[ipgL - offsetL],
 				   xref2[ipgL - offsetL]};
-		  real wpgL = omega[ipgL - offsetL];
+		  schnaps_real wpgL = omega[ipgL - offsetL];
 		  /* real xrefL[3], wpgL; */
 		  /* ref_pg_vol(f->interp_param+1,ipgL,xrefL, &wpgL, NULL); */
 
 		  // mapping from the ref glop to the physical glop
-		  real dtau[3][3], codtau[3][3], dphiL[3];
-		  Ref2Phy(f->physnode,
+		  schnaps_real dtau[3][3], codtau[3][3], dphiL[3];
+		  schnaps_ref2phy(f->physnode,
 			  xrefL,
 			  dphiref, // dphiref
 			  -1,  // ifa
@@ -3189,15 +3189,15 @@ void NonlinearThetaVector_assembly(Simulation * simu,real * solvector,real *nlve
 
      /////////// We compute the source term - B(uL) in the subs-cell and the mass term + M uL//////  
     for(int ipg = 0; ipg < NPG(f->deg, f->raf); ipg++) {
-      real dtau[3][3], codtau[3][3], xpgref[3], xphy[3], wpg;
+      schnaps_real dtau[3][3], codtau[3][3], xpgref[3], xphy[3], wpg;
       ref_pg_vol(f->deg, f->raf, ipg, xpgref, &wpg, NULL);
-      Ref2Phy(f->physnode, // phys. nodes
+      schnaps_ref2phy(f->physnode, // phys. nodes
 	      xpgref, // xref
 	      NULL, -1, // dpsiref, ifa
 	      xphy, dtau, // xphy, dtau
 	      codtau, NULL, NULL); // codtau, dpsi, vnds
-      real det = dot_product(dtau[0], codtau[0]);  //// temp !!!!!!!!!!!!!!!
-      real wL[m], source[m];
+      schnaps_real det = dot_product(dtau[0], codtau[0]);  //// temp !!!!!!!!!!!!!!!
+      schnaps_real wL[m], source[m];
       for(int iv = 0; iv < m; ++iv){
 	int imem = f->varindex(f->deg, f->raf, f->model.m, ipg, iv);
 	wL[iv] = w[imem];

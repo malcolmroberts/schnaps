@@ -69,12 +69,12 @@ void ReadFile(char filename[], char** s);
 
 bool cldevice_is_acceptable(cl_uint ndevice, cl_uint nplatform);
 
-real cl_dev_gflops(char *platform_name);
-real cl_dev_bwidth(char *platform_name);
-real kernel_min_time(real dev_flops, real bandwidth,
+schnaps_real cl_dev_gflops(char *platform_name);
+schnaps_real cl_dev_bwidth(char *platform_name);
+schnaps_real kernel_min_time(schnaps_real dev_flops, schnaps_real bandwidth,
 		       unsigned long int flop_count, 
 		       unsigned long int io_count);
-void print_kernel_perf(real dev_fflops, real bandwidth,
+void print_kernel_perf(schnaps_real dev_fflops, schnaps_real bandwidth,
 		       unsigned long int flop_count, unsigned long int io_count,
 		       cl_ulong kernel_time_ns);
 

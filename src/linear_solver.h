@@ -37,11 +37,11 @@ typedef struct LinearSolver{
   //! name of the storage method;
   PC pc_type; 
   //! \brief solution of the linear system
-  real* sol;
+  schnaps_real* sol;
   //! \brief rhs of the linear system
-  real* rhs;
+  schnaps_real* rhs;
   //! tolerance iterative solver
-  real tol;
+  schnaps_real tol;
   //! restart for gmres
   int restart_gmres;
   //! number max of iteration
@@ -51,7 +51,7 @@ typedef struct LinearSolver{
   //! \param[in] lsol the LinearSolver object containing matrix A
   //! \param[in] x a vector
   //! \param[out] prod Ax
-  void (*MatVecProduct)(void* lsol,real x[],real prod[]);
+  void (*MatVecProduct)(void* lsol,schnaps_real x[],schnaps_real prod[]);
 
 } LinearSolver;
 
@@ -87,21 +87,21 @@ void AllocateLinearSolver(LinearSolver* lsol);
 //! \param[in] i row index
 //! \param[in] j column index
 //! \param[in] val value
-void AddLinearSolver(LinearSolver* lsol,int i,int j,real val);
+void AddLinearSolver(LinearSolver* lsol,int i,int j,schnaps_real val);
 
 //! \brief set  to elem (i,j)  value val
 //! \param[inout] lsol the LinearSolver object
 //! \param[in] i row index
 //! \param[in] j column index
 //! \param[in] val value
-void SetLinearSolver(LinearSolver* lsol,int i,int j,real val); 
+void SetLinearSolver(LinearSolver* lsol,int i,int j,schnaps_real val); 
 
 //! \brief get elem (i,j)
 //! \param[inout] lsol the LinearSolver object
 //! \param[in] i row index
 //! \param[in] j column index
 //! \return value at pos (i,j)
-real GetLinearSolver(LinearSolver* lsol,int i,int j); 
+schnaps_real GetLinearSolver(LinearSolver* lsol,int i,int j); 
 
 
 //! \brief display the matrix
@@ -112,7 +112,7 @@ void DisplayLinearSolver(LinearSolver* lsol);
 //! \param[in] system the LinearSolver object containing matrix A
 //! \param[in] x a vector
 //! \param[out] prod Ax
-void MatVect(void * system,real x[],real prod[]);
+void MatVect(void * system,schnaps_real x[],schnaps_real prod[]);
 
 //! \brief compute a matrix vector product
 //! use the rhs and sol starpu data handles
@@ -130,7 +130,7 @@ void MatVectIn(void * system);
 //! \param[in] system the LinearSolver object containing matrix A
 //! \param[in] x a vector
 //! \param[out] prod Ax
-void MatVect_slow(void * system,real x[],real prod[]);
+void MatVect_slow(void * system,schnaps_real x[],schnaps_real prod[]);
 
 //! \brief compute the inplace LU decomposition
 //! \param[inout] lsol the LinearSolver object
@@ -146,18 +146,18 @@ void SolveLinearSolver(LinearSolver* lsol);
 //! \param[in] x vector
 //! \param[inout] prod is a copy of x
 //! \param[in] N size
-void Vector_copy(real x[],real prod[],int N);
+void Vector_copy(schnaps_real x[],schnaps_real prod[],int N);
 
 //! \brief return the dot product
 //! \param[in] x vector
 //! \param[in] y vector
 //! \param[in] N size
-real Vector_prodot(real x[],real y[],int N);
+schnaps_real Vector_prodot(schnaps_real x[],schnaps_real y[],int N);
 
 //! \brief return the l2 norm
 //! \param[in] x vector
 //! \param[in] N size
-real Vector_norm2(real x[],int  N);
+schnaps_real Vector_norm2(schnaps_real x[],int  N);
 
 //! \brief solve the linear system with paralution
 //! \param[inout] lsol contains the matrices rhs and sol
@@ -169,10 +169,10 @@ void GMRESSolver(LinearSolver* lsol);
 
 //! \brief Jacobi preconditioner
 //! \param[in] lsol contains the matrices rhs and sol
-void Jacobi_PC(LinearSolver* lsol, real* sol, real* rhs);
+void Jacobi_PC(LinearSolver* lsol, schnaps_real* sol, schnaps_real* rhs);
 
 //! \brief Exact LU preconditioner
 //! \param[in] lsol contains the matrices rhs and sol
-void Exact_PC(LinearSolver* lsol, real* sol, real* rhs);
+void Exact_PC(LinearSolver* lsol, schnaps_real* sol, schnaps_real* rhs);
 
 #endif

@@ -50,7 +50,7 @@ int TestReconnexion(int argc, char *argv[]) {
   bool is2d=mesh.is2d; 
   assert(is2d);  
 
-  real periodsize = 2.;
+  schnaps_real periodsize = 2.;
   mesh.period[0]=periodsize;
   mesh.period[1]=periodsize;
 
@@ -61,7 +61,7 @@ int TestReconnexion(int argc, char *argv[]) {
 
   Model model;
 
-  real cfl = 0.1;
+  schnaps_real cfl = 0.1;
 
   simu.cfl = cfl;
   model.m = 9;
@@ -93,9 +93,9 @@ int TestReconnexion(int argc, char *argv[]) {
 
   InitSimulation(&simu, &mesh, deg, raf, &model);
  
-  real tmax = 0.1;
+  schnaps_real tmax = 0.1;
   simu.vmax = 6.0;
-  real dt = 0;
+  schnaps_real dt = 0;
   RK4_CL(&simu, tmax, dt,  0, NULL, NULL);
   
   CopyfieldtoCPU(&simu);

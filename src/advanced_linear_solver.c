@@ -82,9 +82,9 @@ void InitJFLinearSolver(JFLinearSolver* lsol,int n,
 
   if (solvtyp != NULL) lsol->solver_type = *solvtyp;
 
-  lsol->rhs=calloc(n,sizeof(real));
-  lsol->sol=calloc(n,sizeof(real));
-  lsol->soln=calloc(n,sizeof(real));
+  lsol->rhs=calloc(n,sizeof(schnaps_real));
+  lsol->sol=calloc(n,sizeof(schnaps_real));
+  lsol->soln=calloc(n,sizeof(schnaps_real));
 
 }
 
@@ -96,17 +96,17 @@ void FreeJFLinearSolver(JFLinearSolver* lsol){
 
 }
 
-void MatVecJacobianFree(Simulation *simu,void * system,real x[],real prod[]){
+void MatVecJacobianFree(Simulation *simu,void * system,schnaps_real x[],schnaps_real prod[]){
   int i,j;
-  real aij;
+  schnaps_real aij;
   JFLinearSolver* lsol=system;
-  real * U;
-  real * Up;
-  real * solnp;
+  schnaps_real * U;
+  schnaps_real * Up;
+  schnaps_real * solnp;
   
-  solnp=calloc(lsol->neq,sizeof(real));
-  U=calloc(lsol->neq,sizeof(real));
-  Up=calloc(lsol->neq,sizeof(real));
+  solnp=calloc(lsol->neq,sizeof(schnaps_real));
+  U=calloc(lsol->neq,sizeof(schnaps_real));
+  Up=calloc(lsol->neq,sizeof(schnaps_real));
 
   
   for(i=0;i<lsol->neq;i++)
@@ -143,14 +143,14 @@ void Advanced_GMRESSolver(LinearSolver* lsol, Simulation* simu){
   int irc[5+1];
   int icntl[8+1];
   int info[3+1];
-  real cntl[5+1];
-  real rinfo[2+1];
-  real sum,err,sum_rhs,lr_tol;
-  real * work;
-  real *loc_x;
-  real *loc_y;
-  real *loc_z;
-  real prodot=0.0;
+  schnaps_real cntl[5+1];
+  schnaps_real rinfo[2+1];
+  schnaps_real sum,err,sum_rhs,lr_tol;
+  schnaps_real * work;
+  schnaps_real *loc_x;
+  schnaps_real *loc_y;
+  schnaps_real *loc_z;
+  schnaps_real prodot=0.0;
   int res=0;
   int matvec=1, precondLeft=2, precondRight=3, dotProd=4;
 
@@ -218,10 +218,10 @@ void Advanced_GMRESSolver(LinearSolver* lsol, Simulation* simu){
   pt_Size = &N;
   pt_lwork = &lwork;
 
-  work = calloc(lwork, sizeof(real));
-  loc_x = calloc(N, sizeof(real));
-  loc_y = calloc(N, sizeof(real));
-  loc_z = calloc(N, sizeof(real));
+  work = calloc(lwork, sizeof(schnaps_real));
+  loc_x = calloc(N, sizeof(schnaps_real));
+  loc_y = calloc(N, sizeof(schnaps_real));
+  loc_z = calloc(N, sizeof(schnaps_real));
 
   
   for(int ivec = 0; ivec < N; ivec++) {
@@ -230,10 +230,10 @@ void Advanced_GMRESSolver(LinearSolver* lsol, Simulation* simu){
   }
 
 
-  real * Ax2=calloc(lsol->neq,sizeof(real));
+  schnaps_real * Ax2=calloc(lsol->neq,sizeof(schnaps_real));
   lsol->MatVecProduct(lsol,lsol->sol,Ax2);
-  real errorb=0;
-  real errorb2=0;
+  schnaps_real errorb=0;
+  schnaps_real errorb2=0;
    for(int i = 0; i < N; i++) {
      errorb=errorb+fabs((Ax2[i]-lsol->rhs[i])*(Ax2[i]-lsol->rhs[i]));                    
      errorb2=errorb2+fabs(lsol->sol[i]*lsol->sol[i]);                    
@@ -324,10 +324,10 @@ void Advanced_GMRESSolver(LinearSolver* lsol, Simulation* simu){
     lsol->sol[ivec] = work[ivec+1];                    
   }
 
-  real * Ax=calloc(lsol->neq,sizeof(real));
+  schnaps_real * Ax=calloc(lsol->neq,sizeof(schnaps_real));
   lsol->MatVecProduct(lsol,lsol->sol,Ax);
-  real error=0;
-  real error2=0;
+  schnaps_real error=0;
+  schnaps_real error2=0;
    for(int i = 0; i < N; i++) {
      error=error+fabs((Ax[i]-lsol->rhs[i])*(Ax[i]-lsol->rhs[i]));                    
      error2=error2+fabs(lsol->sol[i]*lsol->sol[i]);                    
@@ -362,14 +362,14 @@ void SolveJFLinearSolver(JFLinearSolver* lsol,Simulation * simu){
   int irc[5+1];
   int icntl[8+1];
   int info[3+1];
-  real cntl[5+1];
-  real rinfo[2+1];
-  real sum,err,sum_rhs,lr_tol;
-  real * work;
-  real *loc_x;
-  real *loc_y;
-  real *loc_z;
-  real prodot=0.0;
+  schnaps_real cntl[5+1];
+  schnaps_real rinfo[2+1];
+  schnaps_real sum,err,sum_rhs,lr_tol;
+  schnaps_real * work;
+  schnaps_real *loc_x;
+  schnaps_real *loc_y;
+  schnaps_real *loc_z;
+  schnaps_real prodot=0.0;
   int res=0;
   int matvec=1, precondLeft=2, precondRight=3, dotProd=4;
 
@@ -411,10 +411,10 @@ void SolveJFLinearSolver(JFLinearSolver* lsol,Simulation * simu){
   pt_Size = &N;
   pt_lwork = &lwork;
 
-  work = calloc(lwork, sizeof(real));
-  loc_x = calloc(N, sizeof(real));
-  loc_y = calloc(N, sizeof(real));
-  loc_z = calloc(N, sizeof(real));
+  work = calloc(lwork, sizeof(schnaps_real));
+  loc_x = calloc(N, sizeof(schnaps_real));
+  loc_y = calloc(N, sizeof(schnaps_real));
+  loc_z = calloc(N, sizeof(schnaps_real));
   
   for(int ivec = 0; ivec < N; ivec++) {
     work[ivec+1]     = lsol->sol[ivec];                    

@@ -27,8 +27,8 @@ int BuildFatNodeList(Simulation *simu,FatNode* fn_list){
   int big_int = 1 << 28; // 2**28 = 268 435 456
 
   int ino=0;
-  real* xmin=simu->macromesh.xmin;
-  real* xmax=simu->macromesh.xmax;
+  schnaps_real* xmin=simu->macromesh.xmin;
+  schnaps_real* xmax=simu->macromesh.xmax;
   int nb_dg_nodes=0;
   for(int ie = 0; ie < simu->macromesh.nbelems; ie++) {
     
@@ -38,10 +38,10 @@ int BuildFatNodeList(Simulation *simu,FatNode* fn_list){
 
     
     for(int ipg = 0; ipg < NPG(f->deg, f->raf); ipg++) {
-      real xpg[3];
-      real xref[3];
+      schnaps_real xpg[3];
+      schnaps_real xref[3];
       ref_pg_vol(f->deg, f->raf, ipg, xref, NULL, NULL);
-      Ref2Phy(f->physnode,
+      schnaps_ref2phy(f->physnode,
 	      xref,
 	      0, -1, // dphiref, ifa
               xpg, NULL,
@@ -159,9 +159,9 @@ void InitContinuousSolver(void * cs, Simulation* simu,int type_bc,int nb_phy_var
 
   InitLinearSolver(&ps->lsol,ps->nb_fe_dof,NULL,NULL); //InitSkyline(&sky, neq);
 
-  ps->lsol.rhs = malloc(ps->nb_fe_dof * sizeof(real));
+  ps->lsol.rhs = malloc(ps->nb_fe_dof * sizeof(schnaps_real));
   assert(ps->lsol.rhs);
-  ps->lsol.sol = calloc(ps->nb_fe_dof, sizeof(real));
+  ps->lsol.sol = calloc(ps->nb_fe_dof, sizeof(schnaps_real));
   assert(ps->lsol.sol);
 
   AllocateContinuousMatrix(ps);
@@ -282,7 +282,7 @@ void ExactDirichletContinuousMatrix(void * cs){
         field *f = &ps->simu->fd[ie];
 
         for(int ipglf = 0;ipglf < NPGF(f->deg,f->raf,locfaL); ipglf++){
-          real xpgref[3], xpgref_in[3], wpg;
+          schnaps_real xpgref[3], xpgref_in[3], wpg;
           
           // Get the coordinates of the Gauss point and coordinates of a
           // point slightly inside the opposite element in xref_in
@@ -293,10 +293,10 @@ void ExactDirichletContinuousMatrix(void * cs){
           			ipg,ps->list_of_var[var]);
           int ipot_fe = ino_fe*ps->nb_phy_vars + var;
           // Normal vector at gauss point ipgL
-          real vnds[3], xpg[3];
+          schnaps_real vnds[3], xpg[3];
           {
-            real dtau[3][3], codtau[3][3];
-            Ref2Phy(f->physnode,
+            schnaps_real dtau[3][3], codtau[3][3];
+            schnaps_ref2phy(f->physnode,
                     xpgref,
                     NULL, locfaL, // dpsiref, ifa
                     xpg, dtau,
@@ -304,7 +304,7 @@ void ExactDirichletContinuousMatrix(void * cs){
           }
           
           // the boundary flux is an affine function
-          real flux0[f->model.m];
+          schnaps_real flux0[f->model.m];
           f->model.ImposedData(xpg, f->tnow, flux0);
           ps->lsol.rhs[ipot_fe] = flux0[ps->list_of_var[var]];
         }
@@ -320,7 +320,7 @@ void PenalizedDirichletContinuousMatrix(void * cs){
   ContinuousSolver * ps=cs;
   
   field* f0 = &ps->simu->fd[0];
-   real bigval = 1.e20;//.e16;
+   schnaps_real bigval = 1.e20;//.e16;
   for(int ino=0; ino<ps->nb_fe_nodes; ino++){
    
     if (ps->is_boundary_node[ino]){
@@ -343,7 +343,7 @@ void PenalizedDirichletContinuousMatrix(void * cs){
         field *f = &ps->simu->fd[ie];
 
         for(int ipglf = 0;ipglf < NPGF(f->deg,f->raf,locfaL); ipglf++){
-          real xpgref[3], xpgref_in[3], wpg;
+          schnaps_real xpgref[3], xpgref_in[3], wpg;
           
           // Get the coordinates of the Gauss point and coordinates of a
           // point slightly inside the opposite element in xref_in
@@ -354,10 +354,10 @@ void PenalizedDirichletContinuousMatrix(void * cs){
           			ipg,ps->list_of_var[var]);
           int ipot_fe = ino_fe*ps->nb_phy_vars + var;
           // Normal vector at gauss point ipgL
-          real vnds[3], xpg[3];
+          schnaps_real vnds[3], xpg[3];
           {
-            real dtau[3][3], codtau[3][3];
-            Ref2Phy(f->physnode,
+            schnaps_real dtau[3][3], codtau[3][3];
+            schnaps_ref2phy(f->physnode,
                     xpgref,
                     NULL, locfaL, // dpsiref, ifa
                     xpg, dtau,
@@ -365,7 +365,7 @@ void PenalizedDirichletContinuousMatrix(void * cs){
           }
           
           // the boundary flux is an affine function
-          real flux0[f->model.m];
+          schnaps_real flux0[f->model.m];
           f->model.ImposedData(xpg, f->tnow, flux0);
           ps->lsol.rhs[ipot_fe] = flux0[ps->list_of_var[var]] * bigval;
         }
@@ -444,7 +444,7 @@ void GenericOperator_Continuous(void * cs){
     for(int ie = 0; ie < ps->nbel; ie++){  
 
       // local matrix 
-      real aloc[ps->nnodes*ps->nb_phy_vars][ps->nnodes*ps->nb_phy_vars];
+      schnaps_real aloc[ps->nnodes*ps->nb_phy_vars][ps->nnodes*ps->nb_phy_vars];
       for(int iloc = 0; iloc < ps->nnodes*ps->nb_phy_vars; iloc++){
         for(int jloc = 0; jloc < ps->nnodes*ps->nb_phy_vars; jloc++){
           aloc[iloc][jloc] = 0.0;
@@ -455,24 +455,24 @@ void GenericOperator_Continuous(void * cs){
       int isubcell = ie % (f0->raf[0] * f0->raf[1] * f0->raf[2]);
 
       for(int ipg = 0;ipg < ps->nnodes; ipg++){
-        real wpg;
-        real xref[3];
+        schnaps_real wpg;
+        schnaps_real xref[3];
         int ipgmacro= ipg + isubcell * ps->nnodes;
 
         ref_pg_vol(f0->deg,f0->raf,ipgmacro,xref,&wpg,NULL);
 
         for(int iloc = 0; iloc < ps->nnodes; iloc++){
-          real dtau[3][3],codtau[3][3];
-          real dphiref_i[3],dphiref_j[3];
-          real dphi_i[3],dphi_j[3];
-          real basisPhi_i[4], basisPhi_j[4];
+          schnaps_real dtau[3][3],codtau[3][3];
+          schnaps_real dphiref_i[3],dphiref_j[3];
+          schnaps_real dphi_i[3],dphi_j[3];
+          schnaps_real basisPhi_i[4], basisPhi_j[4];
           int ilocmacro = iloc + isubcell * ps->nnodes;
           grad_psi_pg(f0->deg,f0->raf,ilocmacro,ipgmacro,dphiref_i);
-          Ref2Phy(ps->simu->fd[iemacro].physnode,
+          schnaps_ref2phy(ps->simu->fd[iemacro].physnode,
                   xref,dphiref_i,0,NULL,
                   dtau,codtau,dphi_i,NULL);
         
-          real det = dot_product(dtau[0], codtau[0]);
+          schnaps_real det = dot_product(dtau[0], codtau[0]);
           if (ilocmacro==ipgmacro){
             basisPhi_i[0]=1;
           }
@@ -486,7 +486,7 @@ void GenericOperator_Continuous(void * cs){
           for(int jloc = 0; jloc < ps->nnodes; jloc++){
             int jlocmacro = jloc + isubcell * ps->nnodes;
             grad_psi_pg(f0->deg,f0->raf,jlocmacro,ipgmacro,dphiref_j);
-            Ref2Phy(ps->simu->fd[iemacro].physnode,
+            schnaps_ref2phy(ps->simu->fd[iemacro].physnode,
                     xref,dphiref_j,0,NULL,
                     dtau,codtau,dphi_j,NULL);
             if (jlocmacro==ipgmacro){
@@ -501,7 +501,7 @@ void GenericOperator_Continuous(void * cs){
             basisPhi_j[3]=dphi_j[2]/det;
             for (int iv1=0; iv1<ps->nb_phy_vars; iv1++){
               for (int iv2=0; iv2<ps->nb_phy_vars; iv2++){
-                real res[4] = {0, 0, 0, 0};
+                schnaps_real res[4] = {0, 0, 0, 0};
                 for (int i=0; i<4; i++){
                   for (int j=0; j<4; j++){
                     res[i]+=basisPhi_j[j]*ps->diff_op[ps->nb_phy_vars*iv1+iv2].DO[i][j];
@@ -522,7 +522,7 @@ void GenericOperator_Continuous(void * cs){
           int jno_fe = ps->dg_to_fe_index[jno_dg];
           for (int iv1=0;iv1<ps->nb_phy_vars;iv1++){
             for (int iv2=0;iv2<ps->nb_phy_vars;iv2++){
-              real val = aloc[iloc*ps->nb_phy_vars+iv1][jloc*ps->nb_phy_vars+iv2];
+              schnaps_real val = aloc[iloc*ps->nb_phy_vars+iv1][jloc*ps->nb_phy_vars+iv2];
               AddLinearSolver(&ps->lsol,ino_fe*ps->nb_phy_vars+iv1,jno_fe*ps->nb_phy_vars+iv2,val);
             }
           }
@@ -534,7 +534,7 @@ void GenericOperator_Continuous(void * cs){
 }
 
 
-void cat2CGVectors(ContinuousSolver* L1Solver,ContinuousSolver* L2Solver, real *L1, real *L2, real *L){
+void cat2CGVectors(ContinuousSolver* L1Solver,ContinuousSolver* L2Solver, schnaps_real *L1, schnaps_real *L2, schnaps_real *L){
 
   int cc=0;
   for (int i=0; i<L1Solver->nb_fe_nodes;i++){
@@ -550,7 +550,7 @@ void cat2CGVectors(ContinuousSolver* L1Solver,ContinuousSolver* L2Solver, real *
 
 
 
-void extract2CGVectors(ContinuousSolver* L1Solver,ContinuousSolver* L2Solver, real *L, real *L1, real *L2){
+void extract2CGVectors(ContinuousSolver* L1Solver,ContinuousSolver* L2Solver, schnaps_real *L, schnaps_real *L1, schnaps_real *L2){
   
   int cc=0;
   for (int i=0; i<L1Solver->nb_fe_nodes;i++){

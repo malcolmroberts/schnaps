@@ -4,9 +4,9 @@
 #include "test.h"
 #include "maxwell.h"
 
-void Coil2DImposedData(const real x[3],const real t,real w[])
+void Coil2DImposedData(const schnaps_real x[3],const schnaps_real t,schnaps_real w[])
 {
-  real r = x[0] * x[0] + x[1] * x[1];
+  schnaps_real r = x[0] * x[0] + x[1] * x[1];
   w[0] = 0;
   w[1] = 0;
   w[2] = r > 1 ? 0 : 1;
@@ -16,14 +16,14 @@ void Coil2DImposedData(const real x[3],const real t,real w[])
   w[6] = 0;
 }
 
-void coil_pre_dtfields(void *simu, real *w);
+void coil_pre_dtfields(void *simu, schnaps_real *w);
 
-void coil_pre_dtfields(void *simu, real *w){
+void coil_pre_dtfields(void *simu, schnaps_real *w){
   AccumulateParticles(simu, w);
 }
 
 
-void Coil2DSource(const real *x, const real t, const real *w, real *source)
+void Coil2DSource(const schnaps_real *x, const schnaps_real t, const schnaps_real *w, schnaps_real *source)
 {
   // w: (Ex, Ey, Hz, Hz, \lambda, rho, Jx, Jy)
   
@@ -31,7 +31,7 @@ void Coil2DSource(const real *x, const real t, const real *w, real *source)
 
   static int icall = 0;
   
-  const real khi = 1.0;
+  const schnaps_real khi = 1.0;
   source[0] = -w[4];
   source[1] = -w[5];
   source[2] = 0;
@@ -50,17 +50,17 @@ void Coil2DSource(const real *x, const real t, const real *w, real *source)
 
 
 
-void Coil2DBoundaryFlux(real x[3], real t, real wL[], real *vnorm,
-			real *flux)
+void Coil2DBoundaryFlux(schnaps_real x[3], schnaps_real t, schnaps_real wL[], schnaps_real *vnorm,
+			schnaps_real *flux)
 {
-  real wR[7];
+  schnaps_real wR[7];
   Coil2DImposedData(x, t, wR);
   Maxwell2DNumFlux_upwind(wL, wR, vnorm, flux);
 }
 
-void Coil2DInitData(real x[3], real w[])
+void Coil2DInitData(schnaps_real x[3], schnaps_real w[])
 {
-  real t = 0;
+  schnaps_real t = 0;
   Coil2DImposedData(x, t, w);
 }
 
@@ -117,7 +117,7 @@ int TestCoil2D(void)
   PlotParticles(&pic, &mesh);
 
   // time evolution
-  real tmax = 0.5;
+  schnaps_real tmax = 0.5;
   simu.cfl=0.2;
   simu.vmax = 1;
   RK2(&simu, tmax);
@@ -129,7 +129,7 @@ int TestCoil2D(void)
     field *f = simu.fd + ie;
     int offset = ie * f->wsize;
     //real *wf = f->wn;
-    real *wf = simu.w + offset;
+    schnaps_real *wf = simu.w + offset;
     //assert(1==3); xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
     int npg = NPG(f->deg, f->raf);
     for(int ipg = 0; ipg < npg; ipg++){
@@ -153,8 +153,8 @@ int TestCoil2D(void)
 
   DisplaySimulation(&simu);
 
-  real dd = L2error(&simu);
-  real tolerance = 0.3;
+  schnaps_real dd = L2error(&simu);
+  schnaps_real tolerance = 0.3;
   test = test && (dd < tolerance);
   printf("L2 error: %f\n", dd);
 

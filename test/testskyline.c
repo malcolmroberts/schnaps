@@ -34,10 +34,10 @@ int TestSkyline(void){
   // _NN is the size of the linear system to be solved
   InitSkyline(&sky,_NN);
 
-  real A[_NN][_NN];
-  real vf[_NN];
-  real sol[_NN]={1,2,3,4,5};
-  real vf2[_NN]={0,0,0,0,6};
+  schnaps_real A[_NN][_NN];
+  schnaps_real vf[_NN];
+  schnaps_real sol[_NN]={1,2,3,4,5};
+  schnaps_real vf2[_NN]={0,0,0,0,6};
 
   A[0][0] = 0.2e1;
   A[0][1] = -0.1e1;
@@ -96,7 +96,7 @@ int TestSkyline(void){
   }
 
 
-  real vf3[_NN];
+  schnaps_real vf3[_NN];
 
   // test the product non symmetric case
   for(int i=0; i < _NN; i++){
@@ -129,7 +129,7 @@ int TestSkyline(void){
 
 
   // checking
-  real verr=0;
+  schnaps_real verr=0;
   printf("sol=");
   for(int i=0;i<_NN;i++){
     printf("%f ",sol[i]);

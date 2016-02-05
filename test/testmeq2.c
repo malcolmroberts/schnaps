@@ -53,7 +53,7 @@ int TestmEq2(void){
 
   InitSimulation(&simu, &mesh, deg, raf, &model);
  
-  real tmax = 1;
+  schnaps_real tmax = 1;
   simu.cfl=0.05;
   simu.vmax=1;
   RK2(&simu,tmax);
@@ -61,12 +61,12 @@ int TestmEq2(void){
   PlotFields(0, false, &simu, NULL, "dgvisu.msh");
   PlotFields(0, true , &simu, "error", "dgerror.msh");
 
-  real dd = 0;
+  schnaps_real dd = 0;
   dd = L2error(&simu);
 
   printf("erreur L2=%f\n", dd);
 
-  real tolerance = 0.015;
+  schnaps_real tolerance = 0.015;
 
   test = dd < tolerance;
 

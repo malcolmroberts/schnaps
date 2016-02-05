@@ -8,10 +8,10 @@
 #include "linear_solver.h"
 
 
-void TestPoisson_ImposedData(const real x[3],const real t,real w[]);
-void TestPoisson_InitData(real x[3],real w[]);
-void TestPoisson_BoundaryFlux(real x[3],real t,real wL[],real* vnorm,
-			      real* flux);
+void TestPoisson_ImposedData(const schnaps_real x[3],const schnaps_real t,schnaps_real w[]);
+void TestPoisson_InitData(schnaps_real x[3],schnaps_real w[]);
+void TestPoisson_BoundaryFlux(schnaps_real x[3],schnaps_real t,schnaps_real wL[],schnaps_real* vnorm,
+			      schnaps_real* flux);
 
 int main(void) 
 {
@@ -103,7 +103,7 @@ int TestPoisson(void)
   SolveContinuous2D(&ps);
 
 
-  real errl2 = L2error(&simu);
+  schnaps_real errl2 = L2error(&simu);
 
   printf("Erreur L2=%.12e\n",errl2);
 
@@ -129,12 +129,12 @@ int TestPoisson(void)
 }
 
 
-void TestPoisson_ImposedData(const real x[3], const real t,real w[]){
+void TestPoisson_ImposedData(const schnaps_real x[3], const schnaps_real t,schnaps_real w[]){
   for(int i = 0; i < _INDEX_MAX_KIN + 1; i++){
     int j = i%_DEG_V; // local connectivity put in function
     int nel = i / _DEG_V; // element num (TODO : function)
 
-    real vi = (-_VMAX + nel * _DV + _DV * glop(_DEG_V, j));
+    schnaps_real vi = (-_VMAX + nel * _DV + _DV * glop(_DEG_V, j));
 
     w[i] = 1. / _VMAX;
   }
@@ -149,17 +149,17 @@ void TestPoisson_ImposedData(const real x[3], const real t,real w[]){
 
 };
 
-void TestPoisson_InitData(real x[3],real w[]){
+void TestPoisson_InitData(schnaps_real x[3],schnaps_real w[]){
 
-  real t=0;
+  schnaps_real t=0;
   TestPoisson_ImposedData(x,t,w);
 
 };
 
 
-void TestPoisson_BoundaryFlux(real x[3],real t,real wL[],real* vnorm,
-				       real* flux){
-  real wR[_MV+6];
+void TestPoisson_BoundaryFlux(schnaps_real x[3],schnaps_real t,schnaps_real wL[],schnaps_real* vnorm,
+				       schnaps_real* flux){
+  schnaps_real wR[_MV+6];
   TestPoisson_ImposedData(x,t,wR);
   VlasovP_Lagrangian_NumFlux(wL,wR,vnorm,flux);
 };

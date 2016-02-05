@@ -15,7 +15,7 @@
 typedef struct SDO{
 
   //! \brief physical coordinates of the node
-  real DO[4][4];
+  schnaps_real DO[4][4];
 
 } SDO;
 
@@ -29,7 +29,7 @@ typedef struct FatNode{
   int fe_index;
 
   //! \brief physical coordinates of the node
-  real x[3];
+  schnaps_real x[3];
   //! \brief int converted coordinates for sorting and searching
   int x_int[3];
 
@@ -91,7 +91,7 @@ typedef struct ContinuousSolver{
   SDO * diff_op;
 
   //! \brief FluxMatrix is the matrix of the hyperbolic model
-  real ** FluxMatrix;
+  schnaps_real ** FluxMatrix;
   
   //! \brief pointer on the function which assembles the rhs
   //! \param[inout] lsol a linear solver allocate
@@ -118,7 +118,7 @@ typedef struct ContinuousSolver{
   //! \param[in] w a vector of unknowns
   //! \param[in] vnorm a vector of normal
   //! \param[inout] flux a vector of flux
-  void (*bc_flux)(void * cs, real * xpg, real * w, real *vnorm, real * flux);
+  void (*bc_flux)(void * cs, schnaps_real * xpg, schnaps_real * w, schnaps_real *vnorm, schnaps_real * flux);
 
   
 
@@ -185,7 +185,7 @@ void GenericOperator_Continuous(void * cs);//,LinearSolver* lsol);
 //! \param[in] L2 is a vector
 //! \param[in] L1Solver a continuous solver
 //! \param[in] L2Solver continuous solver
-void cat2CGVectors(ContinuousSolver* L1Solver,ContinuousSolver* L2Solver, real *L1, real *L2, real *L);
+void cat2CGVectors(ContinuousSolver* L1Solver,ContinuousSolver* L2Solver, schnaps_real *L1, schnaps_real *L2, schnaps_real *L);
 
 //! \brief extract the variables of the Solver L1Solver in the L1 vector (resp variables of the Solver L2Solver in the L2 vector)
 //! \param[inout] L is a vector
@@ -193,7 +193,7 @@ void cat2CGVectors(ContinuousSolver* L1Solver,ContinuousSolver* L2Solver, real *
 //! \param[in] L2 is a vector
 //! \param[in] L1Solver a continuous solver
 //! \param[in] L2Solver continuous solver
-void extract2CGVectors(ContinuousSolver* L1Solver,ContinuousSolver* L2Solver, real *L, real *L1, real *L2);
+void extract2CGVectors(ContinuousSolver* L1Solver,ContinuousSolver* L2Solver, schnaps_real *L, schnaps_real *L1, schnaps_real *L2);
 
 
 //! \brief frees a ContinuousSolver object

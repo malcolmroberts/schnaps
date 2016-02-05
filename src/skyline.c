@@ -6,16 +6,16 @@
 #include "math.h"
 
 
-int sol_(real *vkgs, real *vkgd, real *
-	vkgi, real *vfg, int *kld, real *vu, int neq, 
-	 int ifac, int isol, int nsym, real *
+int sol_(schnaps_real *vkgs, schnaps_real *vkgd, schnaps_real *
+	vkgi, schnaps_real *vfg, int *kld, schnaps_real *vu, int neq, 
+	 int ifac, int isol, int nsym, schnaps_real *
 	 energ, int *ier);
 
-int mulku_(real *vkgs, real *vkgd, real *
-	vkgi, int *kld, real *vfg, int neq, int nsym, 
-	   real *vres, int nsky);
+int mulku_(schnaps_real *vkgs, schnaps_real *vkgd, schnaps_real *
+	vkgi, int *kld, schnaps_real *vfg, int neq, int nsym, 
+	   schnaps_real *vres, int nsky);
 
-real scal_(real *x, real *y, int *n);
+schnaps_real scal_(schnaps_real *x, schnaps_real *y, int *n);
 
 
 void InitSkyline(Skyline* sky, int n){
@@ -32,7 +32,7 @@ void InitSkyline(Skyline* sky, int n){
   sky->vkgs=NULL;
   sky->copy_vkgs=NULL;
 
-  sky->vkgd=calloc(n,sizeof(real));
+  sky->vkgd=calloc(n,sizeof(schnaps_real));
   assert(sky->vkgd);
   for(int i=0;i<n;i++) sky->vkgd[i]=0;
   sky->copy_vkgd=NULL;
@@ -69,11 +69,11 @@ void AllocateSkyline(Skyline* sky){
   }
   sky->nmem=sky->kld[sky->neq];
 
-  sky->vkgs=calloc(sky->nmem,sizeof(real));
+  sky->vkgs=calloc(sky->nmem,sizeof(schnaps_real));
   assert(sky->vkgs);
 
   if (! sky->is_sym){
-    sky->vkgi=calloc(sky->nmem,sizeof(real));
+    sky->vkgi=calloc(sky->nmem,sizeof(schnaps_real));
     assert(sky->vkgi);
   }
   else{
@@ -95,18 +95,18 @@ void AllocateCopySkyline(Skyline* sky){
 
   assert(!sky->copy_is_alloc);
 
-  sky->copy_vkgs=calloc(sky->nmem,sizeof(real));
+  sky->copy_vkgs=calloc(sky->nmem,sizeof(schnaps_real));
   assert(sky->copy_vkgs);
 
   if (! sky->is_sym){
-    sky->copy_vkgi=calloc(sky->nmem,sizeof(real));
+    sky->copy_vkgi=calloc(sky->nmem,sizeof(schnaps_real));
     assert(sky->copy_vkgi);
   }
   else{
     sky->copy_vkgi=sky->copy_vkgs;
   }
 
-  sky->copy_vkgd=calloc(sky->neq,sizeof(real));
+  sky->copy_vkgd=calloc(sky->neq,sizeof(schnaps_real));
   assert(sky->copy_vkgd);
   for(int i=0;i<sky->neq;i++) sky->copy_vkgd[i]=0;
 
@@ -129,7 +129,7 @@ void AllocateCopySkyline(Skyline* sky){
 
 }
 
-void AddSkyline(Skyline* sky,int i,int j,real val){
+void AddSkyline(Skyline* sky,int i,int j,schnaps_real val){
 
   assert(sky->is_alloc);
   
@@ -160,7 +160,7 @@ void AddSkyline(Skyline* sky,int i,int j,real val){
 
 }
 
-void SetSkyline(Skyline* sky,int i,int j,real val){
+void SetSkyline(Skyline* sky,int i,int j,schnaps_real val){
 
   assert(sky->is_alloc);
 
@@ -190,7 +190,7 @@ void SetSkyline(Skyline* sky,int i,int j,real val){
   
 } 
 
-real GetSkyline(Skyline* sky,int i,int j){
+schnaps_real GetSkyline(Skyline* sky,int i,int j){
 
   if (sky->is_sym && i>j){
     int temp=i;
@@ -265,9 +265,9 @@ void DisplaySkyline(Skyline* sky){
 
 void FactoLU(Skyline* sky){
 
-  real* vfg=NULL;
-  real* vu=NULL;
-  real energ;
+  schnaps_real* vfg=NULL;
+  schnaps_real* vu=NULL;
+  schnaps_real energ;
   int ier;
   int ifac=1;
   int isol=0;
@@ -287,7 +287,7 @@ void FactoLU(Skyline* sky){
 
 }
 
-void MatVectSkyline(Skyline * sky, real * x, real * prod) {
+void MatVectSkyline(Skyline * sky, schnaps_real * x, schnaps_real * prod) {
 
   //assert(!sky->is_lu);
 
@@ -310,22 +310,22 @@ void MatVectSkyline(Skyline * sky, real * x, real * prod) {
 
 
 
-void SolveSkyline(Skyline* sky,real* vfg,real* vu){
+void SolveSkyline(Skyline* sky,schnaps_real* vfg,schnaps_real* vu){
   assert(sky->is_lu);
 
-  real energ;
+  schnaps_real energ;
   int ier,iter;
   int ifac=0;
   int isol=1;
   int nsym=1;
-  real * vec_temp;
-  real * sol_temp;
-  real * sol_temp2;
+  schnaps_real * vec_temp;
+  schnaps_real * sol_temp;
+  schnaps_real * sol_temp2;
   int nb_iterations=2;
 
-  sol_temp=calloc(sky->neq,sizeof(real));
-  sol_temp2=calloc(sky->neq,sizeof(real));  
-  vec_temp=calloc(sky->neq,sizeof(real));
+  sol_temp=calloc(sky->neq,sizeof(schnaps_real));
+  sol_temp2=calloc(sky->neq,sizeof(schnaps_real));  
+  vec_temp=calloc(sky->neq,sizeof(schnaps_real));
   
   if (sky->is_sym) nsym=0;
 
@@ -353,7 +353,7 @@ void SolveSkyline(Skyline* sky,real* vfg,real* vu){
 	 vec_temp, sky->kld, sol_temp2, sky->neq, 
 	 ifac, isol, nsym,&energ, &ier);
     
-    real error=0.0;
+    schnaps_real error=0.0;
     for(int i=0; i < sky->neq; i++){
       error=error+fabs(sol_temp2[i]);
     }
@@ -410,14 +410,14 @@ void FreeSkyline(Skyline* sky){
 
 static int c__1 = 1;
 
-/* Subroutine */ int sol_(real *vkgs, real *vkgd, real *
-	vkgi, real *vfg, int *kld, real *vu, int neq, 
-	 int ifac, int isol, int nsym, real *
+/* Subroutine */ int sol_(schnaps_real *vkgs, schnaps_real *vkgd, schnaps_real *
+	vkgi, schnaps_real *vfg, int *kld, schnaps_real *vu, int neq, 
+	 int ifac, int isol, int nsym, schnaps_real *
 	energ, int *ier)
 {
     /* Initialized data */
 
-    static real vzero = 0.0;
+    static schnaps_real vzero = 0.0;
 
     /* Format strings */
     static char fmt_8000[] = "sol pivot nul equation";
@@ -430,12 +430,12 @@ static int c__1 = 1;
 
     /* Local variables */
     static int i__;
-    static real c1=0.0, c2=0.0;
+    static schnaps_real c1=0.0, c2=0.0;
     static int j1, j2, ic, ij, ik, jbk, jck, jhj, jhk, lhk, jhj1, jhk1, 
 	    lhk1;
-    extern real scal_(real *, real *, int *);
+    extern schnaps_real scal_(schnaps_real *, schnaps_real *, int *);
     static int imin, imax, imin1;
-    static real cdiag=0.0;
+    static schnaps_real cdiag=0.0;
 
 /*   resolution d'un systeme lineaire symetrique ou non. la matrice est */
 /*   stockee par ligne de ciel,en memoire dans les tables vkgs,vkgd,vkgi */
@@ -679,15 +679,15 @@ L9999:
 /* ===========================   fin du module sol    ================== */
 } /* sol_ */
 
-real scal_(real *x, real *y, int *n)
+schnaps_real scal_(schnaps_real *x, schnaps_real *y, int *n)
 {
     /* Initialized data */
 
-    static real zero = 0.0;
+    static schnaps_real zero = 0.0;
 
     /* System generated locals */
     int i__1;
-    real ret_val=0.0;
+    schnaps_real ret_val=0.0;
 
     /* Local variables */
     static int i__;
@@ -724,15 +724,15 @@ real scal_(real *x, real *y, int *n)
 
 //#include "f2c.h"
 
-/* Subroutine */ int mulku_(real *vkgs, real *vkgd, real *
-	vkgi, int *kld, real *vfg, int neq, int nsym, 
-	real *vres, int nsky)
+/* Subroutine */ int mulku_(schnaps_real *vkgs, schnaps_real *vkgd, schnaps_real *
+	vkgi, int *kld, schnaps_real *vfg, int neq, int nsym, 
+	schnaps_real *vres, int nsky)
 {
     /* System generated locals */
     int i__1, i__2;
 
     /* Local variables */
-    static real c__;
+    static schnaps_real c__;
     static int j, i0, i1, ij, ik, jhk, lhk, jhk1;
     //extern real scal_(real *, real *, int *);
 

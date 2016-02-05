@@ -22,7 +22,7 @@ int main(void) {
 
 
 
-void JFNonlinearVector_GX(Simulation *simu,void* system,real * solvector,real *nlvector){
+void JFNonlinearVector_GX(Simulation *simu,void* system,schnaps_real * solvector,schnaps_real *nlvector){
   JFLinearSolver* lsol=system;
 
   nlvector[0] = 9*solvector[0]*solvector[0]+36*solvector[1]*solvector[1]+4*solvector[2]*solvector[2];
@@ -31,7 +31,7 @@ void JFNonlinearVector_GX(Simulation *simu,void* system,real * solvector,real *n
 
 }
 
-void NonlinearVector_GX(Simulation *simu,void* system,real * solvector,real *nlvector){
+void NonlinearVector_GX(Simulation *simu,void* system,schnaps_real * solvector,schnaps_real *nlvector){
   LinearSolver* lsol=system;
 
   nlvector[0] = 9*solvector[0]*solvector[0]+36*solvector[1]*solvector[1]+4*solvector[2]*solvector[2];
@@ -44,8 +44,8 @@ void NonlinearVector_GX(Simulation *simu,void* system,real * solvector,real *nlv
 int TestNonLinearSolver(void){
 
   int test=1,test1=1,test2=1,test3=1,test4=1;
-  real A[_NN][_NN];
-  real b[_NN],sold[_NN],soln[_NN],fsoln[_NN],rhs[_NN];
+  schnaps_real A[_NN][_NN];
+  schnaps_real b[_NN],sold[_NN],soln[_NN],fsoln[_NN],rhs[_NN];
   double verr;
 
 #ifdef PARALUTION 

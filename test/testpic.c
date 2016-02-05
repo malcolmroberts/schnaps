@@ -13,7 +13,7 @@ int main(void) {
   return !resu;
 } 
 
-void Maxwell2DConstInitData(real x[3], real w[]) {
+void Maxwell2DConstInitData(schnaps_real x[3], schnaps_real w[]) {
   w[0]=0;
   w[1]=0;
   w[2]=1;
@@ -71,7 +71,7 @@ int TestPIC(void)
   pic.xv[0]=0;
   pic.xv[1]=1;
   pic.xv[2]=0.5;
-  real xref[3];
+  schnaps_real xref[3];
   pic.cell_id[0]=NumElemFromPoint(&mesh,pic.xv,xref);
   pic.xv[0]=xref[0];  
   pic.xv[1]=xref[1];  
@@ -82,8 +82,8 @@ int TestPIC(void)
 
   simu.pic = &pic;
 
-  real final_pos_phy[3]={0,-1,0.5};
-  real final_pos[3];
+  schnaps_real final_pos_phy[3]={0,-1,0.5};
+  schnaps_real final_pos[3];
   int final_cell=NumElemFromPoint(&mesh,
 				  final_pos_phy,final_pos);
 

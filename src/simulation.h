@@ -21,9 +21,9 @@ typedef struct Simulation {
   Interface *interface;
 
   //! memory spaces for w and dtw
-  real *w;
-  real *dtw;
-  real *res;
+  schnaps_real *w;
+  schnaps_real *dtw;
+  schnaps_real *res;
 
 
   //! array of starpu data handles
@@ -39,19 +39,19 @@ typedef struct Simulation {
   int interp_param[7];
 
   //! Current time
-  real tnow;
+  schnaps_real tnow;
   //! CFL parameter min_i (vol_i / surf_i)
-  real hmin;
+  schnaps_real hmin;
 
   //! PIC struct pointer (=NULL if not used)
   void *pic;
 
 
   //! final time of simulation
-  real tmax;
+  schnaps_real tmax;
 
   //! time step, theta (Crank-Nicholson) and cfl
-  real dt,theta,cfl;
+  schnaps_real dt,theta,cfl;
 
   //! current iteration of the RK algorithm
   int iter_time_rk;
@@ -60,16 +60,16 @@ typedef struct Simulation {
   //! nb of diagnostics
   int nb_diags;
   //! table for diagnostics
-  real *Diagnostics;
+  schnaps_real *Diagnostics;
 
 
   //! \brief Pointer to a generic function called before computing dtfield.
   //! \param[inout] si a simulation (to be converted from void*)
-  void (*pre_dtfields)(void *si, real *w);
+  void (*pre_dtfields)(void *si, schnaps_real *w);
 
   //! \brief Pointer to a generic function called after computing dtfield.
   //! \param[inout] si a simulation (to be converted from void*)
-  void (*post_dtfields)(void *si, real *w);
+  void (*post_dtfields)(void *si, schnaps_real *w);
 
   //! \brief generic update function called
   //! \brief called at each runge-kutta sustep
@@ -77,11 +77,11 @@ typedef struct Simulation {
   //! \param[in] elem macro element index
   //! \param[in] ipg glop index
   //! \param[in] iv field component index
-  void (*update_after_rk)(void *si, real *w);
+  void (*update_after_rk)(void *si, schnaps_real *w);
 
 
   //! vmax
-  real vmax;
+  schnaps_real vmax;
 
 #ifdef _WITH_OPENCL
   //! \brief opencl data
@@ -96,7 +96,7 @@ typedef struct Simulation {
   cl_mem physnodes_cl; // The physnodes for all the macrocells
 
   cl_mem physnodeR_cl;
-  real *physnodeR;
+  schnaps_real *physnodeR;
 
   bool use_source_cl;
   char *sourcename_cl;
@@ -175,12 +175,12 @@ void InitInterfaces(Simulation *simu);
 //! \brief apply the Discontinuous Galerkin approximation for computing
 //! the time derivative of the fields. Works with several subcells.
 //! \param[inout] simu A simulation
-void DtFields(Simulation *simu, real *w, real *dtw);
+void DtFields(Simulation *simu, schnaps_real *w, schnaps_real *dtw);
 
 //! \brief compute the time step of the RK scheme
 //! respecting a cfl condition
 //! \param[inout] simu A simulation
-real Get_Dt_RK(Simulation *simu);
+schnaps_real Get_Dt_RK(Simulation *simu);
 
 //! \brief An out-of-place RK stage
 //! \param[out] fwnp1 field at time n+1
@@ -188,7 +188,7 @@ real Get_Dt_RK(Simulation *simu);
 //! \param[in] fdtwn time derivative of the field
 //! \param[in] dt time step
 //! \param[in] sizew size of the field buffer
-void RK_out(real *fwnp1, real *fwn, real *fdtwn, const real dt,
+void RK_out(schnaps_real *fwnp1, schnaps_real *fwn, schnaps_real *fdtwn, const schnaps_real dt,
 	    const int sizew);
 
 //! \brief An in-place RK stage
@@ -196,7 +196,7 @@ void RK_out(real *fwnp1, real *fwn, real *fdtwn, const real dt,
 //! \param[in] fdtwn time derivative of the field
 //! \param[in] dt time step
 //! \param[in] sizew size of the field buffer
-void RK_in(real *fwnp1, real *fdtwn, const real dt, const int sizew);
+void RK_in(schnaps_real *fwnp1, schnaps_real *fdtwn, const schnaps_real dt, const int sizew);
 
 //! \brief Final in-place RK stage
 //! \param[out] w field at time n+1
@@ -206,18 +206,18 @@ void RK_in(real *fwnp1, real *fdtwn, const real dt, const int sizew);
 //! \param[in] dtw last rk4 vector
 //! \param[in] dt time step
 //! \param[in] sizew size of the field buffer
-void RK4_final_inplace(real *w, real *l1, real *l2, real *l3,
-		       real *dtw, const real dt, const int sizew);
+void RK4_final_inplace(schnaps_real *w, schnaps_real *l1, schnaps_real *l2, schnaps_real *l3,
+		       schnaps_real *dtw, const schnaps_real dt, const int sizew);
 
 //! \brief Time integration by a second order Runge-Kutta algorithm
 //! \param[inout] simu a simulation
 //! \param[in] tmax physical duration of the simulation
-void RK2(Simulation *simu, real tmax);
+void RK2(Simulation *simu, schnaps_real tmax);
 
 //! \brief Time integration by a second order Runge-Kutta algorithm
 //! \param[inout] simu a simulation
 //! \param[in] tmax physical duration of the simulation
-void RK4(Simulation *simu, real tmax);
+void RK4(Simulation *simu, schnaps_real tmax);
 
 
 // TODO: see how to manage opencl...
@@ -251,19 +251,19 @@ void DisplaySimulation(Simulation *simu);
 //! \param[in] dir fixed direction to plot
 //! \param[in] fixval fixed value to plot
 //! \param[in] filename the path to the gmsh visualization file.
-void Gnuplot(Simulation *simu,int dir, real fixval,char* filename);
+void Gnuplot(Simulation *simu,int dir, schnaps_real fixval,char* filename);
 
 //! \brief compute the normalized L2 distance with the imposed data
 //! \param[in] simu a simulation.
 //! \returns the error.
-real L2error(Simulation *simu);
+schnaps_real L2error(Simulation *simu);
 
 
 //! \brief compute the normalized L2 distance with the imposed data
 //! \param[in] simu a simulation.
 //! \param[in] nbvar index of one variable.
 //! \returns the error.
-real L2error_onefield(Simulation *simu, int nbvar);
+schnaps_real L2error_onefield(Simulation *simu, int nbvar);
 
 //! \brief frees any Simulation object
 //! \param[inout] simu: a Simulation object
@@ -281,7 +281,7 @@ void UnregisterSimulation_SPU(Simulation* simu);
 //! \param[in] array a real array
 //! \param[in] size array size
 //! \param[in] name an array name (appears on every line: make it short)
-void DisplayArray(real* array,
+void DisplayArray(schnaps_real* array,
                   size_t size,
                   const char* name);
 

@@ -5,7 +5,7 @@
 #include <assert.h>
 #include <math.h>
 
-bool submit_task(Simulation* simu, real* buffer_cmp) {
+bool submit_task(Simulation* simu, schnaps_real* buffer_cmp) {
   bool test = true;
 
   // Indicators for function comparision
@@ -14,8 +14,8 @@ bool submit_task(Simulation* simu, real* buffer_cmp) {
 
   // Data buffer
   const int size = simu->wsize / simu->macromesh.nbelems;
-  real* buffer_in = calloc(size, sizeof(real));
-  real* buffer_out = calloc(size, sizeof(real));
+  schnaps_real* buffer_in = calloc(size, sizeof(schnaps_real));
+  schnaps_real* buffer_out = calloc(size, sizeof(schnaps_real));
 
   // Loop over the fields
   for (int iel = 0; iel < simu->macromesh.nbelems; ++iel) {
@@ -23,8 +23,8 @@ bool submit_task(Simulation* simu, real* buffer_cmp) {
 
     // Create data handle (init and register)
     for (int i = 0; i < size; ++i) buffer_in[i] = i;
-    starpu_vector_data_register(&f->wn_handle, 0, (uintptr_t) buffer_in, size, sizeof(real));
-    starpu_vector_data_register(&f->res_handle, 0, (uintptr_t) buffer_out, size, sizeof(real));
+    starpu_vector_data_register(&f->wn_handle, 0, (uintptr_t) buffer_in, size, sizeof(schnaps_real));
+    starpu_vector_data_register(&f->res_handle, 0, (uintptr_t) buffer_out, size, sizeof(schnaps_real));
 
     // Task
     DGVolume_SPU(f);
@@ -79,7 +79,7 @@ int TestCodelet_DGVolume_SPU(void){
 
   /* int deg[]={3, 3, 3}; */
   /* int raf[]={3, 3, 3}; */
-  int deg[]={3, 3, 3};
+  int deg[]={1, 2, 2};
   int raf[]={2, 2, 2};
 
   MacroMesh mesh;
@@ -105,9 +105,9 @@ int TestCodelet_DGVolume_SPU(void){
   sprintf(cl_buildoptions, "%s", "");
   char buf[1000];
 #ifdef _DOUBLE_PRECISION
-  sprintf(buf, "-D real=double");
+  sprintf(buf, "-D schnaps_real=double");
 #else
-  sprintf(buf, "-D real=float");
+  sprintf(buf, "-D schnaps_real=float");
 #endif
   strcat(cl_buildoptions, buf);
 
@@ -115,9 +115,6 @@ int TestCodelet_DGVolume_SPU(void){
   strcat(cl_buildoptions, buf);
 
   sprintf(buf, " -D NUMFLUX=%s", "Maxwell3DNumFlux_upwind");
-  strcat(cl_buildoptions, buf);
-
-  sprintf(buf, " -D BOUNDARYFLUX=%s", "Maxwell3DBoundaryFlux_upwind");
   strcat(cl_buildoptions, buf);
 
 
@@ -158,7 +155,7 @@ int TestCodelet_DGVolume_SPU(void){
   struct starpu_codelet* codelet = DGVolume_codelet();
   struct starpu_codelet codelet_backup = *codelet;
 
-  real* buffer_cmp = calloc(simu.wsize, sizeof(real));
+  schnaps_real* buffer_cmp = calloc(simu.wsize, sizeof(schnaps_real));
 
   // Loop over workers to submit tasks
   for (int wid = 0; wid < nb_workers; ++wid) {

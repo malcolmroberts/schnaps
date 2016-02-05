@@ -35,8 +35,8 @@ void InitLinearSolver(LinearSolver* lsol,int n,
 
   if (matstor != NULL) {
     if (*matstor != SKYLINE_SPU){
-      lsol->rhs=calloc(n,sizeof(real));
-      lsol->sol=calloc(n,sizeof(real));
+      lsol->rhs=calloc(n,sizeof(schnaps_real));
+      lsol->sol=calloc(n,sizeof(schnaps_real));
     }
   }
     
@@ -163,7 +163,7 @@ void AllocateLinearSolver(LinearSolver* lsol){
   lsol->is_alloc=true;
 }
 
-void AddLinearSolver(LinearSolver* lsol,int i,int j,real val){
+void AddLinearSolver(LinearSolver* lsol,int i,int j,schnaps_real val){
 
   assert(lsol->is_init);
   assert(lsol->is_alloc);
@@ -185,7 +185,7 @@ void AddLinearSolver(LinearSolver* lsol,int i,int j,real val){
 
 }
 
-void SetLinearSolver(LinearSolver* lsol,int i,int j,real val){
+void SetLinearSolver(LinearSolver* lsol,int i,int j,schnaps_real val){
 
   assert(lsol->is_init);
   assert(lsol->is_alloc);
@@ -207,12 +207,12 @@ void SetLinearSolver(LinearSolver* lsol,int i,int j,real val){
 
 } 
 
-real GetLinearSolver(LinearSolver* lsol,int i,int j){
+schnaps_real GetLinearSolver(LinearSolver* lsol,int i,int j){
 
   assert(lsol->is_init);
   assert(lsol->is_alloc);
   
-  real val;
+  schnaps_real val;
 
   switch(lsol->storage_type) {
 
@@ -256,9 +256,9 @@ void DisplayLinearSolver(LinearSolver* lsol){
 
 } 
 
-void MatVect(void * system,real x[],real prod[]){
+void MatVect(void * system,schnaps_real x[],schnaps_real prod[]){
   int i,j;
-  real aij;
+  schnaps_real aij;
   LinearSolver* lsol=system;
   
   switch(lsol->storage_type) {
@@ -294,7 +294,7 @@ void MatVect(void * system,real x[],real prod[]){
 
 void MatVectIn(void * system){
   int i,j;
-  real aij;
+  schnaps_real aij;
   LinearSolver* lsol=system;
   
   switch(lsol->storage_type) {
@@ -324,7 +324,7 @@ void MatVectIn(void * system){
 
 void MatVect_SPU(void * system, starpu_data_handle_t sol_handle, starpu_data_handle_t rhs_handle){
   int i,j;
-  real aij;
+  schnaps_real aij;
   LinearSolver* lsol=system;
   
   switch(lsol->storage_type) {
@@ -353,7 +353,7 @@ void MatVect_SPU(void * system, starpu_data_handle_t sol_handle, starpu_data_han
 }
 
 
-void Vector_copy(real x[],real prod[],int N){
+void Vector_copy(schnaps_real x[],schnaps_real prod[],int N){
   int i;
  
     for(i=0;i<N;i++)
@@ -363,9 +363,9 @@ void Vector_copy(real x[],real prod[],int N){
 }
 
 
-real Vector_norm2(real x[],int  N){
+schnaps_real Vector_norm2(schnaps_real x[],int  N){
   int i;
-  real norm=0;
+  schnaps_real norm=0;
  
   for(i=0;i<N;i++)
     {
@@ -378,9 +378,9 @@ real Vector_norm2(real x[],int  N){
 
 
 
-real Vector_prodot(real x[],real y[],int N){
+schnaps_real Vector_prodot(schnaps_real x[],schnaps_real y[],int N){
   int i;
-  real prod;
+  schnaps_real prod;
 
   prod=0;
     for(i=0;i<N;i++)
@@ -468,15 +468,15 @@ void SolveLinearSolver(LinearSolver* lsol){
 void Solver_Paralution(LinearSolver* lsol){
   int * rows=NULL;
   int * cols=NULL;
-  real * coefs=NULL;
+  schnaps_real * coefs=NULL;
   
-  real * mat_coefs=NULL;
-  real * RHS=NULL;
-  real * Sol=NULL;
+  schnaps_real * mat_coefs=NULL;
+  schnaps_real * RHS=NULL;
+  schnaps_real * Sol=NULL;
   char * solver;
   char * pc;
   char * storage;
-  real * residu=0; 
+  schnaps_real * residu=0; 
   int nnz=0,n=0,c=0;
   Skyline * mat;
   
@@ -484,8 +484,8 @@ void Solver_Paralution(LinearSolver* lsol){
   int* iter_final=0;
   int* ierr=0;
   int maxit=10000;
-  real norm_rhs=0;
-  real a_tol=0,r_tol=0,div_tol=1.e+8;
+  schnaps_real norm_rhs=0;
+  schnaps_real a_tol=0,r_tol=0,div_tol=1.e+8;
 
   storage="CSR";
   norm_rhs=Vector_norm2(lsol->rhs,lsol->neq);
@@ -559,12 +559,12 @@ void Solver_Paralution(LinearSolver* lsol){
 
   
   n=lsol->neq;
-  RHS = calloc(n,sizeof(real));
-  Sol = calloc(n,sizeof(real));
+  RHS = calloc(n,sizeof(schnaps_real));
+  Sol = calloc(n,sizeof(schnaps_real));
 
   for(int i=0;i<n;i++){
-    RHS[i] = (real) lsol->rhs[i];
-    Sol[i] = (real )lsol->sol[i];   
+    RHS[i] = (schnaps_real) lsol->rhs[i];
+    Sol[i] = (schnaps_real )lsol->sol[i];   
   }
 
 
@@ -579,7 +579,7 @@ void Solver_Paralution(LinearSolver* lsol){
   
     rows = (int*) malloc(nnz*sizeof(int)); 
     cols = (int*) malloc(nnz*sizeof(int));
-    coefs = (real*) malloc(nnz*sizeof(real));
+    coefs = (schnaps_real*) malloc(nnz*sizeof(schnaps_real));
     assert(rows);
   
     for (int i=0;i< mat->neq; i++) {
@@ -609,9 +609,9 @@ void Solver_Paralution(LinearSolver* lsol){
       }
     }    
     
-    mat_coefs = malloc(nnz*sizeof(real));
+    mat_coefs = malloc(nnz*sizeof(schnaps_real));
     for(int i=0;i<nnz;i++){
-      mat_coefs[i] = (real) coefs[i];
+      mat_coefs[i] = (schnaps_real) coefs[i];
     }
     
 #ifdef PARALUTION
@@ -630,7 +630,7 @@ void Solver_Paralution(LinearSolver* lsol){
   }
   
   for(int i=0;i<n;i++){
-    lsol->sol[i] = (real) Sol[i];
+    lsol->sol[i] = (schnaps_real) Sol[i];
   }
   
 }
@@ -648,14 +648,14 @@ void GMRESSolver(LinearSolver* lsol){
   int irc[5+1];
   int icntl[8+1];
   int info[3+1];
-  real cntl[5+1];
-  real rinfo[2+1];
-  real sum,err,sum_rhs,lr_tol;
-  real * work;
-  real *loc_x;
-  real *loc_y;
-  real *loc_z;
-  real prodot=0.0;
+  schnaps_real cntl[5+1];
+  schnaps_real rinfo[2+1];
+  schnaps_real sum,err,sum_rhs,lr_tol;
+  schnaps_real * work;
+  schnaps_real *loc_x;
+  schnaps_real *loc_y;
+  schnaps_real *loc_z;
+  schnaps_real prodot=0.0;
   int res=0;
   int matvec=1, precondLeft=2, precondRight=3, dotProd=4;
 
@@ -701,10 +701,10 @@ void GMRESSolver(LinearSolver* lsol){
   pt_Size = &N;
   pt_lwork = &lwork;
 
-  work = calloc(lwork, sizeof(real));
-  loc_x = calloc(N, sizeof(real));
-  loc_y = calloc(N, sizeof(real));
-  loc_z = calloc(N, sizeof(real));
+  work = calloc(lwork, sizeof(schnaps_real));
+  loc_x = calloc(N, sizeof(schnaps_real));
+  loc_y = calloc(N, sizeof(schnaps_real));
+  loc_z = calloc(N, sizeof(schnaps_real));
   
   for(int ivec = 0; ivec < N; ivec++) {
     work[ivec+1]     = lsol->sol[ivec];                    
@@ -712,10 +712,10 @@ void GMRESSolver(LinearSolver* lsol){
   }
 
 
-  real * Ax2=calloc(lsol->neq,sizeof(real));
+  schnaps_real * Ax2=calloc(lsol->neq,sizeof(schnaps_real));
   lsol->MatVecProduct(lsol,lsol->sol,Ax2);
-  real errorb=0;
-  real errorb2=0;
+  schnaps_real errorb=0;
+  schnaps_real errorb2=0;
    for(int i = 0; i < N; i++) {
      errorb=errorb+fabs((Ax2[i]-lsol->rhs[i])*(Ax2[i]-lsol->rhs[i]));                    
      errorb2=errorb2+fabs(lsol->sol[i]*lsol->sol[i]);                    
@@ -797,10 +797,10 @@ void GMRESSolver(LinearSolver* lsol){
     lsol->sol[ivec] = work[ivec+1];                    
   }
 
-  real * Ax=calloc(lsol->neq,sizeof(real));
+  schnaps_real * Ax=calloc(lsol->neq,sizeof(schnaps_real));
   lsol->MatVecProduct(lsol,lsol->sol,Ax);
-  real error=0;
-  real error2=0;
+  schnaps_real error=0;
+  schnaps_real error2=0;
    for(int i = 0; i < N; i++) {
      error=error+fabs((Ax[i]-lsol->rhs[i])*(Ax[i]-lsol->rhs[i]));                    
      error2=error2+fabs(lsol->sol[i]*lsol->sol[i]);                    
@@ -817,7 +817,7 @@ void GMRESSolver(LinearSolver* lsol){
 
 
 
-void Jacobi_PC(LinearSolver *lsol, real* sol, real* rhs){
+void Jacobi_PC(LinearSolver *lsol, schnaps_real* sol, schnaps_real* rhs){
 
   for (int i=0;i<lsol->neq; i++){
     assert(GetLinearSolver(lsol,i,i)!=0);
@@ -825,7 +825,7 @@ void Jacobi_PC(LinearSolver *lsol, real* sol, real* rhs){
   }
 }
 
-void Exact_PC(LinearSolver *lsol, real* sol, real* rhs){
+void Exact_PC(LinearSolver *lsol, schnaps_real* sol, schnaps_real* rhs){
 
   Skyline * mat;
   Skyline mat_copy;
@@ -840,9 +840,9 @@ void Exact_PC(LinearSolver *lsol, real* sol, real* rhs){
   mat_copy.neq=mat->neq;
   mat_copy.nmem=mat->nmem;
 
-  mat_copy.vkgd=malloc(mat_copy.neq*sizeof(real));
-  mat_copy.vkgi=malloc(mat_copy.nmem*sizeof(real));
-  mat_copy.vkgs=malloc(mat_copy.nmem*sizeof(real));
+  mat_copy.vkgd=malloc(mat_copy.neq*sizeof(schnaps_real));
+  mat_copy.vkgi=malloc(mat_copy.nmem*sizeof(schnaps_real));
+  mat_copy.vkgs=malloc(mat_copy.nmem*sizeof(schnaps_real));
   
 
   mat_copy.prof=malloc(mat_copy.neq*sizeof(int));

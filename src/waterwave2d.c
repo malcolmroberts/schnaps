@@ -4,8 +4,8 @@
 #include <assert.h>
 
 
-void Wave_Upwind_NumFlux(real wL[],real wR[],real* vnorm,real* flux){
-  real flux_temp=0;
+void Wave_Upwind_NumFlux(schnaps_real wL[],schnaps_real wR[],schnaps_real* vnorm,schnaps_real* flux){
+  schnaps_real flux_temp=0;
   
   flux[0]=0.5*((wL[1]+wR[1])*vnorm[0] + (wL[2]+wR[2])*vnorm[1])+0.5*(wL[0]-wR[0]);
   
@@ -21,8 +21,8 @@ void Wave_Upwind_NumFlux(real wL[],real wR[],real* vnorm,real* flux){
 };
 
 
-void Wave_Centered_NumFlux(real wL[],real wR[],real* vnorm,real* flux){
-  real flux_temp=0;
+void Wave_Centered_NumFlux(schnaps_real wL[],schnaps_real wR[],schnaps_real* vnorm,schnaps_real* flux){
+  schnaps_real flux_temp=0;
   
   flux[0]=0.5*((wL[1]+wR[1])*vnorm[0] + (wL[2]+wR[2])*vnorm[1]);
   
@@ -38,8 +38,8 @@ void Wave_Centered_NumFlux(real wL[],real wR[],real* vnorm,real* flux){
 };
 
 
-void Wave_Rusanov_NumFlux(real wL[],real wR[],real* vnorm,real* flux){
-  real flux_temp=0;
+void Wave_Rusanov_NumFlux(schnaps_real wL[],schnaps_real wR[],schnaps_real* vnorm,schnaps_real* flux){
+  schnaps_real flux_temp=0;
   
   flux[0]=0.5*((wL[1]+wR[1])*vnorm[0] + (wL[2]+wR[2])*vnorm[1]);
   
@@ -54,18 +54,18 @@ void Wave_Rusanov_NumFlux(real wL[],real wR[],real* vnorm,real* flux){
   
 };
 
-void ShallowWater_Roe_NumFlux(real wL[],real wR[],real* vnorm,real* flux){
-  real centered_flux[3];
-  real e1[3], e2[3], e3[3];
-  real viscosity[3];
-  real alpha =0;
-  real g=_GRAVITY;
-  real alpha1=0, alpha2=0, alpha3=0,c=0;
-  real uti=0,vti=0;
-  real dh=0,dhu=0,dhv=0;
-  real a1=0,a2=0,a3=0;
-  real uL=0, uR=0, vL=0, vR=0;
-  real hR=0,hL=0,pR=0,pL=0;
+void ShallowWater_Roe_NumFlux(schnaps_real wL[],schnaps_real wR[],schnaps_real* vnorm,schnaps_real* flux){
+  schnaps_real centered_flux[3];
+  schnaps_real e1[3], e2[3], e3[3];
+  schnaps_real viscosity[3];
+  schnaps_real alpha =0;
+  schnaps_real g=_GRAVITY;
+  schnaps_real alpha1=0, alpha2=0, alpha3=0,c=0;
+  schnaps_real uti=0,vti=0;
+  schnaps_real dh=0,dhu=0,dhv=0;
+  schnaps_real a1=0,a2=0,a3=0;
+  schnaps_real uL=0, uR=0, vL=0, vR=0;
+  schnaps_real hR=0,hL=0,pR=0,pL=0;
 
   hL=wL[0];
   hR=wR[0];
@@ -131,15 +131,15 @@ void ShallowWater_Roe_NumFlux(real wL[],real wR[],real* vnorm,real* flux){
 };
 
 
-void ShallowWater_HLL_NumFlux(real wL[],real wR[],real* vnorm,real* flux){
-  real centered_flux[3];
-  real e1[3], e2[3], e3[3];
-  real viscosity[3];
-  real alpha =0;
-  real g=_GRAVITY;
-  real cL=0, cR=0, cstar=0,qn=0;
-  real SL=0, SR=0, uL=0, uR=0, vL=0, vR=0;
-  real hR=0,hL=0,pR=0,pL=0;
+void ShallowWater_HLL_NumFlux(schnaps_real wL[],schnaps_real wR[],schnaps_real* vnorm,schnaps_real* flux){
+  schnaps_real centered_flux[3];
+  schnaps_real e1[3], e2[3], e3[3];
+  schnaps_real viscosity[3];
+  schnaps_real alpha =0;
+  schnaps_real g=_GRAVITY;
+  schnaps_real cL=0, cR=0, cstar=0,qn=0;
+  schnaps_real SL=0, SR=0, uL=0, uR=0, vL=0, vR=0;
+  schnaps_real hR=0,hL=0,pR=0,pL=0;
 
 
   cL = sqrt(g*wL[0]);
@@ -185,13 +185,13 @@ void ShallowWater_HLL_NumFlux(real wL[],real wR[],real* vnorm,real* flux){
 };
 
 
-void ShallowWater_Rusanov_NumFlux(real wL[],real wR[],real* vnorm,real* flux){
-  real centered_flux[3];
-  real viscosity[3];
-  real g=_GRAVITY;
-  real cL=0, cR=0, uL=0, uR=0, vL=0, vR=0;
-  real hL=0, hR=0, pL=0, pR=0;
-  real S=0;
+void ShallowWater_Rusanov_NumFlux(schnaps_real wL[],schnaps_real wR[],schnaps_real* vnorm,schnaps_real* flux){
+  schnaps_real centered_flux[3];
+  schnaps_real viscosity[3];
+  schnaps_real g=_GRAVITY;
+  schnaps_real cL=0, cR=0, uL=0, uR=0, vL=0, vR=0;
+  schnaps_real hL=0, hR=0, pL=0, pR=0;
+  schnaps_real S=0;
 
   cL = sqrt(g*wL[0]);
   cR = sqrt(g*wR[0]);
@@ -234,10 +234,10 @@ void ShallowWater_Rusanov_NumFlux(real wL[],real wR[],real* vnorm,real* flux){
 
 
 
-void ShallowWater_classical_SourceTerm(const real *x, const real t, const real *w, real *source){
-  real g=_GRAVITY;
-  real hL=0, hR=0, uL=0, uR=0, vL=0, vR=0;
-  real S=0;
+void ShallowWater_classical_SourceTerm(const schnaps_real *x, const schnaps_real t, const schnaps_real *w, schnaps_real *source){
+  schnaps_real g=_GRAVITY;
+  schnaps_real hL=0, hR=0, uL=0, uR=0, vL=0, vR=0;
+  schnaps_real S=0;
 
   hL = w[0];
 
@@ -257,13 +257,13 @@ void ShallowWater_classical_SourceTerm(const real *x, const real t, const real *
 };
 
 
-void ShallowWater_HLLWB_NumFlux(real wL[],real wR[],real* vnorm,real* flux){
-  real centered_flux[3];
-  real viscosity[3];
-  real g=_GRAVITY;
-  real cL=0, cR=0, cstar=0,qn=0;
-  real SL=0, SR=0, uL=0, uR=0, vL=0, vR=0;
-  real bL=0,bR=0,hL=0,hR=0,pR=0,pL=0;
+void ShallowWater_HLLWB_NumFlux(schnaps_real wL[],schnaps_real wR[],schnaps_real* vnorm,schnaps_real* flux){
+  schnaps_real centered_flux[3];
+  schnaps_real viscosity[3];
+  schnaps_real g=_GRAVITY;
+  schnaps_real cL=0, cR=0, cstar=0,qn=0;
+  schnaps_real SL=0, SR=0, uL=0, uR=0, vL=0, vR=0;
+  schnaps_real bL=0,bR=0,hL=0,hR=0,pR=0,pL=0;
 
   hL=wL[0];
   hR=wR[0];
@@ -318,10 +318,10 @@ void ShallowWater_HLLWB_NumFlux(real wL[],real wR[],real* vnorm,real* flux){
 };
 
 
-void ShallowWater_HLLWB_SourceTerm(const real *x, const real t, const real *w, real *source){
-  real g=_GRAVITY;
-  real hL=0, hR=0, uL=0, uR=0, vL=0, vR=0;
-  real S=0;
+void ShallowWater_HLLWB_SourceTerm(const schnaps_real *x, const schnaps_real t, const schnaps_real *w, schnaps_real *source){
+  schnaps_real g=_GRAVITY;
+  schnaps_real hL=0, hR=0, uL=0, uR=0, vL=0, vR=0;
+  schnaps_real S=0;
 
   hL = w[0];
 

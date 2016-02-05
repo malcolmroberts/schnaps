@@ -46,8 +46,8 @@ int TestLinearSolver(void){
   sky.solver_type = LU;
   sky.pc_type=NONE;
 
-  real A[_NN][_NN];
-  real vf[_NN],sol[_NN];
+  schnaps_real A[_NN][_NN];
+  schnaps_real vf[_NN],sol[_NN];
 
 
   A[0][0] = 0.2e1;
@@ -124,7 +124,7 @@ int TestLinearSolver(void){
   Advanced_SolveLinearSolver(&sky,&simu);
 
   // checking
-  real verr=0;
+  schnaps_real verr=0;
   for(int i=0;i<_NN;i++){
     printf("%.8e ",sky.sol[i]);
     verr+=fabs(sky.sol[i]-i-1);
@@ -323,7 +323,7 @@ int TestLinearSolver(void){
   printf("Error =%.12e\n",verr);
 
   int NPoisson=60;
-  real h=1.0/NPoisson;
+  schnaps_real h=1.0/NPoisson;
   
 
   InitLinearSolver(&sky,NPoisson,&ms,NULL);
@@ -369,7 +369,7 @@ int TestLinearSolver(void){
     sky.rhs[i]=2.0;
   }
 
-  real bigval=1.e+15;
+  schnaps_real bigval=1.e+15;
   AddLinearSolver(&sky,NPoisson-1,NPoisson-1,bigval);
   AddLinearSolver(&sky,0,0,bigval);
  

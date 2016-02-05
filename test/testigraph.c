@@ -30,7 +30,7 @@ int TestIGraph(void)
   BuildConnectivity(&m);
   CheckMacroMesh(&m, deg, raf);
   //PrintMacroMesh(&m);
-  real vit[3] = {1, 1, 0};
+  schnaps_real vit[3] = {1, 1, 0};
   BuildMacroMeshGraph(&m, vit, deg, raf);
   
   igraph_t* graph = &m.connect_graph;

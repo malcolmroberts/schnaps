@@ -12,17 +12,17 @@ typedef struct PIC {
   int nbparts;
 
   //! common weight of each particle
-  real weight;
+  schnaps_real weight;
 
   //! positions and velocity of particles (size=6*nbparts)
-  real* xv;
+  schnaps_real* xv;
 
   //! list of cell ids for each particles
   int* cell_id;
   int* old_cell_id;
 
   //! time step
-  real dt; 
+  schnaps_real dt; 
 
 } PIC;
 
@@ -38,7 +38,7 @@ void InitPIC(PIC* pic,int n);
 //! \param[in] k1 4 van der Corput parameters
 //! \param[in] k2 4 van der Corput parameters
 //! \param[out] v a pseudo-random gaussian vector 
-void BoxMuller3d(real *v,int* k1, int* k2);
+void BoxMuller3d(schnaps_real *v,int* k1, int* k2);
 
 
 
@@ -60,14 +60,14 @@ void CreateCoil2DParticles(PIC* pic,MacroMesh *m);
 
 //! \brief compute charge and current associated to particles
 //! \param[in] simu a simulation (containing a PIC struct)
-void AccumulateParticles(void *simu, real *w);
+void AccumulateParticles(void *simu, schnaps_real *w);
 
 
 //! brief pseudo-random van der corput number generator
 //! \param[in] n index of the number in the sequence
 //! \param[in] k1 a prime number
 //! \param[in] k2 a prime number k1 > k2 !!
-real corput(int n,int k1,int k2);
+schnaps_real corput(int n,int k1,int k2);
 
 
 //! brief create a gmsh file for plotting the particles

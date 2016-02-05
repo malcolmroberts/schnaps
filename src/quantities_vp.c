@@ -30,8 +30,8 @@ void Computation_charge_density(Simulation *simu){
       for(int ielv=0;ielv<_NB_ELEM_V;ielv++){
 	// loop on the local glops
 	for(int iloc=0;iloc<_DEG_V+1;iloc++){
-	  real omega=wglop(_DEG_V,iloc);
-	  real vi=-_VMAX+ielv*_DV+_DV*glop(_DEG_V,iloc);
+	  schnaps_real omega=wglop(_DEG_V,iloc);
+	  schnaps_real vi=-_VMAX+ielv*_DV+_DV*glop(_DEG_V,iloc);
 	  int ipgv=iloc+ielv*_DEG_V;
 	  int imem=f->varindex(f->deg, f->raf, f->model.m,ipg,ipgv);
 	  simu->w[imemc]+=omega*_DV*simu->w[imem];
@@ -43,12 +43,12 @@ void Computation_charge_density(Simulation *simu){
 }
 
 
-real Computation_charge_average(Simulation *simu) {
+schnaps_real Computation_charge_average(Simulation *simu) {
 
   field * f=&simu->fd[0];
-  real average = 0;
-  real rho_imem = 0;
-  real size_domain = 0;
+  schnaps_real average = 0;
+  schnaps_real rho_imem = 0;
+  schnaps_real size_domain = 0;
 
 
     // Loop on the glops (for numerical integration)
@@ -58,14 +58,14 @@ real Computation_charge_average(Simulation *simu) {
 			     ipg, _INDEX_RHO);
 	rho_imem = f->wn[imem];
       
-      real wpg, det;
+      schnaps_real wpg, det;
       // Compute wpg, det, and the exact solution
       { 
-	real xphy[3], xpgref[3];
-	real dtau[3][3], codtau[3][3];
+	schnaps_real xphy[3], xpgref[3];
+	schnaps_real dtau[3][3], codtau[3][3];
 	// Get the coordinates of the Gauss point
 	ref_pg_vol(f->deg, f->raf, ipg, xpgref, &wpg, NULL);
-	Ref2Phy(f->physnode, // phys. nodes
+	schnaps_ref2phy(f->physnode, // phys. nodes
 		xpgref, // xref
 		NULL, -1, // dpsiref, ifa
 		xphy, dtau, // xphy, dtau
@@ -106,7 +106,7 @@ void ComputeElectricField(field* f){
     // loop on the gauss points of the subcell
     for(int ipg = 0;ipg < nnodes; ipg++){
       //real wpg;
-      real xref[3];
+      schnaps_real xref[3];
       int ipgmacro= ipg + isubcell * nnodes;
 
       ref_pg_vol(f->deg,f->raf,ipgmacro,xref,NULL,NULL);
@@ -115,14 +115,14 @@ void ComputeElectricField(field* f){
       f->wn[iex] = 0;
       
       for(int ib=0; ib < nnodes; ib++){
-	real dtau[3][3],codtau[3][3];
-	real dphiref[3];
-	real dphi[3];
+	schnaps_real dtau[3][3],codtau[3][3];
+	schnaps_real dphiref[3];
+	schnaps_real dphi[3];
 	int ibmacro = ib + isubcell * nnodes;
 	grad_psi_pg(f->deg,f->raf,ibmacro,ipgmacro,dphiref);
-	Ref2Phy(f->physnode,xref,dphiref,0,NULL,
+	schnaps_ref2phy(f->physnode,xref,dphiref,0,NULL,
 		  dtau,codtau,dphi,NULL);
-	real det = dot_product(dtau[0], codtau[0]);
+	schnaps_real det = dot_product(dtau[0], codtau[0]);
 	int ipot = f->varindex(f->deg,f->raf,f->model.m,
 			   ibmacro,_INDEX_PHI);
 	f->wn[iex] -= f->wn[ipot] * dphi[0] / det;

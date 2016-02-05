@@ -99,7 +99,8 @@
 \end_layout
 
 \begin_layout Title
-SCHNAPS: Solveur Conservatif Hyperbolique Non-linéaire Appliqué aux PlaSmas
+SCHNAPS: une bibliothèque pour la résolution numérique des lois de conservation
+ sur ordinateur massivement multicoeur
 \end_layout
 
 \begin_layout Author
@@ -133,9 +134,10 @@ Solveur Conservatif Hyperbolique Non-linéaire Appliqué aux PlasmaS
 \end_inset
 
 .
- Il s'agit d'une bibliothèque C99 pour résoudre numériquement des systèmes
- de lois de conservation sur des ordinateurs massivement parallèles, avec
- plusieurs niveaux de parallélisme, par exemple un gros cluster de GPU.
+ Il s'agit d'une bibliothèque de classes C pour résoudre numériquement des
+ systèmes de lois de conservation sur des ordinateurs massivement parallèles,
+ avec plusieurs niveaux de parallélisme, par exemple un gros cluster de
+ GPU.
 \end_layout
 
 \begin_layout Standard
@@ -715,13 +717,13 @@ Comme
 \end_inset
 
 .
- Par conséquent, comme dans la méthode des volumes finis, nous devons utiliser
+ Par conséquent, comme dans la méthode des volumes finis, nous devons introduire
  un flux numérique 
 \begin_inset Formula $F(W_{L},W_{R},n_{LR})$
 \end_inset
 
-, introduit dans la section précédente.
- Le flux numérique satisfait souvent les deux conditions
+.
+ Généralement, le flux numérique satisfait deux conditions
 \end_layout
 
 \begin_deeper
@@ -780,7 +782,7 @@ reference "eq:DG"
 \begin_inset Formula $F(W_{L},W_{R},n_{LR})$
 \end_inset
 
- par le flux frontière
+ par un flux frontière
 \begin_inset Formula 
 \[
 F_{b}(W_{L},n_{LR}).
@@ -833,15 +835,6 @@ reference "sub:Documentation"
 \end_inset
 
 ).
-\end_layout
-
-\begin_layout Subsection
-StarPU
-\end_layout
-
-\begin_layout Standard
-Afin d'exploiter les architectures d'ordinateurs hybrides les plus récentes,
- il est indispensable de pouvoir soumettre de fa
 \end_layout
 
 \begin_layout Subsection
@@ -976,7 +969,7 @@ Toutes ces informations sont données dans des fonctions SCHNAPS, car elles
 \end_layout
 
 \begin_layout Subsection
-Macrocellules et champs
+Sous-domaines
 \end_layout
 
 \begin_layout Standard
@@ -1007,6 +1000,10 @@ sous-domaines
 \begin_layout Standard
 S'il n'y a qu'un seul sous-domaine, SCHNAPS peut fonctionner sans la bibliothèqu
 e MPI.
+\end_layout
+
+\begin_layout Subsection
+Zones
 \end_layout
 
 \begin_layout Standard

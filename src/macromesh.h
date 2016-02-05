@@ -5,19 +5,7 @@
 #include "global.h"
 
 
-//// problem: change real into schnaps_real in all the code
-// in order to avoid collision with igraph.h
-// ugly workaround
-#undef real
 #include <igraph.h>
-// ugly workaround
-#ifndef _DOUBLE_PRECISION
-#define real float
-#else
-#define real double
-#endif
-
-
 
 
 //! \brief structure for managing the mesh obtained from gmsh.
@@ -31,7 +19,7 @@ typedef struct MacroMesh{
   int nmacrointerfaces; //!< number of macrocell-to-macrocell interfaces
   int *boundaryface; //!< list of boundary faces
   int *macrointerface; //<! List of macrocell interfaces
-  
+
   bool is_read;
   bool is_build;
 
@@ -51,13 +39,13 @@ typedef struct MacroMesh{
   //! topological order of the macrocells
   int* topo_order;
 
-  //! max numbers of elems that touch a node +1 
+  //! max numbers of elems that touch a node +1
   int max_node2elem;
   //! nodes to elems connectivity (size = max_node2elem * nbelems)
   //! the list for a given node ends with -1's (it explains the +1)
   int* node2elem;
 
-  real *node; //!< nodes coordinates array
+  schnaps_real *node; //!< nodes coordinates array
 
   //! Activate or not 2D computations
   bool is2d;
@@ -66,15 +54,15 @@ typedef struct MacroMesh{
 
 
   //! a value for checking that connectivity is finished
-  bool connec_ok; 
+  bool connec_ok;
 
 
   // mesh boundaries
-  real xmin[3],xmax[3];
+  schnaps_real xmin[3],xmax[3];
 
   //! period in each direction
   //! if negative: non-periodic computation (default)
-  real period[3];
+  schnaps_real period[3];
 
 } MacroMesh;
 
@@ -132,18 +120,18 @@ void BuildConnectivity(MacroMesh *m);
 //! \param[in] vit a velocity vector (3 components)
 //! \param[in] deg degree approximation in each direction
 //! \param[in] raf refinement in each direction
-void BuildMacroMeshGraph(MacroMesh *m, real vit[], int deg[], int raf[]);
+void BuildMacroMeshGraph(MacroMesh *m, schnaps_real vit[], int deg[], int raf[]);
 
 //! \brief affine transformation
 //! \param[inout] x the transformed point
 //! \param[in] x0 the initial point
-//! \param[in] A the transformation 
-void AffineMap(real* x,real A[3][3], real x0[3]);
+//! \param[in] A the transformation
+void AffineMap(schnaps_real* x,schnaps_real A[3][3], schnaps_real x0[3]);
 //! \brief simple transformations of the mesh
 //! \param[inout] m the macromesh
 //! \param[in] x0 the initial point
-//! \param[in] A the transformation 
-void AffineMapMacroMesh(MacroMesh *m,real A[3][3], real x0[3]);
+//! \param[in] A the transformation
+void AffineMapMacroMesh(MacroMesh *m,schnaps_real A[3][3], schnaps_real x0[3]);
 
 //! \brief detects if the mesh is 1D and then permuts the nodes so
 //! that the y,z directions coincide in the reference or physical
@@ -161,8 +149,8 @@ void Detect2DMacroMesh(MacroMesh *m);
 //! The function simply aborts if the mesh is bad because
 //! going on with computations has no meaning.
 //! \param[in] m a macromesh
-//! \param[in] deg degrees parameters 
-//! \param[in] raf refinement parameters 
+//! \param[in] deg degrees parameters
+//! \param[in] raf refinement parameters
 void CheckMacroMesh(MacroMesh *m, int *deg, int *raf);
 //! \brief list the mesh data
 //! \param[in] m a macromesh
@@ -172,22 +160,22 @@ void PrintMacroMesh(MacroMesh *m);
 //! \param[in] m a macromesh
 //! \param[in] ie a macrocell index
 //! \param[in] xphy a point in physical space
-//! \param[out] xref the corresponding ref coordinates (optional if NULL) 
+//! \param[out] xref the corresponding ref coordinates (optional if NULL)
 //! \returns true or false
-bool IsInElem(MacroMesh *m,int ie, real* xphy, real* xref);
+bool IsInElem(MacroMesh *m,int ie, schnaps_real* xphy, schnaps_real* xref);
 
 //! \brief find the nearest node to xphy in the mesh
 //! \param[in] m a macromesh
 //! \param[in] xphy a point in physical space
 //! \returns the index of the nearest node
-int NearestNode(MacroMesh *m,real* xphy);
+int NearestNode(MacroMesh *m,schnaps_real* xphy);
 
 //! \brief find the cell containing a physical point
 //! \param[in] m a macromesh
 //! \param[in] xphy a point in physical space
-//! \param[out] xref the corresponding ref coordinates (optional if NULL) 
+//! \param[out] xref the corresponding ref coordinates (optional if NULL)
 //! \returns the index of the macrocell containing xphy or -1 if none found
-int NumElemFromPoint(MacroMesh *m,real* xphy, real* xref);
+int NumElemFromPoint(MacroMesh *m,schnaps_real* xphy, schnaps_real* xref);
 
 
 #endif

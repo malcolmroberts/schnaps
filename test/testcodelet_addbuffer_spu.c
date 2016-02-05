@@ -9,19 +9,19 @@ bool submit_task() {
 
   // Data buffer
   const int size = 1000000;
-  const real alpha = 3.14123456789123456789123456789123456789123456879;
-  real* buffer_in = calloc(size, sizeof(real));
-  real* buffer_out = calloc(size, sizeof(real));
+  const schnaps_real alpha = 3.14123456789123456789123456789123456789123456879;
+  schnaps_real* buffer_in = calloc(size, sizeof(schnaps_real));
+  schnaps_real* buffer_out = calloc(size, sizeof(schnaps_real));
 
   // Create data handle (init and register)
   for (int i = 0; i < size; ++i) {
     buffer_in[i] = i;
-    buffer_out[i] = i;
+    buffer_out[i] = 0;
   }
   starpu_data_handle_t handle_in;
-  starpu_vector_data_register(&handle_in, 0, (uintptr_t) buffer_in, size, sizeof(real));
+  starpu_vector_data_register(&handle_in, 0, (uintptr_t) buffer_in, size, sizeof(schnaps_real));
   starpu_data_handle_t handle_out;
-  starpu_vector_data_register(&handle_out, 0, (uintptr_t) buffer_out, size, sizeof(real));
+  starpu_vector_data_register(&handle_out, 0, (uintptr_t) buffer_out, size, sizeof(schnaps_real));
 
   // Task
   AddBuffer_SPU(alpha, handle_in, handle_out);
@@ -36,7 +36,7 @@ bool submit_task() {
     test &= (abs(buffer_in[i] - i) < _VERY_SMALL);
   assert(test);
   for (int i = 0; i < size; ++i)
-    test &= (abs(buffer_out[i] - i * (1 + alpha)) < _VERY_SMALL);
+    test &= (abs(buffer_out[i] - i * alpha) < _VERY_SMALL);
 
   if (test) printf(" OK\n");
   else printf(" KO !\n");
@@ -53,9 +53,9 @@ int TestCodelet_AddBuffer_SPU(void){
   sprintf(cl_buildoptions, "%s", "");
   char buf[1000];
 #ifdef _DOUBLE_PRECISION
-  sprintf(buf, "-D real=double");
+  sprintf(buf, "-D schnaps_real=double");
 #else
-  sprintf(buf, "-D real=float");
+  sprintf(buf, "-D schnaps_real=float");
 #endif
   strcat(cl_buildoptions, buf);
 

@@ -14,7 +14,7 @@ typedef struct JFLinearSolver{
   int neq;
 
   //! brief eps for free Jacobian matrix
-  real eps;
+  schnaps_real eps;
 
   //! solver type;
   Solver solver_type;
@@ -23,14 +23,14 @@ typedef struct JFLinearSolver{
   PC pc_type; 
 
   //! \brief solution of the linear system
-  real* sol;
+  schnaps_real* sol;
   //! \brief rhs of the linear system
-  real* rhs;
+  schnaps_real* rhs;
   //! \brief sol at the time n
-  real* soln;
+  schnaps_real* soln;
 
     //! tolerance iterative solver
-  real tol;
+  schnaps_real tol;
 
   //! restart for gmres
   int restart_gmres;
@@ -42,14 +42,14 @@ typedef struct JFLinearSolver{
   //! \param[in] f the field
   //! \param[in] x a vector
   //! \param[out] prod Ax
-  void (*MatVecProduct)(Simulation * simu,void* lsol,real x[],real prod[]);
+  void (*MatVecProduct)(Simulation * simu,void* lsol,schnaps_real x[],schnaps_real prod[]);
 
   //! \brief compute the
   //! \param[in] simu the simulatio,n
   //! \param[in] lsol the LinearSolver object containing matrix A
   //! \param[in] solvector the solution at the time n
   //! \param[out] given the nonlinear vector for the free jacobian
-  void (*NonlinearVector_computation)(Simulation * simu,void* lsol,real * solvector,real *nlvector);
+  void (*NonlinearVector_computation)(Simulation * simu,void* lsol,schnaps_real * solvector,schnaps_real *nlvector);
 
 } JFLinearSolver;
 
@@ -73,7 +73,7 @@ void FreeJFLinearSolver(JFLinearSolver* lsol);
 //! \param[in] f a field
 //! \param[in] x a vector
 //! \param[out] prod Ax
-void MatVecJacobianFree(Simulation * simu,void * system,real x[],real prod[]);
+void MatVecJacobianFree(Simulation * simu,void * system,schnaps_real x[],schnaps_real prod[]);
 
 //! \brief solve the linear system
 //! \param[inout] lsol the JFLinearSolver object

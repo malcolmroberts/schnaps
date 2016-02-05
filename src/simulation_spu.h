@@ -28,9 +28,9 @@ struct starpu_codelet* AddBuffer_codelet();
 //! \param[in] alpha the scaling factor
 //! \param[in] handle_in handle to the scaled buffer
 //! \param[in,out] handle_out handle to the result buffer
-void AddBuffer_SPU(real alpha,
+void AddBuffer_SPU(schnaps_real alpha,
                    starpu_data_handle_t handle_in,
-		   starpu_data_handle_t handle_out);
+                   starpu_data_handle_t handle_out);
 
 
 //! \brief Init and get DGVolume codelet.
@@ -55,7 +55,7 @@ void DtFields_SPU(Simulation *simu,
 //! starpu version
 //! \param[inout] simu a simulation
 //! \param[in] tmax tmax
-void RK2_SPU(Simulation *simu, real tmax);
+void RK2_SPU(Simulation *simu, schnaps_real tmax);
 
 //! \brief apply the flux terms inside a macrocell
 //! StarPU version
@@ -98,8 +98,8 @@ void DGMacroCellBoundaryFlux_SPU(Interface* inter);
 //! \param[inout] w an array to the field value
 //! \param[out] dtw an array to the time derivatives
 void DtFields_bis(Simulation *simu,
-		  real* w,
-		  real* dtw);
+		  schnaps_real* w,
+		  schnaps_real* dtw);
 
 
 #endif

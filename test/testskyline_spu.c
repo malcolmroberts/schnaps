@@ -34,10 +34,10 @@ int TestSkyline_SPU(void){
 
 #define _NN 5
   
-  real A[_NN][_NN];
-  real vf[_NN];
-  real sol[_NN]={1,2,3,4,5};
-  real vf2[_NN]={0,0,0,0,6};
+  schnaps_real A[_NN][_NN];
+  schnaps_real vf[_NN];
+  schnaps_real sol[_NN]={1,2,3,4,5};
+  schnaps_real vf2[_NN]={0,0,0,0,6};
 
   A[0][0] = 0.2e1;
   A[0][1] = -0.1e1;
@@ -103,7 +103,7 @@ int TestSkyline_SPU(void){
     }
   }
   
-  real vf3[_NN];
+  schnaps_real vf3[_NN];
     
   // test the product non symmetric case
   for(int i=0; i < _NN; i++){
@@ -151,7 +151,7 @@ int TestSkyline_SPU(void){
 
 
     // checking
-    real verr=0;
+    schnaps_real verr=0;
     printf("sol test num. %d\n", is);
     for(int i=0;i<_NN;i++){
       printf("%f ",sky[is].sol[i]);

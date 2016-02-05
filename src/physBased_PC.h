@@ -35,11 +35,11 @@ typedef struct PB_PC{
   ContinuousSolver Schur;
 
   //! \brief Right-hand side for the prediciton step of the preconditioner
-  real *rhs_prediction;
+  schnaps_real *rhs_prediction;
   //! \brief Right-hand side for the propagation (middle) step of the preconditioner
-  real *rhs_propagation;
+  schnaps_real *rhs_propagation;
   //! \brief Right-hand side for the correction step of the preconditioner
-  real *rhs_correction;
+  schnaps_real *rhs_correction;
 
   Solver solver_prediction;
   Solver solver_propagation;
@@ -49,9 +49,9 @@ typedef struct PB_PC{
   PC pc_propagation;
   PC pc_correction;
 
-  real tol_prediction;
-  real tol_propagation;
-  real tol_correction;
+  schnaps_real tol_prediction;
+  schnaps_real tol_propagation;
+  schnaps_real tol_correction;
 
   int itermax_prediction;
   int itermax_propagation;
@@ -78,14 +78,14 @@ typedef struct PB_PC{
 // \param[in] cs: ContinuousSolver object.
 // \param[in] rhsIn: Vector in DG.
 // \param[out] rhsOut: Vector in CG.
-void PiDgToCg(ContinuousSolver * cs,real * rhsIn, real * rhsOut);
+void PiDgToCg(ContinuousSolver * cs,schnaps_real * rhsIn, schnaps_real * rhsOut);
 
 // \brief Takes a vector in Continuous Galerkin, and returns the 
 // same vector projected on the Discontinuous Galerkin discrete space.
 // \param[in] cs: ContinuousSolver object.
 // \param[in] rhsIn: Vector in CG.
 // \param[out] rhsOut: Vector in DG.
-void PiInvertCgToDg(ContinuousSolver * cs,real * rhsIn, real * rhsOut);
+void PiInvertCgToDg(ContinuousSolver * cs,schnaps_real * rhsIn, schnaps_real * rhsOut);
 
 
 // \brief general initialisation of the solvers for eahc sub systems of the pc
@@ -133,7 +133,7 @@ void Init_PBPC_Wave_SchurPressure_BCPressure(Simulation *simu, PB_PC* pb_pc, int
 // \param[in] U1mat: U1Matrix
 // \param[in] U2mat: U2Matrix
 // \param[in] Schurmat: SchurMatrix
-void InitMat_ContinuousSolver(PB_PC* pb_pc, real Dmat[4][4], real L1Mat[4][4], real L2Mat[4][4], real U1Mat[4][4], real U2Mat[4][4], real Schurmat[4][4][4]);
+void InitMat_ContinuousSolver(PB_PC* pb_pc, schnaps_real Dmat[4][4], schnaps_real L1Mat[4][4], schnaps_real L2Mat[4][4], schnaps_real U1Mat[4][4], schnaps_real U2Mat[4][4], schnaps_real Schurmat[4][4][4]);
 
 
 // \brief Physics-based CG preconditioner for CG problem with schur on velocity
@@ -141,14 +141,14 @@ void InitMat_ContinuousSolver(PB_PC* pb_pc, real Dmat[4][4], real L1Mat[4][4], r
 // \param[inout] globalSol a solution of the preconditioner.
 // \param[in] globalRHS a Right-hand-side containing all explicit and source terms.
 // \param[in] simu a simulation
-void PhyBased_PC_CG(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*globalRHS);
+void PhyBased_PC_CG(PB_PC* pb_pc, Simulation *simu, schnaps_real* globalSol, schnaps_real*globalRHS);
 
 // \brief Physics-based CG preconditioner for CG problem with schur on pressure
 // \param[in] pb_pc a Physics-based preconditioner (Schur pressure)
 // \param[inout] globalSol a solution of the preconditioner.
 // \param[in] globalRHS a Right-hand-side containing all explicit and source terms.
 // \param[in] simu a simulation
-void PhyBased_PC_InvertSchur_CG(PB_PC* pb_pc, Simulation *simu, real* globalSol, real*globalRHS);
+void PhyBased_PC_InvertSchur_CG(PB_PC* pb_pc, Simulation *simu, schnaps_real* globalSol, schnaps_real*globalRHS);
 
 
 // \brief Frees any PB_PC object
@@ -173,7 +173,7 @@ void reset(PB_PC* pb_pc);
 //! \param[in] w a vector of unknowns
 //! \param[in] vnorm a vector of normal
 //! \param[inout] flux a vector of flux
-void RobinFlux_SchurPressure(void * cs, real * xpg, real * w, real *vnorm, real * flux);
+void RobinFlux_SchurPressure(void * cs, schnaps_real * xpg, schnaps_real * w, schnaps_real *vnorm, schnaps_real * flux);
 
 //! \brief pointer on the function which compute the BC flux for the condition (u,n)=0
 //! \param[in] cs a continuous solver
@@ -181,7 +181,7 @@ void RobinFlux_SchurPressure(void * cs, real * xpg, real * w, real *vnorm, real 
 //! \param[in] w a vector of unknowns
 //! \param[in] vnorm a vector of normal
 //! \param[inout] flux a vector of flux
-void Dirichlet_Velocity(void * cs, real * xpg, real * w, real *vnorm, real * flux);
+void Dirichlet_Velocity(void * cs, schnaps_real * xpg, schnaps_real * w, schnaps_real *vnorm, schnaps_real * flux);
 
 //! \brief pointer on the function which compute the BC flux for the operator dx 
 //! \param[in] cs a continuous solver
@@ -189,7 +189,7 @@ void Dirichlet_Velocity(void * cs, real * xpg, real * w, real *vnorm, real * flu
 //! \param[in] w a vector of unknowns
 //! \param[in] vnorm a vector of normal
 //! \param[inout] flux a vector of flux
-void BoundaryTerm_Yderivative(void * cs, real * xpg, real * w, real *vnorm, real * flux);
+void BoundaryTerm_Yderivative(void * cs, schnaps_real * xpg, schnaps_real * w, schnaps_real *vnorm, schnaps_real * flux);
 
 
 //! \brief pointer on the function which compute the BC flux for the operator dy 
@@ -198,6 +198,6 @@ void BoundaryTerm_Yderivative(void * cs, real * xpg, real * w, real *vnorm, real
 //! \param[in] w a vector of unknowns
 //! \param[in] vnorm a vector of normal
 //! \param[inout] flux a vector of flux
-void BoundaryTerm_Xderivative(void * cs, real * xpg, real * w, real *vnorm, real * flux);
+void BoundaryTerm_Xderivative(void * cs, schnaps_real * xpg, schnaps_real * w, schnaps_real *vnorm, schnaps_real * flux);
 
 #endif
