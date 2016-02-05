@@ -8,10 +8,10 @@
 #include "diagnostics_vp.h"
 #include "solverpoisson.h"
 
-void TestPeriodic_ImposedData(const real *x, const real t, real *w);
-void TestPeriodic_InitData(real *x, real *w);
-void TestPeriodic_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
-			       real *flux);
+void TestPeriodic_ImposedData(const schnaps_real *x, const schnaps_real t, schnaps_real *w);
+void TestPeriodic_InitData(schnaps_real *x, schnaps_real *w);
+void TestPeriodic_BoundaryFlux(schnaps_real *x, schnaps_real t, schnaps_real *wL, schnaps_real *vnorm,
+			       schnaps_real *flux);
 
 int main(void) {
   // unit tests
@@ -66,7 +66,7 @@ int TestPeriodic(void) {
 
   simu.vmax = _VMAX; // maximal wave speed 
   simu.cfl = 0.05;
-  real tmax = 0.5;
+  schnaps_real tmax = 0.5;
  
   RK2(&simu,tmax);
  
@@ -74,7 +74,7 @@ int TestPeriodic(void) {
   PlotFields(0, false, &simu, "sol","dgvisu.msh");
   PlotFields(0, true, &simu, "error","dgerror.msh");
 
-  real dd = L2error(&simu);
+  schnaps_real dd = L2error(&simu);
   //real dd_Kinetic = L2_Kinetic_error(&simu);
   //printf("erreur kinetic L2: %lf\n", dd_Kinetic);
 
@@ -86,14 +86,14 @@ int TestPeriodic(void) {
   return test;
 }
 
-void TestPeriodic_ImposedData(const real x[3], const real t,real w[])
+void TestPeriodic_ImposedData(const schnaps_real x[3], const schnaps_real t,schnaps_real w[])
 {
-  real pi = 4 * atan(1.0);
+  schnaps_real pi = 4 * atan(1.0);
   for(int i = 0; i < _INDEX_MAX_KIN + 1 ; ++i) {
     int j = i % _DEG_V; // local connectivity put in function
     int nel = i / _DEG_V; // element num (TODO : function)
 
-    real vi = (-_VMAX + nel * _DV + _DV * glop(_DEG_V, j));
+    schnaps_real vi = (-_VMAX + nel * _DV + _DV * glop(_DEG_V, j));
 
     w[i] = cos(2 * pi * ( x[0] - vi * t) );
   }
@@ -106,16 +106,16 @@ void TestPeriodic_ImposedData(const real x[3], const real t,real w[])
   w[_INDEX_TEMP] = 0; // e ou T init
 }
 
-void TestPeriodic_InitData(real x[3], real w[])
+void TestPeriodic_InitData(schnaps_real x[3], schnaps_real w[])
 {
-  real t = 0;
+  schnaps_real t = 0;
   TestPeriodic_ImposedData(x, t, w);
 }
 
-void TestPeriodic_BoundaryFlux(real x[3], real t, real wL[], real *vnorm,
-			       real* flux)
+void TestPeriodic_BoundaryFlux(schnaps_real x[3], schnaps_real t, schnaps_real wL[], schnaps_real *vnorm,
+			       schnaps_real* flux)
 {
-  real wR[_MV + 6];
+  schnaps_real wR[_MV + 6];
   TestPeriodic_ImposedData(x, t, wR);
   VlasovP_Lagrangian_NumFlux(wL, wR, vnorm, flux);
   assert(false);

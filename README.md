@@ -1,96 +1,137 @@
-SCHNAPS
-=======
+# SCHNAPS
 
 Solveur pour les lois de Conservation Hyperboliques Non-linéaires
 Appliqué aux PlasmaS
 
-Mode d'emploi
+## Mode d'emploi
 
-téléchargement (nécessite git)
+### Téléchargement (nécessite git)
 
 Accès développeur:
-git clone git+ssh://<gforge_account_name>\@scm.gforge.inria.fr//gitroot/schnaps/schnaps.git
+`git clone git+ssh://<gforge_account_name>\@scm.gforge.inria.fr//gitroot/schnaps/schnaps.git`
 
 Accès lecture seule:
-git clone https://gforge.inria.fr/git/schnaps/schnaps.git
+`git clone https://gforge.inria.fr/git/schnaps/schnaps.git`
 
-se placer dans le dossier SCHNAPS
+### Compilation
+
+se placer dans le dossier schnaps
+
+créer un dossier
+
+	mkdir build
+
+se placer dans ce dossier
+
+	cd build
 
 puis:
 
-cmake .
+	cmake ..
+	make
+	ctest
 
-make
-
-ctest
-
-une série de tests démarre. Il est conseillé de faire repasser ces
+Une série de tests démarre. Il est conseillé de faire repasser ces
 tests après toute modification du code.
 
-Pour lancer schnaps:
+Si certains tests StarPU ne passent pas, désactiver les codelets OpenCL et CUDA avant de lancer ctest:
 
-générer le maillage:
+	export STARPU_NOPENCL=0
+	export STARPU_NCUDA=0
 
-gmsh disque.geo -3
+### Pour lancer schnaps:
 
-./schnaps
+#### générer le maillage:
+
+	gmsh disque.geo -3
+
+	./schnaps
 
 Cet exemple consiste à résoudre l'équation de transport à
-l'intérieur d'un cylindre. La visualisation  des résultats
-utilise gmsh
+l'intérieur d'un cylindre.
 
-gmsh dgvisu.msh
+(Edit: en ce moment cet exemple est désactivé) 
+
+La visualisation  des résultats utilise gmsh
+
+	gmsh dgvisu.msh
 
 (puis tools -> options -> view[0] -> adapt visualization grid pour
 afficher une image plus jolie...)
 
-Adapter le fichier source "schnaps.c" pour traiter des cas avec
+Adapter le fichier source `schnaps.c` pour traiter des cas avec
 d'autres maillages. Des exemples de maillages se trouvent dans le
 dossier geo.
 
-Génération de la documentation (avec doxygen):
 
-cd doc/
-doxygen doxyschnaps
-
-SCHNAPS est sous licence CeCILL:
+#### SCHNAPS est sous licence CeCILL:
 
 http://www.cecill.info/licences/Licence_CeCILL_V1.1-US.html
 
-Génération de la documentation (avec doxygen):
+#### Génération de la documentation (avec doxygen):
 
-cd doc/
-doxygen doxyschnaps
- *
- *
- */
+	cd doc/
+	doxygen doxyschnaps
+	 *
+	 *
+	 */
 
-Installation de StarPU:
+#### Installation de StarPU (préalable à l'installation de schnaps)
 
+Facultatif (permet de visualiser les traces starpu):
 Télécharger FxT
-mkdir /usr/local/fxtdir
-cd FxT
-./bootstrap
-export FXTDIR=/usr/local/fxtdir
-./configure --prefix=$FXTDIR
-make -j4
-make install
 
+	mkdir /usr/local/fxtdir
+	cd FxT
+	./bootstrap
+	export FXTDIR=/usr/local/fxtdir
+	./configure --prefix=$FXTDIR
+	make -j4
+	make install
+
+Indispensable:
 Télécharger StarPU a partir de la base svn (voir site StarPU)
 brew 
-cd StarPu/
-mkdir build
-./autogen.sh
+
+	cd StarPu/
+	mkdir build
+	./autogen.sh
 (installer les paquets brew manquants)
-../configure --with-fxt=$FXTDIR
-make -j4
-make check (facultatif)
-make install
+Si Fxt a été installé:
 
-Désactiver les codelets opencl (éventuellement)
-export STARPU_NOPENCL=0
+	../configure --with-fxt=$FXTDIR
 
-Télécharger VITE a partir de la base svn (voir site vite trace)
-brew install graphviz
+sinon:
+
+	../configure
+	make -j4
+	make check (facultatif)
+	make install
+
+Remarque: il y a une limitation de taille des kernels opencl dans StarPU qui est corrigée avec ce patch:
+
+	Index: `src/drivers/opencl/driver_opencl_utils.c
+
+	--- src/drivers/opencl/driver_opencl_utils.c    (révision 16654)
+	+++ src/drivers/opencl/driver_opencl_utils.c    (copie de travail)
+	@@ -364,7 +364,7 @@
+	     char located_file_name[1024];
+	     char located_dir_name[1024];
+	     char new_build_options[1024];
+	-    char opencl_program_source[16384];
+	+    char opencl_program_source[131072];
+
+     // Do not try to load and compile the file if there is no devices
+     nb_devices = starpu_opencl_worker_get_count();
+
+
+Désactiver les codelets opencl et cuda (éventuellement) :
+
+	export STARPU_NOPENCL=0 
+	export STARPU_NCUDA=0 
+
+Pour visualiser les traces, télécharger et compiler VITE a partir de la base svn
+(voir site http://vite.gforge.inria.fr/)
+Installer graphviz pour visualiser les graphes de tâche.
 
 

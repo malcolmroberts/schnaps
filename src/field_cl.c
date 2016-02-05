@@ -22,7 +22,7 @@ void CopyfieldtoCPU(Simulation *simu)
 			      CL_TRUE, // block until the buffer is available
 			      CL_MAP_READ, // we just want to see the results
 			      0, // offset
-			      simu->wsize * sizeof(real), // buffersize
+			      simu->wsize * sizeof(schnaps_real), // buffersize
 			      0, NULL, NULL, // events management
 			      &status);
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
@@ -34,7 +34,7 @@ void CopyfieldtoCPU(Simulation *simu)
 			      CL_TRUE, // block until the buffer is available
 			      CL_MAP_READ, // we just want to see the results
 			      0, // offset
-			      simu->wsize * sizeof(real), // buffersize
+			      simu->wsize * sizeof(schnaps_real), // buffersize
 			      0, NULL, NULL, // events management
 			      &status);
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
@@ -84,7 +84,7 @@ void init_DGBoundary_CL(Simulation *simu,
   // real tnow,                  // 1: current time
   status = clSetKernelArg(kernel,
   			  argnum++,
-  			  sizeof(real),
+  			  sizeof(schnaps_real),
   			  &simu->tnow);
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
   assert(status >= CL_SUCCESS);
@@ -132,7 +132,7 @@ void init_DGBoundary_CL(Simulation *simu,
   // __local real *cache         // 7: local mem
   status = clSetKernelArg(kernel,
                           argnum++,
-                          sizeof(real) * cachesize,
+                          sizeof(schnaps_real) * cachesize,
                           NULL);
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
   assert(status >= CL_SUCCESS);
@@ -254,7 +254,7 @@ void init_DGMacroCellInterface_CL(Simulation *simu,
   //__local real *cache         // 9: local mem
   status = clSetKernelArg(kernel,
                           argnum++,
-                          sizeof(real) * cachesize,
+                          sizeof(schnaps_real) * cachesize,
                           NULL);
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
   assert(status >= CL_SUCCESS);
@@ -452,7 +452,7 @@ void init_DGFlux_CL(Simulation *simu, int ie, int dim0, cl_mem *w_cl,
   // __local real* wloc,       // 6: w local memory
   status = clSetKernelArg(kernel,
                           argnum++,
-                          sizeof(real) * cachesize,
+                          sizeof(schnaps_real) * cachesize,
                           NULL);
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
   assert(status >= CL_SUCCESS);
@@ -560,7 +560,7 @@ void init_DGVolume_CL(Simulation *simu, cl_mem *w_cl, size_t cachesize)
 
   status = clSetKernelArg(kernel,
                           argnum++,
-                          sizeof(real) * cachesize,
+                          sizeof(schnaps_real) * cachesize,
                           NULL);
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
   assert(status >= CL_SUCCESS);
@@ -656,7 +656,7 @@ void init_DGSource_CL(Simulation *simu, cl_mem *w_cl, size_t cachesize)
 
   status = clSetKernelArg(kernel,
   			  argnum++,
-  			  sizeof(real),
+  			  sizeof(schnaps_real),
   			  &simu->tnow);
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
   assert(status >= CL_SUCCESS);
@@ -677,7 +677,7 @@ void init_DGSource_CL(Simulation *simu, cl_mem *w_cl, size_t cachesize)
 
   status = clSetKernelArg(kernel,
                           argnum++,
-                          sizeof(real) * cachesize,
+                          sizeof(schnaps_real) * cachesize,
                           NULL);
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
   assert(status >= CL_SUCCESS);
@@ -888,7 +888,7 @@ void dtfield_CL(Simulation *simu, cl_mem *w_cl,
 }
 
 // Set kernel arguments for first stage of RK2
-void init_RK2_CL_stage1(Simulation *simu, const real dt, cl_mem *wp1_cl)
+void init_RK2_CL_stage1(Simulation *simu, const schnaps_real dt, cl_mem *wp1_cl)
 {
   cl_kernel kernel = simu->RK_out_CL;
   cl_int status;
@@ -919,10 +919,10 @@ void init_RK2_CL_stage1(Simulation *simu, const real dt, cl_mem *wp1_cl)
   assert(status >= CL_SUCCESS);
   
   //real dt, // time step for the stage
-  real halfdt = 0.5 * dt;
+  schnaps_real halfdt = 0.5 * dt;
   status = clSetKernelArg(kernel,
 			  argnum++,
-			  sizeof(real),
+			  sizeof(schnaps_real),
 			  &halfdt);
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
   assert(status >= CL_SUCCESS);
@@ -947,7 +947,7 @@ void RK2_CL_stage1(Simulation *simu, size_t numworkitems,
 }
 
 // Set kernel arguments for second stage of RK2
-void init_RK2_CL_stage2(Simulation *simu, const real dt) 
+void init_RK2_CL_stage2(Simulation *simu, const schnaps_real dt) 
 {
   cl_kernel kernel = simu->RK_in_CL;
   cl_int status;
@@ -968,7 +968,7 @@ void init_RK2_CL_stage2(Simulation *simu, const real dt)
 
   status = clSetKernelArg(kernel,
 			  argnum++,
-			  sizeof(real),
+			  sizeof(schnaps_real),
 			  &dt);
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
   assert(status >= CL_SUCCESS);
@@ -991,7 +991,7 @@ void RK2_CL_stage2(Simulation *simu, size_t numworkitems,
 
 void RK4_CL_stageA(Simulation *simu, 
 		   cl_mem *wp1, cl_mem *w, cl_mem *dtw, 
-		   const real dt, const int sizew, size_t numworkitems, 
+		   const schnaps_real dt, const int sizew, size_t numworkitems, 
 		   cl_uint nwait, cl_event *wait, cl_event *done)
 {
   // l_1 = w_n + 0.5dt * S(w_n, t_0)
@@ -1027,7 +1027,7 @@ void RK4_CL_stageA(Simulation *simu,
   //real dt,
   status = clSetKernelArg(kernel,
 			  argnum++,
-			  sizeof(real),
+			  sizeof(schnaps_real),
 			  &dt);
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
   assert(status >= CL_SUCCESS);
@@ -1047,7 +1047,7 @@ void RK4_CL_stageA(Simulation *simu,
 
 void RK4_final_inplace_CL(Simulation *simu, 
 			  cl_mem *w_cl, cl_mem *l1, cl_mem *l2, cl_mem *l3, 
-			  cl_mem *dtw_cl, const real dt, 
+			  cl_mem *dtw_cl, const schnaps_real dt, 
 			  const size_t numworkitems, 
 			  cl_uint nwait, cl_event *wait, cl_event *done)
 {
@@ -1096,10 +1096,10 @@ void RK4_final_inplace_CL(Simulation *simu,
   assert(status >= CL_SUCCESS);
 
   // const real dt
-  real halfdt = 0.5 * dt;
+  schnaps_real halfdt = 0.5 * dt;
   status = clSetKernelArg(kernel,
 			  argnum++,
-			  sizeof(real),
+			  sizeof(schnaps_real),
 			  &dt);
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
   assert(status >= CL_SUCCESS);
@@ -1119,7 +1119,7 @@ void RK4_final_inplace_CL(Simulation *simu,
 
 // Time integration by a fourth-order Runge-Kutta algorithm, OpenCL
 // version.
-void RK4_CL(Simulation *simu, real tmax, real dt,
+void RK4_CL(Simulation *simu, schnaps_real tmax, schnaps_real dt,
 	    cl_uint nwait, cl_event *wait, cl_event *done) 
 {
   simu->dt = Get_Dt_RK(simu);
@@ -1137,7 +1137,7 @@ void RK4_CL(Simulation *simu, real tmax, real dt,
   cl_int status;  
   cl_mem l1 = clCreateBuffer(simu->cli.context,
 			     0,
-			     sizeof(real) * simu->wsize,
+			     sizeof(schnaps_real) * simu->wsize,
 			     NULL,
 			     &status);
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
@@ -1145,14 +1145,14 @@ void RK4_CL(Simulation *simu, real tmax, real dt,
 
   cl_mem l2 = clCreateBuffer(simu->cli.context,
 			     0,
-			     sizeof(real) * simu->wsize,
+			     sizeof(schnaps_real) * simu->wsize,
 			     NULL,
 			     &status);
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
   assert(status >= CL_SUCCESS);
   cl_mem l3 = clCreateBuffer(simu->cli.context,
 			     0,
-			     sizeof(real) * simu->wsize,
+			     sizeof(schnaps_real) * simu->wsize,
 			     NULL,
 			     &status);
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
@@ -1223,7 +1223,7 @@ void RK4_CL(Simulation *simu, real tmax, real dt,
   if(done != NULL)
     status = clSetUserEventStatus(*done, CL_COMPLETE);
 
- real rkseconds = (t_end.tv_sec - t_start.tv_sec) * 1.0 // seconds
+ schnaps_real rkseconds = (t_end.tv_sec - t_start.tv_sec) * 1.0 // seconds
     + (t_end.tv_usec - t_start.tv_usec) * 1e-6; // microseconds
   printf("\nTotal RK time (s):\n%f\n", rkseconds);
   printf("\nTotal RK time per time-step (s):\n%f\n", rkseconds / iter );
@@ -1240,7 +1240,7 @@ void RK4_CL(Simulation *simu, real tmax, real dt,
 
 // Time integration by a second-order Runge-Kutta algorithm, OpenCL
 // version.
-void RK2_CL(Simulation *simu, real tmax, real dt,
+void RK2_CL(Simulation *simu, schnaps_real tmax, schnaps_real dt,
 	    cl_uint nwait, cl_event *wait, cl_event *done) 
 {
 
@@ -1259,7 +1259,7 @@ void RK2_CL(Simulation *simu, real tmax, real dt,
   cl_int status;
   cl_mem wp1_cl = clCreateBuffer(simu->cli.context,
 				  0, // no flags
-				  sizeof(real) * simu->wsize,
+				  sizeof(schnaps_real) * simu->wsize,
 				  NULL, // do not use a host pointer
 				  &status);
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
@@ -1312,7 +1312,7 @@ void RK2_CL(Simulation *simu, real tmax, real dt,
   clReleaseEvent(stage2);
   clReleaseEvent(stage1);
   
-  real rkseconds = (t_end.tv_sec - t_start.tv_sec) * 1.0 // seconds
+  schnaps_real rkseconds = (t_end.tv_sec - t_start.tv_sec) * 1.0 // seconds
     + (t_end.tv_usec - t_start.tv_usec) * 1e-6; // microseconds
   printf("\nTotal RK time (s):\n%f\n", rkseconds);
   printf("\nTotal RK time per time-step (s):\n%f\n", rkseconds / iter );
@@ -1327,8 +1327,8 @@ void show_cl_timing(Simulation *simu)
   printf("\n");
   printf("Device characteristics:\n");
   printf("\tname:\t%s\n", simu->cli.devicename);
-  real dev_gflops = cl_dev_gflops(simu->cli.devicename);
-  real dev_bwidth = cl_dev_bwidth(simu->cli.devicename);
+  schnaps_real dev_gflops = cl_dev_gflops(simu->cli.devicename);
+  schnaps_real dev_bwidth = cl_dev_bwidth(simu->cli.devicename);
   printf("\tgflops:   \t%f\n", dev_gflops);
   printf("\tbandwidth:\t%f\n", dev_bwidth);
 
@@ -1344,28 +1344,28 @@ void show_cl_timing(Simulation *simu)
   printf("Terms included in roofline: volume, flux, and mass.\n");
 
   cl_ulong roofline_time_ns = simu->vol_time + simu->flux_time + simu->mass_time;
-  real roofline_time_s = 1e-9 * roofline_time_ns;
-  real roofline_flops = flops_total / roofline_time_s;
-  real roofline_bw = sizeof(real) * reads_total / roofline_time_s;
+  schnaps_real roofline_time_s = 1e-9 * roofline_time_ns;
+  schnaps_real roofline_flops = flops_total / roofline_time_s;
+  schnaps_real roofline_bw = sizeof(schnaps_real) * reads_total / roofline_time_s;
   
   // Volume terms
-  real vol_time_s = 1e-9 * simu->vol_time;
-  real vol_flops = simu->flops_vol / vol_time_s;
-  real vol_bw = sizeof(real) * simu->reads_vol / vol_time_s;
+  schnaps_real vol_time_s = 1e-9 * simu->vol_time;
+  schnaps_real vol_flops = simu->flops_vol / vol_time_s;
+  schnaps_real vol_bw = sizeof(schnaps_real) * simu->reads_vol / vol_time_s;
   printf("DGVol:  GFLOP/s: %f\tbandwidth (GB/s): %f\n", 
 	 1e-9 * vol_flops, 1e-9 * vol_bw);
 
   // Flux terms
-  real flux_time_s = 1e-9 * simu->flux_time;
-  real flux_flops = simu->flops_flux / flux_time_s;
-  real flux_bw = sizeof(real) * simu->reads_flux / flux_time_s;
+  schnaps_real flux_time_s = 1e-9 * simu->flux_time;
+  schnaps_real flux_flops = simu->flops_flux / flux_time_s;
+  schnaps_real flux_bw = sizeof(schnaps_real) * simu->reads_flux / flux_time_s;
   printf("DGFlux: GFLOP/s: %f\tbandwidth (GB/s): %f\n", 
 	 1e-9 * flux_flops, 1e-9 * flux_bw);
   
   // Mass terms
-  real mass_time_s = 1e-9 * simu->mass_time;
-  real mass_flops = simu->flops_mass / mass_time_s;
-  real mass_bw = sizeof(real) * simu->reads_mass / mass_time_s;
+  schnaps_real mass_time_s = 1e-9 * simu->mass_time;
+  schnaps_real mass_flops = simu->flops_mass / mass_time_s;
+  schnaps_real mass_bw = sizeof(schnaps_real) * simu->reads_mass / mass_time_s;
   printf("DGMass: GFLOP/s: %f\tbandwidth (GB/s): %f\n", 
 	 1e-9 * mass_flops, 1e-9 * mass_bw);
 
@@ -1385,7 +1385,7 @@ void show_cl_timing(Simulation *simu)
   total += simu->rk_time;
   total += simu->flux_time;
   
-  real N = 100.0 / total;
+  schnaps_real N = 100.0 / total;
 
   cl_ulong ns;
 
@@ -1424,7 +1424,7 @@ void show_cl_timing(Simulation *simu)
   printf("\n");
   
   ns = total;
-  real total_time = 1e-9 * ns;
+  schnaps_real total_time = 1e-9 * ns;
   printf("total time:                   %f%% \t%luns \t%fs\n", 
 	 ns*N, (unsigned long) ns, total_time);
 
@@ -1442,7 +1442,7 @@ void init_field_cl(Simulation *simu)
 
   simu->w_cl = clCreateBuffer(simu->cli.context,
 			    CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR,
-			    sizeof(real) * simu->wsize,
+			    sizeof(schnaps_real) * simu->wsize,
 			    simu->w,
 			    &status);
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
@@ -1450,7 +1450,7 @@ void init_field_cl(Simulation *simu)
 
   simu->dtw_cl = clCreateBuffer(simu->cli.context,
 			      CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR,
-			      sizeof(real) * simu->wsize,
+			      sizeof(schnaps_real) * simu->wsize,
 			      simu->dtw,
 			      &status);
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
@@ -1474,7 +1474,7 @@ void init_field_cl(Simulation *simu)
   //f->physnode = calloc(60, sizeof(real));
   simu->physnode_cl = clCreateBuffer(simu->cli.context,
 				  CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
-				  sizeof(real) * 60,
+				  sizeof(schnaps_real) * 60,
 				  f->physnode,
 				  &status);
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
@@ -1482,7 +1482,7 @@ void init_field_cl(Simulation *simu)
 
   // Allocate and fill buffer for all macrocell geometries.
   const int nmacro = simu->macromesh.nbelems;
-  const size_t buf_size = sizeof(real) * 60 * nmacro;
+  const size_t buf_size = sizeof(schnaps_real) * 60 * nmacro;
   simu->physnodes_cl = clCreateBuffer(simu->cli.context,
 				   CL_MEM_READ_ONLY,
 				   buf_size,
@@ -1493,10 +1493,10 @@ void init_field_cl(Simulation *simu)
   set_physnodes_cl(simu);
 
   // Allocate one physnode buffer for R macrocell
-  simu->physnodeR = calloc(60, sizeof(real));
+  simu->physnodeR = calloc(60, sizeof(schnaps_real));
   simu->physnodeR_cl = clCreateBuffer(simu->cli.context,
 				   CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
-				   sizeof(real) * 60,
+				   sizeof(schnaps_real) * 60,
 				   f->physnode,
 				   &status);
 

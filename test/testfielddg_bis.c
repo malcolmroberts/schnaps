@@ -55,11 +55,11 @@ int TestfieldDG_bis(void){
   //PlotFields(0, true, &simu, "error", "error.msh");
 
   //Test the time derivative with the exact solution
-  real test2 = 0;
+  schnaps_real test2 = 0;
   for(int i = 0;
       i < model.m * mesh.nbelems * NPG(deg,raf);
       i++){
-    real errloc = fabs(4 * simu.w[i] - pow(simu.dtw[i], 2));
+    schnaps_real errloc = fabs(4 * simu.w[i] - pow(simu.dtw[i], 2));
     //real errloc = pow(simu.dtw[i], 2.);
    //errloc = fabs(pow(simu.dtw[i], 2));
     test2 += errloc * errloc;

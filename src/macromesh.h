@@ -57,7 +57,7 @@ typedef struct MacroMesh{
   //! the list for a given node ends with -1's (it explains the +1)
   int* node2elem;
 
-  real *node; //!< nodes coordinates array
+  schnaps_real *node; //!< nodes coordinates array
 
   //! Activate or not 2D computations
   bool is2d;
@@ -70,11 +70,11 @@ typedef struct MacroMesh{
 
 
   // mesh boundaries
-  real xmin[3],xmax[3];
+  schnaps_real xmin[3],xmax[3];
 
   //! period in each direction
   //! if negative: non-periodic computation (default)
-  real period[3];
+  schnaps_real period[3];
 
 } MacroMesh;
 
@@ -132,18 +132,18 @@ void BuildConnectivity(MacroMesh *m);
 //! \param[in] vit a velocity vector (3 components)
 //! \param[in] deg degree approximation in each direction
 //! \param[in] raf refinement in each direction
-void BuildMacroMeshGraph(MacroMesh *m, real vit[], int deg[], int raf[]);
+void BuildMacroMeshGraph(MacroMesh *m, schnaps_real vit[], int deg[], int raf[]);
 
 //! \brief affine transformation
 //! \param[inout] x the transformed point
 //! \param[in] x0 the initial point
 //! \param[in] A the transformation 
-void AffineMap(real* x,real A[3][3], real x0[3]);
+void AffineMap(schnaps_real* x,schnaps_real A[3][3], schnaps_real x0[3]);
 //! \brief simple transformations of the mesh
 //! \param[inout] m the macromesh
 //! \param[in] x0 the initial point
 //! \param[in] A the transformation 
-void AffineMapMacroMesh(MacroMesh *m,real A[3][3], real x0[3]);
+void AffineMapMacroMesh(MacroMesh *m,schnaps_real A[3][3], schnaps_real x0[3]);
 
 //! \brief detects if the mesh is 1D and then permuts the nodes so
 //! that the y,z directions coincide in the reference or physical
@@ -174,20 +174,20 @@ void PrintMacroMesh(MacroMesh *m);
 //! \param[in] xphy a point in physical space
 //! \param[out] xref the corresponding ref coordinates (optional if NULL) 
 //! \returns true or false
-bool IsInElem(MacroMesh *m,int ie, real* xphy, real* xref);
+bool IsInElem(MacroMesh *m,int ie, schnaps_real* xphy, schnaps_real* xref);
 
 //! \brief find the nearest node to xphy in the mesh
 //! \param[in] m a macromesh
 //! \param[in] xphy a point in physical space
 //! \returns the index of the nearest node
-int NearestNode(MacroMesh *m,real* xphy);
+int NearestNode(MacroMesh *m,schnaps_real* xphy);
 
 //! \brief find the cell containing a physical point
 //! \param[in] m a macromesh
 //! \param[in] xphy a point in physical space
 //! \param[out] xref the corresponding ref coordinates (optional if NULL) 
 //! \returns the index of the macrocell containing xphy or -1 if none found
-int NumElemFromPoint(MacroMesh *m,real* xphy, real* xref);
+int NumElemFromPoint(MacroMesh *m,schnaps_real* xphy, schnaps_real* xref);
 
 
 #endif

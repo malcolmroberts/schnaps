@@ -35,13 +35,13 @@ int TestSimulation(void){
 
     int ipg = 4;
 
-    real xref[3],xphy[3],wtest[1];
+    schnaps_real xref[3],xphy[3],wtest[1];
 
     field f = simu.fd[ie];
 
     ref_pg_vol(f.deg, f.raf, ipg, xref, NULL, NULL);
 
-    Ref2Phy(f.physnode,
+    schnaps_ref2phy(f.physnode,
 	    xref,
 	    NULL, -1, // dphiref, ifa
 	    xphy, NULL,
@@ -50,7 +50,7 @@ int TestSimulation(void){
 
     int imem = f.varindex(f.deg, f.raf, f.model.m,ipg,0);
     f.model.InitData(xphy,wtest);
-    real val = f.wn[imem];
+    schnaps_real val = f.wn[imem];
     test = test && fabs(val - wtest[0]) < _SMALL;
     printf("x= %f %f %f val = %f valex = %f\n",xphy[0],xphy[1],xphy[2],val,wtest[0]);
   }

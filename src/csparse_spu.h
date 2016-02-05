@@ -17,11 +17,11 @@ typedef struct CSparse_SPU{
   int nmem;
 
   //! \brief rhs of the linear solver
-  real* rhs;
+  schnaps_real* rhs;
   starpu_data_handle_t rhs_handle;
   
   //! \brief solution of the linear solver
-  real* sol;
+  schnaps_real* sol;
   starpu_data_handle_t sol_handle;
 
   //! \brief true if the struct is initialized
@@ -72,21 +72,21 @@ void Allocate_CSparse_SPU(CSparse_SPU* spm);
 //! \param[in] i row index
 //! \param[in] j column index
 //! \param[in] val value
-void Set_CSparse_SPU(CSparse_SPU* spm,int i,int j,real val);
+void Set_CSparse_SPU(CSparse_SPU* spm,int i,int j,schnaps_real val);
 
 //! \brief add elem (i,j) to value val
 //! \param[inout] spm the csparse object
 //! \param[in] i row index
 //! \param[in] j column index
 //! \param[in] val value
-void Add_CSparse_SPU(CSparse_SPU* spm,int i,int j,real val); 
+void Add_CSparse_SPU(CSparse_SPU* spm,int i,int j,schnaps_real val); 
 
 //! \brief get elem (i,j)
 //! \param[inout] spm the csparse object
 //! \param[in] i row index
 //! \param[in] j column index
 //! \return value at pos (i,j)
-real Get_CSparse_SPU(CSparse_SPU* spm,int i,int j); 
+schnaps_real Get_CSparse_SPU(CSparse_SPU* spm,int i,int j); 
 
 
 //! \brief display the matrix

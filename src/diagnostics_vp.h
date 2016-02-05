@@ -14,17 +14,17 @@
 
 
 //! \brief compute square of velocity L2 error
-real L2VelError(field * f,real* x,real *w);
+schnaps_real L2VelError(field * f,schnaps_real* x,schnaps_real *w);
 
-real L2_Kinetic_error(Simulation * simu);
+schnaps_real L2_Kinetic_error(Simulation * simu);
 
-real local_kinetic_energy(field * f,real* x,real *w);
+schnaps_real local_kinetic_energy(field * f,schnaps_real* x,schnaps_real *w);
 
-void Energies(Simulation* simu,real * w,real k_energy, real e_energy, real t_energy,int first_diag);
+void Energies(Simulation* simu,schnaps_real * w,schnaps_real k_energy, schnaps_real e_energy, schnaps_real t_energy,int first_diag);
 
-void Charge_total(Simulation * simu,real * w, real t_charge,int first_diag);
+void Charge_total(Simulation * simu,schnaps_real * w, schnaps_real t_charge,int first_diag);
 
-void Plot_Energies(Simulation *simu, real dt);
+void Plot_Energies(Simulation *simu, schnaps_real dt);
 
 
 #endif

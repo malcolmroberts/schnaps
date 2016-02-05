@@ -130,7 +130,7 @@ int TestfieldRK2_SPU(void){
 
   InitSimulation(&simu, &mesh, deg, raf, &model);
 
-  real tmax = 0.25;
+  schnaps_real tmax = 0.25;
   tmax = 0.00666;
   simu.cfl=0.2;
   simu.vmax=1;
@@ -139,12 +139,12 @@ int TestfieldRK2_SPU(void){
   PlotFields(0, false, &simu, NULL, "dgvisu.msh");
   PlotFields(0, true , &simu, "error", "dgerror.msh");
 
-  real dd = 0;
+  schnaps_real dd = 0;
   dd = L2error(&simu);
 
   printf("erreur L2=%.12f\n", dd);
 
-  real tolerance = 0.0026;
+  schnaps_real tolerance = 0.0026;
 
   test = dd < tolerance;
 

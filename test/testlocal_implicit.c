@@ -7,27 +7,27 @@
 #include "waterwave2d.h"
 #include "implicit.h"
 
-const  real a[6]={1,1,1,1,1,1};
-const  real b[6]={1,1,1,1,1,1};
-const  real c[6]={1,1,1,1,1,1};
+const  schnaps_real a[6]={1,1,1,1,1,1};
+const  schnaps_real b[6]={1,1,1,1,1,1};
+const  schnaps_real c[6]={1,1,1,1,1,1};
 
-const real TestSteady_Transport_v2[3] = {0.7071067811865476, 0.7071067811865476, 0};
+const schnaps_real TestSteady_Transport_v2[3] = {0.7071067811865476, 0.7071067811865476, 0};
 
   
-void TestSteady_Transport_NumFlux(real *wL, real *wR, real *vnorm, real *flux);
-void TestSteady_Transport_ImposedData(const real *x, const real t, real *w);
-void TestSteady_Transport_InitData(real *x, real *w);
-void TestSteady_Transport_Source(const real *xy, const real t, const real *w, real *S);
-void Transport_Upwind_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
-                              real *flux);
+void TestSteady_Transport_NumFlux(schnaps_real *wL, schnaps_real *wR, schnaps_real *vnorm, schnaps_real *flux);
+void TestSteady_Transport_ImposedData(const schnaps_real *x, const schnaps_real t, schnaps_real *w);
+void TestSteady_Transport_InitData(schnaps_real *x, schnaps_real *w);
+void TestSteady_Transport_Source(const schnaps_real *xy, const schnaps_real t, const schnaps_real *w, schnaps_real *S);
+void Transport_Upwind_BoundaryFlux(schnaps_real *x, schnaps_real t, schnaps_real *wL, schnaps_real *vnorm,
+                              schnaps_real *flux);
 
 
 
-void TestSteady_Wave_ImposedData(const real *x, const real t, real *w);
-void TestSteady_Wave_InitData(real *x, real *w);
-void TestSteady_Wave_Source(const real *xy, const real t, const real *w, real *S);
-void Wave_Upwind_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
-			      real *flux);
+void TestSteady_Wave_ImposedData(const schnaps_real *x, const schnaps_real t, schnaps_real *w);
+void TestSteady_Wave_InitData(schnaps_real *x, schnaps_real *w);
+void TestSteady_Wave_Source(const schnaps_real *xy, const schnaps_real t, const schnaps_real *w, schnaps_real *S);
+void Wave_Upwind_BoundaryFlux(schnaps_real *x, schnaps_real t, schnaps_real *wL, schnaps_real *vnorm,
+			      schnaps_real *flux);
 
 
 
@@ -56,8 +56,8 @@ int Test_Local_Implicit(void) {
   //ReadMacroMesh(&mesh,"../test/testmacromesh.msh");
   Detect2DMacroMesh(&mesh);
   
-  real A[3][3] = {{_LENGTH_DOMAIN, 0, 0}, {0, _LENGTH_DOMAIN, 0}, {0, 0,1}};
-  real x0[3] = {0, 0, 0};
+  schnaps_real A[3][3] = {{_LENGTH_DOMAIN, 0, 0}, {0, _LENGTH_DOMAIN, 0}, {0, 0,1}};
+  schnaps_real x0[3] = {0, 0, 0};
   AffineMapMacroMesh(&mesh,A,x0);
 
   BuildConnectivity(&mesh);
@@ -99,7 +99,7 @@ int Test_Local_Implicit(void) {
 
   field* fd = simu.fd;
 
-  real tmax = 1;
+  schnaps_real tmax = 1;
   simu.cfl=0.2;
   simu.vmax= _SPEED_WAVE;
   simu.dt = 0.025;
@@ -107,7 +107,7 @@ int Test_Local_Implicit(void) {
   /* InitFieldImplicitSolver(fd); */
   /* AssemblyFieldImplicitSolver(fd, 1, 1); */
   LocalThetaTimeScheme(&simu, tmax, simu.dt);
-  real dd = L2error(&simu);
+  schnaps_real dd = L2error(&simu);
   printf("erreur local implicit L2=%.12e\n", dd);
   PlotFields(0, false, &simu, NULL, "dgvisu.msh");
   PlotFields(0, true, &simu, NULL, "dgerror.msh");
@@ -118,10 +118,10 @@ int Test_Local_Implicit(void) {
   return test;
 }
 
-void TestSteady_Transport_ImposedData(const real *xy, const real t, real *w) {
+void TestSteady_Transport_ImposedData(const schnaps_real *xy, const schnaps_real t, schnaps_real *w) {
 
-  real x=xy[0];
-  real y=xy[1];
+  schnaps_real x=xy[0];
+  schnaps_real y=xy[1];
   //real xx = x * v2[0] + y * v2[1] - t;
   
   w[0] = x * (1 - x) * y * (1-y) + 1;
@@ -129,10 +129,10 @@ void TestSteady_Transport_ImposedData(const real *xy, const real t, real *w) {
   //w[0] = 1;
 }
 
-void TestSteady_Transport_Source(const real *xy, const real t, const real *w, real *S){
+void TestSteady_Transport_Source(const schnaps_real *xy, const schnaps_real t, const schnaps_real *w, schnaps_real *S){
 
-  real x=xy[0];
-  real y=xy[1];
+  schnaps_real x=xy[0];
+  schnaps_real y=xy[1];
 
 
   S[0] = TestSteady_Transport_v2[0] * (1 - 2 * x) * y * (1 - y) +
@@ -141,27 +141,27 @@ void TestSteady_Transport_Source(const real *xy, const real t, const real *w, re
 
 }
 
-void TestSteady_Transport_InitData(real *x, real *w) {
-  real t = 0;
+void TestSteady_Transport_InitData(schnaps_real *x, schnaps_real *w) {
+  schnaps_real t = 0;
   TestSteady_Transport_ImposedData(x, t, w);
 }
 
 
-void Transport_Upwind_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
-                                       real *flux) {
-  real wR[3];
+void Transport_Upwind_BoundaryFlux(schnaps_real *x, schnaps_real t, schnaps_real *wL, schnaps_real *vnorm,
+                                       schnaps_real *flux) {
+  schnaps_real wR[3];
   TestSteady_Transport_ImposedData(x , t, wR);
   TestSteady_Transport_NumFlux(wL, wR, vnorm, flux);
 }
  
-void TestSteady_Transport_NumFlux(real *wL, real *wR, real *vnorm, real *flux)
+void TestSteady_Transport_NumFlux(schnaps_real *wL, schnaps_real *wR, schnaps_real *vnorm, schnaps_real *flux)
 {
-  real vn 
+  schnaps_real vn 
     = TestSteady_Transport_v2[0] * vnorm[0]
     + TestSteady_Transport_v2[1] * vnorm[1]
     + TestSteady_Transport_v2[2] * vnorm[2];
-  real vnp = vn > 0 ? vn : 0;
-  real vnm = vn - vnp;
+  schnaps_real vnp = vn > 0 ? vn : 0;
+  schnaps_real vnm = vn - vnp;
   flux[0] = vnp * wL[0] + vnm * wR[0];
   /* if (fabs(vnorm[2])>1e-6) { */
   /*   printf("vnds %lf %lf %lf \n", vnorm[0], vnorm[1], vnorm[2]); */
@@ -174,10 +174,10 @@ void TestSteady_Transport_NumFlux(real *wL, real *wR, real *vnorm, real *flux)
 /* #undef _SPEED_WAVE */
 /* #define _SPEED_WAVE 2 */
 
-void TestSteady_Wave_ImposedData(const real *xy, const real t, real *w) {
+void TestSteady_Wave_ImposedData(const schnaps_real *xy, const schnaps_real t, schnaps_real *w) {
 
-  real x=xy[0];
-  real y=xy[1];
+  schnaps_real x=xy[0];
+  schnaps_real y=xy[1];
 
 
   w[0] = x*(1-x)*y*(1-y)+1;
@@ -188,10 +188,10 @@ void TestSteady_Wave_ImposedData(const real *xy, const real t, real *w) {
 }
 
 
-void TestSteady_Wave_Source(const real *xy, const real t, const real *w, real *S){
+void TestSteady_Wave_Source(const schnaps_real *xy, const schnaps_real t, const schnaps_real *w, schnaps_real *S){
   
-  real x=xy[0];
-  real y=xy[1];
+  schnaps_real x=xy[0];
+  schnaps_real y=xy[1];
 
   S[0] = 2*(1-2*x)*(y*(1-y))+3*(1-2*y)*(x*(1-x));
   S[1] = (1-2*x)*(y*(1-y));
@@ -203,17 +203,17 @@ void TestSteady_Wave_Source(const real *xy, const real t, const real *w, real *S
 
 }
 
-void TestSteady_Wave_InitData(real *x, real *w) {
-  real t = 0;
+void TestSteady_Wave_InitData(schnaps_real *x, schnaps_real *w) {
+  schnaps_real t = 0;
   TestSteady_Wave_ImposedData(x, t, w);
 }
 
 
 
 
-void Wave_Upwind_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
-				       real *flux) {
-  real wR[3];
+void Wave_Upwind_BoundaryFlux(schnaps_real *x, schnaps_real t, schnaps_real *wL, schnaps_real *vnorm,
+				       schnaps_real *flux) {
+  schnaps_real wR[3];
   TestSteady_Wave_ImposedData(x , t, wR);
   Wave_Upwind_NumFlux(wL, wR, vnorm, flux);
 }

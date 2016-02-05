@@ -8,8 +8,25 @@ bool starpu_use = false;
 bool starpu_c_use = false;
 bool starpu_ocl_use = false;
 
+KineticData  schnaps_kinetic_data;
+
 // OpenCL program for StarPU
 bool opencl_program_is_init = false;
 #ifdef _WITH_STARPU
 struct starpu_opencl_program opencl_program;
 #endif //_WITH_STARPU
+
+void InitKineticData(KineticData *kd, int nbelemv, int degv){
+  kd->nb_elem_v = nbelemv;
+  kd->deg_v = degv;
+  kd->mv = nbelemv * degv + 1;
+  kd->index_max_kin = kd->mv - 1;
+  kd->index_rho = kd->mv ;
+  kd->index_phi = kd->mv + 1;
+  kd->index_ex = kd->mv + 2;
+  kd->index_ey = kd->mv + 3;
+  kd->index_ez = kd->mv + 4;
+  kd->index_max = kd->mv + 5;
+  kd->vmax = 6;
+  kd->dv = 2 * kd->vmax / nbelemv;
+}

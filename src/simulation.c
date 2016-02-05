@@ -101,34 +101,34 @@ void InitInterfaces(Simulation *simu){
      inter[ifa].wsizeR = 0;
      if (fR != NULL) inter[ifa].wsizeR = npgfR * fR->model.m;
 
-     inter[ifa].wL = calloc(inter[ifa].wsizeL, sizeof(real));
+     inter[ifa].wL = calloc(inter[ifa].wsizeL, sizeof(schnaps_real));
      inter[ifa].wR = NULL;
      if (npgfR > 0)  inter[ifa].wR =
-		       calloc(inter[ifa].wsizeR, sizeof(real));
+		       calloc(inter[ifa].wsizeR, sizeof(schnaps_real));
 
      inter[ifa].vol_indexL = malloc(sizeof(int) * npgfL);
      inter[ifa].vol_indexR = NULL;
      if (fR != NULL) inter[ifa].vol_indexR = malloc(sizeof(int) * npgfR);
 
-     inter[ifa].vnds = malloc(3* sizeof(real) * npgfL);
-     inter[ifa].xpg = malloc(3* sizeof(real) * npgfL);
+     inter[ifa].vnds = malloc(3* sizeof(schnaps_real) * npgfL);
+     inter[ifa].xpg = malloc(3* sizeof(schnaps_real) * npgfL);
 
-     real xpgref[3], xpgref_in[3],xpg[3], xpg_in[3];
+     schnaps_real xpgref[3], xpgref_in[3],xpg[3], xpg_in[3];
      for(int ipgf = 0; ipgf < npgfL; ipgf++){
-       real wpg;
-       real vnds[3];
+       schnaps_real wpg;
+       schnaps_real vnds[3];
        int ipgv =
 	 ref_pg_face(fL->deg, fL->raf, locfaL, ipgf,
 		     xpgref, &wpg, xpgref_in);
        inter[ifa].vol_indexL[ipgf] = ipgv;
        {
-	 real codtau[3][3], dtau[3][3];
-	 Ref2Phy(fL->physnode,
+	 schnaps_real codtau[3][3], dtau[3][3];
+	 schnaps_ref2phy(fL->physnode,
 		 xpgref,
 		 NULL, locfaL, // dpsiref, ifa
 		 xpg, dtau,
 		 codtau, NULL, vnds); // codtau, dpsi, vnds
-	 Ref2Phy(fL->physnode,
+	 schnaps_ref2phy(fL->physnode,
 		 xpgref_in,
 		 NULL, locfaL, // dpsiref, ifa
 		 xpg_in, dtau,
@@ -148,7 +148,7 @@ void InitInterfaces(Simulation *simu){
        inter[ifa].xpg[3 * ipgf + 2] = xpg[2];
 
        if (fR != NULL){
-	 Phy2Ref(fR->physnode, xpg_in, xpgref_in);
+	 schnaps_phy2ref(fR->physnode, xpg_in, xpgref_in);
 	 inter[ifa].vol_indexR[ipgf] =
 	   ref_ipg(fR->deg, fR->raf, xpgref_in);
        }
@@ -195,15 +195,15 @@ void InitSimulation(Simulation *simu, MacroMesh *mesh,
 
   printf("field_size = %d simusize = %d\n",field_size,simu->wsize);
 
-  simu->w = calloc(simu->wsize, sizeof(real));
-  simu->dtw = calloc(simu->wsize, sizeof(real));
-  simu->res = calloc(simu->wsize, sizeof(real));
+  simu->w = calloc(simu->wsize, sizeof(schnaps_real));
+  simu->dtw = calloc(simu->wsize, sizeof(schnaps_real));
+  simu->res = calloc(simu->wsize, sizeof(schnaps_real));
 
-  real *w = simu->w;
-  real *dtw = simu->dtw;
-  real *res = simu->res;
+  schnaps_real *w = simu->w;
+  schnaps_real *dtw = simu->dtw;
+  schnaps_real *res = simu->res;
 
-  real physnode[20][3];
+  schnaps_real physnode[20][3];
 
   simu->hmin = FLT_MAX;
 
@@ -293,7 +293,7 @@ void DisplaySimulation(Simulation *simu){
 void PlotFields(int typplot, int compare, Simulation* simu, char *fieldname,
 	       char *filename) {
 
-  real hexa64ref[3 * 64] = {
+  schnaps_real hexa64ref[3 * 64] = {
     0, 0, 3, 3, 0, 3, 3, 3, 3, 0, 3, 3, 0, 0, 0, 3, 0, 0, 3, 3, 0, 0, 3, 0,
     1, 0, 3, 2, 0, 3, 0, 1, 3, 0, 2, 3, 0, 0, 2, 0, 0, 1, 3, 1, 3, 3, 2, 3,
     3, 0, 2, 3, 0, 1, 2, 3, 3, 1, 3, 3, 3, 3, 2, 3, 3, 1, 0, 3, 2, 0, 3, 1,
@@ -317,15 +317,15 @@ void PlotFields(int typplot, int compare, Simulation* simu, char *fieldname,
 		simu->fd[0].deg[1],
 		simu->fd[0].deg[2]};
   // Refinement size in each direction
-  real hh[3] = {1.0 / nraf[0], 1.0 / nraf[1], 1.0 / nraf[2]};
+  schnaps_real hh[3] = {1.0 / nraf[0], 1.0 / nraf[1], 1.0 / nraf[2]};
 
   // Header
-  fprintf(gmshfile, "$MeshFormat\n2.2 0 %d\n", (int) sizeof(real));
+  fprintf(gmshfile, "$MeshFormat\n2.2 0 %d\n", (int) sizeof(schnaps_real));
 
   int nb_plotnodes = simu->macromesh.nbelems * nraf[0] * nraf[1] * nraf[2] * 64;
   fprintf(gmshfile, "$EndMeshFormat\n$Nodes\n%d\n", nb_plotnodes);
 
-  real *value = malloc(nb_plotnodes * sizeof(real));
+  schnaps_real *value = malloc(nb_plotnodes * sizeof(schnaps_real));
   assert(value);
   int nodecount = 0;
 
@@ -343,7 +343,7 @@ void PlotFields(int typplot, int compare, Simulation* simu, char *fieldname,
 	for(icL[2] = 0; icL[2] < nraf[2]; icL[2]++) {
 
 	  for(int ino = 0; ino < 64; ino++) {
-	    real Xr[3] = { hh[0] * (icL[0] + hexa64ref[3 * ino + 0]),
+	    schnaps_real Xr[3] = { hh[0] * (icL[0] + hexa64ref[3 * ino + 0]),
 			     hh[1] * (icL[1] + hexa64ref[3 * ino + 1]),
 			     hh[2] * (icL[2] + hexa64ref[3 * ino + 2]) };
 
@@ -352,15 +352,15 @@ void PlotFields(int typplot, int compare, Simulation* simu, char *fieldname,
 	      assert(Xr[ii] > -1e-10);
 	    }
 
-	    real Xphy[3];
-	    Ref2Phy(simu->fd[i].physnode, Xr, NULL, -1, Xphy, NULL,  NULL, NULL, NULL);
+	    schnaps_real Xphy[3];
+	    schnaps_ref2phy(simu->fd[i].physnode, Xr, NULL, -1, Xphy, NULL,  NULL, NULL, NULL);
 
-	    real Xplot[3] = {Xphy[0], Xphy[1], Xphy[2]};
+	    schnaps_real Xplot[3] = {Xphy[0], Xphy[1], Xphy[2]};
 
 	    value[nodecount] = 0;
-	    real testpsi = 0;
+	    schnaps_real testpsi = 0;
 	    for(int ib = 0; ib < npgv; ib++) {
-	      real psi;
+	      schnaps_real psi;
 	      psi_ref_subcell(f->deg, f->raf, icL, ib, Xr, &psi, NULL);
 	      testpsi += psi;
 	      int vi = f->varindex(f->deg, f->raf, f->model.m, ib, typplot);
@@ -371,7 +371,7 @@ void PlotFields(int typplot, int compare, Simulation* simu, char *fieldname,
 
 	    // Compare with an exact solution
 	    if (compare) {
-	      real wex[f->model.m];
+	      schnaps_real wex[f->model.m];
 	      f->model.ImposedData(Xphy, f->tnow, wex);
 	      value[nodecount] -= wex[typplot];
 
@@ -437,7 +437,7 @@ void PlotFields(int typplot, int compare, Simulation* simu, char *fieldname,
   else
     fprintf(gmshfile, "\"field: %s\"\n", fieldname);
 
-  real t = 0;
+  schnaps_real t = 0;
   fprintf(gmshfile, "1\n%f\n3\n0\n1\n", t);
   fprintf(gmshfile, "%d\n", nb_plotnodes);
 
@@ -537,7 +537,7 @@ void freeSimulation(Simulation* simu){
 
 // Apply the Discontinuous Galerkin approximation to compute the
 // time derivative of the field
-void DtFields(Simulation *simu, real *w, real *dtw) {
+void DtFields(Simulation *simu, schnaps_real *w, schnaps_real *dtw) {
 
   if(simu->pre_dtfields != NULL) {
     simu->pre_dtfields(simu, w);
@@ -618,10 +618,10 @@ void DtFields(Simulation *simu, real *w, real *dtw) {
   }
 }
 
-real L2error(Simulation *simu) {
+schnaps_real L2error(Simulation *simu) {
 
-  real error = 0;
-  real mean = 0;
+  schnaps_real error = 0;
+  schnaps_real mean = 0;
 
   for(int ie = 0; ie < simu->macromesh.nbelems; ++ie) {
 
@@ -630,21 +630,21 @@ real L2error(Simulation *simu) {
     // Loop on the glops (for numerical integration)
     const int npg = NPG(f->deg, f->raf);
     for(int ipg = 0; ipg < npg; ipg++) {
-      real w[f->model.m];
+      schnaps_real w[f->model.m];
       for(int iv = 0; iv < f->model.m; iv++) {
 	int imem = f->varindex(f->deg, f->raf, f->model.m, ipg, iv);
 	w[iv] = f->wn[imem];
       }
 
-      real wex[f->model.m];
-      real wpg, det;
+      schnaps_real wex[f->model.m];
+      schnaps_real wpg, det;
       // Compute wpg, det, and the exact solution
       {
-	real xphy[3], xpgref[3];
-	real dtau[3][3], codtau[3][3];
+	schnaps_real xphy[3], xpgref[3];
+	schnaps_real dtau[3][3], codtau[3][3];
 	// Get the coordinates of the Gauss point
 	ref_pg_vol(f->deg, f->raf, ipg, xpgref, &wpg, NULL);
-	Ref2Phy(f->physnode, // phys. nodes
+	schnaps_ref2phy(f->physnode, // phys. nodes
 		xpgref, // xref
 		NULL, -1, // dpsiref, ifa
 		xphy, dtau, // xphy, dtau
@@ -657,7 +657,7 @@ real L2error(Simulation *simu) {
 
       for(int iv = 0; iv < f->model.m; iv++) {
 	//for(int iv = 0; iv < 4; iv++) {   ///////error here for coil2d
-	real diff = w[iv] - wex[iv];
+	schnaps_real diff = w[iv] - wex[iv];
        error += diff * diff * wpg * det;
         mean += wex[iv] * wex[iv] * wpg * det;
 	//printf("ie=%d ipg=%d iv=%d err=%f \n",ie,ipg,iv,diff);
@@ -669,12 +669,12 @@ real L2error(Simulation *simu) {
 }
 
 // Time integration by a second-order Runge-Kutta algorithm
-void RK2(Simulation *simu, real tmax){
+void RK2(Simulation *simu, schnaps_real tmax){
 
   simu->dt = Get_Dt_RK(simu);
 
 
-  real dt = simu->dt;
+  schnaps_real dt = simu->dt;
 
   simu->tmax = tmax;
 
@@ -685,7 +685,7 @@ void RK2(Simulation *simu, real tmax){
 
   simu->tnow = 0;
 
-  real *wnp1 = calloc(simu->wsize, sizeof(real));
+  schnaps_real *wnp1 = calloc(simu->wsize, sizeof(schnaps_real));
   assert(wnp1);
 
   // FIXME: remove
@@ -693,7 +693,7 @@ void RK2(Simulation *simu, real tmax){
   simu->iter_time_rk = iter;
 
    if(simu->nb_diags != 0) {
-     simu->Diagnostics = malloc(size_diags * sizeof(real));
+     simu->Diagnostics = malloc(size_diags * sizeof(schnaps_real));
    }
 
   while(simu->tnow < tmax) {
@@ -732,12 +732,12 @@ void RK2(Simulation *simu, real tmax){
 
 
 // Time integration by a fourth-order Runge-Kutta algorithm
-void RK4(Simulation *simu, real tmax)
+void RK4(Simulation *simu, schnaps_real tmax)
 {
 
   simu->dt = Get_Dt_RK(simu);
 
-  real dt = simu->dt;
+  schnaps_real dt = simu->dt;
 
   simu->tmax = tmax;
 
@@ -747,16 +747,16 @@ void RK4(Simulation *simu, real tmax)
   int iter = 0;
 
   // Allocate memory for RK time-stepping
-  real *l1, *l2, *l3;
-  l1 = calloc(simu->wsize, sizeof(real));
-  l2 = calloc(simu->wsize, sizeof(real));
-  l3 = calloc(simu->wsize, sizeof(real));
+  schnaps_real *l1, *l2, *l3;
+  l1 = calloc(simu->wsize, sizeof(schnaps_real));
+  l2 = calloc(simu->wsize, sizeof(schnaps_real));
+  l3 = calloc(simu->wsize, sizeof(schnaps_real));
 
   size_diags = simu->nb_diags * simu->itermax_rk;
   simu->iter_time_rk = iter;
 
     if(simu->nb_diags != 0)
-    simu->Diagnostics = malloc(size_diags * sizeof(real));
+    simu->Diagnostics = malloc(size_diags * sizeof(schnaps_real));
 
   while(simu->tnow < tmax) {
     if (iter % freq == 0)
@@ -798,7 +798,7 @@ void RK4(Simulation *simu, real tmax)
 }
 
 // An out-of-place RK step
-void RK_out(real *dest, real *fwn, real *fdtwn, const real dt,
+void RK_out(schnaps_real *dest, schnaps_real *fwn, schnaps_real *fdtwn, const schnaps_real dt,
 	    const int sizew)
 {
 #ifdef _OPENMP
@@ -811,7 +811,7 @@ void RK_out(real *dest, real *fwn, real *fdtwn, const real dt,
 
 
 // An in-place RK step
-void RK_in(real *fwnp1, real *fdtwn, const real dt, const int sizew)
+void RK_in(schnaps_real *fwnp1, schnaps_real *fdtwn, const schnaps_real dt, const int sizew)
 {
 #ifdef _OPENMP
 #pragma omp parallel for
@@ -821,11 +821,11 @@ void RK_in(real *fwnp1, real *fdtwn, const real dt, const int sizew)
   }
 }
 
-void RK4_final_inplace(real *w, real *l1, real *l2, real *l3,
-		       real *dtw, const real dt, const int sizew)
+void RK4_final_inplace(schnaps_real *w, schnaps_real *l1, schnaps_real *l2, schnaps_real *l3,
+		       schnaps_real *dtw, const schnaps_real dt, const int sizew)
 {
-  const real b = -1.0 / 3.0;
-  const real a[] = {1.0 / 3.0, 2.0 / 3.0, 1.0 / 3.0, dt / 6.0};
+  const schnaps_real b = -1.0 / 3.0;
+  const schnaps_real a[] = {1.0 / 3.0, 2.0 / 3.0, 1.0 / 3.0, dt / 6.0};
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
@@ -840,7 +840,7 @@ void RK4_final_inplace(real *w, real *l1, real *l2, real *l3,
 }
 
 
-real Get_Dt_RK(Simulation *simu)
+schnaps_real Get_Dt_RK(Simulation *simu)
 {
    printf("mmmm %f %f %f ",simu->cfl, simu->hmin,simu->vmax);
   return simu->cfl * simu->hmin / simu->vmax;
@@ -848,7 +848,7 @@ real Get_Dt_RK(Simulation *simu)
 }
 
 
-void DisplayArray(real* array,
+void DisplayArray(schnaps_real* array,
                   size_t size,
                   const char* name) {
   for (int i = 0; i < size; ++i)

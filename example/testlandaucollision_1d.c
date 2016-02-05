@@ -9,12 +9,12 @@
 #include "solverpoisson.h"
 
 
-void Test_Landau_Damping_ImposedData(const real x[3], const real t,real w[]);
-void Test_Landau_Damping_InitData(real x[3],real w[]);
-void Test_Landau_Damping_BoundaryFlux(real x[3],real t,real wL[],real* vnorm, real* flux);
+void Test_Landau_Damping_ImposedData(const schnaps_real x[3], const schnaps_real t,schnaps_real w[]);
+void Test_Landau_Damping_InitData(schnaps_real x[3],schnaps_real w[]);
+void Test_Landau_Damping_BoundaryFlux(schnaps_real x[3],schnaps_real t,schnaps_real wL[],schnaps_real* vnorm, schnaps_real* flux);
 
-void UpdateVlasovPoisson(void* field, real *w);
-void PlotVlasovPoisson(void* vf, real * w);
+void UpdateVlasovPoisson(void* field, schnaps_real *w);
+void PlotVlasovPoisson(void* vf, schnaps_real * w);
 
 int main(void) {
   

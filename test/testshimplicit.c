@@ -8,10 +8,10 @@
 #include "waterwave2d.h"
 #include "implicit.h"
 
-void ShallowWater_Rusanov_equilibrium_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
-						   real *flux);
-void ShallowWater_Rusanov_periodic_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
-						   real *flux);
+void ShallowWater_Rusanov_equilibrium_BoundaryFlux(schnaps_real *x, schnaps_real t, schnaps_real *wL, schnaps_real *vnorm,
+						   schnaps_real *flux);
+void ShallowWater_Rusanov_periodic_BoundaryFlux(schnaps_real *x, schnaps_real t, schnaps_real *wL, schnaps_real *vnorm,
+						   schnaps_real *flux);
 
 int main(void) {
   
@@ -35,14 +35,14 @@ int main(void) {
 int Test_SH_equilibrium_Implicit(void) {
 
   int test1 = 0,test2 = 0,test = 0;
-  real tmax=0.0,dt=0.0,tolerance=0.0,dd=0.0;
+  schnaps_real tmax=0.0,dt=0.0,tolerance=0.0,dd=0.0;
 
   MacroMesh mesh;
   ReadMacroMesh(&mesh,"../test/testcube.msh");
   Detect2DMacroMesh(&mesh);
   
-  real A[3][3] = {{_LENGTH_DOMAIN, 0, 0}, {0, _LENGTH_DOMAIN, 0}, {0, 0,1}};
-  real x0[3] = {0, 0, 0};
+  schnaps_real A[3][3] = {{_LENGTH_DOMAIN, 0, 0}, {0, _LENGTH_DOMAIN, 0}, {0, 0,1}};
+  schnaps_real x0[3] = {0, 0, 0};
   AffineMapMacroMesh(&mesh,A,x0);
 
   BuildConnectivity(&mesh);
@@ -121,9 +121,9 @@ int Test_SH_equilibrium_Implicit(void) {
   
   ThetaTimeScheme_WithJF(&simu2,tmax,simu2.dt);
   
-  real dd1 = L2error_onefield(&simu2,0);
-  real dd2 = L2error_onefield(&simu2,1);
-  real dd3 = L2error_onefield(&simu2,2);
+  schnaps_real dd1 = L2error_onefield(&simu2,0);
+  schnaps_real dd2 = L2error_onefield(&simu2,1);
+  schnaps_real dd3 = L2error_onefield(&simu2,2);
   
   printf("erreur periodic L2=%.12e\n", dd1+dd2+dd3);
 
@@ -149,7 +149,7 @@ int Test_SH_equilibrium_Implicit(void) {
 
 
 
-void TestSH_equilibrium_ImposedData(const real *x, const real t, real *w) {
+void TestSH_equilibrium_ImposedData(const schnaps_real *x, const schnaps_real t, schnaps_real *w) {
 
   w[0] = 1.0-0.8*exp(-50*(pow(x[0]-0.5*_LENGTH_DOMAIN,2.0)+pow(x[1]-0.5*_LENGTH_DOMAIN,2.0)));
   w[1] = 0.0;
@@ -161,24 +161,24 @@ void TestSH_equilibrium_ImposedData(const real *x, const real t, real *w) {
 
 }
 
-void TestSH_equilibrium_InitData(real *x, real *w) {
-  real t = 0;
+void TestSH_equilibrium_InitData(schnaps_real *x, schnaps_real *w) {
+  schnaps_real t = 0;
   TestSH_equilibrium_ImposedData(x, t, w);
 }
 
 
-void ShallowWater_Rusanov_equilibrium_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
-				       real *flux) {
-  real wR[6];
+void ShallowWater_Rusanov_equilibrium_BoundaryFlux(schnaps_real *x, schnaps_real t, schnaps_real *wL, schnaps_real *vnorm,
+				       schnaps_real *flux) {
+  schnaps_real wR[6];
   TestSH_equilibrium_ImposedData(x , t, wR);
   ShallowWater_Rusanov_NumFlux(wL, wR, vnorm, flux);
 }
 
 
-void TestSH_periodic_ImposedData(const real *x, const real t, real *w) {
-  real u0=2;
-  real v0=2;
-  real pi=4.0*atan(1.0);
+void TestSH_periodic_ImposedData(const schnaps_real *x, const schnaps_real t, schnaps_real *w) {
+  schnaps_real u0=2;
+  schnaps_real v0=2;
+  schnaps_real pi=4.0*atan(1.0);
   
   w[0] = 1.0+0.2*sin(((2.*pi)/_LENGTH_DOMAIN)*(x[0]+x[1]-u0*t-v0*t));
   w[1] = u0*w[0];
@@ -190,18 +190,18 @@ void TestSH_periodic_ImposedData(const real *x, const real t, real *w) {
 
 }
 
-void TestSH_periodic_InitData(real *x, real *w) {
-  real t = 0;
+void TestSH_periodic_InitData(schnaps_real *x, schnaps_real *w) {
+  schnaps_real t = 0;
   TestSH_periodic_ImposedData(x, t, w);
 }
 
 
 
-void ShallowWater_periodic_SourceTerm(const real *x, const real t, const real *w, real *source){
-  real g=_GRAVITY;
-  real hL=0, hR=0, uL=0, uR=0, vL=0, vR=0;
-  real S=0,b=0,bx=0,by=0;
-  real wexact[6];
+void ShallowWater_periodic_SourceTerm(const schnaps_real *x, const schnaps_real t, const schnaps_real *w, schnaps_real *source){
+  schnaps_real g=_GRAVITY;
+  schnaps_real hL=0, hR=0, uL=0, uR=0, vL=0, vR=0;
+  schnaps_real S=0,b=0,bx=0,by=0;
+  schnaps_real wexact[6];
 
   
   hL = w[0];
@@ -220,9 +220,9 @@ void ShallowWater_periodic_SourceTerm(const real *x, const real t, const real *w
 
 };
 
-void ShallowWater_Rusanov_periodic_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
-				       real *flux) {
-  real wR[6];
+void ShallowWater_Rusanov_periodic_BoundaryFlux(schnaps_real *x, schnaps_real t, schnaps_real *wL, schnaps_real *vnorm,
+				       schnaps_real *flux) {
+  schnaps_real wR[6];
   TestSH_periodic_ImposedData(x , t, wR);
   ShallowWater_Rusanov_NumFlux(wL, wR, vnorm, flux);
 }

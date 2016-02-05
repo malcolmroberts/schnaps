@@ -33,7 +33,7 @@
 //! \param[in] wL,wR : left and right states
 //! \param[in] vn : normal vector
 //! \param[out] flux : the flux
-void VlasovP_Lagrangian_NumFlux(real *wL, real *wR, real *vn, real *flux);
+void VlasovP_Lagrangian_NumFlux(schnaps_real *wL, schnaps_real *wR, schnaps_real *vn, schnaps_real *flux);
 
 //! \brief  compute the source term of the collision
 //! model: electric force + true collisions
@@ -41,7 +41,7 @@ void VlasovP_Lagrangian_NumFlux(real *wL, real *wR, real *vn, real *flux);
 //! \param[in] t time
 //! \param[in] w the distribution function
 //! \param[out] source the source
-void VlasovP_Lagrangian_Source(const real *x, const real t, const real *w, real *source);
+void VlasovP_Lagrangian_Source(const schnaps_real *x, const schnaps_real t, const schnaps_real *w, schnaps_real *source);
 
 
 //! \brief compute M^{-1 * M_f(v) * w for collision step
@@ -49,7 +49,7 @@ void VlasovP_Lagrangian_Source(const real *x, const real t, const real *w, real 
 //! \param[in] w the distribution function in entropic variable
 //! \param[in] function the function which compute second order derivate of the adjoint entropic transformation
 //! \param[out] product contains the result
-void VlasovP_Mass_modified(field *f,real * w,void (*function)(field *f,real w,real *tw),real* product);
+void VlasovP_Mass_modified(field *f,schnaps_real * w,void (*function)(field *f,schnaps_real w,schnaps_real *tw),schnaps_real* product);
 
 			    
 #endif

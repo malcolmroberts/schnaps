@@ -86,36 +86,36 @@ int GenericVarindex3d(int m, int *nx, int *nc,
 /*   p[2] = ipg / npg[0] / npg[1]; */
 /* }  */
 
-real min_grid_spacing(field *f)
+schnaps_real min_grid_spacing(field *f)
 {
-  real hmin = FLT_MAX;
+  schnaps_real hmin = FLT_MAX;
 
-    real vol = 0, surf = 0;
+    schnaps_real vol = 0, surf = 0;
 
     // Loop on the glops (for numerical integration)
     for(int ipg = 0; ipg < NPG(f->deg, f->raf); ipg++) {
-      real xpgref[3], wpg;
+      schnaps_real xpgref[3], wpg;
       // Get the coordinates of the Gauss point
       ref_pg_vol(f->deg, f->raf, ipg, xpgref, &wpg, NULL);
-      real codtau[3][3], dtau[3][3];
-      Ref2Phy(f->physnode, // phys. nodes
+      schnaps_real codtau[3][3], dtau[3][3];
+      schnaps_ref2phy(f->physnode, // phys. nodes
 	      xpgref, // xref
 	      NULL, -1, // dpsiref, ifa
 	      NULL, dtau, // xphy, dtau
 	      codtau, NULL, NULL); // codtau, dpsi, vnds
-      real det = dot_product(dtau[0], codtau[0]);
+      schnaps_real det = dot_product(dtau[0], codtau[0]);
       vol += wpg * det;
     }
     for(int ifa = 0; ifa < 6; ifa++) {
       // loop on the faces
       for(int ipgf = 0; ipgf < NPGF(f->deg, f->raf, ifa); ipgf++) {
-	real xpgref[3], wpg;
+	schnaps_real xpgref[3], wpg;
 	// get the coordinates of the Gauss point
 	ref_pg_face(f->deg, f->raf, ifa, ipgf, xpgref, &wpg, NULL);
-	real vnds[3];
+	schnaps_real vnds[3];
 	{
-	  real codtau[3][3], dtau[3][3];
-	  Ref2Phy(f->physnode,
+	  schnaps_real codtau[3][3], dtau[3][3];
+	  schnaps_ref2phy(f->physnode,
 		  xpgref,
 		  NULL, ifa, // dpsiref, ifa
 		  NULL, dtau,
@@ -163,22 +163,22 @@ void init_data(field *f)
 {
 
     for(int ipg = 0; ipg < NPG(f->deg, f->raf); ipg++) {
-      real xpg[3];
-      real xref[3], omega;
+      schnaps_real xpg[3];
+      schnaps_real xref[3], omega;
       ref_pg_vol(f->deg, f->raf, ipg, xref, &omega, NULL);
-      real dtau[3][3];
-      Ref2Phy(f->physnode,
+      schnaps_real dtau[3][3];
+      schnaps_ref2phy(f->physnode,
 	      xref,
 	      0, -1, // dphiref, ifa
               xpg, dtau,
 	      NULL, NULL, NULL); // codtau, dphi, vnds
       { // Check the reverse transform at all the GLOPS
- 	real xref2[3];
-	Phy2Ref(f->physnode, xpg, xref2);
+ 	schnaps_real xref2[3];
+	schnaps_phy2ref(f->physnode, xpg, xref2);
 	assert(Dist(xref, xref2) < _SMALL);
       }
 
-      real w[f->model.m];
+      schnaps_real w[f->model.m];
       f->model.InitData(xpg, w);
       for(int iv = 0; iv < f->model.m; iv++) {
 	int imem = f->varindex(f->deg, f->raf, f->model.m, ipg, iv);
@@ -193,15 +193,15 @@ void init_data(field *f)
 void set_physnodes_cl(Simulation *simu)
 {
   const int nmacro = simu->macromesh.nbelems;
-  real buf_size = sizeof(real) * 60 * nmacro;
-  real *physnode = malloc(buf_size);
+  schnaps_real buf_size = sizeof(schnaps_real) * 60 * nmacro;
+  schnaps_real *physnode = malloc(buf_size);
 
   for(int ie = 0; ie < nmacro; ++ie) {
     int ie20 = 20 * ie;
     for(int inoloc = 0; inoloc < 20; ++inoloc) {
       int ino = 3 * simu->macromesh.elem2node[ie20 + inoloc];
-      real *iphysnode = physnode + 3 * ie20 + 3 * inoloc;
-      real *nodeino = simu->macromesh.node + ino;
+      schnaps_real *iphysnode = physnode + 3 * ie20 + 3 * inoloc;
+      schnaps_real *nodeino = simu->macromesh.node + ino;
       iphysnode[0] = nodeino[0];
       iphysnode[1] = nodeino[1];
       iphysnode[2] = nodeino[2];
@@ -226,7 +226,7 @@ void set_physnodes_cl(Simulation *simu)
 #endif
 
 void Initfield(field *f, Model model,
-	       real physnode[][3], int *deg, int *raf, real *w, real* dtw) {
+	       schnaps_real physnode[][3], int *deg, int *raf, schnaps_real *w, schnaps_real* dtw) {
   //int param[8]={f->model.m,_DEGX,_DEGY,_DEGZ,_RAFX,_RAFY,_RAFZ,0};
 
   //f->vmax = 1.0; // FIXME: make this variable ??????
@@ -272,14 +272,14 @@ void Initfield(field *f, Model model,
   /*   printf("Allocating %d floats per array (%f GB)\n", nmem, g_memsize); */
 
   if (w == NULL){
-    f->wn = calloc(nmem, sizeof(real));
+    f->wn = calloc(nmem, sizeof(schnaps_real));
   } else {
     f->wn = w;
   }
   assert(f->wn);
 
   if (dtw == NULL){
-    f->dtwn = calloc(nmem, sizeof(real));
+    f->dtwn = calloc(nmem, sizeof(schnaps_real));
   } else {
     f->dtwn = dtw;
   }
@@ -298,19 +298,19 @@ void Initfield(field *f, Model model,
 
   if (f->store_det) {
     int npg = NPG(f->deg, f->raf);
-    f->jacobian = malloc(npg * 9 * sizeof(real));
-    f->det = malloc(npg * sizeof(real));
+    f->jacobian = malloc(npg * 9 * sizeof(schnaps_real));
+    f->det = malloc(npg * sizeof(schnaps_real));
     for(int ipg = 0; ipg < npg; ipg++) {
-      real xpg[3];
-      real xref[3], omega;
+      schnaps_real xpg[3];
+      schnaps_real xref[3], omega;
       ref_pg_vol(f->deg, f->raf, ipg, xref, &omega, NULL);
-      real codtau[9];
-      real* dtau = f->jacobian + 9 * ipg;
-      Ref2Phy(f->physnode,
+      schnaps_real codtau[9];
+      schnaps_real* dtau = f->jacobian + 9 * ipg;
+      schnaps_ref2phy(f->physnode,
 	      xref,
 	      NULL, -1, // dphiref, ifa
-              NULL, (real(*)[3])dtau, // xphy , dtau
-	      (real(*)[3])codtau, NULL, NULL); // codtau, dphi, vnds
+              NULL, (schnaps_real(*)[3])dtau, // xphy , dtau
+	      (schnaps_real(*)[3])codtau, NULL, NULL); // codtau, dphi, vnds
       f->det[ipg] = dot_product(dtau, codtau);
     }
   }
@@ -351,20 +351,20 @@ void Registerfield_SPU(field *f){
 				0, // location: CPU
 				(uintptr_t)(f->wn), // vector location
 				f->wsize,  // size
-				sizeof(real));  // type
+				sizeof(schnaps_real));  // type
 
 
     starpu_vector_data_register(&(f->dtwn_handle), // mem handle
 				0, // location: CPU
 				(uintptr_t)(f->dtwn), // vector location
 				f->wsize,  // size
-				sizeof(real));  // type
+				sizeof(schnaps_real));  // type
 
     starpu_vector_data_register(&(f->res_handle), // mem handle
 				0, // location: CPU
 				(uintptr_t)(f->res), // vector location
 				f->wsize,  // size
-				sizeof(real));  // type
+				sizeof(schnaps_real));  // type
     f->starpu_registered = true;
   }
 
@@ -437,12 +437,12 @@ void Displayfield(field *f) {
   printf("Display field...\n");
     printf("elem data \n");
     for(int ipg = 0; ipg < NPG(f->deg, f->raf); ipg++) {
-      real xref[3], wpg;
+      schnaps_real xref[3], wpg;
       ref_pg_vol(f->deg, f->raf, ipg, xref, &wpg, NULL);
 
-      real dtau[3][3], codtau[3][3], xpgref[3], xphy[3];
+      schnaps_real dtau[3][3], codtau[3][3], xpgref[3], xphy[3];
       ref_pg_vol(f->deg, f->raf, ipg, xpgref, &wpg, NULL);
-      Ref2Phy(f->physnode, // phys. nodes
+      schnaps_ref2phy(f->physnode, // phys. nodes
 	      xpgref, // xref
 	      NULL, -1, // dpsiref, ifa
 	      xphy, dtau, // xphy, dtau
@@ -467,7 +467,7 @@ void Displayfield(field *f) {
 
 // Save the results in a text file
 // in order plot it with Gnuplot
-void Gnuplot(Simulation *simu,int dir, real fixval, char* filename) {
+void Gnuplot(Simulation *simu,int dir, schnaps_real fixval, char* filename) {
 
   FILE * gmshfile;
   gmshfile = fopen(filename, "w" );
@@ -478,11 +478,11 @@ void Gnuplot(Simulation *simu,int dir, real fixval, char* filename) {
     field *f = &simu->fd[ie];
     for(int ipg = 0; ipg < NPG(f->deg, f->raf); ipg++) {
 
-      real xref[3], xphy[3], wpg;
-      real dtau[3][3];
+      schnaps_real xref[3], xphy[3], wpg;
+      schnaps_real dtau[3][3];
       ref_pg_vol(f->deg, f->raf, ipg, xref, &wpg, NULL);
 
-      Ref2Phy(f->physnode,
+      schnaps_ref2phy(f->physnode,
 	      xref,
 	      0, -1, // dphiref, ifa
 	      xphy, dtau,
@@ -508,7 +508,7 @@ void Gnuplot(Simulation *simu,int dir, real fixval, char* filename) {
 
 
 // Compute inter-subcell fluxes
-void DGSubCellInterface(field *f, real *w, real *dtw)
+void DGSubCellInterface(field *f, schnaps_real *w, schnaps_real *dtw)
 {
 
 
@@ -575,13 +575,13 @@ void DGSubCellInterface(field *f, real *w, real *dtw)
 
 		// Compute the normal vector for integrating on the
 		// face
-		real vnds[3];
+		schnaps_real vnds[3];
 		{
-		  real xref[3], wpg3;
+		  schnaps_real xref[3], wpg3;
 		  ref_pg_vol(f->deg, f->raf, ipgL, xref, &wpg3, NULL);
 		  // mapping from the ref glop to the physical glop
-		  real dtau[3][3], codtau[3][3];
-		  Ref2Phy(f->physnode,
+		  schnaps_real dtau[3][3], codtau[3][3];
+		  schnaps_ref2phy(f->physnode,
 			  xref,
 			  NULL, // dphiref
 			  -1,  // ifa
@@ -593,7 +593,7 @@ void DGSubCellInterface(field *f, real *w, real *dtw)
 		  // we compute ourself the normal vector because we
 		  // have to take into account the subcell surface
 
-		  real h1h2 = 1. / nraf[dim1] / nraf[dim2];
+		  schnaps_real h1h2 = 1. / nraf[dim1] / nraf[dim2];
 		  vnds[0] = codtau[0][dim0] * h1h2;
 		  vnds[1] = codtau[1][dim0] * h1h2;
 		  vnds[2] = codtau[2][dim0] * h1h2;
@@ -601,7 +601,7 @@ void DGSubCellInterface(field *f, real *w, real *dtw)
 
 		// numerical flux from the left and right state and
 		// normal vector
-		real wL[m], wR[m], flux[m];
+		schnaps_real wL[m], wR[m], flux[m];
 		for(int iv = 0; iv < m; iv++) {
 		  // TO DO change the varindex signature
 		  int imemL = f->varindex(f->deg, f->raf, f->model.m, ipgL, iv);
@@ -613,7 +613,7 @@ void DGSubCellInterface(field *f, real *w, real *dtw)
 		f->model.NumFlux(wL, wR, vnds, flux);
 
 		// subcell ref surface glop weight
-		real wpg
+		schnaps_real wpg
 		  = wglop(deg[dim1], iL[dim1])
 		  * wglop(deg[dim2], iL[dim2]);
 
@@ -646,7 +646,7 @@ void DGSubCellInterface(field *f, real *w, real *dtw)
 // Second implementation with a loop on the faces.
 void DGMacroCellInterface(int locfaL,
 			  field *fL, int offsetL, field *fR, int offsetR,
-			  real *w, real *dtw)
+			  schnaps_real *w, schnaps_real *dtw)
 {
 
   const unsigned int m = fL->model.m;
@@ -660,11 +660,11 @@ void DGMacroCellInterface(int locfaL,
   //int ieR = msh->face2elem[4 * ifa + 2];
   //int locfaR = msh->face2elem[4 * ifa + 3];
 
-  real *fwL = w + offsetL;
-  real *fwR = w + offsetR;
+  schnaps_real *fwL = w + offsetL;
+  schnaps_real *fwR = w + offsetR;
 
-  real *fdtwL = dtw + offsetL;
-  real *fdtwR = dtw + offsetR;
+  schnaps_real *fdtwL = dtw + offsetL;
+  schnaps_real *fdtwR = dtw + offsetR;
 
   // Loop over the points on a single macro cell interface.
 /* #ifdef _OPENMP */
@@ -672,20 +672,20 @@ void DGMacroCellInterface(int locfaL,
 /* #endif */
   for(int ipgfL = 0; ipgfL < NPGF(fL->deg, fL->raf, locfaL); ipgfL++) {
 
-    real xpgref[3], xpgref_in[3], wpg;
+    schnaps_real xpgref[3], xpgref_in[3], wpg;
 
     // Get the coordinates of the Gauss point and coordinates of a
     // point slightly inside the opposite element in xref_in
     int ipgL = ref_pg_face(fL->deg, fL->raf, locfaL, ipgfL, xpgref, &wpg, xpgref_in);
 
-    real flux[m];
-    real wL[m];
+    schnaps_real flux[m];
+    schnaps_real wL[m];
 
     // Normal vector at gauss point ipgL
-    real vnds[3], xpg[3];
+    schnaps_real vnds[3], xpg[3];
     {
-      real dtau[3][3], codtau[3][3];
-      Ref2Phy(fL->physnode,
+      schnaps_real dtau[3][3], codtau[3][3];
+      schnaps_ref2phy(fL->physnode,
 	      xpgref,
 	      NULL, locfaL, // dpsiref, ifa
 	      xpg, dtau,
@@ -693,16 +693,16 @@ void DGMacroCellInterface(int locfaL,
     }
 
     if (fR != NULL) {  // the right element exists
-      real xrefL[3];
+      schnaps_real xrefL[3];
       {
-	real xpg_in[3];
-	Ref2Phy(fL->physnode,
+	schnaps_real xpg_in[3];
+	schnaps_ref2phy(fL->physnode,
 		xpgref_in,
 		NULL, -1, // dpsiref, ifa
 		xpg_in, NULL,
 		NULL, NULL, NULL); // codtau, dpsi, vnds
 	PeriodicCorrection(xpg_in,fL->period);
-	Phy2Ref(fR->physnode, xpg_in, xrefL);
+	schnaps_phy2ref(fR->physnode, xpg_in, xrefL);
 
       }
 
@@ -728,7 +728,7 @@ void DGMacroCellInterface(int locfaL,
       /* #endif */
       /* } */
 
-      real wR[m];
+      schnaps_real wR[m];
       for(int iv = 0; iv < m; iv++) {
 	int imemL = fL->varindex(fL->deg, fL->raf,fL->model.m, ipgL, iv);
 	wL[iv] = fwL[imemL];
@@ -773,20 +773,20 @@ void DGMacroCellInterface(int locfaL,
 }
 
 // Apply division by the mass matrix
-void DGMass(field *f, real *w, real *dtw)
+void DGMass(field *f, schnaps_real *w, schnaps_real *dtw)
 {
 
   int m = f->model.m;
 
   for(int ipg = 0; ipg < NPG(f->deg, f->raf); ipg++) {
-    real dtau[3][3], codtau[3][3], xpgref[3], xphy[3], wpg;
+    schnaps_real dtau[3][3], codtau[3][3], xpgref[3], xphy[3], wpg;
     ref_pg_vol(f->deg, f->raf, ipg, xpgref, &wpg, NULL);
-    Ref2Phy(f->physnode, // phys. nodes
+    schnaps_ref2phy(f->physnode, // phys. nodes
 	    xpgref, // xref
 	    NULL, -1, // dpsiref, ifa
 	    xphy, dtau, // xphy, dtau
 	    codtau, NULL, NULL); // codtau, dpsi, vnds
-    real det = dot_product(dtau[0], codtau[0]);
+    schnaps_real det = dot_product(dtau[0], codtau[0]);
     for(int iv = 0; iv < m; iv++) {
       int imem = f->varindex(f->deg, f->raf, f->model.m, ipg, iv);
       dtw[imem] /= (wpg * det);
@@ -796,7 +796,7 @@ void DGMass(field *f, real *w, real *dtw)
 }
 
 // Apply the source term
-void DGSource(field *f, real *w, real *dtw)
+void DGSource(field *f, schnaps_real *w, schnaps_real *dtw)
 {
   if (f->model.Source == NULL) {
     return;
@@ -805,15 +805,15 @@ void DGSource(field *f, real *w, real *dtw)
   const int m = f->model.m;
 
   for(int ipg = 0; ipg < NPG(f->deg, f->raf); ipg++) {
-    real dtau[3][3], codtau[3][3], xpgref[3], xphy[3], wpg;
+    schnaps_real dtau[3][3], codtau[3][3], xpgref[3], xphy[3], wpg;
     ref_pg_vol(f->deg, f->raf, ipg, xpgref, &wpg, NULL);
-    Ref2Phy(f->physnode, // phys. nodes
+    schnaps_ref2phy(f->physnode, // phys. nodes
 	    xpgref, // xref
 	    NULL, -1, // dpsiref, ifa
 	    xphy, dtau, // xphy, dtau
 	    codtau, NULL, NULL); // codtau, dpsi, vnds
-    real det = dot_product(dtau[0], codtau[0]);  //// temp !!!!!!!!!!!!!!!
-    real wL[m], source[m];
+    schnaps_real det = dot_product(dtau[0], codtau[0]);  //// temp !!!!!!!!!!!!!!!
+    schnaps_real wL[m], source[m];
     for(int iv = 0; iv < m; ++iv){
       int imem = f->varindex(f->deg, f->raf, f->model.m, ipg, iv);
       wL[iv] = w[imem];
@@ -832,7 +832,7 @@ void DGSource(field *f, real *w, real *dtw)
 }
 
 // Compute the Discontinuous Galerkin volume terms, fast version
-void DGVolume(field *f, real *w, real *dtw)
+void DGVolume(field *f, schnaps_real *w, schnaps_real *dtw)
 {
 
 
@@ -862,15 +862,15 @@ void DGVolume(field *f, real *w, real *dtw)
 	int offsetL = npg[0] * npg[1] * npg[2] * ncL;
 
 	// compute all of the xref for the subcell
-	real *xref0 = malloc(sc_npg * sizeof(real));
-	real *xref1 = malloc(sc_npg * sizeof(real));
-	real *xref2 = malloc(sc_npg * sizeof(real));
-	real *omega = malloc(sc_npg * sizeof(real));
+	schnaps_real *xref0 = malloc(sc_npg * sizeof(schnaps_real));
+	schnaps_real *xref1 = malloc(sc_npg * sizeof(schnaps_real));
+	schnaps_real *xref2 = malloc(sc_npg * sizeof(schnaps_real));
+	schnaps_real *omega = malloc(sc_npg * sizeof(schnaps_real));
 	int *imems = malloc(m * sc_npg * sizeof(int));
 	int pos = 0;
 	for(unsigned int p = 0; p < sc_npg; ++p) {
-	  real xref[3];
-	  real tomega;
+	  schnaps_real xref[3];
+	  schnaps_real tomega;
 
 	  ref_pg_vol(f->deg, f->raf, offsetL + p, xref, &tomega, NULL);
 	  xref0[p] = xref[0];
@@ -891,7 +891,7 @@ void DGVolume(field *f, real *w, real *dtw)
 	  for(int p0 = 0; p0 < npg[0]; p0++) {
 	    for(int p1 = 0; p1 < npg[1]; p1++) {
 	      for(int p2 = 0; p2 < npg[2]; p2++) {
-		real wL[m], flux[m];
+		schnaps_real wL[m], flux[m];
 		int p[3] = {p0, p1, p2};
 		int ipgL = offsetL + p[0] + npg[0] * (p[1] + npg[1] * p[2]);
 		for(int iv = 0; iv < m; iv++) {
@@ -902,21 +902,21 @@ void DGVolume(field *f, real *w, real *dtw)
 		// loop on the direction dim0 on the "cross"
 		for(int iq = 0; iq < npg[dim0]; iq++) {
 		  q[dim0] = (p[dim0] + iq) % npg[dim0];
-		  real dphiref[3] = {0, 0, 0};
+		  schnaps_real dphiref[3] = {0, 0, 0};
 		  // compute grad phi_q at glop p
 		  dphiref[dim0] = dlag(deg[dim0], q[dim0], p[dim0])
 		    * nraf[dim0];
 
-		  real xrefL[3] = {xref0[ipgL - offsetL],
+		  schnaps_real xrefL[3] = {xref0[ipgL - offsetL],
 				   xref1[ipgL - offsetL],
 				   xref2[ipgL - offsetL]};
-		  real wpgL = omega[ipgL - offsetL];
+		  schnaps_real wpgL = omega[ipgL - offsetL];
 		  /* real xrefL[3], wpgL; */
 		  /* ref_pg_vol(f->interp_param+1,ipgL,xrefL, &wpgL, NULL); */
 
 		  // mapping from the ref glop to the physical glop
-		  real dtau[3][3], codtau[3][3], dphiL[3];
-		  Ref2Phy(f->physnode,
+		  schnaps_real dtau[3][3], codtau[3][3], dphiL[3];
+		  schnaps_ref2phy(f->physnode,
 			  xrefL,
 			  dphiref, // dphiref
 			  -1,  // ifa
@@ -964,10 +964,10 @@ void DGVolume(field *f, real *w, real *dtw)
 // Compute the normalized L2 distance with the imposed data
 
 // Compute the normalized L2 distance with the imposed data
-real L2error_onefield(Simulation *simu, int nbfield) {
+schnaps_real L2error_onefield(Simulation *simu, int nbfield) {
   //int param[8] = {f->model.m, _DEGX, _DEGY, _DEGZ, _RAFX, _RAFY, _RAFZ, 0};
-  real error = 0;
-  real mean = 0;
+  schnaps_real error = 0;
+  schnaps_real mean = 0;
 
   for (int ie = 0; ie < simu->macromesh.nbelems; ie++) {
     // Get the physical nodes of element ie
@@ -977,21 +977,21 @@ real L2error_onefield(Simulation *simu, int nbfield) {
     // Loop on the glops (for numerical integration)
     const int npg = NPG(f->deg, f->raf);
     for(int ipg = 0; ipg < npg; ipg++) {
-      real w[f->model.m];
+      schnaps_real w[f->model.m];
       for(int iv = 0; iv < f->model.m; iv++) {
 	int imem = f->varindex(f->deg, f->raf, f->model.m, ipg, iv);
 	w[iv] = f->wn[imem];
       }
 
-      real wex[f->model.m];
-      real wpg, det;
+      schnaps_real wex[f->model.m];
+      schnaps_real wpg, det;
       // Compute wpg, det, and the exact solution
       {
-	real xphy[3], xpgref[3];
-	real dtau[3][3], codtau[3][3];
+	schnaps_real xphy[3], xpgref[3];
+	schnaps_real dtau[3][3], codtau[3][3];
 	// Get the coordinates of the Gauss point
 	ref_pg_vol(f->deg, f->raf, ipg, xpgref, &wpg, NULL);
-	Ref2Phy(f->physnode, // phys. nodes
+	schnaps_ref2phy(f->physnode, // phys. nodes
 		xpgref, // xref
 		NULL, -1, // dpsiref, ifa
 		xphy, dtau, // xphy, dtau
@@ -1003,7 +1003,7 @@ real L2error_onefield(Simulation *simu, int nbfield) {
       }
 
       int iv = nbfield;
-      real diff = w[iv] - wex[iv];
+      schnaps_real diff = w[iv] - wex[iv];
       error += diff * diff * wpg * det;
       mean += w[iv] * w[iv] * wpg * det;
     }
@@ -1012,7 +1012,7 @@ real L2error_onefield(Simulation *simu, int nbfield) {
 }
 
 
-void InterpField(field *f, real *xref, real *w){
+void InterpField(field *f, schnaps_real *xref, schnaps_real *w){
   int deg[3] = {f->deg[0],
 		      f->deg[1],
 		      f->deg[2]};
@@ -1034,7 +1034,7 @@ void InterpField(field *f, real *xref, real *w){
   int npgv = NPG(deg, nraf);
   // TODO: loop only on non zero basis function
   for(int ib = 0; ib < npgv; ib++) {
-    real psi;
+    schnaps_real psi;
     psi_ref_subcell(deg, nraf, is, ib, xref, &psi, NULL);
 
     for(int iv=0;iv<f->model.m;iv++){

@@ -9,7 +9,7 @@ void DisplayHandle_SPU(starpu_data_handle_t handle,
   starpu_data_prefetch_on_node(handle, 0, 0);
   // Warning: only real arrays for the moment
   // Extention to every type could be made with starpu_vector_get_elemsize
-  real* ptr = (real*) starpu_vector_get_local_ptr(handle);
+  schnaps_real* ptr = (schnaps_real*) starpu_vector_get_local_ptr(handle);
   int size = starpu_vector_get_nx(handle);
   for (int i = 0; i < size; ++i)
     printf("%s[%d]: %f\n", name, i , ptr[i]);
@@ -70,7 +70,7 @@ void ZeroBuffer_C(void *buffers[], void *cl_arg) {
 
   int n = STARPU_VECTOR_GET_NX(buffers[0]);
 
-  real* w = (real *)STARPU_VECTOR_GET_PTR(w_v);
+  schnaps_real* w = (schnaps_real *)STARPU_VECTOR_GET_PTR(w_v);
 
   for(int i = 0; i < n; i++) w[i] = 0;
 
@@ -119,7 +119,7 @@ void AddBuffer_C(void *buffers[], void *cl_arg);
 void AddBuffer_OCL(void *buffers[], void *cl_arg);
 
 // compute wout = wout + alpha * win
-void AddBuffer_SPU(real alpha, starpu_data_handle_t win, starpu_data_handle_t wout){
+void AddBuffer_SPU(schnaps_real alpha, starpu_data_handle_t win, starpu_data_handle_t wout){
 
   static bool is_init = false;
   static struct starpu_codelet codelet;
@@ -155,7 +155,7 @@ void AddBuffer_SPU(real alpha, starpu_data_handle_t win, starpu_data_handle_t wo
   size_t arg_buffer_size;
 
   starpu_codelet_pack_args(&arg_buffer, &arg_buffer_size,
-			   STARPU_VALUE, &alpha, sizeof(real),
+			   STARPU_VALUE, &alpha, sizeof(schnaps_real),
 			   0);
 
   task = starpu_task_create();
@@ -174,18 +174,18 @@ void AddBuffer_SPU(real alpha, starpu_data_handle_t win, starpu_data_handle_t wo
 
 void AddBuffer_C(void *buffers[], void *cl_args) {
 
-  real alpha;
+  schnaps_real alpha;
 
   starpu_codelet_unpack_args(cl_args,&alpha);
   free(cl_args);
 
   struct starpu_vector_interface *win_v =
     (struct starpu_vector_interface *) buffers[0];
-  real* win = (real *)STARPU_VECTOR_GET_PTR(win_v);
+  schnaps_real* win = (schnaps_real *)STARPU_VECTOR_GET_PTR(win_v);
 
   struct starpu_vector_interface *wout_v =
     (struct starpu_vector_interface *) buffers[1];
-  real* wout = (real *)STARPU_VECTOR_GET_PTR(wout_v);
+  schnaps_real* wout = (schnaps_real *)STARPU_VECTOR_GET_PTR(wout_v);
 
   int n = STARPU_VECTOR_GET_NX(buffers[0]);
   int np = STARPU_VECTOR_GET_NX(buffers[1]);
@@ -199,7 +199,7 @@ void AddBuffer_C(void *buffers[], void *cl_args) {
 
 void AddBuffer_OCL(void *buffers[], void *cl_args) {
 
-  real alpha;
+  schnaps_real alpha;
 
   starpu_codelet_unpack_args(cl_args,&alpha);
   free(cl_args);
@@ -228,7 +228,7 @@ void AddBuffer_OCL(void *buffers[], void *cl_args) {
   if (status != CL_SUCCESS) STARPU_OPENCL_REPORT_ERROR(status);
 
   int narg = 0;
-  status = clSetKernelArg(kernel, narg++, sizeof(real), &alpha);
+  status = clSetKernelArg(kernel, narg++, sizeof(schnaps_real), &alpha);
   status |= clSetKernelArg(kernel, narg++, sizeof(cl_mem), &win);
   status |= clSetKernelArg(kernel, narg++, sizeof(cl_mem), &wout);
   if (status != CL_SUCCESS) STARPU_OPENCL_REPORT_ERROR(status);
@@ -257,8 +257,8 @@ void InterfaceExplicitFlux_bis(Interface* inter, int side){
   int locfa;
   int *index_ext;
   int *index;
-  real* wn;
-  real* wn_ext;
+  schnaps_real* wn;
+  schnaps_real* wn_ext;
 
   const int sign = 1 - 2 * side;
 
@@ -295,8 +295,8 @@ void InterfaceExplicitFlux_bis(Interface* inter, int side){
     for(int ipgf = 0; ipgf < NPGF(f->deg, f->raf, locfa); ipgf++) {
 
 
-      real flux[m];
-      real wL[m];
+      schnaps_real flux[m];
+      schnaps_real wL[m];
       int ipgL = index[ipgf];
       for(int iv = 0; iv < m; iv++) {
 	int imemf = VarindexFace(npgf, m, ipgf, iv);
@@ -305,7 +305,7 @@ void InterfaceExplicitFlux_bis(Interface* inter, int side){
       }
 
       if (fext != NULL) {  // the right element exists
-	real wR[m];
+	schnaps_real wR[m];
 	int ipgR = index_ext[ipgf];
 	//int ipgL = index[ipgf];
 	for(int iv = 0; iv < m; iv++) {
@@ -315,7 +315,7 @@ void InterfaceExplicitFlux_bis(Interface* inter, int side){
 	}
 
 	// int_dL F(wL, wR, grad phi_ib)
-	real vndsloc[3];
+	schnaps_real vndsloc[3];
 
 	vndsloc[0] = sign * inter->vnds[3 * ipgf + 0];
 	vndsloc[1] = sign * inter->vnds[3 * ipgf + 1];
@@ -336,8 +336,8 @@ void InterfaceExplicitFlux_bis(Interface* inter, int side){
 
 
 	assert(sign == 1);
-	real* xpg = inter->xpg + 3 * ipgf;
-	real* vnds = inter->vnds + 3 * ipgf;
+	schnaps_real* xpg = inter->xpg + 3 * ipgf;
+	schnaps_real* vnds = inter->vnds + 3 * ipgf;
 
 	//printf("tnow=%f wL=%f\n",f->tnow,wL[0]);
 	f->model.BoundaryFlux(xpg, f->tnow, wL, vnds, flux);
@@ -365,8 +365,8 @@ void InterfaceExplicitFlux_bis(Interface* inter, int side){
 
 
 void DtFields_bis(Simulation *simu,
-		  real* w,
-		  real* dtw){
+		  schnaps_real* w,
+		  schnaps_real* dtw){
 
   if(simu->pre_dtfields != NULL) {
     simu->pre_dtfields(simu, w);
@@ -614,23 +614,23 @@ void DGMacroCellInterface_bis_C(void* buffer[], void* cl_args) {
 
   struct starpu_vector_interface *vnds_buf_v =
     (struct starpu_vector_interface *) buffer[buf_num++];
-  real* vnds_buf = (real *)STARPU_VECTOR_GET_PTR(vnds_buf_v);
+  schnaps_real* vnds_buf = (schnaps_real *)STARPU_VECTOR_GET_PTR(vnds_buf_v);
 
   struct starpu_vector_interface *wnL_v =
     (struct starpu_vector_interface *) buffer[buf_num++];
-  real* wnL = (real *)STARPU_VECTOR_GET_PTR(wnL_v);
+  schnaps_real* wnL = (schnaps_real *)STARPU_VECTOR_GET_PTR(wnL_v);
 
   struct starpu_vector_interface *wnR_v =
     (struct starpu_vector_interface *) buffer[buf_num++];
-  real* wnR = (real *)STARPU_VECTOR_GET_PTR(wnR_v);
+  schnaps_real* wnR = (schnaps_real *)STARPU_VECTOR_GET_PTR(wnR_v);
 
   struct starpu_vector_interface *resL_v =
     (struct starpu_vector_interface *) buffer[buf_num++];
-  real* resL = (real *)STARPU_VECTOR_GET_PTR(resL_v);
+  schnaps_real* resL = (schnaps_real *)STARPU_VECTOR_GET_PTR(resL_v);
 
   struct starpu_vector_interface *resR_v =
     (struct starpu_vector_interface *) buffer[buf_num++];
-  real* resR = (real *)STARPU_VECTOR_GET_PTR(resR_v);
+  schnaps_real* resR = (schnaps_real *)STARPU_VECTOR_GET_PTR(resR_v);
 
 
   const int npgf = NPGF(fL->deg, fL->raf, locfa);
@@ -638,20 +638,20 @@ void DGMacroCellInterface_bis_C(void* buffer[], void* cl_args) {
 
   for (int ipgf = 0; ipgf < npgf; ++ipgf) {
 
-    real wL[m];
-    real wR[m];
+    schnaps_real wL[m];
+    schnaps_real wR[m];
     for (int iv = 0; iv < m; ++iv) {
       const int imem = VarindexFace(npgf, m, ipgf, iv);
       wL[iv] = wnL[imem];
       wR[iv] = wnR[imem];
     }
 
-    real vnds[3];
+    schnaps_real vnds[3];
     vnds[0] = vnds_buf[3 * ipgf + 0];
     vnds[1] = vnds_buf[3 * ipgf + 1];
     vnds[2] = vnds_buf[3 * ipgf + 2];
 
-    real flux[m];
+    schnaps_real flux[m];
     fL->model.NumFlux(wL, wR, vnds, flux);
 
     const int ipgL = vol_indexL[ipgf];
@@ -801,19 +801,19 @@ void DGMacroCellInterface_C(void* buffer[], void* cl_args){
 
   struct starpu_vector_interface *vnds_buf_v =
     (struct starpu_vector_interface *) buffer[buf_num++];
-  real* vnds_buf = (real *)STARPU_VECTOR_GET_PTR(vnds_buf_v);
+  schnaps_real* vnds_buf = (schnaps_real *)STARPU_VECTOR_GET_PTR(vnds_buf_v);
 
   struct starpu_vector_interface *wn_in_v =
     (struct starpu_vector_interface *) buffer[buf_num++];
-  real* wn_in = (real *)STARPU_VECTOR_GET_PTR(wn_in_v);
+  schnaps_real* wn_in = (schnaps_real *)STARPU_VECTOR_GET_PTR(wn_in_v);
 
   struct starpu_vector_interface *wn_ext_v =
     (struct starpu_vector_interface *) buffer[buf_num++];
-  real* wn_ext = (real *)STARPU_VECTOR_GET_PTR(wn_ext_v);
+  schnaps_real* wn_ext = (schnaps_real *)STARPU_VECTOR_GET_PTR(wn_ext_v);
 
   struct starpu_vector_interface *rhs_v =
     (struct starpu_vector_interface *) buffer[buf_num++];
-  real* rhs = (real *)STARPU_VECTOR_GET_PTR(rhs_v);
+  schnaps_real* rhs = (schnaps_real *)STARPU_VECTOR_GET_PTR(rhs_v);
 
 
   int npgf = NPGF(f->deg, f->raf, locfa);
@@ -822,9 +822,9 @@ void DGMacroCellInterface_C(void* buffer[], void* cl_args){
   for(int ipgf = 0; ipgf < npgf; ipgf++) {
 
 
-    real flux[m];
-    real wL[m];
-    real wR[m];
+    schnaps_real flux[m];
+    schnaps_real wL[m];
+    schnaps_real wR[m];
     for(int iv = 0; iv < m; iv++) {
       int imemf = VarindexFace(npgf, m, ipgf, iv);
       //int imemR = fext->varindex(fext->deg, fext->raf,m , ipgR, iv);
@@ -834,7 +834,7 @@ void DGMacroCellInterface_C(void* buffer[], void* cl_args){
     }
 
     // int_dL F(wL, wR, grad phi_ib)
-    real vndsloc[3];
+    schnaps_real vndsloc[3];
 
     vndsloc[0] = sign * vnds_buf[3 * ipgf + 0];
     vndsloc[1] = sign * vnds_buf[3 * ipgf + 1];
@@ -1034,33 +1034,33 @@ void DGMacroCellBoundaryFlux_C(void* buffer[], void* cl_args){
 
   struct starpu_vector_interface *vnds_buf_v =
     (struct starpu_vector_interface *) buffer[buf_num++];
-  real* vnds_buf = (real *)STARPU_VECTOR_GET_PTR(vnds_buf_v);
+  schnaps_real* vnds_buf = (schnaps_real *)STARPU_VECTOR_GET_PTR(vnds_buf_v);
 
   struct starpu_vector_interface *xpg_buf_v =
     (struct starpu_vector_interface *) buffer[buf_num++];
-  real* xpg_buf = (real *)STARPU_VECTOR_GET_PTR(xpg_buf_v);
+  schnaps_real* xpg_buf = (schnaps_real *)STARPU_VECTOR_GET_PTR(xpg_buf_v);
 
   struct starpu_vector_interface *wL_buf_v =
     (struct starpu_vector_interface *) buffer[buf_num++];
-  real* wL_buf = (real *)STARPU_VECTOR_GET_PTR(wL_buf_v);
+  schnaps_real* wL_buf = (schnaps_real *)STARPU_VECTOR_GET_PTR(wL_buf_v);
 
   struct starpu_vector_interface *rhs_v =
     (struct starpu_vector_interface *) buffer[buf_num++];
-  real* rhs = (real *)STARPU_VECTOR_GET_PTR(rhs_v);
+  schnaps_real* rhs = (schnaps_real *)STARPU_VECTOR_GET_PTR(rhs_v);
 
   int npgf = NPGF(f->deg, f->raf, locfa);
   for(int ipgf = 0; ipgf < npgf; ipgf++) {
 
 
-    real flux[m];
-    real wL[m];
+    schnaps_real flux[m];
+    schnaps_real wL[m];
     for(int iv = 0; iv < m; iv++) {
       int imemf = VarindexFace(npgf, m, ipgf, iv);
       wL[iv] = wL_buf[imemf];
     }
 
-    real* xpg = xpg_buf + 3 * ipgf;
-    real* vnds = vnds_buf + 3 * ipgf;
+    schnaps_real* xpg = xpg_buf + 3 * ipgf;
+    schnaps_real* vnds = vnds_buf + 3 * ipgf;
 
     //printf("tnow=%f wL=%f\n",f->tnow,wL[0]);
     f->model.BoundaryFlux(xpg, f->tnow, wL, vnds, flux);
@@ -1132,7 +1132,7 @@ void DGMacroCellBoundaryFlux_OCL(void* buffers[], void* cl_args){
   status = clSetKernelArg(kernel, narg++, sizeof(int), &(f->model.m));
   status |= clSetKernelArg(kernel, narg++, sizeof(cl_mem), &deg_cl);
   status |= clSetKernelArg(kernel, narg++, sizeof(cl_mem), &raf_cl);
-  status |= clSetKernelArg(kernel, narg++, sizeof(real), &(f->tnow));
+  status |= clSetKernelArg(kernel, narg++, sizeof(schnaps_real), &(f->tnow));
   status |= clSetKernelArg(kernel, narg++, sizeof(cl_mem), &index);
   status |= clSetKernelArg(kernel, narg++, sizeof(cl_mem), &wn_in);
   status |= clSetKernelArg(kernel, narg++, sizeof(cl_mem), &xpg_buf);
@@ -1203,7 +1203,7 @@ void DGSubCellInterface_SPU(field *f){
 			   STARPU_VALUE, &f->model.m, sizeof(int),
 			   STARPU_VALUE, f->deg, 3 * sizeof(int),
 			   STARPU_VALUE, f->raf, 3 * sizeof(int),
-			   STARPU_VALUE, f->physnode, 60 * sizeof(real),
+			   STARPU_VALUE, f->physnode, 60 * sizeof(schnaps_real),
 			   STARPU_VALUE, &f->varindex, sizeof(varindexptr),
 			   STARPU_VALUE, &f->model.NumFlux, sizeof(fluxptr),
 			   0);
@@ -1230,7 +1230,7 @@ void DGSubCellInterface_C(void *buffers[], void *cl_arg)
   int m;
   int deg[3];
   int raf[3];
-  real physnode[20][3];
+  schnaps_real physnode[20][3];
   varindexptr Varindex;
   fluxptr NumFlux;
 
@@ -1245,11 +1245,11 @@ void DGSubCellInterface_C(void *buffers[], void *cl_arg)
 
   struct starpu_vector_interface *w_v =
     (struct starpu_vector_interface *) buffers[0];
-  real* w = (real *)STARPU_VECTOR_GET_PTR(w_v);
+  schnaps_real* w = (schnaps_real *)STARPU_VECTOR_GET_PTR(w_v);
 
   struct starpu_vector_interface *res_v =
     (struct starpu_vector_interface *) buffers[1];
-  real* res = (real *)STARPU_VECTOR_GET_PTR(res_v);
+  schnaps_real* res = (schnaps_real *)STARPU_VECTOR_GET_PTR(res_v);
 
 
 
@@ -1305,13 +1305,13 @@ void DGSubCellInterface_C(void *buffers[], void *cl_arg)
 
 		// Compute the normal vector for integrating on the
 		// face
-		real vnds[3];
+		schnaps_real vnds[3];
 		{
-		  real xref[3], wpg3;
+		  schnaps_real xref[3], wpg3;
 		  ref_pg_vol(deg, raf, ipgL, xref, &wpg3, NULL);
 		  // mapping from the ref glop to the physical glop
-		  real dtau[3][3], codtau[3][3];
-		  Ref2Phy(physnode,
+		  schnaps_real dtau[3][3], codtau[3][3];
+		  schnaps_ref2phy(physnode,
 			  xref,
 			  NULL, // dphiref
 			  -1,  // ifa
@@ -1323,7 +1323,7 @@ void DGSubCellInterface_C(void *buffers[], void *cl_arg)
 		  // we compute ourself the normal vector because we
 		  // have to take into account the subcell surface
 
-		  real h1h2 = 1. / raf[dim1] / raf[dim2];
+		  schnaps_real h1h2 = 1. / raf[dim1] / raf[dim2];
 		  vnds[0] = codtau[0][dim0] * h1h2;
 		  vnds[1] = codtau[1][dim0] * h1h2;
 		  vnds[2] = codtau[2][dim0] * h1h2;
@@ -1331,7 +1331,7 @@ void DGSubCellInterface_C(void *buffers[], void *cl_arg)
 
 		// numerical flux from the left and right state and
 		// normal vector
-		real wL[m], wR[m], flux[m];
+		schnaps_real wL[m], wR[m], flux[m];
 		for(int iv = 0; iv < m; iv++) {
 		  // TO DO change the Varindex signature
 		  int imemL = Varindex(deg, raf, m, ipgL, iv);
@@ -1343,7 +1343,7 @@ void DGSubCellInterface_C(void *buffers[], void *cl_arg)
 		NumFlux(wL, wR, vnds, flux);
 
 		// subcell ref surface glop weight
-		real wpg
+		schnaps_real wpg
 		  = wglop(deg[dim1], iL[dim1])
 		  * wglop(deg[dim2], iL[dim2]);
 
@@ -1379,7 +1379,7 @@ void DGSubCellInterface_OCL(void *buffers[], void *cl_arg)
   int m;
   int deg[3];
   int raf[3];
-  real physnode[20][3];
+  schnaps_real physnode[20][3];
   varindexptr Varindex;
   fluxptr NumFlux;
 
@@ -1408,7 +1408,7 @@ void DGSubCellInterface_OCL(void *buffers[], void *cl_arg)
 
   cl_mem physnode_cl = clCreateBuffer(context,
                                       CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
-                                      sizeof(real) * 60,
+                                      sizeof(schnaps_real) * 60,
                                       physnode,
                                       &status);
   if (status != CL_SUCCESS) STARPU_OPENCL_REPORT_ERROR(status);
@@ -1449,7 +1449,7 @@ void DGSubCellInterface_OCL(void *buffers[], void *cl_arg)
       status |= clSetKernelArg(kernel, narg++, sizeof(int), &dim0);
       status |= clSetKernelArg(kernel, narg++, sizeof(cl_mem), &w);
       status |= clSetKernelArg(kernel, narg++, sizeof(cl_mem), &res);
-      status |= clSetKernelArg(kernel, narg++, sizeof(real) * lsize * m, NULL);
+      status |= clSetKernelArg(kernel, narg++, sizeof(schnaps_real) * lsize * m, NULL);
       if (status != CL_SUCCESS) STARPU_OPENCL_REPORT_ERROR(status);
       assert(status >= CL_SUCCESS);
 
@@ -1515,7 +1515,7 @@ void DGVolume_SPU(field* f)
 			   STARPU_VALUE, &f->model.m, sizeof(int),
 			   STARPU_VALUE, f->deg, 3 * sizeof(int),
 			   STARPU_VALUE, f->raf, 3 * sizeof(int),
-			   STARPU_VALUE, f->physnode, 60 * sizeof(real),
+			   STARPU_VALUE, f->physnode, 60 * sizeof(schnaps_real),
 			   STARPU_VALUE, &f->varindex, sizeof(varindexptr),
 			   STARPU_VALUE, &f->model.NumFlux, sizeof(fluxptr),
 			   0);
@@ -1544,7 +1544,7 @@ void DGVolume_C(void *buffers[], void *cl_arg)
   int m;
   int deg[3];
   int raf[3];
-  real physnode[20][3];
+  schnaps_real physnode[20][3];
   varindexptr Varindex;
   fluxptr NumFlux;
 
@@ -1561,11 +1561,11 @@ void DGVolume_C(void *buffers[], void *cl_arg)
 
   struct starpu_vector_interface *w_v =
     (struct starpu_vector_interface *) buffers[0];
-  real* w = (real *)STARPU_VECTOR_GET_PTR(w_v);
+  schnaps_real* w = (schnaps_real *)STARPU_VECTOR_GET_PTR(w_v);
 
   struct starpu_vector_interface *res_v =
     (struct starpu_vector_interface *) buffers[1];
-  real* res = (real *)STARPU_VECTOR_GET_PTR(res_v);
+  schnaps_real* res = (schnaps_real *)STARPU_VECTOR_GET_PTR(res_v);
 
   // Loop on the subcells
   for(int icL0 = 0; icL0 < raf[0]; icL0++) {
@@ -1579,15 +1579,15 @@ void DGVolume_C(void *buffers[], void *cl_arg)
 	int offsetL = npg[0] * npg[1] * npg[2] * ncL;
 
 	// compute all of the xref for the subcell
-	real *xref0 = malloc(sc_npg * sizeof(real));
-	real *xref1 = malloc(sc_npg * sizeof(real));
-	real *xref2 = malloc(sc_npg * sizeof(real));
-	real *omega = malloc(sc_npg * sizeof(real));
+	schnaps_real *xref0 = malloc(sc_npg * sizeof(schnaps_real));
+	schnaps_real *xref1 = malloc(sc_npg * sizeof(schnaps_real));
+	schnaps_real *xref2 = malloc(sc_npg * sizeof(schnaps_real));
+	schnaps_real *omega = malloc(sc_npg * sizeof(schnaps_real));
 	int *imems = malloc(m * sc_npg * sizeof(int));
 	int pos = 0;
 	for(unsigned int p = 0; p < sc_npg; ++p) {
-	  real xref[3];
-	  real tomega;
+	  schnaps_real xref[3];
+	  schnaps_real tomega;
 
 	  ref_pg_vol(deg, raf, offsetL + p, xref, &tomega, NULL);
 	  xref0[p] = xref[0];
@@ -1608,7 +1608,7 @@ void DGVolume_C(void *buffers[], void *cl_arg)
 	  for(int p0 = 0; p0 < npg[0]; p0++) {
 	    for(int p1 = 0; p1 < npg[1]; p1++) {
 	      for(int p2 = 0; p2 < npg[2]; p2++) {
-		real wL[m], flux[m];
+		schnaps_real wL[m], flux[m];
 		int p[3] = {p0, p1, p2};
 		int ipgL = offsetL + p[0] + npg[0] * (p[1] + npg[1] * p[2]);
 		for(int iv = 0; iv < m; iv++) {
@@ -1619,19 +1619,19 @@ void DGVolume_C(void *buffers[], void *cl_arg)
 		// loop on the direction dim0 on the "cross"
 		for(int iq = 0; iq < npg[dim0]; iq++) {
 		  q[dim0] = (p[dim0] + iq) % npg[dim0];
-		  real dphiref[3] = {0, 0, 0};
+		  schnaps_real dphiref[3] = {0, 0, 0};
 		  // compute grad phi_q at glop p
 		  dphiref[dim0] = dlag(deg[dim0], q[dim0], p[dim0])
 		    * raf[dim0];
 
-		  real xrefL[3] = {xref0[ipgL - offsetL],
+		  schnaps_real xrefL[3] = {xref0[ipgL - offsetL],
 				   xref1[ipgL - offsetL],
 				   xref2[ipgL - offsetL]};
-		  real wpgL = omega[ipgL - offsetL];
+		  schnaps_real wpgL = omega[ipgL - offsetL];
 
 		  // mapping from the ref glop to the physical glop
-		  real dtau[3][3], codtau[3][3], dphiL[3];
-		  Ref2Phy(physnode,
+		  schnaps_real dtau[3][3], codtau[3][3], dphiL[3];
+		  schnaps_ref2phy(physnode,
 			  xrefL,
 			  dphiref, // dphiref
 			  -1,  // ifa
@@ -1676,7 +1676,7 @@ void DGVolume_OCL(void *buffers[], void *cl_arg) {
   int m;
   int deg[3];
   int raf[3];
-  real physnode[20][3];
+  schnaps_real physnode[20][3];
   varindexptr Varindex;
   fluxptr NumFlux;
 
@@ -1705,7 +1705,7 @@ void DGVolume_OCL(void *buffers[], void *cl_arg) {
 
   cl_mem physnode_cl = clCreateBuffer(context,
                                       CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
-                                      sizeof(real) * 60,
+                                      sizeof(schnaps_real) * 60,
                                       physnode,
                                       &status);
   if (status != CL_SUCCESS) STARPU_OPENCL_REPORT_ERROR(status);
@@ -1729,7 +1729,7 @@ void DGVolume_OCL(void *buffers[], void *cl_arg) {
   status |= clSetKernelArg(kernel, narg++, sizeof(cl_mem), &physnode_cl);
   status |= clSetKernelArg(kernel, narg++, sizeof(cl_mem), &w);
   status |= clSetKernelArg(kernel, narg++, sizeof(cl_mem), &res);
-  status |= clSetKernelArg(kernel, narg++, sizeof(real) * 2 * lsize * m, NULL);
+  status |= clSetKernelArg(kernel, narg++, sizeof(schnaps_real) * 2 * lsize * m, NULL);
   if (status != CL_SUCCESS) STARPU_OPENCL_REPORT_ERROR(status);
   assert(status >= CL_SUCCESS);
 
@@ -1797,10 +1797,10 @@ void DGSource_SPU(field* f)
 			   STARPU_VALUE, &f->model.m, sizeof(int),
 			   STARPU_VALUE, f->deg, 3 * sizeof(int),
 			   STARPU_VALUE, f->raf, 3 * sizeof(int),
-			   STARPU_VALUE, f->physnode, 60 * sizeof(real),
+			   STARPU_VALUE, f->physnode, 60 * sizeof(schnaps_real),
 			   STARPU_VALUE, &f->varindex, sizeof(varindexptr),
 			   STARPU_VALUE, &f->model.Source, sizeof(sourceptr),
-			   STARPU_VALUE, &f->tnow, sizeof(real),
+			   STARPU_VALUE, &f->tnow, sizeof(schnaps_real),
 			   0);
 
 
@@ -1828,10 +1828,10 @@ void DGSource_C(void *buffers[], void *cl_arg)
   int m;
   int deg[3];
   int raf[3];
-  real physnode[20][3];
+  schnaps_real physnode[20][3];
   varindexptr Varindex;
   sourceptr Source;
-  real tnow;
+  schnaps_real tnow;
 
   starpu_codelet_unpack_args(cl_arg,
 			     &m, deg, raf, physnode, &Varindex, &Source, &tnow);
@@ -1841,22 +1841,22 @@ void DGSource_C(void *buffers[], void *cl_arg)
 
   struct starpu_vector_interface *w_v =
     (struct starpu_vector_interface *) buffers[0];
-  real* w = (real *)STARPU_VECTOR_GET_PTR(w_v);
+  schnaps_real* w = (schnaps_real *)STARPU_VECTOR_GET_PTR(w_v);
 
   struct starpu_vector_interface *res_v =
     (struct starpu_vector_interface *) buffers[1];
-  real* res = (real *)STARPU_VECTOR_GET_PTR(res_v);
+  schnaps_real* res = (schnaps_real *)STARPU_VECTOR_GET_PTR(res_v);
 
   for(int ipg = 0; ipg < NPG(deg, raf); ipg++) {
-    real dtau[3][3], codtau[3][3], xpgref[3], xphy[3], wpg;
+    schnaps_real dtau[3][3], codtau[3][3], xpgref[3], xphy[3], wpg;
     ref_pg_vol(deg, raf, ipg, xpgref, &wpg, NULL);
-    Ref2Phy(physnode, // phys. nodes
+    schnaps_ref2phy(physnode, // phys. nodes
 	    xpgref, // xref
 	    NULL, -1, // dpsiref, ifa
 	    xphy, dtau, // xphy, dtau
 	    codtau, NULL, NULL); // codtau, dpsi, vnds
-    real det = dot_product(dtau[0], codtau[0]);  //// temp !!!!!!!!!!!!!!!
-    real wL[m], source[m];
+    schnaps_real det = dot_product(dtau[0], codtau[0]);  //// temp !!!!!!!!!!!!!!!
+    schnaps_real wL[m], source[m];
     for(int iv = 0; iv < m; ++iv){
       int imem = Varindex(deg, raf, m, ipg, iv);
       wL[iv] = w[imem];
@@ -1882,10 +1882,10 @@ void DGSource_OCL(void *buffers[], void *cl_arg)
   int m;
   int deg[3];
   int raf[3];
-  real physnode[20][3];
+  schnaps_real physnode[20][3];
   varindexptr Varindex;
   sourceptr Source;
-  real tnow;
+  schnaps_real tnow;
 
   starpu_codelet_unpack_args(cl_arg,
 			     &m, deg, raf, physnode, &Varindex, &Source, &tnow);
@@ -1912,7 +1912,7 @@ void DGSource_OCL(void *buffers[], void *cl_arg)
 
   cl_mem physnode_cl = clCreateBuffer(context,
                                       CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
-                                      sizeof(real) * 60,
+                                      sizeof(schnaps_real) * 60,
                                       physnode,
                                       &status);
   if (status != CL_SUCCESS) STARPU_OPENCL_REPORT_ERROR(status);
@@ -1939,10 +1939,10 @@ void DGSource_OCL(void *buffers[], void *cl_arg)
   status |= clSetKernelArg(kernel, narg++, sizeof(cl_mem), &deg_cl);
   status |= clSetKernelArg(kernel, narg++, sizeof(cl_mem), &raf_cl);
   status |= clSetKernelArg(kernel, narg++, sizeof(cl_mem), &physnode_cl);
-  status |= clSetKernelArg(kernel, narg++, sizeof(real), &tnow);
+  status |= clSetKernelArg(kernel, narg++, sizeof(schnaps_real), &tnow);
   status |= clSetKernelArg(kernel, narg++, sizeof(cl_mem), &w);
   status |= clSetKernelArg(kernel, narg++, sizeof(cl_mem), &res);
-  status |= clSetKernelArg(kernel, narg++, sizeof(real) * 2 * lsize * m, NULL);
+  status |= clSetKernelArg(kernel, narg++, sizeof(schnaps_real) * 2 * lsize * m, NULL);
   if (status != CL_SUCCESS) STARPU_OPENCL_REPORT_ERROR(status);
   assert(status >= CL_SUCCESS);
 
@@ -2007,7 +2007,7 @@ void DGMass_SPU(field* f)
 			   STARPU_VALUE, &f->model.m, sizeof(int),
 			   STARPU_VALUE, f->deg, 3 * sizeof(int),
 			   STARPU_VALUE, f->raf, 3 * sizeof(int),
-			   STARPU_VALUE, f->physnode, 60 * sizeof(real),
+			   STARPU_VALUE, f->physnode, 60 * sizeof(schnaps_real),
 			   STARPU_VALUE, &f->varindex, sizeof(varindexptr),
 			   0);
 
@@ -2038,7 +2038,7 @@ void DGMass_C(void *buffers[], void *cl_arg)
   int m;
   int deg[3];
   int raf[3];
-  real physnode[20][3];
+  schnaps_real physnode[20][3];
   varindexptr Varindex;
 
   starpu_codelet_unpack_args(cl_arg,
@@ -2049,21 +2049,21 @@ void DGMass_C(void *buffers[], void *cl_arg)
 
   struct starpu_vector_interface *res_v =
     (struct starpu_vector_interface *) buffers[0];
-  real* res = (real *)STARPU_VECTOR_GET_PTR(res_v);
+  schnaps_real* res = (schnaps_real *)STARPU_VECTOR_GET_PTR(res_v);
 
   struct starpu_vector_interface *dtw_v =
     (struct starpu_vector_interface *) buffers[1];
-  real* dtw = (real *)STARPU_VECTOR_GET_PTR(dtw_v);
+  schnaps_real* dtw = (schnaps_real *)STARPU_VECTOR_GET_PTR(dtw_v);
 
   for(int ipg = 0; ipg < NPG(deg, raf); ipg++) {
-    real dtau[3][3], codtau[3][3], xpgref[3], xphy[3], wpg;
+    schnaps_real dtau[3][3], codtau[3][3], xpgref[3], xphy[3], wpg;
     ref_pg_vol(deg, raf, ipg, xpgref, &wpg, NULL);
-    Ref2Phy(physnode, // phys. nodes
+    schnaps_ref2phy(physnode, // phys. nodes
 	    xpgref, // xref
 	    NULL, -1, // dpsiref, ifa
 	    xphy, dtau, // xphy, dtau
 	    codtau, NULL, NULL); // codtau, dpsi, vnds
-    real det = dot_product(dtau[0], codtau[0]);
+    schnaps_real det = dot_product(dtau[0], codtau[0]);
     for(int iv = 0; iv < m; iv++) {
       int imem = Varindex(deg, raf, m, ipg, iv);
       dtw[imem] = res[imem] / (wpg * det) - dtw[imem] / 2 ;
@@ -2080,7 +2080,7 @@ void DGMass_OCL(void *buffers[], void *cl_arg)
   int m;
   int deg[3];
   int raf[3];
-  real physnode[20][3];
+  schnaps_real physnode[20][3];
   varindexptr Varindex;
 
   starpu_codelet_unpack_args(cl_arg,
@@ -2108,7 +2108,7 @@ void DGMass_OCL(void *buffers[], void *cl_arg)
 
   cl_mem physnode_cl = clCreateBuffer(context,
 			       CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
-			       sizeof(real) * 60,
+			       sizeof(schnaps_real) * 60,
 			       physnode,
 			       &status);
   if (status != CL_SUCCESS) STARPU_OPENCL_REPORT_ERROR(status);
@@ -2147,10 +2147,10 @@ void DGMass_OCL(void *buffers[], void *cl_arg)
 
 
 
-void RK2_SPU(Simulation *simu, real tmax){
+void RK2_SPU(Simulation *simu, schnaps_real tmax){
 
   simu->dt = Get_Dt_RK(simu);
-  real dt = simu->dt;
+  schnaps_real dt = simu->dt;
 
   simu->tmax = tmax;
 
@@ -2188,7 +2188,7 @@ void RK2_SPU(Simulation *simu, real tmax){
     /* assert(1==2); */
 
     for(int ie = 0; ie < simu->macromesh.nbelems; ++ie) {
-      real alpha = dt/2;
+      schnaps_real alpha = dt/2;
       AddBuffer_SPU(alpha, simu->fd[ie].dtwn_handle, simu->fd[ie].wn_handle);
     }
 

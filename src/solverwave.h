@@ -13,7 +13,7 @@
 //! \param[inout] cs: a ContinuousSolver object
 //! \param[in] theta: a coeffcient
 //! \param[in] dt: a time step
-void Wave_test(ContinuousSolver* cs, real theta, real dt);
+void Wave_test(ContinuousSolver* cs, schnaps_real theta, schnaps_real dt);
 
 //! \brief compute the boundary condition for Friedrics systems
 //! \param[inout] cs: a ContinuousSolver object
@@ -25,7 +25,7 @@ void BoundaryConditionFriedrichsAssembly(void * cs);
 //! \param[in] w a vector of unknowns
 //! \param[in] vnorm a vector of normal
 //! \param[inout] flux a vector of flux
-void Wave_BC_pressure_imposed(void * cs, real * xpg, real * w, real *vnorm, real * flux);
+void Wave_BC_pressure_imposed(void * cs, schnaps_real * xpg, schnaps_real * w, schnaps_real *vnorm, schnaps_real * flux);
 
 //! \brief pointer on the function which compute the BC flux 
 //! \param[in] cs a continuous solver
@@ -33,7 +33,7 @@ void Wave_BC_pressure_imposed(void * cs, real * xpg, real * w, real *vnorm, real
 //! \param[in] w a vector of unknowns
 //! \param[in] vnorm a vector of normal
 //! \param[inout] flux a vector of flux
-void Wave_BC_normalvelocity_null(void * cs, real * xpg, real * w, real *vnorm, real * flux);
+void Wave_BC_normalvelocity_null(void * cs, schnaps_real * xpg, schnaps_real * w, schnaps_real *vnorm, schnaps_real * flux);
 
 //! \brief construct the source associated to the source of the model 
 //! \param[inout] cs a continuous solver

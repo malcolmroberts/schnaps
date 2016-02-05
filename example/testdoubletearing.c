@@ -48,7 +48,7 @@ int TestDoubleTearing(int argc, char *argv[]) {
   bool is2d=mesh.is2d; 
   assert(is2d);  
 
-  real periodsize = 4.0;
+  schnaps_real periodsize = 4.0;
   mesh.period[1]=periodsize;
 
   BuildConnectivity(&mesh);
@@ -58,7 +58,7 @@ int TestDoubleTearing(int argc, char *argv[]) {
 
   Model model;
 
-  real cfl = 0.2;
+  schnaps_real cfl = 0.2;
 
   simu.cfl = cfl;
   model.m = 9;
@@ -90,9 +90,9 @@ int TestDoubleTearing(int argc, char *argv[]) {
 
   InitSimulation(&simu, &mesh, deg, raf, &model);
  
-  real tmax = 1.0;
+  schnaps_real tmax = 1.0;
   simu.vmax = 6.0;
-  real dt = 0;
+  schnaps_real dt = 0;
   RK4_CL(&simu, tmax, dt,  0, NULL, NULL);
   //RK4(&simu, tmax);
   

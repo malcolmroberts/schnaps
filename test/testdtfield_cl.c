@@ -89,14 +89,14 @@ int TestDtfield_CL(void){
   // Displayfield(&f);
   show_cl_timing(&simu);
 
-  real *saveptr = simu.dtw;
-  simu.dtw = calloc(simu.wsize, sizeof(real));
+  schnaps_real *saveptr = simu.dtw;
+  simu.dtw = calloc(simu.wsize, sizeof(schnaps_real));
 
   DtFields(&simu, simu.w, simu.dtw);
  
-  real maxerr = 0;
+  schnaps_real maxerr = 0;
   for(int i = 0; i < simu.wsize; i++) {
-    real error = simu.dtw[i] - saveptr[i];
+    schnaps_real error = simu.dtw[i] - saveptr[i];
     //printf("error= \t%f\t%f\t%f\n", error, f.dtwn[i], saveptr[i]);
     maxerr = fmax(fabs(error), maxerr);
   }

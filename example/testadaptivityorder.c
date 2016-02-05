@@ -9,12 +9,12 @@
 #include "advanced_linear_solver.h"
 
 
-void TestPoisson_ImposedData(const real x[3],const real t,real w[]);
-void TestPoisson_InitData(real x[3],real w[]);
-void TestPoisson_BoundaryFlux(real x[3],real t,real wL[],real* vnorm,
-			      real* flux);
+void TestPoisson_ImposedData(const schnaps_real x[3],const schnaps_real t,schnaps_real w[]);
+void TestPoisson_InitData(schnaps_real x[3],schnaps_real w[]);
+void TestPoisson_BoundaryFlux(schnaps_real x[3],schnaps_real t,schnaps_real wL[],schnaps_real* vnorm,
+			      schnaps_real* flux);
 
-void Create_Polynome(ContinuousSolver *cs_HighOrder,int order, real * VecOut);
+void Create_Polynome(ContinuousSolver *cs_HighOrder,int order, schnaps_real * VecOut);
 
 int main(void) 
 {
@@ -81,7 +81,7 @@ int Test_OrderAdaptivity(void)
   SolveContinuous2D(&ps);
 
 
-  real errl2 = L2error(&simu);
+  schnaps_real errl2 = L2error(&simu);
 
   printf("Erreur L2=%.12e\n",errl2);
 
@@ -142,12 +142,12 @@ int Test_OrderAdaptivity(void)
 }
 
 
-void TestPoisson_ImposedData(const real x[3], const real t,real w[]){
+void TestPoisson_ImposedData(const schnaps_real x[3], const schnaps_real t,schnaps_real w[]){
   for(int i = 0; i < _INDEX_MAX_KIN + 1; i++){
     int j = i%_DEG_V; // local connectivity put in function
     int nel = i / _DEG_V; // element num (TODO : function)
 
-    real vi = (-_VMAX + nel * _DV + _DV * glop(_DEG_V, j));
+    schnaps_real vi = (-_VMAX + nel * _DV + _DV * glop(_DEG_V, j));
 
     w[i] = 1. / _VMAX;
   }
@@ -162,15 +162,15 @@ void TestPoisson_ImposedData(const real x[3], const real t,real w[]){
 
 };
 
-void TestPoisson_InitData(real x[3],real w[]){
-  real t=0;
+void TestPoisson_InitData(schnaps_real x[3],schnaps_real w[]){
+  schnaps_real t=0;
   TestPoisson_ImposedData(x,t,w);
 };
 
 
-void TestPoisson_BoundaryFlux(real x[3],real t,real wL[],real* vnorm,
-				       real* flux){
-  real wR[_MV+6];
+void TestPoisson_BoundaryFlux(schnaps_real x[3],schnaps_real t,schnaps_real wL[],schnaps_real* vnorm,
+				       schnaps_real* flux){
+  schnaps_real wR[_MV+6];
   TestPoisson_ImposedData(x,t,wR);
   VlasovP_Lagrangian_NumFlux(wL,wR,vnorm,flux);
 };
@@ -179,10 +179,10 @@ void TestPoisson_BoundaryFlux(real x[3],real t,real wL[],real* vnorm,
 
 
 
-void Create_Polynome(ContinuousSolver *cs_HighOrder,int order, real * VecOut){
+void Create_Polynome(ContinuousSolver *cs_HighOrder,int order, schnaps_real * VecOut){
   field* f0 = &cs_HighOrder->simu->fd[0];
-  real Polynome[order+1];
-  real temp_poly[cs_HighOrder->nb_fe_nodes][order+1];
+  schnaps_real Polynome[order+1];
+  schnaps_real temp_poly[cs_HighOrder->nb_fe_nodes][order+1];
 
   Polynome[0]=4.0;
   Polynome[1]=-1.0;
@@ -196,25 +196,25 @@ void Create_Polynome(ContinuousSolver *cs_HighOrder,int order, real * VecOut){
     int isubcell = ie % (f0->raf[0] * f0->raf[1] * f0->raf[2]);
     int iemacro = ie / (f0->raf[0] * f0->raf[1] * f0->raf[2]);
       
-    real wpg;
-    real xref[3], xref_begin[3], xref_end[3];
-    real dtau[3][3],codtau[3][3];   
+    schnaps_real wpg;
+    schnaps_real xref[3], xref_begin[3], xref_end[3];
+    schnaps_real dtau[3][3],codtau[3][3];   
       
     for(int ipg = 0;ipg < cs_HighOrder->nnodes; ipg++){
 	
       int ipgmacro= ipg + isubcell * cs_HighOrder->nnodes;
       
       ref_pg_vol(f0->deg,f0->raf,ipgmacro,xref,&wpg,NULL);
-      real dtau[3][3],codtau[3][3];
+      schnaps_real dtau[3][3],codtau[3][3];
       
-      Ref2Phy(f0[iemacro].physnode,
+      schnaps_ref2phy(f0[iemacro].physnode,
 	      xref,NULL,0,NULL,
 	      dtau,codtau,NULL,NULL);
       
       int ino_dg = ipg + ie * cs_HighOrder->nnodes;
       int ino_fe = cs_HighOrder->dg_to_fe_index[ino_dg];
       for(int i = 0; i< order+1; i++){
-	real deg=i;
+	schnaps_real deg=i;
 	temp_poly[ino_fe][i]=pow(xref[0],deg)*Polynome[i];
       }
     }  

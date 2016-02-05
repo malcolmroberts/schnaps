@@ -9,17 +9,17 @@
 
 
 
-void VlasovP_Lagrangian_NumFlux(real wL[],real wR[],real* vnorm,real* flux){
+void VlasovP_Lagrangian_NumFlux(schnaps_real wL[],schnaps_real wR[],schnaps_real* vnorm,schnaps_real* flux){
   
   for(int i=0;i<_INDEX_MAX_KIN+1;i++){
     int j=i%_DEG_V; // local connectivity put in function
     int nel=i/_DEG_V; // element num (TODO : function)
 
-    real vn = (-_VMAX+nel*_DV +
+    schnaps_real vn = (-_VMAX+nel*_DV +
 		 _DV* glop(_DEG_V,j))*vnorm[0];
     
-    real vnp = vn>0 ? vn : 0;
-    real vnm = vn-vnp;
+    schnaps_real vnp = vn>0 ? vn : 0;
+    schnaps_real vnm = vn-vnp;
 
     flux[i] = vnp * wL[i] + vnm * wR[i];
   }
@@ -37,12 +37,12 @@ void VlasovP_Lagrangian_NumFlux(real wL[],real wR[],real* vnorm,real* flux){
 
 //! \brief compute compute the source term of the collision
 //! model: electric force + true collisions
-void VlasovP_Lagrangian_Source(const real* x, const real t, const real* w, 
-			       real* source) {
+void VlasovP_Lagrangian_Source(const schnaps_real* x, const schnaps_real t, const schnaps_real* w, 
+			       schnaps_real* source) {
 
-  real E=w[_INDEX_EX]; // electric field
-  real Md[_INDEX_MAX_KIN+1];
-  real db[_INDEX_MAX_KIN+1];
+  schnaps_real E=w[_INDEX_EX]; // electric field
+  schnaps_real Md[_INDEX_MAX_KIN+1];
+  schnaps_real db[_INDEX_MAX_KIN+1];
   for(int iv=0;iv<_INDEX_MAX_KIN+1;iv++){
     Md[iv]=0;
     db[iv]=0;
@@ -63,7 +63,7 @@ void VlasovP_Lagrangian_Source(const real* x, const real t, const real* w,
   for(int iel=0;iel<_NB_ELEM_V;iel++){
     // loop on the local glops
     for(int kloc=0;kloc<_DEG_V+1;kloc++){
-      real omega=wglop(_DEG_V,kloc);
+      schnaps_real omega=wglop(_DEG_V,kloc);
       int kpg=kloc+iel*_DEG_V;
       Md[kpg]+=omega*_DV;
       for(int iloc=0;iloc<_DEG_V+1;iloc++){
@@ -96,11 +96,11 @@ void VlasovP_Lagrangian_Source(const real* x, const real t, const real* w,
 
 
 
-void VlasovP_Mass_modified(field *f,real * w,void (*function)(field *f,real w,real *tw),real* product){
+void VlasovP_Mass_modified(field *f,schnaps_real * w,void (*function)(field *f,schnaps_real w,schnaps_real *tw),schnaps_real* product){
   // give M^-1 * M_f(v)  
-  real tw;
-  real Mass[_INDEX_MAX_KIN+1];
-  real MassCollision[_INDEX_MAX];
+  schnaps_real tw;
+  schnaps_real Mass[_INDEX_MAX_KIN+1];
+  schnaps_real MassCollision[_INDEX_MAX];
   for(int iv=0;iv<_INDEX_MAX_KIN+1;iv++){
     Mass[iv]=0;
 
@@ -116,7 +116,7 @@ void VlasovP_Mass_modified(field *f,real * w,void (*function)(field *f,real w,re
   for(int iel=0;iel<_NB_ELEM_V;iel++){
     // loop on the local glops
     for(int kloc=0;kloc<_DEG_V+1;kloc++){
-      real omega=wglop(_DEG_V,kloc);
+      schnaps_real omega=wglop(_DEG_V,kloc);
       int kpg=kloc+iel*_DEG_V;
       Mass[kpg]=omega*_DV;
       function(f,w[kpg],&tw);

@@ -14,7 +14,7 @@
 //! \param[in] wL : states
 //! \param[in] vnorm : normal vector
 //! \param[out] flux : the flux
-void SteadyState_U_Rusanov_BoundaryFlux(real *x, real t, real *wL, real *vnorm,real *flux);
+void SteadyState_U_Rusanov_BoundaryFlux(schnaps_real *x, schnaps_real t, schnaps_real *wL, schnaps_real *vnorm,schnaps_real *flux);
 
 //! \brief boundary HLL flux based for a Steady State with velocity imposed
 //! \param[in] t : current time
@@ -22,7 +22,7 @@ void SteadyState_U_Rusanov_BoundaryFlux(real *x, real t, real *wL, real *vnorm,r
 //! \param[in] wL : states
 //! \param[in] vnorm : normal vector
 //! \param[out] flux : the flux
-void SteadyState_U_HLL_BoundaryFlux(real *x, real t, real *wL, real *vnorm,real *flux);
+void SteadyState_U_HLL_BoundaryFlux(schnaps_real *x, schnaps_real t, schnaps_real *wL, schnaps_real *vnorm,schnaps_real *flux);
 
 //! \brief boundary Roe flux based for a Steady State with velocity imposed
 //! \param[in] t : current time
@@ -30,7 +30,7 @@ void SteadyState_U_HLL_BoundaryFlux(real *x, real t, real *wL, real *vnorm,real 
 //! \param[in] wL : states
 //! \param[in] vnorm : normal vector
 //! \param[out] flux : the flux
-void SteadyState_U_Roe_BoundaryFlux(real *x, real t, real *wL, real *vnorm,real *flux);
+void SteadyState_U_Roe_BoundaryFlux(schnaps_real *x, schnaps_real t, schnaps_real *wL, schnaps_real *vnorm,schnaps_real *flux);
 
 //! \brief boundary rusanov flux based for a Steady State with pressure imposed
 //! \param[in] t : current time
@@ -38,7 +38,7 @@ void SteadyState_U_Roe_BoundaryFlux(real *x, real t, real *wL, real *vnorm,real 
 //! \param[in] wL : states
 //! \param[in] vnorm : normal vector
 //! \param[out] flux : the flux
-void SteadyState_P_Rusanov_BoundaryFlux(real *x, real t, real *wL, real *vnorm,real *flux);
+void SteadyState_P_Rusanov_BoundaryFlux(schnaps_real *x, schnaps_real t, schnaps_real *wL, schnaps_real *vnorm,schnaps_real *flux);
 
 //! \brief boundary HLL flux based for a Steady State with pressure imposed
 //! \param[in] t : current time
@@ -46,7 +46,7 @@ void SteadyState_P_Rusanov_BoundaryFlux(real *x, real t, real *wL, real *vnorm,r
 //! \param[in] wL : states
 //! \param[in] vnorm : normal vector
 //! \param[out] flux : the flux
-void SteadyState_P_HLL_BoundaryFlux(real *x, real t, real *wL, real *vnorm,real *flux);
+void SteadyState_P_HLL_BoundaryFlux(schnaps_real *x, schnaps_real t, schnaps_real *wL, schnaps_real *vnorm,schnaps_real *flux);
 
 //! \brief boundary Roe flux based for a Steady State with pressure imposed
 //! \param[in] t : current time
@@ -54,7 +54,7 @@ void SteadyState_P_HLL_BoundaryFlux(real *x, real t, real *wL, real *vnorm,real 
 //! \param[in] wL : states
 //! \param[in] vnorm : normal vector
 //! \param[out] flux : the flux
-void SteadyState_P_Roe_BoundaryFlux(real *x, real t, real *wL, real *vnorm,real *flux);
+void SteadyState_P_Roe_BoundaryFlux(schnaps_real *x, schnaps_real t, schnaps_real *wL, schnaps_real *vnorm,schnaps_real *flux);
 
 
 //! \brief boundary rusanov flux based for periodic Shallow Water case
@@ -63,7 +63,7 @@ void SteadyState_P_Roe_BoundaryFlux(real *x, real t, real *wL, real *vnorm,real 
 //! \param[in] wL : states
 //! \param[in] vnorm : normal vector
 //! \param[out] flux : the flux
-void Periodic_Rusanov_BoundaryFlux(real *x, real t, real *wL, real *vnorm,real *flux);
+void Periodic_Rusanov_BoundaryFlux(schnaps_real *x, schnaps_real t, schnaps_real *wL, schnaps_real *vnorm,schnaps_real *flux);
 
 //! \brief boundary HLL flux based for periodic Shallow Water case
 //! \param[in] t : current time
@@ -71,7 +71,7 @@ void Periodic_Rusanov_BoundaryFlux(real *x, real t, real *wL, real *vnorm,real *
 //! \param[in] wL : states
 //! \param[in] vnorm : normal vector
 //! \param[out] flux : the flux
-void Periodic_HLL_BoundaryFlux(real *x, real t, real *wL, real *vnorm,real *flux);
+void Periodic_HLL_BoundaryFlux(schnaps_real *x, schnaps_real t, schnaps_real *wL, schnaps_real *vnorm,schnaps_real *flux);
 
 //! \brief boundary Roe flux based for periodic Shallow Water case
 //! \param[in] t : current time
@@ -79,7 +79,7 @@ void Periodic_HLL_BoundaryFlux(real *x, real t, real *wL, real *vnorm,real *flux
 //! \param[in] wL : states
 //! \param[in] vnorm : normal vector
 //! \param[out] flux : the flux
-void Periodic_Roe_BoundaryFlux(real *x, real t, real *wL, real *vnorm,real *flux);
+void Periodic_Roe_BoundaryFlux(schnaps_real *x, schnaps_real t, schnaps_real *wL, schnaps_real *vnorm,schnaps_real *flux);
 
 //! \brief boundary rusanov flux based for equilibirum Shallow Water case
 //! \param[in] t : current time
@@ -87,7 +87,7 @@ void Periodic_Roe_BoundaryFlux(real *x, real t, real *wL, real *vnorm,real *flux
 //! \param[in] wL : states
 //! \param[in] vnorm : normal vector
 //! \param[out] flux : the flux
-void Equilibrium_Rusanov_BoundaryFlux(real *x, real t, real *wL, real *vnorm,real *flux);
+void Equilibrium_Rusanov_BoundaryFlux(schnaps_real *x, schnaps_real t, schnaps_real *wL, schnaps_real *vnorm,schnaps_real *flux);
 
 //! \brief boundary HLL flux based for equilibrium Shallow Water case
 //! \param[in] t : current time
@@ -95,7 +95,7 @@ void Equilibrium_Rusanov_BoundaryFlux(real *x, real t, real *wL, real *vnorm,rea
 //! \param[in] wL : states
 //! \param[in] vnorm : normal vector
 //! \param[out] flux : the flux
-void Equilibrium_HLL_BoundaryFlux(real *x, real t, real *wL, real *vnorm,real *flux);
+void Equilibrium_HLL_BoundaryFlux(schnaps_real *x, schnaps_real t, schnaps_real *wL, schnaps_real *vnorm,schnaps_real *flux);
 
 //! \brief boundary Roe flux based for equilibrium Shallow Water case
 //! \param[in] t : current time
@@ -103,7 +103,7 @@ void Equilibrium_HLL_BoundaryFlux(real *x, real t, real *wL, real *vnorm,real *f
 //! \param[in] wL : states
 //! \param[in] vnorm : normal vector
 //! \param[out] flux : the flux
-void Equilibrium_Roe_BoundaryFlux(real *x, real t, real *wL, real *vnorm,real *flux);
+void Equilibrium_Roe_BoundaryFlux(schnaps_real *x, schnaps_real t, schnaps_real *wL, schnaps_real *vnorm,schnaps_real *flux);
 
 
 int main(void) {
@@ -133,14 +133,14 @@ int main(void) {
 
 int Test_SH_equilibrium(void) {
   int test1 = 0,test2 = 0,test3=0,test = 0;
-  real tmax=0.0,dt=0.0,tolerance=0.0,dd=0.0;
+  schnaps_real tmax=0.0,dt=0.0,tolerance=0.0,dd=0.0;
 
   MacroMesh mesh;
   ReadMacroMesh(&mesh,"../test/testcube.msh");
   Detect2DMacroMesh(&mesh);
   
-  real A[3][3] = {{_LENGTH_DOMAIN, 0, 0}, {0, _LENGTH_DOMAIN, 0}, {0, 0,1}};
-  real x0[3] = {0, 0, 0};
+  schnaps_real A[3][3] = {{_LENGTH_DOMAIN, 0, 0}, {0, _LENGTH_DOMAIN, 0}, {0, 0,1}};
+  schnaps_real x0[3] = {0, 0, 0};
   AffineMapMacroMesh(&mesh,A,x0);
   BuildConnectivity(&mesh);
 
@@ -247,14 +247,14 @@ int Test_SH_equilibrium(void) {
 
 int Test_SH_periodic(void) {
   int test1 = 0,test2 = 0,test3=0,test = 0;
-  real tmax=0.0,dt=0.0,tolerance=0.0,dd=0.0,dd2=0,dd3=0;
+  schnaps_real tmax=0.0,dt=0.0,tolerance=0.0,dd=0.0,dd2=0,dd3=0;
 
   MacroMesh mesh;
   ReadMacroMesh(&mesh,"../test/testcube.msh");
   Detect2DMacroMesh(&mesh);
   
-  real A[3][3] = {{_LENGTH_DOMAIN, 0, 0}, {0, _LENGTH_DOMAIN, 0}, {0, 0,1}};
-  real x0[3] = {0, 0, 0};
+  schnaps_real A[3][3] = {{_LENGTH_DOMAIN, 0, 0}, {0, _LENGTH_DOMAIN, 0}, {0, 0,1}};
+  schnaps_real x0[3] = {0, 0, 0};
   AffineMapMacroMesh(&mesh,A,x0);
   BuildConnectivity(&mesh);
 
@@ -343,9 +343,9 @@ int Test_SH_periodic(void) {
   dd3 = L2error_onefield(&simu3,2);
   tolerance = 5e-3;
 
-  real dd4 = L2error_onefield(&simu2,3);
-  real dd5 = L2error_onefield(&simu2,4);
-  real dd6 = L2error_onefield(&simu2,5);
+  schnaps_real dd4 = L2error_onefield(&simu2,3);
+  schnaps_real dd5 = L2error_onefield(&simu2,4);
+  schnaps_real dd6 = L2error_onefield(&simu2,5);
 
   printf("erreur h L2=%.12e\n", dd);
   printf("erreur u1 L2=%.12e\n", dd2);
@@ -370,14 +370,14 @@ int Test_SH_periodic(void) {
 
 int Test_SH_SteadyState_UImposed(void) {
   int test1 = 0,test2 = 0,test3=0,test = 0;
-  real tmax=0.0,dt=0.0,tolerance=0.0,dd=0.0,dd2=0,dd3=0;
+  schnaps_real tmax=0.0,dt=0.0,tolerance=0.0,dd=0.0,dd2=0,dd3=0;
 
   MacroMesh mesh;
   ReadMacroMesh(&mesh,"../test/testcube.msh");
   Detect2DMacroMesh(&mesh);
   
-  real A[3][3] = {{_LENGTH_DOMAIN, 0, 0}, {0, _LENGTH_DOMAIN, 0}, {0, 0,1}};
-  real x0[3] = {0, 0, 0};
+  schnaps_real A[3][3] = {{_LENGTH_DOMAIN, 0, 0}, {0, _LENGTH_DOMAIN, 0}, {0, 0,1}};
+  schnaps_real x0[3] = {0, 0, 0};
   AffineMapMacroMesh(&mesh,A,x0);
   BuildConnectivity(&mesh);
 
@@ -484,14 +484,14 @@ int Test_SH_SteadyState_UImposed(void) {
 
 int Test_SH_SteadyState_PImposed(void) {
   int test1 = 0,test2 = 0,test3=0,test = 0;
-  real tmax=0.0,dt=0.0,tolerance=0.0,dd=0.0,dd2=0,dd3=0;
+  schnaps_real tmax=0.0,dt=0.0,tolerance=0.0,dd=0.0,dd2=0,dd3=0;
 
   MacroMesh mesh;
   ReadMacroMesh(&mesh,"../test/testcube.msh");
   Detect2DMacroMesh(&mesh);
   
-  real A[3][3] = {{_LENGTH_DOMAIN, 0, 0}, {0, _LENGTH_DOMAIN, 0}, {0, 0,1}};
-  real x0[3] = {0, 0, 0};
+  schnaps_real A[3][3] = {{_LENGTH_DOMAIN, 0, 0}, {0, _LENGTH_DOMAIN, 0}, {0, 0,1}};
+  schnaps_real x0[3] = {0, 0, 0};
   AffineMapMacroMesh(&mesh,A,x0);
   BuildConnectivity(&mesh);
 
@@ -595,7 +595,7 @@ int Test_SH_SteadyState_PImposed(void) {
   return test;
 }
 
-void TestSH_equilibrium_ImposedData(const real *x, const real t, real *w) {
+void TestSH_equilibrium_ImposedData(const schnaps_real *x, const schnaps_real t, schnaps_real *w) {
 
   w[0] = 1.0-0.8*exp(-50*(pow(x[0]-0.5*_LENGTH_DOMAIN,2.0)+pow(x[1]-0.5*_LENGTH_DOMAIN,2.0)));
   w[1] = 0.0;
@@ -605,38 +605,38 @@ void TestSH_equilibrium_ImposedData(const real *x, const real t, real *w) {
   w[5] = -0.8*50*(2.0*x[1]-_LENGTH_DOMAIN)*exp(-50*(pow(x[0]-0.5*_LENGTH_DOMAIN,2.0)+pow(x[1]-0.5*_LENGTH_DOMAIN,2.0)));
 }
 
-void TestSH_equilibrium_InitData(real *x, real *w) {
-  real t = 0;
+void TestSH_equilibrium_InitData(schnaps_real *x, schnaps_real *w) {
+  schnaps_real t = 0;
   TestSH_equilibrium_ImposedData(x, t, w);
 }
 
 
-void Equilibrium_Rusanov_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
-				       real *flux) {
-  real wR[6];
+void Equilibrium_Rusanov_BoundaryFlux(schnaps_real *x, schnaps_real t, schnaps_real *wL, schnaps_real *vnorm,
+				       schnaps_real *flux) {
+  schnaps_real wR[6];
   TestSH_equilibrium_ImposedData(x , t, wR);
   ShallowWater_Rusanov_NumFlux(wL, wR, vnorm, flux);
 }
 
-void Equilibrium_HLL_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
-				       real *flux) {
-  real wR[6];
+void Equilibrium_HLL_BoundaryFlux(schnaps_real *x, schnaps_real t, schnaps_real *wL, schnaps_real *vnorm,
+				       schnaps_real *flux) {
+  schnaps_real wR[6];
   TestSH_equilibrium_ImposedData(x , t, wR);
   ShallowWater_HLL_NumFlux(wL, wR, vnorm, flux);
 }
 
 
-void Equilibrium_Roe_BoundaryFlux(real *x, real t, real *wL, real *vnorm,
-				       real *flux) {
-  real wR[6];
+void Equilibrium_Roe_BoundaryFlux(schnaps_real *x, schnaps_real t, schnaps_real *wL, schnaps_real *vnorm,
+				       schnaps_real *flux) {
+  schnaps_real wR[6];
   TestSH_equilibrium_ImposedData(x , t, wR);
   ShallowWater_Roe_NumFlux(wL, wR, vnorm, flux);
 }
 
-void TestSH_periodic_ImposedData(const real *x, const real t, real *w) {
-  real u0=2;
-  real v0=2;
-  real pi=4.0*atan(1.0);
+void TestSH_periodic_ImposedData(const schnaps_real *x, const schnaps_real t, schnaps_real *w) {
+  schnaps_real u0=2;
+  schnaps_real v0=2;
+  schnaps_real pi=4.0*atan(1.0);
   
   w[0] = 1.0+0.2*sin(((2.*pi)/_LENGTH_DOMAIN)*(x[0]+x[1]-u0*t-v0*t));
   w[1] = u0*w[0];
@@ -646,16 +646,16 @@ void TestSH_periodic_ImposedData(const real *x, const real t, real *w) {
   w[5] = -0.2*((2.*pi)/_LENGTH_DOMAIN)*cos(((2.*pi)/_LENGTH_DOMAIN)*(x[0]+x[1]-u0*t-v0*t));
 }
 
-void TestSH_periodic_InitData(real *x, real *w) {
-  real t = 0;
+void TestSH_periodic_InitData(schnaps_real *x, schnaps_real *w) {
+  schnaps_real t = 0;
   TestSH_periodic_ImposedData(x, t, w);
 }
 
-void ShallowWater_periodic_SourceTerm(const real *x, const real t, const real *w, real *source){
-  real g=_GRAVITY;
-  real hL=0, hR=0, uL=0, uR=0, vL=0, vR=0;
-  real S=0,b=0,bx=0,by=0;
-  real wexact[6]; 
+void ShallowWater_periodic_SourceTerm(const schnaps_real *x, const schnaps_real t, const schnaps_real *w, schnaps_real *source){
+  schnaps_real g=_GRAVITY;
+  schnaps_real hL=0, hR=0, uL=0, uR=0, vL=0, vR=0;
+  schnaps_real S=0,b=0,bx=0,by=0;
+  schnaps_real wexact[6]; 
   hL = w[0];
   uL=w[1]/w[0];
   vL=w[2]/w[0];
@@ -670,28 +670,28 @@ void ShallowWater_periodic_SourceTerm(const real *x, const real t, const real *w
   source[5]= 0.0;
 };
 
-void Periodic_Rusanov_BoundaryFlux(real *x, real t, real *wL, real *vnorm,real *flux) {
-  real wR[6];
+void Periodic_Rusanov_BoundaryFlux(schnaps_real *x, schnaps_real t, schnaps_real *wL, schnaps_real *vnorm,schnaps_real *flux) {
+  schnaps_real wR[6];
   TestSH_periodic_ImposedData(x , t, wR);
   ShallowWater_Rusanov_NumFlux(wL, wR, vnorm, flux);
 }
 
-void Periodic_HLL_BoundaryFlux(real *x, real t, real *wL, real *vnorm,real *flux) {
-  real wR[6];
+void Periodic_HLL_BoundaryFlux(schnaps_real *x, schnaps_real t, schnaps_real *wL, schnaps_real *vnorm,schnaps_real *flux) {
+  schnaps_real wR[6];
   TestSH_periodic_ImposedData(x , t, wR);
   ShallowWater_HLL_NumFlux(wL, wR, vnorm, flux);
 }
 
 
-void Periodic_Roe_BoundaryFlux(real *x, real t, real *wL, real *vnorm,real *flux) {
-  real wR[6];
+void Periodic_Roe_BoundaryFlux(schnaps_real *x, schnaps_real t, schnaps_real *wL, schnaps_real *vnorm,schnaps_real *flux) {
+  schnaps_real wR[6];
   TestSH_periodic_ImposedData(x , t, wR);
   ShallowWater_Roe_NumFlux(wL, wR, vnorm, flux);
 }
 
 
-void TestSH_SteadyState_U_ImposedData(const real *x, const real t, real *w) {
-  real alpha=1.0; 
+void TestSH_SteadyState_U_ImposedData(const schnaps_real *x, const schnaps_real t, schnaps_real *w) {
+  schnaps_real alpha=1.0; 
   w[0] = 1.0+alpha*((x[0]-x[0]*x[0])*(x[1]-x[1]*x[1]));
   w[1] = ((x[0]-x[0]*x[0])*(1.0-2*x[1]))*w[0];
   w[2] = -((x[1]-x[1]*x[1])*(1.0-2*x[0]))*w[0];
@@ -700,16 +700,16 @@ void TestSH_SteadyState_U_ImposedData(const real *x, const real t, real *w) {
   w[5] = 0.0;
 }
 
-void TestSH_SteadyState_U_InitData(real *x, real *w) {
-  real t = 0;
+void TestSH_SteadyState_U_InitData(schnaps_real *x, schnaps_real *w) {
+  schnaps_real t = 0;
   TestSH_SteadyState_U_ImposedData(x, t, w);
 }
 
-void ShallowWater_SteadyState_U_SourceTerm(const real *x, const real t, const real *w, real *source){
-  real g=_GRAVITY;
-  real alpha=1.0;
-  real S_11, S_12,S_13, S_21, S_22, S_23, S_factor;
-  real wexact[6];
+void ShallowWater_SteadyState_U_SourceTerm(const schnaps_real *x, const schnaps_real t, const schnaps_real *w, schnaps_real *source){
+  schnaps_real g=_GRAVITY;
+  schnaps_real alpha=1.0;
+  schnaps_real S_11, S_12,S_13, S_21, S_22, S_23, S_factor;
+  schnaps_real wexact[6];
 
   S_factor=alpha*(x[0]-x[0]*x[0])*(x[1]-x[1]*x[1])+1.0;
 
@@ -729,29 +729,29 @@ void ShallowWater_SteadyState_U_SourceTerm(const real *x, const real t, const re
   source[5]= 0.0;
 };
 
-void SteadyState_U_Rusanov_BoundaryFlux(real *x, real t, real *wL, real *vnorm,real *flux) {
-  real wR[6];
+void SteadyState_U_Rusanov_BoundaryFlux(schnaps_real *x, schnaps_real t, schnaps_real *wL, schnaps_real *vnorm,schnaps_real *flux) {
+  schnaps_real wR[6];
   TestSH_SteadyState_U_ImposedData(x , t, wR);
   ShallowWater_Rusanov_NumFlux(wL, wR, vnorm, flux);
 }
 
-void SteadyState_U_HLL_BoundaryFlux(real *x, real t, real *wL, real *vnorm,real *flux) {
-  real wR[6];
+void SteadyState_U_HLL_BoundaryFlux(schnaps_real *x, schnaps_real t, schnaps_real *wL, schnaps_real *vnorm,schnaps_real *flux) {
+  schnaps_real wR[6];
   TestSH_SteadyState_U_ImposedData(x , t, wR);
   ShallowWater_HLL_NumFlux(wL, wR, vnorm, flux);
 }
 
-void SteadyState_U_Roe_BoundaryFlux(real *x, real t, real *wL, real *vnorm,real *flux) {
-  real wR[6];
+void SteadyState_U_Roe_BoundaryFlux(schnaps_real *x, schnaps_real t, schnaps_real *wL, schnaps_real *vnorm,schnaps_real *flux) {
+  schnaps_real wR[6];
   TestSH_SteadyState_U_ImposedData(x , t, wR);
   ShallowWater_Roe_NumFlux(wL, wR, vnorm, flux);
 }
 
 
 
-void TestSH_SteadyState_P_ImposedData(const real *x, const real t, real *w) {
-  real g=_GRAVITY;
-  real u01=2.0,u02=2.0; 
+void TestSH_SteadyState_P_ImposedData(const schnaps_real *x, const schnaps_real t, schnaps_real *w) {
+  schnaps_real g=_GRAVITY;
+  schnaps_real u01=2.0,u02=2.0; 
   
   w[0] = sqrt(2.0/g*(1.0+(x[0]-x[0]*x[0])*(x[1]-x[1]*x[1])));
   w[1] = u01*w[0];
@@ -761,17 +761,17 @@ void TestSH_SteadyState_P_ImposedData(const real *x, const real t, real *w) {
   w[5] = 0.0;
 }
 
-void TestSH_SteadyState_P_InitData(real *x, real *w) {
-  real t = 0;
+void TestSH_SteadyState_P_InitData(schnaps_real *x, schnaps_real *w) {
+  schnaps_real t = 0;
   TestSH_SteadyState_P_ImposedData(x, t, w);
 }
 
 
-void ShallowWater_SteadyState_P_SourceTerm(const real *x, const real t, const real *w, real *source){
-  real g=_GRAVITY;
-  real S_h1, S_h2;
-  real wexact[6];
-  real u01=2.0,u02=2.0; 
+void ShallowWater_SteadyState_P_SourceTerm(const schnaps_real *x, const schnaps_real t, const schnaps_real *w, schnaps_real *source){
+  schnaps_real g=_GRAVITY;
+  schnaps_real S_h1, S_h2;
+  schnaps_real wexact[6];
+  schnaps_real u01=2.0,u02=2.0; 
 
   S_h1=1.0/sqrt(2.0*g*(1.0+(x[0]-x[0]*x[0])*(x[1]-x[1]*x[1])));
   S_h2=u01*(1-2.0*x[0])*(x[1]-x[1]*x[1])+u02*(1-2.0*x[1])*(x[0]-x[0]*x[0]);
@@ -784,21 +784,21 @@ void ShallowWater_SteadyState_P_SourceTerm(const real *x, const real t, const re
   source[5]= 0.0;
 };
 
-void SteadyState_P_Rusanov_BoundaryFlux(real *x, real t, real *wL, real *vnorm,real *flux) {
-  real wR[6];
+void SteadyState_P_Rusanov_BoundaryFlux(schnaps_real *x, schnaps_real t, schnaps_real *wL, schnaps_real *vnorm,schnaps_real *flux) {
+  schnaps_real wR[6];
   TestSH_SteadyState_P_ImposedData(x , t, wR);
   ShallowWater_Rusanov_NumFlux(wL, wR, vnorm, flux);
 }
 
-void SteadyState_P_HLL_BoundaryFlux(real *x, real t, real *wL, real *vnorm,real *flux) {
-  real wR[6];
+void SteadyState_P_HLL_BoundaryFlux(schnaps_real *x, schnaps_real t, schnaps_real *wL, schnaps_real *vnorm,schnaps_real *flux) {
+  schnaps_real wR[6];
   TestSH_SteadyState_P_ImposedData(x , t, wR);
   ShallowWater_HLL_NumFlux(wL, wR, vnorm, flux);
 }
 
 
-void SteadyState_P_Roe_BoundaryFlux(real *x, real t, real *wL, real *vnorm, real *flux) {
-  real wR[6];
+void SteadyState_P_Roe_BoundaryFlux(schnaps_real *x, schnaps_real t, schnaps_real *wL, schnaps_real *vnorm, schnaps_real *flux) {
+  schnaps_real wR[6];
   TestSH_SteadyState_P_ImposedData(x , t, wR);
   ShallowWater_Roe_NumFlux(wL, wR, vnorm, flux);
 }

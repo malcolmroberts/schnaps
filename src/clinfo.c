@@ -445,9 +445,9 @@ void BuildKernels(CLInfo *cli, char *strprog, char *buildoptions)
     malloc(deflen + strlen(buildoptions) + 1);
 
 #ifdef _DOUBLE_PRECISION
-  sprintf(buildoptions0, "-D real=double ");
+  sprintf(buildoptions0, "-D schnaps_real=double ");
 #else
-  sprintf(buildoptions0, "-cl-single-precision-constant -D real=float ");
+  sprintf(buildoptions0, "-cl-single-precision-constant -D schnaps_real=float ");
 #endif
   if(buildoptions != NULL)
     strcat(buildoptions0, buildoptions);
@@ -502,7 +502,7 @@ void GetOpenCLCode(void){
   assert(status == 0);
 }
 
-real cl_dev_gflops(char *platform_name)
+schnaps_real cl_dev_gflops(char *platform_name)
 {
   //if(strcmp(platform_name, "Intel(R) Core(TM) i3-4010U CPU @ 1.70GHz") == 0)
   //  return 2;
@@ -510,7 +510,7 @@ real cl_dev_gflops(char *platform_name)
      == 0)
     return 1011.0;
   if(strcmp(platform_name, "Tahiti") == 0)
-    return (sizeof(real) == sizeof(float)) ? 3788.8 : 947.2;
+    return (sizeof(schnaps_real) == sizeof(float)) ? 3788.8 : 947.2;
   if(strcmp(platform_name, "Tesla K80") == 0)
     return 2910;
   if(strcmp(platform_name, "GeForce GT 540M") == 0)
@@ -518,7 +518,7 @@ real cl_dev_gflops(char *platform_name)
   return 0;
 }
 
-real cl_dev_bwidth(char *platform_name)
+schnaps_real cl_dev_bwidth(char *platform_name)
 {
   //if(strcmp(platform_name, "Intel(R) Core(TM) i3-4010U CPU @ 1.70GHz") == 0)
   //  return 2;
@@ -538,22 +538,22 @@ real cl_dev_bwidth(char *platform_name)
 // Given the dev_flops (in gflop/s) and the bandwidth (in GB/s), the
 // number of operations (flop_count), and the number of real io
 // transfers (io_count), compute the theoretical execution time.
-real kernel_min_time(real dev_flops, real bandwidth,
+schnaps_real kernel_min_time(schnaps_real dev_flops, schnaps_real bandwidth,
 		       unsigned long int flop_count, unsigned long int io_count)
 {
   return flop_count / (1e9 * dev_flops);
 }
 
-void print_kernel_perf(real dev_gflops, real dev_bwidth,
+void print_kernel_perf(schnaps_real dev_gflops, schnaps_real dev_bwidth,
 		       unsigned long int flop_count, unsigned long int io_count,
 		       cl_ulong kernel_time_ns)
 {
   if(dev_gflops > 0 && dev_bwidth > 0) {
     printf("\tKernel flop count:\t\t%lu\n", flop_count);
     printf("\tKernel io count:\t\t%lu\n", io_count);
-    real total_time = 1e-9 * kernel_time_ns;
+    schnaps_real total_time = 1e-9 * kernel_time_ns;
     printf("\tKernel time:\t\t\t%f s\n", total_time);
-    real min_time_total = kernel_min_time(dev_gflops, dev_bwidth,
+    schnaps_real min_time_total = kernel_min_time(dev_gflops, dev_bwidth,
 					    flop_count, io_count);
     printf("\tTheoretical kernel time:\t%f s\n", min_time_total);
     printf("\tEfficiency:\t\t\t%f%%\n", 100.0 * min_time_total / total_time);

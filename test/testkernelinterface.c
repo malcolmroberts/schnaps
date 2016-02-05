@@ -90,7 +90,7 @@ int TestKernelInterface(void){
 			      CL_TRUE,
 			      CL_MAP_WRITE,
 			      0, // offset
-			      sizeof(real) * (simu.wsize),
+			      sizeof(schnaps_real) * (simu.wsize),
 			      0, NULL, NULL, // events management
 			      &status);
   assert(status == CL_SUCCESS);
@@ -128,10 +128,10 @@ int TestKernelInterface(void){
   clFinish(simu.cli.commandqueue);
   CopyfieldtoCPU(&simu);
   //Displayfield(&f);
-  real *fdtw_opencl = simu.dtw;
+  schnaps_real *fdtw_opencl = simu.dtw;
 
   // OpenMP version
-  simu.dtw = calloc(simu.wsize, sizeof(real));
+  simu.dtw = calloc(simu.wsize, sizeof(schnaps_real));
   for(int iw = 0; iw < simu.wsize; iw++) simu.dtw[iw] = 0;
   
   for(int ifa = 0; ifa < simu.macromesh.nbfaces; ifa++){
@@ -154,11 +154,11 @@ int TestKernelInterface(void){
 			 fR, offsetR, simu.w, simu.dtw);
   }
   //Displayfield(&f);
-  real *fdtw_openmp = simu.dtw;
+  schnaps_real *fdtw_openmp = simu.dtw;
 
-  real maxerr = 0.0;
+  schnaps_real maxerr = 0.0;
   for(int i = 0; i < simu.wsize; i++) {
-    real error = fabs(fdtw_openmp[i] - fdtw_opencl[i]);
+    schnaps_real error = fabs(fdtw_openmp[i] - fdtw_opencl[i]);
     printf("error: %f \t%f \t%f\n", error, fdtw_openmp[i], fdtw_opencl[i]);
     maxerr = fmax(error, maxerr);
   }

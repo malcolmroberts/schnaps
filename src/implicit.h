@@ -22,7 +22,7 @@ void InitImplicitLinearSolver(Simulation *simu, LinearSolver *solver);
 //! \param[inout] solver a linear solver
 //! \param[in] theta the crank nicholson parameter
 //!  \param[in] dt time step
-void AssemblyImplicitLinearSolver(Simulation *simu, LinearSolver *solver,real theta, real dt);
+void AssemblyImplicitLinearSolver(Simulation *simu, LinearSolver *solver,schnaps_real theta, schnaps_real dt);
 
 //! \brief Assembly of the DG operator into a sparse matrix
 //! computations of all the terms
@@ -30,7 +30,7 @@ void AssemblyImplicitLinearSolver(Simulation *simu, LinearSolver *solver,real th
 //! \param[inout] field a field
 //! \param[in] theta the crank nicholson parameter
 //!  \param[in] dt time step
-void AssemblyFieldImplicitSolver(field *fd,real theta, real dt);
+void AssemblyFieldImplicitSolver(field *fd,schnaps_real theta, schnaps_real dt);
 
 //! \brief Assembly and solving of the implicit DG operator into
 //! one macrocell. No global matrix allocation
@@ -38,14 +38,14 @@ void AssemblyFieldImplicitSolver(field *fd,real theta, real dt);
 //! \param[inout] field a field
 //! \param[in] theta the crank nicholson parameter
 //!  \param[in] dt time step
-void FieldDownwindSolve(field *fd,real theta, real dt);
+void FieldDownwindSolve(field *fd,schnaps_real theta, schnaps_real dt);
 
 //! \brief residual of the DG operator into
 //! one macrocell.
 //! \param[inout] field a field
 //! \param[in] theta the crank nicholson parameter
 //!  \param[in] dt time step
-void FieldResidual(field *fd,real theta, real dt);
+void FieldResidual(field *fd,schnaps_real theta, schnaps_real dt);
 
 
 //! \brief Assembly of the DG operator into a sparse matrix
@@ -94,14 +94,14 @@ void InterfaceCoupling(Simulation *simu,  LinearSolver *solver,int itest);
 //! \param[inout] solver a linear solver
 //! \param[in] theta the crank nicholson parameter
 //!  \param[in] dt time step
-void InternalAssembly(Simulation *simu,  LinearSolver *solver,real theta, real dt);
+void InternalAssembly(Simulation *simu,  LinearSolver *solver,schnaps_real theta, schnaps_real dt);
 
 //! \brief Assembly of DG differential terms
 //! case of the locally implicit scheme
 //! \param[inout] field a field
 //! \param[in] theta the crank nicholson parameter
 //!  \param[in] dt time step
-void InternalLocalAssembly(field *fd, real theta, real dt);
+void InternalLocalAssembly(field *fd, schnaps_real theta, schnaps_real dt);
 
 //! \brief Assembly of the DG operator into a sparse matrix
 //! assembly of the internal flxes of the fields
@@ -109,7 +109,7 @@ void InternalLocalAssembly(field *fd, real theta, real dt);
 //! \param[inout] solver a linear solver
 //! \param[in] theta the crank nicholson parameter
 //!  \param[in] dt time step
-void FluxAssembly(Simulation *simu,  LinearSolver *solver,real theta, real dt);
+void FluxAssembly(Simulation *simu,  LinearSolver *solver,schnaps_real theta, schnaps_real dt);
 
 //! \brief Assembly of the DG operator into a sparse matrix
 //! assembly of the internal flxes of the fields
@@ -117,41 +117,41 @@ void FluxAssembly(Simulation *simu,  LinearSolver *solver,real theta, real dt);
 //! \param[inout] field a field
 //! \param[in] theta the crank nicholson parameter
 //!  \param[in] dt time step
-void FluxLocalAssembly(field* fd,real theta, real dt);
+void FluxLocalAssembly(field* fd,schnaps_real theta, schnaps_real dt);
 
 //! \brief time-stepping by the crank nicholson scheme
 //! \param[inout] simu a simulation
 //! \param[in] tmax final time
 //! \param[in] dt time step
-void ThetaTimeScheme(Simulation *simu, real tmax, real dt);
+void ThetaTimeScheme(Simulation *simu, schnaps_real tmax, schnaps_real dt);
 
 //! \brief time-stepping by the crank nicholson scheme
 //! macrocell local version
 //! \param[inout] simu a simulation
 //! \param[in] tmax final time
 //! \param[in] dt time step
-void LocalThetaTimeScheme(Simulation *simu, real tmax, real dt);
+void LocalThetaTimeScheme(Simulation *simu, schnaps_real tmax, schnaps_real dt);
 
 //! \brief time-stepping by the crank nicholson scheme StarPU version
 //! macrocell local version 
 //! \param[inout] simu a simulation
 //! \param[in] tmax final time
 //! \param[in] dt time step
-void LocalThetaTimeScheme_SPU(Simulation *simu, real tmax, real dt);
+void LocalThetaTimeScheme_SPU(Simulation *simu, schnaps_real tmax, schnaps_real dt);
 
 //! \brief Crank-Nicholson time-stepping for transport solver 
 //! graph_based and StarPU version
 //! \param[inout] simu a simulation
 //! \param[in] tmax final time
 //! \param[in] dt time step
-void GraphThetaTimeScheme_SPU(Simulation *simu, real tmax, real dt);
+void GraphThetaTimeScheme_SPU(Simulation *simu, schnaps_real tmax, schnaps_real dt);
 
 //! \brief Crank-Nicholson time-stepping for transport solver 
 //! graph_based and StarPU version without matrix assembly
 //! \param[inout] simu a simulation
 //! \param[in] tmax final time
 //! \param[in] dt time step
-void GraphThetaTimeSchemeSubCell_SPU(Simulation *simu, real tmax, real dt);
+void GraphThetaTimeSchemeSubCell_SPU(Simulation *simu, schnaps_real tmax, schnaps_real dt);
 
 ///! \brief Assembly of the DG operator into a sparse matrix
 //! assembly of the interface fluxes between the neighboring fields
@@ -159,7 +159,7 @@ void GraphThetaTimeSchemeSubCell_SPU(Simulation *simu, real tmax, real dt);
 //! \param[inout] solver a linear solver
 //! \param[in] theta the crank nicholson parameter
 //!  \param[in] dt time step
-void InterfaceAssembly(Simulation *simu,  LinearSolver *solver,real theta, real dt);
+void InterfaceAssembly(Simulation *simu,  LinearSolver *solver,schnaps_real theta, schnaps_real dt);
 
 //! \brief Assembly of the DG operator into a sparse matrix
 //! assembly of the right hand side of the linear system:
@@ -168,7 +168,7 @@ void InterfaceAssembly(Simulation *simu,  LinearSolver *solver,real theta, real 
 //! \param[inout] solver a linear solver
 //! \param[in] theta the crank nicholson parameter
 //!  \param[in] dt time step
-void SourceAssembly(Simulation *simu,  LinearSolver *solver,real theta, real dt);
+void SourceAssembly(Simulation *simu,  LinearSolver *solver,schnaps_real theta, schnaps_real dt);
 
 //! \brief Assembly of the DG operator into a sparse matrix
 //! assembly of the right hand side of the linear system:
@@ -178,7 +178,7 @@ void SourceAssembly(Simulation *simu,  LinearSolver *solver,real theta, real dt)
 //! \param[inout] solver a linear solver
 //! \param[in] theta the crank nicholson parameter
 //!  \param[in] dt time step
-void SourceLocalAssembly(field *fd,real theta, real dt);
+void SourceLocalAssembly(field *fd,schnaps_real theta, schnaps_real dt);
 
 //! \brief Assembly of the DG operator into a sparse matrix
 //! assembly of the right hand side of the linear system:
@@ -189,7 +189,7 @@ void SourceLocalAssembly(field *fd,real theta, real dt);
 //! \param[inout] solver a linear solver
 //! \param[in] theta the crank nicholson parameter
 //!  \param[in] dt time step
-void SourceLocalAssembly_SPU(field *fd,real theta, real dt);
+void SourceLocalAssembly_SPU(field *fd,schnaps_real theta, schnaps_real dt);
 
 //! \brief Assembly of the DG operator into a sparse matrix
 //! assembly of the mass terms
@@ -216,18 +216,18 @@ void InitImplicitJFLinearSolver(Simulation *simu, JFLinearSolver *solver);
 //! \param[inout] solver a jacobian free linear solver
 //! \param[in] theta the crank nicholson parameter
 //!  \param[in] dt time step
-void AssemblyImplicitJFLinearSolver(Simulation *simu, JFLinearSolver *solver, real dt);
+void AssemblyImplicitJFLinearSolver(Simulation *simu, JFLinearSolver *solver, schnaps_real dt);
 
 
 //! ADD DESCRIPTION
-void ThetaTimeScheme_WithJF(Simulation *simu, real tmax, real dt);
+void ThetaTimeScheme_WithJF(Simulation *simu, schnaps_real tmax, schnaps_real dt);
 
 //! \brief function which compute the implicit nonlinear vector for the Jacobian free for the sol solvector
 //! \param[i] simu a simulation
 //! \param[in] solver a linear solver
 //! \param[in] solvector a vector of unknown used to construct the nonlinear vector
 //! \param[inout] nlvector a nonlinear vector obtained at the end
-void ImplicitNonlinearVector_computation(Simulation * simu,void* lsol,real * solvector,real *nlvector);
+void ImplicitNonlinearVector_computation(Simulation * simu,void* lsol,schnaps_real * solvector,schnaps_real *nlvector);
 
 //! \brief function which compute the nonlinear vector for the theta scheme
 //! \param[i] simu a simulation
@@ -235,7 +235,7 @@ void ImplicitNonlinearVector_computation(Simulation * simu,void* lsol,real * sol
 //! \param[inout] nlvector a nonlinear vector obtained at the end
 //! \param[in] theta a coefficeny
 //! \param[in] dt a time step
-void NonlinearThetaVector_assembly(Simulation * simu,real * solvector,real *nlvector,real theta, real dt);
+void NonlinearThetaVector_assembly(Simulation * simu,schnaps_real * solvector,schnaps_real *nlvector,schnaps_real theta, schnaps_real dt);
 
 
 

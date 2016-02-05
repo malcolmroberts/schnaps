@@ -16,23 +16,23 @@ typedef struct Skyline_SPU{
   int nmem;
 
   //! \brief rhs of the linear solver
-  real* rhs;
+  schnaps_real* rhs;
   starpu_data_handle_t rhs_handle;
   
   //! \brief solution of the linear solver
-  real* sol;
+  schnaps_real* sol;
   starpu_data_handle_t sol_handle;
 
   //! \brief array for the upper part of  the matrix
-  real* vkgs;
+  schnaps_real* vkgs;
   starpu_data_handle_t vkgs_handle;
 
   //! \brief array for the diagonal part of  the matrix (size neq)
-  real* vkgd;
+  schnaps_real* vkgd;
   starpu_data_handle_t vkgd_handle;
 
   //! \brief array for the lower part of  the matrix
-  real* vkgi;
+  schnaps_real* vkgi;
   starpu_data_handle_t vkgi_handle;
 
   //! \brief profile of the matrix (size neq)
@@ -93,21 +93,21 @@ void AllocateSkyline_SPU(Skyline_SPU* sky);
 //! \param[in] i row index
 //! \param[in] j column index
 //! \param[in] val value
-void SetSkyline_SPU(Skyline_SPU* sky,int i,int j,real val);
+void SetSkyline_SPU(Skyline_SPU* sky,int i,int j,schnaps_real val);
 
 //! \brief add elem (i,j) to value val
 //! \param[inout] sky the skyline object
 //! \param[in] i row index
 //! \param[in] j column index
 //! \param[in] val value
-void AddSkyline_SPU(Skyline_SPU* sky,int i,int j,real val); 
+void AddSkyline_SPU(Skyline_SPU* sky,int i,int j,schnaps_real val); 
 
 //! \brief get elem (i,j)
 //! \param[inout] sky the skyline object
 //! \param[in] i row index
 //! \param[in] j column index
 //! \return value at pos (i,j)
-real GetSkyline_SPU(Skyline_SPU* sky,int i,int j); 
+schnaps_real GetSkyline_SPU(Skyline_SPU* sky,int i,int j); 
 
 
 //! \brief display the matrix

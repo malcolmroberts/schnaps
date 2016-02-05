@@ -13,7 +13,7 @@ const int h20_refnormal[6][3]={{0,-1,0},
 			       {0,0,-1} };
 
 // 20 nodes of the reference element
-const real h20_ref_node[20][3] = {
+const schnaps_real h20_ref_node[20][3] = {
   {0  ,0  ,0  },
   {1  ,0  ,0  },
   {1  ,1  ,0  },
@@ -37,26 +37,26 @@ const real h20_ref_node[20][3] = {
 };
 
 // Return the dot-product of the reals a[3] and b[3]
-real dot_product(real a[3], real b[3])
+schnaps_real dot_product(schnaps_real a[3], schnaps_real b[3])
 {
   return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 }
 
-real norm(real a[3])
+schnaps_real norm(schnaps_real a[3])
 {
   return sqrt(a[0] * a[0] + a[1] * a[1] + a[2] * a[2]);
 }
 
-void Normalize(real a[3])
+void Normalize(schnaps_real a[3])
 {
-  real r = 1.0 / norm(a);
+  schnaps_real r = 1.0 / norm(a);
   a[0] *= r;
   a[1] *= r;
   a[2] *= r;
 }
 
 #pragma start_opencl
-void PeriodicCorrection(real xyz[3], real period[3])
+void PeriodicCorrection(schnaps_real xyz[3], schnaps_real period[3])
 {
   for (int dim = 0; dim < 3; ++dim) {
     if (period[dim] > 0) {
@@ -71,7 +71,7 @@ void PeriodicCorrection(real xyz[3], real period[3])
 }
 #pragma end_opencl
 
-void PeriodicCorrectionB(real xyz[3],real period[3], real xmin[3], real xmax[3])
+void PeriodicCorrectionB(schnaps_real xyz[3],schnaps_real period[3], schnaps_real xmin[3], schnaps_real xmax[3])
 {
   for (int dim = 0; dim < 3; ++dim) {
     if (period[dim] > 0){
@@ -87,13 +87,13 @@ void PeriodicCorrectionB(real xyz[3],real period[3], real xmin[3], real xmax[3])
   }
 }
 
-real Dist(real a[3], real b[3]) 
+schnaps_real Dist(schnaps_real a[3], schnaps_real b[3]) 
 {
-  real d[3] = {a[0] - b[0], a[1] - b[1], a[2] - b[2]};
+  schnaps_real d[3] = {a[0] - b[0], a[1] - b[1], a[2] - b[2]};
   return norm(d);
 }
 
-void PrintPoint(real x[3]) 
+void PrintPoint(schnaps_real x[3]) 
 {
   printf("%f %f %f\n", x[0], x[1], x[2]);
 }
@@ -109,24 +109,24 @@ void PrintPoint(real x[3])
 /*     + g->codtau[0][2] * g->dtau[0][2]; */
 /* } */
 
-void Ref2Phy(real physnode[20][3],
-             real xref[3],
-             real dphiref[3],
+void schnaps_ref2phy(schnaps_real physnode[20][3],
+             schnaps_real xref[3],
+             schnaps_real dphiref[3],
              int ifa,
-             real xphy[3],
-             real dtau[3][3],
-             real codtau[3][3],
-             real dphi[3],
-             real vnds[3]) 
+             schnaps_real xphy[3],
+             schnaps_real dtau[3][3],
+             schnaps_real codtau[3][3],
+             schnaps_real dphi[3],
+             schnaps_real vnds[3]) 
 {
   // Compute the mapping and its Jacobian
-  real x = xref[0];
-  real y = xref[1];
-  real z = xref[2];
+  schnaps_real x = xref[0];
+  schnaps_real y = xref[1];
+  schnaps_real z = xref[2];
 
   // Gradient of the shape functions and value (4th component) of the
   // shape functions
-  real gradphi[20][4];
+  schnaps_real gradphi[20][4];
 #include "h20phi.h"  // this file fills the values of phi and gradphi
 
   if (xphy != NULL) {
@@ -202,27 +202,27 @@ void Ref2Phy(real physnode[20][3],
 /*   Phy2Ref(g->physnode,g->xphy,g->xref); */
 /* } */
 
-void Phy2Ref(real physnode[20][3], real xphy[3], real xref[3]) 
+void schnaps_phy2ref(schnaps_real physnode[20][3], schnaps_real xphy[3], schnaps_real xref[3]) 
 {
 #define ITERNEWTON 20
 
-  real dtau[3][3], codtau[3][3];
-  real dxref[3], dxphy[3];
+  schnaps_real dtau[3][3], codtau[3][3];
+  schnaps_real dxref[3], dxphy[3];
   int ifa =- 1;
   xref[0] = 0.5;
   xref[1] = 0.5;
   xref[2] = 0.5;
 
-  real *codtau0 = codtau[0];
-  real *codtau1 = codtau[1];
-  real *codtau2 = codtau[2];
+  schnaps_real *codtau0 = codtau[0];
+  schnaps_real *codtau1 = codtau[1];
+  schnaps_real *codtau2 = codtau[2];
 
   for(int iter = 0; iter < ITERNEWTON; ++iter) {
-    Ref2Phy(physnode, xref, 0,ifa, dxphy, dtau, codtau, 0,0);
+    schnaps_ref2phy(physnode, xref, 0,ifa, dxphy, dtau, codtau, 0,0);
     dxphy[0] -= xphy[0];
     dxphy[1] -= xphy[1];
     dxphy[2] -= xphy[2];
-    real overdet = 1.0 / dot_product(dtau[0], codtau[0]);
+    schnaps_real overdet = 1.0 / dot_product(dtau[0], codtau[0]);
     //assert(overdet > 0);
 
     for(int ii = 0; ii < 3; ii ++ ) {
@@ -241,13 +241,13 @@ void Phy2Ref(real physnode[20][3], real xphy[3], real xref[3])
   /* assert(xref[2] < 1 + eps && xref[2] > -eps); */
 }
 
-void RobustPhy2Ref(real physnode[20][3], real xphy[3], real xref[3]) 
+void RobustPhy2Ref(schnaps_real physnode[20][3], schnaps_real xphy[3], schnaps_real xref[3]) 
 {
 #define _ITERNEWTON 5
 #define _NTHETA 100
 
-  real dtau[3][3], codtau[3][3];
-  real dxref[3], dxphy[3],xphy0[3];
+  schnaps_real dtau[3][3], codtau[3][3];
+  schnaps_real dxref[3], dxphy[3],xphy0[3];
   int ifa =- 1;
   
 
@@ -256,30 +256,30 @@ void RobustPhy2Ref(real physnode[20][3], real xphy[3], real xref[3])
   xref[1] = 0.5;
   xref[2] = 0.5;
 
-  Ref2Phy(physnode, xref, 0,ifa, xphy0,0,0,0,0);
+  schnaps_ref2phy(physnode, xref, 0,ifa, xphy0,0,0,0,0);
 
 
   // homotopy path
   // theta=0 -> xphy0
   // theta=1 -> xphy
-  real dtheta=1./_NTHETA;
+  schnaps_real dtheta=1./_NTHETA;
 
   for(int itheta=0;itheta<=_NTHETA;itheta++){
     //printf("itheta=%d\n",itheta);
-    real theta=itheta*dtheta;
+    schnaps_real theta=itheta*dtheta;
     // intermediate point to find
-    real xphy1[3];
+    schnaps_real xphy1[3];
     for(int ii=0;ii<3;ii++){
       xphy1[ii]=theta*xphy[ii]+(1-theta)*xphy0[ii];
     }
   
 
     for(int iter = 0; iter < _ITERNEWTON; ++iter) {
-      Ref2Phy(physnode, xref, 0,ifa, dxphy, dtau, codtau, 0,0);
+      schnaps_ref2phy(physnode, xref, 0,ifa, dxphy, dtau, codtau, 0,0);
       dxphy[0] -= xphy1[0];
       dxphy[1] -= xphy1[1];
       dxphy[2] -= xphy1[2];
-      real det = dot_product(dtau[0], codtau[0]);
+      schnaps_real det = dot_product(dtau[0], codtau[0]);
       //assert(det > 0);
 
       for(int ii = 0; ii < 3; ii ++ ) {

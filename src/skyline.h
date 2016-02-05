@@ -15,22 +15,22 @@ typedef struct Skyline{
   int nmem;
 
   //! \brief array for the upper part of  the matrix
-  real* vkgs;
+  schnaps_real* vkgs;
 
   //! \brief array for the diagonal part of  the matrix (size neq)
-  real* vkgd;
+  schnaps_real* vkgd;
 
   //! \brief array for the lower part of  the matrix
-  real* vkgi;
+  schnaps_real* vkgi;
 
   //! \brief array for the upper part of  the matrix (copy used if factorized)
-  real* copy_vkgs;
+  schnaps_real* copy_vkgs;
 
   //! \brief array for the diagonal part of  the matrix (size neq) (copy used if factorized)
-  real* copy_vkgd;
+  schnaps_real* copy_vkgd;
 
   //! \brief array for the lower part of  the matrix (copy used if factorized)
-  real* copy_vkgi;
+  schnaps_real* copy_vkgi;
 
   //! \brief profile of the matrix (size neq)
   int* prof;
@@ -86,21 +86,21 @@ void AllocateCopySkyline(Skyline* sky);
 //! \param[in] i row index
 //! \param[in] j column index
 //! \param[in] val value
-void SetSkyline(Skyline* sky,int i,int j,real val);
+void SetSkyline(Skyline* sky,int i,int j,schnaps_real val);
 
 //! \brief add elem (i,j) to value val
 //! \param[inout] sky the skyline object
 //! \param[in] i row index
 //! \param[in] j column index
 //! \param[in] val value
-void AddSkyline(Skyline* sky,int i,int j,real val); 
+void AddSkyline(Skyline* sky,int i,int j,schnaps_real val); 
 
 //! \brief get elem (i,j)
 //! \param[inout] sky the skyline object
 //! \param[in] i row index
 //! \param[in] j column index
 //! \return value at pos (i,j)
-real GetSkyline(Skyline* sky,int i,int j); 
+schnaps_real GetSkyline(Skyline* sky,int i,int j); 
 
 
 //! \brief display the matrix
@@ -111,7 +111,7 @@ void DisplaySkyline(Skyline* sky);
 //! \param[in] sky a skyline matrix
 //! \param[in] x a vector
 //! \param[out] prod Ax
-void MatVectSkyline(Skyline * sky, real * x, real * prod);
+void MatVectSkyline(Skyline * sky, schnaps_real * x, schnaps_real * prod);
 
 
 //! \brief compute the inplace LU decomposition
@@ -122,6 +122,6 @@ void FactoLU(Skyline* sky);
 //! \param[in] sky the skyline object
 //! \param[in] rhs the right hand side
 //! \param[in] sol the solution
-void SolveSkyline(Skyline* sky,real* rhs,real* sol);
+void SolveSkyline(Skyline* sky,schnaps_real* rhs,schnaps_real* sol);
 
 #endif
