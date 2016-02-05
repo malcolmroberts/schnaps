@@ -48,7 +48,7 @@ int TestCodelet_ZeroBuffer_SPU(void){
   const int nb_ocl = starpu_opencl_worker_get_count();
   printf("OCL workers                : %d\n", nb_ocl);
   printf("CUDA workers               : %d\n", starpu_cuda_worker_get_count());
-  printf("MIC workers                : %d\n", starpu_mic_worker_get_count());
+  //printf("MIC workers                : %d\n", starpu_mic_worker_get_count());
   
   // Loop over workers to submit tasks
   for (int wid = 0; wid < nb_workers; ++wid) {
