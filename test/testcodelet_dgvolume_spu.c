@@ -77,10 +77,10 @@ bool submit_task(Simulation* simu, schnaps_real* buffer_cmp) {
 int TestCodelet_DGVolume_SPU(void){
   bool test = true;
 
-  /* int deg[]={3, 3, 3}; */
-  /* int raf[]={3, 3, 3}; */
-  int deg[]={1, 2, 2};
-  int raf[]={2, 2, 2};
+  int deg[]={3, 3, 3};
+  int raf[]={3, 3, 3};
+  /* int deg[]={1, 2, 2}; */
+  /* int raf[]={2, 2, 2}; */
 
   MacroMesh mesh;
   //ReadMacroMesh(&mesh,"../test/testdisque.msh");
