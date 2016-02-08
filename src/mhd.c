@@ -331,10 +331,10 @@ void MHDNumFlux1D(schnaps_real *WL, schnaps_real *WR, schnaps_real *vn, schnaps_
   // calcul des vitesses relaxees a gauche et a droite
   alpha = (gam-1)/2.;
 
-  Xl = (fmax(YL[1]-YR[1], 0.0)
-	+ (fmax(piR-piL, 0.0))/(YL[0]*cfL+YR[0]*cfR))/cfL;
-  Xr = (fmax(YL[1]-YR[1], 0.0)
-	+ (fmax(piL-piR, 0.0))/(YL[0]*cfL+YR[0]*cfR))/cfR;
+  Xl = (fmax(YL[1]-YR[1], 0)
+	+ (fmax(piR-piL, 0))/(YL[0]*cfL+YR[0]*cfR))/cfL;
+  Xr = (fmax(YL[1]-YR[1], 0)
+	+ (fmax(piL-piR, 0))/(YL[0]*cfL+YR[0]*cfR))/cfR;
 
   pxl = 1 - Xl/(1+alpha*Xl);
   pxr = 1 - Xr/(1+alpha*Xr);
@@ -357,15 +357,15 @@ void MHDNumFlux1D(schnaps_real *WL, schnaps_real *WR, schnaps_real *vn, schnaps_
 		    )
 	     );
 
-  cL = al0*YL[0] + alpha*YL[0]*(fmax(YL[1]-YR[1],0.0)
-				+ (fmax(piR-piL,0.0))/(YL[0]*cfL+YR[0]*cfR));
-  cR = ar0*YR[0] + alpha*YR[0]*(fmax(YL[1]-YR[1],0.0)
-				+ (fmax(piL-piR,0.0))/(YL[0]*cfL+YR[0]*cfR));
+  cL = al0*YL[0] + alpha*YL[0]*(fmax(YL[1]-YR[1],0)
+				+ (fmax(piR-piL,0))/(YL[0]*cfL+YR[0]*cfR));
+  cR = ar0*YR[0] + alpha*YR[0]*(fmax(YL[1]-YR[1],0)
+				+ (fmax(piL-piR,0))/(YL[0]*cfL+YR[0]*cfR));
 
   // pour le 3-ondes ondes on prend des vitesses simples
   //real cA = cf;
   //real cB = cf;
-  //real b2 = 0.0;
+  //real b2 = 0;
 
   // calcul des etats intermediaires
   us = (cL*YL[1] + cR*YR[1] + piL-piR)/(cL+cR);
@@ -384,7 +384,7 @@ void MHDNumFlux1D(schnaps_real *WL, schnaps_real *WR, schnaps_real *vn, schnaps_
   sigma3 = YR[2] + cR/YR[0];
 
   // decentrement
-  if(sigma1 > 0.0){
+  if(sigma1 > 0){
     ystar[0] = YL[0];
     ystar[1] = YL[1];
     ystar[2] = YL[2];
@@ -397,7 +397,7 @@ void MHDNumFlux1D(schnaps_real *WL, schnaps_real *WR, schnaps_real *vn, schnaps_
     piz = pizL;
   }
   else
-    if(sigma2 > 0.0){
+    if(sigma2 > 0){
       ystar[0] = 1.0/(1.0/YL[0] + (piL-piR+cR*(YR[1]-YL[1]))/(cL*(cL+cR)));
       ystar[5] = ystar[0]*(YL[5]/YL[0] + b/(cL*cL)*piyL - b/(cL*cL)*piys);
       ystar[6] = ystar[0]*(YL[6]/YL[0] + b/(cL*cL)*pizL - b/(cL*cL)*pizs);
@@ -418,7 +418,7 @@ void MHDNumFlux1D(schnaps_real *WL, schnaps_real *WR, schnaps_real *vn, schnaps_
 				   + (piys*piys+pizs*pizs)/(2.0*cL*cL));
     }
     else
-      if(sigma3 > 0.0){
+      if(sigma3 > 0){
 	ystar[0] = 1.0/(1.0/YR[0] + (piR-piL+cL*(YR[1]-YL[1]))/(cR*(cL+cR)));
 	ystar[5] = ystar[0]*(YR[5]/YR[0] + b/(cR*cR)*piyR - b/(cR*cR)*piys);
 	ystar[6] = ystar[0]*(YR[6]/YR[0] + b/(cR*cR)*pizR - b/(cR*cR)*pizs);
@@ -542,11 +542,11 @@ void MHDImposedData(const schnaps_real *x,const  schnaps_real t, schnaps_real *w
   yL[1] = -sin(x[1]);
   yL[2] = gam;
   yL[3] = sin(x[0]);
-  yL[4] = 0.0;
+  yL[4] = 0;
   yL[5] = sin(2*(x[0]));
-  yL[6] = 0.0;
+  yL[6] = 0;
   yL[7] = -sin(x[1]);
-  yL[8] = 0.0;
+  yL[8] = 0;
 
   conservatives(yL, w);
 }
@@ -584,11 +584,11 @@ void MHDImposedDataOrszagTang(const schnaps_real *x,const  schnaps_real t, schna
   yL[1] = -sin(x[1]);
   yL[2] = gam;
   yL[3] = sin(x[0]);
-  yL[4] = 0.0;
+  yL[4] = 0;
   yL[5] = sin(2*(x[0]));
-  yL[6] = 0.0;
+  yL[6] = 0;
   yL[7] = -sin(x[1]);
-  yL[8] = 0.0;
+  yL[8] = 0;
 
   conservatives(yL, w);
   
@@ -624,8 +624,8 @@ void MHDImposedDataReconnexion(const schnaps_real *x,const  schnaps_real t, schn
   yL[0] = 1.0;
   yL[1] = 0.1*sin(3.14159265359*(x[1]));
   yL[2] = 0.1;
-  yL[3] = 0.0;
-  yL[4] = 0.0;
+  yL[3] = 0;
+  yL[4] = 0;
   if((x[0])<(2./3.)){
     yL[5] = 1.0;
   }
@@ -635,9 +635,9 @@ void MHDImposedDataReconnexion(const schnaps_real *x,const  schnaps_real t, schn
   else{
     yL[5] = -1.0;
   }
-  yL[6] = 0.0;
-  yL[7] = 0.0;
-  yL[8] = 0.0;
+  yL[6] = 0;
+  yL[7] = 0;
+  yL[8] = 0;
 
   conservatives(yL, w);
   
@@ -685,11 +685,11 @@ void MHDImposedDataKelvinHelmotz(const schnaps_real *x,const  schnaps_real t, sc
   yL[1] = (1.29/2)*tanh((x[1])/0.05);
   yL[2] = 1.0;
   yL[3] = 0.01*sin(2*3.14159265359*(x[0]))*exp(-((x[1])/0.2)*((x[1])/0.2));
-  yL[4] = 0.0;
+  yL[4] = 0;
   yL[7] = 0.39; // pour le Bx on prend le 1.29 et on divise pas le mac
-  yL[5] = 0.0;
-  yL[6] = 0.0;
-  yL[8] = 0.0;
+  yL[5] = 0;
+  yL[6] = 0;
+  yL[8] = 0;
   
   conservatives(yL, w);
   
@@ -741,11 +741,11 @@ void MHDImposedDataDoubleTearing(const schnaps_real *x,const  schnaps_real t, sc
   else
     yL[7] = 0.003*sin(3.14159265359*(x[1])/2)*exp(-( (x[0])*(x[0])-0.5 )/0.1 );   // Bx essayer de forcer les bord a 0. si on est < -1.5 x>1.5 je met 0
 
-  yL[1] = 0.0;                                                 // Ux
-  yL[3] = 0.0;                                                 // Uy
-  yL[4] = 0.0;                                                 // Uz
-  yL[6] = 0.0;                                                 // Bz
-  yL[8] = 0.0;                                                 // Psi
+  yL[1] = 0;                                                 // Ux
+  yL[3] = 0;                                                 // Uy
+  yL[4] = 0;                                                 // Uz
+  yL[6] = 0;                                                 // Bz
+  yL[8] = 0;                                                 // Psi
 
   
   conservatives(yL, w);
