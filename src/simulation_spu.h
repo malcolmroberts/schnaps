@@ -11,6 +11,36 @@
 void DisplayHandle_SPU(starpu_data_handle_t handle,
                        const char* name);
 
+
+//! \brief Init and get ZeroBuffer codelet.
+struct starpu_codelet* ZeroBuffer_codelet();
+
+//! \brief Create a ZeroBuffer task and submit it.
+//! \param[in,out] handle handle of the buffer to nullifiy
+void ZeroBuffer_SPU(starpu_data_handle_t handle);
+
+
+//! \brief Init and get AddBuffer codelet.
+struct starpu_codelet* AddBuffer_codelet();
+
+//! \brief Add a scaled buffer to another buffer.
+//! handle_out = handle_out + alpha * handle_in
+//! \param[in] alpha the scaling factor
+//! \param[in] handle_in handle to the scaled buffer
+//! \param[in,out] handle_out handle to the result buffer
+void AddBuffer_SPU(schnaps_real alpha,
+                   starpu_data_handle_t handle_in,
+                   starpu_data_handle_t handle_out);
+
+
+//! \brief Init and get DGVolume codelet.
+struct starpu_codelet* DGVolume_codelet();
+
+//! \brief Apply the "cross" derivative terms inside a macrocell
+//! \param[in,out] fd field
+void DGVolume_SPU(field* fd);
+
+
 //! \brief apply the Discontinuous Galerkin approximation for computing
 //! the time derivative of the fields. Works with several subcells.
 //! starpu version
@@ -27,24 +57,10 @@ void DtFields_SPU(Simulation *simu,
 //! \param[in] tmax tmax
 void RK2_SPU(Simulation *simu, schnaps_real tmax);
 
-//! \brief add a scaled vector to another vector
-//! wout = wout + alpha * win
-//! starpu version
-//! \param[in] alpha the scaling factor
-//! \param[in] win a handle to the scaled vector
-//! \param[out] wout a handle to the result
-void AddBuffer_SPU(schnaps_real alpha, starpu_data_handle_t win,
-		   starpu_data_handle_t wout);
-
-  //! \brief apply the flux terms inside a macrocell
+//! \brief apply the flux terms inside a macrocell
 //! StarPU version
 //! \param[inout] fd a field
 void DGSubCellInterface_SPU(field* fd);
-
-//! \brief apply the "cross" derivative terms inside a macrocell
-//! StarPU version
-//! \param[inout] fd a field
-void DGVolume_SPU(field* fd);
 
 //! \brief apply the source terms inside a macrocell
 //! StarPU version
@@ -84,8 +100,6 @@ void DGMacroCellBoundaryFlux_SPU(Interface* inter);
 void DtFields_bis(Simulation *simu,
 		  schnaps_real* w,
 		  schnaps_real* dtw);
-
-void ZeroBuffer_SPU(starpu_data_handle_t w);
 
 
 #endif
