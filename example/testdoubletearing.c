@@ -17,6 +17,9 @@
 //  clock_gettime(CLOCK_MONOTONIC, &ts);
 //  return (real)ts.tv_sec + 1e-9 * (real)ts.tv_nsec;
 //}
+int TestDoubleTearing(int argc, char *argv[]);
+
+
 
 int main(int argc, char *argv[]) {
   int resu = TestDoubleTearing(argc,argv);

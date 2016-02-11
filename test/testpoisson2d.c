@@ -7,7 +7,7 @@
 #include "solverpoisson.h"
 #include "linear_solver.h"
 
-
+int TestPoisson2d(void) ;
 void TestPoisson_ImposedData(const schnaps_real x[3],const schnaps_real t,schnaps_real w[]);
 void TestPoisson_InitData(schnaps_real x[3],schnaps_real w[]);
 void TestPoisson_BoundaryFlux(schnaps_real x[3],schnaps_real t,schnaps_real wL[],schnaps_real* vnorm,

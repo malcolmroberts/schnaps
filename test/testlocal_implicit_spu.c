@@ -18,7 +18,7 @@ void TestSteady_Transport_Source(const schnaps_real *xy, const schnaps_real t, c
 void Transport_Upwind_BoundaryFlux(schnaps_real *x, schnaps_real t, schnaps_real *wL, schnaps_real *vnorm,
                               schnaps_real *flux);
 
-
+int Test_Local_Implicit_SPU(void);
 
 void TestSteady_Wave_ImposedData(const schnaps_real *x, const schnaps_real t, schnaps_real *w);
 void TestSteady_Wave_InitData(schnaps_real *x, schnaps_real *w);

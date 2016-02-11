@@ -1,8 +1,11 @@
-#include "test.h"
+//#include "test.h"
 #include "schnaps.h"
 #include<stdio.h>
 #include <assert.h>
 #include <math.h>
+
+int Test2DMeshDetection(void);
+
 
 int main(void) {
   int resu = Test2DMeshDetection();

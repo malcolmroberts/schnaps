@@ -7,6 +7,8 @@
 
 #define _NN 5
 
+int TestLinearSolver(void);
+
 int main(void) {
   
   // unit tests

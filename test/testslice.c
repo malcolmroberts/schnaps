@@ -5,23 +5,22 @@
 #include "quantities_vp.h"
 #include "gyro.h"
 
-
-int TestGyro(void);
+int TestSlice(void);
 
 int main(void) {
   
   // unit tests
     
-  int resu=TestGyro();
+  int resu=TestSlice();
 	 
-  if (resu) printf("gyro test OK !\n");
-  else printf("gyro test failed !\n");
+  if (resu) printf("slice test OK !\n");
+  else printf("slice test failed !\n");
 
   return !resu;
 } 
 
 
-int TestGyro(void) { 
+int TestSlice(void) { 
 
   bool test=true;
 
@@ -35,8 +34,8 @@ int TestGyro(void) {
   int vec=1;
   
     
-  int deg[]={2, 2, 2};
-  int raf[]={2, 2, 2};
+  int deg[]={1, 1, 1};
+  int raf[]={1, 1, 1};
 
   CheckMacroMesh(&mesh, deg, raf);
 
@@ -69,34 +68,16 @@ int TestGyro(void) {
 
 
   InitSimulation(&simu, &mesh, deg, raf, &model);
-
-  //simu.pre_dtfields = UpdateGyroPoisson;
-   simu.vmax = kd->vmax; // maximal wave speed 
-  //f.macromesh.is1d=true;
-  //f.is1d=true;
-
-  // apply the DG scheme
-  // time integration by RK2 scheme 
-  // up to final time = 1.
-  simu.cfl=0.2;
-  schnaps_real dt = 0;
-  schnaps_real tmax = 0;
-  RK4(&simu,tmax);
-  compute_charge_density(&simu);
-  // save the results and the error
-  //PlotFields(1,(1==0),&simu,"sol","dgvisu.msh");
-  PlotFields(kd->index_rho,(1==0),&simu,"sol","dgvisu.msh");
-  //PlotFields(1,(1==1),&simu,"error","dgerror.msh");
-
-  double dd=L2error(&simu);
-  //double dd_l2_vel =GyroL2VelError(&f)
-  //double dd_Kinetic=L2_Kinetic_error(&f);
   
-  //printf("erreur kinetic L2=%lf\n",dd_Kinetic);
-  printf("erreur L2=%lf\n",dd);
-  printf("tnow is  %lf\n",simu.tnow);
-  Velocity_distribution_plot(simu.w);
-  test= test && (dd < 0.005);
+  ContinuousSolver ps;
+  
+  int nb_var=1;
+  int * listvar= malloc(nb_var * sizeof(int));
+  listvar[0]=kd->index_phi;
+
+  InitContinuousSolver(&ps,&simu,1,nb_var,listvar);
+
+  test= test && (ps.slice_size == 8);
 
 
   return test; 

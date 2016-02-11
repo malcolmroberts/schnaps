@@ -13,7 +13,9 @@ const  schnaps_real c[6]={1,1,1,1,1,1};
 
 const schnaps_real TestSteady_Transport_v2[3] = {0.7071067811865476, 0.7071067811865476, 0};
 
-  
+int Test_Local_Implicit(void);
+
+
 void TestSteady_Transport_NumFlux(schnaps_real *wL, schnaps_real *wR, schnaps_real *vnorm, schnaps_real *flux);
 void TestSteady_Transport_ImposedData(const schnaps_real *x, const schnaps_real t, schnaps_real *w);
 void TestSteady_Transport_InitData(schnaps_real *x, schnaps_real *w);

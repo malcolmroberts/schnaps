@@ -4,6 +4,8 @@
 #include <assert.h>
 #include "test.h"
 
+int TestUmfPack(void);
+
 int main(void) {
   // unit tests
   int resu=TestUmfPack();

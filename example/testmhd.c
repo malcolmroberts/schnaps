@@ -18,6 +18,8 @@
 //  return (real)ts.tv_sec + 1e-9 * (real)ts.tv_nsec;
 //}
 
+int TestMHD(int argc, char *argv[]);
+
 int main(int argc, char *argv[]) {
   int resu = TestMHD(argc,argv);
   if (resu)

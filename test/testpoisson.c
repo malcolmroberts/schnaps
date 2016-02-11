@@ -7,6 +7,7 @@
 #include "solverpoisson.h"
 #include "linear_solver.h"
 
+int TestPoisson(void) ;
 
 void TestPoisson_ImposedData(const schnaps_real x[3],const schnaps_real t,schnaps_real w[]);
 void TestPoisson_InitData(schnaps_real x[3],schnaps_real w[]);

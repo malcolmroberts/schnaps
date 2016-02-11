@@ -21,6 +21,13 @@ int CompareFatNode(const void* a,const void* b){
 
 }
 
+void slice_projection(schnaps_real* xin,schnaps_real* xout){
+  // flat tokamak
+  xout[0] = xin[2];
+  xout[1] = xin[0];
+  xout[2] = xin[1];
+}
+
 int BuildFatNodeList(Simulation *simu,FatNode* fn_list){
 
 
@@ -30,12 +37,23 @@ int BuildFatNodeList(Simulation *simu,FatNode* fn_list){
   schnaps_real* xmin=simu->macromesh.xmin;
   schnaps_real* xmax=simu->macromesh.xmax;
   int nb_dg_nodes=0;
+
+  schnaps_real smin[3], smax[3];
+
+  smin[0] = 1e10;
+  smin[1] = 1e10;
+  smin[2] = 1e10;
+  smax[0] = -1e10;
+  smax[1] = -1e10;
+  smax[2] = -1e10;
+  
   for(int ie = 0; ie < simu->macromesh.nbelems; ie++) {
     
     field *f = &simu->fd[ie];
 
     nb_dg_nodes =  NPG(f->deg, f->raf) * simu->macromesh.nbelems;
 
+    
     
     for(int ipg = 0; ipg < NPG(f->deg, f->raf); ipg++) {
       schnaps_real xpg[3];
@@ -47,14 +65,13 @@ int BuildFatNodeList(Simulation *simu,FatNode* fn_list){
               xpg, NULL,
 	      NULL, NULL, NULL); // codtau, dphi, vnds
 
-      fn_list[ino].x[0]=xpg[0];
-      fn_list[ino].x[1]=xpg[1];
-      fn_list[ino].x[2]=xpg[2];
 
-      // convert points to "pixels" and round to nearest integer
-      fn_list[ino].x_int[0]=(int) ((xpg[0]-xmin[0])/(xmax[0]-xmin[0]) * big_int)  ;
-      fn_list[ino].x_int[1]=(int) ((xpg[1]-xmin[1])/(xmax[1]-xmin[1]) * big_int)  ;
-      fn_list[ino].x_int[2]=(int) ((xpg[2]-xmin[2])/(xmax[2]-xmin[2]) * big_int)  ;
+      slice_projection(xpg, fn_list[ino].x);
+
+      for(int dim = 0; dim < 3; dim++){
+	smin[dim] = smin[dim] >  fn_list[ino].x[dim] ? fn_list[ino].x[dim] : smin[dim];
+	smax[dim] = smax[dim] <  fn_list[ino].x[dim] ? fn_list[ino].x[dim] : smax[dim];
+      }
       
       fn_list[ino].dg_index = ino;
 
@@ -63,10 +80,23 @@ int BuildFatNodeList(Simulation *simu,FatNode* fn_list){
   }
 
   assert(ino == nb_dg_nodes);
+
+  for(int ino = 0; ino < nb_dg_nodes; ino++){
+    // convert points to "pixels" and round to nearest integer
+    schnaps_real xloc[3]={fn_list[ino].x[0],
+			  fn_list[ino].x[1],
+			  fn_list[ino].x[2]};
+    
+    fn_list[ino].x_int[0]=(int) ((xloc[0]-smin[0])/(smax[0]-smin[0]) * big_int)  ;
+    fn_list[ino].x_int[1]=(int) ((xloc[1]-smin[1])/(smax[1]-smin[1]) * big_int)  ;
+    fn_list[ino].x_int[2]=(int) ((xloc[2]-smin[2])/(smax[2]-smin[2]) * big_int)  ;
+  }
+
   qsort(fn_list, nb_dg_nodes, sizeof(FatNode),CompareFatNode);
 
   fn_list[0].fe_index=0;
   int fe_index=0;
+  
   for(int ino=1;ino<nb_dg_nodes;ino++){
     if (CompareFatNode(fn_list+ino,fn_list+ino-1)!=0) fe_index++;
     fn_list[ino].fe_index=fe_index;
@@ -103,6 +133,7 @@ void InitContinuousSolver(void * cs, Simulation* simu,int type_bc,int nb_phy_var
   assert(ps->fn_list);
   // paste the nodes of the DG mesh
   ps->nb_fe_nodes=BuildFatNodeList(simu,ps->fn_list);
+  
   ps->nb_fe_dof= ps->nb_fe_nodes * ps->nb_phy_vars;
   ps->dg_to_fe_index = malloc(ps->nb_dg_nodes * sizeof(int));
   assert(ps->dg_to_fe_index);
@@ -110,6 +141,36 @@ void InitContinuousSolver(void * cs, Simulation* simu,int type_bc,int nb_phy_var
   for(int ino=0;ino<ps->nb_dg_nodes;ino++){
     ps->dg_to_fe_index[ps->fn_list[ino].dg_index]=ps->fn_list[ino].fe_index;
   }
+
+  // count the number of nodes in each slice
+  // first build a list of integer points of
+  // finite element nodes
+  int *xfe = malloc(3 * ps->nb_fe_nodes * sizeof(int));
+  
+  for(int ino = 0; ino < ps->nb_dg_nodes; ino++){
+    int ife = ps->dg_to_fe_index[ps->fn_list[ino].dg_index];
+    xfe[3 * ife + 0] = ps->fn_list[ino].x_int[0];
+    xfe[3 * ife + 1] = ps->fn_list[ino].x_int[1];
+    xfe[3 * ife + 2] = ps->fn_list[ino].x_int[2];
+  }
+
+  ps->slice_size = 0;
+  for(int ino = 0; ino < ps->nb_fe_nodes; ino++){
+    int i1 = xfe[3 * ino + 0];
+     if (i1 == 0 || i1 == -1 || i1 == 1) {
+      ps->slice_size++;
+    }
+      
+  }
+
+  printf("slice_size=%d\n", ps->slice_size);
+
+  ps->nb_slices = ps->nb_fe_nodes / ps->slice_size;
+
+  assert(ps->nb_fe_nodes % ps->slice_size == 0);
+
+  free(xfe);
+
 
   // now construct the list of boundary nodes
   ps->is_boundary_node = malloc(ps->nb_fe_nodes * sizeof(int));
