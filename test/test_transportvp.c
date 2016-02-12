@@ -52,8 +52,14 @@ int Test_TransportVP(void) {
   BuildConnectivity(&mesh);
 
   Model model;
+  schnaps_real degV=2;
+  schnaps_real nbEV=24;
+  KineticData * kd=&schnaps_kinetic_data;
+
+  InitKineticData(kd,nbEV,degV);
   
-  model.m=_INDEX_MAX; // num of conservative variables f(vi) for each vi, phi, E, rho, u, p, e (ou T)
+  
+  model.m=kd->index_max; // num of conservative variables f(vi) for each vi, phi, E, rho, u, p, e (ou T)
   model.NumFlux=VlasovP_Lagrangian_NumFlux;
   model.InitData = Test_TransportVP_InitData;
   model.ImposedData = Test_TransportVP_ImposedData;
@@ -69,23 +75,23 @@ int Test_TransportVP(void) {
   EmptySimulation(&simu);
 
   InitSimulation(&simu, &mesh, deg, raf, &model);
-  simu.vmax = _VMAX; // maximal wave speed
+  simu.vmax = kd->vmax; // maximal wave speed
   simu.cfl=0.2;
-  simu.nb_diags = 3;
+  simu.nb_diags = 4;
   simu.pre_dtfields = UpdateVlasovPoisson;
   simu.post_dtfields=NULL;
   simu.update_after_rk = PlotVlasovPoisson;
 
 
   schnaps_real tmax = 0.03;
-  RK4(&simu, tmax);
+  RK2(&simu, tmax);
 
    // save the results and the error
-  int iel = 2 * _NB_ELEM_V / 3;
-  int iloc = _DEG_V;
-  printf("Trace vi=%f\n", -_VMAX + iel * _DV + _DV * glop(_DEG_V, iloc));
-  PlotFields(iloc + iel * _DEG_V, false, &simu, "sol","dgvisu_kin.msh");
-  PlotFields(iloc + iel * _DEG_V, true, &simu, "error","dgerror_kin.msh");
+  int iel = 2 * kd->nb_elem_v / 3;
+  int iloc = kd->deg_v;
+  printf("Trace vi=%f\n", -kd->vmax + iel * kd->dv + kd->dv * glop(kd->deg_v, iloc));
+  PlotFields(iloc + iel * kd->deg_v, false, &simu, "sol","dgvisu_kin.msh");
+  PlotFields(iloc + iel * kd->deg_v, true, &simu, "error","dgerror_kin.msh");
   Plot_Energies(&simu, simu.dt);
 
   schnaps_real dd_Kinetic = L2_Kinetic_error(&simu);
@@ -99,22 +105,22 @@ int Test_TransportVP(void) {
 }
 
 void Test_TransportVP_ImposedData(const schnaps_real *x, const schnaps_real t, schnaps_real *w) {
+  KineticData * kd=&schnaps_kinetic_data;
+  for(int i = 0; i <kd->index_max_kin + 1; i++) {
+    int j = i % kd->deg_v; // local connectivity put in function
+    int nel = i / kd->deg_v; // element num (TODO : function)
 
-  for(int i = 0; i <_INDEX_MAX_KIN + 1; i++) {
-    int j = i % _DEG_V; // local connectivity put in function
-    int nel = i / _DEG_V; // element num (TODO : function)
-
-    schnaps_real vi = (-_VMAX + nel * _DV + _DV * glop(_DEG_V, j));
+    schnaps_real vi = (-kd->vmax + nel * kd->dv + kd->dv * glop(kd->deg_v, j));
  
     w[i] = TransportVP_ImposedKinetic_Data(x, t, vi);
   }
   // exact value of the potential and electric field
-  w[_INDEX_PHI] = -x[0];
-  w[_INDEX_EX] = 1;
-  w[_INDEX_RHO] = 0.; //rho init
-  w[_INDEX_VELOCITY] = 0; // u init
-  w[_INDEX_PRESSURE] = 0; // p init
-  w[_INDEX_TEMP] = 0; // e ou T init
+  w[kd->index_phi] = -x[0];
+  w[kd->index_ex] = 1.0;
+  w[kd->index_rho] = 0.; //rho init
+  w[kd->index_u] = 0; // u init
+  w[kd->index_P] = 0; // p init
+  w[kd->index_T] = 0; // e ou T init
 }
 
 void Test_TransportVP_InitData(schnaps_real *x, schnaps_real *w) {
@@ -134,24 +140,23 @@ schnaps_real TransportVP_ImposedKinetic_Data(const schnaps_real *x, const schnap
 
 void Test_TransportVP_BoundaryFlux(schnaps_real *x, schnaps_real t, schnaps_real *wL, schnaps_real *vnorm,
 				       schnaps_real *flux) {
-  schnaps_real wR[_INDEX_MAX];
+  KineticData * kd=&schnaps_kinetic_data;
+  schnaps_real wR[kd->index_max];
   Test_TransportVP_ImposedData(x , t, wR);
   VlasovP_Lagrangian_NumFlux(wL, wR, vnorm, flux);
 }
 
 void UpdateVlasovPoisson(void *si, schnaps_real *w) {
   Simulation *simu = si;
-  
+  KineticData * kd=&schnaps_kinetic_data;
   int type_bc = 1;
-  schnaps_real bc_l = 1;
-  schnaps_real bc_r = 0;
     
   // Computation_charge_density(simu,simu->w);
   ContinuousSolver ps;
   
   int nb_var=1;
   int * listvar= malloc(nb_var * sizeof(int));
-  listvar[0]=_INDEX_PHI;
+  listvar[0]=kd->index_phi;
   
   InitContinuousSolver(&ps,simu,1,nb_var,listvar);
 
@@ -173,10 +178,11 @@ void UpdateVlasovPoisson(void *si, schnaps_real *w) {
 }
 
 void PlotVlasovPoisson(void *si, schnaps_real *w) {
-  schnaps_real k_energy = 0, e_energy = 0, t_energy = 0;
+  schnaps_real k_energy = 0, e_energy = 0, t_energy = 0, charge =0;
   
   Simulation *simu = si;
   
   Energies(simu, w, k_energy, e_energy, t_energy,1);
+  Charge_total(simu, w, charge,4);
   si = simu; 
 }

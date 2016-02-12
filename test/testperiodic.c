@@ -45,41 +45,36 @@ int TestPeriodic(void) {
 
 
   Model model;
+  schnaps_real degV=2;
+  schnaps_real nbEV=24;
+  KineticData * kd=&schnaps_kinetic_data;
 
-  model.m = 1; // only one conservative variable
-  model.NumFlux = TransNumFlux2d;
-  model.BoundaryFlux = TransBoundaryFlux2d;
-  model.InitData = TransInitData2d;
-  model.ImposedData = TransImposedData2d;
-
-  model.m = _INDEX_MAX; // num of conservative variables
-  model.NumFlux = VlasovP_Lagrangian_NumFlux;
-  model.Source = NULL;
+  InitKineticData(kd,nbEV,degV);
+ 
   
+  model.m=kd->index_max; // num of conservative variables f(vi) for each vi, phi, E, rho, u, p, e (ou T)
+  model.NumFlux=VlasovP_Lagrangian_NumFlux;
+  model.Source = NULL;
   model.BoundaryFlux = TestPeriodic_BoundaryFlux;
   model.InitData = TestPeriodic_InitData;
   model.ImposedData = TestPeriodic_ImposedData;
-
-
 
   Simulation simu;
 
   InitSimulation(&simu, &mesh, deg, raf, &model);
   printf("cfl param =%f\n",simu.hmin);
 
-  simu.vmax = _VMAX; // maximal wave speed 
+  simu.vmax = kd->vmax; // maximal wave speed 
   simu.cfl = 0.05;
-  schnaps_real tmax = 0.5;
+  schnaps_real tmax = 0.4;
  
   RK2(&simu,tmax);
- 
+
   // save the results and the error
   PlotFields(0, false, &simu, "sol","dgvisu.msh");
   PlotFields(0, true, &simu, "error","dgerror.msh");
 
   schnaps_real dd = L2error(&simu);
-  //real dd_Kinetic = L2_Kinetic_error(&simu);
-  //printf("erreur kinetic L2: %lf\n", dd_Kinetic);
 
   printf("erreur L2: %lf\n", dd);
   test = test && (dd<2e-1);
@@ -91,22 +86,23 @@ int TestPeriodic(void) {
 
 void TestPeriodic_ImposedData(const schnaps_real x[3], const schnaps_real t,schnaps_real w[])
 {
+  KineticData * kd=&schnaps_kinetic_data;
   schnaps_real pi = 4 * atan(1.0);
-  for(int i = 0; i < _INDEX_MAX_KIN + 1 ; ++i) {
-    int j = i % _DEG_V; // local connectivity put in function
-    int nel = i / _DEG_V; // element num (TODO : function)
+  for(int i = 0; i < kd->index_max_kin + 1 ; ++i) {
+    int j = i % kd->deg_v; // local connectivity put in function
+    int nel = i / kd->deg_v; // element num (TODO : function)
 
-    schnaps_real vi = (-_VMAX + nel * _DV + _DV * glop(_DEG_V, j));
+    schnaps_real vi = (-kd->vmax + nel * kd->dv + kd->dv * glop(kd->deg_v, j));
 
     w[i] = cos(2 * pi * ( x[0] - vi * t) );
   }
   // exact value of the potential and electric field
-  w[_INDEX_PHI] = 0;
-  w[_INDEX_EX] = 0;
-  w[_INDEX_RHO] = 2.0; //rho init
-  w[_INDEX_VELOCITY] = 0; // u init
-  w[_INDEX_PRESSURE] = 0; // p init
-  w[_INDEX_TEMP] = 0; // e ou T init
+  w[kd->index_phi] = 0;
+  w[kd->index_ex] = 0;
+  w[kd->index_rho] = 2.0; //rho init
+  w[kd->index_u] = 0; // u init
+  w[kd->index_P] = 0; // p init
+  w[kd->index_T] = 0; // e ou T init
 }
 
 void TestPeriodic_InitData(schnaps_real x[3], schnaps_real w[])
@@ -118,7 +114,8 @@ void TestPeriodic_InitData(schnaps_real x[3], schnaps_real w[])
 void TestPeriodic_BoundaryFlux(schnaps_real x[3], schnaps_real t, schnaps_real wL[], schnaps_real *vnorm,
 			       schnaps_real* flux)
 {
-  schnaps_real wR[_MV + 6];
+  KineticData * kd=&schnaps_kinetic_data;
+  schnaps_real wR[kd->index_max];
   TestPeriodic_ImposedData(x, t, wR);
   VlasovP_Lagrangian_NumFlux(wL, wR, vnorm, flux);
   assert(false);

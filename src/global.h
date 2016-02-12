@@ -48,6 +48,9 @@ typedef struct KineticData{
   int index_ex;
   int index_ey;
   int index_ez;
+  int index_u;
+  int index_P;
+  int index_T;
   int index_max;
   schnaps_real vmax;
   schnaps_real dv;
