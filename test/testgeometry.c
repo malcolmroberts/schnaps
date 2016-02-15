@@ -5,6 +5,8 @@
 #include "test.h"
 #include "schnaps.h"
 
+int TestGeometry(void);
+
 int main(void) {
   // unit tests
   int resu=TestGeometry();

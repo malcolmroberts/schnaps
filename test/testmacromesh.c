@@ -5,6 +5,8 @@
 #include "test.h"
 #include "schnaps.h"
 
+int TestMacroMesh(void);
+
 int main(void) {
   // Unit tests
   int resu=TestMacroMesh();

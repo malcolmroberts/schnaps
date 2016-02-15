@@ -105,6 +105,10 @@ void Equilibrium_HLL_BoundaryFlux(schnaps_real *x, schnaps_real t, schnaps_real 
 //! \param[out] flux : the flux
 void Equilibrium_Roe_BoundaryFlux(schnaps_real *x, schnaps_real t, schnaps_real *wL, schnaps_real *vnorm,schnaps_real *flux);
 
+int Test_SH_equilibrium(void);
+int Test_SH_periodic(void);
+int Test_SH_SteadyState_UImposed(void);
+int Test_SH_SteadyState_PImposed(void);
 
 int main(void) {
   

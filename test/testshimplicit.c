@@ -8,6 +8,7 @@
 #include "waterwave2d.h"
 #include "implicit.h"
 
+int Test_SH_equilibrium_Implicit(void);
 void ShallowWater_Rusanov_equilibrium_BoundaryFlux(schnaps_real *x, schnaps_real t, schnaps_real *wL, schnaps_real *vnorm,
 						   schnaps_real *flux);
 void ShallowWater_Rusanov_periodic_BoundaryFlux(schnaps_real *x, schnaps_real t, schnaps_real *wL, schnaps_real *vnorm,

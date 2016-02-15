@@ -9,7 +9,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <assert.h>
-
+int TestModel(void);
 int main(void) {
   // Unit tests
   int resu = TestModel();

@@ -7,6 +7,7 @@
 #include "solverpoisson.h"
 #include "linear_solver.h"
 
+int TestPoisson(void) ;
 
 void TestPoisson_ImposedData(const schnaps_real x[3],const schnaps_real t,schnaps_real w[]);
 void TestPoisson_InitData(schnaps_real x[3],schnaps_real w[]);
@@ -54,10 +55,14 @@ int TestPoisson(void)
   Model model;
 
 
-  // num of conservative variables f(vi) for each vi, phi, E, rho, u,
-  // p, e (ou T)
-  model.m=_INDEX_MAX; 
-  model.NumFlux = VlasovP_Lagrangian_NumFlux;
+  schnaps_real degV=2;
+  schnaps_real nbEV=12;
+  KineticData * kd=&schnaps_kinetic_data;
+
+  InitKineticData(kd,nbEV,degV);
+ 
+  model.m=kd->index_max; // num of conservative variables f(vi) for each vi, phi, E, rho, u, p, e (ou T)
+  model.NumFlux=VlasovP_Lagrangian_NumFlux;
   model.Source = VlasovP_Lagrangian_Source;
   
   model.BoundaryFlux = TestPoisson_BoundaryFlux;
@@ -81,7 +86,7 @@ int TestPoisson(void)
   
   int nb_var=1;
   int * listvar= malloc(nb_var * sizeof(int));
-  listvar[0]=_INDEX_PHI;
+  listvar[0]=kd->index_phi;
   
   InitContinuousSolver(&ps,&simu,1,nb_var,listvar);
 
@@ -112,8 +117,8 @@ int TestPoisson(void)
   printf("Plot...\n");
 
 
-  PlotFields(_INDEX_PHI, false, &simu, NULL, "dgvisu.msh");
-  PlotFields(_INDEX_EX, false, &simu, NULL, "dgex.msh");
+  PlotFields(kd->index_phi, false, &simu, NULL, "dgvisu.msh");
+  PlotFields(kd->index_ex, false, &simu, NULL, "dgex.msh");
 
 #ifdef PARALUTION 
   paralution_end();
@@ -130,22 +135,24 @@ int TestPoisson(void)
 
 
 void TestPoisson_ImposedData(const schnaps_real x[3], const schnaps_real t,schnaps_real w[]){
-  for(int i = 0; i < _INDEX_MAX_KIN + 1; i++){
-    int j = i%_DEG_V; // local connectivity put in function
-    int nel = i / _DEG_V; // element num (TODO : function)
 
-    schnaps_real vi = (-_VMAX + nel * _DV + _DV * glop(_DEG_V, j));
+  KineticData * kd=&schnaps_kinetic_data;
+  schnaps_real pi = 4 * atan(1.0);
+  for(int i = 0; i < kd->index_max_kin + 1 ; ++i) {
+    int j = i % kd->deg_v; // local connectivity put in function
+    int nel = i / kd->deg_v; // element num (TODO : function)
 
-    w[i] = 1. / _VMAX;
+    schnaps_real vi = (-kd->vmax + nel * kd->dv + kd->dv * glop(kd->deg_v, j));
+
+    w[i] = 1./kd->vmax;
   }
-  // exact value of the potential
-  // and electric field
-  w[_INDEX_PHI] = x[0] * (1 - x[0]);
-  w[_INDEX_EX] = - 1. + 2. * x[0];
-  w[_INDEX_RHO] = 2.; //rho init
-  w[_INDEX_VELOCITY] = 0; // u init
-  w[_INDEX_PRESSURE] = 0; // p init
-  w[_INDEX_TEMP] = 0; // e ou T init
+  // exact value of the potential and electric field
+  w[kd->index_phi] = x[0] * (1 - x[0]);
+  w[kd->index_ex] = - 1. + 2. * x[0];
+  w[kd->index_rho] = 2.0; //rho init
+  w[kd->index_u] = 0; // u init
+  w[kd->index_P] = 0; // p init
+  w[kd->index_T] = 0; // e ou T init
 
 };
 
@@ -159,7 +166,8 @@ void TestPoisson_InitData(schnaps_real x[3],schnaps_real w[]){
 
 void TestPoisson_BoundaryFlux(schnaps_real x[3],schnaps_real t,schnaps_real wL[],schnaps_real* vnorm,
 				       schnaps_real* flux){
-  schnaps_real wR[_MV+6];
+   KineticData * kd=&schnaps_kinetic_data;
+  schnaps_real wR[kd->index_max];
   TestPoisson_ImposedData(x,t,wR);
   VlasovP_Lagrangian_NumFlux(wL,wR,vnorm,flux);
 };

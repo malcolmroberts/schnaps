@@ -15,6 +15,8 @@ void Wave_Steady_BoundaryFlux(schnaps_real *x, schnaps_real t, schnaps_real *wL,
 void Wave_Periodic_BoundaryFlux(schnaps_real *x, schnaps_real t, schnaps_real *wL, schnaps_real *vnorm,
 				schnaps_real *flux);
 
+int Test_Wave_Periodic(void);
+int Test_Wave_Steady(void);
 
 int main(void) {
   

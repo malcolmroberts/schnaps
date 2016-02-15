@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
-#include "test.h"
+//#include "test.h"
 #include "collision.h"
 #include "waterwave2d.h"
 #include "implicit.h"
@@ -11,6 +11,10 @@ const  schnaps_real a[6]={1,1,1,1,1,1};
 const  schnaps_real b[6]={1,1,1,1,1,1};
 const  schnaps_real c[6]={1,1,1,1,1,1};
   
+
+int Test_Graph_Implicit_SPU(void);
+
+
 void TestSteady_Transport_NumFlux(schnaps_real *wL, schnaps_real *wR, schnaps_real *vnorm, schnaps_real *flux);
 void TestSteady_Transport_ImposedData(const schnaps_real *x, const schnaps_real t, schnaps_real *w);
 void TestSteady_Transport_InitData(schnaps_real *x, schnaps_real *w);
@@ -28,7 +32,6 @@ void Wave_Upwind_BoundaryFlux(schnaps_real *x, schnaps_real t, schnaps_real *wL,
 // sqrt(1/3) = 0.5773502691896257
 //real TestSteady_Transport_v2[3] = {1, 0, 0};
 schnaps_real TestSteady_Transport_v2[3] = {0.7071067811865476, 0.7071067811865476, 0};
-
 
 
 

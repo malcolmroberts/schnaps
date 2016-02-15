@@ -189,7 +189,7 @@ void Advanced_GMRESSolver(LinearSolver* lsol, Simulation* simu){
      Init_Parameters_PhyBasedPC(&pb_pc);
      icntl[4]  = 2;
   }
-  else if (((lsol->pc_type == JACOBI) ||(lsol->pc_type == EXACT)) ||lsol->pc_type == LO_POISSON){
+  else if ((lsol->pc_type == JACOBI) ||(lsol->pc_type == EXACT)){
     icntl[4] = 2;
   }
      
@@ -289,9 +289,6 @@ void Advanced_GMRESSolver(LinearSolver* lsol, Simulation* simu){
     }
     else if (lsol->pc_type == JACOBI){
       Jacobi_PC(lsol,loc_z,loc_x);
-    }
-    else if (lsol->pc_type == LO_POISSON){
-      LowerOrderPC_Poisson(lsol,simu,loc_z,loc_x);
     }
     else {
       Vector_copy(loc_x,loc_z,N);
