@@ -37,8 +37,8 @@ void AddBuffer_SPU(schnaps_real alpha,
 struct starpu_codelet* DGVolume_codelet();
 
 //! \brief Apply the "cross" derivative terms inside a macrocell
-//! \param[in,out] fd field
-void DGVolume_SPU(field* fd);
+//! \param[in,out] f field
+void DGVolume_SPU(field* f);
 
 
 //! \brief apply the Discontinuous Galerkin approximation for computing

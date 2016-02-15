@@ -19,7 +19,7 @@ void DisplayHandle_SPU(starpu_data_handle_t handle,
                        const char* name) {
   starpu_task_wait_for_all();
   // Force update of memory on main node
-  starpu_data_prefetch_on_node(handle, 0, 0);
+  starpu_data_fetch_on_node(handle, 0, 0);
   // Warning: only schnaps_real arrays for the moment
   // Extention to every type could be made with starpu_vector_get_elemsize
   schnaps_real* ptr = (schnaps_real*) starpu_vector_get_local_ptr(handle);
@@ -80,7 +80,8 @@ struct starpu_codelet* ZeroBuffer_codelet() {
 }
 
 void ZeroBuffer_C(void *buffers[], void *cl_args) {
-  schnaps_real* buffer = (schnaps_real *)STARPU_VECTOR_GET_PTR((struct starpu_vector_interface *)buffers[0]);
+  schnaps_real* buffer = (schnaps_real *)STARPU_VECTOR_GET_PTR(
+      (struct starpu_vector_interface *)buffers[0]);
   size_t size = STARPU_VECTOR_GET_NX(buffers[0]);
 
   for (size_t i = 0; i < size; i++) buffer[i] = 0;
@@ -186,8 +187,10 @@ void AddBuffer_C(void *buffers[], void *cl_args) {
   starpu_codelet_unpack_args(cl_args, &alpha);
   free(cl_args);
 
-  schnaps_real* buffer_in = (schnaps_real *)STARPU_VECTOR_GET_PTR((struct starpu_vector_interface *)buffers[0]);
-  schnaps_real* buffer_out = (schnaps_real *)STARPU_VECTOR_GET_PTR((struct starpu_vector_interface *)buffers[1]);
+  schnaps_real* buffer_in = (schnaps_real *)STARPU_VECTOR_GET_PTR(
+      (struct starpu_vector_interface *)buffers[0]);
+  schnaps_real* buffer_out = (schnaps_real *)STARPU_VECTOR_GET_PTR(
+      (struct starpu_vector_interface *)buffers[1]);
 
   size_t size_in = STARPU_VECTOR_GET_NX(buffers[0]);
   size_t size_out = STARPU_VECTOR_GET_NX(buffers[1]);
@@ -300,7 +303,7 @@ struct starpu_codelet* DGVolume_codelet() {
 
       size_t ncodelet = 0;
       codelet.opencl_funcs[ncodelet++] = DGVolume_OCL;
-      //codelet.opencl_funcs[ncodelet++] = DGVolume3D_OCL;
+      codelet.opencl_funcs[ncodelet++] = DGVolume3D_OCL;
       codelet.opencl_funcs[ncodelet++] = NULL;
     }
   }
@@ -321,8 +324,10 @@ void DGVolume_C(void *buffers[], void *cl_args) {
                              &Varindex, &NumFlux);
   free(cl_args);
 
-  schnaps_real* w = (schnaps_real *)STARPU_VECTOR_GET_PTR((struct starpu_vector_interface *)buffers[0]);
-  schnaps_real* res = (schnaps_real *)STARPU_VECTOR_GET_PTR((struct starpu_vector_interface *)buffers[1]);
+  schnaps_real* w = (schnaps_real *)STARPU_VECTOR_GET_PTR(
+      (struct starpu_vector_interface *)buffers[0]);
+  schnaps_real* res = (schnaps_real *)STARPU_VECTOR_GET_PTR(
+      (struct starpu_vector_interface *)buffers[1]);
 
 
   int npg[3] = {deg[0] + 1, deg[1] + 1, deg[2] + 1};
@@ -446,12 +451,26 @@ void DGVolume_OCL(void *buffers[], void *cl_args) {
   cl_mem w = (cl_mem)STARPU_VECTOR_GET_DEV_HANDLE(buffers[0]);
   cl_mem res = (cl_mem)STARPU_VECTOR_GET_DEV_HANDLE(buffers[1]);
 
-  int devid = starpu_worker_get_devid(starpu_worker_get_id());
+  int wid = starpu_worker_get_id();
+  int devid = starpu_worker_get_devid(wid);
   cl_context context;
   starpu_opencl_get_context(devid, &context);
 
   cl_kernel kernel;
   cl_command_queue queue;
+
+  // Usefull to determine device type on runtime
+  //char buffer[100];
+  //starpu_worker_get_name(wid, buffer, 100);
+  //switch (GetDeviceTypeFromName(buffer)) {
+  //  case CL_DEVICE_TYPE_CPU:
+  //
+  //    break;
+  //  default:
+  //
+  //    break;
+  //}
+
   cl_int status = starpu_opencl_load_kernel(&kernel, &queue,
                                             &opencl_program,
                                             "DGVolume",
@@ -459,7 +478,7 @@ void DGVolume_OCL(void *buffers[], void *cl_args) {
   if (status != CL_SUCCESS) STARPU_OPENCL_REPORT_ERROR(status);
 
   cl_mem physnode_cl = clCreateBuffer(context,
-                                      CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
+                                      CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
                                       60 * sizeof(schnaps_real),
                                       physnode,
                                       &status);
@@ -467,7 +486,7 @@ void DGVolume_OCL(void *buffers[], void *cl_args) {
 
   int param[7] = {m, deg[0], deg[1], deg[2], raf[0], raf[1], raf[2]};
   cl_mem param_cl = clCreateBuffer(context,
-                                   CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
+                                   CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
                                    7 * sizeof(int),
                                    param,
                                    &status);
@@ -484,7 +503,7 @@ void DGVolume_OCL(void *buffers[], void *cl_args) {
   status |= clSetKernelArg(kernel, narg++, sizeof(cl_mem), &physnode_cl);
   status |= clSetKernelArg(kernel, narg++, sizeof(cl_mem), &w);
   status |= clSetKernelArg(kernel, narg++, sizeof(cl_mem), &res);
-  status |= clSetKernelArg(kernel, narg++, sizeof(schnaps_real) * 2 * lsize * m, NULL);
+  status |= clSetKernelArg(kernel, narg++, sizeof(schnaps_real) * lsize * m, NULL);
   if (status != CL_SUCCESS) STARPU_OPENCL_REPORT_ERROR(status);
 
   cl_event event;
@@ -515,12 +534,26 @@ void DGVolume3D_OCL(void *buffers[], void *cl_args) {
   cl_mem w = (cl_mem)STARPU_VECTOR_GET_DEV_HANDLE(buffers[0]);
   cl_mem res = (cl_mem)STARPU_VECTOR_GET_DEV_HANDLE(buffers[1]);
 
-  int devid = starpu_worker_get_devid(starpu_worker_get_id());
+  int wid = starpu_worker_get_id();
+  int devid = starpu_worker_get_devid(wid);
   cl_context context;
   starpu_opencl_get_context(devid, &context);
 
   cl_kernel kernel;
   cl_command_queue queue;
+
+  // Usefull to determine device type on runtime
+  //char buffer[100];
+  //starpu_worker_get_name(wid, buffer, 100);
+  //switch (GetDeviceTypeFromName(buffer)) {
+  //  case CL_DEVICE_TYPE_CPU:
+  //
+  //    break;
+  //  default:
+  //
+  //    break;
+  //}
+
   cl_int status = starpu_opencl_load_kernel(&kernel, &queue,
                                             &opencl_program,
                                             "DGVolume3D",
@@ -528,7 +561,7 @@ void DGVolume3D_OCL(void *buffers[], void *cl_args) {
   if (status != CL_SUCCESS) STARPU_OPENCL_REPORT_ERROR(status);
 
   cl_mem physnode_cl = clCreateBuffer(context,
-                                      CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
+                                      CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
                                       60 * sizeof(schnaps_real),
                                       physnode,
                                       &status);
@@ -536,7 +569,7 @@ void DGVolume3D_OCL(void *buffers[], void *cl_args) {
 
   int param[7] = {m, deg[0], deg[1], deg[2], raf[0], raf[1], raf[2]};
   cl_mem param_cl = clCreateBuffer(context,
-                                   CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
+                                   CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
                                    7 * sizeof(int),
                                    param,
                                    &status);
@@ -561,6 +594,8 @@ void DGVolume3D_OCL(void *buffers[], void *cl_args) {
   status |= clSetKernelArg(kernel, narg++, sizeof(cl_mem), &physnode_cl);
   status |= clSetKernelArg(kernel, narg++, sizeof(cl_mem), &w);
   status |= clSetKernelArg(kernel, narg++, sizeof(cl_mem), &res);
+  status |= clSetKernelArg(kernel, narg++, sizeof(schnaps_real) *
+                           lsize[0] * lsize[1] * lsize[2] * m, NULL);
   if (status != CL_SUCCESS) STARPU_OPENCL_REPORT_ERROR(status);
 
   cl_event event;

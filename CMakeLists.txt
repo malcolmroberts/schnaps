@@ -333,5 +333,3 @@ foreach(example IN LISTS examplelist)
     )
   target_link_libraries(${example} ${LIBS})
 endforeach(example)
-
-

@@ -21,7 +21,6 @@ bool submit_task() {
 
   // Check output
   starpu_task_wait_for_all();
-  starpu_data_prefetch_on_node(handle, 0, 0);
   starpu_data_unregister(handle);
   for (int i = 0; i < size; ++i) test &= (abs(buffer[i]) < _VERY_SMALL);
 
@@ -54,10 +53,6 @@ int TestCodelet_ZeroBuffer_SPU() {
   test &= (starpu_init(&conf) != -ENODEV);
   assert(test);
 
-  // Activate all the available codelets
-  starpu_c_use = true;
-  starpu_ocl_use = true;
-
   // Interesting environment variables
   printf("Environment variables...\n");
   printf("STARPU_NCPU                : %s\n", getenv("STARPU_NCPU"));
@@ -77,12 +72,30 @@ int TestCodelet_ZeroBuffer_SPU() {
   printf("CUDA workers               : %d\n", starpu_cuda_worker_get_count());
   printf("MIC workers                : %d\n", starpu_mic_worker_get_count());
 
+  if (nb_workers == 0) {
+    printf("No available worker.\n");
+    return test;
+  }
+
   // Regenerate opencl code
   if (nb_ocl > 0) GetOpenCLCode();
 
   // Codelet
-  struct starpu_codelet* codelet = ZeroBuffer_codelet();
+  starpu_c_use = true;
+  starpu_ocl_use = true;
+  struct starpu_codelet* codelet = AddBuffer_codelet();
+
+  // Empty codelet for function selection
   struct starpu_codelet codelet_backup = *codelet;
+  for (int i = 0; i < STARPU_MAXIMPLEMENTATIONS; ++i) {
+    codelet->cpu_funcs[i] = NULL;
+    codelet->opencl_funcs[i] = NULL;
+    codelet->cuda_funcs[i] = NULL;
+    codelet->mic_funcs[i] = NULL;
+  }
+
+  // TRICK Need at least one C function
+  codelet->cpu_funcs[0] = codelet_backup.cpu_funcs[0];
 
   // Loop over workers to submit tasks
   for (int wid = 0; wid < nb_workers; ++wid) {
@@ -94,18 +107,10 @@ int TestCodelet_ZeroBuffer_SPU() {
         STARPU_SCHED_CTX_POLICY_NAME, conf.sched_policy_name,
         NULL);
     starpu_sched_ctx_set_context(&ctxid);
-    starpu_sched_ctx_display_workers(ctxid, stdout);
 
-    // Empty codelet for function selection
-    for (int i = 0; i < STARPU_MAXIMPLEMENTATIONS; ++i) {
-      codelet->cpu_funcs[i] = NULL;
-      codelet->opencl_funcs[i] = NULL;
-      codelet->cuda_funcs[i] = NULL;
-      codelet->mic_funcs[i] = NULL;
-    }
-
-    // TRICK Need at least one C function (at least when OpenCL worker)
-    codelet->cpu_funcs[0] = codelet_backup.cpu_funcs[0];
+    char name[100];
+    starpu_worker_get_name(wid, name, 100);
+    printf("StarPU worker name: %s\n", name);
 
     // Loop over the codelet implementations
     switch (starpu_worker_get_type(wid)) {
@@ -172,8 +177,6 @@ int TestCodelet_ZeroBuffer_SPU() {
     // Delete context
     starpu_sched_ctx_delete(ctxid);
   }
-
-  *codelet = codelet_backup;
 
   // Delete opencl program if it has been created
   if (nb_ocl > 0) {

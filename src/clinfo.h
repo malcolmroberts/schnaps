@@ -58,7 +58,7 @@ void BuildKernels(CLInfo *cli, char *program, char *buildoptions);
 
 //! \brief scan all *.h and *.c in order to find the code
 //! to be shared with opencl
-//! such code is enclosed between \#pragma start_opencl and 
+//! such code is enclosed between \#pragma start_opencl and
 // #pragma end_opencl
 //! get also field.cl
 //! the result is put into schnaps.cl
@@ -72,10 +72,15 @@ bool cldevice_is_acceptable(cl_uint ndevice, cl_uint nplatform);
 schnaps_real cl_dev_gflops(char *platform_name);
 schnaps_real cl_dev_bwidth(char *platform_name);
 schnaps_real kernel_min_time(schnaps_real dev_flops, schnaps_real bandwidth,
-		       unsigned long int flop_count, 
+		       unsigned long int flop_count,
 		       unsigned long int io_count);
 void print_kernel_perf(schnaps_real dev_fflops, schnaps_real bandwidth,
 		       unsigned long int flop_count, unsigned long int io_count,
 		       cl_ulong kernel_time_ns);
+
+
+//! \brief Get device type from name
+//! \param[in] name string containing the device name
+cl_device_type GetDeviceTypeFromName(const char *name);
 
 #endif

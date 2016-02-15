@@ -16,7 +16,7 @@ bool submit_task() {
   // Create data handle (init and register)
   for (int i = 0; i < size; ++i) {
     buffer_in[i] = i;
-    buffer_out[i] = 0;
+    buffer_out[i] = i;
   }
   starpu_data_handle_t handle_in;
   starpu_vector_data_register(&handle_in, 0, (uintptr_t) buffer_in, size, sizeof(schnaps_real));
@@ -28,15 +28,16 @@ bool submit_task() {
 
   // Check output
   starpu_task_wait_for_all();
-  starpu_data_prefetch_on_node(handle_in, 0, 0);
   starpu_data_unregister(handle_in);
-  starpu_data_prefetch_on_node(handle_out, 0, 0);
   starpu_data_unregister(handle_out);
   for (int i = 0; i < size; ++i)
     test &= (abs(buffer_in[i] - i) < _VERY_SMALL);
   assert(test);
-  for (int i = 0; i < size; ++i)
-    test &= (abs(buffer_out[i] - i * alpha) < _VERY_SMALL);
+  for (int i = 0; i < size; ++i) {
+    if (!(abs(buffer_out[i] - i * (1 + alpha)) < _VERY_SMALL))
+      printf("result[%d]: %f (should be %f)\n", i, buffer_out[i], i * (1 + alpha));
+    test &= (abs(buffer_out[i] - i * (1 + alpha)) < _VERY_SMALL);
+  }
 
   if (test) printf(" OK\n");
   else printf(" KO !\n");
@@ -45,7 +46,7 @@ bool submit_task() {
 }
 
 
-int TestCodelet_AddBuffer_SPU(void){
+int TestCodelet_AddBuffer_SPU() {
   bool test = true;
 
 
@@ -67,10 +68,6 @@ int TestCodelet_AddBuffer_SPU(void){
   test &= (starpu_init(&conf) != -ENODEV);
   assert(test);
 
-  // Activate all the available codelets
-  starpu_c_use = true;
-  starpu_ocl_use = true;
-
   // Interesting environment variables
   printf("Environment variables...\n");
   printf("STARPU_NCPU                : %s\n", getenv("STARPU_NCPU"));
@@ -80,7 +77,7 @@ int TestCodelet_AddBuffer_SPU(void){
   printf("STARPU_OPENCL_ON_CPUS      : %s\n", getenv("STARPU_OPENCL_ON_CPUS"));
   printf("STARPU_OPENCL_ONLY_ON_CPUS : %s\n", getenv("STARPU_OPENCL_ONLY_ON_CPUS"));
 
-  // Get workers
+  // Workers
   const int nb_workers = starpu_worker_get_count();
   const int nb_ocl = starpu_opencl_worker_get_count();
   printf("Available workers...\n");
@@ -90,12 +87,30 @@ int TestCodelet_AddBuffer_SPU(void){
   printf("CUDA workers               : %d\n", starpu_cuda_worker_get_count());
   printf("MIC workers                : %d\n", starpu_mic_worker_get_count());
 
+  if (nb_workers == 0) {
+    printf("No available worker.\n");
+    return test;
+  }
+
   // Regenerate opencl code
   if (nb_ocl > 0) GetOpenCLCode();
 
   // Codelet
+  starpu_c_use = true;
+  starpu_ocl_use = true;
   struct starpu_codelet* codelet = AddBuffer_codelet();
+
+  // Empty codelet for function selection
   struct starpu_codelet codelet_backup = *codelet;
+  for (int i = 0; i < STARPU_MAXIMPLEMENTATIONS; ++i) {
+    codelet->cpu_funcs[i] = NULL;
+    codelet->opencl_funcs[i] = NULL;
+    codelet->cuda_funcs[i] = NULL;
+    codelet->mic_funcs[i] = NULL;
+  }
+
+  // TRICK Need at least one C function
+  codelet->cpu_funcs[0] = codelet_backup.cpu_funcs[0];
 
   // Loop over workers to submit tasks
   for (int wid = 0; wid < nb_workers; ++wid) {
@@ -107,18 +122,10 @@ int TestCodelet_AddBuffer_SPU(void){
         STARPU_SCHED_CTX_POLICY_NAME, conf.sched_policy_name,
         NULL);
     starpu_sched_ctx_set_context(&ctxid);
-    starpu_sched_ctx_display_workers(ctxid, stdout);
 
-    // Empty codelet for function selection
-    for (int i = 0; i < STARPU_MAXIMPLEMENTATIONS; ++i) {
-      codelet->cpu_funcs[i] = NULL;
-      codelet->opencl_funcs[i] = NULL;
-      codelet->cuda_funcs[i] = NULL;
-      codelet->mic_funcs[i] = NULL;
-    }
-
-    // TRICK Need at least one C function (at least when OpenCL worker)
-    codelet->cpu_funcs[0] = codelet_backup.cpu_funcs[0];
+    char name[100];
+    starpu_worker_get_name(wid, name, 100);
+    printf("StarPU worker name: %s\n", name);
 
     // Loop over the codelet implementations
     switch (starpu_worker_get_type(wid)) {
@@ -185,8 +192,6 @@ int TestCodelet_AddBuffer_SPU(void){
     // Delete context
     starpu_sched_ctx_delete(ctxid);
   }
-
-  *codelet = codelet_backup;
 
   // Delete opencl program if it has been created
   if (nb_ocl > 0) {

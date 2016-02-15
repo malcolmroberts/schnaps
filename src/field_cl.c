@@ -46,7 +46,7 @@ void CopyfieldtoCPU(Simulation *simu)
   assert(status >= CL_SUCCESS);
 }
 
-void set_source_CL(Simulation *simu, char *sourcename_cl) 
+void set_source_CL(Simulation *simu, char *sourcename_cl)
 {
 #ifdef _WITH_OPENCL
   simu->use_source_cl = true;
@@ -62,7 +62,7 @@ void set_source_CL(Simulation *simu, char *sourcename_cl)
 #endif
 }
 
-void init_DGBoundary_CL(Simulation *simu, 
+void init_DGBoundary_CL(Simulation *simu,
 			int ieL, int locfaL,
 			cl_mem physnodeL_cl,
 			cl_mem *w_cl,
@@ -72,7 +72,7 @@ void init_DGBoundary_CL(Simulation *simu,
   cl_kernel kernel = simu->dgboundary;
 
   unsigned int argnum = 0;
-  
+
   // __constant int *param,        // 0: interp param
   status = clSetKernelArg(kernel,
                           argnum++,
@@ -139,7 +139,7 @@ void init_DGBoundary_CL(Simulation *simu,
 }
 
 void DGBoundary_CL(int ifa, Simulation *simu, cl_mem *w_cl,
-		   cl_uint nwait, cl_event *wait, cl_event *done) 
+		   cl_uint nwait, cl_event *wait, cl_event *done)
 {
   int *param = simu->interp_param;
   cl_int status;
@@ -155,20 +155,20 @@ void DGBoundary_CL(int ifa, Simulation *simu, cl_mem *w_cl,
 				  simu->dgboundary,
 				  1, // cl_uint work_dim,
 				  NULL, // global_work_offset,
-				  &numworkitems, // global_work_size, 
-				  NULL, // size_t *local_work_size, 
-				  nwait, 
+				  &numworkitems, // global_work_size,
+				  NULL, // size_t *local_work_size,
+				  nwait,
 				  wait, // *wait_list,
 				  done); // *event
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
   assert(status >= CL_SUCCESS);
-  
+
 }
 
 // Set the loop-dependant kernel arguments for DGMacroCellInterface_CL
-void init_DGMacroCellInterface_CL(Simulation *simu, 
+void init_DGMacroCellInterface_CL(Simulation *simu,
 				  int ieL, int ieR, int locfaL, int locfaR,
-				  cl_mem physnodeL_cl, 
+				  cl_mem physnodeL_cl,
 				  cl_mem *w_cl,
 				  size_t cachesize)
 {
@@ -187,7 +187,7 @@ void init_DGMacroCellInterface_CL(Simulation *simu,
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
   assert(status >= CL_SUCCESS);
 
-  //int ieL,                      // 1: left macrocell 
+  //int ieL,                      // 1: left macrocell
   status = clSetKernelArg(kernel,
 			  argnum++,
 			  sizeof(int),
@@ -235,7 +235,7 @@ void init_DGMacroCellInterface_CL(Simulation *simu,
   /* if(status < CL_SUCCESS) printf("%s\n", clErrorString(status)); */
   /* assert(status >= CL_SUCCESS); */
 
-  //__global real *w,          // 7: field 
+  //__global real *w,          // 7: field
   status = clSetKernelArg(kernel,
                           argnum++,
                           sizeof(cl_mem),
@@ -261,7 +261,7 @@ void init_DGMacroCellInterface_CL(Simulation *simu,
 }
 
 void DGMacroCellInterface_CL(int ifa, Simulation *simu, cl_mem *w_cl,
-			     cl_uint nwait, cl_event *wait, cl_event *done) 
+			     cl_uint nwait, cl_event *wait, cl_event *done)
 {
   int *param = simu->interp_param;
   cl_int status;
@@ -283,19 +283,19 @@ void DGMacroCellInterface_CL(int ifa, Simulation *simu, cl_mem *w_cl,
   if(ieR >= 0) {
     // Set the remaining loop-dependant kernel arguments
     size_t kernel_cachesize = 1;
-    init_DGMacroCellInterface_CL(simu, 
-				 ieL, ieR, locfaL, locfaR, 
+    init_DGMacroCellInterface_CL(simu,
+				 ieL, ieR, locfaL, locfaR,
 				 simu->physnodes_cl,
-				 w_cl, 
+				 w_cl,
 				 kernel_cachesize);
 
     status = clEnqueueNDRangeKernel(simu->cli.commandqueue,
 				    kernel,
 				    1, // cl_uint work_dim,
 				    NULL, // global_work_offset,
-				    &numworkitems, // global_work_size, 
-				    NULL, // size_t *local_work_size, 
-				    nwait,  // nwait, 
+				    &numworkitems, // global_work_size,
+				    NULL, // size_t *local_work_size,
+				    nwait,  // nwait,
 				    wait, // *wait_list,
 				    done); // *event
     if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
@@ -305,7 +305,7 @@ void DGMacroCellInterface_CL(int ifa, Simulation *simu, cl_mem *w_cl,
     if(done != NULL)
       clSetUserEventStatus(*done, CL_COMPLETE);
   }
-  
+
 }
 
 // Set up kernel arguments, etc, for DGMass_CL.
@@ -325,7 +325,7 @@ void init_DGMass_CL(Simulation *simu)
   /* int ie, // macrocel index */
   // Set in loop on call.
   argnum++;
-      
+
   /* __constant real* physnode,  // macrocell nodes */
   status = clSetKernelArg(simu->dgmass,           // kernel name
                           argnum++,              // arg num
@@ -345,23 +345,23 @@ void init_DGMass_CL(Simulation *simu)
 
 // Apply division by the mass matrix OpenCL version
 void DGMass_CL(int ie, Simulation *simu,
-	       cl_uint nwait, cl_event *wait, cl_event *done) 
+	       cl_uint nwait, cl_event *wait, cl_event *done)
 {
 
   int *param = simu->interp_param;
   cl_int status;
 
   init_DGMass_CL(simu);
- 
+
   //clSetUserEventStatus(simu->clv_mass, CL_COMPLETE);
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
   assert(status >= CL_SUCCESS);
 
   // Loop on the elements
-    
-  status = clSetKernelArg(simu->dgmass, 
-			  1, 
-			  sizeof(int), 
+
+  status = clSetKernelArg(simu->dgmass,
+			  1,
+			  sizeof(int),
 			  (void *)&ie);
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
   assert(status >= CL_SUCCESS);
@@ -377,30 +377,30 @@ void DGMass_CL(int ie, Simulation *simu,
   unsigned int nmultsdgmass = 53 + 2 * m + 2601;
   simu->flops_mass += numworkitems * nmultsdgmass;
   simu->reads_mass += numworkitems * nreadsdgmass;
-    
+
   status = clEnqueueNDRangeKernel(simu->cli.commandqueue,
 				  simu->dgmass,
 				  1, // cl_uint work_dim,
-				  NULL, // size_t *global_work_offset, 
+				  NULL, // size_t *global_work_offset,
 				  &numworkitems, // size_t *global_work_size,
-				  &groupsize, // size_t *local_work_size, 
-				  nwait, // cl_uint num_events_in_wait_list, 
-				  wait, //*event_wait_list, 
+				  &groupsize, // size_t *local_work_size,
+				  nwait, // cl_uint num_events_in_wait_list,
+				  wait, //*event_wait_list,
 				  done); // cl_event *event
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
   assert(status >= CL_SUCCESS);
-  
+
 }
 
-void init_DGFlux_CL(Simulation *simu, int ie, int dim0, cl_mem *w_cl, 
+void init_DGFlux_CL(Simulation *simu, int ie, int dim0, cl_mem *w_cl,
 		    size_t cachesize)
 {
   //printf("DGFlux cachesize:%zu\n", cachesize);
 
   cl_kernel kernel = simu->dgflux;
   cl_int status;
-  int argnum = 0; 
-  
+  int argnum = 0;
+
   // __constant int *param, // interp param
   status = clSetKernelArg(kernel,
                           argnum++,
@@ -410,21 +410,21 @@ void init_DGFlux_CL(Simulation *simu, int ie, int dim0, cl_mem *w_cl,
   assert(status >= CL_SUCCESS);
 
   // int ie, // macrocel index
-  status = clSetKernelArg(kernel, 
-			  argnum++, 
-			  sizeof(int), 
+  status = clSetKernelArg(kernel,
+			  argnum++,
+			  sizeof(int),
 			  (void *)&ie);
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
   assert(status >= CL_SUCCESS);
 
   // int dim0, // face direction
-  status = clSetKernelArg(kernel, 
-			  argnum++, 
-			  sizeof(int), 
+  status = clSetKernelArg(kernel,
+			  argnum++,
+			  sizeof(int),
 			  (void *)&dim0);
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
   assert(status >= CL_SUCCESS);
-    
+
   // __constant real *physnode, // macrocell nodes
   status = clSetKernelArg(kernel,
                           argnum++,
@@ -459,7 +459,7 @@ void init_DGFlux_CL(Simulation *simu, int ie, int dim0, cl_mem *w_cl,
 }
 
 void DGFlux_CL(Simulation *simu, int dim0, int ie, cl_mem *w_cl,
-	       cl_uint nwait, cl_event *wait, cl_event *done) 
+	       cl_uint nwait, cl_event *wait, cl_event *done)
 {
   // Unpack the parameters
   int *param = simu->interp_param;
@@ -497,7 +497,7 @@ void DGFlux_CL(Simulation *simu, int dim0, int ie, cl_mem *w_cl,
     nmultsdgflux += 3 * m; // Using NUMFLUX = NumFlux
     simu->flops_flux += numworkitems * nmultsdgflux;
     simu->reads_flux += numworkitems * nreadsdgflux;
-    
+
     // Launch the kernel
     cl_int status;
     status = clEnqueueNDRangeKernel(simu->cli.commandqueue,
@@ -575,7 +575,7 @@ void init_DGVolume_CL(Simulation *simu, cl_mem *w_cl, size_t cachesize)
 
 // Apply division by the mass matrix OpenCL version
 void DGVolume_CL(int ie, Simulation *simu, cl_mem *w_cl,
-		 cl_uint nwait, cl_event *wait, cl_event *done) 
+		 cl_uint nwait, cl_event *wait, cl_event *done)
 {
   cl_kernel kernel = simu->dgvolume;
   int *param = simu->interp_param;
@@ -589,15 +589,15 @@ void DGVolume_CL(int ie, Simulation *simu, cl_mem *w_cl,
   // * number of subcells
   const int nraf[3] = {param[4], param[5], param[6]};
   size_t numworkitems = nraf[0] * nraf[1] * nraf[2] * groupsize;
-  
+
   unsigned int nreadsdgvol = 2 * m; // read m from w, write m to dtw
   unsigned int nmultsdgvol = 2601 + (npgc[0] + npgc[1] + npgc[2]) * 6 * m;
-  nmultsdgvol += (npgc[0] + npgc[1] + npgc[2]) * 54; 
+  nmultsdgvol += (npgc[0] + npgc[1] + npgc[2]) * 54;
   // Using NUMFLUX = NumFlux (3 * m multiplies):
-  nmultsdgvol += (npgc[0] + npgc[1] + npgc[2]) * 6 * m; 
-  
-  init_DGVolume_CL(simu, w_cl, 2 * groupsize * m);
-  
+  nmultsdgvol += (npgc[0] + npgc[1] + npgc[2]) * 6 * m;
+
+  init_DGVolume_CL(simu, w_cl, groupsize * m);
+
   simu->flops_vol += numworkitems * nmultsdgvol;
   simu->reads_vol += numworkitems * nreadsdgvol;
 
@@ -625,7 +625,7 @@ void DGVolume_CL(int ie, Simulation *simu, cl_mem *w_cl,
 				  done);
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
   assert(status >= CL_SUCCESS);
-  
+
 }
 
 // Set kernel argument for DGVolume_CL
@@ -685,7 +685,7 @@ void init_DGSource_CL(Simulation *simu, cl_mem *w_cl, size_t cachesize)
 
 // Apply division by the mass matrix OpenCL version
 void DGSource_CL(int ie, Simulation *simu, cl_mem *w_cl,
-		 cl_uint nwait, cl_event *wait, cl_event *done) 
+		 cl_uint nwait, cl_event *wait, cl_event *done)
 {
   cl_kernel kernel = simu->dgsource;
   int *param = simu->interp_param;
@@ -696,17 +696,17 @@ void DGSource_CL(int ie, Simulation *simu, cl_mem *w_cl,
   // The total work items number is the number of glops in a subcell
   // times the number of subcells
   size_t numworkitems = param[4] * param[5] * param[6] * groupsize;
-  
+
   /* unsigned int nreadsdgvol = 2 * m; // read m from w, write m to dtw */
   /* unsigned int nmultsdgvol = 1296 + m; */
   /* nmultsdgvol += 3 * m; // Using NUMFLUX = NumFlux */
-  
+
   /* simu->nmults += numworkitems * nmultsdgvol; */
   /* simu->nreads += numworkitems * nreadsdgvol; */
-   
+
   init_DGSource_CL(simu, w_cl, 2 * groupsize * m);
-  
-  
+
+
   // Loop on the elements
   status = clSetKernelArg(kernel,
 			  1,
@@ -732,7 +732,7 @@ void DGSource_CL(int ie, Simulation *simu, cl_mem *w_cl,
 				  done);
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
   assert(status >= CL_SUCCESS);
-  
+
 }
 
 void set_buf_to_zero_cl(cl_mem *buf, int size, Simulation *simu,
@@ -744,7 +744,7 @@ void set_buf_to_zero_cl(cl_mem *buf, int size, Simulation *simu,
 
   // associates the param buffer to the 0th kernel argument
   status = clSetKernelArg(kernel,
-                          0, 
+                          0,
                           sizeof(cl_mem),
                           buf);
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
@@ -756,8 +756,8 @@ void set_buf_to_zero_cl(cl_mem *buf, int size, Simulation *simu,
 				  1, NULL,
 				  &numworkitems,
 				  NULL,
-				  nwait, 
-				  wait, 
+				  nwait,
+				  wait,
 				  done);
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
   assert(status >= CL_SUCCESS);
@@ -771,10 +771,10 @@ void dtfield_CL(Simulation *simu, cl_mem *w_cl,
 
   set_buf_to_zero_cl(&simu->dtw_cl, simu->wsize, simu,
   		     nwait, wait, &simu->clv_zbuf);
-  
+
   // Macrocell interfaces must be launched serially
   const int ninterfaces = simu->macromesh.nmacrointerfaces;
-  
+
   for(int i = 0; i < ninterfaces; ++i) {
     int ifa = simu->macromesh.macrointerface[i];
     DGMacroCellInterface_CL(ifa, simu, w_cl,
@@ -785,7 +785,7 @@ void dtfield_CL(Simulation *simu, cl_mem *w_cl,
 
   cl_event *startboundary = ninterfaces > 0 ?
     simu->clv_mci + ninterfaces - 1: &simu->clv_zbuf;
-  
+
   // Boundary terms may also need to be launched serially.
   const int nboundaryfaces = simu->macromesh.nboundaryfaces;
   for(int i = 0; i < nboundaryfaces; ++i) {
@@ -818,31 +818,31 @@ void dtfield_CL(Simulation *simu, cl_mem *w_cl,
     ndim = 1;
     fluxdone = simu->clv_flux0;
   }
-  
+
   cl_event *dtfielddone = simu->use_source_cl ? simu->clv_source : simu->clv_mass;
-  
+
   // The kernels for the intra-macrocell computations can be launched
   // in parallel between macrocells.
   const int nmacro = simu->macromesh.nbelems;
   for(int ie = 0; ie < nmacro; ++ie) {
     //printf("ie: %d\n", ie);
-    
-    DGFlux_CL(simu, 0, ie, w_cl, 
+
+    DGFlux_CL(simu, 0, ie, w_cl,
 	      1, startmacroloop,
 	      simu->clv_flux0 + ie);
 
     if(ndim > 1) {
-      DGFlux_CL(simu, 1, ie, w_cl, 
+      DGFlux_CL(simu, 1, ie, w_cl,
 		1, simu->clv_flux0 + ie,
 		simu->clv_flux1 + ie);
     }
-    
+
     if(ndim > 2) {
-      DGFlux_CL(simu, 2, ie, w_cl, 
-		1, simu->clv_flux1 + ie, 
+      DGFlux_CL(simu, 2, ie, w_cl,
+		1, simu->clv_flux1 + ie,
 		simu->clv_flux2 + ie);
     }
-    
+
     DGVolume_CL(ie, simu, w_cl,
   		1,
   		fluxdone + ie,
@@ -854,7 +854,7 @@ void dtfield_CL(Simulation *simu, cl_mem *w_cl,
   	      simu->clv_mass + ie);
 
     if(simu->use_source_cl) {
-      DGSource_CL(ie, simu, w_cl, 
+      DGSource_CL(ie, simu, w_cl,
 		  1,
 		  simu->clv_mass + ie,
 		  simu->clv_source + ie);
@@ -875,7 +875,7 @@ void dtfield_CL(Simulation *simu, cl_mem *w_cl,
     if(simu->use_source_cl)
       simu->source_time += clv_duration(simu->clv_source[ie]);
     simu->flux_time += clv_duration(simu->clv_flux0[ie]);
-    if(ndim > 1) 
+    if(ndim > 1)
       simu->flux_time += clv_duration(simu->clv_flux1[ie]);
     if(ndim > 2)
       simu->flux_time += clv_duration(simu->clv_flux2[ie]);
@@ -896,15 +896,15 @@ void init_RK2_CL_stage1(Simulation *simu, const schnaps_real dt, cl_mem *wp1_cl)
 
   //__global real *wp1 // field values
   status = clSetKernelArg(kernel,
-			  argnum++, 
+			  argnum++,
                           sizeof(cl_mem),
                           wp1_cl);
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
   assert(status >= CL_SUCCESS);
-  
-  // __global real *w, 
+
+  // __global real *w,
   status = clSetKernelArg(kernel,
-			  argnum++, 
+			  argnum++,
                           sizeof(cl_mem),
                           &simu->w_cl);
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
@@ -912,12 +912,12 @@ void init_RK2_CL_stage1(Simulation *simu, const schnaps_real dt, cl_mem *wp1_cl)
 
   //__global real* dtw // time derivative
   status = clSetKernelArg(kernel,
-			  argnum++, 
+			  argnum++,
                           sizeof(cl_mem),
                           &simu->dtw_cl);
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
   assert(status >= CL_SUCCESS);
-  
+
   //real dt, // time step for the stage
   schnaps_real halfdt = 0.5 * dt;
   status = clSetKernelArg(kernel,
@@ -935,26 +935,26 @@ void RK2_CL_stage1(Simulation *simu, size_t numworkitems,
   cl_int status;
   status = clEnqueueNDRangeKernel(simu->cli.commandqueue,
 				  simu->RK_out_CL,
-				  1, 
+				  1,
 				  NULL,
 				  &numworkitems,
 				  NULL,
-				  nwait, 
-				  wait, 
+				  nwait,
+				  wait,
 				  done);
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
   assert(status >= CL_SUCCESS);
 }
 
 // Set kernel arguments for second stage of RK2
-void init_RK2_CL_stage2(Simulation *simu, const schnaps_real dt) 
+void init_RK2_CL_stage2(Simulation *simu, const schnaps_real dt)
 {
   cl_kernel kernel = simu->RK_in_CL;
   cl_int status;
   int argnum = 0;
 
   status = clSetKernelArg(kernel,
-			  argnum++, 
+			  argnum++,
                           sizeof(cl_mem),
                           &simu->w_cl);
   assert(status >= CL_SUCCESS);
@@ -989,28 +989,28 @@ void RK2_CL_stage2(Simulation *simu, size_t numworkitems,
   assert(status >= CL_SUCCESS);
 }
 
-void RK4_CL_stageA(Simulation *simu, 
-		   cl_mem *wp1, cl_mem *w, cl_mem *dtw, 
-		   const schnaps_real dt, const int sizew, size_t numworkitems, 
+void RK4_CL_stageA(Simulation *simu,
+		   cl_mem *wp1, cl_mem *w, cl_mem *dtw,
+		   const schnaps_real dt, const int sizew, size_t numworkitems,
 		   cl_uint nwait, cl_event *wait, cl_event *done)
 {
   // l_1 = w_n + 0.5dt * S(w_n, t_0)
-  
+
   cl_kernel kernel = simu->RK_out_CL;
   cl_int status;
   int argnum = 0;
 
   //__global real *wp1 // field values
   status = clSetKernelArg(kernel,
-			  argnum++, 
+			  argnum++,
                           sizeof(cl_mem),
                           wp1);
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
   assert(status >= CL_SUCCESS);
-  
-  // __global real *w, 
+
+  // __global real *w,
   status = clSetKernelArg(kernel,
-			  argnum++, 
+			  argnum++,
                           sizeof(cl_mem),
                           w);
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
@@ -1018,7 +1018,7 @@ void RK4_CL_stageA(Simulation *simu,
 
   //__global real *dtw // time derivative
   status = clSetKernelArg(kernel,
-			  argnum++, 
+			  argnum++,
                           sizeof(cl_mem),
                           dtw);
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
@@ -1045,10 +1045,10 @@ void RK4_CL_stageA(Simulation *simu,
   assert(status >= CL_SUCCESS);
 }
 
-void RK4_final_inplace_CL(Simulation *simu, 
-			  cl_mem *w_cl, cl_mem *l1, cl_mem *l2, cl_mem *l3, 
-			  cl_mem *dtw_cl, const schnaps_real dt, 
-			  const size_t numworkitems, 
+void RK4_final_inplace_CL(Simulation *simu,
+			  cl_mem *w_cl, cl_mem *l1, cl_mem *l2, cl_mem *l3,
+			  cl_mem *dtw_cl, const schnaps_real dt,
+			  const size_t numworkitems,
 			  cl_uint nwait, cl_event *wait, cl_event *done)
 {
   cl_kernel kernel = simu->RK4_final_stage;
@@ -1057,7 +1057,7 @@ void RK4_final_inplace_CL(Simulation *simu,
 
   // __global real *w,
   status = clSetKernelArg(kernel,
-			  argnum++, 
+			  argnum++,
                           sizeof(cl_mem),
                           w_cl);
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
@@ -1065,7 +1065,7 @@ void RK4_final_inplace_CL(Simulation *simu,
 
   // __global real *l1,
   status = clSetKernelArg(kernel,
-			  argnum++, 
+			  argnum++,
                           sizeof(cl_mem),
                           l1);
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
@@ -1073,7 +1073,7 @@ void RK4_final_inplace_CL(Simulation *simu,
 
   // __global real *l2,
   status = clSetKernelArg(kernel,
-			  argnum++, 
+			  argnum++,
                           sizeof(cl_mem),
                           l2);
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
@@ -1081,15 +1081,15 @@ void RK4_final_inplace_CL(Simulation *simu,
 
   // __global real *l3,
   status = clSetKernelArg(kernel,
-			  argnum++, 
+			  argnum++,
                           sizeof(cl_mem),
                           l3);
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
   assert(status >= CL_SUCCESS);
 
-  // __global real *dtw, 
+  // __global real *dtw,
   status = clSetKernelArg(kernel,
-			  argnum++, 
+			  argnum++,
                           sizeof(cl_mem),
                           dtw_cl);
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
@@ -1120,7 +1120,7 @@ void RK4_final_inplace_CL(Simulation *simu,
 // Time integration by a fourth-order Runge-Kutta algorithm, OpenCL
 // version.
 void RK4_CL(Simulation *simu, schnaps_real tmax, schnaps_real dt,
-	    cl_uint nwait, cl_event *wait, cl_event *done) 
+	    cl_uint nwait, cl_event *wait, cl_event *done)
 {
   simu->dt = Get_Dt_RK(simu);
 
@@ -1134,7 +1134,7 @@ void RK4_CL(Simulation *simu, schnaps_real tmax, schnaps_real dt,
   int sizew = simu->macromesh.nbelems * f->model.m * NPG(f->deg, f->raf);
   int iter = 0;
 
-  cl_int status;  
+  cl_int status;
   cl_mem l1 = clCreateBuffer(simu->cli.context,
 			     0,
 			     sizeof(schnaps_real) * simu->wsize,
@@ -1174,7 +1174,7 @@ void RK4_CL(Simulation *simu, schnaps_real tmax, schnaps_real dt,
   clWaitForEvents(nwait, wait);
 
   printf("Starting RK4_CL\n");
-  
+
   status = clSetUserEventStatus(stage[3], CL_COMPLETE);
 
   struct timeval t_start;
@@ -1185,29 +1185,29 @@ void RK4_CL(Simulation *simu, schnaps_real tmax, schnaps_real dt,
       printf("t=%f iter=%d/%d dt=%f\n", simu->tnow, iter, simu->itermax_rk, dt);
 
     // stage 0
-    dtfield_CL(simu, w, 
+    dtfield_CL(simu, w,
 	       1, stage + 3, source);
     RK4_CL_stageA(simu, &l1, w, dtw,
     		  0.5 * dt, sizew, numworkitems,
 		  1, source, stage);
-    
+
     // stage 1
     dtfield_CL(simu, &l1, 1, stage, source + 1);
     RK4_CL_stageA(simu, &l2, w, dtw,
     		  0.5 * dt, sizew, numworkitems,
 		  1, source + 1, stage + 1);
-    
+
     // stage 2
-    dtfield_CL(simu, &l2, 
+    dtfield_CL(simu, &l2,
 	       1, stage + 1, source + 2);
     RK4_CL_stageA(simu, &l3, w, dtw,
     		  dt, sizew, numworkitems,
 		  1, source + 2, stage + 2);
-    
+
     // stage 3
-    dtfield_CL(simu, &l3, 
+    dtfield_CL(simu, &l3,
 	       1, stage + 2, source + 3);
-    RK4_final_inplace_CL(simu, w, &l1, &l2, &l3, 
+    RK4_final_inplace_CL(simu, w, &l1, &l2, &l3,
 			 dtw, dt, numworkitems,
 			 1, source + 3, stage + 3);
 
@@ -1215,10 +1215,10 @@ void RK4_CL(Simulation *simu, schnaps_real tmax, schnaps_real dt,
 
     for(int i = 0; i < nstages; ++i)
       simu->rk_time += clv_duration(stage[i]);
-    
+
     iter++;
   }
-  gettimeofday(&t_end, NULL); 
+  gettimeofday(&t_end, NULL);
 
   if(done != NULL)
     status = clSetUserEventStatus(*done, CL_COMPLETE);
@@ -1227,13 +1227,13 @@ void RK4_CL(Simulation *simu, schnaps_real tmax, schnaps_real dt,
     + (t_end.tv_usec - t_start.tv_usec) * 1e-6; // microseconds
   printf("\nTotal RK time (s):\n%f\n", rkseconds);
   printf("\nTotal RK time per time-step (s):\n%f\n", rkseconds / iter );
- 
-  
+
+
   for(int i = 0; i < nstages; ++i) {
     clReleaseEvent(source[i]);
     clReleaseEvent(stage[i]);
   }
-  
+
   printf("\nt=%f iter=%d/%d dt=%f\n", simu->tnow, iter, simu->itermax_rk, dt);
 }
 
@@ -1241,7 +1241,7 @@ void RK4_CL(Simulation *simu, schnaps_real tmax, schnaps_real dt,
 // Time integration by a second-order Runge-Kutta algorithm, OpenCL
 // version.
 void RK2_CL(Simulation *simu, schnaps_real tmax, schnaps_real dt,
-	    cl_uint nwait, cl_event *wait, cl_event *done) 
+	    cl_uint nwait, cl_event *wait, cl_event *done)
 {
 
 
@@ -1280,7 +1280,7 @@ void RK2_CL(Simulation *simu, schnaps_real tmax, schnaps_real dt,
     clWaitForEvents(nwait, wait);
 
   printf("Starting RK2_CL\n");
-  
+
   struct timeval t_start;
   struct timeval t_end;
   gettimeofday(&t_start, NULL);
@@ -1306,20 +1306,20 @@ void RK2_CL(Simulation *simu, schnaps_real tmax, schnaps_real dt,
   }
   status = clFinish(simu->cli.commandqueue);
   gettimeofday(&t_end, NULL);
-  if(done != NULL) 
+  if(done != NULL)
     status = clSetUserEventStatus(*done, CL_COMPLETE);
 
   clReleaseEvent(stage2);
   clReleaseEvent(stage1);
-  
+
   schnaps_real rkseconds = (t_end.tv_sec - t_start.tv_sec) * 1.0 // seconds
     + (t_end.tv_usec - t_start.tv_usec) * 1e-6; // microseconds
   printf("\nTotal RK time (s):\n%f\n", rkseconds);
   printf("\nTotal RK time per time-step (s):\n%f\n", rkseconds / iter );
- 
+
   printf("\nt=%f iter=%d/%d dt=%f\n", simu->tnow, iter, simu->itermax_rk, dt);
 
-  
+
 }
 
 void show_cl_timing(Simulation *simu)
@@ -1336,9 +1336,9 @@ void show_cl_timing(Simulation *simu)
   printf("Roofline counts:\n");
   unsigned long int flops_total = simu->flops_vol + simu->flops_flux + simu->flops_mass;
   unsigned long int reads_total = simu->reads_vol + simu->reads_flux + simu->reads_mass;
-  printf("Number of real multiplies in kernels:               %lu\n", 
+  printf("Number of real multiplies in kernels:               %lu\n",
 	 flops_total);
-  printf("Number of reads/writes of reals from global memory: %lu\n", 
+  printf("Number of reads/writes of reals from global memory: %lu\n",
 	 reads_total);
   //printf("NB: real multiplies assumes the flux involved 3m multiplies.\n");
   printf("Terms included in roofline: volume, flux, and mass.\n");
@@ -1347,34 +1347,34 @@ void show_cl_timing(Simulation *simu)
   schnaps_real roofline_time_s = 1e-9 * roofline_time_ns;
   schnaps_real roofline_flops = flops_total / roofline_time_s;
   schnaps_real roofline_bw = sizeof(schnaps_real) * reads_total / roofline_time_s;
-  
+
   // Volume terms
   schnaps_real vol_time_s = 1e-9 * simu->vol_time;
   schnaps_real vol_flops = simu->flops_vol / vol_time_s;
   schnaps_real vol_bw = sizeof(schnaps_real) * simu->reads_vol / vol_time_s;
-  printf("DGVol:  GFLOP/s: %f\tbandwidth (GB/s): %f\n", 
+  printf("DGVol:  GFLOP/s: %f\tbandwidth (GB/s): %f\n",
 	 1e-9 * vol_flops, 1e-9 * vol_bw);
 
   // Flux terms
   schnaps_real flux_time_s = 1e-9 * simu->flux_time;
   schnaps_real flux_flops = simu->flops_flux / flux_time_s;
   schnaps_real flux_bw = sizeof(schnaps_real) * simu->reads_flux / flux_time_s;
-  printf("DGFlux: GFLOP/s: %f\tbandwidth (GB/s): %f\n", 
+  printf("DGFlux: GFLOP/s: %f\tbandwidth (GB/s): %f\n",
 	 1e-9 * flux_flops, 1e-9 * flux_bw);
-  
+
   // Mass terms
   schnaps_real mass_time_s = 1e-9 * simu->mass_time;
   schnaps_real mass_flops = simu->flops_mass / mass_time_s;
   schnaps_real mass_bw = sizeof(schnaps_real) * simu->reads_mass / mass_time_s;
-  printf("DGMass: GFLOP/s: %f\tbandwidth (GB/s): %f\n", 
+  printf("DGMass: GFLOP/s: %f\tbandwidth (GB/s): %f\n",
 	 1e-9 * mass_flops, 1e-9 * mass_bw);
 
-  printf("Total:  GFLOP/s: %f\tbandwidth (GB/s): %f\n", 
+  printf("Total:  GFLOP/s: %f\tbandwidth (GB/s): %f\n",
 	 1e-9 * roofline_flops, 1e-9 * roofline_bw);
-  
+
   printf("\n");
 
-  printf("Kernel execution times:\n"); 
+  printf("Kernel execution times:\n");
   cl_ulong total = 0;
   total += simu->zbuf_time;
   total += simu->minter_time;
@@ -1384,48 +1384,48 @@ void show_cl_timing(Simulation *simu)
   total += simu->source_time;
   total += simu->rk_time;
   total += simu->flux_time;
-  
+
   schnaps_real N = 100.0 / total;
 
   cl_ulong ns;
 
   ns = simu->zbuf_time;
-  printf("set_buf_to_zero_cl time:      %f%% \t%luns \t%fs\n", 
+  printf("set_buf_to_zero_cl time:      %f%% \t%luns \t%fs\n",
 	 ns * N, (unsigned long) ns, 1e-9 * ns);
 
   ns = simu->minter_time;
-  printf("DGMacroCellInterface_CL time: %f%% \t%luns \t%fs\n", 
+  printf("DGMacroCellInterface_CL time: %f%% \t%luns \t%fs\n",
 	 ns * N, (unsigned long) ns, 1e-9 * ns);
 
   ns = simu->boundary_time;
-  printf("DGBoundary time:              %f%% \t%luns \t%fs\n", 
+  printf("DGBoundary time:              %f%% \t%luns \t%fs\n",
 	 ns * N, (unsigned long) ns, 1e-9 * ns);
 
   ns = simu->vol_time;
-  printf("DGVolume_CL time:             %f%% \t%luns \t%fs\n", 
+  printf("DGVolume_CL time:             %f%% \t%luns \t%fs\n",
 	 ns * N, (unsigned long) ns, 1e-9 * ns);
 
   ns = simu->flux_time;
-  printf("DGFlux_CL time:               %f%% \t%luns \t%fs\n", 
+  printf("DGFlux_CL time:               %f%% \t%luns \t%fs\n",
 	 ns * N, (unsigned long) ns, 1e-9 * ns);
 
   ns = simu->mass_time;
-  printf("DGMass_CL time:               %f%% \t%luns \t%fs\n", 
+  printf("DGMass_CL time:               %f%% \t%luns \t%fs\n",
 	 ns * N, (unsigned long) ns, 1e-9 * ns);
 
   ns = simu->source_time;
-  printf("DGSource_CL time:             %f%% \t%luns \t%fs\n", 
+  printf("DGSource_CL time:             %f%% \t%luns \t%fs\n",
 	 ns * N, (unsigned long) ns, 1e-9 * ns);
 
   ns = simu->rk_time;
-  printf("rk time:                      %f%% \t%luns \t%fs\n", 
+  printf("rk time:                      %f%% \t%luns \t%fs\n",
 	 ns*N, (unsigned long) ns, 1e-9 * ns);
 
   printf("\n");
-  
+
   ns = total;
   schnaps_real total_time = 1e-9 * ns;
-  printf("total time:                   %f%% \t%luns \t%fs\n", 
+  printf("total time:                   %f%% \t%luns \t%fs\n",
 	 ns*N, (unsigned long) ns, total_time);
 
   printf("\n");
@@ -1458,10 +1458,10 @@ void init_field_cl(Simulation *simu)
 
   field *f = simu->fd;
   /* simu->interp_param[0]=f->model.m; */
-  
+
   /* 		       f->deg[0], f->deg[1], f->deg[2], */
   /* 		       f->raf[0], f->raf[1], f->raf[2] }; */
-  
+
   simu->param_cl = clCreateBuffer(simu->cli.context,
 			       CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
 			       sizeof(int) * 7,
@@ -1507,6 +1507,12 @@ void init_field_cl(Simulation *simu)
 
   printf("\t%s\n", numflux_cl_name);
   //printf("\t%s\n", strprog);
+
+  char buf[1000];
+
+  // Set simulation parameters
+  sprintf(buf, " -D _M=%d", simu->interp_param[0]);
+  strcat(cl_buildoptions, buf);
 
   // If the source term is set (via set_source_CL) then add it to the
   // buildoptions and compile using the new buildoptions.
@@ -1597,14 +1603,14 @@ void init_field_cl(Simulation *simu)
     for(int ifa = 0; ifa < ninterfaces; ++ifa)
       simu->clv_mci[ifa] = clCreateUserEvent(simu->cli.context, &status);
   }
-    
+
   const int nbound = simu->macromesh.nboundaryfaces;
   if(nbound > 0) {
     simu->clv_boundary = calloc(nbound, sizeof(cl_event));
     for(int ifa = 0; ifa < nbound; ++ifa)
       simu->clv_boundary[ifa] = clCreateUserEvent(simu->cli.context, &status);
   }
-  
+
   simu->clv_mass = calloc(nmacro, sizeof(cl_event));
   for(int ie = 0; ie < nmacro; ++ie)
     simu->clv_mass[ie] = clCreateUserEvent(simu->cli.context, &status);
@@ -1617,7 +1623,7 @@ void init_field_cl(Simulation *simu)
     simu->clv_flux1[ie] = clCreateUserEvent(simu->cli.context, &status);
     simu->clv_flux2[ie] = clCreateUserEvent(simu->cli.context, &status);
   }
-  
+
   simu->clv_volume = calloc(nmacro, sizeof(cl_event));
   for(int ie = 0; ie < nmacro; ++ie) {
     simu->clv_volume[ie] = clCreateUserEvent(simu->cli.context, &status);
@@ -1627,7 +1633,7 @@ void init_field_cl(Simulation *simu)
   for(int ie = 0; ie < nmacro; ++ie) {
     simu->clv_source[ie] = clCreateUserEvent(simu->cli.context, &status);
   }
-    
+
   // Set timers to zero
   simu->zbuf_time = 0;
   simu->mass_time = 0;
@@ -1641,10 +1647,10 @@ void init_field_cl(Simulation *simu)
   // Set roofline counts to zero
   simu->flops_vol = 0;
   simu->flops_flux = 0;
-  simu->flops_mass = 0; 
+  simu->flops_mass = 0;
   simu->reads_vol = 0;
   simu->reads_flux = 0;
-  simu->reads_mass = 0; 
+  simu->reads_mass = 0;
 }
 
 #endif // _WITH_OPENCL
