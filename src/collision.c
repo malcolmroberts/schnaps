@@ -27,6 +27,8 @@ void VlasovP_Lagrangian_NumFlux(schnaps_real wL[],schnaps_real wR[],schnaps_real
   // and the electric field
   flux[kd->index_phi]=0;  // flux for phi
   flux[kd->index_ex]=0; // flux for E
+  flux[kd->index_ey]=0;
+  flux[kd->index_ez]=0;
   flux[kd->index_rho]=0; // flux for rho
   flux[kd->index_u]=0; // flux for u
   flux[kd->index_P]=0; // flux for p
@@ -55,6 +57,8 @@ void VlasovP_Lagrangian_Source(const schnaps_real* x, const schnaps_real t, cons
   // no source on the potential for the moment
   source[kd->index_phi]=0;
   source[kd->index_ex]=0;
+  source[kd->index_ey]=0;
+  source[kd->index_ez]=0;
   source[kd->index_rho]=0; //rho init
   source[kd->index_u]=0; // u init
   source[kd->index_P]=0; // p init
@@ -86,12 +90,33 @@ void VlasovP_Lagrangian_Source(const schnaps_real* x, const schnaps_real t, cons
 
   for(int iv=0;iv<kd->index_max_kin+1;iv++){
     source[iv]/=Md[iv];
-    //printf("%f ",source[iv]);
   }
-  //printf("\n");
-  //assert(1==2);
-  
 
+  
+};
+
+void BGK_Source(const schnaps_real* w, schnaps_real* source) {
+
+  KineticData * kd=&schnaps_kinetic_data;
+  schnaps_real Maxw=0;
+  
+  for(int i=0;i<kd->index_max;i++){
+    source[i]=0;
+  }
+  
+  for(int ielv=0;ielv<kd->nb_elem_v;ielv++){
+    // loop on the local glops
+    for(int iloc=0;iloc<kd->deg_v+1;iloc++){
+      schnaps_real omega=wglop(kd->deg_v,iloc);
+      schnaps_real vi=-kd->vmax+ielv*kd->dv+kd->dv*glop(kd->deg_v,iloc);
+      int ipgv=iloc+ielv*kd->deg_v;
+      
+      Maxw=Computation_Maxwellian(w[kd->index_rho],w[kd->index_u],w[kd->index_T],vi);
+      source[ipgv]=kd->knud*(Maxw-w[ipgv]);
+    }
+  }
+  
+  
 };
 
 

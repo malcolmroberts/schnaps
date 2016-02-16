@@ -26,5 +26,6 @@ void VlasovP_Lagrangian_NumFlux(schnaps_real *wL, schnaps_real *wR, schnaps_real
 //! \param[out] source the source
 void VlasovP_Lagrangian_Source(const schnaps_real *x, const schnaps_real t, const schnaps_real *w, schnaps_real *source);
 
+void BGK_Source(const schnaps_real* w, schnaps_real* source);
 		    
 #endif

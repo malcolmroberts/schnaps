@@ -162,15 +162,16 @@ void InitContinuousSolver(void * cs, Simulation* simu,int type_bc,int nb_phy_var
     }
       
   }
-
-  printf("slice_size=%d\n", ps->slice_size);
-
-  ps->nb_slices = ps->nb_fe_nodes / ps->slice_size;
-
-  //assert(ps->nb_fe_nodes % ps->slice_size == 0);
-  if (ps->nb_fe_nodes % ps->slice_size != 0)
+    
+  if(ps->slice_size != 0){
+    ps->nb_slices = ps->nb_fe_nodes / ps->slice_size;
+      if (ps->nb_fe_nodes % ps->slice_size != 0)
     printf("warning, incorrect slice size:%d %d\n",
 	   ps->nb_fe_nodes, ps->slice_size);
+  }
+  else{
+    ps->nb_slices=1;
+  }
 
   free(xfe);
 

@@ -54,6 +54,8 @@ typedef struct KineticData{
   int index_max;
   schnaps_real vmax;
   schnaps_real dv;
+  schnaps_real gamma;
+  schnaps_real knud;
 } KineticData;
 
 

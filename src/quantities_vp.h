@@ -15,7 +15,13 @@ void Computation_charge_density(Simulation *simu);
 
 //void Compute_electric_field(field * f, real * w);
 void ComputeElectricField(field* f);
+
 schnaps_real Computation_charge_average(Simulation *simu);
 
+schnaps_real Computation_Maxwellian(schnaps_real rho, schnaps_real U, schnaps_real T, schnaps_real v);
+
+void Computation_Fluid_Quantities(Simulation *simu);
+
+void Collision_Source(Simulation *simu);
 
 #endif
