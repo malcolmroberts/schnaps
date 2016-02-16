@@ -52,12 +52,13 @@ void RHSPoisson_Continuous(void * cs){
       int imem = f0->varindex(f0->deg,f0->raf,f0->model.m,
 			      ilocmacro,kd->index_rho) ;
 	//+ iemacro * NPG(f0->deg,f0->raf) * f0->model.m ;
+   
       schnaps_real rho = ps->simu->fd[iemacro].wn[imem];
       ps->lsol.rhs[ino_fe] += rho * wpg * det ; 
       surf += wpg * det ;  
     }
- 
   }
+
 }
 
 

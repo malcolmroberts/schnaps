@@ -170,7 +170,7 @@ void ComputeElectricField(field* f){
 		  dtau,codtau,dphi,NULL);
 	schnaps_real det = dot_product(dtau[0], codtau[0]);
 	int ipot = f->varindex(f->deg,f->raf,f->model.m,
-			   ibmacro,kd->index_phi);
+			   ibmacro,kd->index_phi);	
 	f->wn[iex] -= f->wn[ipot] * dphi[0] / det;
       }
     }

@@ -50,7 +50,6 @@ void VlasovP_Lagrangian_Source(const schnaps_real* x, const schnaps_real t, cons
     db[iv]=0;
   }
   
-  
   for(int iv=0;iv< kd->index_max_kin + 1;iv++){
     source[iv]=0;
   }
@@ -68,11 +67,11 @@ void VlasovP_Lagrangian_Source(const schnaps_real* x, const schnaps_real t, cons
     // loop on the local glops
     for(int kloc=0;kloc<kd->deg_v+1;kloc++){
       schnaps_real omega=wglop(kd->deg_v,kloc);
-      int kpg=kloc+iel*kd->deg_v;
-      Md[kpg]+=omega*kd->dv;
+      int kpg = kloc+iel*kd->deg_v;
+      Md[kpg] += omega*kd->dv;
       for(int iloc=0;iloc<kd->deg_v+1;iloc++){
 	int ipg=iloc+iel*kd->deg_v;
-	source[ipg]+=E*omega*w[kpg]*dlag(kd->deg_v,iloc,kloc);
+	source[ipg] += E*omega*w[kpg]*dlag(kd->deg_v,iloc,kloc);
 	if (iloc==kloc) db[ipg]+=E*omega*dlag(kd->deg_v,iloc,kloc);
       }
     }
