@@ -149,6 +149,8 @@ void TestPoisson_ImposedData(const schnaps_real x[3], const schnaps_real t,schna
   // exact value of the potential and electric field
   w[kd->index_phi] = x[0] * (1 - x[0]);
   w[kd->index_ex] = - 1. + 2. * x[0];
+  w[kd->index_ey] = 0.0;
+  w[kd->index_ez] = 0.0;
   w[kd->index_rho] = 2.0; //rho init
   w[kd->index_u] = 0; // u init
   w[kd->index_P] = 0; // p init

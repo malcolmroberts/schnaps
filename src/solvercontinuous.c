@@ -170,7 +170,7 @@ void InitContinuousSolver(void * cs, Simulation* simu,int type_bc,int nb_phy_var
 	   ps->nb_fe_nodes, ps->slice_size);
   }
   else{
-    ps->nb_slices=1;
+    ps->nb_slices=0;
   }
 
   free(xfe);
