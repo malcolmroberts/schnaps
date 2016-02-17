@@ -54,11 +54,11 @@ void RHSPoisson_Continuous(void * cs){
 	//+ iemacro * NPG(f0->deg,f0->raf) * f0->model.m ;
    
       schnaps_real rho = ps->simu->fd[iemacro].wn[imem];
-      ps->lsol.rhs[ino_fe] += rho * wpg * det ; 
-      surf += wpg * det ;  
+      ps->lsol.rhs[ino_fe] += rho * wpg * det ;
+      surf += wpg * det ;
     }
+    
   }
-
 }
 
 
@@ -207,18 +207,21 @@ void Periodic_BoundaryCondition_Poisson1D(void * cs){
 			      ilocmacro,kd->index_rho) ;
 	//+ iemacro * NPG(f0->deg,f0->raf) * f0->model.m ;
       schnaps_real rho = ps->simu->fd[iemacro].wn[imem];
-      ps->lsol.rhs[ino_fe] -= charge_average * wpg * det ; 
+      ps->lsol.rhs[ino_fe] -= charge_average * wpg * det ;
       surf += wpg * det ;  
     }
  
   }
   
-  AddLinearSolver(&ps->lsol,0,0,1e20);
-  AddLinearSolver(&ps->lsol,ps->lsol.neq-1,ps->lsol.neq-1,1e20);
-
-  ps->lsol.rhs[0]=0;
-  ps->lsol.rhs[ps->lsol.neq-1]=0;
-}  
+  for(int ino=0; ino<ps->nb_fe_nodes; ino++){
+    if (ps->is_boundary_node[ino]){
+      AddLinearSolver(&ps->lsol,ino,ino,1e20);     
+      ps->lsol.rhs[ino]=0;
+    }
+  }
+  
+};
+    
 
 void ContinuousOperator_Poisson1D(void * cs){
   ContinuousSolver * ps=cs;  

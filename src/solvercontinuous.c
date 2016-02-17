@@ -280,9 +280,16 @@ void SolveContinuous2D(void* cs){
       exit(1);
     }
   
-
+  for(int i=0;i<ps->nb_fe_dof;i++){
+    //   printf(" rhs %d %f\n",i,ps->lsol.rhs[i]);
+    }
+   
   Advanced_SolveLinearSolver(&ps->lsol,ps->simu);
-  
+
+    for(int i=0;i<ps->nb_fe_dof;i++){
+      //  printf(" sol %d %f\n",i,ps->lsol.sol[i]);
+    }
+    //assert(1==2);  
   //printf("post computation assembly.....\n");
   if(ps->postcomputation_assembly != NULL){
     ps->postcomputation_assembly(ps);

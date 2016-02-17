@@ -15,10 +15,10 @@ void Equilibrium_ImposedData(const schnaps_real x[3], const schnaps_real t,schna
 void Equilibrium_InitData(schnaps_real x[3],schnaps_real w[]);
 void Equilibrium_BoundaryFlux(schnaps_real x[3],schnaps_real t,schnaps_real wL[],schnaps_real* vnorm, schnaps_real* flux);
 
-void Equilibrium2_ImposedData(const schnaps_real x[3], const schnaps_real t,schnaps_real w[]);
-void Equilibrium2_InitData(schnaps_real x[3],schnaps_real w[]);
-void Equilibrium2_BoundaryFlux(schnaps_real x[3],schnaps_real t,schnaps_real wL[],schnaps_real* vnorm, schnaps_real* flux);
-void Equilibrium2_TotalSource(const schnaps_real* x, const schnaps_real t, const schnaps_real* w, schnaps_real* source);
+void Equilibrium_SpacePerturbation_ImposedData(const schnaps_real x[3], const schnaps_real t,schnaps_real w[]);
+void Equilibrium_SpacePerturbation_InitData(schnaps_real x[3],schnaps_real w[]);
+void Equilibrium_SpacePerturbation_BoundaryFlux(schnaps_real x[3],schnaps_real t,schnaps_real wL[],schnaps_real* vnorm, schnaps_real* flux);
+void Equilibrium_SpacePerturbation_TotalSource(const schnaps_real* x, const schnaps_real t, const schnaps_real* w, schnaps_real* source);
 
 void Collision_VlasovPoisson(void* field, schnaps_real *w);
 void PlotVlasovPoisson(void* vf, schnaps_real * w);
@@ -60,8 +60,8 @@ int TestCollision(void) {
 
   
   Model model;
-  schnaps_real degV=3;
-  schnaps_real nbEV=20;
+  schnaps_real degV=4;
+  schnaps_real nbEV=24;
   KineticData * kd=&schnaps_kinetic_data;
 
   InitKineticData(kd,nbEV,degV);
@@ -74,14 +74,14 @@ int TestCollision(void) {
   model.Source = VlasovP_Lagrangian_Source;*/
 
   model.NumFlux=VlasovP_Lagrangian_NumFlux;
-  model.InitData =Equilibrium2_InitData;
-  model.ImposedData = Equilibrium2_ImposedData;
-  model.BoundaryFlux = Equilibrium2_BoundaryFlux;
-  model.Source = Equilibrium2_TotalSource;
+  model.InitData =Equilibrium_SpacePerturbation_InitData;
+  model.ImposedData = Equilibrium_SpacePerturbation_ImposedData;
+  model.BoundaryFlux = Equilibrium_SpacePerturbation_BoundaryFlux;
+  model.Source = Equilibrium_SpacePerturbation_TotalSource;
 
   
   int deg[]={4, 0, 0};
-  int raf[]={12, 1, 1};
+  int raf[]={24, 1, 1};
 
   CheckMacroMesh(&mesh, deg, raf);
   Simulation simu;
@@ -108,8 +108,11 @@ int TestCollision(void) {
   Plot_Energies(&simu, simu.dt);
 
   schnaps_real dd_Kinetic = L2_Kinetic_error(&simu);
+  schnaps_real dde = L2error_onefield(&simu,kd->index_ex);
+  schnaps_real ddp = L2error_onefield(&simu,kd->index_phi);
+
   
-  printf("erreur kinetic L2=%.5e \n", dd_Kinetic);
+  printf("erreur kinetic L2=%.5e, erreur Ex L2=%.5e, erreur Phi L2=%.5e  \n", dd_Kinetic,dde,ddp);
   test= test && (dd_Kinetic < 1e-2);
 
 
@@ -149,13 +152,13 @@ void Equilibrium_ImposedData(const schnaps_real x[3], const schnaps_real t, schn
 
 };
 
-void Equilibrium2_ImposedData(const schnaps_real x[3], const schnaps_real t, schnaps_real w[])
+void Equilibrium_SpacePerturbation_ImposedData(const schnaps_real x[3], const schnaps_real t, schnaps_real w[])
 {
   //parameters of the case
   KineticData * kd=&schnaps_kinetic_data;
   schnaps_real my_pi= 4.0*atan(1.0);
 
-  schnaps_real rho=4*my_pi*my_pi*(sin(2*my_pi*x[0]));
+  schnaps_real rho=4*my_pi*my_pi*(1.+0.5*(sin(2*my_pi*x[0])));
   
   for(int i=0;i<kd->index_max_kin+1;i++){
     int j=i%kd->deg_v; // local connectivity put in function
@@ -168,19 +171,20 @@ void Equilibrium2_ImposedData(const schnaps_real x[3], const schnaps_real t, sch
   }
   // exact value of the potential
   // and electric field
-  w[kd->index_phi]=sin(2*my_pi*x[0]);
-  w[kd->index_ex]=-2*my_pi*cos(2*my_pi*x[0]);
+
+ 
+  w[kd->index_phi]=0.5*sin(2.0*my_pi*x[0]);
+  w[kd->index_ex]=-my_pi*cos(2.0*my_pi*x[0]);
   w[kd->index_ey]=0.0;
   w[kd->index_ez]=0.0;
   w[kd->index_rho]=rho;  //rho init
   w[kd->index_u]=0; // u init
   w[kd->index_P]=0.; // p init
   w[kd->index_T]=1.0; // e ou T init
-
 };
 
 
-void Equilibrium2_TotalSource(const schnaps_real* x, const schnaps_real t, const schnaps_real* w, 
+void Equilibrium_SpacePerturbation_TotalSource(const schnaps_real* x, const schnaps_real t, const schnaps_real* w, 
 			       schnaps_real* source) {
   KineticData * kd=&schnaps_kinetic_data;
   schnaps_real Transport_source[kd->index_max];
@@ -198,7 +202,7 @@ void Equilibrium2_TotalSource(const schnaps_real* x, const schnaps_real t, const
       
       M=(1.0/sqrt(2.0*my_pi))*exp(-(vn*vn)/2.0);	
       source[iv] = Transport_source[iv];
-      source[iv] += (vn+(sin(2.0*my_pi*x[0]))*vn)*8.0*pow(my_pi,3.0)*cos(2.0*my_pi*x[0])*M;
+      source[iv] += 0.5*(vn+(1+0.5*sin(2.0*my_pi*x[0]))*vn)*8.0*pow(my_pi,3.0)*cos(2.0*my_pi*x[0])*M;
    }
   source[kd->index_phi]=0.0;
   source[kd->index_ex]=0.0;
@@ -217,10 +221,10 @@ void Equilibrium_InitData(schnaps_real x[3],schnaps_real w[]){
 
 };
 
-void Equilibrium2_InitData(schnaps_real x[3],schnaps_real w[]){
+void Equilibrium_SpacePerturbation_InitData(schnaps_real x[3],schnaps_real w[]){
 
   schnaps_real t=0;
-  Equilibrium2_ImposedData(x,t,w);
+  Equilibrium_SpacePerturbation_ImposedData(x,t,w);
 
 };
 
@@ -233,11 +237,11 @@ void Equilibrium_BoundaryFlux(schnaps_real x[3],schnaps_real t,schnaps_real wL[]
   VlasovP_Lagrangian_NumFlux(wL,wR,vnorm,flux);
 };
 
-void Equilibrium2_BoundaryFlux(schnaps_real x[3],schnaps_real t,schnaps_real wL[],schnaps_real* vnorm,
+void Equilibrium_SpacePerturbation_BoundaryFlux(schnaps_real x[3],schnaps_real t,schnaps_real wL[],schnaps_real* vnorm,
 				       schnaps_real* flux){
   KineticData * kd=&schnaps_kinetic_data;
   schnaps_real wR[kd->index_max];
-  Equilibrium2_ImposedData(x,t,wR);
+  Equilibrium_SpacePerturbation_ImposedData(x,t,wR);
   VlasovP_Lagrangian_NumFlux(wL,wR,vnorm,flux);
 };
 
@@ -247,7 +251,7 @@ void Collision_VlasovPoisson(void *si, schnaps_real *w) {
   Simulation *simu = si;
   KineticData * kd=&schnaps_kinetic_data;
   
-  //Collision_Source(simu);
+  Collision_Source(simu);
   
   Computation_charge_density(simu);
   static ContinuousSolver ps;
@@ -262,7 +266,7 @@ void Collision_VlasovPoisson(void *si, schnaps_real *w) {
     
     ps.matrix_assembly=ContinuousOperator_Poisson1D;
     ps.rhs_assembly=RHSPoisson_Continuous;
-    ps.bc_assembly=ExactDirichletContinuousMatrix;
+    ps.bc_assembly=Periodic_BoundaryCondition_Poisson1D;//;
     ps.postcomputation_assembly=Computation_ElectricField_Poisson;
     
     ps.lsol.solver_type = LU;
