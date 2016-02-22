@@ -654,7 +654,7 @@ schnaps_real L2error(Simulation *simu) {
 	// Get the exact value
 	f->model.ImposedData(xphy, simu->tnow, wex);
       }
-
+      
       for(int iv = 0; iv < f->model.m; iv++) {
 	//for(int iv = 0; iv < 4; iv++) {   ///////error here for coil2d
 	schnaps_real diff = w[iv] - wex[iv];

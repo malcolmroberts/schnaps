@@ -11,7 +11,7 @@
 
 void VlasovP_Lagrangian_NumFlux(schnaps_real wL[],schnaps_real wR[],schnaps_real* vnorm,schnaps_real* flux){
   KineticData * kd=&schnaps_kinetic_data;
-  for(int i=0;i<kd->index_max_kin+1;i++){
+  for(int i = 0;i < kd->index_max_kin+1;i++){
     int j=i%kd->deg_v; // local connectivity put in function
     int nel=i/kd->deg_v; // element num (TODO : function)
 

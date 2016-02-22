@@ -68,7 +68,7 @@ int TestPeriodic(void) {
   simu.cfl = 0.05;
   schnaps_real tmax = 0.4;
  
-  RK2(&simu,tmax);
+  RK4(&simu,tmax);
 
   // save the results and the error
   PlotFields(0, false, &simu, "sol","dgvisu.msh");
@@ -99,6 +99,8 @@ void TestPeriodic_ImposedData(const schnaps_real x[3], const schnaps_real t,schn
   // exact value of the potential and electric field
   w[kd->index_phi] = 0;
   w[kd->index_ex] = 0;
+  w[kd->index_ey] = 0;
+  w[kd->index_ez] = 0;
   w[kd->index_rho] = 2.0; //rho init
   w[kd->index_u] = 0; // u init
   w[kd->index_P] = 0; // p init
