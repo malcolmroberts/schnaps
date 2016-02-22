@@ -596,7 +596,7 @@ void DGVolume_CL(int ie, Simulation *simu, cl_mem *w_cl,
   // Using NUMFLUX = NumFlux (3 * m multiplies):
   nmultsdgvol += (npgc[0] + npgc[1] + npgc[2]) * 6 * m;
 
-  init_DGVolume_CL(simu, w_cl, groupsize * m);
+  init_DGVolume_CL(simu, w_cl, 2 * groupsize * m);
 
   simu->flops_vol += numworkitems * nmultsdgvol;
   simu->reads_vol += numworkitems * nreadsdgvol;

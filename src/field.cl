@@ -767,9 +767,201 @@ void AddBuffer(schnaps_real alpha,
 #endif
 
 
+__kernel
+void DGVolume(__constant int *param,     // 0: interp param
+	      int ie,                    // 1: macrocel index
+	      __constant schnaps_real *physnodes, // 2: macrocell nodes
+              __global schnaps_real *wn,         // 3: field values
+	      __global schnaps_real *dtwn,       // 4: time derivative
+	      __local schnaps_real *wnloc        // 5: cache for wn and dtwn
+	      )
+{
+  // Use __local memory in DGVolume kernel?
+#define DGVolume_LOCAL 1
+
+  __constant schnaps_real *physnode = physnodes + ie * 60;
+
+  const int m = param[0];
+  const int deg[3] = {param[1],param[2], param[3]};
+  const int npg[3] = {deg[0] + 1, deg[1] + 1, deg[2] + 1};
+  const int nraf[3] = {param[4], param[5], param[6]};
+
+  int icell = get_group_id(0);
+
+
+  int woffset = ie * m * NPG(deg, nraf);
+
+  //printf("ie=%d m=%d woffset=%d\n",ie,m,woffset);
+
+  __local schnaps_real *dtwnloc = wnloc  + m * npg[0] * npg[1] * npg[2];
+#if DGVolume_LOCAL
+  // Prefetch: m reads of wn
+  for(int i = 0; i < m ; ++i){
+    int iread = get_local_id(0) + i * get_local_size(0);
+    int iv = iread % m;
+    int ipgloc = iread / m;
+    int ipg = ipgloc + icell * get_local_size(0);
+    int imem =  VARINDEX(param + 1, param + 4, m, ipg, iv) + woffset;
+    //VARINDEX(param, ie, ipg, iv);
+    int imemloc = iv + ipgloc * m;
+    wnloc[imemloc] = wn[imem];
+    dtwnloc[imemloc] = 0;
+
+    /* printf("_M=%d icell=%d imem:%d loc_id=%d iv=%d ipg=%d w2=%f\n",_M, */
+    /* 	   icell, imem,get_local_id(0) ,iv,ipgloc,wnloc[imemloc]); */
+  }
+
+  //barrier(CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE);
+  barrier(CLK_LOCAL_MEM_FENCE);
+#endif
+
+  // subcell id
+  int icL[3];
+  icL[0] = icell % nraf[0];
+  icL[1] = (icell / nraf[0]) % nraf[1];
+  icL[2]= icell / nraf[0] / nraf[1];
+
+  // gauss point id where we compute the jacobian
+  int p[3];
+  //ipg_to_xyz(get_local_id(0), p, npg
+  {
+    int ipg = get_local_id(0);
+    p[0] = ipg % npg[0];
+    p[1] = (ipg / npg[0]) % npg[1];
+    p[2] = ipg / npg[0] / npg[1];
+  }
+
+  // ref coordinates
+  schnaps_real hx = 1.0 / (schnaps_real) nraf[0];
+  schnaps_real hy = 1.0 / (schnaps_real) nraf[1];
+  schnaps_real hz = 1.0 / (schnaps_real) nraf[2];
+
+  int offset[3] = {gauss_lob_offset[deg[0]] + p[0],
+		   gauss_lob_offset[deg[1]] + p[1],
+		   gauss_lob_offset[deg[2]] + p[2]};
+
+  schnaps_real x = hx * (icL[0] + gauss_lob_point[offset[0]]);
+  schnaps_real y = hy * (icL[1] + gauss_lob_point[offset[1]]);
+  schnaps_real z = hz * (icL[2] + gauss_lob_point[offset[2]]);
+
+  schnaps_real wpg = hx * hy * hz
+    * gauss_lob_weight[offset[0]]
+    * gauss_lob_weight[offset[1]]
+    * gauss_lob_weight[offset[2]];
+
+  schnaps_real codtau[3][3];
+  {
+    schnaps_real dtau[3][3];
+    get_dtau(x, y, z, physnode, dtau); // 1296 mults
+
+    codtau[0][0] =  dtau[1][1] * dtau[2][2] - dtau[1][2] * dtau[2][1];
+    codtau[0][1] = -dtau[1][0] * dtau[2][2] + dtau[1][2] * dtau[2][0];
+    codtau[0][2] =  dtau[1][0] * dtau[2][1] - dtau[1][1] * dtau[2][0];
+    codtau[1][0] = -dtau[0][1] * dtau[2][2] + dtau[0][2] * dtau[2][1];
+    codtau[1][1] =  dtau[0][0] * dtau[2][2] - dtau[0][2] * dtau[2][0];
+    codtau[1][2] = -dtau[0][0] * dtau[2][1] + dtau[0][1] * dtau[2][0];
+    codtau[2][0] =  dtau[0][1] * dtau[1][2] - dtau[0][2] * dtau[1][1];
+    codtau[2][1] = -dtau[0][0] * dtau[1][2] + dtau[0][2] * dtau[1][0];
+    codtau[2][2] =  dtau[0][0] * dtau[1][1] - dtau[0][1] * dtau[1][0];
+  }
+
+  schnaps_real wL[_M];
+  int ipgL = ipg(npg, p, 0);
+
+  //int imemL0 = VARINDEX(param, ie, ipgL, 0);
+  //int imemL0loc = ipgL * m;
+  __local schnaps_real *wnloc0 = wnloc + ipgL * m;
+  //printf("ipgL * m: %d\n", ipgL * m);
+  for(int iv = 0; iv < m; iv++) {
+#if DGVolume_LOCAL
+    // Copy to register from local memory
+    //wL[iv] = wnloc[ipgL * m + iv];
+    wL[iv] = wnloc0[iv];
+#else
+    // gauss point id in the macrocell
+    int ipgL = ipg(npg, p, icell);
+    int imemL =  VARINDEX(param + 1, param + 4, m, ipgL, iv) + woffset;
+    //VARINDEX(param, ie, ipgL, iv);
+    wL[iv] = wn[imemL];
+#endif
+  }
+
+  schnaps_real flux[_M];
+  for(int dim0 = 0; dim0 < 3; dim0++) {
+    int q[3] = {p[0], p[1], p[2]};
+
+    // Loop on the "cross" points
+    for(int iq = 0; iq < npg[dim0]; iq++) {
+      q[dim0] = (p[dim0] + iq) % npg[dim0];
+      schnaps_real dphiref[3] = {0, 0, 0};
+      dphiref[dim0] = dlag(deg[dim0], q[dim0], p[dim0]) * nraf[dim0];
+      schnaps_real dphi[3];
+      for(int ii = 0; ii < 3; ii++) {
+	/* dphi[ii] = 0; */
+	/* for(int jj = 0; jj < 3; jj++) { */
+	/*   dphi[ii] += codtau[ii][jj] * dphiref[jj]; */
+	/* } */
+	schnaps_real *codtauii = codtau[ii];
+	dphi[ii]
+	  = codtauii[0] * dphiref[0]
+	  + codtauii[1] * dphiref[1]
+	  + codtauii[2] * dphiref[2];
+      }
+
+      NUMFLUX(wL, wL, dphi, flux); // 3m mults when using NumFlux
+
+#if DGVolume_LOCAL
+      int ipgR = ipg(npg, q, 0);
+      //int imemR0 = VARINDEX(param, ie, ipgR, 0);
+      //__global schnaps_real *dtwn0 = dtwn + imemR0;
+
+      int imemR0loc = ipgR * m;
+      __local schnaps_real *dtwnloc0 =  dtwnloc + imemR0loc;
+      for(int iv = 0; iv < m; iv++) {
+	// Add to global memory
+	//dtwn0[iv] += flux[iv] * wpg;
+
+	// Add to local memory
+	//dtwnloc[ipgR * m + iv] += flux[iv] * wpg;
+	dtwnloc0[iv] += flux[iv] * wpg;
+      }
+#else
+      int ipgR = ipg(npg, q, icell);
+      int imemR0 =  VARINDEX(param + 1, param + 4, m, ipgR, iv) + woffset;
+      //VARINDEX(param, ie, ipgR, 0);
+      __global double *dtwn0 = dtwn + imemR0;
+      for(int iv = 0; iv < m; iv++) {
+     	dtwn0[iv] += flux[iv] * wpg;
+      }
+#endif
+    }
+
+  } // dim0 loop
+
+
+#if DGVolume_LOCAL
+  //barrier(CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE);
+  barrier(CLK_LOCAL_MEM_FENCE);
+
+  // Postfetch: m writes
+  for(int i = 0; i < m; ++i){
+    int iread = get_local_id(0) + i * get_local_size(0);
+    int iv = iread % m;
+    int ipgloc = iread / m ;
+    int ipg = ipgloc + icell * get_local_size(0);
+    int imem =  VARINDEX(param + 1, param + 4, m, ipg, iv) + woffset;
+    //VARINDEX(param, ie, ipg, iv);
+    int imemloc = ipgloc * m + iv;
+    dtwn[imem] += dtwnloc[imemloc];
+  }
+#else
+
+#endif
+}
+
 // Compute the volume terms inside one macrocell
 __kernel
-void DGVolume(__constant int *param,              // 0: interp param (m, deg, raf)
+void DGVolumeAAA(__constant int *param,              // 0: interp param (m, deg, raf)
               int ie,                             // 1: macrocel index
               __constant schnaps_real *physnodes, // 2: macrocell nodes
               __global schnaps_real *wn,          // 3: field values
