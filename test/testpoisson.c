@@ -31,10 +31,6 @@ int TestPoisson(void)
 {
   bool test = true;
 
-#ifdef PARALUTION 
-  paralution_begin();
-#endif 
-
   // 2D meshes:
   // test/disque2d.msh
   // test/testdisque2d.msh
@@ -95,16 +91,10 @@ int TestPoisson(void)
   ps.bc_assembly= ExactDirichletContinuousMatrix;
   ps.postcomputation_assembly=Computation_ElectricField_Poisson;
 
-#ifdef PARALUTION
-  ps.lsol.solver_type =LU;
-  ps.lsol.pc_type=NONE;
-#else
   //ps.lsol.solver_type = GMRES;
   ps.lsol.solver_type = LU;
   ps.lsol.pc_type=NONE;
-#endif 
   
-
   SolveContinuous2D(&ps);
 
 
@@ -119,16 +109,9 @@ int TestPoisson(void)
 
   PlotFields(kd->index_phi, false, &simu, NULL, "dgvisu.msh");
   PlotFields(kd->index_ex, false, &simu, NULL, "dgex.msh");
-
-#ifdef PARALUTION 
-  paralution_end();
-#endif
   
   freeContinuousSolver(&ps);
   FreeMacroMesh(&mesh);
-
-
-
 
   return test;
 }

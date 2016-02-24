@@ -107,28 +107,6 @@ endif()
 #  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 #endif()
 
-SET(BUILD_PARALUTION      OFF CACHE BOOL   "Build paralution library")
-
-IF(BUILD_PARALUTION)
-
-  ADD_DEFINITIONS(-DPARALUTION)
-  INCLUDE(ExternalProject)
-  SET(PARALUTION_VERSION 1.0.0 CACHE STRING "Paralution version number")
-  EXTERNALPROJECT_ADD( paralution-${PARALUTION_VERSION}
-     URL  http://www.paralution.com/downloads/paralution-${PARALUTION_VERSION}.tar.gz
-     CMAKE_ARGS -DSUPPORT_CUDA=OFF -DSUPPORT_OMP=OFF -DSUPPORT_OCL=OFF -DSUPPORT_MIC=OFF
-   -DBUILD_EXAMPLES=OFF -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER} -O3
-     INSTALL_COMMAND ""
-  )
-
-  INCLUDE_DIRECTORIES(${CMAKE_BINARY_DIR}/paralution-${PARALUTION_VERSION}-prefix/src/paralution-${PARALUTION_VERSION}/src/)
-  LINK_DIRECTORIES(${CMAKE_BINARY_DIR}/paralution-${PARALUTION_VERSION}-prefix/src/paralution-${PARALUTION_VERSION}-build/lib)
-  ADD_LIBRARY(paralution_c   src/paralution_c.cpp )
-  ADD_DEPENDENCIES(paralution_c  paralution-${PARALUTION_VERSION})
-  TARGET_LINK_LIBRARIES(paralution_c paralution)
-
-ENDIF()
-
 set(SuiteSparse_VERBOSE OFF)
 set(SuiteSparse_USE_LAPACK_BLAS ON)
 find_package(suitesparse)
@@ -199,12 +177,8 @@ list(APPEND
   src/advanced_linear_solver.c
   src/solvercontinuous.h
   src/solvercontinuous.c
-  src/physBased_PC.h
-  src/physBased_PC.c
   src/solverpoisson.h
   src/solverpoisson.c
-  src/solverwave.h
-  src/solverwave.c
   src/quantities_vp.h
   src/quantities_vp.c
   src/diagnostics_vp.h
@@ -236,10 +210,6 @@ endif (OPENCL_FOUND)
 
 #schnaps library
 add_library (_schnaps ${source_files})
-
-IF(BUILD_PARALUTION)
-  target_link_libraries(_schnaps paralution_c paralution)
-ENDIF(BUILD_PARALUTION)
 
 set(LIBS "")
 

@@ -80,9 +80,6 @@ void RobinBoundaryConditionAssembly(void * cs){
 	for(int ipglf = 0;ipglf < NPGF(f->deg,f->raf,locfaL); ipglf++){
 	  schnaps_real xpgref[3], xpgref_in[3], wpg;
 
-
-	  // Get the coordinates of the Gauss point and coordinates of a
-	  // point slightly inside the opposite element in xref_in
 	  int ipg = ref_pg_face(f->deg, f->raf, locfaL, ipglf, xpgref, &wpg, xpgref_in);
 	  int ino_dg = ipg + ie * ps->npgmacrocell;
 	  int ino_fe = ps->dg_to_fe_index[ino_dg];
@@ -129,8 +126,6 @@ void RobinBoundaryConditionAssembly(void * cs){
     ps->lsol.mat_is_assembly=true;
   }
   
-  //for(int var =0; var < ps->nb_phy_vars; var++){ 
-  //for(int ie = 0; ie < ps->simu->macromesh.nbelems; ie++){  
   for (int i=0; i<ps->simu->macromesh.nboundaryfaces;i++){
     int ifa = ps->simu->macromesh.boundaryface[i];
     int locfaL = ps->simu->macromesh.face2elem[4 * ifa + 1];

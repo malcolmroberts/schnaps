@@ -116,8 +116,6 @@ int TestCollision(void) {
   test= test && (dd_Kinetic < 1e-2);
 
 
- 
-
   test= 1;
 
   return test; 
@@ -169,8 +167,6 @@ void Equilibrium_SpacePerturbation_ImposedData(const schnaps_real x[3], const sc
  
     w[i]=(rho/sqrt(2.0*my_pi))*exp(-(vi*vi)/2.0);
   }
-  // exact value of the potential
-  // and electric field
 
  
   w[kd->index_phi]=0.5*sin(2.0*my_pi*x[0]);

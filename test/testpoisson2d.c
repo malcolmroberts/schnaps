@@ -30,9 +30,6 @@ int TestPoisson2d(void)
 {
   bool test = true;
 
-#ifdef PARALUTION 
-  paralution_begin();
-#endif   
   // 2D meshes:
   // test/disque2d.msh
   // test/testdisque2d.msh
@@ -88,16 +85,11 @@ int TestPoisson2d(void)
   ps.matrix_assembly=ContinuousOperator_Poisson2D;
   ps.rhs_assembly=RHSPoisson_Continuous;
   ps.bc_assembly= ExactDirichletContinuousMatrix;
-   ps.postcomputation_assembly=Computation_ElectricField_Poisson;
+  ps.postcomputation_assembly=Computation_ElectricField_Poisson;
 
-#undef PARALUTION
-#ifdef PARALUTION
-  ps.lsol.solver_type = PAR_LU;
-  ps.lsol.pc_type=NONE;
-#else
   ps.lsol.solver_type = GMRES;
   ps.lsol.pc_type=NONE;
-#endif
+
 
   SolveContinuous2D(&ps);
 

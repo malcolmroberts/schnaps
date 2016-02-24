@@ -606,37 +606,6 @@ void GenericOperator_Continuous(void * cs){
 }
 
 
-void cat2CGVectors(ContinuousSolver* L1Solver,ContinuousSolver* L2Solver, schnaps_real *L1, schnaps_real *L2, schnaps_real *L){
-
-  int cc=0;
-  for (int i=0; i<L1Solver->nb_fe_nodes;i++){
-    for (int iv1=0; iv1<L1Solver->nb_phy_vars;iv1++){
-      L[cc+L1Solver->list_of_var[iv1]] = L1[i*L1Solver->nb_phy_vars+iv1];
-    }
-    for (int iv2=0; iv2<L2Solver->nb_phy_vars;iv2++){
-      L[cc+L2Solver->list_of_var[iv2]] = L2[i*L2Solver->nb_phy_vars+iv2];
-    }
-    cc+=L1Solver->nb_phy_vars+L2Solver->nb_phy_vars;
-  }
-}
-
-
-
-void extract2CGVectors(ContinuousSolver* L1Solver,ContinuousSolver* L2Solver, schnaps_real *L, schnaps_real *L1, schnaps_real *L2){
-  
-  int cc=0;
-  for (int i=0; i<L1Solver->nb_fe_nodes;i++){
-    for (int iv1=0; iv1<L1Solver->nb_phy_vars;iv1++){
-      L1[i*L1Solver->nb_phy_vars+iv1] = L[cc+L1Solver->list_of_var[iv1]];
-    }
-    for (int iv2=0; iv2<L2Solver->nb_phy_vars;iv2++){
-      L2[i*L2Solver->nb_phy_vars+iv2] = L[cc+L2Solver->list_of_var[iv2]];
-    }
-    cc+=L1Solver->nb_phy_vars+L2Solver->nb_phy_vars;
-  }
-}
-
-
 
 void freeContinuousSolver(ContinuousSolver* cs){
 
