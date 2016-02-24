@@ -56,6 +56,7 @@ typedef struct KineticData{
   schnaps_real dv;
   schnaps_real gamma;
   schnaps_real knud;
+  bool solve_quasineutrality;
 } KineticData;
 
 

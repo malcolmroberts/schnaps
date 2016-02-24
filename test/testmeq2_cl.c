@@ -98,7 +98,7 @@ int TestmEq2(void)  {
 #else
   // OpenCL version
   schnaps_real dt = 0;
-  RK2_CL(&simu, tmax, dt, 0, 0, 0);
+  RK4_CL(&simu, tmax, dt, 0, 0, 0);
 
   CopyfieldtoCPU(&simu); 
   printf("\nOpenCL Kernel time:\n");

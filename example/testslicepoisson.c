@@ -40,7 +40,7 @@ int TestSlicePoisson(void) {
   
     
   int deg[]={2, 2, 2};
-  int raf[]={3, 3, 3};
+  int raf[]={4, 4, 8};
 
   CheckMacroMesh(&mesh, deg, raf);
 
@@ -55,7 +55,9 @@ int TestSlicePoisson(void) {
   KineticData *kd = &schnaps_kinetic_data;
   int nbelemv = 2;
   int deg_v = 2;
+  
   InitKineticData(&schnaps_kinetic_data,nbelemv,deg_v);
+  kd->solve_quasineutrality = true;
   
   printf("_MV=%d\n",kd->mv);
   printf("_INDEX_MAX=%d\n",kd->index_max);
@@ -116,6 +118,8 @@ int TestSlicePoisson(void) {
 #endif
 
   SolveContinuous2D(&ps);
+  /* DisplayLinearSolver(&ps.lsol); */
+  /* assert(1==2); */
   
   
   PlotFields(kd->index_phi,(1==0),&simu,"sol","dgvisu.msh");
