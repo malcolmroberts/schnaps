@@ -243,7 +243,7 @@ void ipg_to_xyz(const int *raf, const int *deg, int *ic, int *ix,
 
 
 // From a reference point find the nearest gauss point
-// Warning: works only  degree 1,2 or 3
+// Warning: works only for  degrees 1,2 or 3
 int ref_ipg(int *deg, int *nraf, schnaps_real *xref) {
 
   schnaps_real hh[3] = {1./nraf[0],1./nraf[1],1./nraf[2]};
@@ -519,6 +519,7 @@ int ref_pg_face(int deg3d[], int nraf3d[], int ifa, int ipg,
 
   // Compute the global index of the
   // Gauss-Lobatto point in the volume
+  // TODO: call rather xyz_to_ipg !!!!!!!!!!!!!!!!!!!!!
   int ipg3d = ipgxyz[0] + (deg3d[0] + 1) *
     (ipgxyz[1] + (deg3d[1] + 1) *
      (ipgxyz[2] + (deg3d[2] + 1) *
