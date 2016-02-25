@@ -35,8 +35,8 @@ int TestmEq2(void)  {
   char *mshname =  "../test/testcube.msh";
   
   MacroMesh mesh;
-  ReadMacroMesh(&mesh,"../test/testcube.msh");
-  //ReadMacroMesh(&mesh,"../test/testmacromesh.msh");
+  //ReadMacroMesh(&mesh,"../test/testcube.msh");
+  ReadMacroMesh(&mesh,"../test/testmacromesh.msh");
   Detect2DMacroMesh(&mesh);
   BuildConnectivity(&mesh);
 
@@ -53,7 +53,7 @@ int TestmEq2(void)  {
 
 
   int deg[]={3, 3, 0};
-  int raf[]={4, 4, 1};
+  int raf[]={2, 2, 1};
 
   assert(mesh.is2d);
 
@@ -115,7 +115,7 @@ int TestmEq2(void)  {
 
   printf("erreur L2=%f\n", dd);
 
-  schnaps_real tolerance = 0.0025;
+  schnaps_real tolerance = 0.009;
 
   test = dd < tolerance;
   

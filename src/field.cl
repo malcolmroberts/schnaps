@@ -255,7 +255,7 @@ void Phy2Ref(__constant schnaps_real *physnode,
              schnaps_real xphy[3], schnaps_real xref[3]);
 
 // Given parameters deg and nraf and input ipg, compute the reference
-// coordinages (xpg) and the weght of the Gauss piont (wpg).
+// coordinages (xpg) and the weight of the Gauss piont (wpg).
 void ref_pg_vol(const int *deg, const int *nraf,
 		const int ipg, schnaps_real *xpg, schnaps_real *wpg) {
   int ix[3], ic[3];
@@ -600,7 +600,7 @@ void DGFlux(__constant int *param,       // 0: interp param
   for(int iv = 0; iv < m; iv++) {
     int imemL =  VARINDEX(param + 1, param + 4, m, ipgL, iv) + woffset;
     //VARINDEX(param, ie, ipgL, iv);
-    wL[iv] = wn[imemL];
+    wL[iv] = wn[imemL]; 
     int imemR =  VARINDEX(param + 1, param + 4, m, ipgR, iv) + woffset;
     //VARINDEX(param, ie, ipgR, iv);
     wR[iv] = wn[imemR];
@@ -678,7 +678,7 @@ void DGFlux(__constant int *param,       // 0: interp param
   for(int iv = 0; iv < m; iv++) {
     int imemL =  VARINDEX(param + 1, param + 4, m, ipgL, iv) + woffset;
     //VARINDEX(param, ie, ipgL, iv);
-    wL[iv] = wn[imemL];
+    wL[iv] = wn[imemL]; 
     int imemR =  VARINDEX(param + 1, param + 4, m, ipgR, iv) + woffset;
     //VARINDEX(param, ie, ipgR, iv);
     wR[iv] = wn[imemR];
@@ -927,10 +927,10 @@ void DGVolume(__constant int *param,     // 0: interp param
       }
 #else
       int ipgR = ipg(npg, q, icell);
+      for(int iv = 0; iv < m; iv++) {
       int imemR0 =  VARINDEX(param + 1, param + 4, m, ipgR, iv) + woffset;
       //VARINDEX(param, ie, ipgR, 0);
       __global double *dtwn0 = dtwn + imemR0;
-      for(int iv = 0; iv < m; iv++) {
      	dtwn0[iv] += flux[iv] * wpg;
       }
 #endif
@@ -1160,6 +1160,7 @@ void DGMass(__constant int *param,       // 0: interp param
 
 
   int npgie = npg[0] * npg[1] * npg[2] * nraf[0] * nraf[1] * nraf[2];
+  //printf("offset=%d %d\n",woffset, npgie * ie * m);
 
   //ref_pg_vol(param+1, ipg,xpgref,&wpg,NULL);
   int ix = ipg % npg[0];
@@ -1204,11 +1205,16 @@ void DGMass(__constant int *param,       // 0: interp param
     - dtau[2][0] * dtau[0][2] * dtau[1][1];
 
   schnaps_real overwpgget = 1.0 / (wpg * det);
-  int imem0 = m * (get_global_id(0) + npgie * ie);
-  __global schnaps_real *dtwn0 = dtwn + imem0;
+  // faster computations but wrong when we change varindex !!!!!!!!!!!!!!!!
+  /* int imem0 = m * (get_global_id(0) + npgie * ie); */
+  /* __global schnaps_real *dtwn0 = dtwn + imem0; */
   for(int iv = 0; iv < m; iv++) {
-    //int imem = iv + imem0;
-    dtwn0[iv] *= overwpgget; // m mults, m reads
+    /* dtwn0[iv] *= overwpgget; // m mults, m reads */
+    int imem = VARINDEX(param + 1, param + 4, m, get_global_id(0), iv) + woffset;
+    /* int *deg1 = param + 1; */
+    /* int *raf1 = param + 4; */
+    /* printf("deg=%d %d %d raf=%d %d %d m=%d\n",deg1[0],deg1[1],deg1[2],raf1[0],raf1[1],raf1[2],m); */
+    dtwn[imem] *= overwpgget;
   }
 }
 
@@ -1384,18 +1390,28 @@ void DGMacroCellInterface(__constant int *param,        // 0: interp param
   __global schnaps_real *wnL0 = wn + imemL0;
   __global schnaps_real *wnR0 = wn + imemR0;
   for(int iv = 0; iv < m; iv++) {
-    wL[iv] = wnL0[iv];
-    wR[iv] = wnR0[iv];
+    /* wL[iv] = wnL0[iv]; */
+    /* wR[iv] = wnR0[iv]; */
+    int imemL = VARINDEX(param + 1, param + 4, m, ipgL, iv) + woffsetL;
+    wL[iv] = wn[imemL];
+
+    int imemR = VARINDEX(param + 1, param + 4, m, ipgR, iv) + woffsetR;
+    wR[iv] = wn[imemR];
   }
 
   NUMFLUX(wL, wR, vnds, flux);
 
-  __global schnaps_real *dtwnL0 = dtwn + imemL0;
-  __global schnaps_real *dtwnR0 = dtwn + imemR0;
+  /* __global schnaps_real *dtwnL0 = dtwn + imemL0; */
+  /* __global schnaps_real *dtwnR0 = dtwn + imemR0; */
   for(int iv = 0; iv < m; ++iv) {
     schnaps_real fluxwpg = flux[iv] * wpg;
-    dtwnL0[iv] -= fluxwpg;
-    dtwnR0[iv] += fluxwpg;
+    int imemL = VARINDEX(param + 1, param + 4, m, ipgL, iv) + woffsetL;
+    dtwn[imemL] -= fluxwpg;
+
+    int imemR = VARINDEX(param + 1, param + 4, m, ipgR, iv) + woffsetR;
+    dtwn[imemR] += fluxwpg;
+    /* dtwnL0[iv] -= fluxwpg; */
+    /* dtwnR0[iv] += fluxwpg; */
   }
 }
 
@@ -1490,19 +1506,23 @@ void DGBoundary(__constant int *param,      // 0: interp param
   schnaps_real wL[_M];
   schnaps_real flux[_M];
 
-  int imemL0 =  VARINDEX(param + 1, param + 4, m, ipgL, 0) + woffset;
+  //int imemL0 =  VARINDEX(param + 1, param + 4, m, ipgL, 0) + woffset;
   //VARINDEX(param, ieL, ipgL, 0);
-  __global schnaps_real *wn0 = wn + imemL0;
+  //__global schnaps_real *wn0 = wn + imemL0;
   for(int iv = 0; iv < m; ++iv) {
-    wL[iv] = wn0[iv];
+    //wL[iv] = wn0[iv];
+    int imemL = VARINDEX(param + 1, param + 4, m, ipgL, iv) + woffset;
+    wL[iv] = wn[imemL];
   }
 
   BOUNDARYFLUX(xpg, tnow, wL, vnds, flux);
 
   // The basis functions is also the gauss point index
-  __global schnaps_real *dtwn0 = dtwn + imemL0;
+  //__global schnaps_real *dtwn0 = dtwn + imemL0;
   for(int iv = 0; iv < m; ++iv) {
-    dtwn0[iv] -= flux[iv] * wpg;
+    //dtwn0[iv] -= flux[iv] * wpg;
+    int imemL = VARINDEX(param + 1, param + 4, m, ipgL, iv) + woffset;
+    dtwn[imemL] -= flux[iv] * wpg;
   }
 }
 
