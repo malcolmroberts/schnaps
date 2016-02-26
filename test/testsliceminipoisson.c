@@ -5,7 +5,7 @@
 #include "gyro.h"
 #include "solverpoisson.h"
 
-int TestSlicePoisson(void);
+int TestSliceMiniPoisson(void);
 void SliceInitData(schnaps_real x[3],schnaps_real w[]);
 void SliceImposedData(const schnaps_real x[3], const schnaps_real t, schnaps_real w[]);
 void SliceBoundaryFlux(schnaps_real x[3],schnaps_real t,
@@ -16,7 +16,7 @@ int main(void) {
   
   // unit tests
     
-  int resu=TestSlicePoisson();
+  int resu=TestSliceMiniPoisson();
 	 
   if (resu) printf("slice poisson test OK !\n");
   else printf("slice poisson test failed !\n");
@@ -25,7 +25,7 @@ int main(void) {
 } 
 
 
-int TestSlicePoisson(void) { 
+int TestSliceMiniPoisson(void) { 
 
   bool test=true;
 
@@ -40,7 +40,7 @@ int TestSlicePoisson(void) {
   
     
   int deg[]={2, 2, 2};
-  int raf[]={4, 4, 4};
+  int raf[]={1, 1, 1};
 
   CheckMacroMesh(&mesh, deg, raf);
 
@@ -58,8 +58,6 @@ int TestSlicePoisson(void) {
   
   InitKineticData(&schnaps_kinetic_data,nbelemv,deg_v);
   kd->solve_quasineutrality = true;
-  kd->substract_mean_charge = false;
-  kd->qn_damping = 0;
   
   printf("_MV=%d\n",kd->mv);
   printf("_INDEX_MAX=%d\n",kd->index_max);
@@ -135,7 +133,7 @@ int TestSlicePoisson(void) {
   printf("erreur L2=%lf\n",dd);
   printf("tnow is  %lf\n",simu.tnow);
   Velocity_distribution_plot(simu.w);
-  test= test && (dd < 0.005);
+  test= test && (dd < 0.03);
 
 
   return test; 
@@ -158,7 +156,7 @@ void SliceImposedData(const schnaps_real x[3], const schnaps_real t, schnaps_rea
   // and electric field
   w[kd->index_phi]=(x[0] * x[0] + x[1] * x[1])/4;
   //w[kd->index_phi]= 0;
-  w[kd->index_rho] = -1 + kd->qn_damping * w[kd->index_phi];
+  w[kd->index_rho] = -1;
   w[kd->index_ex]=-x[0]/2;
   w[kd->index_ey]=-x[1]/2;
   //w[kd->index_ex]=0;

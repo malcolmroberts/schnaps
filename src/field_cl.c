@@ -354,8 +354,8 @@ void DGMass_CL(int ie, Simulation *simu,
   init_DGMass_CL(simu);
 
   //clSetUserEventStatus(simu->clv_mass, CL_COMPLETE);
-  if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
-  assert(status >= CL_SUCCESS);
+  //if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
+  //assert(status >= CL_SUCCESS);
 
   // Loop on the elements
 

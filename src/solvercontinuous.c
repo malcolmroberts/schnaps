@@ -60,10 +60,10 @@ int BuildFatNodeList(Simulation *simu,FatNode* fn_list){
       schnaps_real xref[3];
       ref_pg_vol(f->deg, f->raf, ipg, xref, NULL, NULL);
       schnaps_ref2phy(f->physnode,
-	      xref,
-	      0, -1, // dphiref, ifa
-              xpg, NULL,
-	      NULL, NULL, NULL); // codtau, dphi, vnds
+		      xref,
+		      0, -1, // dphiref, ifa
+		      xpg, NULL,
+		      NULL, NULL, NULL); // codtau, dphi, vnds
 
 
       slice_projection(xpg, fn_list[ino].x);
@@ -153,26 +153,35 @@ void InitContinuousSolver(void * cs, Simulation* simu,int type_bc,int nb_phy_var
     xfe[3 * ife + 1] = ps->fn_list[ino].x_int[1];
     xfe[3 * ife + 2] = ps->fn_list[ino].x_int[2];
   }
-
+  
   ps->slice_size = 0;
-  for(int ino = 0; ino < ps->nb_fe_nodes; ino++){
-    int i1 = xfe[3 * ino + 0];
-     if (i1 == 0 || i1 == -1 || i1 == 1) {
-      ps->slice_size++;
-    }
-      
-  }
+  ps->nb_slices=0;
+  
+  if (schnaps_kinetic_data.solve_quasineutrality){
     
-  if(ps->slice_size != 0){
-    ps->nb_slices = ps->nb_fe_nodes / ps->slice_size;
-    if (ps->nb_fe_nodes % ps->slice_size != 0)
-      printf("warning, incorrect slice size or slice useless:%d %d\n",
-	     ps->nb_fe_nodes, ps->slice_size);
-  }
-  else{
-    ps->nb_slices=0;
-  }
+    for(int ino = 0; ino < ps->nb_fe_nodes; ino++){
+      int i1 = xfe[3 * ino + 0];
+      if (i1 == 0 || i1 == -1 || i1 == 1) {
+	ps->slice_size++;
+      }
+      
+    }
+    
+    
+    if(ps->slice_size != 0){
+      ps->nb_slices = ps->nb_fe_nodes / ps->slice_size;
+      if (ps->nb_fe_nodes % ps->slice_size != 0){
+	printf("Incorrect slice size or slice useless:%d %d\n",
+	       ps->nb_fe_nodes, ps->slice_size);
+	assert(ps->nb_fe_nodes % ps->slice_size == 0);
+      }
+    }
+    else{
+      ps->nb_slices=0;
+    }
 
+  }
+  
   free(xfe);
 
 
@@ -206,7 +215,7 @@ void InitContinuousSolver(void * cs, Simulation* simu,int type_bc,int nb_phy_var
       if (ieR < 0) {
 	for(int ipgf = 0; ipgf < NPGF(deg,nraf, ifa); ipgf++) {
 	  int ipg = ref_pg_face(deg,nraf, ifa, ipgf,
-		      NULL, NULL, NULL);
+				NULL, NULL, NULL);
 	  int ino_dg = ipg + ie * ps->npgmacrocell;
 	  int ino_fe = ps->dg_to_fe_index[ino_dg];
 	  ps->is_boundary_node[ino_fe] = 1;
@@ -282,14 +291,14 @@ void SolveContinuous2D(void* cs){
   
   for(int i=0;i<ps->nb_fe_dof;i++){
     //   printf(" rhs %d %f\n",i,ps->lsol.rhs[i]);
-    }
+  }
    
   Advanced_SolveLinearSolver(&ps->lsol,ps->simu);
 
-    for(int i=0;i<ps->nb_fe_dof;i++){
-      //  printf(" sol %d %f\n",i,ps->lsol.sol[i]);
-    }
-    //assert(1==2);  
+  for(int i=0;i<ps->nb_fe_dof;i++){
+    //  printf(" sol %d %f\n",i,ps->lsol.sol[i]);
+  }
+  //assert(1==2);  
   //printf("post computation assembly.....\n");
   if(ps->postcomputation_assembly != NULL){
     ps->postcomputation_assembly(ps);
@@ -318,7 +327,7 @@ void ContinuousToDiscontinuous_Copy(ContinuousSolver * cs){
 	int ipot = f0->varindex(f0->deg,f0->raf,f0->model.m,
 				ipg,cs->list_of_var[var]);
 	cs->simu->fd[ie].wn[ipot]=cs->lsol.sol[ino_fe];
-	}
+      }
     }
   }
 
@@ -336,7 +345,7 @@ void ExactDirichletContinuousMatrix(void * cs){
         for(int i=0; i<ps->nb_fe_dof; i++){
           SetLinearSolver(&ps->lsol,iBord,i,0.0);
         }
-       SetLinearSolver(&ps->lsol,iBord,iBord,1.0);
+	SetLinearSolver(&ps->lsol,iBord,iBord,1.0);
       }
     }
   }
@@ -362,17 +371,17 @@ void ExactDirichletContinuousMatrix(void * cs){
           int ino_dg = ipg + ie * ps->npgmacrocell;
           int ino_fe = ps->dg_to_fe_index[ino_dg];
           int ipot = f0->varindex(f0->deg,f0->raf,f0->model.m,
-          			ipg,ps->list_of_var[var]);
+				  ipg,ps->list_of_var[var]);
           int ipot_fe = ino_fe*ps->nb_phy_vars + var;
           // Normal vector at gauss point ipgL
           schnaps_real vnds[3], xpg[3];
           {
             schnaps_real dtau[3][3], codtau[3][3];
             schnaps_ref2phy(f->physnode,
-                    xpgref,
-                    NULL, locfaL, // dpsiref, ifa
-                    xpg, dtau,
-                    codtau, NULL, vnds); // codtau, dpsi, vnds
+			    xpgref,
+			    NULL, locfaL, // dpsiref, ifa
+			    xpg, dtau,
+			    codtau, NULL, vnds); // codtau, dpsi, vnds
           }
           
           // the boundary flux is an affine function
@@ -392,7 +401,7 @@ void PenalizedDirichletContinuousMatrix(void * cs){
   ContinuousSolver * ps=cs;
   
   field* f0 = &ps->simu->fd[0];
-   schnaps_real bigval = 1.e20;//.e16;
+  schnaps_real bigval = 1.e20;//.e16;
   for(int ino=0; ino<ps->nb_fe_nodes; ino++){
    
     if (ps->is_boundary_node[ino]){
@@ -423,17 +432,17 @@ void PenalizedDirichletContinuousMatrix(void * cs){
           int ino_dg = ipg + ie * ps->npgmacrocell;
           int ino_fe = ps->dg_to_fe_index[ino_dg];
           int ipot = f0->varindex(f0->deg,f0->raf,f0->model.m,
-          			ipg,ps->list_of_var[var]);
+				  ipg,ps->list_of_var[var]);
           int ipot_fe = ino_fe*ps->nb_phy_vars + var;
           // Normal vector at gauss point ipgL
           schnaps_real vnds[3], xpg[3];
           {
             schnaps_real dtau[3][3], codtau[3][3];
             schnaps_ref2phy(f->physnode,
-                    xpgref,
-                    NULL, locfaL, // dpsiref, ifa
-                    xpg, dtau,
-                    codtau, NULL, vnds); // codtau, dpsi, vnds
+			    xpgref,
+			    NULL, locfaL, // dpsiref, ifa
+			    xpg, dtau,
+			    codtau, NULL, vnds); // codtau, dpsi, vnds
           }
           
           // the boundary flux is an affine function
@@ -449,7 +458,7 @@ void PenalizedDirichletContinuousMatrix(void * cs){
 
 
 void AllocateContinuousMatrix(void *cs){
-    ContinuousSolver * ps=cs;
+  ContinuousSolver * ps=cs;
 
   //static bool is_lu = false;
 
@@ -490,9 +499,16 @@ void AllocateContinuousMatrix(void *cs){
 	  int jno_dg = jloc + ie * ps->nnodes;
 	  int ino_fe = ps->dg_to_fe_index[ino_dg];
 	  int jno_fe = ps->dg_to_fe_index[jno_dg];
+	  int ino_slice = 0;
+	  int jno_slice = 0;
+	  if (schnaps_kinetic_data.solve_quasineutrality){
+	    ino_slice = ino_fe / ps->slice_size;
+	    jno_slice = jno_fe / ps->slice_size;
+	  }
 	  for (int iv1=0;iv1<ps->nb_phy_vars;iv1++){
 	    for (int iv2=0;iv2<ps->nb_phy_vars;iv2++){
-	      IsNonZero(&ps->lsol, ino_fe*ps->nb_phy_vars+iv1, jno_fe*ps->nb_phy_vars+iv2);
+	      if (ino_slice == jno_slice)
+		IsNonZero(&ps->lsol, ino_fe*ps->nb_phy_vars+iv1, jno_fe*ps->nb_phy_vars+iv2);
 	    }
 	  }
 	}
@@ -500,7 +516,7 @@ void AllocateContinuousMatrix(void *cs){
     }
     
     
-    AllocateLinearSolver(&ps->lsol);
+      AllocateLinearSolver(&ps->lsol);
   } 
 }
 
@@ -518,87 +534,95 @@ void GenericOperator_Continuous(void * cs){
       // local matrix 
       schnaps_real aloc[ps->nnodes*ps->nb_phy_vars][ps->nnodes*ps->nb_phy_vars];
       for(int iloc = 0; iloc < ps->nnodes*ps->nb_phy_vars; iloc++){
-        for(int jloc = 0; jloc < ps->nnodes*ps->nb_phy_vars; jloc++){
-          aloc[iloc][jloc] = 0.0;
-        }
+	for(int jloc = 0; jloc < ps->nnodes*ps->nb_phy_vars; jloc++){
+	  aloc[iloc][jloc] = 0.0;
+	}
       }
 
       int iemacro = ie / (f0->raf[0] * f0->raf[1] * f0->raf[2]);
       int isubcell = ie % (f0->raf[0] * f0->raf[1] * f0->raf[2]);
 
       for(int ipg = 0;ipg < ps->nnodes; ipg++){
-        schnaps_real wpg;
-        schnaps_real xref[3];
-        int ipgmacro= ipg + isubcell * ps->nnodes;
+	schnaps_real wpg;
+	schnaps_real xref[3];
+	int ipgmacro= ipg + isubcell * ps->nnodes;
 
-        ref_pg_vol(f0->deg,f0->raf,ipgmacro,xref,&wpg,NULL);
+	ref_pg_vol(f0->deg,f0->raf,ipgmacro,xref,&wpg,NULL);
 
-        for(int iloc = 0; iloc < ps->nnodes; iloc++){
-          schnaps_real dtau[3][3],codtau[3][3];
-          schnaps_real dphiref_i[3],dphiref_j[3];
-          schnaps_real dphi_i[3],dphi_j[3];
-          schnaps_real basisPhi_i[4], basisPhi_j[4];
-          int ilocmacro = iloc + isubcell * ps->nnodes;
-          grad_psi_pg(f0->deg,f0->raf,ilocmacro,ipgmacro,dphiref_i);
-          schnaps_ref2phy(ps->simu->fd[iemacro].physnode,
-                  xref,dphiref_i,0,NULL,
-                  dtau,codtau,dphi_i,NULL);
+	for(int iloc = 0; iloc < ps->nnodes; iloc++){
+	  schnaps_real dtau[3][3],codtau[3][3];
+	  schnaps_real dphiref_i[3],dphiref_j[3];
+	  schnaps_real dphi_i[3],dphi_j[3];
+	  schnaps_real basisPhi_i[4], basisPhi_j[4];
+	  int ilocmacro = iloc + isubcell * ps->nnodes;
+	  grad_psi_pg(f0->deg,f0->raf,ilocmacro,ipgmacro,dphiref_i);
+	  schnaps_ref2phy(ps->simu->fd[iemacro].physnode,
+			  xref,dphiref_i,0,NULL,
+			  dtau,codtau,dphi_i,NULL);
         
-          schnaps_real det = dot_product(dtau[0], codtau[0]);
-          if (ilocmacro==ipgmacro){
-            basisPhi_i[0]=1;
-          }
-          else
-          {
-            basisPhi_i[0]=0;
-          }
-          basisPhi_i[1]=dphi_i[0]/det;
-          basisPhi_i[2]=dphi_i[1]/det;
-          basisPhi_i[3]=dphi_i[2]/det;
-          for(int jloc = 0; jloc < ps->nnodes; jloc++){
-            int jlocmacro = jloc + isubcell * ps->nnodes;
-            grad_psi_pg(f0->deg,f0->raf,jlocmacro,ipgmacro,dphiref_j);
-            schnaps_ref2phy(ps->simu->fd[iemacro].physnode,
-                    xref,dphiref_j,0,NULL,
-                    dtau,codtau,dphi_j,NULL);
-            if (jlocmacro==ipgmacro){
-              basisPhi_j[0]=1;
-            }
-            else
-            {
-              basisPhi_j[0]=0;
-            }
-            basisPhi_j[1]=dphi_j[0]/det;
-            basisPhi_j[2]=dphi_j[1]/det;
-            basisPhi_j[3]=dphi_j[2]/det;
-            for (int iv1=0; iv1<ps->nb_phy_vars; iv1++){
-              for (int iv2=0; iv2<ps->nb_phy_vars; iv2++){
-                schnaps_real res[4] = {0, 0, 0, 0};
-                for (int i=0; i<4; i++){
-                  for (int j=0; j<4; j++){
-                    res[i]+=basisPhi_j[j]*ps->diff_op[ps->nb_phy_vars*iv1+iv2].DO[i][j];
-                  }
-                }
-                aloc[iv1+iloc*ps->nb_phy_vars][iv2+jloc*ps->nb_phy_vars] += dot_product(basisPhi_i, res) * wpg * det  ;
-              }
-            }
-          }
-        }
+	  schnaps_real det = dot_product(dtau[0], codtau[0]);
+	  if (ilocmacro==ipgmacro){
+	    basisPhi_i[0]=1;
+	  }
+	  else
+	    {
+	      basisPhi_i[0]=0;
+	    }
+	  basisPhi_i[1]=dphi_i[0]/det;
+	  basisPhi_i[2]=dphi_i[1]/det;
+	  basisPhi_i[3]=dphi_i[2]/det;
+	  for(int jloc = 0; jloc < ps->nnodes; jloc++){
+	    int jlocmacro = jloc + isubcell * ps->nnodes;
+	    grad_psi_pg(f0->deg,f0->raf,jlocmacro,ipgmacro,dphiref_j);
+	    schnaps_ref2phy(ps->simu->fd[iemacro].physnode,
+			    xref,dphiref_j,0,NULL,
+			    dtau,codtau,dphi_j,NULL);
+	    if (jlocmacro==ipgmacro){
+	      basisPhi_j[0]=1;
+	    }
+	    else
+	      {
+		basisPhi_j[0]=0;
+	      }
+	    basisPhi_j[1]=dphi_j[0]/det;
+	    basisPhi_j[2]=dphi_j[1]/det;
+	    basisPhi_j[3]=dphi_j[2]/det;
+	    for (int iv1=0; iv1<ps->nb_phy_vars; iv1++){
+	      for (int iv2=0; iv2<ps->nb_phy_vars; iv2++){
+		schnaps_real res[4] = {0, 0, 0, 0};
+		for (int i=0; i<4; i++){
+		  for (int j=0; j<4; j++){
+		    res[i]+=basisPhi_j[j]*ps->diff_op[ps->nb_phy_vars*iv1+iv2].DO[i][j];
+		  }
+		}
+		aloc[iv1+iloc*ps->nb_phy_vars][iv2+jloc*ps->nb_phy_vars] += dot_product(basisPhi_i, res) * wpg * det  ;
+	      }
+	    }
+	  }
+	}
       }
 
       for(int iloc = 0; iloc < ps->nnodes; iloc++){
-        for(int jloc = 0; jloc < ps->nnodes; jloc++){
-          int ino_dg = iloc + ie * ps->nnodes;
-          int jno_dg = jloc + ie * ps->nnodes;
-          int ino_fe = ps->dg_to_fe_index[ino_dg];
-          int jno_fe = ps->dg_to_fe_index[jno_dg];
-          for (int iv1=0;iv1<ps->nb_phy_vars;iv1++){
-            for (int iv2=0;iv2<ps->nb_phy_vars;iv2++){
-              schnaps_real val = aloc[iloc*ps->nb_phy_vars+iv1][jloc*ps->nb_phy_vars+iv2];
-              AddLinearSolver(&ps->lsol,ino_fe*ps->nb_phy_vars+iv1,jno_fe*ps->nb_phy_vars+iv2,val);
-            }
-          }
-        }
+	for(int jloc = 0; jloc < ps->nnodes; jloc++){
+	  int ino_dg = iloc + ie * ps->nnodes;
+	  int jno_dg = jloc + ie * ps->nnodes;
+	  int ino_fe = ps->dg_to_fe_index[ino_dg];
+	  int jno_fe = ps->dg_to_fe_index[jno_dg];
+	  int ino_slice = 0;
+	  int jno_slice = 0;
+	  if (schnaps_kinetic_data.solve_quasineutrality){
+	    ino_slice = ino_fe / ps->slice_size;
+	    jno_slice = jno_fe / ps->slice_size;
+	  }
+	  //printf("ino=%d islice=%d nbslices=%d\n",ino_fe, ino_fe / ps->slice_size, ps->nb_slices);
+	  for (int iv1=0;iv1<ps->nb_phy_vars;iv1++){
+	    for (int iv2=0;iv2<ps->nb_phy_vars;iv2++){
+	      schnaps_real val = aloc[iloc*ps->nb_phy_vars+iv1][jloc*ps->nb_phy_vars+iv2];
+	      if (ino_slice == jno_slice)
+		AddLinearSolver(&ps->lsol,ino_fe*ps->nb_phy_vars+iv1,jno_fe*ps->nb_phy_vars+iv2,val);
+	    }
+	  }
+	}
       }
     }
   }
