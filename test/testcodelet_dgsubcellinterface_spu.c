@@ -23,7 +23,7 @@ bool submit_task(Simulation* simu, schnaps_real* buffer) {
                                 fsize, sizeof(schnaps_real));
 
     // Submit task
-    DGVolume_SPU(f);
+    DGSubCellInterface_SPU(f);
   }
 
   starpu_task_wait_for_all();
@@ -52,7 +52,7 @@ bool submit_task(Simulation* simu, schnaps_real* buffer) {
 }
 
 
-int TestCodelet_DGVolume_SPU() {
+int TestCodelet_DGSubCellInterface_SPU() {
   bool test = true;
 
   int deg[]={3, 3, 3};
@@ -129,7 +129,7 @@ int TestCodelet_DGVolume_SPU() {
   // Compute the comparision buffer
   schnaps_real* buffer = calloc(simu.wsize, sizeof(schnaps_real));
   const int fsize =  simu.wsize / simu.macromesh.nbelems;
-  for (int ie = 0; ie < simu.macromesh.nbelems; ++ie) {
+  for(int ie = 0; ie < simu.macromesh.nbelems; ++ie) {
     field* f = simu.fd + ie;
 
     // Init data
@@ -138,8 +138,8 @@ int TestCodelet_DGVolume_SPU() {
       f->res[i] = 0;
     }
 
-    // Compute volume term
-    DGVolume(f, f->wn, f->res);
+    // Compute subcell interface term
+    DGSubCellInterface(f, f->wn, f->res);
 
     // Store data for comparision
     for (int i = 0; i < fsize; ++i)
@@ -152,7 +152,7 @@ int TestCodelet_DGVolume_SPU() {
   // Codelet
   starpu_c_use = true;
   starpu_ocl_use = true;
-  struct starpu_codelet* codelet = DGVolume_codelet();
+  struct starpu_codelet* codelet = DGSubCellInterface_codelet();
 
   // Empty codelet for function selection
   struct starpu_codelet codelet_backup = *codelet;
@@ -265,8 +265,8 @@ int TestCodelet_DGVolume_SPU() {
 
 int main(void) {
   // Unit tests
-  int resu = TestCodelet_DGVolume_SPU();
-  if (resu) printf("StarPU DGVolume Codelet test OK !\n");
-  else printf("StarPU DGVolume Codelet test failed !\n");
+  int resu = TestCodelet_DGSubCellInterface_SPU();
+  if (resu) printf("StarPU DGSubCellInterface Codelet test OK !\n");
+  else printf("StarPU DGSubCellInterface Codelet test failed !\n");
   return !resu;
 }

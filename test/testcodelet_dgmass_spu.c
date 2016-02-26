@@ -14,16 +14,16 @@ bool submit_task(Simulation* simu, schnaps_real* buffer) {
 
     // Create data handle (init and register)
     for (int i = 0; i < fsize; ++i) {
-      f->wn[i] = i + 1;
-      f->res[i] = 0;
+      f->res[i] = i + 1;
+      f->dtwn[i] = 2;
     }
-    starpu_vector_data_register(&f->wn_handle, 0, (uintptr_t)f->wn,
-                                fsize, sizeof(schnaps_real));
     starpu_vector_data_register(&f->res_handle, 0, (uintptr_t)f->res,
+                                fsize, sizeof(schnaps_real));
+    starpu_vector_data_register(&f->dtwn_handle, 0, (uintptr_t)f->dtwn,
                                 fsize, sizeof(schnaps_real));
 
     // Submit task
-    DGVolume_SPU(f);
+    DGMass_SPU(f);
   }
 
   starpu_task_wait_for_all();
@@ -32,16 +32,16 @@ bool submit_task(Simulation* simu, schnaps_real* buffer) {
   for(int ie = 0; ie < simu->macromesh.nbelems; ++ie) {
     field* f = simu->fd + ie;
 
-    starpu_data_unregister(f->wn_handle);
     starpu_data_unregister(f->res_handle);
+    starpu_data_unregister(f->dtwn_handle);
 
     for (int i = 0; i < fsize; ++i)
-      assert(abs(f->wn[i] - i - 1) < _VERY_SMALL);
+      assert(abs(f->res[i] - i - 1) < _VERY_SMALL);
     for (int i = 0; i < fsize; ++i) {
-      /* if (!(abs(buffer[ie * fsize + i] - f->res[i]) < _VERY_SMALL)) */
+      /* if (!(abs(buffer[ie * fsize + i] - f->dtwn[i] - 1) < _VERY_SMALL)) */
       /*   printf("field: %d  reference[%d]: %f  result[%d]: %f\n", */
-      /*          ie, i, buffer[ie * fsize + i], i, f->res[i]); */
-      test &= (abs(buffer[ie * fsize + i] - f->res[i]) < _VERY_SMALL);
+      /*          ie, i, buffer[ie * fsize + i], i, f->dtwn[i]); */
+      test &= (abs(buffer[ie * fsize + i] - f->dtwn[i] - 1) < _VERY_SMALL);
     }
   }
 
@@ -52,7 +52,7 @@ bool submit_task(Simulation* simu, schnaps_real* buffer) {
 }
 
 
-int TestCodelet_DGVolume_SPU() {
+int TestCodelet_DGMass_SPU() {
   bool test = true;
 
   int deg[]={3, 3, 3};
@@ -133,26 +133,22 @@ int TestCodelet_DGVolume_SPU() {
     field* f = simu.fd + ie;
 
     // Init data
-    for (int i = 0; i < fsize; ++i) {
-      f->wn[i] = i + 1;
-      f->res[i] = 0;
-    }
+    for (int i = 0; i < fsize; ++i)
+      f->dtwn[i] = i + 1;
 
-    // Compute volume term
-    DGVolume(f, f->wn, f->res);
+    // Compute mass term
+    DGMass(f, NULL, f->dtwn);
 
     // Store data for comparision
     for (int i = 0; i < fsize; ++i)
-      assert(abs(f->wn[i] - i - 1) < _VERY_SMALL);
-    for (int i = 0; i < fsize; ++i)
-      buffer[ie * fsize + i] = f->res[i];
+      buffer[ie * fsize + i] = f->dtwn[i];
   }
 
 
   // Codelet
   starpu_c_use = true;
   starpu_ocl_use = true;
-  struct starpu_codelet* codelet = DGVolume_codelet();
+  struct starpu_codelet* codelet = DGMass_codelet();
 
   // Empty codelet for function selection
   struct starpu_codelet codelet_backup = *codelet;
@@ -265,8 +261,8 @@ int TestCodelet_DGVolume_SPU() {
 
 int main(void) {
   // Unit tests
-  int resu = TestCodelet_DGVolume_SPU();
-  if (resu) printf("StarPU DGVolume Codelet test OK !\n");
-  else printf("StarPU DGVolume Codelet test failed !\n");
+  int resu = TestCodelet_DGMass_SPU();
+  if (resu) printf("StarPU DGMass Codelet test OK !\n");
+  else printf("StarPU DGMass Codelet test failed !\n");
   return !resu;
 }
