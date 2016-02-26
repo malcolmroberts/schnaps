@@ -5,6 +5,8 @@
 #include "test.h"
 #include "schnaps.h"
 
+int TestIGraph(void);
+
 int main(void) {
   // Unit tests
   int resu=TestIGraph();

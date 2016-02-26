@@ -8,6 +8,7 @@
 #include "diagnostics_vp.h"
 #include "solverpoisson.h"
 
+int Test_TransportVP(void);
 void Test_TransportVP_ImposedData(const schnaps_real *x, const schnaps_real t, schnaps_real *w);
 void Test_TransportVP_InitData(schnaps_real *x, schnaps_real *w);
 schnaps_real TransportVP_ImposedKinetic_Data(const schnaps_real *x, const schnaps_real t, schnaps_real v);

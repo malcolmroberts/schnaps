@@ -18,6 +18,8 @@
 //  return (real)ts.tv_sec + 1e-9 * (real)ts.tv_nsec;
 //}
 
+int TestKelvinHelmotz(int argc, char *argv[]);
+
 int main(int argc, char *argv[]) {
   int resu = TestKelvinHelmotz(argc,argv);
   if (resu)

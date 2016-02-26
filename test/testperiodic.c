@@ -8,6 +8,9 @@
 #include "diagnostics_vp.h"
 #include "solverpoisson.h"
 
+int TestPeriodic(void);
+
+
 void TestPeriodic_ImposedData(const schnaps_real *x, const schnaps_real t, schnaps_real *w);
 void TestPeriodic_InitData(schnaps_real *x, schnaps_real *w);
 void TestPeriodic_BoundaryFlux(schnaps_real *x, schnaps_real t, schnaps_real *wL, schnaps_real *vnorm,

@@ -5,6 +5,8 @@
 #include "test.h"
 #include "schnaps.h"
 
+int TestSkyline(void);
+
 int main(void) {
   
   // unit tests

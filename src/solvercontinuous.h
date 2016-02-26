@@ -28,6 +28,12 @@ typedef struct FatNode{
   //! \brief index in the fe mesh
   int fe_index;
 
+  //! \brief cg index in the slice
+  int index_2d;
+
+  //! \brief cg slice index
+  int slice_index;
+
   //! \brief physical coordinates of the node
   schnaps_real x[3];
   //! \brief int converted coordinates for sorting and searching
@@ -65,6 +71,12 @@ typedef struct ContinuousSolver{
 
   //! \brief connectivity DG node -> FE node
   int* dg_to_fe_index;
+
+   //! \brief number of slices (for the quasineutrality solver)
+  int nb_slices;
+
+  //! \brief number of nodes in each slice
+  int slice_size;
 
    //! \brief number of element
   int nbel;

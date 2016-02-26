@@ -12,6 +12,7 @@
 #include "simulation.h"
 
 void Computation_charge_density(Simulation *simu);
+void compute_charge_density(Simulation *simu);
 
 //void Compute_electric_field(field * f, real * w);
 void ComputeElectricField(field* f);

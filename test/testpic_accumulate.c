@@ -5,6 +5,8 @@
 #include "test.h"
 #include "schnaps.h"
 
+int TestPICAccumulate(void);
+
 int main(void) {
   // Unit tests
   int resu=TestPICAccumulate();

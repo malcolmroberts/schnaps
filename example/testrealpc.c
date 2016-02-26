@@ -8,7 +8,7 @@
 #include "waterwave2d.h"
 #include "physBased_PC.h"
 
-
+int Testrealpc(void);
 void SteadyStateOne_ImposedData(const schnaps_real *x, const schnaps_real t, schnaps_real *w);
 void SteadyStateOne_InitData(schnaps_real *x, schnaps_real *w);
 void SteadyStateOne_Source(const schnaps_real *xy, const schnaps_real t, const schnaps_real *w, schnaps_real *S);

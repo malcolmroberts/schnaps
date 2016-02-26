@@ -10,7 +10,6 @@
 #define _PERIODZ -1
 #endif
 
-
 schnaps_real dlag(int deg, int ib, int ipg) {
   return gauss_lob_dpsi[gauss_lob_dpsi_offset[deg] + ib * (deg + 1) + ipg];
 }
@@ -928,9 +927,9 @@ void DGVolume(__constant int *param,     // 0: interp param
       }
 #else
       int ipgR = ipg(npg, q, icell);
-      int imemR0 =  VARINDEX(param + 1, param + 4, m, ipgR, iv) + woffset;
+      int imemR0 =  VARINDEX(param + 1, param + 4, m, ipgR, 0) + woffset;
       //VARINDEX(param, ie, ipgR, 0);
-      __global double *dtwn0 = dtwn + imemR0;
+      __global schnaps_real *dtwn0 = dtwn + imemR0;
       for(int iv = 0; iv < m; iv++) {
      	dtwn0[iv] += flux[iv] * wpg;
       }
@@ -958,6 +957,79 @@ void DGVolume(__constant int *param,     // 0: interp param
 #else
 
 #endif
+}
+
+
+__kernel
+void DGVolume3D(__constant int *param,      // 0: interp param (m, deg, raf)
+                int ie,                     // 1: macrocel index
+                __constant schnaps_real *physnodes, // 2: macrocell nodes
+                __global schnaps_real *wn,          // 3: field values
+                __global schnaps_real *dtwn         // 4: time derivative
+                ) {
+
+  __constant schnaps_real *physnode = physnodes + ie * 60;
+
+  const int deg[3] = {param[1], param[2], param[3]};
+  const int raf[3] = {param[4], param[5], param[6]};
+  const int npg[3] = {deg[0] + 1, deg[1] + 1, deg[2] + 1};
+
+  const int woffset = ie * _M * NPG(deg, raf);
+
+  // Subcell id
+  const int ic[3] = {
+    get_group_id(0),
+    get_group_id(1),
+    get_group_id(2),
+  };
+  const int icell = ic[0] + raf[0] * (ic[1] + raf[1] * ic[2]);
+
+  // Gauss point id
+  const int ipL[3] = {
+    get_local_id(0),
+    get_local_id(1),
+    get_local_id(2),
+  };
+  const int ipgL = ipg(npg, ipL, icell);
+
+  // Reference coordinates
+  schnaps_real xpg[3];
+  schnaps_real wpg;
+  ref_pg_vol(deg, raf, ipgL, xpg, &wpg);
+
+  // Codtau
+  schnaps_real codtau[3][3];
+  schnaps_real dtau[3][3];
+  get_dtau(xpg[0], xpg[1], xpg[2], physnode, dtau); // 1296 mults
+  compute_codtau(dtau, codtau);
+
+  // Field
+  schnaps_real w[_M];
+  for (int iv = 0; iv < _M; iv++)
+    w[iv] = wn[VARINDEX(param + 1, param + 4, _M, ipgL, iv) + woffset];
+
+  // Flux
+  schnaps_real flux[_M];
+  // Loop over the dimensions
+  for (int dim = 0; dim < 3; dim++) {
+    int ipR[3] = {ipL[0], ipL[1], ipL[2]};
+
+    // Loop over the "cross" points
+    for (int ip = 0; ip < npg[dim]; ip++) {
+      ipR[dim] = (ipL[dim] + ip) % npg[dim];
+
+      schnaps_real dphi[3];
+      const schnaps_real dphiref = dlag(deg[dim], ipR[dim], ipL[dim]) * raf[dim];
+      for (int i = 0; i < 3; i++)
+	dphi[i] = codtau[i][dim] * dphiref;
+
+      NUMFLUX(w, w, dphi, flux);
+
+      const int ipgR = ipg(npg, ipR, icell);
+      for (int iv = 0; iv < _M; iv++)
+        dtwn[VARINDEX(param + 1, param + 4, _M, ipgR, iv) + woffset] += flux[iv] * wpg;
+    }
+  }
 }
 
 
@@ -1534,7 +1606,7 @@ void get_dtau(schnaps_real x, schnaps_real y, schnaps_real z,
   // shape functions
 
   /* schnaps_real gradphi[20][3]; */
-  /* //schnaps_real x,y,z; */
+  /* //real x,y,z; */
   /* // this fills the values of gradphi */
   /* gradphi[0][0] = (-1 + z) * (-1 + y) * (2 * y + 2 * z + 4 * x - 3); */
   /* gradphi[0][1] = (-1 + z) * (-1 + x) * (2 * x + 2 * z - 3 + 4 * y); */

@@ -30,7 +30,7 @@ void Wave_Upwind_BoundaryFlux(schnaps_real *x, schnaps_real t, schnaps_real *wL,
 schnaps_real TestSteady_Transport_v2[3] = {0.7071067811865476, 0.7071067811865476, 0};
 
 
-
+int Test_NoMatrix_Implicit_SPU(void);
 
 int main(void) {
   

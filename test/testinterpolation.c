@@ -10,6 +10,8 @@
 #include <math.h>
 #include <assert.h>
 
+int TestInterpolation(void);
+
 int main(void) {
   // unit tests
   int resu=TestInterpolation();

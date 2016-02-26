@@ -6,6 +6,8 @@
 #include "schnaps.h"
 
 #define _NN 3
+int TestNonLinearSolver(void);
+
 
 int main(void) {
   
