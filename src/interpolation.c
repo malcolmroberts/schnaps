@@ -588,10 +588,6 @@ int ref_pg_face_CG(int deg3d[], int nraf3d[], int ifa, int ipg,
 				  {1, 0, 2, 0} };
 
   int deg[3], offset[2],nraf[3];
-  schnaps_real h[3];
-  h[0] = 1.0 / (schnaps_real) nraf[0];
-  h[1] = 1.0 / (schnaps_real) nraf[1];
-  h[2] = 1.0 / (schnaps_real) nraf[2];
 
   int ipgxyz[3], ncpgxyz[3];
   //int ipgf=ipg;
@@ -601,12 +597,18 @@ int ref_pg_face_CG(int deg3d[], int nraf3d[], int ifa, int ipg,
   deg[1] = deg3d[axis_permut[ifa][1]];
   deg[2] = deg3d[axis_permut[ifa][2]];
 
+ 
   // number of subcells in each direction
   nraf[0] = nraf3d[axis_permut[ifa][0]];
   nraf[1] = nraf3d[axis_permut[ifa][1]];
   nraf[2] = nraf3d[axis_permut[ifa][2]];
 
-  int nx[3] = {
+  schnaps_real h[3];
+  h[0] = 1.0 / (schnaps_real) nraf[0];
+  h[1] = 1.0 / (schnaps_real) nraf[1];
+  h[2] = 1.0 / (schnaps_real) nraf[2];
+
+ int nx[3] = {
     deg[0] * nraf[0] + 1,
     deg[1] * nraf[1] + 1,
     deg[2] * nraf[2] + 1};

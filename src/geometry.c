@@ -186,13 +186,14 @@ void schnaps_ref2phy(schnaps_real physnode[20][3],
   if (vnds !=NULL) {
     assert(codtau != NULL);
     assert(ifa >= 0);
+    if( ifa>=0 ){
     for(int ii = 0; ii < 3; ii++) {
       vnds[ii] = 0.0;
       for(int jj = 0; jj < 3; jj++) {
         vnds[ii] += codtau[ii][jj] * h20_refnormal[ifa][jj];
       }
     }
-
+   }
   }
 
 }

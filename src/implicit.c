@@ -962,15 +962,15 @@ void subcell_solve(field* f, int isub){
 
 
   // local "rigidity" matrix in triplet form
-  cs *T;
+  //cs *T;
 
   // assembly of the flux part of the matrix
 
   // assembly of the volume part of the matrix
 
   // local "rigidity" matrix in compressed-column form
-  cs *K;
-  K = cs_triplet(T);
+  //cs *K;
+  //K = cs_triplet(T);
   /* cs_lusol(K,  // matrix */
   /* 	   0, // order */
   /* 	   f->res + isub * wsub_size, // rhs and solution... */
