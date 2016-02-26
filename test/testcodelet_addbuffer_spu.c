@@ -8,7 +8,7 @@ bool submit_task() {
   bool test = true;
 
   // Data buffer
-  const int size = 1000000;
+  const int size = 10000;
   const schnaps_real alpha = 3.14123456789123456789123456789123456789123456879;
   schnaps_real* buffer_in = calloc(size, sizeof(schnaps_real));
   schnaps_real* buffer_out = calloc(size, sizeof(schnaps_real));

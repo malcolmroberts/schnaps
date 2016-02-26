@@ -55,8 +55,8 @@ bool submit_task(Simulation* simu, schnaps_real* buffer) {
 int TestCodelet_DGMass_SPU() {
   bool test = true;
 
-  int deg[]={3, 3, 3};
-  int raf[]={3, 3, 3};
+  int deg[]={2, 2, 2};
+  int raf[]={2, 2, 2};
 
   MacroMesh mesh;
   ReadMacroMesh(&mesh,"../test/testdisque.msh");
