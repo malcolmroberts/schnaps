@@ -282,10 +282,8 @@ void UpdateGyroPoisson(void *si, schnaps_real *w) {
   Simulation *simu = si;
   
   int type_bc = 1;
-  schnaps_real bc_l = 0;
-  schnaps_real bc_r = 0;
   
-  compute_charge_density(simu);
+  Computation_charge_density(simu);
   static ContinuousSolver ps;
   static bool is_init = false;
   

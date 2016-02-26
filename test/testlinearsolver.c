@@ -10,11 +10,8 @@
 int TestLinearSolver(void);
 
 int main(void) {
-  
-  // unit tests
     
-  int resu=TestLinearSolver();
-	 
+  int resu=TestLinearSolver();	 
 
   if (resu) printf("Linear solver test OK !\n");
   else printf("Linear solver test failed !\n");
@@ -24,20 +21,12 @@ int main(void) {
 
 
 
-
 int TestLinearSolver(void){
 
-  int test=0,test1=1,test2=1,test3=1,test4=1;
+  int test=0,test1=1,test2=1,test3=1;
   Simulation simu;
 
   LinearSolver sky;
-
-#ifdef PARALUTION 
-  paralution_begin();
-#endif 
-
-  // preliminary work on the skyline struct
-  // _NN is the size of the linear system to be solved
 
   //MatrixStorage ms = SKYLINE_SPU;
   MatrixStorage ms = SKYLINE;
@@ -50,7 +39,6 @@ int TestLinearSolver(void){
 
   schnaps_real A[_NN][_NN];
   schnaps_real vf[_NN],sol[_NN];
-
 
   A[0][0] = 0.2e1;
   A[0][1] = -0.1e1;
@@ -90,15 +78,12 @@ int TestLinearSolver(void){
   sol[4] = 0.0;
 
 
-
   // first mark the nonzero values in A
   for(int i=0;i<_NN;i++){
     for(int j=0;j<_NN;j++){
       if (A[i][j] != 0) IsNonZero(&sky,i,j);
-      //if (i==j) SwitchOn(&sky,i,j);
     }
   }
-
   // once the nonzero positions are known allocate memory
   AllocateLinearSolver(&sky);
 
@@ -108,12 +93,8 @@ int TestLinearSolver(void){
       if (A[i][j] != 0){
       	AddLinearSolver(&sky,i,j,A[i][j]);
       }
-      /* if (i==j){ */
-      /* 	SetLinearSolver(&sky,i,j,2); */
-      /* } */
     }
   }
-
  
   for(int i=0;i<_NN;i++){
     sky.rhs[i]=vf[i];
@@ -135,107 +116,10 @@ int TestLinearSolver(void){
   printf("\n");
   // deallocate memory
   FreeLinearSolver(&sky);
-  
 
   test1 = test1 && (verr<1e-10);
   printf("Error =%.12e\n",verr);
 
-  
-#ifdef PARALUTION
-  // preliminary work on the skyline struct
-  // _NN is the size of the linear system to be solved
-  InitLinearSolver(&sky,_NN,&ms,NULL);
-
-  sky.solver_type = PAR_GMRES;
-  sky.pc_type=NONE;//PAR_JACOBI;
-
-  A[0][0] = 0.2e1;
-  A[0][1] = -0.1e1;
-  A[0][2] = 0;
-  A[0][3] = 0;
-  A[0][4] = 0;
-  A[1][0] = -0.1e1;
-  A[1][1] = 0.2e1;
-  A[1][2] = -0.1e1;
-  A[1][3] = 0;
-  A[1][4] = 0;
-  A[2][0] = 0;
-  A[2][1] = -0.1e1;
-  A[2][2] = 0.2e1;
-  A[2][3] = -0.1e1;
-  A[2][4] = 0;
-  A[3][0] = 0;
-  A[3][1] = 0;
-  A[3][2] = -0.1e1;
-  A[3][3] = 0.2e1;
-  A[3][4] = -0.1e1;
-  A[4][0] = 0;
-  A[4][1] = 0;
-  A[4][2] = 0;
-  A[4][3] = -0.1e1;
-  A[4][4] = 0.2e1;
-  vf[0] = 0;
-  vf[1] = 0;
-  vf[2] = 0;
-  vf[3] = 0;
-  vf[4] = 0.6e1;
-
-  sol[0] = 0;
-  sol[1] = 0;
-  sol[2] = 0;
-  sol[3] = 0;
-  sol[4] = 0;
-
-
-
-  // first mark the nonzero values in A
-  for(int i=0;i<_NN;i++){
-    for(int j=0;j<_NN;j++){
-      if (A[i][j] != 0) IsNonZero(&sky,i,j);
-      //if (i==j) SwitchOn(&sky,i,j);
-    }
-  }
-
-  // once the nonzero positions are known allocate memory
-  AllocateLinearSolver(&sky);
-
-  // now set the nonzero terms
-  for(int i=0;i<_NN;i++){
-    for(int j=0;j<_NN;j++){
-      if (A[i][j] != 0){
-      	AddLinearSolver(&sky,i,j,A[i][j]);
-      }
-      /* if (i==j){ */
-      /* 	SetLinearSolver(&sky,i,j,2); */
-      /* } */
-    }
-  }
-
-  for(int i=0;i<_NN;i++){
-    sky.rhs[i]=vf[i];
-    sky.sol[i]=sol[i];
-  }
-
-  Advanced_SolveLinearSolver(&sky,&simu);
-
-
-  // checking
-  verr=0;
-  printf("sol of paralution=");
-  for(int i=0;i<_NN;i++){
-    printf("%f ",sky.sol[i]);
-    verr+=fabs(sky.sol[i]-i-1);
-  }
-  printf("\n");
-  printf("\n");
-
-  // deallocate memory
-  FreeLinearSolver(&sky);
-  
-
-  test2 = test2 && (verr<1e-6);
-  printf("Error =%.12e\n",verr);
-#endif
  
   InitLinearSolver(&sky,_NN,&ms,NULL);
 
@@ -321,7 +205,7 @@ int TestLinearSolver(void){
   // deallocate memory
   FreeLinearSolver(&sky);
 
-  test3 = test3 && (verr<1e-6);
+  test2 = test2 && (verr<1e-6);
   printf("Error =%.12e\n",verr);
 
   int NPoisson=60;
@@ -392,15 +276,10 @@ int TestLinearSolver(void){
   // deallocate memory
   FreeLinearSolver(&sky);
 
-  test4 = test4 && (verr<5.e-2);
+  test3 = test3 && (verr<5.e-2);
   printf("Error =%.12e\n",verr);
 
-  if(test1==1 &&  test2==1 && test3==1 && test4==1) test=1;
-
-
-#ifdef PARALUTION 
-  paralution_end();
-#endif 
+  if(test1==1 && test2==1 && test3==1) test=1;
 
   return test;
 

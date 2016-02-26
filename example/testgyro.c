@@ -1,7 +1,6 @@
 #include "schnaps.h"
 #include <stdio.h>
 #include <assert.h>
-#include "../test/test.h"
 #include "quantities_vp.h"
 #include "gyro.h"
 
@@ -82,7 +81,7 @@ int TestGyro(void) {
   schnaps_real dt = 0;
   schnaps_real tmax = 0;
   RK4(&simu,tmax);
-  compute_charge_density(&simu);
+  Computation_charge_density(&simu);
   // save the results and the error
   //PlotFields(1,(1==0),&simu,"sol","dgvisu.msh");
   PlotFields(kd->index_rho,(1==0),&simu,"sol","dgvisu.msh");

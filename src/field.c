@@ -30,10 +30,10 @@
 int GenericVarindex(__constant int *deg, __constant int *raf, int m,
 		    int ipg, int iv) {
 
-  return iv + m * ipg;
-// int npg = (deg[0] + 1) * (deg[1] + 1) * (deg[2] + 1)
-  // * raf[0] * raf[1] * raf[2];
-  //return ipg + npg * iv;
+  //return iv + m * ipg;
+  int npg = (deg[0] + 1) * (deg[1] + 1) * (deg[2] + 1)
+    * raf[0] * raf[1] * raf[2];
+  return ipg + npg * iv;
 }
 #pragma end_opencl
 
@@ -533,6 +533,7 @@ void DGSubCellInterface(field *f, schnaps_real *w, schnaps_real *dtw)
 	// Get the left subcell id
 	int ncL = icL[0] + nraf[0] * (icL[1] + nraf[1] * icL[2]);
 	// First glop index in the subcell
+	// TODO change this wrong approach !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	int offsetL = npg[0] * npg[1] * npg[2] * ncL;
 
 	// Sweeping subcell faces in the three directions
@@ -858,6 +859,8 @@ void DGVolume(field *f, schnaps_real *w, schnaps_real *dtw)
 	int icL[3] = {icL0, icL1, icL2};
 	// get the L subcell id
 	int ncL = icL[0] + nraf[0] * (icL[1] + nraf[1] * icL[2]);
+
+	// TODO: wrong approach not compatible with xyz_to_ipg !!!!!!!!!!!!!!!!!!!!!!!!!
 	// first glop index in the subcell
 	int offsetL = npg[0] * npg[1] * npg[2] * ncL;
 
@@ -893,6 +896,7 @@ void DGVolume(field *f, schnaps_real *w, schnaps_real *dtw)
 	      for(int p2 = 0; p2 < npg[2]; p2++) {
 		schnaps_real wL[m], flux[m];
 		int p[3] = {p0, p1, p2};
+		// TODO rather call xyz_to_ipg
 		int ipgL = offsetL + p[0] + npg[0] * (p[1] + npg[1] * p[2]);
 		for(int iv = 0; iv < m; iv++) {
 		  ///int imemL = f->varindex(f_interp_param, ie, ipgL, iv);

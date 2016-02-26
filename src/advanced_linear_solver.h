@@ -4,7 +4,6 @@
 #include "global.h"
 #include <stdbool.h>
 #include "field.h"
-#include "paralution_c.h"
 #include "simulation.h"
 #include "linear_solver.h"
 

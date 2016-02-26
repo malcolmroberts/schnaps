@@ -73,12 +73,10 @@ int TestSkyline(void){
   vf[4] = 0.6e1;
 
 
-
   // first mark the nonzero values in A
   for(int i=0;i<_NN;i++){
     for(int j=0;j<_NN;j++){
       if (A[i][j] != 0) SwitchOn(&sky,i,j);
-      //if (i==j) SwitchOn(&sky,i,j);
     }
   }
 
@@ -91,9 +89,6 @@ int TestSkyline(void){
       if (A[i][j] != 0){
       	SetSkyline(&sky,i,j,A[i][j]);
       }
-      /* if (i==j){ */
-      /* 	SetSkyline(&sky,i,j,2); */
-      /* } */
     }
   }
 
@@ -115,7 +110,6 @@ int TestSkyline(void){
     test = test && fabs(vf2[i]-vf3[i]) < _SMALL;
   }
   
-
  
   
   // LU decomposition

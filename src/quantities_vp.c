@@ -7,42 +7,12 @@
 #include "geometry.h"
 #include "skyline.h"
 #include "quantities_vp.h"
+#include "collision.h"
 
 
 
-/*void distribution_to_physic_entropy(field* f,real w,real *tw){
-  *tw=log(w+1);
-}
 
-void physic_entropy_to_distribution(field* f,real w,real *tw){
-  *tw=exp(w)-1;
-  }*/
-
-// TODO: replace the following function by compute_charge_density below
 void Computation_charge_density(Simulation *simu){
-
-  field * f=&simu->fd[0];
-  
-    for(int ipg=0;ipg<NPG(f->deg, f-> raf);ipg++){
-      int imemc=f->varindex(f->deg, f->raf, f->model.m,ipg,_INDEX_RHO);
-      simu->w[imemc]=0;
-  
-      for(int ielv=0;ielv<_NB_ELEM_V;ielv++){
-	// loop on the local glops
-	for(int iloc=0;iloc<_DEG_V+1;iloc++){
-	  schnaps_real omega=wglop(_DEG_V,iloc);
-	  schnaps_real vi=-_VMAX+ielv*_DV+_DV*glop(_DEG_V,iloc);
-	  int ipgv=iloc+ielv*_DEG_V;
-	  int imem=f->varindex(f->deg, f->raf, f->model.m,ipg,ipgv);
-	  simu->w[imemc]+=omega*_DV*simu->w[imem];
-	}
-      }
-    }
-  
-  
-}
-
-void compute_charge_density(Simulation *simu){
 
   KineticData *kd = &schnaps_kinetic_data;
   for(int ie = 0; ie < simu->macromesh.nbelems; ie++){
@@ -67,9 +37,60 @@ void compute_charge_density(Simulation *simu){
   
 }
 
+void Computation_Fluid_Quantities(Simulation *simu){
 
+  KineticData *kd = &schnaps_kinetic_data;
+
+  for(int ie = 0; ie < simu->macromesh.nbelems; ie++){
+    field * f = simu->fd + ie; 
+  
+    for(int ipg=0;ipg<NPG(f->deg, f-> raf);ipg++){
+      int imem_rho=f->varindex(f->deg, f->raf, f->model.m,ipg,kd->index_rho);
+      int imem_U=f->varindex(f->deg, f->raf, f->model.m,ipg,kd->index_u);
+      int imem_P=f->varindex(f->deg, f->raf, f->model.m,ipg,kd->index_P);
+      int imem_T=f->varindex(f->deg, f->raf, f->model.m,ipg,kd->index_T);
+      f->wn[imem_rho]=0;
+      f->wn[imem_U]=0;
+      f->wn[imem_T]=0;
+      f->wn[imem_P]=0;
+
+      schnaps_real rhoU=0,rho=0,U=0,tensor_P=0;
+      for(int ielv=0;ielv<kd->nb_elem_v;ielv++){
+	// loop on the local glops
+	for(int iloc=0;iloc<kd->deg_v+1;iloc++){
+	  schnaps_real omega=wglop(kd->deg_v,iloc);
+	  schnaps_real vi=-kd->vmax+ielv*kd->dv+kd->dv*glop(kd->deg_v,iloc);
+	  int ipgv=iloc+ielv*kd->deg_v;
+	  int imem=f->varindex(f->deg, f->raf, f->model.m,ipg,ipgv);
+	  rho+=omega*kd->dv*simu->w[imem];
+	  rhoU+=omega*kd->dv*vi*simu->w[imem];
+	  tensor_P+=omega*kd->dv*vi*vi*simu->w[imem];
+	}
+      }
+    
+      f->wn[imem_rho]=rho;
+      f->wn[imem_U]=rhoU/rho;
+      f->wn[imem_T]=tensor_P/rho;
+      f->wn[imem_P]=(0.5*tensor_P-0.5*rhoU*rhoU/rho)*(kd->gamma-1);
+           
+    }
+  }
+  
+}
+
+schnaps_real Computation_Maxwellian(schnaps_real rho, schnaps_real U, schnaps_real T, schnaps_real v){ 
+
+  schnaps_real maxw;
+  schnaps_real my_pi= 4.0*atan(1.0);
+  
+  maxw= (rho/pow(2*my_pi*T,0.5))*exp(-pow(U-v,2.0)/(2.0*T));
+
+  return maxw;
+
+}
+  
 schnaps_real Computation_charge_average(Simulation *simu) {
-
+   KineticData *kd = &schnaps_kinetic_data;
   field * f=&simu->fd[0];
   schnaps_real average = 0;
   schnaps_real rho_imem = 0;
@@ -80,7 +101,7 @@ schnaps_real Computation_charge_average(Simulation *simu) {
   const int npg = NPG(f->deg, f->raf);
     for(int ipg = 0; ipg < npg; ipg++) {
       int imem = f->varindex(f->deg, f->raf, f->model.m,
-			     ipg, _INDEX_RHO);
+			     ipg, kd->index_rho);
 	rho_imem = f->wn[imem];
       
       schnaps_real wpg, det;
@@ -107,7 +128,7 @@ schnaps_real Computation_charge_average(Simulation *simu) {
 
 
 void ComputeElectricField(field* f){
-
+   KineticData *kd = &schnaps_kinetic_data;
   int nraf[3] = {f->raf[0], 
 		 f->raf[1],
 		 f->raf[2]};
@@ -136,7 +157,7 @@ void ComputeElectricField(field* f){
 
       ref_pg_vol(f->deg,f->raf,ipgmacro,xref,NULL,NULL);
       int iex = f->varindex(f->deg,f->raf,f->model.m,
-			    ipgmacro,_INDEX_EX);
+			    ipgmacro,kd->index_ex);
       f->wn[iex] = 0;
       
       for(int ib=0; ib < nnodes; ib++){
@@ -149,7 +170,7 @@ void ComputeElectricField(field* f){
 		  dtau,codtau,dphi,NULL);
 	schnaps_real det = dot_product(dtau[0], codtau[0]);
 	int ipot = f->varindex(f->deg,f->raf,f->model.m,
-			   ibmacro,_INDEX_PHI);
+			   ibmacro,kd->index_phi);	
 	f->wn[iex] -= f->wn[ipot] * dphi[0] / det;
       }
     }
@@ -158,48 +179,33 @@ void ComputeElectricField(field* f){
   }
 }
 
-/*void Compute_electric_field(field* f, real * w){
 
-    
-  int nraf[3] = {f->raf[0], 
-		 f->raf[1],
-		 f->raf[2]};
-  
-  int npg[3] = {f->deg[0] + 1, 
-		f->deg[1] + 1,
-		f->deg[2] + 1};
 
-  int nnodes = npg[0] * npg[1] * npg[2] ;
+
+
+void Collision_Source(Simulation *simu) {
+  KineticData * kd=&schnaps_kinetic_data;
  
-  int npgmacrocell = nnodes * nraf[0] * nraf[1] * nraf[2];
 
+  Computation_Fluid_Quantities(simu);
 
-
-    for(int ipg = 0;ipg < npgmacrocell; ipg++){
-      //real wpg;
-      real xref[3];
-
-      ref_pg_vol(f->deg,f->raf,ipg,xref,NULL,NULL);
-      int iex = f->varindex(f->deg,f->raf,f->model.m,
-			    ipg,_INDEX_EX);
-      w[iex] = 0;
-      
-      for(int ib=0; ib < npgmacrocell; ib++){
-	real dtau[3][3],codtau[3][3];
-	real dphiref[3];
-	real dphi[3];
-	grad_psi_pg(f->deg,f->raf,ib,ipg,dphiref);
-	Ref2Phy(f->physnode,xref,dphiref,0,NULL,
-		  dtau,codtau,dphi,NULL);
-	real det = dot_product(dtau[0], codtau[0]);
-	int ipot = f->varindex(f->deg,f->raf,f->model.m,
-			   ib,_INDEX_PHI);
-	w[iex] -= w[ipot] * dphi[0] / det;
+  for(int ie = 0; ie < simu->macromesh.nbelems; ie++){
+    field * f = simu->fd + ie;
+    
+    schnaps_real w_loc[f->model.m];
+    schnaps_real source_loc[f->model.m];
+    
+    for(int ipg=0;ipg<NPG(f->deg, f-> raf);ipg++){
+      for(int iv=0;iv<f->model.m;iv++){
+	w_loc[iv] = simu->w[iv];
       }
-    }
-  
-    }*/
+      BGK_Source(w_loc, source_loc);  
+      for(int iv=0;iv<f->model.m;iv++){
+	int imemc=f->varindex(f->deg, f->raf, f->model.m, ipg, 0);
+	simu->w[imemc] = simu->w[imemc]+ simu->dt*source_loc[iv];
+      }
 
-
-
-
+      
+    }  
+  }
+};

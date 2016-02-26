@@ -42,7 +42,7 @@ cl_uint get_nbplatforms()
 }
 
 bool clplatform_exists(cl_uint nplatform)
-{ 
+{
   cl_uint nbplatforms = get_nbplatforms();
   if(nplatform < nbplatforms)
     return true;
@@ -54,12 +54,12 @@ cl_platform_id get_platform_id(cl_uint nplatform)
 {
   cl_uint nbplatforms = get_nbplatforms();
   cl_platform_id *platforms = malloc(sizeof(cl_platform_id[nbplatforms]));
-  
+
   cl_int status;
   status = clGetPlatformIDs(nbplatforms, platforms, NULL);
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
   assert(status >= CL_SUCCESS);
-  
+
   cl_platform_id the_platform = platforms[nplatform];
 
   free(platforms);
@@ -179,11 +179,11 @@ bool cldevice_is_acceptable(cl_uint nplatform, cl_uint ndevice)
 void InitCLInfo(CLInfo *cli, int platform_num, int device_num)
 {
   cl_int status;
-  
+
   /* numbers of platforms */
   cli->nbplatforms = get_nbplatforms();
   assert(cli->nbplatforms > 0);
- 
+
   /* platform array construction */
   cl_platform_id *platforms = malloc(sizeof(cl_platform_id[cli->nbplatforms]));
   assert(platforms);
@@ -192,9 +192,9 @@ void InitCLInfo(CLInfo *cli, int platform_num, int device_num)
   status = clGetPlatformIDs(cli->nbplatforms, platforms, NULL);
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
   assert(status >= CL_SUCCESS);
-  
+
   printf("\nAvailable OpenCL platforms:\n");
-  
+
   char pbuf[2000];
   for(int i = 0; i < cli->nbplatforms; ++i) {
     printf("\nPlatform %d:\n", i);
@@ -241,7 +241,7 @@ void InitCLInfo(CLInfo *cli, int platform_num, int device_num)
   printf("of platform %d/%d\n", platform_num, cli->nbplatforms - 1);
 
   cli->device = get_device_id(platform, device_num);
-  
+
   // device name
   status = clGetDeviceInfo(cli->device,
 			   CL_DEVICE_NAME,
@@ -255,8 +255,8 @@ void InitCLInfo(CLInfo *cli, int platform_num, int device_num)
   cl_device_type dtype;
   status = clGetDeviceInfo(cli->device,
 			   CL_DEVICE_TYPE,
-			   sizeof(dtype), 
-			   &dtype, 
+			   sizeof(dtype),
+			   &dtype,
 			   NULL);
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
   assert(status >= CL_SUCCESS);
@@ -287,7 +287,7 @@ void InitCLInfo(CLInfo *cli, int platform_num, int device_num)
     assert(status >= CL_SUCCESS);
     printf("\tOpenCL version: %s\n", buf);
   }
-  
+
   // device memory
   status = clGetDeviceInfo(cli->device,
 			   CL_DEVICE_GLOBAL_MEM_SIZE,
@@ -373,7 +373,7 @@ void InitCLInfo(CLInfo *cli, int platform_num, int device_num)
   get_cldevice_extensions(cli->device, cli->clextensions,
 			  sizeof(cli->clextensions));
   printf("\tOpenCL extensions: %s\n", cli->clextensions);
-  
+
   // First opencl context
   cli->context = clCreateContext(NULL, // no context properties
 				 1,         // only one device in the list
@@ -387,7 +387,7 @@ void InitCLInfo(CLInfo *cli, int platform_num, int device_num)
 #if 0
   //#ifdef CL_VERSION_2_0
   cl_queue_properties queue_properties = CL_QUEUE_PROFILING_ENABLE;
-  cli->commandqueue 
+  cli->commandqueue
     = clCreateCommandQueueWithProperties(cli->context,
 					 cli->device,
 					 &queue_properties,
@@ -434,14 +434,14 @@ void BuildKernels(CLInfo *cli, char *strprog, char *buildoptions)
 					   &status);
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
   assert(status >= CL_SUCCESS);
-  
-  if(!(cli->program)) 
+
+  if(!(cli->program))
     printf("Failed to create program.\n");
 
   int deflen = 400;
-  char *buildoptions0 
-    = (buildoptions == NULL) ? 
-    malloc(deflen + 1) :  
+  char *buildoptions0
+    = (buildoptions == NULL) ?
+    malloc(deflen + 1) :
     malloc(deflen + strlen(buildoptions) + 1);
 
 #ifdef _DOUBLE_PRECISION
@@ -490,7 +490,7 @@ void ReadFile(char filename[], char **s){
 
 //! \brief scan all *.h and *.c in order to find the code
 //! to be shared with opencl
-//! such code is enclosed between \#pragma start_opencl and 
+//! such code is enclosed between \#pragma start_opencl and
 // \#pragma end_opencl
 void GetOpenCLCode(void){
   int status;
@@ -557,10 +557,53 @@ void print_kernel_perf(schnaps_real dev_gflops, schnaps_real dev_bwidth,
 					    flop_count, io_count);
     printf("\tTheoretical kernel time:\t%f s\n", min_time_total);
     printf("\tEfficiency:\t\t\t%f%%\n", 100.0 * min_time_total / total_time);
-  } 
+  }
 }
+
+
+cl_device_type GetDeviceTypeFromName(const char *name) {
+  cl_int status;
+
+  // Loop over platforms
+  for(int ip = 0; ip < get_nbplatforms(); ++ip) {
+    cl_platform_id platform = get_platform_id(ip);
+
+    // Loop over devices
+    for(int id = 0; id < get_nbdevices(&platform); ++id) {
+      cl_device_id device = get_device_id(platform, id);
+
+      // Get device name
+      char buffer[1000];
+      status = clGetDeviceInfo(device,
+                               CL_DEVICE_NAME,
+                               sizeof(buffer),
+                               buffer,
+                               NULL);
+      if (status < CL_SUCCESS) printf("%s\n", clErrorString(status));
+      assert(status >= CL_SUCCESS);
+
+      // Check that name contains device name
+      if (strstr(name, buffer) != NULL) {
+        // Get device type
+        cl_device_type type;
+        status = clGetDeviceInfo(device,
+                                 CL_DEVICE_TYPE,
+                                 sizeof(type),
+                                 &type,
+                                 NULL);
+        if (status < CL_SUCCESS) printf("%s\n", clErrorString(status));
+        assert(status >= CL_SUCCESS);
+
+        return type;
+      }
+    }
+  }
+
+  printf("%s\n", clErrorString(CL_DEVICE_NOT_FOUND));
+  assert(CL_DEVICE_NOT_FOUND);
+}
+
 
 #ifdef DISABLE_PRINTF_CL
     #undef printf
 #endif
-

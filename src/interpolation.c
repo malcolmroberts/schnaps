@@ -243,7 +243,7 @@ void ipg_to_xyz(const int *raf, const int *deg, int *ic, int *ix,
 
 
 // From a reference point find the nearest gauss point
-// Warning: works only  degree 1,2 or 3
+// Warning: works only for  degrees 1,2 or 3
 int ref_ipg(int *deg, int *nraf, schnaps_real *xref) {
 
   schnaps_real hh[3] = {1./nraf[0],1./nraf[1],1./nraf[2]};
@@ -519,6 +519,7 @@ int ref_pg_face(int deg3d[], int nraf3d[], int ifa, int ipg,
 
   // Compute the global index of the
   // Gauss-Lobatto point in the volume
+  // TODO: call rather xyz_to_ipg !!!!!!!!!!!!!!!!!!!!!
   int ipg3d = ipgxyz[0] + (deg3d[0] + 1) *
     (ipgxyz[1] + (deg3d[1] + 1) *
      (ipgxyz[2] + (deg3d[2] + 1) *
@@ -587,10 +588,6 @@ int ref_pg_face_CG(int deg3d[], int nraf3d[], int ifa, int ipg,
 				  {1, 0, 2, 0} };
 
   int deg[3], offset[2],nraf[3];
-  schnaps_real h[3];
-  h[0] = 1.0 / (schnaps_real) nraf[0];
-  h[1] = 1.0 / (schnaps_real) nraf[1];
-  h[2] = 1.0 / (schnaps_real) nraf[2];
 
   int ipgxyz[3], ncpgxyz[3];
   //int ipgf=ipg;
@@ -600,12 +597,18 @@ int ref_pg_face_CG(int deg3d[], int nraf3d[], int ifa, int ipg,
   deg[1] = deg3d[axis_permut[ifa][1]];
   deg[2] = deg3d[axis_permut[ifa][2]];
 
+ 
   // number of subcells in each direction
   nraf[0] = nraf3d[axis_permut[ifa][0]];
   nraf[1] = nraf3d[axis_permut[ifa][1]];
   nraf[2] = nraf3d[axis_permut[ifa][2]];
 
-  int nx[3] = {
+  schnaps_real h[3];
+  h[0] = 1.0 / (schnaps_real) nraf[0];
+  h[1] = 1.0 / (schnaps_real) nraf[1];
+  h[2] = 1.0 / (schnaps_real) nraf[2];
+
+ int nx[3] = {
     deg[0] * nraf[0] + 1,
     deg[1] * nraf[1] + 1,
     deg[2] * nraf[2] + 1};

@@ -5,9 +5,7 @@
 #include <math.h>
 #include "skyline.h"
 #include "skyline_spu.h"
-#include "paralution_c.h"
 #include "dpackfgmres.h"
-#include "physBased_PC.h"
 
 void InitLinearSolver(LinearSolver* lsol,int n,
 		      MatrixStorage* matstor,
@@ -420,7 +418,6 @@ void SolveLinearSolver(LinearSolver* lsol){
   assert(lsol->rhs);
   assert(lsol->sol);
 
-
   if(lsol->solver_type == LU) {
        Skyline* sky;
        Skyline_SPU* sky_spu;
@@ -451,188 +448,7 @@ void SolveLinearSolver(LinearSolver* lsol){
   }
   else if(lsol->solver_type == GMRES) {
     GMRESSolver(lsol);
-  }
-  else {
-#ifdef PARALUTION
-    Solver_Paralution(lsol);
-#else
-    printf("paralution is not build this solver is not accessible.");
-    assert(1==2);
-#endif
   }  
-   
-}
-
-
-
-void Solver_Paralution(LinearSolver* lsol){
-  int * rows=NULL;
-  int * cols=NULL;
-  schnaps_real * coefs=NULL;
-  
-  schnaps_real * mat_coefs=NULL;
-  schnaps_real * RHS=NULL;
-  schnaps_real * Sol=NULL;
-  char * solver;
-  char * pc;
-  char * storage;
-  schnaps_real * residu=0; 
-  int nnz=0,n=0,c=0;
-  Skyline * mat;
-  
-  int basis_size_gmres=30, ILU_p=2,ILU_q=2;
-  int* iter_final=0;
-  int* ierr=0;
-  int maxit=10000;
-  schnaps_real norm_rhs=0;
-  schnaps_real a_tol=0,r_tol=0,div_tol=1.e+8;
-
-  storage="CSR";
-  norm_rhs=Vector_norm2(lsol->rhs,lsol->neq);
-  a_tol=lsol->tol*(1.0+1.e-20*norm_rhs);
-
-  if(lsol->neq<61) {
-    basis_size_gmres = (int) (lsol->neq/2);
-    }
-  else {
-      basis_size_gmres = 30;
-    }
-
-  switch(lsol->solver_type){
-  case PAR_CG :
-    solver="CG";
-    break;
-  case PAR_GMRES :
-    solver="GMRES";
-    break;
-  case PAR_FGMRES :
-   solver="FGMRES";
-    break;
-  case PAR_BICGSTAB :
-    solver="BiCGStab";
-     break;
-  case PAR_AMG :
-    solver="AMG";
-     break;
-  case PAR_LU :
-    solver="LU";
-    storage="DENSE";
-     break;
-  case PAR_QR :
-    solver="QR";
-    storage="DENSE";
-     break;
-  default : 
-    assert(1==2);   
-  }
-
-
-  switch(lsol->pc_type){
-  case NONE :
-    pc="None";
-    break;   
-  case PAR_JACOBI :
-    pc="Jacobi";
-    break;
-  case PAR_ILU :
-    pc="ILU";
-    break;
-  case PAR_MULTICOLOREDGS :
-   pc="MultiColoredGS";
-    break;
-  case PAR_MULTICOLOREDSGS :
-    pc="MultiColoredSGS";
-     break;
-  case PAR_MULTICOLOREDILU :
-    pc="MultiColoredILU";
-     break;
-  case PAR_AMG_PC :
-    pc="AMG";
-     break;
-  case PAR_ELIMI :
-     pc="ELIMI";
-     break;  
-  default : 
-    assert(1==2);   
-  }
-
-
-  
-  n=lsol->neq;
-  RHS = calloc(n,sizeof(schnaps_real));
-  Sol = calloc(n,sizeof(schnaps_real));
-
-  for(int i=0;i<n;i++){
-    RHS[i] = (schnaps_real) lsol->rhs[i];
-    Sol[i] = (schnaps_real )lsol->sol[i];   
-  }
-
-
-
-  
- switch(lsol->storage_type) {
-  case SKYLINE :
-
-    mat = lsol->matrix;
-    
-    nnz= mat->neq+2*mat->nmem;
-  
-    rows = (int*) malloc(nnz*sizeof(int)); 
-    cols = (int*) malloc(nnz*sizeof(int));
-    coefs = (schnaps_real*) malloc(nnz*sizeof(schnaps_real));
-    assert(rows);
-  
-    for (int i=0;i< mat->neq; i++) {
-      for (int j=0;j< mat->neq; j++) {
-	if (j-i <= mat->prof[j] && i-j <= mat->prof[i]){
-	  if (i==j){
-	    coefs[c]=mat->vkgd[i];
-	    rows[c]=i;
-	    cols[c]=j;
-	    c++;
-	  }
-	  else if ( j>i){
-	    int k=mat->kld[j+1]-j+i;
-	    coefs[c]=mat->vkgs[k];
-	    rows[c]=i;
-	    cols[c]=j;
-	    c++; 
-	  }
-	  else {
-	    int k=mat->kld[i+1]-i+j;
-	    coefs[c]=mat->vkgi[k];
-	    rows[c]=i;
-	    cols[c]=j;
-	    c++; 
-	  }
-	}
-      }
-    }    
-    
-    mat_coefs = malloc(nnz*sizeof(schnaps_real));
-    for(int i=0;i<nnz;i++){
-      mat_coefs[i] = (schnaps_real) coefs[i];
-    }
-    
-#ifdef PARALUTION
-    paralution_fortran_solve_coo(n,n,nnz,solver,storage,pc,storage,
-    				 rows,cols,mat_coefs,RHS,a_tol,r_tol,div_tol,maxit,
-    				 basis_size_gmres,ILU_p,ILU_q,Sol); 
-#endif /* PARALUTION */
-    break;
-
-  case CSR :
-    assert(1==2);
-    break;
-
-  default : 
-    assert(1==2);
-  }
-  
-  for(int i=0;i<n;i++){
-    lsol->sol[i] = (schnaps_real) Sol[i];
-  }
-  
 }
 
 
@@ -672,7 +488,7 @@ void GMRESSolver(LinearSolver* lsol){
   icntl[8]  = 1; //1
 
   
-  if ((lsol->pc_type == JACOBI) ||(lsol->pc_type == EXACT)){
+  if (lsol->pc_type == JACOBI){
     icntl[4] = 2;
   }
      
@@ -760,10 +576,7 @@ void GMRESSolver(LinearSolver* lsol){
   }
 
   else if(revcom == precondRight)  {
-    if(lsol->pc_type == EXACT){
-      Exact_PC(lsol,loc_z,loc_x);
-    }
-    else if (lsol->pc_type == JACOBI){
+    if (lsol->pc_type == JACOBI){
       Jacobi_PC(lsol,loc_z,loc_x);
     }
     else {
@@ -825,48 +638,7 @@ void Jacobi_PC(LinearSolver *lsol, schnaps_real* sol, schnaps_real* rhs){
   }
 }
 
-void Exact_PC(LinearSolver *lsol, schnaps_real* sol, schnaps_real* rhs){
 
-  Skyline * mat;
-  Skyline mat_copy;
-
-  mat=(Skyline*)lsol->matrix; 
-  
-  mat_copy.is_alloc= mat->is_alloc;
-  mat_copy.copy_is_alloc=mat->copy_is_alloc;
-  mat_copy.is_sym=mat->is_sym;
-  mat_copy.is_lu=mat->is_lu;
-
-  mat_copy.neq=mat->neq;
-  mat_copy.nmem=mat->nmem;
-
-  mat_copy.vkgd=malloc(mat_copy.neq*sizeof(schnaps_real));
-  mat_copy.vkgi=malloc(mat_copy.nmem*sizeof(schnaps_real));
-  mat_copy.vkgs=malloc(mat_copy.nmem*sizeof(schnaps_real));
-  
-
-  mat_copy.prof=malloc(mat_copy.neq*sizeof(int));
-  mat_copy.kld=malloc((mat_copy.neq+1)*sizeof(int));
-
-  for (int i=0;i<mat->neq; i++){
-    mat_copy.vkgd[i]=mat->vkgd[i];
-  }
-  for (int i=0;i<mat->nmem; i++){
-    mat_copy.vkgi[i]=mat->vkgi[i];
-    mat_copy.vkgs[i]=mat->vkgs[i];
-  }
-
-  for (int i=0;i<mat->neq+1; i++){
-    mat_copy.kld[i]=mat->kld[i];
-  }
-  for (int i=0;i<mat->neq; i++){
-    mat_copy.prof[i]=mat->prof[i];
-  }
-  
-  FactoLU(&mat_copy);
-  SolveSkyline(&mat_copy,rhs,sol);
-  
-}
 
 
 

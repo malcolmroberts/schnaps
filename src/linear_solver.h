@@ -3,12 +3,11 @@
 
 #include "global.h"
 #include <stdbool.h>
-#include "paralution_c.h"
 #include <starpu.h>
 
 typedef enum MatrixStorage{SKYLINE,CSR,SKYLINE_SPU} MatrixStorage;
-typedef enum Solver{LU,GMRES,PAR_GMRES,PAR_FGMRES,PAR_CG,PAR_BICGSTAB,PAR_AMG,PAR_LU,PAR_QR} Solver;
-typedef enum PC{NONE,JACOBI,PAR_JACOBI,PAR_ILU,PAR_MULTICOLOREDSGS,PAR_MULTICOLOREDGS,PAR_MULTICOLOREDILU,PAR_AMG_PC,PAR_ELIMI,PHY_BASED_P1,PHY_BASED_P2,PHY_BASED_U1,PHY_BASED_U2,EXACT,LO_POISSON} PC;
+typedef enum Solver{LU,GMRES} Solver;
+typedef enum PC{NONE,JACOBI} PC;
 
 //! class for managing linear solvers
 typedef struct LinearSolver{
@@ -159,9 +158,6 @@ schnaps_real Vector_prodot(schnaps_real x[],schnaps_real y[],int N);
 //! \param[in] N size
 schnaps_real Vector_norm2(schnaps_real x[],int  N);
 
-//! \brief solve the linear system with paralution
-//! \param[inout] lsol contains the matrices rhs and sol
-void Solver_Paralution(LinearSolver* lsol);
 
 //! \brief solve the linear system with the GMREs of the cerfacs
 //! \param[inout] lsol contains the matrices rhs and sol
@@ -170,9 +166,5 @@ void GMRESSolver(LinearSolver* lsol);
 //! \brief Jacobi preconditioner
 //! \param[in] lsol contains the matrices rhs and sol
 void Jacobi_PC(LinearSolver* lsol, schnaps_real* sol, schnaps_real* rhs);
-
-//! \brief Exact LU preconditioner
-//! \param[in] lsol contains the matrices rhs and sol
-void Exact_PC(LinearSolver* lsol, schnaps_real* sol, schnaps_real* rhs);
 
 #endif

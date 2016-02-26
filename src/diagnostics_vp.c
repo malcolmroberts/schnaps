@@ -10,19 +10,19 @@
 #include "diagnostics_vp.h"
 
 schnaps_real L2VelError(field *f, schnaps_real *x, schnaps_real *w){
-
-  schnaps_real wex[_INDEX_MAX];
+  KineticData * kd=&schnaps_kinetic_data;
+  schnaps_real wex[kd->index_max];
   schnaps_real err2 = 0;
   schnaps_real t = f->tnow;
   f->model.ImposedData(x, t, wex);
   // loop on the finite emlements
-  for(int iel = 0; iel < _NB_ELEM_V; iel++){
+  for(int iel = 0; iel < kd->nb_elem_v; iel++){
     // loop on the local glops
-    for(int iloc = 0; iloc < _DEG_V + 1; iloc++){
-      schnaps_real omega = wglop(_DEG_V, iloc);
-      schnaps_real vi = -_VMAX + iel*_DV + _DV * glop(_DEG_V, iloc);
-      int ipg = iloc + iel * _DEG_V;
-      err2 += omega * _DV * (w[ipg] - wex[ipg]) * (w[ipg] - wex[ipg]);
+    for(int iloc = 0; iloc < kd->deg_v + 1; iloc++){
+      schnaps_real omega = wglop(kd->deg_v, iloc);
+      schnaps_real vi = -kd->vmax + iel*kd->dv + kd->dv * glop(kd->deg_v, iloc);
+      int ipg = iloc + iel * kd->deg_v;
+      err2 += omega * kd->dv * (w[ipg] - wex[ipg]) * (w[ipg] - wex[ipg]);
     }
   }
   
@@ -31,7 +31,6 @@ schnaps_real L2VelError(field *f, schnaps_real *x, schnaps_real *w){
 
 schnaps_real L2_Kinetic_error(Simulation* simu){
   schnaps_real error = 0;
-
   field *f =&simu->fd[0];
 
     // get the physical nodes of element ie
@@ -65,18 +64,19 @@ schnaps_real L2_Kinetic_error(Simulation* simu){
 
 schnaps_real local_kinetic_energy(field *f,schnaps_real *x, schnaps_real *w) {
 
-  schnaps_real wex[_INDEX_MAX];
+  KineticData * kd=&schnaps_kinetic_data;
+  schnaps_real wex[kd->index_max];
   schnaps_real l_ke=0;
   schnaps_real t=f->tnow;
   
   // loop on the finite emlements
-  for(int iel = 0; iel < _NB_ELEM_V; iel++){
+  for(int iel = 0; iel < kd->nb_elem_v; iel++){
     // loop on the local glops
-    for(int iloc = 0; iloc < _DEG_V + 1; iloc++){
-      schnaps_real omega = wglop(_DEG_V, iloc);
-      schnaps_real vi = -_VMAX + iel * _DV + _DV * glop(_DEG_V, iloc);
-      int ipg = iloc + iel * _DEG_V;
-      l_ke += omega * _DV * w[ipg] * vi * vi ;
+    for(int iloc = 0; iloc < kd->deg_v + 1; iloc++){
+      schnaps_real omega = wglop(kd->deg_v, iloc);
+      schnaps_real vi = -kd->vmax + iel * kd->dv + kd->dv * glop(kd->deg_v, iloc);
+      int ipg = iloc + iel * kd->deg_v;
+      l_ke += omega * kd->dv * w[ipg] * vi * vi ;
      }
   }
   return l_ke;
@@ -86,7 +86,7 @@ schnaps_real local_kinetic_energy(field *f,schnaps_real *x, schnaps_real *w) {
 // TODO: do not store all diagnotics for all time, but instead just
 // append to the output file.
 void Energies(Simulation *simu, schnaps_real *w, schnaps_real k_energy, schnaps_real e_energy, schnaps_real t_energy,int first_diag) {
-  
+  KineticData * kd=&schnaps_kinetic_data;
   k_energy = 0;
   e_energy = 0;
   t_energy = 0;
@@ -111,13 +111,13 @@ void Energies(Simulation *simu, schnaps_real *w, schnaps_real k_energy, schnaps_
 	+ dtau[0][2] * codtau[0][2]; 
       schnaps_real wn[f->model.m];
       //printf("m=%d imax=%d\n",f->model.m,_INDEX_MAX + 1);
-      for(int iv = 0; iv < _INDEX_MAX + 1; iv++){ 
+      for(int iv = 0; iv < kd->index_max + 1; iv++){ 
 	int imem = f->varindex(f->deg,f->raf, f->model.m, ipg, iv);
 	wn[iv] = w[imem];
       }
       // get the exact value
       k_energy += local_kinetic_energy(f, xphy, wn) * wpg * det;
-      e_energy += wn[_INDEX_EX] * wn[_INDEX_EX] * wpg * det;
+      e_energy += wn[kd->index_ex] * wn[kd->index_ex] * wpg * det;
   
     }
   
@@ -130,7 +130,7 @@ void Energies(Simulation *simu, schnaps_real *w, schnaps_real k_energy, schnaps_
 }
 
 void Charge_total(Simulation *simu, schnaps_real *w, schnaps_real t_charge,int first_diag) {
-  
+   KineticData * kd=&schnaps_kinetic_data;
   t_charge=0;
   field *f=&simu->fd[0];
 
@@ -150,11 +150,11 @@ void Charge_total(Simulation *simu, schnaps_real *w, schnaps_real t_charge,int f
 	+ dtau[0][1] * codtau[0][1]
 	+ dtau[0][2] * codtau[0][2]; 
       schnaps_real wn[f->model.m];
-      for(int iv = 0; iv < _INDEX_MAX + 1; iv++){ 
+      for(int iv = 0; iv < kd->index_max + 1; iv++){ 
 	int imem = f->varindex(f->deg,f->raf, f->model.m, ipg, iv);
 	wn[iv] = w[imem];
       }
-      t_charge += wn[_INDEX_RHO] * wpg * det;
+      t_charge += wn[kd->index_rho] * wpg * det;
     }
   
 

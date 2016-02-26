@@ -379,6 +379,10 @@ void SolveSkyline(Skyline* sky,schnaps_real* vfg,schnaps_real* vu){
 	vu[i]=sol_temp[i];
       }
    }
+   
+   free(vec_temp);
+   free(sol_temp);
+   free(sol_temp2);
 }
 
 

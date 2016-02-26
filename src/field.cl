@@ -255,7 +255,7 @@ void Phy2Ref(__constant schnaps_real *physnode,
              schnaps_real xphy[3], schnaps_real xref[3]);
 
 // Given parameters deg and nraf and input ipg, compute the reference
-// coordinages (xpg) and the weght of the Gauss piont (wpg).
+// coordinages (xpg) and the weight of the Gauss piont (wpg).
 void ref_pg_vol(const int *deg, const int *nraf,
 		const int ipg, schnaps_real *xpg, schnaps_real *wpg) {
   int ix[3], ic[3];
@@ -600,7 +600,7 @@ void DGFlux(__constant int *param,       // 0: interp param
   for(int iv = 0; iv < m; iv++) {
     int imemL =  VARINDEX(param + 1, param + 4, m, ipgL, iv) + woffset;
     //VARINDEX(param, ie, ipgL, iv);
-    wL[iv] = wn[imemL];
+    wL[iv] = wn[imemL]; 
     int imemR =  VARINDEX(param + 1, param + 4, m, ipgR, iv) + woffset;
     //VARINDEX(param, ie, ipgR, iv);
     wR[iv] = wn[imemR];
@@ -678,7 +678,7 @@ void DGFlux(__constant int *param,       // 0: interp param
   for(int iv = 0; iv < m; iv++) {
     int imemL =  VARINDEX(param + 1, param + 4, m, ipgL, iv) + woffset;
     //VARINDEX(param, ie, ipgL, iv);
-    wL[iv] = wn[imemL];
+    wL[iv] = wn[imemL]; 
     int imemR =  VARINDEX(param + 1, param + 4, m, ipgR, iv) + woffset;
     //VARINDEX(param, ie, ipgR, iv);
     wR[iv] = wn[imemR];
@@ -766,7 +766,7 @@ void AddBuffer(schnaps_real alpha,
 #define BOUNDARYFLUX BoundaryFlux
 #endif
 
-// Compute the volume  terms inside  one macrocell
+
 __kernel
 void DGVolume(__constant int *param,     // 0: interp param
 	      int ie,                    // 1: macrocel index
@@ -927,10 +927,10 @@ void DGVolume(__constant int *param,     // 0: interp param
       }
 #else
       int ipgR = ipg(npg, q, icell);
-      int imemR0 =  VARINDEX(param + 1, param + 4, m, ipgR, 0) + woffset;
-      //VARINDEX(param, ie, ipgR, 0);
-      __global schnaps_real *dtwn0 = dtwn + imemR0;
       for(int iv = 0; iv < m; iv++) {
+      int imemR0 =  VARINDEX(param + 1, param + 4, m, ipgR, iv) + woffset;
+      //VARINDEX(param, ie, ipgR, 0);
+      __global double *dtwn0 = dtwn + imemR0;
      	dtwn0[iv] += flux[iv] * wpg;
       }
 #endif
@@ -959,15 +959,102 @@ void DGVolume(__constant int *param,     // 0: interp param
 #endif
 }
 
+// Compute the volume terms inside one macrocell
+__kernel
+void DGVolumeAAA(__constant int *param,              // 0: interp param (m, deg, raf)
+              int ie,                             // 1: macrocel index
+              __constant schnaps_real *physnodes, // 2: macrocell nodes
+              __global schnaps_real *wn,          // 3: field values
+              __global schnaps_real *dtwn,        // 4: time derivative
+              __local schnaps_real *dtwnloc       // 5: cache for dtwn
+              ) {
+  __constant schnaps_real *physnode = physnodes + ie * 60;
+
+  const int deg[3] = {param[1], param[2], param[3]};
+  const int npg[3] = {deg[0] + 1, deg[1] + 1, deg[2] + 1};
+  const int raf[3] = {param[4], param[5], param[6]};
+
+  const int woffset = ie * _M * NPG(deg, raf);
+
+  // Subcell id
+  const int icell = get_group_id(0);
+
+  // Gauss point id
+  int ipL[3] = {
+    get_local_id(0) % npg[0],
+    (get_local_id(0) / npg[0]) % npg[1],
+    get_local_id(0) / npg[0] / npg[1],
+  };
+  const int ipgL = ipg(npg, ipL, icell);
+
+  // Reference coordinates
+  schnaps_real xpg[3];
+  schnaps_real wpg;
+  ref_pg_vol(deg, raf, ipgL, xpg, &wpg);
+
+  // Codtau
+  schnaps_real codtau[3][3];
+  {
+    schnaps_real dtau[3][3];
+    get_dtau(xpg[0], xpg[1], xpg[2], physnode, dtau); // 1296 mults
+    compute_codtau(dtau, codtau);
+  }
+
+  // Field
+  schnaps_real w[_M];
+  for (int iv = 0; iv < _M; ++iv)
+    w[iv] = wn[VARINDEX(param + 1, param + 4, _M, ipgL, iv) + woffset];
+
+
+  // Init of local dtwn (coalescent access)
+  for (int iv = 0; iv < _M; ++iv)
+    dtwnloc[get_local_id(0) + iv * get_local_size(0)] = 0;
+  barrier(CLK_LOCAL_MEM_FENCE);
+
+
+  // Flux
+  schnaps_real flux[_M];
+  for (int dim = 0; dim < 3; ++dim) {
+    int ipR[3] = {ipL[0], ipL[1], ipL[2]};
+
+    // Loop over the "cross" points
+    for (int ip = 0; ip < npg[dim]; ++ip) {
+      ipR[dim] = (ipL[dim] + ip) % npg[dim];
+      const schnaps_real dphiref = dlag(deg[dim], ipR[dim], ipL[dim]) * raf[dim];
+      schnaps_real dphi[3] = {
+        codtau[0][dim] * dphiref,
+        codtau[1][dim] * dphiref,
+        codtau[2][dim] * dphiref,
+      };
+
+      NUMFLUX(w, w, dphi, flux);
+
+      // Apply flux to local dtwn
+      const int ipgR = ipg(npg, ipR, 0);
+      for (int iv = 0; iv < _M; ++iv)
+        dtwnloc[ipgR * _M + iv] += flux[iv] * wpg;
+
+      barrier(CLK_LOCAL_MEM_FENCE);
+    }
+  }
+
+
+  // Apply flux to global dtwn
+  for (int iv = 0; iv < _M; ++iv)
+    dtwn[VARINDEX(param + 1, param + 4, _M, ipgL, iv) + woffset]
+        += dtwnloc[get_local_id(0) * _M + iv];
+}
+
 
 __kernel
-void DGVolume3D(__constant int *param,      // 0: interp param (m, deg, raf)
-                int ie,                     // 1: macrocel index
+void DGVolume3D(__constant int *param,              // 0: interp param (m, deg, raf)
+                int ie,                             // 1: macrocel index
                 __constant schnaps_real *physnodes, // 2: macrocell nodes
                 __global schnaps_real *wn,          // 3: field values
-                __global schnaps_real *dtwn         // 4: time derivative
-                ) {
-
+                __global schnaps_real *dtwn,        // 4: time derivative
+                __local schnaps_real *dtwnloc       // 5: cache for dtwn
+                )
+{
   __constant schnaps_real *physnode = physnodes + ie * 60;
 
   const int deg[3] = {param[1], param[2], param[3]};
@@ -999,37 +1086,58 @@ void DGVolume3D(__constant int *param,      // 0: interp param (m, deg, raf)
 
   // Codtau
   schnaps_real codtau[3][3];
-  schnaps_real dtau[3][3];
-  get_dtau(xpg[0], xpg[1], xpg[2], physnode, dtau); // 1296 mults
-  compute_codtau(dtau, codtau);
+  {
+    schnaps_real dtau[3][3];
+    get_dtau(xpg[0], xpg[1], xpg[2], physnode, dtau); // 1296 mults
+    compute_codtau(dtau, codtau);
+  }
 
   // Field
   schnaps_real w[_M];
-  for (int iv = 0; iv < _M; iv++)
+  for (int iv = 0; iv < _M; ++iv)
     w[iv] = wn[VARINDEX(param + 1, param + 4, _M, ipgL, iv) + woffset];
+
+
+  // Init of local dtwn (coalescent access)
+  for (int iv = 0; iv < _M; ++iv)
+    dtwnloc[ipg(npg, ipL, 0) + iv *
+            get_local_size(0) *
+            get_local_size(1) *
+            get_local_size(2)] = 0;
+  barrier(CLK_LOCAL_MEM_FENCE);
+
 
   // Flux
   schnaps_real flux[_M];
-  // Loop over the dimensions
-  for (int dim = 0; dim < 3; dim++) {
+  for (int dim = 0; dim < 3; ++dim) {
     int ipR[3] = {ipL[0], ipL[1], ipL[2]};
 
     // Loop over the "cross" points
-    for (int ip = 0; ip < npg[dim]; ip++) {
+    for (int ip = 0; ip < npg[dim]; ++ip) {
       ipR[dim] = (ipL[dim] + ip) % npg[dim];
-
-      schnaps_real dphi[3];
       const schnaps_real dphiref = dlag(deg[dim], ipR[dim], ipL[dim]) * raf[dim];
-      for (int i = 0; i < 3; i++)
-	dphi[i] = codtau[i][dim] * dphiref;
+      schnaps_real dphi[3] = {
+        codtau[0][dim] * dphiref,
+        codtau[1][dim] * dphiref,
+        codtau[2][dim] * dphiref,
+      };
 
       NUMFLUX(w, w, dphi, flux);
 
-      const int ipgR = ipg(npg, ipR, icell);
-      for (int iv = 0; iv < _M; iv++)
-        dtwn[VARINDEX(param + 1, param + 4, _M, ipgR, iv) + woffset] += flux[iv] * wpg;
+      // Apply flux to local dtwn
+      const int ipgR = ipg(npg, ipR, 0);
+      for (int iv = 0; iv < _M; ++iv)
+        dtwnloc[ipgR * _M + iv] += flux[iv] * wpg;
+
+      barrier(CLK_LOCAL_MEM_FENCE);
     }
   }
+
+
+  // Apply flux to global dtwn
+  for (int iv = 0; iv < _M; ++iv)
+    dtwn[VARINDEX(param + 1, param + 4, _M, ipgL, iv) + woffset]
+        += dtwnloc[ipg(npg, ipL, 0) * _M + iv];
 }
 
 
@@ -1052,6 +1160,7 @@ void DGMass(__constant int *param,       // 0: interp param
 
 
   int npgie = npg[0] * npg[1] * npg[2] * nraf[0] * nraf[1] * nraf[2];
+  //printf("offset=%d %d\n",woffset, npgie * ie * m);
 
   //ref_pg_vol(param+1, ipg,xpgref,&wpg,NULL);
   int ix = ipg % npg[0];
@@ -1096,11 +1205,16 @@ void DGMass(__constant int *param,       // 0: interp param
     - dtau[2][0] * dtau[0][2] * dtau[1][1];
 
   schnaps_real overwpgget = 1.0 / (wpg * det);
-  int imem0 = m * (get_global_id(0) + npgie * ie);
-  __global schnaps_real *dtwn0 = dtwn + imem0;
+  // faster computations but wrong when we change varindex !!!!!!!!!!!!!!!!
+  /* int imem0 = m * (get_global_id(0) + npgie * ie); */
+  /* __global schnaps_real *dtwn0 = dtwn + imem0; */
   for(int iv = 0; iv < m; iv++) {
-    //int imem = iv + imem0;
-    dtwn0[iv] *= overwpgget; // m mults, m reads
+    /* dtwn0[iv] *= overwpgget; // m mults, m reads */
+    int imem = VARINDEX(param + 1, param + 4, m, get_global_id(0), iv) + woffset;
+    /* int *deg1 = param + 1; */
+    /* int *raf1 = param + 4; */
+    /* printf("deg=%d %d %d raf=%d %d %d m=%d\n",deg1[0],deg1[1],deg1[2],raf1[0],raf1[1],raf1[2],m); */
+    dtwn[imem] *= overwpgget;
   }
 }
 
@@ -1276,18 +1390,28 @@ void DGMacroCellInterface(__constant int *param,        // 0: interp param
   __global schnaps_real *wnL0 = wn + imemL0;
   __global schnaps_real *wnR0 = wn + imemR0;
   for(int iv = 0; iv < m; iv++) {
-    wL[iv] = wnL0[iv];
-    wR[iv] = wnR0[iv];
+    /* wL[iv] = wnL0[iv]; */
+    /* wR[iv] = wnR0[iv]; */
+    int imemL = VARINDEX(param + 1, param + 4, m, ipgL, iv) + woffsetL;
+    wL[iv] = wn[imemL];
+
+    int imemR = VARINDEX(param + 1, param + 4, m, ipgR, iv) + woffsetR;
+    wR[iv] = wn[imemR];
   }
 
   NUMFLUX(wL, wR, vnds, flux);
 
-  __global schnaps_real *dtwnL0 = dtwn + imemL0;
-  __global schnaps_real *dtwnR0 = dtwn + imemR0;
+  /* __global schnaps_real *dtwnL0 = dtwn + imemL0; */
+  /* __global schnaps_real *dtwnR0 = dtwn + imemR0; */
   for(int iv = 0; iv < m; ++iv) {
     schnaps_real fluxwpg = flux[iv] * wpg;
-    dtwnL0[iv] -= fluxwpg;
-    dtwnR0[iv] += fluxwpg;
+    int imemL = VARINDEX(param + 1, param + 4, m, ipgL, iv) + woffsetL;
+    dtwn[imemL] -= fluxwpg;
+
+    int imemR = VARINDEX(param + 1, param + 4, m, ipgR, iv) + woffsetR;
+    dtwn[imemR] += fluxwpg;
+    /* dtwnL0[iv] -= fluxwpg; */
+    /* dtwnR0[iv] += fluxwpg; */
   }
 }
 
@@ -1382,19 +1506,23 @@ void DGBoundary(__constant int *param,      // 0: interp param
   schnaps_real wL[_M];
   schnaps_real flux[_M];
 
-  int imemL0 =  VARINDEX(param + 1, param + 4, m, ipgL, 0) + woffset;
+  //int imemL0 =  VARINDEX(param + 1, param + 4, m, ipgL, 0) + woffset;
   //VARINDEX(param, ieL, ipgL, 0);
-  __global schnaps_real *wn0 = wn + imemL0;
+  //__global schnaps_real *wn0 = wn + imemL0;
   for(int iv = 0; iv < m; ++iv) {
-    wL[iv] = wn0[iv];
+    //wL[iv] = wn0[iv];
+    int imemL = VARINDEX(param + 1, param + 4, m, ipgL, iv) + woffset;
+    wL[iv] = wn[imemL];
   }
 
   BOUNDARYFLUX(xpg, tnow, wL, vnds, flux);
 
   // The basis functions is also the gauss point index
-  __global schnaps_real *dtwn0 = dtwn + imemL0;
+  //__global schnaps_real *dtwn0 = dtwn + imemL0;
   for(int iv = 0; iv < m; ++iv) {
-    dtwn0[iv] -= flux[iv] * wpg;
+    //dtwn0[iv] -= flux[iv] * wpg;
+    int imemL = VARINDEX(param + 1, param + 4, m, ipgL, iv) + woffset;
+    dtwn[imemL] -= flux[iv] * wpg;
   }
 }
 

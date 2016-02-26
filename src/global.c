@@ -21,12 +21,18 @@ void InitKineticData(KineticData *kd, int nbelemv, int degv){
   kd->deg_v = degv;
   kd->mv = nbelemv * degv + 1;
   kd->index_max_kin = kd->mv - 1;
-  kd->index_rho = kd->mv ;
-  kd->index_phi = kd->mv + 1;
+  kd->index_rho = kd->mv + 1 ;
+  kd->index_phi = kd->mv ;
   kd->index_ex = kd->mv + 2;
   kd->index_ey = kd->mv + 3;
   kd->index_ez = kd->mv + 4;
-  kd->index_max = kd->mv + 5;
+  kd->index_u = kd->mv + 5;
+  kd->index_P = kd->mv + 6;
+  kd->index_T = kd->mv + 7;
+  kd->index_max = kd->mv + 8;
   kd->vmax = 6;
   kd->dv = 2 * kd->vmax / nbelemv;
+  kd->gamma = 3.;
+  kd->knud =1.;
+  kd->solve_quasineutrality = false;
 }

@@ -53,7 +53,7 @@ int TestmEq2(void){
 
   InitSimulation(&simu, &mesh, deg, raf, &model);
  
-  schnaps_real tmax = 1;
+  schnaps_real tmax = 0.5;
   simu.cfl=0.05;
   simu.vmax=1;
   RK2(&simu,tmax);

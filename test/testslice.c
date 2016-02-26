@@ -51,6 +51,7 @@ int TestSlice(void) {
   // nbelemv = 10
   // deg_v = 4
   InitKineticData(&schnaps_kinetic_data,1,2);
+  kd->solve_quasineutrality = true;
   
   printf("_MV=%d\n",kd->mv);
   printf("_INDEX_MAX=%d\n",kd->index_max);

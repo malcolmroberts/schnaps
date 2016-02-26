@@ -654,7 +654,7 @@ schnaps_real L2error(Simulation *simu) {
 	// Get the exact value
 	f->model.ImposedData(xphy, simu->tnow, wex);
       }
-
+      
       for(int iv = 0; iv < f->model.m; iv++) {
 	//for(int iv = 0; iv < 4; iv++) {   ///////error here for coil2d
 	schnaps_real diff = w[iv] - wex[iv];
@@ -842,7 +842,7 @@ void RK4_final_inplace(schnaps_real *w, schnaps_real *l1, schnaps_real *l2, schn
 
 schnaps_real Get_Dt_RK(Simulation *simu)
 {
-   printf("mmmm %f %f %f ",simu->cfl, simu->hmin,simu->vmax);
+  //printf("mmmm %f %f %f ",simu->cfl, simu->hmin,simu->vmax);
   return simu->cfl * simu->hmin / simu->vmax;
 
 }

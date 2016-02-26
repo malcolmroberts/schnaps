@@ -191,22 +191,6 @@ void SolveContinuous2D(void * cs);
 //! \param[inout] cs a continuous solver
 void GenericOperator_Continuous(void * cs);//,LinearSolver* lsol);
 
-//! \brief fusion the variable of the Solver L1Solver and L2Solver (contains in the L1 and L2 vectors) in the vector L
-//! \param[inout] L is a vector
-//! \param[in] L1 is a vector
-//! \param[in] L2 is a vector
-//! \param[in] L1Solver a continuous solver
-//! \param[in] L2Solver continuous solver
-void cat2CGVectors(ContinuousSolver* L1Solver,ContinuousSolver* L2Solver, schnaps_real *L1, schnaps_real *L2, schnaps_real *L);
-
-//! \brief extract the variables of the Solver L1Solver in the L1 vector (resp variables of the Solver L2Solver in the L2 vector)
-//! \param[inout] L is a vector
-//! \param[in] L1 is a vector
-//! \param[in] L2 is a vector
-//! \param[in] L1Solver a continuous solver
-//! \param[in] L2Solver continuous solver
-void extract2CGVectors(ContinuousSolver* L1Solver,ContinuousSolver* L2Solver, schnaps_real *L, schnaps_real *L1, schnaps_real *L2);
-
 
 //! \brief frees a ContinuousSolver object
 //! \param[in] cs: a ContinuousSolver object

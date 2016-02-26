@@ -12,14 +12,16 @@
 #include "simulation.h"
 
 void Computation_charge_density(Simulation *simu);
-void compute_charge_density(Simulation *simu);
 
 //void Compute_electric_field(field * f, real * w);
 void ComputeElectricField(field* f);
+
 schnaps_real Computation_charge_average(Simulation *simu);
 
-//void distribution_to_physic_entropy(field* f,real w,real *tw);
+schnaps_real Computation_Maxwellian(schnaps_real rho, schnaps_real U, schnaps_real T, schnaps_real v);
 
-//void physic_entropy_to_distribution(field* f,real w,real *tw);
+void Computation_Fluid_Quantities(Simulation *simu);
+
+void Collision_Source(Simulation *simu);
 
 #endif
