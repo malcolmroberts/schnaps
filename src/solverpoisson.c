@@ -29,7 +29,11 @@ void RHSPoisson_Continuous(void * cs){
     ps->lsol.rhs[ino] = 0;
   }
 
-  schnaps_real surf = 0;
+  schnaps_real mean_charge = 0;
+
+  if (kd->substract_mean_charge)
+    mean_charge = Computation_charge_average(ps->simu);
+
 
   for(int ie = 0; ie < ps->nbel; ie++){  
 
@@ -54,11 +58,12 @@ void RHSPoisson_Continuous(void * cs){
 	//+ iemacro * NPG(f0->deg,f0->raf) * f0->model.m ;
    
       schnaps_real rho = ps->simu->fd[iemacro].wn[imem];
-      ps->lsol.rhs[ino_fe] += rho * wpg * det ;
-      surf += wpg * det ;
+      ps->lsol.rhs[ino_fe] += (rho - mean_charge) * wpg * det ;
     }
     
   }
+
+    
 }
 
 
@@ -236,7 +241,8 @@ void ContinuousOperator_Poisson1D(void * cs){
 void ContinuousOperator_Poisson2D(void * cs){
   ContinuousSolver * ps=cs;
   ps->diff_op=calloc(ps->nb_phy_vars*ps->nb_phy_vars,sizeof(SDO));
-  schnaps_real D[4][4] = {{0,0,0,0},
+  KineticData *kd = &schnaps_kinetic_data;
+  schnaps_real D[4][4] = {{kd->qn_damping,0,0,0},
                  {0,1,0,0},
                  {0,0,1,0},
                  {0,0,0,0}};

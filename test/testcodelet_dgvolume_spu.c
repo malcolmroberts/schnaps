@@ -14,7 +14,7 @@ bool submit_task(Simulation* simu, schnaps_real* buffer) {
 
     // Create data handle (init and register)
     for (int i = 0; i < fsize; ++i) {
-      f->wn[i] = i;
+      f->wn[i] = i + 1;
       f->res[i] = 0;
     }
     starpu_vector_data_register(&f->wn_handle, 0, (uintptr_t)f->wn,
@@ -36,11 +36,11 @@ bool submit_task(Simulation* simu, schnaps_real* buffer) {
     starpu_data_unregister(f->res_handle);
 
     for (int i = 0; i < fsize; ++i)
-      assert(abs(f->wn[i] - i) < _VERY_SMALL);
+      assert(abs(f->wn[i] - i - 1) < _VERY_SMALL);
     for (int i = 0; i < fsize; ++i) {
-      if (!(abs(buffer[ie * fsize + i] - f->res[i]) < _VERY_SMALL))
-        printf("field: %d  reference[%d]: %f  result[%d]: %f\n",
-               ie, i, buffer[ie * fsize + i], i, f->res[i]);
+      /* if (!(abs(buffer[ie * fsize + i] - f->res[i]) < _VERY_SMALL)) */
+      /*   printf("field: %d  reference[%d]: %f  result[%d]: %f\n", */
+      /*          ie, i, buffer[ie * fsize + i], i, f->res[i]); */
       test &= (abs(buffer[ie * fsize + i] - f->res[i]) < _VERY_SMALL);
     }
   }
@@ -52,11 +52,11 @@ bool submit_task(Simulation* simu, schnaps_real* buffer) {
 }
 
 
-int TestCodelet_DGVolume_SPU(void){
+int TestCodelet_DGVolume_SPU() {
   bool test = true;
 
-  int deg[]={3, 3, 3};
-  int raf[]={3, 3, 3};
+  int deg[]={2, 2, 2};
+  int raf[]={2, 2, 2};
 
   MacroMesh mesh;
   ReadMacroMesh(&mesh,"../test/testdisque.msh");
@@ -129,12 +129,12 @@ int TestCodelet_DGVolume_SPU(void){
   // Compute the comparision buffer
   schnaps_real* buffer = calloc(simu.wsize, sizeof(schnaps_real));
   const int fsize =  simu.wsize / simu.macromesh.nbelems;
-  for(int ie = 0; ie < simu.macromesh.nbelems; ++ie) {
+  for (int ie = 0; ie < simu.macromesh.nbelems; ++ie) {
     field* f = simu.fd + ie;
 
     // Init data
     for (int i = 0; i < fsize; ++i) {
-      f->wn[i] = i;
+      f->wn[i] = i + 1;
       f->res[i] = 0;
     }
 
@@ -143,7 +143,7 @@ int TestCodelet_DGVolume_SPU(void){
 
     // Store data for comparision
     for (int i = 0; i < fsize; ++i)
-      assert(abs(f->wn[i] - i) < _VERY_SMALL);
+      assert(abs(f->wn[i] - i - 1) < _VERY_SMALL);
     for (int i = 0; i < fsize; ++i)
       buffer[ie * fsize + i] = f->res[i];
   }

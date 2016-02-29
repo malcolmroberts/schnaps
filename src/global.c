@@ -35,4 +35,6 @@ void InitKineticData(KineticData *kd, int nbelemv, int degv){
   kd->gamma = 3.;
   kd->knud =1.;
   kd->solve_quasineutrality = false;
+  kd->substract_mean_charge = false;
+  kd->qn_damping = 0;
 }

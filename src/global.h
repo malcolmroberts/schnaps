@@ -57,6 +57,10 @@ typedef struct KineticData{
   schnaps_real gamma;
   schnaps_real knud;
   bool solve_quasineutrality;
+  bool substract_mean_charge;
+  // quasi neutrality damping (term in front of (phi -phibar) in
+  // QN or damped Laplace equation) 
+  schnaps_real qn_damping;
 } KineticData;
 
 

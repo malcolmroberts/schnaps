@@ -748,6 +748,120 @@ void DGFlux(__constant int *param,       // 0: interp param
 #endif
 }
 
+
+// Compute the Discontinuous Galerkin inter-subcells terms.
+// This kernel is meant to avoid writing conflicts and has to be called for each dimension
+// Boundary of macrocell are not treated: call with a count of subcells minus 1 in that dimension
+__kernel
+void DGFlux3D(__constant int *param,              // 0: interp param (m, deg, raf)
+              int ie,                             // 1: macrocel index
+              int dim0,                           // 2: orthogonal dimension
+              __constant schnaps_real *physnodes, // 3: macrocell nodes
+              __global schnaps_real *wn,          // 4: field values
+              __global schnaps_real *dtwn,        // 5: time derivative
+              __local schnaps_real *wnloc         // 6: cache for wn
+              )
+{
+  __constant schnaps_real *physnode = physnodes + ie * 60;
+
+  const int m = param[0];
+  const int deg[3] = {param[1], param[2], param[3]};
+  const int raf[3] = {param[4], param[5], param[6]};
+  const int npg[3] = {deg[0] + 1, deg[1] + 1, deg[2] + 1};
+
+  const int woffset = ie * m * NPG(deg, raf);
+
+  // Other dimensions
+  const int dim1 = (dim0 + 1) % 3;
+  const int dim2 = (dim1 + 1) % 3;
+
+  // Side of the subface (0 negative side ; 1 positive side)
+  // We refer to the subcell containing the following local glop with "left"
+  // The left subcell can be on negative or positive side of the subface
+  const int side = get_local_id(dim0);
+
+  // Subcell id decomposition
+  int ic[3];
+  ic[dim0] = get_group_id(dim0) + side;
+  ic[dim1] = get_group_id(dim1);
+  ic[dim2] = get_group_id(dim2);
+
+  // Subcell id
+  const int icell = ic[0] + raf[0] * (ic[1] + raf[1] * ic[2]);
+
+  // Face glop id on the subface
+  // All the glops of the subface (both sides) are treated
+  // First half of local WIs: the glops of first subcell
+  // Second half of local WIs: the glops of second subcell
+  // Glop id decomposition
+  int ipL[3];
+  ipL[dim0] = (1 - side) * deg[dim0];
+  ipL[dim1] = get_local_id(dim1);
+  ipL[dim2] = get_local_id(dim2);
+
+  // Glop id
+  const int ipgL = ipg(npg, ipL, icell);
+
+
+  // Reference coordinates of left glop
+  schnaps_real xpg[3];
+  schnaps_real wpg;
+  ref_pg_vol(deg, raf, ipgL, xpg, &wpg);
+
+  // Compute the glop weight on the subcell surface
+  // Warning: value returned by ref_pg_vol is meant for volumes
+  wpg = wglop(deg[dim1], ipL[dim1]) * wglop(deg[dim2], ipL[dim2]);
+
+  // Get codtau
+  schnaps_real codtau[3][3];
+  {
+    schnaps_real dtau[3][3];
+    get_dtau(xpg[0], xpg[1], xpg[2], physnode, dtau); // 1296 mults
+    compute_codtau(dtau, codtau);
+  }
+
+  // Compute the normal vector to the subcell surface
+  const int sign = 1 - 2 * side;
+  const schnaps_real h1h2 = 1. / raf[dim1] / raf[dim2];
+  const schnaps_real vnds[3] = {
+    codtau[0][dim0] * h1h2 * sign,
+    codtau[1][dim0] * h1h2 * sign,
+    codtau[2][dim0] * h1h2 * sign,
+  };
+
+
+  // Prefetch
+  // First half of gauss points writes in first local buffer half
+  // Second half of gauss points writes in second local buffer half
+  __local schnaps_real *wnlocL = wnloc + side * m * npg[dim1] * npg[dim2];
+  __local schnaps_real *wnlocR = wnloc + (1 - side) * m * npg[dim1] * npg[dim2];
+  for (int iv = 0; iv < m; ++iv)
+    wnlocL[(ipL[dim1] * npg[dim2] + ipL[dim2]) * m + iv] =
+        wn[VARINDEX(param + 1, param + 4, m, ipgL, iv) + woffset];
+
+  barrier(CLK_LOCAL_MEM_FENCE);
+
+
+  // Left and right states
+  schnaps_real wL[_M];
+  schnaps_real wR[_M];
+  for (int iv = 0; iv < m; ++iv) {
+    wL[iv] = wnlocL[(ipL[dim1] * npg[dim2] + ipL[dim2]) * m + iv];
+    wR[iv] = wnlocR[(ipL[dim1] * npg[dim2] + ipL[dim2]) * m + iv];
+  }
+
+  // Numerical flux
+  schnaps_real flux[_M];
+  NUMFLUX(wL, wR, vnds, flux);
+
+
+  // Distribute the flux (every glop on his own side)
+  for (int iv = 0; iv < m; ++iv)
+    dtwn[VARINDEX(param + 1, param + 4, m, ipgL, iv) + woffset] -= flux[iv] * wpg;
+}
+
+
+
 __kernel
 void set_buffer_to_zero(__global schnaps_real *w)
 {
@@ -925,6 +1039,7 @@ void DGVolume(__constant int *param,     // 0: interp param
 	//dtwnloc[ipgR * m + iv] += flux[iv] * wpg;
 	dtwnloc0[iv] += flux[iv] * wpg;
       }
+      barrier(CLK_LOCAL_MEM_FENCE);
 #else
       int ipgR = ipg(npg, q, icell);
       for(int iv = 0; iv < m; iv++) {
@@ -959,96 +1074,10 @@ void DGVolume(__constant int *param,     // 0: interp param
 #endif
 }
 
-// Compute the volume terms inside one macrocell
-__kernel
-void DGVolumeAAA(__constant int *param,              // 0: interp param (m, deg, raf)
-              int ie,                             // 1: macrocel index
-              __constant schnaps_real *physnodes, // 2: macrocell nodes
-              __global schnaps_real *wn,          // 3: field values
-              __global schnaps_real *dtwn,        // 4: time derivative
-              __local schnaps_real *dtwnloc       // 5: cache for dtwn
-              ) {
-  __constant schnaps_real *physnode = physnodes + ie * 60;
-
-  const int deg[3] = {param[1], param[2], param[3]};
-  const int npg[3] = {deg[0] + 1, deg[1] + 1, deg[2] + 1};
-  const int raf[3] = {param[4], param[5], param[6]};
-
-  const int woffset = ie * _M * NPG(deg, raf);
-
-  // Subcell id
-  const int icell = get_group_id(0);
-
-  // Gauss point id
-  int ipL[3] = {
-    get_local_id(0) % npg[0],
-    (get_local_id(0) / npg[0]) % npg[1],
-    get_local_id(0) / npg[0] / npg[1],
-  };
-  const int ipgL = ipg(npg, ipL, icell);
-
-  // Reference coordinates
-  schnaps_real xpg[3];
-  schnaps_real wpg;
-  ref_pg_vol(deg, raf, ipgL, xpg, &wpg);
-
-  // Codtau
-  schnaps_real codtau[3][3];
-  {
-    schnaps_real dtau[3][3];
-    get_dtau(xpg[0], xpg[1], xpg[2], physnode, dtau); // 1296 mults
-    compute_codtau(dtau, codtau);
-  }
-
-  // Field
-  schnaps_real w[_M];
-  for (int iv = 0; iv < _M; ++iv)
-    w[iv] = wn[VARINDEX(param + 1, param + 4, _M, ipgL, iv) + woffset];
-
-
-  // Init of local dtwn (coalescent access)
-  for (int iv = 0; iv < _M; ++iv)
-    dtwnloc[get_local_id(0) + iv * get_local_size(0)] = 0;
-  barrier(CLK_LOCAL_MEM_FENCE);
-
-
-  // Flux
-  schnaps_real flux[_M];
-  for (int dim = 0; dim < 3; ++dim) {
-    int ipR[3] = {ipL[0], ipL[1], ipL[2]};
-
-    // Loop over the "cross" points
-    for (int ip = 0; ip < npg[dim]; ++ip) {
-      ipR[dim] = (ipL[dim] + ip) % npg[dim];
-      const schnaps_real dphiref = dlag(deg[dim], ipR[dim], ipL[dim]) * raf[dim];
-      schnaps_real dphi[3] = {
-        codtau[0][dim] * dphiref,
-        codtau[1][dim] * dphiref,
-        codtau[2][dim] * dphiref,
-      };
-
-      NUMFLUX(w, w, dphi, flux);
-
-      // Apply flux to local dtwn
-      const int ipgR = ipg(npg, ipR, 0);
-      for (int iv = 0; iv < _M; ++iv)
-        dtwnloc[ipgR * _M + iv] += flux[iv] * wpg;
-
-      barrier(CLK_LOCAL_MEM_FENCE);
-    }
-  }
-
-
-  // Apply flux to global dtwn
-  for (int iv = 0; iv < _M; ++iv)
-    dtwn[VARINDEX(param + 1, param + 4, _M, ipgL, iv) + woffset]
-        += dtwnloc[get_local_id(0) * _M + iv];
-}
-
 
 __kernel
 void DGVolume3D(__constant int *param,              // 0: interp param (m, deg, raf)
-                int ie,                             // 1: macrocel index
+                int ie,                             // 1: macrocell index
                 __constant schnaps_real *physnodes, // 2: macrocell nodes
                 __global schnaps_real *wn,          // 3: field values
                 __global schnaps_real *dtwn,        // 4: time derivative
@@ -1057,11 +1086,12 @@ void DGVolume3D(__constant int *param,              // 0: interp param (m, deg, 
 {
   __constant schnaps_real *physnode = physnodes + ie * 60;
 
+  const int m = param[0];
   const int deg[3] = {param[1], param[2], param[3]};
   const int raf[3] = {param[4], param[5], param[6]};
   const int npg[3] = {deg[0] + 1, deg[1] + 1, deg[2] + 1};
 
-  const int woffset = ie * _M * NPG(deg, raf);
+  const int woffset = ie * m * NPG(deg, raf);
 
   // Subcell id
   const int ic[3] = {
@@ -1094,12 +1124,12 @@ void DGVolume3D(__constant int *param,              // 0: interp param (m, deg, 
 
   // Field
   schnaps_real w[_M];
-  for (int iv = 0; iv < _M; ++iv)
-    w[iv] = wn[VARINDEX(param + 1, param + 4, _M, ipgL, iv) + woffset];
+  for (int iv = 0; iv < m; ++iv)
+    w[iv] = wn[VARINDEX(param + 1, param + 4, m, ipgL, iv) + woffset];
 
 
   // Init of local dtwn (coalescent access)
-  for (int iv = 0; iv < _M; ++iv)
+  for (int iv = 0; iv < m; ++iv)
     dtwnloc[ipg(npg, ipL, 0) + iv *
             get_local_size(0) *
             get_local_size(1) *
@@ -1126,8 +1156,8 @@ void DGVolume3D(__constant int *param,              // 0: interp param (m, deg, 
 
       // Apply flux to local dtwn
       const int ipgR = ipg(npg, ipR, 0);
-      for (int iv = 0; iv < _M; ++iv)
-        dtwnloc[ipgR * _M + iv] += flux[iv] * wpg;
+      for (int iv = 0; iv < m; ++iv)
+        dtwnloc[ipgR * m + iv] += flux[iv] * wpg;
 
       barrier(CLK_LOCAL_MEM_FENCE);
     }
@@ -1135,9 +1165,9 @@ void DGVolume3D(__constant int *param,              // 0: interp param (m, deg, 
 
 
   // Apply flux to global dtwn
-  for (int iv = 0; iv < _M; ++iv)
-    dtwn[VARINDEX(param + 1, param + 4, _M, ipgL, iv) + woffset]
-        += dtwnloc[ipg(npg, ipL, 0) * _M + iv];
+  for (int iv = 0; iv < m; ++iv)
+    dtwn[VARINDEX(param + 1, param + 4, m, ipgL, iv) + woffset]
+        += dtwnloc[ipg(npg, ipL, 0) * m + iv];
 }
 
 
@@ -1221,66 +1251,46 @@ void DGMass(__constant int *param,       // 0: interp param
 // Apply division by the mass matrix on one macrocell
 // performs : dtw = M^(-1) * res - dtw/2
 __kernel
-void DGMassRes(int m,
-	       int deg0, int deg1, int deg2,
-	       int raf0, int raf1, int raf2,
-	       __constant schnaps_real *physnode, // macrocell nodes
-	       __global schnaps_real *res,        // residual
-	       __global schnaps_real *dtwn)       // time derivative
+void DGMassRes(__constant int *param,               // 0: interp param (m, deg, raf)
+               int ie,                              // 1: macrocell index
+               __constant schnaps_real *physnodes,  // 2: macrocell nodes
+	       __global schnaps_real *res,          // 3: residual
+	       __global schnaps_real *dtwn)         // 4: time derivative
 {
-  int ipg = get_global_id(0);
-  int npg[3] = {deg0 + 1, deg0 + 1, deg0 + 1};
-  int deg[3] = {deg0, deg1, deg2};
-  int raf[3] = {raf0, raf1, raf2};
+  __constant schnaps_real *physnode = physnodes + ie * 60;
 
-  int ix = ipg % npg[0];
-  ipg /= npg[0];
-  int iy = ipg % npg[1];
-  ipg /= npg[1];
-  int iz = ipg % npg[2];
-  ipg /= npg[2];
+  const int m = param[0];
+  const int deg[3] = {param[1], param[2], param[3]};
+  const int raf[3] = {param[4], param[5], param[6]};
+  const int npg[3] = {deg[0] + 1, deg[1] + 1, deg[2] + 1};
 
-  int ncx = ipg % raf[0];
-  ipg /= raf[0];
-  int ncy = ipg % raf[1];
-  ipg /= raf[1];
-  int ncz = ipg;
+  const int woffset = ie * m * NPG(deg, raf);
 
-  schnaps_real hx = 1.0 / (schnaps_real) raf[0];
-  schnaps_real hy = 1.0 / (schnaps_real) raf[1];
-  schnaps_real hz = 1.0 / (schnaps_real) raf[2];
+  // Gauss point id of macrocell
+  const int ipg = get_global_id(0);
 
-  int offset[3] = {gauss_lob_offset[deg[0]] + ix,
-		   gauss_lob_offset[deg[1]] + iy,
-		   gauss_lob_offset[deg[2]] + iz};
+  // Reference coordinates
+  schnaps_real xref[3];
+  schnaps_real wpg;
+  ref_pg_vol(deg, raf, ipg, xref, &wpg);
 
-  schnaps_real x = hx * (ncx + gauss_lob_point[offset[0]]);
-  schnaps_real y = hy * (ncy + gauss_lob_point[offset[1]]);
-  schnaps_real z = hz * (ncz + gauss_lob_point[offset[2]]);
-
-  schnaps_real wpg = hx * hy * hz
-    * gauss_lob_weight[offset[0]]
-    * gauss_lob_weight[offset[1]]
-    * gauss_lob_weight[offset[2]];
-
+  // Dtau
   schnaps_real dtau[3][3];
-  get_dtau(x, y, z, physnode, dtau); // 1296 mults
+  get_dtau(xref[0], xref[1], xref[2], physnode, dtau); // 1296 mults
+  const schnaps_real det = dtau[0][0] * dtau[1][1] * dtau[2][2] -
+                           dtau[0][0] * dtau[1][2] * dtau[2][1] -
+                           dtau[1][0] * dtau[0][1] * dtau[2][2] +
+                           dtau[1][0] * dtau[0][2] * dtau[2][1] +
+                           dtau[2][0] * dtau[0][1] * dtau[1][2] -
+                           dtau[2][0] * dtau[0][2] * dtau[1][1];
 
-  schnaps_real det
-    = dtau[0][0] * dtau[1][1] * dtau[2][2]
-    - dtau[0][0] * dtau[1][2] * dtau[2][1]
-    - dtau[1][0] * dtau[0][1] * dtau[2][2]
-    + dtau[1][0] * dtau[0][2] * dtau[2][1]
-    + dtau[2][0] * dtau[0][1] * dtau[1][2]
-    - dtau[2][0] * dtau[0][2] * dtau[1][1];
+  const schnaps_real overwpgdet = 1 / (wpg * det);
 
-  schnaps_real overwpgdet = 1.0 / (wpg * det);
-  int imem0 = m * get_global_id(0);
-  __global schnaps_real *dtwn0 = dtwn + imem0;
-  __global schnaps_real *res0 = res + imem0;
-  for(int iv = 0; iv < m; iv++) {
-    schnaps_real tmp = dtwn0[iv];
-    dtwn0[iv] = res0[iv] * overwpgdet - tmp * 0.5;
+  // Apply to derivative terms
+  for (int iv = 0; iv < m; ++iv) {
+    dtwn[VARINDEX(param + 1, param + 4, m, ipg, iv) + woffset] =
+        res[VARINDEX(param + 1, param + 4, m, ipg, iv) + woffset] * overwpgdet -
+        dtwn[VARINDEX(param + 1, param + 4, m, ipg, iv) + woffset] * 0.5;
   }
 }
 
@@ -1573,160 +1583,6 @@ void DGBoundaryRes(int m,
 }
 
 
-// Compute the Discontinuous Galerkin inter-subcells terms.
-// This kernel is meant to avoid writing conflicts and has to be called for each dimension
-// Boundary of macrocell are not treated: call with a count of subcells minus 1 in that dimension
-__kernel
-void DGSubCellInterfaceRes(int m,
-                           __constant int *c_deg,
-                           __constant int *c_raf,
-                           __constant schnaps_real *physnode, // macrocell nodes
-                           int dim0,                  // dimension normal to treated faces
-                           __global schnaps_real *wn,         // field values
-                           __global schnaps_real *res,        // residual
-                           __local schnaps_real *cache        // cache for wn and res
-                           )
-{
-#define DGSubCellInterfaceRes_LOCAL 0
-
-  const int raf[3] = {c_raf[0], c_raf[1], c_raf[2]};
-  const int deg[3] = {c_deg[0], c_deg[1], c_deg[2]};
-  const int npg[3] = {deg[0] + 1, deg[1] + 1, deg[2] + 1};
-
-  // Other dimensions
-  const int dim1 = 1 * (dim0 == 0) + 0 * (dim0 == 1) + 0 * (dim0 == 2);
-  const int dim2 = 2 * (dim0 == 0) + 2 * (dim0 == 1) + 1 * (dim0 == 2);
-
-  // Side of the subface (0 negative side ; 1 positive side)
-  // We refer to the subcell containing the following local glop with "left"
-  // The left subcell can be on negative or positive side of the subface
-  const int side = (get_local_id(0) >= (npg[dim1] * npg[dim2]));
-
-
-  // Subface on which we work
-  const int subface = get_group_id(0);
-
-  // First subcell id decomposition (negative side of dim0)
-  // Modulo operator can throw arithmetic exception !
-  // GDB => "opencl Program received signal SIGFPE, Arithmetic exception."
-  int ic1[3];
-  ic1[dim0] = subface;
-  while (ic1[dim0] >= raf[dim0] - 1) ic1[dim0] -= (raf[dim0] - 1);
-  ic1[dim1] = (subface - ic1[dim0]) / (raf[dim0] - 1);
-  while (ic1[dim1] >= raf[dim1]) ic1[dim1] -= raf[dim1];
-  ic1[dim2] = ((subface - ic1[dim0]) / (raf[dim0] - 1) - ic1[dim1]) / raf[dim1];
-  while (ic1[dim2] >= raf[dim2]) ic1[dim2] -= raf[dim2];
-
-  // Second subcell id decomposition (positive side of dim0)
-  int ic2[3] = {ic1[0], ic1[1], ic1[2]};
-  ic2[dim0]++;
-
-  // Left subcell id decomposition
-  int icL[3];
-  icL[dim0] = (1 - side) * ic1[dim0] + side * ic2[dim0];
-  icL[dim1] = ic1[dim1];
-  icL[dim2] = ic1[dim2];
-
-  // Subcell ids
-  // Left subcell id (current side)
-  const int ncL = (1 - side) * (ic1[0] + raf[0] * (ic1[1] + raf[1] * ic1[2])) +
-                  side * (ic2[0] + raf[0] * (ic2[1] + raf[1] * ic2[2]));
-  // Right subcell id (opposite side)
-  const int ncR = (1 - side) * (ic2[0] + raf[0] * (ic2[1] + raf[1] * ic2[2])) +
-                  side * (ic1[0] + raf[0] * (ic1[1] + raf[1] * ic1[2]));
-
-  // First glop index in the left subcell
-  const int offsetL = npg[0] * npg[1] * npg[2] * ncL;
-  // First glop index in the right subcell
-  const int offsetR = npg[0] * npg[1] * npg[2] * ncR;
-
-
-  // Face glop id on the subface
-  // All the glops of a subface (both sides) are treated
-  // First half of local WIs: the glops of first subcell
-  // Second half of local WIs: the glops of second subcell
-  const int pgf = get_local_id(0) - side * (npg[dim1] * npg[dim2]);
-
-  // Glop id decomposition
-  int ipgL[3];
-  ipgL[dim1] = pgf % npg[dim1];
-  ipgL[dim2] = pgf / npg[dim1];
-
-  // Right (opposite) glop id in his own subcell
-  ipgL[dim0] = side * deg[dim0];
-  const int npgR = ipgL[0] + npg[0] * (ipgL[1] + npg[1] * ipgL[2]);
-
-  // Left (current) glop id (we keep left decomposition in memory)
-  ipgL[dim0] = (1 - side) * deg[dim0];
-  const int npgL = ipgL[0] + npg[0] * (ipgL[1] + npg[1] * ipgL[2]);
-
-
-  // Reference coordinates of left glop
-  const schnaps_real h[3] = {1.0 / (schnaps_real) raf[0],
-                     1.0 / (schnaps_real) raf[1],
-                     1.0 / (schnaps_real) raf[2]};
-  const int offset[3] = {gauss_lob_offset[deg[0]] + ipgL[0],
-                         gauss_lob_offset[deg[1]] + ipgL[1],
-                         gauss_lob_offset[deg[2]] + ipgL[2]};
-  const schnaps_real xref[3] = {h[0] * (icL[0] + gauss_lob_point[offset[0]]),
-                        h[1] * (icL[1] + gauss_lob_point[offset[1]]),
-                        h[2] * (icL[2] + gauss_lob_point[offset[2]])};
-
-  // Compute the glop weight on the subcell surface
-  // Warning: value returned by ref_pg_vol is meant for volumes
-  const schnaps_real wpg = h[dim1] * gauss_lob_weight[offset[dim1]] *
-                   h[dim2] * gauss_lob_weight[offset[dim2]];
-
-
-  // Get codtau
-  schnaps_real dtau[3][3];
-  schnaps_real codtau[3][3];
-  get_dtau(xref[0], xref[1], xref[2], physnode, dtau);
-  compute_codtau(dtau, codtau);
-
-  // Compute the normal vector to the subcell surface
-  const int sign = 1 - 2 * side;
-  const schnaps_real vnds[3] = {codtau[0][dim0] * h[dim1] * h[dim2] * sign,
-                        codtau[1][dim0] * h[dim1] * h[dim2] * sign,
-                        codtau[2][dim0] * h[dim1] * h[dim2] * sign};
-
-
-#if DGSubCellInterfaceRes_LOCAL
-  // Prefetch
-  // First half writes in one local part and second half writes in other local part
-  __local schnaps_real *wnlocL = cache + side * m * npg[dim1] * npg[dim2];
-  __local schnaps_real *wnlocR = cache + (1 - side) * m * npg[dim1] * npg[dim2];
-  for (int iv = 0; iv < m ; ++iv)
-    wnlocL[pgf * m + iv] = wn[VARINDEX(c_deg, c_raf, m, offsetL + npgL, iv)];
-
-  barrier(CLK_LOCAL_MEM_FENCE);
-#endif
-
-  // Numerical flux
-  schnaps_real flux[_M];
-  // Left and right states
-  schnaps_real wL[_M];
-  schnaps_real wR[_M];
-  for (int iv = 0; iv < m; ++iv) {
-#if DGSubCellInterfaceRes_LOCAL
-    wL[iv] = wnlocL[pgf * m + iv];
-    wR[iv] = wnlocR[pgf * m + iv];
-#else
-    wL[iv] = wn[VARINDEX(c_deg, c_raf, m, offsetL + npgL, iv)];
-    wR[iv] = wn[VARINDEX(c_deg, c_raf, m, offsetR + npgR, iv)];
-#endif
-  }
-
-  NUMFLUX(wL, wR, vnds, flux);
-
-
-  // Distribute the flux (every glop on his own side)
-  for (int iv = 0; iv < m; ++iv)
-    res[VARINDEX(c_deg, c_raf, m, offsetL + npgL, iv)] -= flux[iv] * wpg;
-}
-
-
-
 void get_dtau(schnaps_real x, schnaps_real y, schnaps_real z,
 	      __constant schnaps_real *p, schnaps_real dtau[][3])
 {
@@ -2006,86 +1862,6 @@ void DGSource(__constant int *param,     // 0: interp param
   }
 }
 
-
-__kernel
-void DGSourceRes(int m,
-                 __constant int *c_deg,
-                 __constant int *c_raf,
-                 __constant schnaps_real *physnode, // 2: macrocell nodes
-                 const schnaps_real tnow,           // 3: the current time
-                 __global schnaps_real *wn,         // 4: field values
-                 __global schnaps_real *res,        // 5: residual
-                 __local schnaps_real *wnloc        // 6: cache for wn and res
-                 )
-{
-  const int deg[3] = {c_deg[0], c_deg[1], c_deg[2]};
-  const int npg[3] = {c_deg[0] + 1, c_deg[1] + 1, c_deg[2] + 1};
-  const int raf[3] = {c_raf[0], c_raf[1], c_raf[2]};
-
-  __local schnaps_real *resloc = wnloc  + m * npg[0] * npg[1] * npg[2];
-
-  // Prefetch: m reads of wn, m reads of res
-  // TODO: put prefetch in function
-  int icell = get_group_id(0);
-  for(int i = 0; i < m ; ++i){
-    int iread = get_local_id(0) + i * get_local_size(0);
-    int iv = iread % m;
-    int ipgloc = iread / m;
-    int ipgL = ipgloc + icell * get_local_size(0);
-    int imem =  VARINDEX(c_deg, c_raf, m, ipgL, iv);
-    int imemloc = iv + ipgloc * m;
-
-    wnloc[imemloc] = wn[imem];
-    resloc[imemloc] = 0;
-  }
-
-  barrier(CLK_LOCAL_MEM_FENCE);
-
-  // Compute Gauss point id where we compute the jacobian
-  const int ipgL = get_local_id(0);
-
-  // Compute xref
-  schnaps_real xref[3];
-  schnaps_real wpg; // FIXME: unused, so remove?
-  ref_pg_vol(deg, raf, ipgL, xref, &wpg);
-
-  // Compute xphy
-  schnaps_real xphy[3];
-  Ref2Phy_only(physnode, xref, xphy);
-
-  schnaps_real w[_M];
-  {
-    __local schnaps_real *wnloc0 = wnloc + ipgL * m;
-    for(int iv = 0; iv < m; iv++) {
-      w[iv] = wnloc0[iv];
-    }
-  }
-
-  // Compute source using w and xref, putting the result in source
-  schnaps_real source[_M];
-
-  _SOURCE_FUNC(xphy, tnow, w, source);
-
-  // Add the source buffer to dtw
-  int imemR0loc = ipgL * m;
-  __local schnaps_real *resloc0 =  resloc + imemR0loc;
-  for(int iv = 0; iv < m; iv++)
-    resloc0[iv] = source[iv];
-
-  barrier(CLK_LOCAL_MEM_FENCE);
-
-  // Postfetch: m writes
-  for(int i = 0; i < m; ++i){
-    int iread = get_local_id(0) + i * get_local_size(0);
-    int iv = iread % m;
-    int ipgloc = iread / m ;
-    int ipgL = ipgloc + icell * get_local_size(0);
-    int imem =  VARINDEX(c_deg, c_raf, m, ipgL, iv);
-    int imemloc = ipgloc * m + iv;
-    // FIXME : why not *det*wpg like the C version ?
-    res[imem] += resloc[imemloc];
-  }
-}
 
 
 // Out-of-place RK stage

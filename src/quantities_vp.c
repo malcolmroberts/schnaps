@@ -90,45 +90,45 @@ schnaps_real Computation_Maxwellian(schnaps_real rho, schnaps_real U, schnaps_re
 }
   
 schnaps_real Computation_charge_average(Simulation *simu) {
-   KineticData *kd = &schnaps_kinetic_data;
+  KineticData *kd = &schnaps_kinetic_data;
   field * f=&simu->fd[0];
   schnaps_real average = 0;
   schnaps_real rho_imem = 0;
   schnaps_real size_domain = 0;
 
 
-    // Loop on the glops (for numerical integration)
+  // Loop on the glops (for numerical integration)
   const int npg = NPG(f->deg, f->raf);
-    for(int ipg = 0; ipg < npg; ipg++) {
-      int imem = f->varindex(f->deg, f->raf, f->model.m,
-			     ipg, kd->index_rho);
-	rho_imem = f->wn[imem];
+  for(int ipg = 0; ipg < npg; ipg++) {
+    int imem = f->varindex(f->deg, f->raf, f->model.m,
+			   ipg, kd->index_rho);
+    rho_imem = f->wn[imem];
       
-      schnaps_real wpg, det;
-      // Compute wpg, det, and the exact solution
-      { 
-	schnaps_real xphy[3], xpgref[3];
-	schnaps_real dtau[3][3], codtau[3][3];
-	// Get the coordinates of the Gauss point
-	ref_pg_vol(f->deg, f->raf, ipg, xpgref, &wpg, NULL);
-	schnaps_ref2phy(f->physnode, // phys. nodes
-		xpgref, // xref
-		NULL, -1, // dpsiref, ifa
-		xphy, dtau, // xphy, dtau
-		codtau, NULL, NULL); // codtau, dpsi, vnds
-	det = dot_product(dtau[0], codtau[0]);
-      }
-
-        average += rho_imem * wpg * det;
-	size_domain +=  wpg * det;
-
+    schnaps_real wpg, det;
+    // Compute wpg, det, and the exact solution
+    { 
+      schnaps_real xphy[3], xpgref[3];
+      schnaps_real dtau[3][3], codtau[3][3];
+      // Get the coordinates of the Gauss point
+      ref_pg_vol(f->deg, f->raf, ipg, xpgref, &wpg, NULL);
+      schnaps_ref2phy(f->physnode, // phys. nodes
+		      xpgref, // xref
+		      NULL, -1, // dpsiref, ifa
+		      xphy, dtau, // xphy, dtau
+		      codtau, NULL, NULL); // codtau, dpsi, vnds
+      det = dot_product(dtau[0], codtau[0]);
     }
-    return average/size_domain;
+
+    average += rho_imem * wpg * det;
+    size_domain +=  wpg * det;
+
+  }
+  return average / size_domain;
 }
 
 
 void ComputeElectricField(field* f){
-   KineticData *kd = &schnaps_kinetic_data;
+  KineticData *kd = &schnaps_kinetic_data;
   int nraf[3] = {f->raf[0], 
 		 f->raf[1],
 		 f->raf[2]};
@@ -167,10 +167,10 @@ void ComputeElectricField(field* f){
 	int ibmacro = ib + isubcell * nnodes;
 	grad_psi_pg(f->deg,f->raf,ibmacro,ipgmacro,dphiref);
 	schnaps_ref2phy(f->physnode,xref,dphiref,0,NULL,
-		  dtau,codtau,dphi,NULL);
+			dtau,codtau,dphi,NULL);
 	schnaps_real det = dot_product(dtau[0], codtau[0]);
 	int ipot = f->varindex(f->deg,f->raf,f->model.m,
-			   ibmacro,kd->index_phi);	
+			       ibmacro,kd->index_phi);	
 	f->wn[iex] -= f->wn[ipot] * dphi[0] / det;
       }
     }
