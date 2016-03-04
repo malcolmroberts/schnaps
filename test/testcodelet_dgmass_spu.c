@@ -2,41 +2,47 @@
 #include "schnaps.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
 #include <math.h>
 
-bool submit_task() {
+bool submit_task(Simulation* simu, schnaps_real* buffer) {
   bool test = true;
 
-  // Data buffer
-  const int size = 10000;
-  const schnaps_real alpha = 3.14123456789123456789123456789123456789123456879;
-  schnaps_real* buffer_in = calloc(size, sizeof(schnaps_real));
-  schnaps_real* buffer_out = calloc(size, sizeof(schnaps_real));
+  const int fsize =  simu->wsize / simu->macromesh.nbelems;
+  for(int ie = 0; ie < simu->macromesh.nbelems; ++ie) {
+    field* f = simu->fd + ie;
 
-  // Create data handle (init and register)
-  for (int i = 0; i < size; ++i) {
-    buffer_in[i] = i;
-    buffer_out[i] = i;
+    // Create data handle (init and register)
+    for (int i = 0; i < fsize; ++i) {
+      f->res[i] = i + 1;
+      f->dtwn[i] = 2;
+    }
+    starpu_vector_data_register(&f->res_handle, 0, (uintptr_t)f->res,
+                                fsize, sizeof(schnaps_real));
+    starpu_vector_data_register(&f->dtwn_handle, 0, (uintptr_t)f->dtwn,
+                                fsize, sizeof(schnaps_real));
+
+    // Submit task
+    DGMass_SPU(f);
   }
-  starpu_data_handle_t handle_in;
-  starpu_vector_data_register(&handle_in, 0, (uintptr_t) buffer_in, size, sizeof(schnaps_real));
-  starpu_data_handle_t handle_out;
-  starpu_vector_data_register(&handle_out, 0, (uintptr_t) buffer_out, size, sizeof(schnaps_real));
 
-  // Task
-  AddBuffer_SPU(alpha, handle_in, handle_out);
+  starpu_task_wait_for_all();
 
   // Check output
-  starpu_task_wait_for_all();
-  starpu_data_unregister(handle_in);
-  starpu_data_unregister(handle_out);
-  for (int i = 0; i < size; ++i)
-    test &= (abs(buffer_in[i] - i) < _VERY_SMALL);
-  assert(test);
-  for (int i = 0; i < size; ++i) {
-    if (!(abs(buffer_out[i] - i * (1 + alpha)) < _VERY_SMALL))
-      printf("result[%d]: %f (should be %f)\n", i, buffer_out[i], i * (1 + alpha));
-    test &= (abs(buffer_out[i] - i * (1 + alpha)) < _VERY_SMALL);
+  for(int ie = 0; ie < simu->macromesh.nbelems; ++ie) {
+    field* f = simu->fd + ie;
+
+    starpu_data_unregister(f->res_handle);
+    starpu_data_unregister(f->dtwn_handle);
+
+    for (int i = 0; i < fsize; ++i)
+      assert(abs(f->res[i] - i - 1) < _VERY_SMALL);
+    for (int i = 0; i < fsize; ++i) {
+      /* if (!(abs(buffer[ie * fsize + i] - f->dtwn[i] - 1) < _VERY_SMALL)) */
+      /*   printf("field: %d  reference[%d]: %f  result[%d]: %f\n", */
+      /*          ie, i, buffer[ie * fsize + i], i, f->dtwn[i]); */
+      test &= (abs(buffer[ie * fsize + i] - f->dtwn[i] - 1) < _VERY_SMALL);
+    }
   }
 
   if (test) printf(" OK\n");
@@ -46,19 +52,43 @@ bool submit_task() {
 }
 
 
-int TestCodelet_AddBuffer_SPU() {
+int TestCodelet_DGMass_SPU() {
   bool test = true;
+
+  int deg[]={2, 2, 2};
+  int raf[]={2, 2, 2};
+
+  MacroMesh mesh;
+  ReadMacroMesh(&mesh,"../test/testdisque.msh");
+  BuildConnectivity(&mesh);
+  CheckMacroMesh(&mesh, deg, raf);
+
+  Model model;
+  model.m = 6;
+  model.NumFlux = Maxwell3DNumFlux_upwind;
+  model.BoundaryFlux = Maxwell3DBoundaryFlux_upwind;
+  model.InitData = Maxwell3DInitData;
+  model.ImposedData = Maxwell3DImposedData;
+  model.Source = NULL;
+
+  Simulation simu;
+  EmptySimulation(&simu);
+  InitSimulation(&simu, &mesh, deg, raf, &model);
 
 
   // Kernel compilation options
-  sprintf(cl_buildoptions, "%s", "");
   char buf[1000];
 #ifdef _DOUBLE_PRECISION
-  sprintf(buf, "-D schnaps_real=double");
+  sprintf(buf, " -D schnaps_real=double");
 #else
-  sprintf(buf, "-D schnaps_real=float");
+  sprintf(buf, " -cl-single-precision-constant -D schnaps_real=float");
 #endif
   strcat(cl_buildoptions, buf);
+
+  sprintf(buf, " -D NUMFLUX=%s", "Maxwell3DNumFlux_upwind");
+  strcat(cl_buildoptions, buf);
+
+  printf("StarPU compilation options: %s\n", cl_buildoptions);
 
 
   // Init StarPU
@@ -95,10 +125,30 @@ int TestCodelet_AddBuffer_SPU() {
   // Regenerate opencl code
   if (nb_ocl > 0) GetOpenCLCode();
 
+
+  // Compute the comparision buffer
+  schnaps_real* buffer = calloc(simu.wsize, sizeof(schnaps_real));
+  const int fsize =  simu.wsize / simu.macromesh.nbelems;
+  for (int ie = 0; ie < simu.macromesh.nbelems; ++ie) {
+    field* f = simu.fd + ie;
+
+    // Init data
+    for (int i = 0; i < fsize; ++i)
+      f->dtwn[i] = i + 1;
+
+    // Compute mass term
+    DGMass(f, NULL, f->dtwn);
+
+    // Store data for comparision
+    for (int i = 0; i < fsize; ++i)
+      buffer[ie * fsize + i] = f->dtwn[i];
+  }
+
+
   // Codelet
   starpu_c_use = true;
   starpu_ocl_use = true;
-  struct starpu_codelet* codelet = AddBuffer_codelet();
+  struct starpu_codelet* codelet = DGMass_codelet();
 
   // Empty codelet for function selection
   struct starpu_codelet codelet_backup = *codelet;
@@ -137,7 +187,7 @@ int TestCodelet_AddBuffer_SPU() {
             if (codelet_backup.cpu_funcs[i] != NULL) {
               codelet->cpu_funcs[0] = codelet_backup.cpu_funcs[i];
               printf("Submit C codelet %d...", i);
-              test &= submit_task();
+              test &= submit_task(&simu, buffer);
             }
           }
         }
@@ -151,7 +201,7 @@ int TestCodelet_AddBuffer_SPU() {
             if (codelet_backup.opencl_funcs[i] != NULL) {
               codelet->opencl_funcs[0] = codelet_backup.opencl_funcs[i];
               printf("Submit OpenCL codelet %d...", i);
-              test &= submit_task();
+              test &= submit_task(&simu, buffer);
             }
           }
         }
@@ -165,7 +215,7 @@ int TestCodelet_AddBuffer_SPU() {
             if (codelet_backup.cuda_funcs[i] != NULL) {
               codelet->cuda_funcs[0] = codelet_backup.cuda_funcs[i];
               printf("Submit CUDA codelet %d...", i);
-              test &= submit_task();
+              test &= submit_task(&simu, buffer);
             }
           }
         }
@@ -179,7 +229,7 @@ int TestCodelet_AddBuffer_SPU() {
             if (codelet_backup.mic_funcs[i] != NULL) {
               codelet->mic_funcs[0] = codelet_backup.mic_funcs[i];
               printf("Submit MIC codelet %d...", i);
-              test &= submit_task();
+              test &= submit_task(&simu, buffer);
             }
           }
         }
@@ -201,14 +251,18 @@ int TestCodelet_AddBuffer_SPU() {
 
   starpu_shutdown();
 
+  free(buffer);
+
+  FreeMacroMesh(&mesh);
+
 
   return test;
 }
 
 int main(void) {
   // Unit tests
-  int resu = TestCodelet_AddBuffer_SPU();
-  if (resu) printf("StarPU AddBuffer Codelet test OK !\n");
-  else printf("StarPU AddBuffer Codelet test failed !\n");
+  int resu = TestCodelet_DGMass_SPU();
+  if (resu) printf("StarPU DGMass Codelet test OK !\n");
+  else printf("StarPU DGMass Codelet test failed !\n");
   return !resu;
 }
