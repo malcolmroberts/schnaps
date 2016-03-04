@@ -227,6 +227,7 @@ void ipg_to_xyz(const int *raf, const int *deg, int *ic, int *ix, const
 		int *ipg);
 #pragma end_opencl
 
+
 //! \brief compute the index of the glop in the macrocell
 //!  from 3d glop and subcell indices
 //! \param[in] deg the degrees list (size [3])

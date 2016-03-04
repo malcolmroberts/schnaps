@@ -85,7 +85,7 @@ int TestCodelet_DGMass_SPU() {
 #endif
   strcat(cl_buildoptions, buf);
 
-  sprintf(buf, " -D NUMFLUX=%s", "Maxwell3DNumFlux_upwind");
+  sprintf(buf, " -D LINEAR_NUM -D NUMFLUX=%s", "Maxwell3DNumFlux_upwind");
   strcat(cl_buildoptions, buf);
 
   printf("StarPU compilation options: %s\n", cl_buildoptions);

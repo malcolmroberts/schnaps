@@ -205,21 +205,56 @@ int NPGF_CG(int deg[], int raf[], int ifa) {
 }
 
 
+#define LINEAR_NUM
+
+
 
 #pragma start_opencl
 void xyz_to_ipg(const int *raf, const int *deg, const int *ic, const int *ix, 
 		int *ipg) 
 {
+#ifdef LINEAR_NUM
+  const int nx[3] = {(deg[0] + 1) * raf[0],
+		     (deg[1] + 1) * raf[1],
+		     (deg[2] + 1) * raf[2]};
+
+  int a[3] = {ix[0] + ic[0] * (deg[0] + 1),
+	      ix[1] + ic[1] * (deg[1] + 1),
+	      ix[2] + ic[2] * (deg[2] + 1)};
+  
+  *ipg = a[0] + nx[0] * (a[1] + nx[1] * a[2]);
+    
+#else
   const int nc = ic[0] + raf[0] * (ic[1] + raf[1] * ic[2]);
   const int offset = (deg[0] + 1) * (deg[1] + 1) * (deg[2] + 1)*nc;
-
+  
   *ipg= ix[0] + (deg[0] + 1) * (ix[1] + (deg[1] + 1) * ix[2]) + offset;
+#endif
 }
 #pragma end_opencl
 
 #pragma start_opencl
 void ipg_to_xyz(const int *raf, const int *deg, int *ic, int *ix, 
 		const int *pipg) {
+#ifdef LINEAR_NUM
+  const int nx[3] = {(deg[0] + 1) * raf[0],
+		     (deg[1] + 1) * raf[1],
+		     (deg[2] + 1) * raf[2]};
+  int a[3];
+  int ipg  = *pipg;
+  a[0] = ipg % nx[0];
+  ipg /= nx[0];
+  a[1] = ipg % nx[1];
+  a[2] = ipg / nx[1];
+
+  ix[0] = a[0] % (deg[0] + 1);
+  ic[0] = a[0] / (deg[0] + 1);
+  ix[1] = a[1] % (deg[1] + 1);
+  ic[1] = a[1] / (deg[1] + 1);
+  ix[2] = a[2] % (deg[2] + 1);
+  ic[2] = a[2] / (deg[2] + 1);
+  
+#else
   int ipg = *pipg;
 
   ix[0] = ipg % (deg[0] + 1);
@@ -238,6 +273,7 @@ void ipg_to_xyz(const int *raf, const int *deg, int *ic, int *ix,
   ipg /= raf[1];
 
   ic[2] = ipg;
+#endif
 }
 #pragma end_opencl
 
@@ -520,12 +556,14 @@ int ref_pg_face(int deg3d[], int nraf3d[], int ifa, int ipg,
   // Compute the global index of the
   // Gauss-Lobatto point in the volume
   // TODO: call rather xyz_to_ipg !!!!!!!!!!!!!!!!!!!!!
-  int ipg3d = ipgxyz[0] + (deg3d[0] + 1) *
-    (ipgxyz[1] + (deg3d[1] + 1) *
-     (ipgxyz[2] + (deg3d[2] + 1) *
-      (ncpgxyz[0] + nraf3d[0] *
-       (ncpgxyz[1] + nraf3d[1] *
-	ncpgxyz[2]))));
+  /* int ipg3d = ipgxyz[0] + (deg3d[0] + 1) * */
+  /*   (ipgxyz[1] + (deg3d[1] + 1) * */
+  /*    (ipgxyz[2] + (deg3d[2] + 1) * */
+  /*     (ncpgxyz[0] + nraf3d[0] * */
+  /*      (ncpgxyz[1] + nraf3d[1] * */
+  /* 	ncpgxyz[2])))); */
+  int ipg3d;
+  xyz_to_ipg(nraf3d, deg3d, ncpgxyz, ipgxyz, &ipg3d);
 
   // Compute the reference coordinates of the Gauss-Lobatto point in
   // the volume

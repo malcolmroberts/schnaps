@@ -18,14 +18,14 @@ int TestfieldRK2_SPU(void){
   // test/testdisque.msh
 
 
-  putenv("STARPU_NOPENCL=0");
+  //putenv("STARPU_NOPENCL=0");
 
 
   char *mshname =  "../test/disque2d.msh";
 
   MacroMesh mesh;
   //ReadMacroMesh(&mesh,"../test/testdisque.msh");
-  ReadMacroMesh(&mesh,"../test/testcube2.msh");
+  ReadMacroMesh(&mesh,"../test/testcube.msh");
   //Detect2DMacroMesh(&mesh);
   BuildConnectivity(&mesh);
 
@@ -59,8 +59,8 @@ int TestfieldRK2_SPU(void){
   sprintf(buf, " -D BOUNDARYFLUX=%s", "TransBoundaryFlux2d");
   strcat(cl_buildoptions, buf);
 
-  int deg[]={3, 3, 0};
-  int raf[]={3, 3, 1};
+  int deg[]={3, 3, 3};
+  int raf[]={3, 3, 3};
 
   assert(mesh.is2d);
   assert(1==2);
@@ -75,9 +75,9 @@ int TestfieldRK2_SPU(void){
 
   char buf[1000];
 #ifdef _DOUBLE_PRECISION
-  sprintf(buf, "-D real=double -D _M=%d", model.m);
+  sprintf(buf, "-D schnaps_real=double -D _M=%d", model.m);
 #else
-  sprintf(buf, "-D real=float -D _M=%d", model.m);
+  sprintf(buf, "-D schnaps_real=float -D _M=%d", model.m);
 #endif
   strcat(cl_buildoptions, buf);
 
@@ -87,8 +87,8 @@ int TestfieldRK2_SPU(void){
   sprintf(buf, " -D BOUNDARYFLUX=%s", "TestTransBoundaryFlux");
   strcat(cl_buildoptions, buf);
 
-  int deg[]={2, 1, 1};
-  int raf[]={2, 1, 1};
+  int deg[]={3, 3, 3};
+  int raf[]={3, 3, 3};
   //int raf[]={2, 2, 2};
 
 #endif
@@ -122,7 +122,7 @@ int TestfieldRK2_SPU(void){
     return true;
   }
 #endif
-
+ 
   CheckMacroMesh(&mesh, deg, raf);
   starpu_use = true;
   starpu_c_use = true;
@@ -130,14 +130,14 @@ int TestfieldRK2_SPU(void){
 
   InitSimulation(&simu, &mesh, deg, raf, &model);
 
-  schnaps_real tmax = 0.25;
+  schnaps_real tmax = 1;
   tmax = 0.00666;
   simu.cfl=0.2;
   simu.vmax=1;
   RK2_SPU(&simu,tmax);
 
-  PlotFields(0, false, &simu, NULL, "dgvisu.msh");
-  PlotFields(0, true , &simu, "error", "dgerror.msh");
+  //PlotFields(0, false, &simu, NULL, "dgvisu.msh");
+  //PlotFields(0, true , &simu, "error", "dgerror.msh");
 
   schnaps_real dd = 0;
   dd = L2error(&simu);

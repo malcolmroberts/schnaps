@@ -6,7 +6,7 @@
 #include "clutils.h"
 #include <stdbool.h>
 
-//#define DISABLE_PRINTF_CL
+#define DISABLE_PRINTF_CL
 
 #ifdef DISABLE_PRINTF_CL
     #define printf(fmt, ...) (0)
