@@ -713,22 +713,6 @@ void DGMacroCellInterface(int locfaL,
 
       //printf("ipgL=%d ipgR=%d\n",ipgL,ipgR);
 
-      //Uncomment to check that the neighbour-finding algorithm worked.
-      /* { */
-      /*   real xpgR[3], xrefR[3], wpgR; */
-      /*   ref_pg_vol(iparam + 1, ipgR, xrefR, &wpgR, NULL); */
-      /*   Ref2Phy(physnodeR, */
-      /* 	  xrefR, */
-      /* 	  NULL, -1, dphiref, ifa */
-      /* 	  xpgR, NULL, */
-      /* 	  NULL, NULL, NULL); codtau, dphi, vnds */
-      /*  #ifdef _PERIOD */
-      /*   assert(fabs(Dist(xpg,xpgR)-_PERIOD)<_SMALL); */
-      /*   #else */
-      /* assert(Dist(xpg,xpgR)<1e-11); */
-      /* #endif */
-      /* } */
-
       schnaps_real wR[m];
       for(int iv = 0; iv < m; iv++) {
 	int imemL = fL->varindex(fL->deg, fL->raf,fL->model.m, ipgL, iv);
