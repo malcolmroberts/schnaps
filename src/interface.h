@@ -19,22 +19,22 @@ typedef struct Interface{
   int ieR;
 
 
-  //! \brief local interface index in Left field 
+  //! \brief local interface index in Left field
   int locfaL;
 
-  //! \brief local interface index in Left field 
+  //! \brief local interface index in Left field
   int locfaR;
-  
+
   //! \brief number of left glops
   int npgL;
-  
+
   //! \brief number of right glops
   int npgR;
 
   //! \brief Left glops volume indices from the interface glop indices
   int* vol_indexL;
   starpu_data_handle_t vol_indexL_handle;
-  
+
   //! \brief Right glops volume indices from the interface glop indices
   int * vol_indexR;
   starpu_data_handle_t vol_indexR_handle;
@@ -48,16 +48,16 @@ typedef struct Interface{
   //! \brief Left conservative glops data
   schnaps_real *wL;
   starpu_data_handle_t wL_handle;
-  
+
   //! \brief Right conservative glops data
   schnaps_real *wR;
   starpu_data_handle_t wR_handle;
-  
-  //! \brief weighted normal vectors at interface glops 
+
+  //! \brief weighted normal vectors at interface glops
   schnaps_real *vnds;
   starpu_data_handle_t vnds_handle;
-  
-  //! \brief  glops coordinates 
+
+  //! \brief  glops coordinates
   schnaps_real *xpg;
   starpu_data_handle_t xpg_handle;
 
@@ -117,6 +117,8 @@ void InterfaceLocalAssembly(Interface *inter,  schnaps_real theta, schnaps_real 
 //! \param[in] ipgf Gauss point index
 //! \param[in] iv conservative variable index
 //! \returns the memory position of the variable
-int VarindexFace(int npg, int m, int ipgf, int iv); 
+#pragma start_opencl
+int VarindexFace(int npg, int m, int ipgf, int iv);
+#pragma end_opencl
 
 #endif

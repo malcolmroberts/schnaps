@@ -2,11 +2,13 @@
 #include <assert.h>
 #include <stdio.h>
 
+#pragma start_opencl
 int VarindexFace(int npg, int m, int ipgf, int iv){
 
   return ipgf * m + iv;
 
 }
+#pragma end_opencl
 
 void InitInterface_SPU(Interface* inter){
 
@@ -305,7 +307,7 @@ void ExtractInterface(Interface* inter, int side){
 	int imem = fd->varindex(fd->deg, fd->raf, fd->model.m,
 				ipgv, iv);
 	int imemf = VarindexFace(npgf, fd->model.m, ipgf, iv);
-	printf("extract to=%d \n",mod_ie);
+	//printf("extract to=%d \n",mod_ie);
 	wf[imemf] = fd->wn[imem];
       }
     }

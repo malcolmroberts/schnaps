@@ -18,6 +18,10 @@ schnaps_real dlag(int deg, int ib, int ipg) {
 #define VARINDEX GenericVarindex
 #endif
 
+#ifndef VARINDEXFACE
+#define VARINDEXFACE VarindexFace
+#endif
+
 int ref_ipg(__constant int *param, schnaps_real *xref);
 
 void compute_gradphi(const schnaps_real x, const schnaps_real y, const schnaps_real z,
@@ -469,7 +473,10 @@ void cemracs2014_TransBoundaryFlux(schnaps_real x[3], schnaps_real t,
   vlaTransNumFlux2d(wL, wR, vnorm, flux);
 }
 
-void BoundaryFlux(schnaps_real x[3], schnaps_real t, schnaps_real *wL, schnaps_real *vnorm,
+void BoundaryFlux(const schnaps_real x[3],
+                  schnaps_real t,
+                  schnaps_real *wL,
+                  const schnaps_real *vnorm,
                   schnaps_real *flux)
 {
   schnaps_real wR[_M];
@@ -600,7 +607,7 @@ void DGFlux(__constant int *param,       // 0: interp param
   for(int iv = 0; iv < m; iv++) {
     int imemL =  VARINDEX(param + 1, param + 4, m, ipgL, iv) + woffset;
     //VARINDEX(param, ie, ipgL, iv);
-    wL[iv] = wn[imemL]; 
+    wL[iv] = wn[imemL];
     int imemR =  VARINDEX(param + 1, param + 4, m, ipgR, iv) + woffset;
     //VARINDEX(param, ie, ipgR, iv);
     wR[iv] = wn[imemR];
@@ -678,7 +685,7 @@ void DGFlux(__constant int *param,       // 0: interp param
   for(int iv = 0; iv < m; iv++) {
     int imemL =  VARINDEX(param + 1, param + 4, m, ipgL, iv) + woffset;
     //VARINDEX(param, ie, ipgL, iv);
-    wL[iv] = wn[imemL]; 
+    wL[iv] = wn[imemL];
     int imemR =  VARINDEX(param + 1, param + 4, m, ipgR, iv) + woffset;
     //VARINDEX(param, ie, ipgR, iv);
     wR[iv] = wn[imemR];
@@ -1427,27 +1434,35 @@ void DGMacroCellInterface(__constant int *param,        // 0: interp param
 
 
 __kernel
-void DGMacroCellInterfaceRes(int m,
-                             __constant int *c_deg,
-                             __constant int *c_raf,
-                             int sign,                  // sign that indicates the selected side
-                             __global int *index,       // current macrocell face to volume index
-                             __global schnaps_real *wn,         // current field values
-                             __global schnaps_real *wn_ext,     // neighboring field values
-                             __global schnaps_real *vnds_buf,   // normal vectors buffer
-                             __global schnaps_real *res         // residual
+void DGMacroCellInterfaceRes(__constant int *param,            // 0: interp param (m, deg, raf)
+                             int ie,                           // 1: macrocell index
+                             int locfa,                        // 2: macrocell face id
+                             int sign,                         // 3: sign depending on the side
+                             __global int *index,              // 4: face to volume index
+                             // Local field values that come from interface extraction
+                             __global schnaps_real *wn_in,     // 5: current field values
+                             __global schnaps_real *wn_ext,    // 6: neighboring field values
+                             __global schnaps_real *vnds_buf,  // 7: normal vectors buffer
+                             __global schnaps_real *res        // 8: residual
                              )
 {
+  const int m = param[0];
+  const int deg[3] = {param[1], param[2], param[3]};
+  const int raf[3] = {param[4], param[5], param[6]};
+  const int npg[3] = {deg[0] + 1, deg[1] + 1, deg[2] + 1};
+
+  const int woffset = ie * m * NPG(deg, raf);
+
   // Face glop
   const int ipgf = get_global_id(0);
 
   // Left and right fields
   schnaps_real wL[_M];
   schnaps_real wR[_M];
-  for (int iv = 0; iv < _M; ++iv) {
-    // Face fields are stored with the volumic varindex in these vectors
-    const int imem = VARINDEX(c_deg, c_raf, _M, ipgf, iv);
-    wL[iv] = wn[imem];
+  for (int iv = 0; iv < m; ++iv) {
+    // Warning: refinement has to be the same for the moment
+    const int imem = VARINDEXFACE(NPGF(deg, raf, locfa), m, ipgf, iv);
+    wL[iv] = wn_in[imem];
     wR[iv] = wn_ext[imem];
   }
 
@@ -1463,8 +1478,9 @@ void DGMacroCellInterfaceRes(int m,
 
   // Add flux to the selected side
   const int ipgL = index[ipgf];
-  for (int iv = 0; iv < _M; ++iv) {
-    const int imem = VARINDEX(c_deg, c_raf, _M, ipgL, iv);
+  for (int iv = 0; iv < m; ++iv) {
+    const int imem = VARINDEX(param + 1, param + 4, m, ipgL, iv) + woffset;
+    // Warning: no wpg because already applied in vnds buffer
     res[imem] -= flux[iv];
   }
 }

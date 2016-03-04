@@ -590,26 +590,11 @@ void DtFields(Simulation *simu, schnaps_real *w, schnaps_real *dtw) {
 #ifdef _OPENMP
 #pragma omp parallel for schedule(dynamic, 1)
 #endif
-  //printf("STEP ---------------------------------------------------\n");
   for(int ie = 0; ie < simu->macromesh.nbelems; ++ie) {
-    //DisplayArray(w + ie * fsize, fsize, "wn_INI");
-    //DisplayArray(dtw + ie * fsize, fsize, "res_INI");
-
     DGSubCellInterface(simu->fd + ie, w + ie * fsize, dtw + ie * fsize);
-
-    //DisplayArray(dtw + ie * fsize, fsize, "res_SCI");
-
     DGVolume(simu->fd + ie, w + ie * fsize, dtw + ie * fsize);
-
-    //DisplayArray(dtw + ie * fsize, fsize, "res_VOL");
-
     DGSource(simu->fd + ie, w + ie * fsize, dtw + ie * fsize);
-
-    //DisplayArray(dtw + ie * fsize, fsize, "res_SOU");
-
     DGMass(simu->fd + ie, w + ie * fsize, dtw + ie * fsize);
-
-    //DisplayArray(dtw + ie * fsize, fsize, "res_MAS");
   }
 
   if(simu->post_dtfields != NULL) {
@@ -654,7 +639,7 @@ schnaps_real L2error(Simulation *simu) {
 	// Get the exact value
 	f->model.ImposedData(xphy, simu->tnow, wex);
       }
-      
+
       for(int iv = 0; iv < f->model.m; iv++) {
 	//for(int iv = 0; iv < 4; iv++) {   ///////error here for coil2d
 	schnaps_real diff = w[iv] - wex[iv];
