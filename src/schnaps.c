@@ -1,181 +1,119 @@
 #include "schnaps.h"
 #include <stdio.h>
 #include <assert.h>
-#include "quantities_vp.h"
-#include "gyro.h"
-#include "solverpoisson.h"
+#include <string.h>
+#include <stdlib.h>
+#include "getopt.h"
+#ifdef _WITH_OPENCL
+#include "clutils.h"
+#include "clinfo.h"
+#endif
+int main(int argc, char *argv[]) 
+{
+   bool test = true;
 
-int TestSlicePoisson(void);
-void SliceInitData(schnaps_real x[3],schnaps_real w[]);
-void SliceImposedData(const schnaps_real x[3], const schnaps_real t, schnaps_real w[]);
-void SliceBoundaryFlux(schnaps_real x[3],schnaps_real t,
-		      schnaps_real wL[],schnaps_real* vnorm,
-		      schnaps_real* flux);
+  // 2D meshes:
+  // test/disque2d.msh
+  // test/testdisque2d.msh
+  // test/testmacromesh.msh
+  // test/unit-cube.msh
 
-int main(void) {
+  // 3D meshes"
+  // test/testdisque.msh
+
+  char *mshname =  "../test/testcube.msh";
   
-  // unit tests
-    
-  int resu=TestSlicePoisson();
-	 
-  if (resu) printf("slice poisson test OK !\n");
-  else printf("slice poisson test failed !\n");
-
-  return !resu;
-} 
-
-
-int TestSlicePoisson(void) { 
-
-  bool test=true;
-
-  // read the gmsh file
   MacroMesh mesh;
-  ReadMacroMesh(&mesh,"../geo/cylindre.msh");
-
-  mesh.period[2]=2;
+  //ReadMacroMesh(&mesh,"../test/testcube.msh");
+  ReadMacroMesh(&mesh,"../test/testmacromesh.msh");
+  Detect2DMacroMesh(&mesh);
   BuildConnectivity(&mesh);
 
-  int vec=1;
-  
-    
-  int deg[]={2, 2, 2};
-  int raf[]={4, 4, 4};
+  Model model;
 
+  model.m = 7;
+
+  model.NumFlux = Maxwell2DNumFlux_upwind;
+  //f.model.NumFlux = Maxwell2DNumFlux_centered;
+  model.BoundaryFlux = Maxwell2DBoundaryFlux_upwind;
+  model.InitData = Maxwell2DInitData;
+  model.ImposedData = Maxwell2DImposedData;
+  model.Source = Maxwell2DSource;
+  //model.Source = NULL;
+
+
+  int deg[]={3, 3, 0};
+  int raf[]={4, 4, 1};
+
+  assert(mesh.is2d);
+
+#ifdef _WITH_OPENCL
+  if(!cldevice_is_acceptable(nplatform_cl, ndevice_cl)) {
+    printf("OpenCL device not acceptable.\n");
+    return true;
+  }
+#endif
+  
   CheckMacroMesh(&mesh, deg, raf);
+
+
 
   Simulation simu;
   EmptySimulation(&simu);
 
-  
-  Model model;
+#ifdef _WITH_OPENCL
 
-  //extern KineticData  schnaps_kinetic_data;
-  
-  KineticData *kd = &schnaps_kinetic_data;
-  int nbelemv = 2;
-  int deg_v = 2;
-  
-  InitKineticData(&schnaps_kinetic_data,nbelemv,deg_v);
-  kd->solve_quasineutrality = true;
-  kd->substract_mean_charge = true;
-  kd->qn_damping = 0;
-  
-  printf("_MV=%d\n",kd->mv);
-  printf("_INDEX_MAX=%d\n",kd->index_max);
-  printf("_INDEX_MAX_KIN=%d\n",kd->index_max_kin);
+  char buf[1000];
+  sprintf(buf, "-D _M=%d", model.m);
+  strcat(cl_buildoptions, buf);
 
-  model.m= kd->index_max; // num of conservative variables
-  model.NumFlux=GyroUpwindNumFlux;
-  //model.NumFlux=GyroZeroNumFlux;
-  //model.NumFlux=NULL;
-  model.BoundaryFlux=GyroBoundaryFlux;
-  model.InitData=SliceInitData;
-  model.ImposedData=SliceImposedData;
-  model.Source = NULL;
-  //model.Source = GyroSource;
+  set_source_CL(&simu, "Maxwell2DSource");
+  sprintf(numflux_cl_name, "%s", "Maxwell2DNumFlux_upwind");
+  sprintf(buf," -D NUMFLUX=");
+  strcat(buf, numflux_cl_name);
+  strcat(cl_buildoptions, buf);
+
+  sprintf(buf, " -D BOUNDARYFLUX=%s", "Maxwell2DBoundaryFlux_upwind");
+  strcat(cl_buildoptions, buf);
+#endif
 
 
   InitSimulation(&simu, &mesh, deg, raf, &model);
-
-  //simu.pre_dtfields = UpdateGyroPoisson;
-   simu.vmax = kd->vmax; // maximal wave speed 
-  //f.macromesh.is1d=true;
-  //f.is1d=true;
-
-  // apply the DG scheme
-  // time integration by RK2 scheme 
-  // up to final time = 1.
+ 
+  schnaps_real tmax = .5;
   simu.cfl=0.2;
-  schnaps_real dt = 0;
-  schnaps_real tmax = 0;
-  //RK4(&simu,tmax);
-  //Computation_charge_density(&simu);
-  // save the results and the error
-  //PlotFields(1,(1==0),&simu,"sol","dgvisu.msh");
+  simu.vmax=1;
 
-  ContinuousSolver ps;
-  
-  int nb_var=1;
-  int * listvar= malloc(nb_var * sizeof(int));
-  listvar[0]=kd->index_phi;
-
-  int type_bc = 1;
-  
-  InitContinuousSolver(&ps,&simu,type_bc,nb_var,listvar);
-
-  ps.matrix_assembly=ContinuousOperator_Poisson2D;
-  ps.rhs_assembly=RHSPoisson_Continuous;
-  ps.bc_assembly= ExactDirichletContinuousMatrix;
-  ps.postcomputation_assembly=Computation_ElectricField_Poisson;
-  //ps.postcomputation_assembly=NULL;
-
-#undef PARALUTION
-#ifdef PARALUTION
-  ps.lsol.solver_type = PAR_LU;
-  ps.lsol.pc_type=NONE;
+#if 1
+  // C version
+  RK4(&simu, tmax);
 #else
-  ps.lsol.solver_type = LU;
-  ps.lsol.pc_type=NONE;
+  // OpenCL version
+  schnaps_real dt = 0;
+  RK4_CL(&simu, tmax, dt, 0, 0, 0);
+
+  CopyfieldtoCPU(&simu); 
+  printf("\nOpenCL Kernel time:\n");
+  show_cl_timing(&simu);
+  printf("\n");
 #endif
 
-  SolveContinuous2D(&ps);
-  /* DisplayLinearSolver(&ps.lsol); */
-  /* assert(1==2); */
+
+  PlotFields(0, false, &simu, NULL, "dgvisu.msh");
+  PlotFields(0, true , &simu, "error", "dgerror.msh");
+
+  schnaps_real dd = 0;
+  dd = L2error(&simu);
+
+  printf("erreur L2=%f\n", dd);
+
+  schnaps_real tolerance = 0.0025;
+
+  test = dd < tolerance;
+
+  FreeMacroMesh(&mesh);
+
+  int exit_status = !test; // because 0 = success...
   
-  
-  PlotFields(kd->index_phi,(1==0),&simu,"sol","dgvisu.msh");
-  PlotFields(kd->index_phi,(1==1),&simu,"error","dgerror.msh");
-
-  double dd=L2error(&simu);
-  //double dd_l2_vel =GyroL2VelError(&f)
-  //double dd_Kinetic=L2_Kinetic_error(&f);
-  
-  //printf("erreur kinetic L2=%lf\n",dd_Kinetic);
-  printf("erreur L2=%lf\n",dd);
-  printf("tnow is  %lf\n",simu.tnow);
-  Velocity_distribution_plot(simu.w);
-  test= test && (dd < 0.005);
-
-
-  return test; 
-
-};
-
-
-void SliceInitData(schnaps_real x[3],schnaps_real w[]){
-  schnaps_real t=0;
-  SliceImposedData(x,t,w);
+  return exit_status;
 }
-
-void SliceImposedData(const schnaps_real x[3], const schnaps_real t, schnaps_real w[])
-{
-  KineticData *kd = &schnaps_kinetic_data;
-  for(int i = 0; i <kd->index_max_kin + 1; i++){
-    w[i] = 0;
-  }
-  // exact value of the potential
-  // and electric field
-  //w[kd->index_phi]=(x[0] * x[0] + x[1] * x[1])/4;
-  w[kd->index_phi]= 0;
-  w[kd->index_rho] = -1 + kd->qn_damping * w[kd->index_phi];
-  w[kd->index_ex]=-x[0]/2;
-  w[kd->index_ey]=-x[1]/2;
-  //w[kd->index_ex]=0;
-  //w[kd->index_ey]=0;
-  w[kd->index_ez]=0;
-  w[kd->index_u] = 0; // u init
-  w[kd->index_P] = 0; // p init
-  w[kd->index_T] = 0; // e ou T init
-}
-
-void SliceBoundaryFlux(schnaps_real x[3],schnaps_real t,
-		      schnaps_real wL[],schnaps_real* vnorm,
-		      schnaps_real* flux)
-{
-  KineticData *kd = &schnaps_kinetic_data;
-  schnaps_real wR[kd->index_max];
-  SliceImposedData(x,t,wR);
-  GyroUpwindNumFlux(wL,wR,vnorm,flux);
-}
-
