@@ -96,7 +96,6 @@ int TestLandau_Damping_1D(void) {
   PlotFields(kd->index_ex,false,&simu,"sol","dgvisuEx.msh");
   PlotFields(kd->index_phi,false,&simu,"sol","dgvisuPhi.msh");
   PlotFields(kd->index_rho,false,&simu,"sol","dgvisuRho.msh");
-
   Plot_Energies(&simu, simu.dt);
  
 

@@ -40,7 +40,7 @@ int TestSliceMiniPoisson(void) {
   
     
   int deg[]={2, 2, 2};
-  int raf[]={1, 1, 1};
+  int raf[]={2, 2, 2};
 
   CheckMacroMesh(&mesh, deg, raf);
 

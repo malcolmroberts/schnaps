@@ -149,7 +149,7 @@ void ComputeElectricField(field* f){
     int iemacro = 0;
     int isubcell = ie; 
 
-    // loop on the gauss points of the subcell
+    //loop on the gauss points of the subcell
     for(int ipg = 0;ipg < nnodes; ipg++){
       //real wpg;
       schnaps_real xref[3];
@@ -157,21 +157,33 @@ void ComputeElectricField(field* f){
 
       ref_pg_vol(f->deg,f->raf,ipgmacro,xref,NULL,NULL);
       int iex = f->varindex(f->deg,f->raf,f->model.m,
-			    ipgmacro,kd->index_ex);
+    			    ipgmacro,kd->index_ex);
       f->wn[iex] = 0;
+
+      int iey = f->varindex(f->deg,f->raf,f->model.m,
+      			    ipgmacro,kd->index_ey);
+    f->wn[iey] = 0;
+
+    int iez = f->varindex(f->deg,f->raf,f->model.m,
+    			    ipgmacro,kd->index_ez);
+      f->wn[iez] = 0;
       
       for(int ib=0; ib < nnodes; ib++){
-	schnaps_real dtau[3][3],codtau[3][3];
-	schnaps_real dphiref[3];
-	schnaps_real dphi[3];
-	int ibmacro = ib + isubcell * nnodes;
-	grad_psi_pg(f->deg,f->raf,ibmacro,ipgmacro,dphiref);
-	schnaps_ref2phy(f->physnode,xref,dphiref,0,NULL,
-			dtau,codtau,dphi,NULL);
-	schnaps_real det = dot_product(dtau[0], codtau[0]);
-	int ipot = f->varindex(f->deg,f->raf,f->model.m,
-			       ibmacro,kd->index_phi);	
-	f->wn[iex] -= f->wn[ipot] * dphi[0] / det;
+    	schnaps_real dtau[3][3],codtau[3][3];
+    	schnaps_real dphiref[3];
+    	schnaps_real dphi[3];
+    	int ibmacro = ib + isubcell * nnodes;
+    	grad_psi_pg(f->deg,f->raf,ibmacro,ipgmacro,dphiref);
+    	schnaps_ref2phy(f->physnode,xref,dphiref,0,NULL,
+    			dtau,codtau,dphi,NULL);
+    	schnaps_real detx = dot_product(dtau[0], codtau[0]);
+    	schnaps_real dety = dot_product(dtau[1], codtau[1]);
+    	schnaps_real detz = dot_product(dtau[2], codtau[2]);
+    	int ipot = f->varindex(f->deg,f->raf,f->model.m,
+    			       ibmacro,kd->index_phi);
+    	f->wn[iex] -= f->wn[ipot] * dphi[0] / detx;
+    	f->wn[iey] -= f->wn[ipot] * dphi[1] / dety;
+    	f->wn[iez] -= f->wn[ipot] * dphi[2] / detz;
       }
     }
  

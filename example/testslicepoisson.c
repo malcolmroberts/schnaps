@@ -40,7 +40,7 @@ int TestSlicePoisson(void) {
   
     
   int deg[]={2, 2, 2};
-  int raf[]={4, 4, 4};
+  int raf[]={1, 1, 1};
 
   CheckMacroMesh(&mesh, deg, raf);
 
@@ -135,7 +135,7 @@ int TestSlicePoisson(void) {
   printf("erreur L2=%lf\n",dd);
   printf("tnow is  %lf\n",simu.tnow);
   Velocity_distribution_plot(simu.w);
-  test= test && (dd < 0.005);
+  test= test && (dd < 0.03);
 
 
   return test; 
