@@ -55,6 +55,12 @@ void UnregisterSimulation_SPU(Simulation *simu){
     simu->dtw_handle = NULL;
     simu->res_handle = NULL;
   }
+
+  for (int ifa = 0; ifa < simu->macromesh.nbfaces; ++ifa) {
+    Interface *inter = simu->interface + ifa;
+    if (inter->starpu_registered == true)
+      UnregisterInterface_SPU(inter);
+  }
 }
 
 
@@ -112,6 +118,7 @@ void InitInterfaces(Simulation *simu){
 
      inter[ifa].vnds = malloc(3* sizeof(schnaps_real) * npgfL);
      inter[ifa].xpg = malloc(3* sizeof(schnaps_real) * npgfL);
+     inter[ifa].wpg = malloc(sizeof(schnaps_real) * npgfL);
 
      schnaps_real xpgref[3], xpgref_in[3],xpg[3], xpg_in[3];
      for(int ipgf = 0; ipgf < npgfL; ipgf++){
@@ -140,12 +147,13 @@ void InitInterfaces(Simulation *simu){
        /* 	      ifa,ieL,ieR,ipgf,vnds[0],vnds[1],vnds[2], */
        /* 	      xpg[0],xpg[1],xpg[2]); */
 
-       inter[ifa].vnds[3 * ipgf + 0] = vnds[0] * wpg;
-       inter[ifa].vnds[3 * ipgf + 1] = vnds[1] * wpg;
-       inter[ifa].vnds[3 * ipgf + 2] = vnds[2] * wpg;
+       inter[ifa].vnds[3 * ipgf + 0] = vnds[0];
+       inter[ifa].vnds[3 * ipgf + 1] = vnds[1];
+       inter[ifa].vnds[3 * ipgf + 2] = vnds[2];
        inter[ifa].xpg[3 * ipgf + 0] = xpg[0];
        inter[ifa].xpg[3 * ipgf + 1] = xpg[1];
        inter[ifa].xpg[3 * ipgf + 2] = xpg[2];
+       inter[ifa].wpg[ipgf] = wpg;
 
        if (fR != NULL){
 	 schnaps_phy2ref(fR->physnode, xpg_in, xpgref_in);
@@ -164,6 +172,7 @@ void InitInterfaces(Simulation *simu){
      /* 	 inter[ifa].vol_indexR[ipgf] = ipgv2; */
      /*   } */
 
+     inter[ifa].starpu_registered = false;
 
      InitInterface_SPU(inter + ifa);
   }

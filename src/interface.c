@@ -11,11 +11,12 @@ int VarindexFace(int npg, int m, int ipgf, int iv){
 #pragma end_opencl
 
 void InitInterface_SPU(Interface* inter){
+  if (!starpu_is_init && starpu_use){
+    assert(starpu_init(NULL) != -ENODEV);
+    starpu_is_init = true;
+  }
 
-  if (starpu_use){
-
-
-
+  if (starpu_use) {
     starpu_vector_data_register(&(inter->vol_indexL_handle), // mem handle
 				0, // location: CPU
 				(uintptr_t)(inter->vol_indexL), // vector location
@@ -51,8 +52,32 @@ void InitInterface_SPU(Interface* inter){
 				(uintptr_t)(inter->xpg), // vector location
 				inter->npgL * 3,  // size  !!!!!!!!!!! same for left and right ????
 				sizeof(schnaps_real));  // type
+
+    starpu_vector_data_register(&(inter->wpg_handle), // mem handle
+				0, // location: CPU
+				(uintptr_t)(inter->wpg), // vector location
+				inter->npgL,  // size  !!!!!!!!!!! same for left and right ????
+				sizeof(schnaps_real));  // type
+
+    inter->starpu_registered = true;
   }
 }
+
+
+void UnregisterInterface_SPU(Interface* inter) {
+  if (starpu_use && inter->starpu_registered) {
+    starpu_data_unregister(inter->vol_indexL_handle);
+    starpu_data_unregister(inter->vol_indexR_handle);
+    starpu_data_unregister(inter->wL_handle);
+    starpu_data_unregister(inter->wR_handle);
+    starpu_data_unregister(inter->vnds_handle);
+    starpu_data_unregister(inter->xpg_handle);
+    starpu_data_unregister(inter->wpg_handle);
+
+    inter->starpu_registered = false;
+  }
+}
+
 
 void ExtractInterface_C(void* buffer[], void* cl_args);
 void ExtractInterface_OCL(void* buffer[], void* cl_args);
@@ -338,13 +363,14 @@ void InterfaceExplicitFlux_SPU(Interface* inter, int side)
     is_init = true;
     starpu_codelet_init(&codelet);
     codelet.cpu_funcs[0] = InterfaceExplicitFlux_C;
-    codelet.nbuffers = 6;
+    codelet.nbuffers = 7;
     codelet.modes[0] = STARPU_R;  // index_ext
     codelet.modes[1] = STARPU_R; // index
     codelet.modes[2] = STARPU_R; // vnds
     codelet.modes[3] = STARPU_R; // xpg
-    codelet.modes[4] = STARPU_R; // wn_ext
-    codelet.modes[5] = STARPU_RW; // rhs
+    codelet.modes[4] = STARPU_R; // wpg
+    codelet.modes[5] = STARPU_R; // wn_ext
+    codelet.modes[6] = STARPU_RW; // rhs
     codelet.name="InterfaceExplicitFlux";
   }
 
@@ -390,17 +416,19 @@ void InterfaceExplicitFlux_SPU(Interface* inter, int side)
     task->cl = &codelet;
     task->cl_arg = arg_buffer;
     task->cl_arg_size = arg_buffer_size;
-    task->handles[0] = index_ext;
-    task->handles[1] = index;
-    task->handles[2] = inter->vnds_handle;
-    task->handles[3] = inter->xpg_handle;
-    task->handles[4] = wn_ext;
+    int nhandle = 0;
+    task->handles[nhandle++] = index_ext;
+    task->handles[nhandle++] = index;
+    task->handles[nhandle++] = inter->vnds_handle;
+    task->handles[nhandle++] = inter->xpg_handle;
+    task->handles[nhandle++] = inter->wpg_handle;
+    task->handles[nhandle++] = wn_ext;
     if (f->solver != NULL){
       Skyline_SPU* sky_spu = f->solver->matrix;
-      task->handles[5] = sky_spu->rhs_handle;
+      task->handles[nhandle++] = sky_spu->rhs_handle;
     }
     else {
-      task->handles[5] = f->res_handle;
+      task->handles[nhandle++] = f->res_handle;
     }
     int ret = starpu_task_submit(task);
     STARPU_CHECK_RETURN_VALUE(ret, "starpu_task_submit");
@@ -441,6 +469,10 @@ void InterfaceExplicitFlux_C(void* buffer[], void* cl_args){
   struct starpu_vector_interface *xpg_buf_v =
     (struct starpu_vector_interface *) buffer[buf_num++];
   schnaps_real* xpg_buf = (schnaps_real *)STARPU_VECTOR_GET_PTR(xpg_buf_v);
+
+  struct starpu_vector_interface *wpg_buf_v =
+    (struct starpu_vector_interface *) buffer[buf_num++];
+  schnaps_real* wpg_buf = (schnaps_real *)STARPU_VECTOR_GET_PTR(wpg_buf_v);
 
   struct starpu_vector_interface *wn_ext_v =
     (struct starpu_vector_interface *) buffer[buf_num++];
@@ -486,11 +518,12 @@ void InterfaceExplicitFlux_C(void* buffer[], void* cl_args){
     //printf("flux=%f %f\n",flux[0],flux[0]);
 
     // Add flux  to the selected side
+    const schnaps_real wpg = wpg_buf[ipgf];
     for(int iv = 0; iv < m; iv++) {
       int ipgL = index[ipgf];
       // The basis functions is also the gauss point index
       int imemL = f->varindex(f->deg, f->raf,f->model.m, ipgL, iv);
-      rhs[imemL] -= flux[iv] * f->dt;
+      rhs[imemL] -= flux[iv] * f->dt * wpg;
       printf("imem=%d res=%f\n",imemL,rhs[imemL]);
       /* real* xpg = inter->xpg + 3 * ipgf; */
       /* real* vnds = inter->vnds + 3 * ipgf; */
@@ -526,11 +559,12 @@ void InterfaceBoundaryFlux_SPU(Interface* inter)
     is_init = true;
     starpu_codelet_init(&codelet);
     codelet.cpu_funcs[0] = InterfaceBoundaryFlux_C;
-    codelet.nbuffers = 4;
+    codelet.nbuffers = 5;
     codelet.modes[0] = STARPU_R;  // wface
     codelet.modes[1] = STARPU_R; // wvol
     codelet.modes[2] = STARPU_R; // vol_index
-    codelet.modes[3] = STARPU_RW; // vol_index
+    codelet.modes[3] = STARPU_R; // wpg
+    codelet.modes[4] = STARPU_RW; // vol_index
     codelet.name="InterfaceBoundaryFlux";
   }
 
@@ -553,15 +587,17 @@ void InterfaceBoundaryFlux_SPU(Interface* inter)
   task->cl = &codelet;
   task->cl_arg = arg_buffer;
   task->cl_arg_size = arg_buffer_size;
-  task->handles[0] = index;
-  task->handles[1] = inter->vnds_handle;
-  task->handles[2] = inter->xpg_handle;
+  int nhandle = 0;
+  task->handles[nhandle++] = index;
+  task->handles[nhandle++] = inter->vnds_handle;
+  task->handles[nhandle++] = inter->xpg_handle;
+  task->handles[nhandle++] = inter->wpg_handle;
   if (f->solver != NULL){
     Skyline_SPU* sky_spu = f->solver->matrix;
-    task->handles[3] = sky_spu->rhs_handle;
+    task->handles[nhandle++] = sky_spu->rhs_handle;
   }
   else {
-    task->handles[3] = f->res_handle;
+    task->handles[nhandle++] = f->res_handle;
   }
   int ret = starpu_task_submit(task);
   STARPU_CHECK_RETURN_VALUE(ret, "starpu_task_submit");
@@ -595,6 +631,10 @@ void InterfaceBoundaryFlux_C(void* buffer[], void* cl_args){
     (struct starpu_vector_interface *) buffer[buf_num++];
   schnaps_real* xpg_buf = (schnaps_real *)STARPU_VECTOR_GET_PTR(xpg_buf_v);
 
+  struct starpu_vector_interface *wpg_buf_v =
+    (struct starpu_vector_interface *) buffer[buf_num++];
+  schnaps_real* wpg_buf = (schnaps_real *)STARPU_VECTOR_GET_PTR(wpg_buf_v);
+
   struct starpu_vector_interface *rhs_v =
     (struct starpu_vector_interface *) buffer[buf_num++];
   schnaps_real* rhs = (schnaps_real *)STARPU_VECTOR_GET_PTR(rhs_v);
@@ -617,11 +657,12 @@ void InterfaceBoundaryFlux_C(void* buffer[], void* cl_args){
     /* printf("xpg=%f %f %f vnds=%f %f %f ipgL=%d \n", */
     /*        xpg[0], xpg[1], xpg[2], */
     /*        vnds[0], vnds[1],vnds[2], ipgL); */
+    const schnaps_real wpg = wpg_buf[ipgf];
     for(int iv = 0; iv < m; iv++) {
       int ipgL = index[ipgf];
       // The basis functions is also the gauss point index
       int imemL = f->varindex(f->deg, f->raf,f->model.m, ipgL, iv);
-      rhs[imemL] -= flux[iv] * f->dt;
+      rhs[imemL] -= flux[iv] * f->dt * wpg;
     }
 
 
@@ -691,6 +732,8 @@ void InterfaceExplicitFlux(Interface* inter, int side){
 	wL[iv] = 0;
       }
 
+      const schnaps_real wpg = inter->wpg[ipgf];
+
       if (fext != NULL) {  // the right element exists
 	schnaps_real wR[m];
 	int ipgR = index_ext[ipgf];
@@ -720,7 +763,7 @@ void InterfaceExplicitFlux(Interface* inter, int side){
 	  int ipgL = index[ipgf];
 	  // The basis functions is also the gauss point index
 	  int imemL = f->varindex(f->deg, f->raf,f->model.m, ipgL, iv);
-	  res[imemL] -= flux[iv] * f->dt;
+	  res[imemL] -= flux[iv] * f->dt * wpg;
 	  printf("imem=%d res=%f\n",imemL,res[imemL]);
 
 	  /* real* xpg = inter->xpg + 3 * ipgf; */
@@ -745,7 +788,7 @@ void InterfaceExplicitFlux(Interface* inter, int side){
 	  int ipgL = index[ipgf];
 	  // The basis functions is also the gauss point index
 	  int imemL = f->varindex(f->deg, f->raf,f->model.m, ipgL, iv);
-	  res[imemL] -= flux[iv] * sign * f->dt;
+	  res[imemL] -= flux[iv] * sign * f->dt * wpg;
 	  /* printf("boundary flux=%f xpg=%f %f vnds=%f %f\n", */
 	  /* 	 flux[0],xpg[0],xpg[1],vnds[0],vnds[1]); */
 	}

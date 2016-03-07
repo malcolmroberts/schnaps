@@ -107,7 +107,6 @@ void ZeroBuffer_OCL(void *buffers[], void *cl_args) {
   status = clSetKernelArg(kernel, narg++, sizeof(cl_mem), &buffer);
   if (status != CL_SUCCESS) STARPU_OPENCL_REPORT_ERROR(status);
 
-  cl_event event;
   status = clEnqueueNDRangeKernel(queue, kernel,
                                   1, // work_dim
                                   NULL, // *global_work_offset
@@ -115,7 +114,7 @@ void ZeroBuffer_OCL(void *buffers[], void *cl_args) {
                                   NULL, // *local_work_size
                                   0, // num_events_in_wait_list
                                   NULL, // *wait_list
-                                  &event); // *event
+                                  NULL); // *event
   if (status != CL_SUCCESS) STARPU_OPENCL_REPORT_ERROR(status);
 }
 
@@ -232,7 +231,6 @@ void AddBuffer_OCL(void *buffers[], void *cl_args) {
   status |= clSetKernelArg(kernel, narg++, sizeof(cl_mem), &buffer_out);
   if (status != CL_SUCCESS) STARPU_OPENCL_REPORT_ERROR(status);
 
-  cl_event event;
   status = clEnqueueNDRangeKernel(queue, kernel,
                                   1, // work_dim
                                   NULL, // *global_work_offset
@@ -240,7 +238,7 @@ void AddBuffer_OCL(void *buffers[], void *cl_args) {
                                   NULL, // *local_work_size
                                   0, // num_events_in_wait_list
                                   NULL, // *wait_list
-                                  &event); // *event
+                                  NULL); // *event
   if (status != CL_SUCCESS) STARPU_OPENCL_REPORT_ERROR(status);
 }
 
@@ -909,7 +907,6 @@ void DGVolume_OCL(void *buffers[], void *cl_args) {
   status |= clSetKernelArg(kernel, narg++, sizeof(schnaps_real) * 2 * lsize * m, NULL);
   if (status != CL_SUCCESS) STARPU_OPENCL_REPORT_ERROR(status);
 
-  cl_event event;
   status = clEnqueueNDRangeKernel(queue, kernel,
                                   1, // work_dim
                                   NULL, // *global_work_offset
@@ -917,7 +914,7 @@ void DGVolume_OCL(void *buffers[], void *cl_args) {
                                   &lsize, // *local_work_size
                                   0, // num_events_in_wait_list
                                   NULL, // *wait_list
-                                  &event); // *event
+                                  NULL); // *event
   if (status != CL_SUCCESS) STARPU_OPENCL_REPORT_ERROR(status);
 }
 
@@ -1000,7 +997,6 @@ void DGVolume3D_OCL(void *buffers[], void *cl_args) {
                            lsize[0] * lsize[1] * lsize[2] * m, NULL);
   if (status != CL_SUCCESS) STARPU_OPENCL_REPORT_ERROR(status);
 
-  cl_event event;
   status = clEnqueueNDRangeKernel(queue, kernel,
                                   3, // work_dim
                                   NULL, // *global_work_offset
@@ -1008,7 +1004,7 @@ void DGVolume3D_OCL(void *buffers[], void *cl_args) {
                                   lsize, // *local_work_size
                                   0, // num_events_in_wait_list
                                   NULL, // *wait_list
-                                  &event); // *event
+                                  NULL); // *event
   if (status != CL_SUCCESS) STARPU_OPENCL_REPORT_ERROR(status);
 }
 
@@ -1199,7 +1195,6 @@ void DGSource_OCL(void *buffers[], void *cl_args) {
   status |= clSetKernelArg(kernel, narg++, sizeof(schnaps_real) * 2 * lsize * m, NULL);
   if (status != CL_SUCCESS) STARPU_OPENCL_REPORT_ERROR(status);
 
-  cl_event event;
   status = clEnqueueNDRangeKernel(queue, kernel,
                                   1, // work_dim
                                   NULL, // *global_work_offset
@@ -1207,7 +1202,7 @@ void DGSource_OCL(void *buffers[], void *cl_args) {
                                   &lsize, // *local_work_size
                                   0, // num_events_in_wait_list
                                   NULL, // *wait_list
-                                  &event); // *event
+                                  NULL); // *event
   if (status != CL_SUCCESS) STARPU_OPENCL_REPORT_ERROR(status);
 }
 
@@ -1381,7 +1376,6 @@ void DGMass_OCL(void *buffers[], void *cl_args) {
 
   size_t wsize = NPG(deg, raf);
 
-  cl_event event;
   status = clEnqueueNDRangeKernel(queue, kernel,
                                   1, // work_dim
                                   NULL, // *global_work_offset
@@ -1389,7 +1383,7 @@ void DGMass_OCL(void *buffers[], void *cl_args) {
                                   NULL, // *local_work_size
                                   0, // num_events_in_wait_list
                                   NULL, // *wait_list
-                                  &event); // *event
+                                  NULL); // *event
   if (status != CL_SUCCESS) STARPU_OPENCL_REPORT_ERROR(status);
 }
 
@@ -1439,15 +1433,17 @@ void DGMacroCellInterface_SPU(Interface* inter, int side) {
   task->cl = DGMacroCellInterface_codelet();
   task->cl_arg = args;
   task->cl_arg_size = arg_size;
-  task->handles[0] = index;
-  task->handles[1] = inter->vnds_handle;
-  task->handles[2] = wn_in;
-  task->handles[3] = wn_ext;
-  if (f->solver != NULL){
+  int nhandle = 0;
+  task->handles[nhandle++] = index;
+  task->handles[nhandle++] = inter->vnds_handle;
+  task->handles[nhandle++] = inter->wpg_handle;
+  task->handles[nhandle++] = wn_in;
+  task->handles[nhandle++] = wn_ext;
+  if (f->solver != NULL) {
     Skyline_SPU* sky_spu = f->solver->matrix;
-    task->handles[4] = sky_spu->rhs_handle;
+    task->handles[nhandle++] = sky_spu->rhs_handle;
   } else {
-    task->handles[4] = f->res_handle;
+    task->handles[nhandle++] = f->res_handle;
   }
 
   STARPU_CHECK_RETURN_VALUE(
@@ -1472,6 +1468,7 @@ struct starpu_codelet* DGMacroCellInterface_codelet() {
     codelet.nbuffers = 0;
     codelet.modes[codelet.nbuffers++] = STARPU_R;  // index
     codelet.modes[codelet.nbuffers++] = STARPU_R;  // vnds
+    codelet.modes[codelet.nbuffers++] = STARPU_R;  // wpg
     codelet.modes[codelet.nbuffers++] = STARPU_R;  // wn_in
     codelet.modes[codelet.nbuffers++] = STARPU_R;  // wn_ext
     codelet.modes[codelet.nbuffers++] = STARPU_RW;  // res
@@ -1509,6 +1506,8 @@ void DGMacroCellInterface_C(void* buffers[], void* cl_args) {
       (struct starpu_vector_interface *)buffers[nbuffer++]);
   schnaps_real* vnds_buf = (schnaps_real *)STARPU_VECTOR_GET_PTR(
       (struct starpu_vector_interface *)buffers[nbuffer++]);
+  schnaps_real* wpg_buf = (schnaps_real *)STARPU_VECTOR_GET_PTR(
+      (struct starpu_vector_interface *)buffers[nbuffer++]);
   schnaps_real* wn_in = (schnaps_real *)STARPU_VECTOR_GET_PTR(
       (struct starpu_vector_interface *)buffers[nbuffer++]);
   schnaps_real* wn_ext = (schnaps_real *)STARPU_VECTOR_GET_PTR(
@@ -1540,11 +1539,12 @@ void DGMacroCellInterface_C(void* buffers[], void* cl_args) {
 
     // Add flux to the selected side
     int ipgL = index[ipgf];
+    const schnaps_real wpg = wpg_buf[ipgf];
     for (int iv = 0; iv < m; ++iv) {
       // The basis functions is also the gauss point index
       int imemL = f->varindex(f->deg, f->raf,f->model.m, ipgL, iv);
       // Warning: no wpg because already applied in vnds buffer
-      res[imemL] -= flux[iv];
+      res[imemL] -= flux[iv] * wpg;
     }
     /* printf("ipgf=%d ipgL=%d wL=%f wR=%f vnds=%f %f %f flux=%f\n", */
     /*        ipgf, ipgL, wL[0], wR[0], vnds[0], vnds[1], vnds[2], flux[0]); */
@@ -1561,9 +1561,10 @@ void DGMacroCellInterface_OCL(void* buffers[], void* cl_args) {
                              f, &locfa, &sign);
   free(cl_args);
 
-  int nbuffer=0;
+  int nbuffer = 0;
   cl_mem index = (cl_mem)STARPU_VECTOR_GET_DEV_HANDLE(buffers[nbuffer++]);
   cl_mem vnds_buf = (cl_mem)STARPU_VECTOR_GET_DEV_HANDLE(buffers[nbuffer++]);
+  cl_mem wpg_buf = (cl_mem)STARPU_VECTOR_GET_DEV_HANDLE(buffers[nbuffer++]);
   cl_mem wn_in = (cl_mem)STARPU_VECTOR_GET_DEV_HANDLE(buffers[nbuffer++]);
   cl_mem wn_ext = (cl_mem)STARPU_VECTOR_GET_DEV_HANDLE(buffers[nbuffer++]);
   cl_mem res = (cl_mem)STARPU_VECTOR_GET_DEV_HANDLE(buffers[nbuffer++]);
@@ -1612,13 +1613,14 @@ void DGMacroCellInterface_OCL(void* buffers[], void* cl_args) {
   status |= clSetKernelArg(kernel, narg++, sizeof(cl_mem), &wn_in);
   status |= clSetKernelArg(kernel, narg++, sizeof(cl_mem), &wn_ext);
   status |= clSetKernelArg(kernel, narg++, sizeof(cl_mem), &vnds_buf);
+  status |= clSetKernelArg(kernel, narg++, sizeof(cl_mem), &wpg_buf);
   status |= clSetKernelArg(kernel, narg++, sizeof(cl_mem), &res);
   if (status != CL_SUCCESS) STARPU_OPENCL_REPORT_ERROR(status);
   assert(status >= CL_SUCCESS);
 
+  // Number of glops on the macrocell interface
   size_t wsize = NPGF(f->deg, f->raf, locfa);
 
-  cl_event event;
   status = clEnqueueNDRangeKernel(queue, kernel,
                                   1, // work_dim
                                   NULL, // *global_work_offset
@@ -1626,9 +1628,223 @@ void DGMacroCellInterface_OCL(void* buffers[], void* cl_args) {
                                   NULL, // *local_work_size
                                   0, // num_events_in_wait_list
                                   NULL, // *wait_list
-                                  &event); // *event
+                                  NULL); // *event
   if (status != CL_SUCCESS) STARPU_OPENCL_REPORT_ERROR(status);
 }
+
+
+
+void DGMacroCellBoundaryFlux_SPU(Interface* inter) {
+  if (inter->fR != NULL) return;
+
+  field *f = inter->fL;
+  int locfa = inter->locfaL;
+
+  void* args;
+  size_t arg_size;
+
+  starpu_codelet_pack_args(&args, &arg_size,
+			   STARPU_VALUE, f, sizeof(field),
+			   STARPU_VALUE, &locfa, sizeof(int),
+			   NULL);
+
+  struct starpu_task *task;
+
+  task = starpu_task_create();
+  task->cl = DGMacroCellBoundaryFlux_codelet();
+  task->cl_arg = args;
+  task->cl_arg_size = arg_size;
+  int nhandle = 0;
+  task->handles[nhandle++] = inter->vol_indexL_handle;
+  task->handles[nhandle++] = inter->vnds_handle;
+  task->handles[nhandle++] = inter->xpg_handle;
+  task->handles[nhandle++] = inter->wpg_handle;
+  task->handles[nhandle++] = inter->wL_handle;
+  if (f->solver != NULL) {
+    Skyline_SPU* sky_spu = f->solver->matrix;
+    task->handles[nhandle++] = sky_spu->rhs_handle;
+  }
+  else {
+    task->handles[nhandle++] = f->res_handle;
+  }
+
+  STARPU_CHECK_RETURN_VALUE(
+      starpu_task_submit(task),
+      "starpu_task_submit");
+}
+
+void DGMacroCellBoundaryFlux_C(void* buffers[], void* cl_args);
+void DGMacroCellBoundaryFlux_OCL(void* buffers[], void* cl_args);
+
+struct starpu_codelet* DGMacroCellBoundaryFlux_codelet() {
+  static bool is_init = false;
+  static struct starpu_codelet codelet;
+
+  if (!is_init) {
+    is_init = true;
+    starpu_codelet_init(&codelet);
+
+    codelet.name = "DGMacroCellBoundaryFlux";
+    printf("init codelet %s...\n", codelet.name);
+
+    codelet.nbuffers = 0;
+    codelet.modes[codelet.nbuffers++] = STARPU_R;  // index
+    codelet.modes[codelet.nbuffers++] = STARPU_R;  // vnds
+    codelet.modes[codelet.nbuffers++] = STARPU_R;  // xpg
+    codelet.modes[codelet.nbuffers++] = STARPU_R;  // wpg
+    codelet.modes[codelet.nbuffers++] = STARPU_R;  // wn
+    codelet.modes[codelet.nbuffers++] = STARPU_RW;  // res
+
+    if (starpu_c_use) {
+      size_t ncodelet = 0;
+      codelet.cpu_funcs[ncodelet++] = DGMacroCellBoundaryFlux_C;
+      codelet.cpu_funcs[ncodelet++] = NULL;
+    }
+
+    if (starpu_ocl_use) {
+      LOAD_OPENCL_PROGRAM_SPU();
+
+      size_t ncodelet = 0;
+      codelet.opencl_funcs[ncodelet++] = DGMacroCellBoundaryFlux_OCL;
+      codelet.opencl_funcs[ncodelet++] = NULL;
+    }
+  }
+
+  return &codelet;
+}
+
+void DGMacroCellBoundaryFlux_C(void* buffers[], void* cl_args) {
+  field f0;
+  field *f = &f0;
+  int locfa;
+
+  starpu_codelet_unpack_args(cl_args,
+                             f, &locfa);
+  free(cl_args);
+
+  int nbuffer = 0;
+  int* index = (int *)STARPU_VECTOR_GET_PTR(
+      (struct starpu_vector_interface *)buffers[nbuffer++]);
+  schnaps_real* vnds_buf = (schnaps_real *)STARPU_VECTOR_GET_PTR(
+      (struct starpu_vector_interface *)buffers[nbuffer++]);
+  schnaps_real* xpg_buf = (schnaps_real *)STARPU_VECTOR_GET_PTR(
+      (struct starpu_vector_interface *)buffers[nbuffer++]);
+  schnaps_real* wpg_buf = (schnaps_real *)STARPU_VECTOR_GET_PTR(
+      (struct starpu_vector_interface *)buffers[nbuffer++]);
+  schnaps_real* wn = (schnaps_real *)STARPU_VECTOR_GET_PTR(
+      (struct starpu_vector_interface *)buffers[nbuffer++]);
+  schnaps_real* res = (schnaps_real *)STARPU_VECTOR_GET_PTR(
+      (struct starpu_vector_interface *)buffers[nbuffer++]);
+
+
+  const int npgf = NPGF(f->deg, f->raf, locfa);
+  const int m = f->model.m;
+
+  for (int ipgf = 0; ipgf < npgf; ++ipgf) {
+    schnaps_real wL[m];
+    for (int iv = 0; iv < m; ++iv) {
+      int imemf = VarindexFace(npgf, m, ipgf, iv);
+      wL[iv] = wn[imemf];
+    }
+
+    schnaps_real* xpg = xpg_buf + 3 * ipgf;
+    schnaps_real* vnds = vnds_buf + 3 * ipgf;
+
+    schnaps_real flux[m];
+    f->model.BoundaryFlux(xpg, f->tnow, wL, vnds, flux);
+
+    // Add flux
+    int ipgL = index[ipgf];
+    const schnaps_real wpg = wpg_buf[ipgf];
+    for (int iv = 0; iv < m; ++iv) {
+      // The basis functions is also the gauss point index
+      int imemL = f->varindex(f->deg, f->raf, f->model.m, ipgL, iv);
+      res[imemL] -= flux[iv] * wpg;
+    }
+  }
+}
+
+void DGMacroCellBoundaryFlux_OCL(void* buffers[], void* cl_args) {
+  field f0;
+  field *f = &f0;
+  int locfa;
+
+  starpu_codelet_unpack_args(cl_args,
+                             f, &locfa);
+  free(cl_args);
+
+  int nbuffer = 0;
+  cl_mem index = (cl_mem)STARPU_VECTOR_GET_DEV_HANDLE(buffers[nbuffer++]);
+  cl_mem vnds_buf = (cl_mem)STARPU_VECTOR_GET_DEV_HANDLE(buffers[nbuffer++]);
+  cl_mem xpg_buf = (cl_mem)STARPU_VECTOR_GET_DEV_HANDLE(buffers[nbuffer++]);
+  cl_mem wpg_buf = (cl_mem)STARPU_VECTOR_GET_DEV_HANDLE(buffers[nbuffer++]);
+  cl_mem wn = (cl_mem)STARPU_VECTOR_GET_DEV_HANDLE(buffers[nbuffer++]);
+  cl_mem res = (cl_mem)STARPU_VECTOR_GET_DEV_HANDLE(buffers[nbuffer++]);
+
+  int wid = starpu_worker_get_id();
+  int devid = starpu_worker_get_devid(wid);
+  cl_context context;
+  starpu_opencl_get_context(devid, &context);
+
+  // Usefull to determine device type on runtime
+  //char buffer[100];
+  //starpu_worker_get_name(wid, buffer, 100);
+  //switch (GetDeviceTypeFromName(buffer)) {
+  //  case CL_DEVICE_TYPE_CPU:
+  //
+  //    break;
+  //  default:
+  //
+  //    break;
+  //}
+
+  cl_kernel kernel;
+  cl_command_queue queue;
+  cl_int status = starpu_opencl_load_kernel(&kernel, &queue,
+                                            &opencl_program,
+                                            "DGBoundaryRes",
+                                            devid);
+  if (status != CL_SUCCESS) STARPU_OPENCL_REPORT_ERROR(status);
+
+  int param[7] = {f->model.m, f->deg[0], f->deg[1], f->deg[2], f->raf[0], f->raf[1], f->raf[2]};
+  cl_mem param_cl = clCreateBuffer(context,
+                                   CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                                   7 * sizeof(int),
+                                   param,
+                                   &status);
+  if (status != CL_SUCCESS) STARPU_OPENCL_REPORT_ERROR(status);
+
+  int ie = 0;
+
+  int narg = 0;
+  status = clSetKernelArg(kernel, narg++, sizeof(cl_mem), &param_cl);
+  status |= clSetKernelArg(kernel, narg++, sizeof(schnaps_real), &(f->tnow));
+  status |= clSetKernelArg(kernel, narg++, sizeof(int), &ie);
+  status |= clSetKernelArg(kernel, narg++, sizeof(int), &locfa);
+  status |= clSetKernelArg(kernel, narg++, sizeof(cl_mem), &index);
+  status |= clSetKernelArg(kernel, narg++, sizeof(cl_mem), &wn);
+  status |= clSetKernelArg(kernel, narg++, sizeof(cl_mem), &vnds_buf);
+  status |= clSetKernelArg(kernel, narg++, sizeof(cl_mem), &xpg_buf);
+  status |= clSetKernelArg(kernel, narg++, sizeof(cl_mem), &wpg_buf);
+  status |= clSetKernelArg(kernel, narg++, sizeof(cl_mem), &res);
+  if (status != CL_SUCCESS) STARPU_OPENCL_REPORT_ERROR(status);
+  assert(status >= CL_SUCCESS);
+
+  // Number of glops on the macrocell interface
+  size_t wsize = NPGF(f->deg, f->raf, locfa);
+
+  status = clEnqueueNDRangeKernel(queue, kernel,
+                                  1, // work_dim
+                                  NULL, // *global_work_offset
+                                  &wsize, // *global_work_size
+                                  NULL, // *local_work_size
+                                  0, // num_events_in_wait_list
+                                  NULL, // *wait_list
+                                  NULL); // *event
+  if (status != CL_SUCCESS) STARPU_OPENCL_REPORT_ERROR(status);
+}
+
+
 
 
 
@@ -1689,6 +1905,8 @@ void InterfaceExplicitFlux_bis(Interface* inter, int side){
         //wL[iv] = 0;
       }
 
+      const schnaps_real wpg = inter->wpg[ipgf];
+
       if (fext != NULL) {  // the right element exists
 	schnaps_real wR[m];
 	int ipgR = index_ext[ipgf];
@@ -1714,7 +1932,7 @@ void InterfaceExplicitFlux_bis(Interface* inter, int side){
 	  int ipgL = index[ipgf];
 	  // The basis functions is also the gauss point index
 	  int imemL = f->varindex(f->deg, f->raf,f->model.m, ipgL, iv);
-	  f->dtwn[imemL] -= flux[iv]  ;
+	  f->dtwn[imemL] -= flux[iv] * wpg;
 	  //printf("imem=%d res=%f\n",imemL,f->dtwn[imemL]);
 	}
       } else { // The point is on the boundary.
@@ -1736,7 +1954,7 @@ void InterfaceExplicitFlux_bis(Interface* inter, int side){
 	  int ipgL = index[ipgf];
 	  // The basis functions is also the gauss point index
 	  int imemL = f->varindex(f->deg, f->raf,f->model.m, ipgL, iv);
-	  f->dtwn[imemL] -= flux[iv] * sign;
+	  f->dtwn[imemL] -= flux[iv] * sign * wpg;
 	  /* printf("boundary flux=%f xpg=%f %f vnds=%f %f\n", */
 	  /* 	 flux[0],xpg[0],xpg[1],vnds[0],vnds[1]); */
 	}
@@ -1871,228 +2089,6 @@ void DtFields_SPU(Simulation *simu,
 
 
 
-
-
-
-void DGMacroCellBoundaryFlux_C(void* buffers[], void* cl_args);
-void DGMacroCellBoundaryFlux_OCL(void* buffers[], void* cl_args);
-
-void DGMacroCellBoundaryFlux_SPU(Interface* inter)
-{
-
-
-  field *f;
-  int locfa;
-  starpu_data_handle_t index;
-
-  static bool is_init = false;
-  static struct starpu_codelet codelet;
-  struct starpu_task *task;
-
-  if (!is_init){
-    printf("init codelet DGMacroCellBoundaryFlux...\n");
-    is_init = true;
-    starpu_codelet_init(&codelet);
-    codelet.cpu_funcs[0] = DGMacroCellBoundaryFlux_C;
-    codelet.cpu_funcs[1] = NULL;
-    if (starpu_ocl_use) {
-      if (!opencl_program_is_init) {
-        opencl_program_is_init = true;
-        printf("load OpenCL program...\n");
-        int ret = starpu_opencl_load_opencl_from_file("./schnaps.cl",
-                                                      &opencl_program,
-                                                      cl_buildoptions);
-        STARPU_CHECK_RETURN_VALUE(ret, "starpu_opencl_load_opencl_from_file");
-      }
-      codelet.opencl_funcs[0] = DGMacroCellBoundaryFlux_OCL;
-      codelet.opencl_funcs[1] = NULL;
-    }
-    codelet.nbuffers = 5;
-    codelet.modes[0] = STARPU_R;  // vol_index
-    codelet.modes[1] = STARPU_R; // vnds
-    codelet.modes[2] = STARPU_R; // xpg
-    codelet.modes[3] = STARPU_R; // wL
-    codelet.modes[4] = STARPU_RW; // rhs / res
-    codelet.name="DGMacroCellBoundaryFlux";
-  }
-
-
-  f = inter->fL;
-  locfa = inter->locfaL;
-  index = inter->vol_indexL_handle;
-
-
-  void* arg_buffer;
-  size_t arg_buffer_size;
-
-  starpu_codelet_pack_args(&arg_buffer, &arg_buffer_size,
-			   STARPU_VALUE, f, sizeof(field),
-			   STARPU_VALUE, &locfa, sizeof(int),
-			   0);
-
-  task = starpu_task_create();
-  task->cl = &codelet;
-  task->cl_arg = arg_buffer;
-  task->cl_arg_size = arg_buffer_size;
-  task->handles[0] = index;
-  task->handles[1] = inter->vnds_handle;
-  task->handles[2] = inter->xpg_handle;
-  task->handles[3] = inter->wL_handle;
-  if (f->solver != NULL){
-    Skyline_SPU* sky_spu = f->solver->matrix;
-    task->handles[4] = sky_spu->rhs_handle;
-  }
-  else {
-    task->handles[4] = f->res_handle;
-  }
-  int ret = starpu_task_submit(task);
-  STARPU_CHECK_RETURN_VALUE(ret, "starpu_task_submit");
-
-
-}
-
-void DGMacroCellBoundaryFlux_C(void* buffers[], void* cl_args){
-
-
-  field f0;
-  field *f = &f0;
-  int locfa;
-
-  starpu_codelet_unpack_args(cl_args,f,&locfa);
-  free(cl_args);
-
-  int m = f->model.m;
-
-  int nbuffer=0;
-
-  struct starpu_vector_interface *index_v =
-      (struct starpu_vector_interface *) buffers[nbuffer++];
-  int* index = (int *)STARPU_VECTOR_GET_PTR(index_v);
-
-  struct starpu_vector_interface *vnds_buf_v =
-      (struct starpu_vector_interface *) buffers[nbuffer++];
-  schnaps_real* vnds_buf = (schnaps_real *)STARPU_VECTOR_GET_PTR(vnds_buf_v);
-
-  struct starpu_vector_interface *xpg_buf_v =
-      (struct starpu_vector_interface *) buffers[nbuffer++];
-  schnaps_real* xpg_buf = (schnaps_real *)STARPU_VECTOR_GET_PTR(xpg_buf_v);
-
-  struct starpu_vector_interface *wL_buf_v =
-      (struct starpu_vector_interface *) buffers[nbuffer++];
-  schnaps_real* wL_buf = (schnaps_real *)STARPU_VECTOR_GET_PTR(wL_buf_v);
-
-  struct starpu_vector_interface *rhs_v =
-      (struct starpu_vector_interface *) buffers[nbuffer++];
-  schnaps_real* rhs = (schnaps_real *)STARPU_VECTOR_GET_PTR(rhs_v);
-
-  int npgf = NPGF(f->deg, f->raf, locfa);
-  for(int ipgf = 0; ipgf < npgf; ipgf++) {
-
-
-    schnaps_real flux[m];
-    schnaps_real wL[m];
-    for(int iv = 0; iv < m; iv++) {
-      int imemf = VarindexFace(npgf, m, ipgf, iv);
-      wL[iv] = wL_buf[imemf];
-    }
-
-    schnaps_real* xpg = xpg_buf + 3 * ipgf;
-    schnaps_real* vnds = vnds_buf + 3 * ipgf;
-
-    //printf("tnow=%f wL=%f\n",f->tnow,wL[0]);
-    f->model.BoundaryFlux(xpg, f->tnow, wL, vnds, flux);
-    //printf("wL=%f, ipgf=%d\n",wL[0], ipgf);
-    //printf("flux=%f, ipgf=%d\n",flux[0], ipgf);
-    int ipgL = index[ipgf];
-    /* printf("xpg=%f %f %f vnds=%f %f %f ipgL=%d \n", */
-    /*        xpg[0], xpg[1], xpg[2], */
-    /*        vnds[0], vnds[1],vnds[2], ipgL); */
-    for(int iv = 0; iv < m; iv++) {
-      int ipgL = index[ipgf];
-      // The basis functions is also the gauss point index
-      int imemL = f->varindex(f->deg, f->raf,f->model.m, ipgL, iv);
-      rhs[imemL] -= flux[iv];
-    }
-
-
-  }
-
-
-}
-
-void DGMacroCellBoundaryFlux_OCL(void* buffers[], void* cl_args){
-
-  field f0;
-  field *f = &f0;
-  int locfa;
-
-  starpu_codelet_unpack_args(cl_args,f,&locfa);
-  free(cl_args);
-
-  int nbuffer=0;
-  cl_mem index = (cl_mem)STARPU_VECTOR_GET_DEV_HANDLE(buffers[nbuffer++]);
-  cl_mem vnds_buf = (cl_mem)STARPU_VECTOR_GET_DEV_HANDLE(buffers[nbuffer++]);
-  cl_mem xpg_buf = (cl_mem)STARPU_VECTOR_GET_DEV_HANDLE(buffers[nbuffer++]);
-  cl_mem wn_in = (cl_mem)STARPU_VECTOR_GET_DEV_HANDLE(buffers[nbuffer++]);
-  cl_mem res = (cl_mem)STARPU_VECTOR_GET_DEV_HANDLE(buffers[nbuffer++]);
-
-  int id = starpu_worker_get_id();
-  int devid = starpu_worker_get_devid(id);
-  cl_context context;
-  starpu_opencl_get_context(devid, &context);
-  cl_event event;
-
-  cl_kernel kernel;
-  cl_command_queue queue;
-
-  cl_int status = starpu_opencl_load_kernel(&kernel, &queue,
-                                            &opencl_program, "DGBoundaryRes",
-                                            devid);
-  if (status != CL_SUCCESS) STARPU_OPENCL_REPORT_ERROR(status);
-
-  cl_mem deg_cl = clCreateBuffer(context,
-                                 CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
-                                 sizeof(int) * 3,
-                                 f->deg,
-                                 &status);
-  if (status != CL_SUCCESS) STARPU_OPENCL_REPORT_ERROR(status);
-
-  cl_mem raf_cl = clCreateBuffer(context,
-                                 CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
-                                 sizeof(int) * 3,
-                                 f->raf,
-                                 &status);
-  if (status != CL_SUCCESS) STARPU_OPENCL_REPORT_ERROR(status);
-
-
-  int narg = 0;
-  status = clSetKernelArg(kernel, narg++, sizeof(int), &(f->model.m));
-  status |= clSetKernelArg(kernel, narg++, sizeof(cl_mem), &deg_cl);
-  status |= clSetKernelArg(kernel, narg++, sizeof(cl_mem), &raf_cl);
-  status |= clSetKernelArg(kernel, narg++, sizeof(schnaps_real), &(f->tnow));
-  status |= clSetKernelArg(kernel, narg++, sizeof(cl_mem), &index);
-  status |= clSetKernelArg(kernel, narg++, sizeof(cl_mem), &wn_in);
-  status |= clSetKernelArg(kernel, narg++, sizeof(cl_mem), &xpg_buf);
-  status |= clSetKernelArg(kernel, narg++, sizeof(cl_mem), &vnds_buf);
-  status |= clSetKernelArg(kernel, narg++, sizeof(cl_mem), &res);
-  if (status != CL_SUCCESS) STARPU_OPENCL_REPORT_ERROR(status);
-  assert(status >= CL_SUCCESS);
-
-  // Number of glops on the macrocell interface
-  size_t wsize = NPGF(f->deg, f->raf, locfa);
-
-  status = clEnqueueNDRangeKernel(queue,
-                                  kernel,
-                                  1, // cl_uint work_dim,
-                                  NULL, // global_work_offset,
-                                  &wsize, // global_work_size,
-                                  NULL, // local_work_size,
-                                  0,
-                                  NULL, // *wait_list,
-                                  &event); // *event
-  if (status != CL_SUCCESS) STARPU_OPENCL_REPORT_ERROR(status);
-  assert(status >= CL_SUCCESS);
-}
 
 
 

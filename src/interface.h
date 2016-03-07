@@ -57,9 +57,16 @@ typedef struct Interface{
   schnaps_real *vnds;
   starpu_data_handle_t vnds_handle;
 
-  //! \brief  glops coordinates
+  //! \brief glops coordinates
   schnaps_real *xpg;
   starpu_data_handle_t xpg_handle;
+
+  //! \brief glops weights
+  schnaps_real *wpg;
+  starpu_data_handle_t wpg_handle;
+
+  //! \brief starpu registering flag
+  bool starpu_registered;
 
 
 } Interface;
@@ -67,6 +74,10 @@ typedef struct Interface{
 //! \brief  registration of starpu data for an interface
 //! \param[inout] inter an Interface
 void InitInterface_SPU(Interface* inter);
+
+//! \brief Unregister interface data from starpu
+//! \param[in,out] inter interface
+void UnregisterInterface_SPU(Interface* inter);
 
 
 //! \brief  extract the values of the neighbouring fields to the interface

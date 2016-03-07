@@ -1443,7 +1443,8 @@ void DGMacroCellInterfaceRes(__constant int *param,            // 0: interp para
                              __global schnaps_real *wn_in,     // 5: current field values
                              __global schnaps_real *wn_ext,    // 6: neighboring field values
                              __global schnaps_real *vnds_buf,  // 7: normal vectors buffer
-                             __global schnaps_real *res        // 8: residual
+                             __global schnaps_real *wpg_buf,   // 8: weights buffer
+                             __global schnaps_real *res        // 9: residual
                              )
 {
   const int m = param[0];
@@ -1478,10 +1479,11 @@ void DGMacroCellInterfaceRes(__constant int *param,            // 0: interp para
 
   // Add flux to the selected side
   const int ipgL = index[ipgf];
+  const schnaps_real wpg = wpg_buf[ipgf];
   for (int iv = 0; iv < m; ++iv) {
     const int imem = VARINDEX(param + 1, param + 4, m, ipgL, iv) + woffset;
     // Warning: no wpg because already applied in vnds buffer
-    res[imem] -= flux[iv];
+    res[imem] -= flux[iv] * wpg;
   }
 }
 
@@ -1554,37 +1556,45 @@ void DGBoundary(__constant int *param,      // 0: interp param
 
 
 __kernel
-void DGBoundaryRes(int m,
-                   __constant int *c_deg,
-                   __constant int *c_raf,
-                   schnaps_real tnow,                 // current time
-                   __global int *index,       // current macrocell face to volume index
-                   __global schnaps_real *wn,         // current field values
-                   __global schnaps_real *xpg_buf,    // reference coordinates buffer
-                   __global schnaps_real *vnds_buf,   // normal vectors buffer
-                   __global schnaps_real *res         // residual
+void DGBoundaryRes(__constant int *param,            // 0: interp param (m, deg, raf)
+                   schnaps_real tnow,                // 1: current time
+                   int ie,                           // 2: macrocell index
+                   int locfa,                        // 3: macrocell face id
+                   __global int *index,              // 4: face to volume index
+                   // Local field values that come from interface extraction
+                   __global schnaps_real *wn,        // 5: current field values
+                   __global schnaps_real *vnds_buf,  // 6: normal vectors buffer
+                   __global schnaps_real *xpg_buf,   // 7: reference coordinates buffer
+                   __global schnaps_real *wpg_buf,   // 8: weights buffer
+                   __global schnaps_real *res        // 9: residual
                    )
 {
+  const int m = param[0];
+  const int deg[3] = {param[1], param[2], param[3]};
+  const int raf[3] = {param[4], param[5], param[6]};
+  const int npg[3] = {deg[0] + 1, deg[1] + 1, deg[2] + 1};
+
+  const int woffset = ie * m * NPG(deg, raf);
+
   // Face glop
   const int ipgf = get_global_id(0);
 
-  // Left and right fields
+  // Field
   schnaps_real wL[_M];
-  for (int iv = 0; iv < _M; ++iv) {
-    // Face fields are stored with the volumic varindex in these vectors
-    const int imem = VARINDEX(c_deg, c_raf, _M, ipgf, iv);
+  for (int iv = 0; iv < m; ++iv) {
+    const int imem = VARINDEXFACE(NPGF(deg, raf, locfa), m, ipgf, iv);
     wL[iv] = wn[imem];
   }
 
   // Reference coordinates
   const schnaps_real xpg[3] = {xpg_buf[3 * ipgf + 0],
-                       xpg_buf[3 * ipgf + 1],
-                       xpg_buf[3 * ipgf + 2]};
+                               xpg_buf[3 * ipgf + 1],
+                               xpg_buf[3 * ipgf + 2]};
 
   // Normal vector
   const schnaps_real vnds[3] = {vnds_buf[3 * ipgf + 0],
-                        vnds_buf[3 * ipgf + 1],
-                        vnds_buf[3 * ipgf + 2]};
+                                vnds_buf[3 * ipgf + 1],
+                                vnds_buf[3 * ipgf + 2]};
 
   // Flux
   schnaps_real flux[_M];
@@ -1592,9 +1602,10 @@ void DGBoundaryRes(int m,
 
   // Add flux to the selected side
   const int ipgL = index[ipgf];
-  for (int iv = 0; iv < _M; ++iv) {
-    int imem = VARINDEX(c_deg, c_raf, _M, ipgL, iv);
-    res[imem] -= flux[iv];
+  const schnaps_real wpg = wpg_buf[ipgf];
+  for (int iv = 0; iv < m; ++iv) {
+    int imem = VARINDEX(param + 1, param + 4, m, ipgL, iv) + woffset;
+    res[imem] -= flux[iv] * wpg;
   }
 }
 

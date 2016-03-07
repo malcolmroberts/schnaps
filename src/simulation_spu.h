@@ -75,10 +75,18 @@ void DGMass_SPU(field* f);
 //! \brief Init and get DGMacroCellInterface codelet.
 struct starpu_codelet* DGMacroCellInterface_codelet();
 
-//! \brief Apply the interface fluxes to a neighbouring field
+//! \brief Apply the interface fluxes to a neighboring field
 //! \param[in] inter interface
-//! \param[in] side side: left if == 0 right if == 1
+//! \param[in,out] side side: left if == 0 right if == 1
 void DGMacroCellInterface_SPU(Interface* inter, int side);
+
+
+//! \brief Init and get DGMacroCellBoundaryFlux codelet.
+struct starpu_codelet* DGMacroCellBoundaryFlux_codelet();
+
+//! \brief Apply the boundary flux to a field
+//! \param[in,out] inter interface
+void DGMacroCellBoundaryFlux_SPU(Interface* inter);
 
 
 
@@ -103,10 +111,6 @@ void RK2_SPU(Simulation *simu, schnaps_real tmax);
 //! \param[in] inter an Interface
 //! \param[in] side the side: left if == 0 right if ==1
 void InterfaceExplicitFlux_bis(Interface* inter, int side);
-
-//! \brief  apply the boundary flux to a neighbouring field
-//! \param[in] inter an Interface
-void DGMacroCellBoundaryFlux_SPU(Interface* inter);
 
 //! \brief apply the Discontinuous Galerkin approximation for computing
 //! the time derivative of the fields. Works with several subcells.

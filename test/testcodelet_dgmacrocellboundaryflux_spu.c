@@ -23,20 +23,17 @@ bool submit_task(Simulation* simu, schnaps_real* buffer) {
     // Create interface data handles (register)
     starpu_vector_data_register(&inter->vol_indexL_handle, 0, (uintptr_t)inter->vol_indexL,
                                 inter->npgL, sizeof(int));
-    starpu_vector_data_register(&inter->vol_indexR_handle, 0, (uintptr_t)inter->vol_indexR,
-                                inter->npgR, sizeof(int));
     starpu_vector_data_register(&inter->wL_handle, 0, (uintptr_t)inter->wL,
                                 inter->wsizeL, sizeof(schnaps_real));
-    starpu_vector_data_register(&inter->wR_handle, 0, (uintptr_t)inter->wR,
-                                inter->wsizeR, sizeof(schnaps_real));
     starpu_vector_data_register(&inter->vnds_handle, 0, (uintptr_t)inter->vnds,
+                                inter->npgL * 3, sizeof(schnaps_real));
+    starpu_vector_data_register(&inter->xpg_handle, 0, (uintptr_t)inter->xpg,
                                 inter->npgL * 3, sizeof(schnaps_real));
     starpu_vector_data_register(&inter->wpg_handle, 0, (uintptr_t)inter->wpg,
                                 inter->npgL, sizeof(schnaps_real));
 
     // Submit task
-    DGMacroCellInterface_SPU(inter, 0);
-    DGMacroCellInterface_SPU(inter, 1);
+    DGMacroCellBoundaryFlux_SPU(inter);
   }
 
   starpu_task_wait_for_all();
@@ -46,10 +43,9 @@ bool submit_task(Simulation* simu, schnaps_real* buffer) {
     Interface* inter = simu->interface + ifa;
 
     starpu_data_unregister(inter->vol_indexL_handle);
-    starpu_data_unregister(inter->vol_indexR_handle);
     starpu_data_unregister(inter->wL_handle);
-    starpu_data_unregister(inter->wR_handle);
     starpu_data_unregister(inter->vnds_handle);
+    starpu_data_unregister(inter->xpg_handle);
     starpu_data_unregister(inter->wpg_handle);
   }
 
@@ -60,9 +56,9 @@ bool submit_task(Simulation* simu, schnaps_real* buffer) {
     starpu_data_unregister(f->res_handle);
 
     for (int i = 0; i < fsize; ++i) {
-      /* if (!(abs(buffer[ie * fsize + i] - f->res[i]) < _VERY_SMALL)) */
-      /*   printf("field: %d  reference[%d]: %f  result[%d]: %f\n", */
-      /*          ie, i, buffer[ie * fsize + i], i, f->res[i]); */
+      if (!(abs(buffer[ie * fsize + i] - f->res[i]) < _VERY_SMALL))
+        printf("field: %d  reference[%d]: %f  result[%d]: %f\n",
+               ie, i, buffer[ie * fsize + i], i, f->res[i]);
       test &= (abs(buffer[ie * fsize + i] - f->res[i]) < _VERY_SMALL);
     }
   }
@@ -74,7 +70,7 @@ bool submit_task(Simulation* simu, schnaps_real* buffer) {
 }
 
 
-int TestCodelet_DGMacroCellInterface_SPU() {
+int TestCodelet_DGMacroCellBoundaryFlux_SPU() {
   bool test = true;
 
   // Warning: refinement must be coherent on interfaces
@@ -82,7 +78,8 @@ int TestCodelet_DGMacroCellInterface_SPU() {
   int raf[]={2, 2, 2};
 
   MacroMesh mesh;
-  ReadMacroMesh(&mesh,"../test/testdisque.msh");
+  //ReadMacroMesh(&mesh,"../test/testdisque.msh");
+  ReadMacroMesh(&mesh,"../test/testcube2.msh");
   BuildConnectivity(&mesh);
   CheckMacroMesh(&mesh, deg, raf);
 
@@ -109,6 +106,9 @@ int TestCodelet_DGMacroCellInterface_SPU() {
   strcat(cl_buildoptions, buf);
 
   sprintf(buf, " -D NUMFLUX=%s", "Maxwell3DNumFlux_upwind");
+  strcat(cl_buildoptions, buf);
+
+  sprintf(buf, " -D BOUNDARYFLUX=%s", "Maxwell3DBoundaryFlux_upwind");
   strcat(cl_buildoptions, buf);
 
   printf("StarPU compilation options: %s\n", cl_buildoptions);
@@ -162,29 +162,26 @@ int TestCodelet_DGMacroCellInterface_SPU() {
     }
   }
 
-  // Compute macrocell interface term
+  // Compute macrocell boundary interface term
   for (int ifa = 0; ifa < simu.macromesh.nbfaces; ++ifa) {
     int ieL = simu.macromesh.face2elem[4 * ifa + 0];
     int locfaL = simu.macromesh.face2elem[4 * ifa + 1];
     int ieR = simu.macromesh.face2elem[4 * ifa + 2];
 
-    // No boundary flux
-    if (ieR < 0) continue;
+    // Only boundary flux
+    if (ieR >= 0) continue;
 
     field *fL = simu.fd + ieL;
-    field *fR = simu.fd + ieR;
     int offsetL = fsize * ieL;
-    int offsetR = fsize * ieR;
 
     DGMacroCellInterface(locfaL,
-    			 fL, offsetL, fR, offsetR,
+    			 fL, offsetL, NULL, -1,
     			 simu.w, simu.res);
 
     // Need of interface extraction for starpu codelets
     Interface* inter = simu.interface + ifa;
     // left = 0  right = 1
     ExtractInterface(inter, 0);
-    ExtractInterface(inter, 1);
   }
 
   // Store data for comparision
@@ -201,7 +198,7 @@ int TestCodelet_DGMacroCellInterface_SPU() {
   // Codelet
   starpu_c_use = true;
   starpu_ocl_use = true;
-  struct starpu_codelet* codelet = DGMacroCellInterface_codelet();
+  struct starpu_codelet* codelet = DGMacroCellBoundaryFlux_codelet();
 
   // Empty codelet for function selection
   struct starpu_codelet codelet_backup = *codelet;
@@ -314,8 +311,8 @@ int TestCodelet_DGMacroCellInterface_SPU() {
 
 int main(void) {
   // Unit tests
-  int resu = TestCodelet_DGMacroCellInterface_SPU();
-  if (resu) printf("StarPU DGMacroCellInterface Codelet test OK !\n");
-  else printf("StarPU DGMacroCellInterface Codelet test failed !\n");
+  int resu = TestCodelet_DGMacroCellBoundaryFlux_SPU();
+  if (resu) printf("StarPU DGMacroCellBoundaryFlux Codelet test OK !\n");
+  else printf("StarPU DGMacroCellBoundaryFlux Codelet test failed !\n");
   return !resu;
 }
