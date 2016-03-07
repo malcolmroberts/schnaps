@@ -10,7 +10,7 @@
 const  schnaps_real a[6]={1,1,1,1,1,1};
 const  schnaps_real b[6]={1,1,1,1,1,1};
 const  schnaps_real c[6]={1,1,1,1,1,1};
-  
+
 void TestSteady_Transport_NumFlux(schnaps_real *wL, schnaps_real *wR, schnaps_real *vnorm, schnaps_real *flux);
 void TestSteady_Transport_ImposedData(const schnaps_real *x, const schnaps_real t, schnaps_real *w);
 void TestSteady_Transport_InitData(schnaps_real *x, schnaps_real *w);
@@ -32,16 +32,16 @@ const schnaps_real TestSteady_Transport_v2[3] = {0.7071067811865476, 0.707106781
 
 
 int main(void) {
-  
+
   // unit tests
-    
+
   int resu = Test_Local_Implicit_SPU();
-	 
+
   if (resu) printf("locally StarPU implicit  test OK !\n");
   else printf("locally StarPU implicit  test failed !\n");
 
   return !resu;
-} 
+}
 
 int Test_Local_Implicit_SPU(void) {
 
@@ -52,7 +52,7 @@ int Test_Local_Implicit_SPU(void) {
   //ReadMacroMesh(&mesh,"cubegros.msh");
   //ReadMacroMesh(&mesh,"../test/testmacromesh.msh");
   Detect2DMacroMesh(&mesh);
-  
+
   schnaps_real A[3][3] = {{_LENGTH_DOMAIN, 0, 0}, {0, _LENGTH_DOMAIN, 0}, {0, 0,1}};
   schnaps_real x0[3] = {0, 0, 0};
   AffineMapMacroMesh(&mesh,A,x0);
@@ -85,11 +85,12 @@ int Test_Local_Implicit_SPU(void) {
 
   int deg[]={3, 3, 0};
   int raf[]={4, 4, 1};
-  
+
   CheckMacroMesh(&mesh, deg, raf);
 
   starpu_use = true;
-  
+  starpu_c_use = true;
+
   Simulation simu;
   EmptySimulation(&simu);
 
@@ -122,7 +123,7 @@ int Test_Local_Implicit_SPU(void) {
   // pour gmsh sur mac: export PYTHONDIR=/usr/local/Cellar/gmsh/2.10.1/libexec
 
   test = test && (dd < 600 * _VERY_SMALL);
-  
+
   return test;
 }
 
@@ -162,12 +163,12 @@ void Transport_Upwind_BoundaryFlux(schnaps_real *x, schnaps_real t, schnaps_real
   TestSteady_Transport_ImposedData(x , t, wR);
   TestSteady_Transport_NumFlux(wL, wR, vnorm, flux);
 }
- 
+
 void TestSteady_Transport_NumFlux(schnaps_real *wL, schnaps_real *wR, schnaps_real *vnorm, schnaps_real *flux)
 {
   const schnaps_real transport_v2d[] = {sqrt(0.5), sqrt(0.5), 0};
   //const real transport_v2d[] = {-1,0, 0};
-  schnaps_real vn 
+  schnaps_real vn
     = TestSteady_Transport_v2[0] * vnorm[0]
     + TestSteady_Transport_v2[1] * vnorm[1]
     + TestSteady_Transport_v2[2] * vnorm[2];
@@ -200,7 +201,7 @@ void TestSteady_Wave_ImposedData(const schnaps_real *xy, const schnaps_real t, s
 
 
 void TestSteady_Wave_Source(const schnaps_real *xy, const schnaps_real t, const schnaps_real *w, schnaps_real *S){
-  
+
   schnaps_real x=xy[0];
   schnaps_real y=xy[1];
 

@@ -91,10 +91,14 @@ void ExtractInterface(Interface* inter, int side);
 //! \param[in] w a vector with the volume data to extract
 void ExtractInterface_bis(Interface* inter, int side, schnaps_real* w);
 
-//! \brief  extract the values of the neighbouring fields to the interface
-//! \brief StarPU version
-//! \param[inout] inter an interface
-//! \param[in] side the side: left if == 0 right if ==1
+
+//! \brief Init and get ExtractInterface codelet.
+struct starpu_codelet* ExtractInterface_codelet();
+
+//! \brief Extract the values of the neighbouring fields to the interface
+//! StarPU version
+//! \param[in,out] inter interface
+//! \param[in] side side: left if == 0 right if == 1
 void ExtractInterface_SPU(Interface* inter, int side);
 
 

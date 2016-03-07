@@ -1,20 +1,6 @@
 #include "simulation_spu.h"
 #include <stdlib.h>
 
-#define LOAD_OPENCL_PROGRAM_SPU()               \
-  if (!opencl_program_is_init) {                \
-    opencl_program_is_init = true;              \
-    printf("load OpenCL program...\n");         \
-    STARPU_CHECK_RETURN_VALUE(                  \
-        starpu_opencl_load_opencl_from_file(    \
-            "./schnaps.cl",                     \
-            &opencl_program,                    \
-            cl_buildoptions),                   \
-        "starpu_opencl_load_opencl_from_file"); \
-  }
-
-
-
 void DisplayHandle_SPU(starpu_data_handle_t handle,
                        const char* name) {
   starpu_task_wait_for_all();
@@ -519,7 +505,6 @@ void DGSubCellInterface_OCL(void *buffers[], void *cl_args) {
       status |= clSetKernelArg(kernel, narg++, sizeof(cl_mem), &res);
       status |= clSetKernelArg(kernel, narg++, sizeof(schnaps_real) * 4 * lsize * m, NULL);
       if (status != CL_SUCCESS) STARPU_OPENCL_REPORT_ERROR(status);
-      assert(status >= CL_SUCCESS);
 
       status = clEnqueueNDRangeKernel(queue, kernel,
                                       1, // work_dim
@@ -631,7 +616,6 @@ void DGSubCellInterface3D_OCL(void *buffers[], void *cl_args) {
       status |= clSetKernelArg(kernel, narg++, sizeof(schnaps_real) *
                                lsize[0] * lsize[1] * lsize[2] * m, NULL);
       if (status != CL_SUCCESS) STARPU_OPENCL_REPORT_ERROR(status);
-      assert(status >= CL_SUCCESS);
 
       status = clEnqueueNDRangeKernel(queue, kernel,
                                       3, // work_dim
@@ -1616,7 +1600,6 @@ void DGMacroCellInterface_OCL(void* buffers[], void* cl_args) {
   status |= clSetKernelArg(kernel, narg++, sizeof(cl_mem), &wpg_buf);
   status |= clSetKernelArg(kernel, narg++, sizeof(cl_mem), &res);
   if (status != CL_SUCCESS) STARPU_OPENCL_REPORT_ERROR(status);
-  assert(status >= CL_SUCCESS);
 
   // Number of glops on the macrocell interface
   size_t wsize = NPGF(f->deg, f->raf, locfa);
@@ -1828,7 +1811,6 @@ void DGMacroCellBoundaryFlux_OCL(void* buffers[], void* cl_args) {
   status |= clSetKernelArg(kernel, narg++, sizeof(cl_mem), &wpg_buf);
   status |= clSetKernelArg(kernel, narg++, sizeof(cl_mem), &res);
   if (status != CL_SUCCESS) STARPU_OPENCL_REPORT_ERROR(status);
-  assert(status >= CL_SUCCESS);
 
   // Number of glops on the macrocell interface
   size_t wsize = NPGF(f->deg, f->raf, locfa);

@@ -1303,22 +1303,28 @@ void DGMassRes(__constant int *param,               // 0: interp param (m, deg, 
 
 
 __kernel
-void ExtractInterface(int m,
-                      __constant int *c_deg,
-                      __constant int *c_raf,
-                      __global int *index,       // current macrocell face to volume index
-                      __global schnaps_real *wn,         // current field values
-                      __global schnaps_real *wf          // output field values of interface
+void ExtractInterface(__constant int *param,      // 0: interp param (m, deg, raf)
+                      __global int *index,        // 1: face to volume index
+                      __global schnaps_real *wn,  // 2: current field values
+                      __global schnaps_real *wf   // 3: output field values of interface
                       )
 {
+  const int m = param[0];
+  //const int deg[3] = {param[1], param[2], param[3]};
+  //const int raf[3] = {param[4], param[5], param[6]};
+  //const int npg[3] = {deg[0] + 1, deg[1] + 1, deg[2] + 1};
+
   // Face glop
   const int ipgf = get_global_id(0);
 
+  // Number of face glops
+  const int npgf = get_global_size(0);
+
   const int ipgv = index[ipgf];
-  for (int iv = 0; iv < _M; ++iv) {
-    const int imem = VARINDEX(c_deg, c_raf, _M, ipgv, iv);
-    const int jmem = VARINDEX(c_deg, c_raf, _M, ipgf, iv);
-    wf[jmem] = wn[imem];
+  for (int iv = 0; iv < m; ++iv) {
+    const int imem = VARINDEX(param + 1, param + 4, m, ipgv, iv);
+    const int imemf = VARINDEXFACE(npgf, m, ipgf, iv);
+    wf[imemf] = wn[imem];
   }
 }
 

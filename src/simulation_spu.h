@@ -75,7 +75,8 @@ void DGMass_SPU(field* f);
 //! \brief Init and get DGMacroCellInterface codelet.
 struct starpu_codelet* DGMacroCellInterface_codelet();
 
-//! \brief Apply the interface fluxes to a neighboring field
+//! \brief Apply the interface fluxes to a neighbouring field
+//! StarPU version
 //! \param[in] inter interface
 //! \param[in,out] side side: left if == 0 right if == 1
 void DGMacroCellInterface_SPU(Interface* inter, int side);
@@ -85,6 +86,7 @@ void DGMacroCellInterface_SPU(Interface* inter, int side);
 struct starpu_codelet* DGMacroCellBoundaryFlux_codelet();
 
 //! \brief Apply the boundary flux to a field
+//! StarPU version
 //! \param[in,out] inter interface
 void DGMacroCellBoundaryFlux_SPU(Interface* inter);
 
