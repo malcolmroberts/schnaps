@@ -11,9 +11,10 @@
 
 int TestCollision(void);
 
-void Equilibrium_ImposedData(const schnaps_real x[3], const schnaps_real t,schnaps_real w[]);
-void Equilibrium_InitData(schnaps_real x[3],schnaps_real w[]);
-void Equilibrium_BoundaryFlux(schnaps_real x[3],schnaps_real t,schnaps_real wL[],schnaps_real* vnorm, schnaps_real* flux);
+void Equilibrium_VelocityPerturbation_ImposedData(const schnaps_real x[3], const schnaps_real t,schnaps_real w[]);
+void Equilibrium_VelocityPerturbation_InitData(schnaps_real x[3],schnaps_real w[]);
+void Equilibrium_VelocityPerturbation_BoundaryFlux(schnaps_real x[3],schnaps_real t,schnaps_real wL[],schnaps_real* vnorm, schnaps_real* flux);
+void Equilibrium_VelocityPerturbation_TotalSource(const schnaps_real* x, const schnaps_real t, const schnaps_real* w, schnaps_real* source);
 
 void Equilibrium_SpacePerturbation_ImposedData(const schnaps_real x[3], const schnaps_real t,schnaps_real w[]);
 void Equilibrium_SpacePerturbation_InitData(schnaps_real x[3],schnaps_real w[]);
@@ -61,27 +62,27 @@ int TestCollision(void) {
   
   Model model;
   schnaps_real degV=4;
-  schnaps_real nbEV=24;
+  schnaps_real nbEV=16;
   KineticData * kd=&schnaps_kinetic_data;
 
   InitKineticData(kd,nbEV,degV);
   
   model.m=kd->index_max; // num of conservative variables f(vi) for each vi, phi, E, rho, u, p, e (ou T)
-  /*model.NumFlux=VlasovP_Lagrangian_NumFlux;
-  model.InitData =Equilibrium_InitData;
-  model.ImposedData = Equilibrium_ImposedData;
-  model.BoundaryFlux = Equilibrium_BoundaryFlux;
-  model.Source = VlasovP_Lagrangian_Source;*/
-
+  
   model.NumFlux=VlasovP_Lagrangian_NumFlux;
-  model.InitData =Equilibrium_SpacePerturbation_InitData;
-  model.ImposedData = Equilibrium_SpacePerturbation_ImposedData;
-  model.BoundaryFlux = Equilibrium_SpacePerturbation_BoundaryFlux;
-  model.Source = Equilibrium_SpacePerturbation_TotalSource;
+  //model.InitData =Equilibrium_SpacePerturbation_InitData;
+  //model.ImposedData = Equilibrium_SpacePerturbation_ImposedData;
+  //model.BoundaryFlux = Equilibrium_SpacePerturbation_BoundaryFlux;
+  //model.Source = Equilibrium_SpacePerturbation_TotalSource;
+
+  model.InitData =Equilibrium_VelocityPerturbation_InitData;
+  model.ImposedData = Equilibrium_VelocityPerturbation_ImposedData;
+  model.BoundaryFlux = Equilibrium_VelocityPerturbation_BoundaryFlux;
+  model.Source = Equilibrium_VelocityPerturbation_TotalSource;
 
   
   int deg[]={4, 0, 0};
-  int raf[]={24, 1, 1};
+  int raf[]={16, 1, 1};
 
   CheckMacroMesh(&mesh, deg, raf);
   Simulation simu;
@@ -89,7 +90,7 @@ int TestCollision(void) {
 
   InitSimulation(&simu, &mesh, deg, raf, &model);
   simu.vmax = kd->vmax; // maximal wave speed
-  simu.cfl=0.1;
+  simu.cfl=0.5;
   simu.nb_diags = 4;
   simu.pre_dtfields = Collision_VlasovPoisson;
   simu.post_dtfields=NULL;
@@ -108,11 +109,13 @@ int TestCollision(void) {
   Plot_Energies(&simu, simu.dt);
 
   schnaps_real dd_Kinetic = L2_Kinetic_error(&simu);
+  schnaps_real ddrho = L2error_onefield(&simu,kd->index_rho);
+  schnaps_real ddt = L2error_onefield(&simu,kd->index_T);
   schnaps_real dde = L2error_onefield(&simu,kd->index_ex);
   schnaps_real ddp = L2error_onefield(&simu,kd->index_phi);
 
   
-  printf("erreur kinetic L2=%.5e, erreur Ex L2=%.5e, erreur Phi L2=%.5e  \n", dd_Kinetic,dde,ddp);
+  printf("erreur kinetic L2=%.5e, erreur Rho L2=%.5e, erreur T L2=%.5e,  erreur Ex L2=%.5e, erreur Phi L2=%.5e  \n", dd_Kinetic,ddrho,ddt,dde,ddp);
   test= test && (dd_Kinetic < 1e-2);
 
 
@@ -122,40 +125,11 @@ int TestCollision(void) {
 
 }
 
-void Equilibrium_ImposedData(const schnaps_real x[3], const schnaps_real t, schnaps_real w[])
-{
-  //parameters of the case
-  KineticData * kd=&schnaps_kinetic_data;
-  schnaps_real k=0.5;
-  schnaps_real eps = 0.001;
-  schnaps_real my_pi= 4.0*atan(1.0);
-  
-  for(int i=0;i<kd->index_max_kin+1;i++){
-    int j=i%kd->deg_v; // local connectivity put in function
-    int nel=i/kd->deg_v; // element num (TODO : function)
-
-    schnaps_real vi = (-kd->vmax+nel*kd->dv +
-		 kd->dv* glop(kd->deg_v,j));
- 
-    w[i]=(1.0/sqrt(2.0*my_pi))*exp(-(vi*vi)/2.0);
-  }
-  // exact value of the potential
-  // and electric field
-  w[kd->index_phi]=0.0;
-  w[kd->index_ex]=0.0;
-  w[kd->index_rho]=1.0; //rho init
-  w[kd->index_u]=0; // u init
-  w[kd->index_P]=0.; // p init
-  w[kd->index_T]=1.0; // e ou T init
-
-};
 
 void Equilibrium_SpacePerturbation_ImposedData(const schnaps_real x[3], const schnaps_real t, schnaps_real w[])
 {
-  //parameters of the case
   KineticData * kd=&schnaps_kinetic_data;
   schnaps_real my_pi= 4.0*atan(1.0);
-
   schnaps_real rho=4*my_pi*my_pi*(1.+0.5*(sin(2*my_pi*x[0])));
   
   for(int i=0;i<kd->index_max_kin+1;i++){
@@ -168,7 +142,6 @@ void Equilibrium_SpacePerturbation_ImposedData(const schnaps_real x[3], const sc
     w[i]=(rho/sqrt(2.0*my_pi))*exp(-(vi*vi)/2.0);
   }
 
- 
   w[kd->index_phi]=0.5*sin(2.0*my_pi*x[0]);
   w[kd->index_ex]=-my_pi*cos(2.0*my_pi*x[0]);
   w[kd->index_ey]=0.0;
@@ -177,6 +150,31 @@ void Equilibrium_SpacePerturbation_ImposedData(const schnaps_real x[3], const sc
   w[kd->index_u]=0; // u init
   w[kd->index_P]=0.; // p init
   w[kd->index_T]=1.0; // e ou T init
+};
+
+void Equilibrium_VelocityPerturbation_ImposedData(const schnaps_real x[3], const schnaps_real t, schnaps_real w[])
+{
+  KineticData * kd=&schnaps_kinetic_data;
+  schnaps_real my_pi= 4.0*atan(1.0), eps=0.01;
+  
+  for(int i=0;i<kd->index_max_kin+1;i++){
+    int j=i%kd->deg_v; // local connectivity put in function
+    int nel=i/kd->deg_v; // element num (TODO : function)
+
+    schnaps_real vi = (-kd->vmax+nel*kd->dv +
+		 kd->dv* glop(kd->deg_v,j));
+ 
+    w[i]=(1.0/sqrt(2.0*my_pi))*exp(-(vi*vi)/2.0) + eps*(kd->vmax*kd->vmax - vi*vi);
+  }
+
+  w[kd->index_phi]=0.0;
+  w[kd->index_ex]=0.0;
+  w[kd->index_ey]=0.0;
+  w[kd->index_ez]=0.0;
+  w[kd->index_rho]=1.0+(4./3.)*eps*pow(kd->vmax,3.0);  //rho init
+  w[kd->index_u]=0; // u init
+  w[kd->index_P]=0.5*(kd->gamma-1.)*(1.0+(4.0/15.0)*eps*pow(kd->vmax,5.0)); // p init
+  w[kd->index_T]=(1.0+(4.0/15.0)*eps*pow(kd->vmax,5.0))/w[kd->index_rho]; // e ou T init
 };
 
 
@@ -210,28 +208,48 @@ void Equilibrium_SpacePerturbation_TotalSource(const schnaps_real* x, const schn
   source[kd->index_T]=0.0;
 };
 
-void Equilibrium_InitData(schnaps_real x[3],schnaps_real w[]){
+void Equilibrium_VelocityPerturbation_TotalSource(const schnaps_real* x, const schnaps_real t, const schnaps_real* w, 
+			       schnaps_real* source) {
+  KineticData * kd=&schnaps_kinetic_data;
+  schnaps_real Transport_source[kd->index_max];
+  schnaps_real M=0,M_0=0,my_pi= 4.0*atan(1.0),eps=0.01;
+  schnaps_real rho=1.0+(4./3.)*eps*pow(kd->vmax,3.0);  //rho init
+  schnaps_real T=(1.0+(4.0/15.0)*eps*pow(kd->vmax,5.0))/rho; // e ou T init
 
-  schnaps_real t=0;
-  Equilibrium_ImposedData(x,t,w);
+  VlasovP_Lagrangian_Source(x,t,w,Transport_source);
 
+   for(int iv=0;iv< kd->index_max_kin + 1;iv++){
+      int j=iv%kd->deg_v; // local connectivity put in function
+      int nel=iv/kd->deg_v; // element num (TODO : function)
+   
+      schnaps_real vn = (-kd->vmax+nel*kd->dv +
+			 kd->dv* glop(kd->deg_v,j));
+      
+      M=(rho/sqrt(2.0*T*my_pi))*exp(-(vn*vn)/(2.0*T));
+      M_0=(1.0/sqrt(2.0*my_pi))*exp(-(vn*vn)/2.0);
+      source[iv] = Transport_source[iv]-kd->knud*(M - M_0 - eps*(kd->vmax*kd->vmax - vn*vn));
+   }
+  source[kd->index_phi]=0.0;
+  source[kd->index_ex]=0.0;
+  source[kd->index_ey]=0.0;
+  source[kd->index_ez]=0.0;
+  source[kd->index_rho]=0.0;  //rho init
+  source[kd->index_u]=0; // u init
+  source[kd->index_P]=0.; // p init
+  source[kd->index_T]=0.0;
 };
+
 
 void Equilibrium_SpacePerturbation_InitData(schnaps_real x[3],schnaps_real w[]){
-
   schnaps_real t=0;
   Equilibrium_SpacePerturbation_ImposedData(x,t,w);
-
 };
 
-
-void Equilibrium_BoundaryFlux(schnaps_real x[3],schnaps_real t,schnaps_real wL[],schnaps_real* vnorm,
-				       schnaps_real* flux){
-  KineticData * kd=&schnaps_kinetic_data;
-  schnaps_real wR[kd->index_max];
-  Equilibrium_ImposedData(x,t,wR);
-  VlasovP_Lagrangian_NumFlux(wL,wR,vnorm,flux);
+void Equilibrium_VelocityPerturbation_InitData(schnaps_real x[3],schnaps_real w[]){
+  schnaps_real t=0;
+  Equilibrium_VelocityPerturbation_ImposedData(x,t,w);
 };
+
 
 void Equilibrium_SpacePerturbation_BoundaryFlux(schnaps_real x[3],schnaps_real t,schnaps_real wL[],schnaps_real* vnorm,
 				       schnaps_real* flux){
@@ -241,15 +259,22 @@ void Equilibrium_SpacePerturbation_BoundaryFlux(schnaps_real x[3],schnaps_real t
   VlasovP_Lagrangian_NumFlux(wL,wR,vnorm,flux);
 };
 
+void Equilibrium_VelocityPerturbation_BoundaryFlux(schnaps_real x[3],schnaps_real t,schnaps_real wL[],schnaps_real* vnorm,
+				       schnaps_real* flux){
+  KineticData * kd=&schnaps_kinetic_data;
+  schnaps_real wR[kd->index_max];
+  Equilibrium_VelocityPerturbation_ImposedData(x,t,wR);
+  VlasovP_Lagrangian_NumFlux(wL,wR,vnorm,flux);
+};
+
 
 
 void Collision_VlasovPoisson(void *si, schnaps_real *w) {
   Simulation *simu = si;
   KineticData * kd=&schnaps_kinetic_data;
+
+  Collision_Source(simu,w);
   
-  Collision_Source(simu);
-  
-  Computation_charge_density(simu);
   static ContinuousSolver ps;
   static bool is_init = false;
 

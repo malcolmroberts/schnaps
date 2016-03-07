@@ -55,6 +55,12 @@ void UnregisterSimulation_SPU(Simulation *simu){
     simu->dtw_handle = NULL;
     simu->res_handle = NULL;
   }
+
+  for (int ifa = 0; ifa < simu->macromesh.nbfaces; ++ifa) {
+    Interface *inter = simu->interface + ifa;
+    if (inter->starpu_registered == true)
+      UnregisterInterface_SPU(inter);
+  }
 }
 
 
@@ -112,6 +118,7 @@ void InitInterfaces(Simulation *simu){
 
      inter[ifa].vnds = malloc(3* sizeof(schnaps_real) * npgfL);
      inter[ifa].xpg = malloc(3* sizeof(schnaps_real) * npgfL);
+     inter[ifa].wpg = malloc(sizeof(schnaps_real) * npgfL);
 
      schnaps_real xpgref[3], xpgref_in[3],xpg[3], xpg_in[3];
      for(int ipgf = 0; ipgf < npgfL; ipgf++){
@@ -140,12 +147,13 @@ void InitInterfaces(Simulation *simu){
        /* 	      ifa,ieL,ieR,ipgf,vnds[0],vnds[1],vnds[2], */
        /* 	      xpg[0],xpg[1],xpg[2]); */
 
-       inter[ifa].vnds[3 * ipgf + 0] = vnds[0] * wpg;
-       inter[ifa].vnds[3 * ipgf + 1] = vnds[1] * wpg;
-       inter[ifa].vnds[3 * ipgf + 2] = vnds[2] * wpg;
+       inter[ifa].vnds[3 * ipgf + 0] = vnds[0];
+       inter[ifa].vnds[3 * ipgf + 1] = vnds[1];
+       inter[ifa].vnds[3 * ipgf + 2] = vnds[2];
        inter[ifa].xpg[3 * ipgf + 0] = xpg[0];
        inter[ifa].xpg[3 * ipgf + 1] = xpg[1];
        inter[ifa].xpg[3 * ipgf + 2] = xpg[2];
+       inter[ifa].wpg[ipgf] = wpg;
 
        if (fR != NULL){
 	 schnaps_phy2ref(fR->physnode, xpg_in, xpgref_in);
@@ -164,6 +172,7 @@ void InitInterfaces(Simulation *simu){
      /* 	 inter[ifa].vol_indexR[ipgf] = ipgv2; */
      /*   } */
 
+     inter[ifa].starpu_registered = false;
 
      InitInterface_SPU(inter + ifa);
   }
@@ -590,26 +599,11 @@ void DtFields(Simulation *simu, schnaps_real *w, schnaps_real *dtw) {
 #ifdef _OPENMP
 #pragma omp parallel for schedule(dynamic, 1)
 #endif
-  //printf("STEP ---------------------------------------------------\n");
   for(int ie = 0; ie < simu->macromesh.nbelems; ++ie) {
-    //DisplayArray(w + ie * fsize, fsize, "wn_INI");
-    //DisplayArray(dtw + ie * fsize, fsize, "res_INI");
-
     DGSubCellInterface(simu->fd + ie, w + ie * fsize, dtw + ie * fsize);
-
-    //DisplayArray(dtw + ie * fsize, fsize, "res_SCI");
-
     DGVolume(simu->fd + ie, w + ie * fsize, dtw + ie * fsize);
-
-    //DisplayArray(dtw + ie * fsize, fsize, "res_VOL");
-
     DGSource(simu->fd + ie, w + ie * fsize, dtw + ie * fsize);
-
-    //DisplayArray(dtw + ie * fsize, fsize, "res_SOU");
-
     DGMass(simu->fd + ie, w + ie * fsize, dtw + ie * fsize);
-
-    //DisplayArray(dtw + ie * fsize, fsize, "res_MAS");
   }
 
   if(simu->post_dtfields != NULL) {
@@ -654,7 +648,7 @@ schnaps_real L2error(Simulation *simu) {
 	// Get the exact value
 	f->model.ImposedData(xphy, simu->tnow, wex);
       }
-      
+
       for(int iv = 0; iv < f->model.m; iv++) {
 	//for(int iv = 0; iv < 4; iv++) {   ///////error here for coil2d
 	schnaps_real diff = w[iv] - wex[iv];
@@ -726,10 +720,49 @@ void RK2(Simulation *simu, schnaps_real tmax){
 
   }
   printf("t=%f iter=%d/%d dt=%f\n", simu->tnow, iter, simu->itermax_rk, dt);
-  free(wnp1);
+    free(wnp1);
 }
 
+// Time integration by a second-order Runge-Kutta algorithm
+void RK1(Simulation *simu, schnaps_real tmax){
 
+  simu->dt = Get_Dt_RK(simu);
+  schnaps_real dt = simu->dt;
+
+  simu->tmax = tmax;
+
+  simu->itermax_rk = tmax / simu->dt + 1;
+  int size_diags;
+  int freq = (1 >= simu->itermax_rk / 10)? 1 : simu->itermax_rk / 10;
+  int iter = 0;
+
+  simu->tnow = 0;
+
+  // FIXME: remove
+  size_diags = simu->nb_diags * simu->itermax_rk;
+  simu->iter_time_rk = iter;
+
+   if(simu->nb_diags != 0) {
+     simu->Diagnostics = malloc(size_diags * sizeof(schnaps_real));
+   }
+
+  while(simu->tnow < tmax) {
+    if (iter % freq == 0)
+      printf("t=%f iter=%d/%d dt=%f\n", simu->tnow, iter, simu->itermax_rk, dt);
+
+    DtFields(simu, simu->w, simu->dtw);
+    RK_out(simu->w, simu->w, simu->dtw, dt, simu->wsize);
+    simu->tnow += dt;
+    if(simu->update_after_rk != NULL){
+      simu->update_after_rk(simu, simu->w);
+    }
+
+    iter++;
+    simu->iter_time_rk = iter;
+
+  }
+  printf("t=%f iter=%d/%d dt=%f\n", simu->tnow, iter, simu->itermax_rk, dt);
+}
 
 // Time integration by a fourth-order Runge-Kutta algorithm
 void RK4(Simulation *simu, schnaps_real tmax)

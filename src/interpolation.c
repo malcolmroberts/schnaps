@@ -157,9 +157,9 @@ void dlagrange_polynomial(schnaps_real* dp, const schnaps_real* subdiv,
 
 // Number of Gauss Lobatto Points (GLOPS) in a macrocell
 #pragma start_opencl
-int NPG(int deg[], int raf[]) {
-  return 
-    (deg[0] + 1) * (deg[1] + 1) * (deg[2] + 1) 
+int NPG(const int deg[], const int raf[]) {
+  return
+    (deg[0] + 1) * (deg[1] + 1) * (deg[2] + 1)
     * raf[0] * raf[1] * raf[2];
 }
 #pragma end_opencl
@@ -167,11 +167,12 @@ int NPG(int deg[], int raf[]) {
 // Number of Gauss Lobatto Points (GLOPS) in a continous macrocell
 int NPG_CG(int deg[], int raf[]) {
   return  (deg[0] * raf[0] + 1) * (deg[1] * raf[1] + 1)
-    * (deg[2] * raf[2] + 1); 
+    * (deg[2] * raf[2] + 1);
 }
 
 // Number of interpolation points for each face of a subcell
-int NPGF(int deg[], int raf[], int ifa) {
+#pragma start_opencl
+int NPGF(const int deg[], const int raf[], int ifa) {
   // For each face, give the dimension index i
   int permut[6][4] = {
     {0, 2, 1, 0},
@@ -187,6 +188,7 @@ int NPGF(int deg[], int raf[], int ifa) {
   /* 	raf[0],raf[1],raf[2]); */
   return (deg[i0] + 1) * (deg[i1] + 1) * raf[i0] * raf[i1];
 }
+#pragma end_opencl
 
 // Number of interpolation points for each continuous face of a subcell
 int NPGF_CG(int deg[], int raf[], int ifa) {
@@ -207,8 +209,8 @@ int NPGF_CG(int deg[], int raf[], int ifa) {
 
 
 #pragma start_opencl
-void xyz_to_ipg(const int *raf, const int *deg, const int *ic, const int *ix, 
-		int *ipg) 
+void xyz_to_ipg(const int *raf, const int *deg, const int *ic, const int *ix,
+		int *ipg)
 {
   const int nc = ic[0] + raf[0] * (ic[1] + raf[1] * ic[2]);
   const int offset = (deg[0] + 1) * (deg[1] + 1) * (deg[2] + 1)*nc;
@@ -218,7 +220,7 @@ void xyz_to_ipg(const int *raf, const int *deg, const int *ic, const int *ix,
 #pragma end_opencl
 
 #pragma start_opencl
-void ipg_to_xyz(const int *raf, const int *deg, int *ic, int *ix, 
+void ipg_to_xyz(const int *raf, const int *deg, int *ic, int *ix,
 		const int *pipg) {
   int ipg = *pipg;
 
@@ -323,7 +325,7 @@ int ref_ipg_CG(int *deg, int *nraf, schnaps_real *xref) {
     deg[0] * ic[0] + ix[0],
     deg[1] * ic[1] + ix[1],
     deg[2] * ic[2] + ix[2]};
-  
+
   int ipg = irefx[0] + nx[0] * (irefx[1] + nx[1] * irefx[2]);
   //xyz_to_ipg(nraf,deg,ic,ix,&ipg);
 
@@ -355,7 +357,7 @@ void ref_pg_vol(int *deg, int *nraf, int ipg, schnaps_real *xpg, schnaps_real *w
     xpg[1] = hy * (ic[1] + gauss_lob_point[offset[1]]);
     xpg[2] = hz * (ic[2] + gauss_lob_point[offset[2]]);
   }
-  
+
   if (wpg != NULL) *wpg = hx * hy * hz *
 		     gauss_lob_weight[offset[0]]*
 		     gauss_lob_weight[offset[1]]*
@@ -384,7 +386,7 @@ void ref_pg_vol_CG(int *deg, int *nraf, int ipg, schnaps_real *xpg, schnaps_real
 
   int offset[3], irefx[3], ic[3], ix[3];
   schnaps_real hx[3];
-  
+
   int nx[3] = {
     deg[0] * nraf[0] + 1,
     deg[1] * nraf[1] + 1,
@@ -416,8 +418,8 @@ void ref_pg_vol_CG(int *deg, int *nraf, int ipg, schnaps_real *xpg, schnaps_real
     assert(nraf[2] == 1);
     ic[2] = 0;
     ix[2] = 0;
-  }    
-  
+  }
+
   offset[0] = gauss_lob_offset[deg[0]] + ix[0];
   offset[1] = gauss_lob_offset[deg[1]] + ix[1];
   offset[2] = gauss_lob_offset[deg[2]] + ix[2];
@@ -427,7 +429,7 @@ void ref_pg_vol_CG(int *deg, int *nraf, int ipg, schnaps_real *xpg, schnaps_real
     xpg[1] = hx[1] * (ic[1] + gauss_lob_point[offset[1]]);
     xpg[2] = hx[2] * (ic[2] + gauss_lob_point[offset[2]]);
   }
-  
+
   if (wpg != NULL) *wpg = hx[0] * hx[1] * hx[2] *
 		     gauss_lob_weight[offset[0]]*
 		     gauss_lob_weight[offset[1]]*
@@ -461,7 +463,7 @@ void ref_pg_vol_CG(int *deg, int *nraf, int ipg, schnaps_real *xpg, schnaps_real
 // compute the reference coordinates xpg[3] and weight wpg of the GLOP
 // ipg on the face ifa.
 // and returns the index of the volume gauss point
-int ref_pg_face(int deg3d[], int nraf3d[], int ifa, int ipg, 
+int ref_pg_face(int deg3d[], int nraf3d[], int ifa, int ipg,
 		 schnaps_real *xpg, schnaps_real *wpg, schnaps_real *xpgin) {
   // For each face, give the dimension index i
   const int axis_permut[6][4] = { {0, 2, 1, 0},
@@ -539,7 +541,7 @@ int ref_pg_face(int deg3d[], int nraf3d[], int ifa, int ipg,
   }
 
   if (wpg != NULL) *wpg = h[0] * h[1] *
-		     gauss_lob_weight[offset[0]] * 
+		     gauss_lob_weight[offset[0]] *
 		     gauss_lob_weight[offset[1]];
 
   // If xpgin exists, compute a point slightly INSIDE the opposite
@@ -577,7 +579,7 @@ int ref_pg_face(int deg3d[], int nraf3d[], int ifa, int ipg,
 // compute the reference coordinates xpg[3] and weight wpg of the GLOP
 // ipg on the face ifa.
 // and returns the index of the volume gauss point
-int ref_pg_face_CG(int deg3d[], int nraf3d[], int ifa, int ipg, 
+int ref_pg_face_CG(int deg3d[], int nraf3d[], int ifa, int ipg,
 		 schnaps_real *xpg, schnaps_real *wpg, schnaps_real *xpgin) {
   // For each face, give the dimension index i
   const int axis_permut[6][4] = { {0, 2, 1, 0},
@@ -597,7 +599,7 @@ int ref_pg_face_CG(int deg3d[], int nraf3d[], int ifa, int ipg,
   deg[1] = deg3d[axis_permut[ifa][1]];
   deg[2] = deg3d[axis_permut[ifa][2]];
 
- 
+
   // number of subcells in each direction
   nraf[0] = nraf3d[axis_permut[ifa][0]];
   nraf[1] = nraf3d[axis_permut[ifa][1]];
@@ -628,15 +630,15 @@ int ref_pg_face_CG(int deg3d[], int nraf3d[], int ifa, int ipg,
   int igx = ix % deg[0];
   int igy = iy % deg[1];
   int igz = 0;
-  
+
   // Compute permuted indices of the subface
   int ncx = ix / deg[0];
   int ncy = iy / deg[1];
-  
+
   // Equals 0 or raf depending on the side
   int ncz = axis_permut[ifa][3] * nraf[2];
-  
-  
+
+
   // Compute non permuted indices for points and subfaces
   ipgxyz[axis_permut[ifa][0]] = igx;
   ipgxyz[axis_permut[ifa][1]] = igy;
@@ -650,8 +652,8 @@ int ref_pg_face_CG(int deg3d[], int nraf3d[], int ifa, int ipg,
   printf("ifa=%d iref=%d %d %d \n",ifa,iref[0],iref[1],iref[2]);
   printf("ifa=%d ix=%d %d %d \n",ifa,ix,iy,iz);
   printf("ifa=%d nx=%d %d %d \n",ifa,nx[0],nx[1],nx[2]);
- 
-  
+
+
   ncpgxyz[axis_permut[ifa][0]] = ncx;
   ncpgxyz[axis_permut[ifa][1]] = ncy;
   ncpgxyz[axis_permut[ifa][2]] = ncz;
@@ -669,8 +671,8 @@ int ref_pg_face_CG(int deg3d[], int nraf3d[], int ifa, int ipg,
   nxp[axis_permut[ifa][0]] = nx[0];
   nxp[axis_permut[ifa][1]] = nx[1];
   nxp[axis_permut[ifa][2]] = nx[2];
-    
-  
+
+
   int ipg3d = iref[0] + nxp[0] * (iref[1] + nxp[1] * iref[2]);
 
   // Compute the reference coordinates of the Gauss-Lobatto point in
@@ -685,7 +687,7 @@ int ref_pg_face_CG(int deg3d[], int nraf3d[], int ifa, int ipg,
   }
 
   if (wpg != NULL) *wpg = h[0] * h[1] *
-		     gauss_lob_weight[offset[0]] * 
+		     gauss_lob_weight[offset[0]] *
 		     gauss_lob_weight[offset[1]];
 
   // If xpgin exists, compute a point slightly INSIDE the opposite
@@ -722,7 +724,7 @@ int ref_pg_face_CG(int deg3d[], int nraf3d[], int ifa, int ipg,
 
 
 // return the 1d derivative of lagrange polynomial ib at glop ipg
-schnaps_real dlag(int deg, int ib, int ipg) 
+schnaps_real dlag(int deg, int ib, int ipg)
 {
   return gauss_lob_dpsi[gauss_lob_dpsi_offset[deg] + ib * (deg + 1) + ipg];
 }
@@ -746,7 +748,7 @@ void psi_ref(int *deg, int *nraf, int ib, schnaps_real *xref, schnaps_real *psi,
 
   int ix[3],ic[3];
 
-  ipg_to_xyz(nraf,deg,ic,ix,&ib); 
+  ipg_to_xyz(nraf,deg,ic,ix,&ib);
 
   /* int ibx = ib % (deg[0] + 1); */
   /* ib /= (deg[0] + 1); */
@@ -784,8 +786,8 @@ void psi_ref(int *deg, int *nraf, int ib, schnaps_real *xref, schnaps_real *psi,
     is[ii]=xref[ii]*nraf[ii];
     assert(is[ii] < nraf[ii] && is[ii]>= 0);
   }
-  
-  int is_in_subcell= (ic[0] == is[0]) && (ic[1] == is[1]) 
+
+  int is_in_subcell= (ic[0] == is[0]) && (ic[1] == is[1])
     && (ic[2] == is[2]);
 
 
@@ -929,7 +931,7 @@ void grad_psi_pg(int *deg, int *nraf, int ib, int ipg, schnaps_real *dpsi) {
   offset[2] = gauss_lob_dpsi_offset[deg[2]];
 
   // Computation of the value of the interpolation polynomial gradient
-  
+
   schnaps_real psibx,psiby,psibz,dpsibx,dpsiby,dpsibz;
 
   psibx = (ix[0] == ibx[0]) * (ic[0] == ibc[0]);
