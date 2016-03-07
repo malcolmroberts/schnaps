@@ -109,7 +109,6 @@ void BGK_Source(const schnaps_real* w, schnaps_real* source) {
       schnaps_real omega=wglop(kd->deg_v,iloc);
       schnaps_real vi=-kd->vmax+ielv*kd->dv+kd->dv*glop(kd->deg_v,iloc);
       int ipgv=iloc+ielv*kd->deg_v;
-      
       Maxw=Computation_Maxwellian(w[kd->index_rho],w[kd->index_u],w[kd->index_T],vi);
       source[ipgv]=kd->knud*(Maxw-w[ipgv]);
     }

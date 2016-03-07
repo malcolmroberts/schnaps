@@ -20,8 +20,8 @@ schnaps_real Computation_charge_average(Simulation *simu);
 
 schnaps_real Computation_Maxwellian(schnaps_real rho, schnaps_real U, schnaps_real T, schnaps_real v);
 
-void Computation_Fluid_Quantities(Simulation *simu);
+void Computation_Fluid_Quantities(Simulation *simu, schnaps_real *w);
 
-void Collision_Source(Simulation *simu);
+void Collision_Source(Simulation *simu, schnaps_real *w);
 
 #endif

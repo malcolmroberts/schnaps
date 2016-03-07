@@ -37,7 +37,7 @@ void Computation_charge_density(Simulation *simu){
   
 }
 
-void Computation_Fluid_Quantities(Simulation *simu){
+void Computation_Fluid_Quantities(Simulation *simu, schnaps_real *w){
 
   KineticData *kd = &schnaps_kinetic_data;
 
@@ -49,10 +49,10 @@ void Computation_Fluid_Quantities(Simulation *simu){
       int imem_U=f->varindex(f->deg, f->raf, f->model.m,ipg,kd->index_u);
       int imem_P=f->varindex(f->deg, f->raf, f->model.m,ipg,kd->index_P);
       int imem_T=f->varindex(f->deg, f->raf, f->model.m,ipg,kd->index_T);
-      f->wn[imem_rho]=0;
-      f->wn[imem_U]=0;
-      f->wn[imem_T]=0;
-      f->wn[imem_P]=0;
+      w[imem_rho]=0;
+      w[imem_U]=0;
+      w[imem_T]=0;
+      w[imem_P]=0;
 
       schnaps_real rhoU=0,rho=0,U=0,tensor_P=0;
       for(int ielv=0;ielv<kd->nb_elem_v;ielv++){
@@ -61,17 +61,18 @@ void Computation_Fluid_Quantities(Simulation *simu){
 	  schnaps_real omega=wglop(kd->deg_v,iloc);
 	  schnaps_real vi=-kd->vmax+ielv*kd->dv+kd->dv*glop(kd->deg_v,iloc);
 	  int ipgv=iloc+ielv*kd->deg_v;
-	  int imem=f->varindex(f->deg, f->raf, f->model.m,ipg,ipgv);
+	  int imem=f->varindex(f->deg, f->raf, f->model.m, ipg, ipgv);
 	  rho+=omega*kd->dv*simu->w[imem];
 	  rhoU+=omega*kd->dv*vi*simu->w[imem];
 	  tensor_P+=omega*kd->dv*vi*vi*simu->w[imem];
 	}
       }
-    
-      f->wn[imem_rho]=rho;
-      f->wn[imem_U]=rhoU/rho;
-      f->wn[imem_T]=tensor_P/rho;
-      f->wn[imem_P]=(0.5*tensor_P-0.5*rhoU*rhoU/rho)*(kd->gamma-1);
+     
+
+      w[imem_rho]=rho;
+      w[imem_U]=rhoU/rho;
+      w[imem_T]=tensor_P/rho;
+      w[imem_P]=(0.5*tensor_P-0.5*rhoU*rhoU/rho)*(kd->gamma-1);
            
     }
   }
@@ -183,11 +184,11 @@ void ComputeElectricField(field* f){
 
 
 
-void Collision_Source(Simulation *simu) {
+void Collision_Source(Simulation *simu, schnaps_real *w) {
   KineticData * kd=&schnaps_kinetic_data;
  
 
-  Computation_Fluid_Quantities(simu);
+  Computation_Fluid_Quantities(simu,w);
 
   for(int ie = 0; ie < simu->macromesh.nbelems; ie++){
     field * f = simu->fd + ie;
@@ -197,12 +198,13 @@ void Collision_Source(Simulation *simu) {
     
     for(int ipg=0;ipg<NPG(f->deg, f-> raf);ipg++){
       for(int iv=0;iv<f->model.m;iv++){
-	w_loc[iv] = simu->w[iv];
+	int imemc=f->varindex(f->deg, f->raf, f->model.m, ipg, iv);
+	w_loc[iv] = w[imemc];
       }
       BGK_Source(w_loc, source_loc);  
       for(int iv=0;iv<f->model.m;iv++){
-	int imemc=f->varindex(f->deg, f->raf, f->model.m, ipg, 0);
-	simu->w[imemc] = simu->w[imemc]+ simu->dt*source_loc[iv];
+	int imemc=f->varindex(f->deg, f->raf, f->model.m, ipg, iv);
+	w[imemc] = w[imemc]+simu->dt*source_loc[iv];
       }
 
       
