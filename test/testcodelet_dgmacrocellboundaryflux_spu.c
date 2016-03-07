@@ -56,9 +56,9 @@ bool submit_task(Simulation* simu, schnaps_real* buffer) {
     starpu_data_unregister(f->res_handle);
 
     for (int i = 0; i < fsize; ++i) {
-      if (!(abs(buffer[ie * fsize + i] - f->res[i]) < _VERY_SMALL))
-        printf("field: %d  reference[%d]: %f  result[%d]: %f\n",
-               ie, i, buffer[ie * fsize + i], i, f->res[i]);
+      /* if (!(abs(buffer[ie * fsize + i] - f->res[i]) < _VERY_SMALL)) */
+      /*   printf("field: %d  reference[%d]: %f  result[%d]: %f\n", */
+      /*          ie, i, buffer[ie * fsize + i], i, f->res[i]); */
       test &= (abs(buffer[ie * fsize + i] - f->res[i]) < _VERY_SMALL);
     }
   }
@@ -73,18 +73,16 @@ bool submit_task(Simulation* simu, schnaps_real* buffer) {
 int TestCodelet_DGMacroCellBoundaryFlux_SPU() {
   bool test = true;
 
-  // Warning: refinement must be coherent on interfaces
   int deg[]={2, 2, 2};
   int raf[]={2, 2, 2};
 
   MacroMesh mesh;
-  //ReadMacroMesh(&mesh,"../test/testdisque.msh");
-  ReadMacroMesh(&mesh,"../test/testcube2.msh");
+  ReadMacroMesh(&mesh,"../test/testdisque.msh");
   BuildConnectivity(&mesh);
   CheckMacroMesh(&mesh, deg, raf);
 
   Model model;
-  model.m = 6;
+  model.m = 8; // For boundary div cleaning
   model.NumFlux = Maxwell3DNumFlux_upwind;
   model.BoundaryFlux = Maxwell3DBoundaryFlux_upwind;
   model.InitData = Maxwell3DInitData;
