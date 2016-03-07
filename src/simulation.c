@@ -711,10 +711,49 @@ void RK2(Simulation *simu, schnaps_real tmax){
 
   }
   printf("t=%f iter=%d/%d dt=%f\n", simu->tnow, iter, simu->itermax_rk, dt);
-  free(wnp1);
+    free(wnp1);
 }
 
+// Time integration by a second-order Runge-Kutta algorithm
+void RK1(Simulation *simu, schnaps_real tmax){
 
+  simu->dt = Get_Dt_RK(simu);
+  schnaps_real dt = simu->dt;
+
+  simu->tmax = tmax;
+
+  simu->itermax_rk = tmax / simu->dt + 1;
+  int size_diags;
+  int freq = (1 >= simu->itermax_rk / 10)? 1 : simu->itermax_rk / 10;
+  int iter = 0;
+
+  simu->tnow = 0;
+
+  // FIXME: remove
+  size_diags = simu->nb_diags * simu->itermax_rk;
+  simu->iter_time_rk = iter;
+
+   if(simu->nb_diags != 0) {
+     simu->Diagnostics = malloc(size_diags * sizeof(schnaps_real));
+   }
+
+  while(simu->tnow < tmax) {
+    if (iter % freq == 0)
+      printf("t=%f iter=%d/%d dt=%f\n", simu->tnow, iter, simu->itermax_rk, dt);
+
+    DtFields(simu, simu->w, simu->dtw);
+    RK_out(simu->w, simu->w, simu->dtw, dt, simu->wsize);
+    simu->tnow += dt;
+    if(simu->update_after_rk != NULL){
+      simu->update_after_rk(simu, simu->w);
+    }
+
+    iter++;
+    simu->iter_time_rk = iter;
+
+  }
+  printf("t=%f iter=%d/%d dt=%f\n", simu->tnow, iter, simu->itermax_rk, dt);
+}
 
 // Time integration by a fourth-order Runge-Kutta algorithm
 void RK4(Simulation *simu, schnaps_real tmax)
