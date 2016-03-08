@@ -21,7 +21,8 @@ void Equilibrium_SpacePerturbation_InitData(schnaps_real x[3],schnaps_real w[]);
 void Equilibrium_SpacePerturbation_BoundaryFlux(schnaps_real x[3],schnaps_real t,schnaps_real wL[],schnaps_real* vnorm, schnaps_real* flux);
 void Equilibrium_SpacePerturbation_TotalSource(const schnaps_real* x, const schnaps_real t, const schnaps_real* w, schnaps_real* source);
 
-void Collision_VlasovPoisson(void* field, schnaps_real *w);
+void Collision_VlasovPoissonI(void* field, schnaps_real *w,double dt);
+void Collision_VlasovPoissonII(void* field, schnaps_real *w,double dt);
 void PlotVlasovPoisson(void* vf, schnaps_real * w);
 
 int main(void) {
@@ -92,12 +93,19 @@ int TestCollision(void) {
   simu.vmax = kd->vmax; // maximal wave speed
   simu.cfl=0.5;
   simu.nb_diags = 4;
-  simu.pre_dtfields = Collision_VlasovPoisson;
-  simu.post_dtfields=NULL;
+  simu.pre_dtfields = Collision_VlasovPoissonI;
   simu.update_after_rk = PlotVlasovPoisson;
  
   schnaps_real tmax = 0.1;
-  RK2(&simu, tmax);
+  if(kd->time_order == 1){
+    RK1(&simu, tmax);
+    simu.post_dtfields= NULL;
+  }
+  else {
+    simu.post_dtfields= Collision_VlasovPoissonII;
+    RK2(&simu, tmax);
+  }
+  
 
     // save the results and the error
   int iel = 2 * kd->nb_elem_v / 3;
@@ -269,11 +277,11 @@ void Equilibrium_VelocityPerturbation_BoundaryFlux(schnaps_real x[3],schnaps_rea
 
 
 
-void Collision_VlasovPoisson(void *si, schnaps_real *w) {
+void Collision_VlasovPoissonI(void *si, schnaps_real *w, double dt) {
   Simulation *simu = si;
   KineticData * kd=&schnaps_kinetic_data;
 
-  Collision_Source(simu,w);
+  Collision_Source(simu,w,dt);
   
   static ContinuousSolver ps;
   static bool is_init = false;
@@ -294,9 +302,18 @@ void Collision_VlasovPoisson(void *si, schnaps_real *w) {
     ps.lsol.pc_type=NONE;
   }
   
-  SolveContinuous2D(&ps);
+  //SolveContinuous2D(&ps);
   //freeContinuousSolver(&ps);
 }
+
+void Collision_VlasovPoissonII(void *si, schnaps_real *w, double dt) {
+  Simulation *simu = si;
+  KineticData * kd=&schnaps_kinetic_data;
+
+  Collision_Source(simu,w,dt);
+  
+}
+
 
 void PlotVlasovPoisson(void *si, schnaps_real *w) {
   schnaps_real k_energy = 0, e_energy = 0, t_energy = 0, t_charge=0;

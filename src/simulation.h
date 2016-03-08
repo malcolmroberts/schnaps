@@ -65,11 +65,11 @@ typedef struct Simulation {
 
   //! \brief Pointer to a generic function called before computing dtfield.
   //! \param[inout] si a simulation (to be converted from void*)
-  void (*pre_dtfields)(void *si, schnaps_real *w);
+  void (*pre_dtfields)(void *si, schnaps_real *w, double dt);
 
   //! \brief Pointer to a generic function called after computing dtfield.
   //! \param[inout] si a simulation (to be converted from void*)
-  void (*post_dtfields)(void *si, schnaps_real *w);
+  void (*post_dtfields)(void *si, schnaps_real *w, double dt);
 
   //! \brief generic update function called
   //! \brief called at each runge-kutta sustep

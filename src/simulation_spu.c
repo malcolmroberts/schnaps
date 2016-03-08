@@ -1954,7 +1954,7 @@ void DtFields_bis(Simulation *simu,
 		  schnaps_real* dtw){
 
   if(simu->pre_dtfields != NULL) {
-    simu->pre_dtfields(simu, w);
+    simu->pre_dtfields(simu, w,simu->dt);
   }
 
 
@@ -2005,7 +2005,7 @@ void DtFields_bis(Simulation *simu,
   }
 
   if(simu->post_dtfields != NULL) {
-    simu->post_dtfields(simu, w);
+    simu->post_dtfields(simu, w,simu->dt);
   }
 
 }

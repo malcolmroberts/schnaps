@@ -39,6 +39,7 @@ char cl_buildoptions[1024];
 
 
 typedef struct KineticData{
+  int time_order;
   int nb_elem_v;
   int deg_v;
   int mv;

@@ -22,6 +22,8 @@ schnaps_real Computation_Maxwellian(schnaps_real rho, schnaps_real U, schnaps_re
 
 void Computation_Fluid_Quantities(Simulation *simu, schnaps_real *w);
 
-void Collision_Source(Simulation *simu, schnaps_real *w);
+void Computation_Fluid_Quantities_loc(Simulation *simu, schnaps_real *w);
+
+void Collision_Source(Simulation *simu, schnaps_real *w, double dt);
 
 #endif

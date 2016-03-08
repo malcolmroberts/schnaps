@@ -62,9 +62,10 @@ void Computation_Fluid_Quantities(Simulation *simu, schnaps_real *w){
 	  schnaps_real vi=-kd->vmax+ielv*kd->dv+kd->dv*glop(kd->deg_v,iloc);
 	  int ipgv=iloc+ielv*kd->deg_v;
 	  int imem=f->varindex(f->deg, f->raf, f->model.m, ipg, ipgv);
-	  rho+=omega*kd->dv*simu->w[imem];
-	  rhoU+=omega*kd->dv*vi*simu->w[imem];
-	  tensor_P+=omega*kd->dv*vi*vi*simu->w[imem];
+	  
+	  rho+=omega*kd->dv*w[imem];
+	  rhoU+=omega*kd->dv*vi*w[imem];
+	  tensor_P+=omega*kd->dv*vi*vi*w[imem];
 	}
       }
      
@@ -76,8 +77,38 @@ void Computation_Fluid_Quantities(Simulation *simu, schnaps_real *w){
            
     }
   }
-  
 }
+
+void Computation_Fluid_Quantities_loc(Simulation *simu, schnaps_real *w){
+  
+  KineticData *kd = &schnaps_kinetic_data;
+  field * f = simu->fd + 0;
+  
+  w[kd->index_rho]=0;
+  w[kd->index_u]=0;
+  w[kd->index_P]=0;
+  w[kd->index_T]=0;
+  
+  schnaps_real rhoU=0,rho=0,U=0,tensor_P=0;
+  for(int ielv=0;ielv<kd->nb_elem_v;ielv++){
+    // loop on the local glops
+    for(int iloc=0;iloc<kd->deg_v+1;iloc++){
+      schnaps_real omega=wglop(kd->deg_v,iloc);
+      schnaps_real vi=-kd->vmax+ielv*kd->dv+kd->dv*glop(kd->deg_v,iloc);
+      int ipgv=iloc+ielv*kd->deg_v;
+      rho+=omega*kd->dv*w[ipgv];
+      rhoU+=omega*kd->dv*vi*w[ipgv];
+      tensor_P+=omega*kd->dv*vi*vi*w[ipgv];
+    }
+  }
+  
+  w[kd->index_rho]=rho;
+  w[kd->index_u]=rhoU/rho;
+  w[kd->index_T]=tensor_P/rho;
+  w[kd->index_P]=(0.5*tensor_P-0.5*rhoU*rhoU/rho)*(kd->gamma-1);
+}
+
+
 
 schnaps_real Computation_Maxwellian(schnaps_real rho, schnaps_real U, schnaps_real T, schnaps_real v){ 
 
@@ -196,30 +227,51 @@ void ComputeElectricField(field* f){
 
 
 
-void Collision_Source(Simulation *simu, schnaps_real *w) {
+void Collision_Source(Simulation *simu, schnaps_real *w, double dt) {
   KineticData * kd=&schnaps_kinetic_data;
- 
 
-  Computation_Fluid_Quantities(simu,w);
+  field * f0 = simu->fd + 0;  
+  schnaps_real w_loc[f0->model.m];
+  schnaps_real source_loc[f0->model.m];
 
-  for(int ie = 0; ie < simu->macromesh.nbelems; ie++){
-    field * f = simu->fd + ie;
-    
-    schnaps_real w_loc[f->model.m];
-    schnaps_real source_loc[f->model.m];
-    
-    for(int ipg=0;ipg<NPG(f->deg, f-> raf);ipg++){
-      for(int iv=0;iv<f->model.m;iv++){
-	int imemc=f->varindex(f->deg, f->raf, f->model.m, ipg, iv);
-	w_loc[iv] = w[imemc];
-      }
-      BGK_Source(w_loc, source_loc);  
-      for(int iv=0;iv<f->model.m;iv++){
-	int imemc=f->varindex(f->deg, f->raf, f->model.m, ipg, iv);
-	w[imemc] = w[imemc]+simu->dt*source_loc[iv];
-      }
-
-      
-    }  
+  if(kd->time_order == 1){    
+    for(int ie = 0; ie < simu->macromesh.nbelems; ie++){
+      field * f = simu->fd + ie;     
+      for(int ipg=0;ipg<NPG(f->deg, f-> raf);ipg++){
+	for(int iv=0;iv<f->model.m;iv++){
+	  int imemc=f->varindex(f->deg, f->raf, f->model.m, ipg, iv);
+	  w_loc[iv] = w[imemc];
+	}
+	Computation_Fluid_Quantities_loc(simu,w_loc);
+	BGK_Source(w_loc, source_loc);
+	for(int iv=0;iv<f->model.m;iv++){
+	  int imemc=f->varindex(f->deg, f->raf, f->model.m, ipg, iv);
+	  w[imemc] = w[imemc]+dt*source_loc[iv];
+	}     
+      }  
+    }
+  }
+  else {
+    for(int ie = 0; ie < simu->macromesh.nbelems; ie++){
+      field * f = simu->fd + ie;      
+      for(int ipg=0;ipg<NPG(f->deg, f-> raf);ipg++){
+	for(int iv=0;iv<f->model.m;iv++){
+	  int imemc=f->varindex(f->deg, f->raf, f->model.m, ipg, iv);
+	  w_loc[iv] = w[imemc];
+	}
+	Computation_Fluid_Quantities_loc(simu,w_loc);
+	BGK_Source(w_loc, source_loc);  
+	for(int iv=0;iv<f->model.m;iv++){
+	  int imemc=f->varindex(f->deg, f->raf, f->model.m, ipg, iv);
+	  w_loc[iv]=w[imemc]+0.5*dt*source_loc[iv];
+	}
+	Computation_Fluid_Quantities_loc(simu,w_loc);
+	BGK_Source(w_loc, source_loc);
+	for(int iv=0;iv<f->model.m;iv++){
+	  int imemc=f->varindex(f->deg, f->raf, f->model.m, ipg, iv);
+	  w[imemc]=w[imemc]+dt*source_loc[iv];
+	}
+      }  
+    }
   }
 };

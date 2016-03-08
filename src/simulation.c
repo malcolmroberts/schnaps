@@ -548,9 +548,7 @@ void freeSimulation(Simulation* simu){
 // time derivative of the field
 void DtFields(Simulation *simu, schnaps_real *w, schnaps_real *dtw) {
 
-  if(simu->pre_dtfields != NULL) {
-    simu->pre_dtfields(simu, w);
-  }
+
 
 
 #ifdef _OPENMP
@@ -606,10 +604,7 @@ void DtFields(Simulation *simu, schnaps_real *w, schnaps_real *dtw) {
     DGMass(simu->fd + ie, w + ie * fsize, dtw + ie * fsize);
   }
 
-  if(simu->post_dtfields != NULL) {
-    simu->post_dtfields(simu, w);
-    //assert(1==2);
-  }
+ 
 }
 
 schnaps_real L2error(Simulation *simu) {
@@ -694,6 +689,10 @@ void RK2(Simulation *simu, schnaps_real tmax){
     if (iter % freq == 0)
       printf("t=%f iter=%d/%d dt=%f\n", simu->tnow, iter, simu->itermax_rk, dt);
 
+    if(simu->pre_dtfields != NULL) {
+      simu->pre_dtfields(simu, simu->w,0.5*dt);
+    }
+
     DtFields(simu, simu->w, simu->dtw);
     /* for(int i=0 ; i<simu->wsize; i++) */
     /*   printf("i=%d dtw=%f\n",i,simu->dtw[i]); */
@@ -703,11 +702,16 @@ void RK2(Simulation *simu, schnaps_real tmax){
     /* for(int i=0 ; i<simu->wsize; i++) */
     /*   printf("i=%d w=%f\n",i,simu->w[i]); */
     /* assert(1==2); */
-
+   
     simu->tnow += 0.5 * dt;
+
 
     DtFields(simu, wnp1, simu->dtw);
     RK_in(simu->w, simu->dtw, dt, simu->wsize);
+
+    if(simu->post_dtfields != NULL) {
+       simu->post_dtfields(simu, simu->w, 0.5*dt);
+    }
 
     simu->tnow += 0.5 * dt;
 
@@ -718,6 +722,10 @@ void RK2(Simulation *simu, schnaps_real tmax){
     iter++;
     simu->iter_time_rk = iter;
 
+  
+
+  
+    //assert(1==2);
   }
   printf("t=%f iter=%d/%d dt=%f\n", simu->tnow, iter, simu->itermax_rk, dt);
     free(wnp1);
@@ -750,9 +758,15 @@ void RK1(Simulation *simu, schnaps_real tmax){
     if (iter % freq == 0)
       printf("t=%f iter=%d/%d dt=%f\n", simu->tnow, iter, simu->itermax_rk, dt);
 
+    if(simu->pre_dtfields != NULL) {
+      simu->pre_dtfields(simu, simu->w,dt);
+    }
+    
     DtFields(simu, simu->w, simu->dtw);
     RK_out(simu->w, simu->w, simu->dtw, dt, simu->wsize);
     simu->tnow += dt;
+
+    
     if(simu->update_after_rk != NULL){
       simu->update_after_rk(simu, simu->w);
     }
