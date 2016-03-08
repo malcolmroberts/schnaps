@@ -15,7 +15,7 @@ schnaps_real TransportVP_ImposedKinetic_Data(const schnaps_real *x, const schnap
 void Test_TransportVP_BoundaryFlux(schnaps_real *x, schnaps_real t, schnaps_real *wL, schnaps_real *vnorm,
 				   schnaps_real *flux);
 
-void UpdateVlasovPoisson(void *field, schnaps_real *w);
+void UpdateVlasovPoisson(void *field, schnaps_real *w, schnaps_real dt);
 void PlotVlasovPoisson(void *vf, schnaps_real *w);
 
 int main(void) {
@@ -146,7 +146,7 @@ void Test_TransportVP_BoundaryFlux(schnaps_real *x, schnaps_real t, schnaps_real
   VlasovP_Lagrangian_NumFlux(wL, wR, vnorm, flux);
 }
 
-void UpdateVlasovPoisson(void *si, schnaps_real *w) {
+void UpdateVlasovPoisson(void *si, schnaps_real *w, schnaps_real dt) {
   Simulation *simu = si;
   KineticData * kd=&schnaps_kinetic_data;
   int type_bc = 1;

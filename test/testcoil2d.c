@@ -16,9 +16,9 @@ void Coil2DImposedData(const schnaps_real x[3],const schnaps_real t,schnaps_real
   w[6] = 0;
 }
 
-void coil_pre_dtfields(void *simu, schnaps_real *w);
+void coil_pre_dtfields(void *simu, schnaps_real *w, schnaps_real dt);
 
-void coil_pre_dtfields(void *simu, schnaps_real *w){
+void coil_pre_dtfields(void *simu, schnaps_real *w, schnaps_real dt){
   AccumulateParticles(simu, w);
 }
 
