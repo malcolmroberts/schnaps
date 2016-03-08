@@ -6,6 +6,7 @@
 
 //! \brief Display a starpu data handle on runtime
 //! The function calls starpu_task_wait_for_all before display.
+//! StarPU version
 //! \param[in] handle a starpu handle
 //! \param[in] name a starpu handle name (appears on every line: make it short)
 void DisplayHandle_SPU(starpu_data_handle_t handle,
@@ -16,6 +17,7 @@ void DisplayHandle_SPU(starpu_data_handle_t handle,
 struct starpu_codelet* ZeroBuffer_codelet();
 
 //! \brief Create a ZeroBuffer task and submit it.
+//! StarPU version
 //! \param[in,out] handle handle of the buffer to nullifiy
 void ZeroBuffer_SPU(starpu_data_handle_t handle);
 
@@ -25,6 +27,7 @@ struct starpu_codelet* AddBuffer_codelet();
 
 //! \brief Add a scaled buffer to another buffer.
 //! handle_out = handle_out + alpha * handle_in
+//! StarPU version
 //! \param[in] alpha the scaling factor
 //! \param[in] handle_in handle to the scaled buffer
 //! \param[in,out] handle_out handle to the result buffer
@@ -33,12 +36,60 @@ void AddBuffer_SPU(schnaps_real alpha,
                    starpu_data_handle_t handle_out);
 
 
+//! \brief Init and get DGSubCellInterface codelet.
+struct starpu_codelet* DGSubCellInterface_codelet();
+
+//! \brief Apply the flux terms inside a macrocell
+//! StarPU version
+//! \param[in,out] f field
+void DGSubCellInterface_SPU(field* f);
+
+
 //! \brief Init and get DGVolume codelet.
 struct starpu_codelet* DGVolume_codelet();
 
 //! \brief Apply the "cross" derivative terms inside a macrocell
+//! StarPU version
 //! \param[in,out] f field
 void DGVolume_SPU(field* f);
+
+
+//! \brief Init and get DGSource codelet.
+struct starpu_codelet* DGSource_codelet();
+
+//! \brief Apply the source terms inside a macrocell
+//! StarPU version
+//! \param[in,out] f field
+void DGSource_SPU(field* f);
+
+
+//! \brief Init and get DGMass codelet.
+struct starpu_codelet* DGMass_codelet();
+
+//! \brief Apply the inverse of the mass matrix in a macrocell
+//! StarPU version
+//! \param[in,out] f field
+void DGMass_SPU(field* f);
+
+
+//! \brief Init and get DGMacroCellInterface codelet.
+struct starpu_codelet* DGMacroCellInterface_codelet();
+
+//! \brief Apply the interface fluxes to a neighbouring field
+//! StarPU version
+//! \param[in] inter interface
+//! \param[in,out] side side: left if == 0 right if == 1
+void DGMacroCellInterface_SPU(Interface* inter, int side);
+
+
+//! \brief Init and get DGMacroCellBoundaryFlux codelet.
+struct starpu_codelet* DGMacroCellBoundaryFlux_codelet();
+
+//! \brief Apply the boundary flux to a field
+//! StarPU version
+//! \param[in,out] inter interface
+void DGMacroCellBoundaryFlux_SPU(Interface* inter);
+
 
 
 //! \brief apply the Discontinuous Galerkin approximation for computing
@@ -57,39 +108,11 @@ void DtFields_SPU(Simulation *simu,
 //! \param[in] tmax tmax
 void RK2_SPU(Simulation *simu, schnaps_real tmax);
 
-//! \brief apply the flux terms inside a macrocell
-//! StarPU version
-//! \param[inout] fd a field
-void DGSubCellInterface_SPU(field* fd);
-
-//! \brief apply the source terms inside a macrocell
-//! StarPU version
-//! \param[inout] fd a field
-void DGSource_SPU(field* fd);
-
-//! \brief apply the inverse of the mass matrix in a macrocell
-//! StarPU version
-//! \param[inout] fd a field
-void DGMass_SPU(field* fd);
-
 
 //! \brief  apply the interface fluxes to a neighbouring field
 //! \param[in] inter an Interface
 //! \param[in] side the side: left if == 0 right if ==1
 void InterfaceExplicitFlux_bis(Interface* inter, int side);
-
-//! \brief  apply the interface fluxes to a neighbouring field
-//! \param[in] inter an Interface
-//! \param[in] side the side: left if == 0 right if ==1
-void DGMacroCellInterface_SPU(Interface* inter, int side);
-
-//! \brief  apply the interface fluxes to neighbouring fields
-//! \param[in] inter an Interface
-void DGMacroCellInterface_bis_SPU(Interface* inter);
-
-//! \brief  apply the boundary flux to a neighbouring field
-//! \param[in] inter an Interface
-void DGMacroCellBoundaryFlux_SPU(Interface* inter);
 
 //! \brief apply the Discontinuous Galerkin approximation for computing
 //! the time derivative of the fields. Works with several subcells.

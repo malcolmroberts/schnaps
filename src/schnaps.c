@@ -86,7 +86,7 @@ int main(int argc, char *argv[])
 
 #if 1
   // C version
-  RK2(&simu, tmax);
+  RK4(&simu, tmax);
 #else
   // OpenCL version
   schnaps_real dt = 0;
@@ -112,4 +112,8 @@ int main(int argc, char *argv[])
   test = dd < tolerance;
 
   FreeMacroMesh(&mesh);
+
+  int exit_status = !test; // because 0 = success...
+  
+  return exit_status;
 }

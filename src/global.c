@@ -1,7 +1,7 @@
 #include "global.h"
 
 int nplatform_cl = 0;
-int ndevice_cl = 0;
+int ndevice_cl = 1;
 
 bool starpu_is_init = false;
 bool starpu_use = false;
@@ -35,4 +35,7 @@ void InitKineticData(KineticData *kd, int nbelemv, int degv){
   kd->gamma = 3.;
   kd->knud =1.;
   kd->solve_quasineutrality = false;
+  kd->substract_mean_charge = false;
+  kd->qn_damping = 0;
+  kd->time_order=2;
 }

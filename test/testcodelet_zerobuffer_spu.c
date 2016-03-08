@@ -8,7 +8,7 @@ bool submit_task() {
   bool test = true;
 
   // Data buffer
-  const int size = 1000000;
+  const int size = 10000;
   schnaps_real* buffer = calloc(size, sizeof(schnaps_real));
 
   // Create data handle (init and register)

@@ -9,34 +9,56 @@ bool submit_task(Simulation* simu, schnaps_real* buffer) {
   bool test = true;
 
   const int fsize =  simu->wsize / simu->macromesh.nbelems;
+  // Create data handle (init and register)
   for(int ie = 0; ie < simu->macromesh.nbelems; ++ie) {
     field* f = simu->fd + ie;
-
-    // Create data handle (init and register)
-    for (int i = 0; i < fsize; ++i) {
-      f->wn[i] = i + 1;
-      f->res[i] = 0;
-    }
-    starpu_vector_data_register(&f->wn_handle, 0, (uintptr_t)f->wn,
-                                fsize, sizeof(schnaps_real));
+    for (int i = 0; i < fsize; ++i) f->res[i] = 0;
     starpu_vector_data_register(&f->res_handle, 0, (uintptr_t)f->res,
                                 fsize, sizeof(schnaps_real));
+  }
+
+  for (int ifa = 0; ifa < simu->macromesh.nbfaces; ++ifa) {
+    Interface* inter = simu->interface + ifa;
+
+    // Create interface data handles (register)
+    starpu_vector_data_register(&inter->vol_indexL_handle, 0, (uintptr_t)inter->vol_indexL,
+                                inter->npgL, sizeof(int));
+    starpu_vector_data_register(&inter->vol_indexR_handle, 0, (uintptr_t)inter->vol_indexR,
+                                inter->npgR, sizeof(int));
+    starpu_vector_data_register(&inter->wL_handle, 0, (uintptr_t)inter->wL,
+                                inter->wsizeL, sizeof(schnaps_real));
+    starpu_vector_data_register(&inter->wR_handle, 0, (uintptr_t)inter->wR,
+                                inter->wsizeR, sizeof(schnaps_real));
+    starpu_vector_data_register(&inter->vnds_handle, 0, (uintptr_t)inter->vnds,
+                                inter->npgL * 3, sizeof(schnaps_real));
+    starpu_vector_data_register(&inter->wpg_handle, 0, (uintptr_t)inter->wpg,
+                                inter->npgL, sizeof(schnaps_real));
 
     // Submit task
-    DGVolume_SPU(f);
+    DGMacroCellInterface_SPU(inter, 0);
+    DGMacroCellInterface_SPU(inter, 1);
   }
 
   starpu_task_wait_for_all();
+
+  // Unregister interface data handles
+  for (int ifa = 0; ifa < simu->macromesh.nbfaces; ++ifa) {
+    Interface* inter = simu->interface + ifa;
+
+    starpu_data_unregister(inter->vol_indexL_handle);
+    starpu_data_unregister(inter->vol_indexR_handle);
+    starpu_data_unregister(inter->wL_handle);
+    starpu_data_unregister(inter->wR_handle);
+    starpu_data_unregister(inter->vnds_handle);
+    starpu_data_unregister(inter->wpg_handle);
+  }
 
   // Check output
   for(int ie = 0; ie < simu->macromesh.nbelems; ++ie) {
     field* f = simu->fd + ie;
 
-    starpu_data_unregister(f->wn_handle);
     starpu_data_unregister(f->res_handle);
 
-    for (int i = 0; i < fsize; ++i)
-      assert(abs(f->wn[i] - i - 1) < _VERY_SMALL);
     for (int i = 0; i < fsize; ++i) {
       /* if (!(abs(buffer[ie * fsize + i] - f->res[i]) < _VERY_SMALL)) */
       /*   printf("field: %d  reference[%d]: %f  result[%d]: %f\n", */
@@ -52,9 +74,10 @@ bool submit_task(Simulation* simu, schnaps_real* buffer) {
 }
 
 
-int TestCodelet_DGVolume_SPU() {
+int TestCodelet_DGMacroCellInterface_SPU() {
   bool test = true;
 
+  // Warning: refinement must be coherent on interfaces
   int deg[]={2, 2, 2};
   int raf[]={2, 2, 2};
 
@@ -129,19 +152,45 @@ int TestCodelet_DGVolume_SPU() {
   // Compute the comparision buffer
   schnaps_real* buffer = calloc(simu.wsize, sizeof(schnaps_real));
   const int fsize =  simu.wsize / simu.macromesh.nbelems;
-  for (int ie = 0; ie < simu.macromesh.nbelems; ++ie) {
+  // Init data
+  for(int ie = 0; ie < simu.macromesh.nbelems; ++ie) {
     field* f = simu.fd + ie;
 
-    // Init data
     for (int i = 0; i < fsize; ++i) {
       f->wn[i] = i + 1;
       f->res[i] = 0;
     }
+  }
 
-    // Compute volume term
-    DGVolume(f, f->wn, f->res);
+  // Compute macrocell interface term
+  for (int ifa = 0; ifa < simu.macromesh.nbfaces; ++ifa) {
+    int ieL = simu.macromesh.face2elem[4 * ifa + 0];
+    int locfaL = simu.macromesh.face2elem[4 * ifa + 1];
+    int ieR = simu.macromesh.face2elem[4 * ifa + 2];
 
-    // Store data for comparision
+    // No boundary flux
+    if (ieR < 0) continue;
+
+    field *fL = simu.fd + ieL;
+    field *fR = simu.fd + ieR;
+    int offsetL = fsize * ieL;
+    int offsetR = fsize * ieR;
+
+    DGMacroCellInterface(locfaL,
+    			 fL, offsetL, fR, offsetR,
+    			 simu.w, simu.res);
+
+    // Need of interface extraction for starpu codelets
+    Interface* inter = simu.interface + ifa;
+    // left = 0  right = 1
+    ExtractInterface(inter, 0);
+    ExtractInterface(inter, 1);
+  }
+
+  // Store data for comparision
+  for(int ie = 0; ie < simu.macromesh.nbelems; ++ie) {
+    field* f = simu.fd + ie;
+
     for (int i = 0; i < fsize; ++i)
       assert(abs(f->wn[i] - i - 1) < _VERY_SMALL);
     for (int i = 0; i < fsize; ++i)
@@ -152,7 +201,7 @@ int TestCodelet_DGVolume_SPU() {
   // Codelet
   starpu_c_use = true;
   starpu_ocl_use = true;
-  struct starpu_codelet* codelet = DGVolume_codelet();
+  struct starpu_codelet* codelet = DGMacroCellInterface_codelet();
 
   // Empty codelet for function selection
   struct starpu_codelet codelet_backup = *codelet;
@@ -265,8 +314,8 @@ int TestCodelet_DGVolume_SPU() {
 
 int main(void) {
   // Unit tests
-  int resu = TestCodelet_DGVolume_SPU();
-  if (resu) printf("StarPU DGVolume Codelet test OK !\n");
-  else printf("StarPU DGVolume Codelet test failed !\n");
+  int resu = TestCodelet_DGMacroCellInterface_SPU();
+  if (resu) printf("StarPU DGMacroCellInterface Codelet test OK !\n");
+  else printf("StarPU DGMacroCellInterface Codelet test failed !\n");
   return !resu;
 }

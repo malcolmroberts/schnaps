@@ -125,6 +125,8 @@ void TestPoisson_ImposedData(const schnaps_real x[3], const schnaps_real t, schn
   // and electric field
   w[kd->index_phi] = (x[0] * x[0] + x[1] * x[1])/4;
   w[kd->index_ex] =  -x[0]/2;
+  w[kd->index_ey] =  -x[1]/2;
+  w[kd->index_ez] =  0;
   w[kd->index_rho] = -1; //rho init
   /* w[_INDEX_PHI] = x[0] ; */
   /* w[_INDEX_EX] =  -1; */

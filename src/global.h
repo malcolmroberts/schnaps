@@ -39,6 +39,7 @@ char cl_buildoptions[1024];
 
 
 typedef struct KineticData{
+  int time_order;
   int nb_elem_v;
   int deg_v;
   int mv;
@@ -57,12 +58,16 @@ typedef struct KineticData{
   schnaps_real gamma;
   schnaps_real knud;
   bool solve_quasineutrality;
+  bool substract_mean_charge;
+  // quasi neutrality damping (term in front of (phi -phibar) in
+  // QN or damped Laplace equation)
+  schnaps_real qn_damping;
 } KineticData;
 
 
 extern KineticData schnaps_kinetic_data;
 
-void InitKineticData(KineticData *kd, int nbelemv, int degv); 
+void InitKineticData(KineticData *kd, int nbelemv, int degv);
 
 extern bool starpu_is_init;
 extern bool starpu_use;
@@ -75,7 +80,26 @@ extern bool starpu_ocl_use;
 extern bool opencl_program_is_init;
 #ifdef _WITH_STARPU
 extern struct starpu_opencl_program opencl_program;
+
+#define LOAD_OPENCL_PROGRAM_SPU()               \
+  if (!opencl_program_is_init) {                \
+    opencl_program_is_init = true;              \
+    printf("load OpenCL program...\n");         \
+    STARPU_CHECK_RETURN_VALUE(                  \
+        starpu_opencl_load_opencl_from_file(    \
+            "./schnaps.cl",                     \
+            &opencl_program,                    \
+            cl_buildoptions),                   \
+        "starpu_opencl_load_opencl_from_file"); \
+  }
+
+#else
+
+#define LOAD_OPENCL_PROGRAM_SPU()               \
+  assert(opencl_program_is_init);
+
 #endif //_WITH_STARPU
+
 
 
 #endif // #ifndef _GLOBAL_H

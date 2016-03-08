@@ -65,11 +65,11 @@ typedef struct Simulation {
 
   //! \brief Pointer to a generic function called before computing dtfield.
   //! \param[inout] si a simulation (to be converted from void*)
-  void (*pre_dtfields)(void *si, schnaps_real *w);
+  void (*pre_dtfields)(void *si, schnaps_real *w, double dt);
 
   //! \brief Pointer to a generic function called after computing dtfield.
   //! \param[inout] si a simulation (to be converted from void*)
-  void (*post_dtfields)(void *si, schnaps_real *w);
+  void (*post_dtfields)(void *si, schnaps_real *w, double dt);
 
   //! \brief generic update function called
   //! \brief called at each runge-kutta sustep
@@ -208,6 +208,13 @@ void RK_in(schnaps_real *fwnp1, schnaps_real *fdtwn, const schnaps_real dt, cons
 //! \param[in] sizew size of the field buffer
 void RK4_final_inplace(schnaps_real *w, schnaps_real *l1, schnaps_real *l2, schnaps_real *l3,
 		       schnaps_real *dtw, const schnaps_real dt, const int sizew);
+
+
+//! \brief Time integration by a second order Runge-Kutta algorithm
+//! \param[inout] simu a simulation
+//! \param[in] tmax physical duration of the simulation
+void RK1(Simulation *simu, schnaps_real tmax);
+
 
 //! \brief Time integration by a second order Runge-Kutta algorithm
 //! \param[inout] simu a simulation

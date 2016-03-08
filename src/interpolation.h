@@ -8,7 +8,7 @@
 //! \brief a struct for managing geometric mapping
 typedef struct Interpolation{
 
-  //! number of conservative variables 
+  //! number of conservative variables
   int m;
 
   //! approximation degrees in each direction
@@ -19,7 +19,7 @@ typedef struct Interpolation{
 
   //! \brief underlying geometry mapping
   Geom geo;
-  
+
   /* //! \brief current Gauss point index */
   /* int i; */
   /* //! \brief number of Gauss points in the volume */
@@ -78,7 +78,7 @@ typedef struct Interpolation{
 //! \param[in] deg degrees list
 //! \param[in] raf refinements list
 #pragma start_opencl
-int NPG(int deg[], int raf[]);
+int NPG(const int deg[], const int raf[]);
 #pragma end_opencl
 
 //! \brief number of Gauss-LObatto Points (GLOPs) on the continuous macrocell
@@ -89,7 +89,9 @@ int NPG_CG(int deg[], int raf[]);
 //! \brief number of GLOPs on the face ifa of the macrocell
 //! \param[in] param the param list
 //! \param[in] ifa face index
-int NPGF(int deg[], int raf[],int ifa);
+#pragma start_opencl
+int NPGF(const int deg[], const int raf[],int ifa);
+#pragma end_opencl
 
 //! \brief number of GLOPs on the face ifa of the continuous macrocell
 //! \param[in] param the param list
@@ -174,17 +176,17 @@ int ref_pg_face_CG(int* deg, int *raf,int ifa,int ipgf,schnaps_real* xpg,schnaps
 //! Warning: the value of the gradient is
 //! not reliable if xref is on the boundary
 //! of a subcell (because the gradient is discontinuous)
-//! \param[in] deg degrees parameters 
-//! \param[in] raf refinements parameters 
+//! \param[in] deg degrees parameters
+//! \param[in] raf refinements parameters
 //! \param[in] ib basis function index
 //! \param[in] xref position of a point in the reference element
 //! \param[out] psi value of the basis function
 //! \param[out] dpsiref gradient of the basis function in the reference element
 void psi_ref(int *deg, int *raf, int ib, schnaps_real* xref, schnaps_real* psi, schnaps_real* dpsiref);
 
-//! \brief  gradient of a basis function at a given glop 
-//! \param[in] deg degrees parameters 
-//! \param[in] raf refinements parameters 
+//! \brief  gradient of a basis function at a given glop
+//! \param[in] deg degrees parameters
+//! \param[in] raf refinements parameters
 //! \param[in] ib basis function index
 //! \param[in] ipg glop index
 //! \param[out] dpsiref gradient of the basis function in the reference element
@@ -192,16 +194,16 @@ void grad_psi_pg(int *deg, int *raf,int ib,int ipg,schnaps_real* dpsiref);
 
 //! \brief  gradient of a basis function at a given glop
 //! continuous version
-//! \param[in] deg degrees parameters 
-//! \param[in] raf refinements parameters 
+//! \param[in] deg degrees parameters
+//! \param[in] raf refinements parameters
 //! \param[in] ib basis function index
 //! \param[in] ipg glop index
 //! \param[out] dpsiref gradient of the basis function in the reference element
 void grad_psi_pg_CG(int *deg, int *raf,int ib,int ipg,schnaps_real* dpsiref);
 
 //! \brief  gradient of a basis function at a given glop in a given subcell
-//! \param[in] deg degrees parameters 
-//! \param[in] raf refinements parameters 
+//! \param[in] deg degrees parameters
+//! \param[in] raf refinements parameters
 //! \param[in] is a vector of three integer indices locating the subcell
 //! \param[in] ib basis function index
 //! \param[in] xref position of a point in the reference element
@@ -223,7 +225,7 @@ schnaps_real glop(int deg,int i);
 //! \param[out] ic the 3 subcell indices in x,y,z directions
 //! \param[out] ix the 3 glop indices in the subcell
 #pragma start_opencl
-void ipg_to_xyz(const int *raf, const int *deg, int *ic, int *ix, const 
+void ipg_to_xyz(const int *raf, const int *deg, int *ic, int *ix, const
 		int *ipg);
 #pragma end_opencl
 

@@ -320,7 +320,7 @@ void Initfield(field *f, Model model,
   // Compute cfl parameter min_i vol_i/surf_i
   f->hmin = min_grid_spacing(f);
 
-  printf("hmin=%f\n", f->hmin);
+  //printf("hmin=%f\n", f->hmin);
 
 
   //printf("field init done\n");
