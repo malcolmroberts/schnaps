@@ -2808,7 +2808,7 @@ void AssemblyImplicitJFLinearSolver(Simulation *simu, JFLinearSolver *solver, sc
 
   NonlinearThetaVector_assembly(simu,simu->w,rhs_implicit,simu->theta,simu->dt);
 
-  DtFields(simu, simu->w, simu->dtw);
+  DtFields_old(simu, simu->w, simu->dtw);
 
   for(int i=0;i<solver->neq;i++){
     solver->rhs[i]=-rhs_implicit[i]+rhs_explicit[i];

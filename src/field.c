@@ -649,10 +649,7 @@ void DGMacroCellInterface(int locfaL,
 			  field *fL, int offsetL, field *fR, int offsetR,
 			  schnaps_real *w, schnaps_real *dtw)
 {
-
   const unsigned int m = fL->model.m;
-
-
   // Assembly of the surface terms loop on the macrocells faces
   //int ieL = msh->face2elem[4 * ifa + 0];
   //int locfaL = msh->face2elem[4 * ifa + 1];
@@ -708,9 +705,6 @@ void DGMacroCellInterface(int locfaL,
       }
 
       int ipgR = ref_ipg(fR->deg,fR->raf, xrefL);
-
-      //assert(1==2);
-
       //printf("ipgL=%d ipgR=%d\n",ipgL,ipgR);
 
       //Uncomment to check that the neighbour-finding algorithm worked.
@@ -737,10 +731,7 @@ void DGMacroCellInterface(int locfaL,
 	wR[iv] = fwR[imemR];
       }
 
-      // int_dL F(wL, wR, grad phi_ib)
-
       fL->model.NumFlux(wL, wR, vnds, flux);
-
 
       // Add flux to both sides
       for(int iv = 0; iv < m; iv++) {
@@ -757,7 +748,6 @@ void DGMacroCellInterface(int locfaL,
 	wL[iv] = fwL[imemL];
       }
 
-
       fL->model.BoundaryFlux(xpg, fL->tnow, wL, vnds, flux);
       //printf("a");
 
@@ -769,8 +759,6 @@ void DGMacroCellInterface(int locfaL,
     }
 
   }
-
-
 }
 
 // Apply division by the mass matrix

@@ -44,7 +44,7 @@ int TestfieldDG(void){
 
   simu.tnow = 0;
 
-  DtFields(&simu, simu.w, simu.dtw);
+  DtFields_old(&simu, simu.w, simu.dtw);
   
   //DisplaySimulation(&simu);
 
