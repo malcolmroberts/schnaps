@@ -65,11 +65,11 @@ typedef struct Simulation {
 
   //! \brief Pointer to a generic function called before computing dtfield.
   //! \param[inout] si a simulation (to be converted from void*)
-  void (*pre_dtfields)(void *si, schnaps_real *w, double dt);
+  void (*pre_dtfields)(void *si);
 
   //! \brief Pointer to a generic function called after computing dtfield.
   //! \param[inout] si a simulation (to be converted from void*)
-  void (*post_dtfields)(void *si, schnaps_real *w, double dt);
+  void (*post_dtfields)(void *si);
 
   //! \brief generic update function called
   //! \brief called at each runge-kutta sustep
@@ -175,7 +175,12 @@ void InitInterfaces(Simulation *simu);
 //! \brief apply the Discontinuous Galerkin approximation for computing
 //! the time derivative of the fields. Works with several subcells.
 //! \param[inout] simu A simulation
-void DtFields(Simulation *simu, schnaps_real *w, schnaps_real *dtw);
+void DtFields(Simulation *simu);
+
+//! \brief apply the Discontinuous Galerkin approximation for computing
+//! the time derivative of the fields. Works with several subcells.
+//! \param[inout] simu A simulation
+void DtFields_old(Simulation *simu, schnaps_real *w, schnaps_real *dtw);
 
 //! \brief compute the time step of the RK scheme
 //! respecting a cfl condition
@@ -188,7 +193,7 @@ schnaps_real Get_Dt_RK(Simulation *simu);
 //! \param[in] fdtwn time derivative of the field
 //! \param[in] dt time step
 //! \param[in] sizew size of the field buffer
-void RK_out(schnaps_real *fwnp1, schnaps_real *fwn, schnaps_real *fdtwn, const schnaps_real dt,
+void RK_out_old(schnaps_real *fwnp1, schnaps_real *fwn, schnaps_real *fdtwn, const schnaps_real dt,
 	    const int sizew);
 
 //! \brief An in-place RK stage
@@ -196,7 +201,23 @@ void RK_out(schnaps_real *fwnp1, schnaps_real *fwn, schnaps_real *fdtwn, const s
 //! \param[in] fdtwn time derivative of the field
 //! \param[in] dt time step
 //! \param[in] sizew size of the field buffer
-void RK_in(schnaps_real *fwnp1, schnaps_real *fdtwn, const schnaps_real dt, const int sizew);
+void RK_in_old(schnaps_real *fwnp1, schnaps_real *fdtwn, const schnaps_real dt, const int sizew);
+
+//! \brief An out-of-place RK stage
+void RK_out(Simulation *simu, schnaps_real * wn);
+
+//! \brief An-in-place RK stage
+void RK_in(Simulation *simu);
+
+void RK_Copy(Simulation * simu,schnaps_real * w, schnaps_real * w_temp);
+
+void RK4_final_inplace(Simulation *simu, schnaps_real *l1, schnaps_real *l2, schnaps_real *l3, schnaps_real *l4);
+
+
+//! \brief Time integration by a second order Runge-Kutta algorithm
+//! \param[inout] simu a simulation
+//! \param[in] tmax physical duration of the simulation
+void RK4_new(Simulation *simu, schnaps_real tmax);
 
 //! \brief Final in-place RK stage
 //! \param[out] w field at time n+1
@@ -206,7 +227,7 @@ void RK_in(schnaps_real *fwnp1, schnaps_real *fdtwn, const schnaps_real dt, cons
 //! \param[in] dtw last rk4 vector
 //! \param[in] dt time step
 //! \param[in] sizew size of the field buffer
-void RK4_final_inplace(schnaps_real *w, schnaps_real *l1, schnaps_real *l2, schnaps_real *l3,
+void RK4_final_inplace_old(schnaps_real *w, schnaps_real *l1, schnaps_real *l2, schnaps_real *l3,
 		       schnaps_real *dtw, const schnaps_real dt, const int sizew);
 
 

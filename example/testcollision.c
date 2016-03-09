@@ -21,8 +21,8 @@ void Equilibrium_SpacePerturbation_InitData(schnaps_real x[3],schnaps_real w[]);
 void Equilibrium_SpacePerturbation_BoundaryFlux(schnaps_real x[3],schnaps_real t,schnaps_real wL[],schnaps_real* vnorm, schnaps_real* flux);
 void Equilibrium_SpacePerturbation_TotalSource(const schnaps_real* x, const schnaps_real t, const schnaps_real* w, schnaps_real* source);
 
-void Collision_VlasovPoissonI(void* field, schnaps_real *w,double dt);
-void Collision_VlasovPoissonII(void* field, schnaps_real *w,double dt);
+void Collision_VlasovPoissonI(void* field);
+void Collision_VlasovPoissonII(void* field);
 void PlotVlasovPoisson(void* vf, schnaps_real * w);
 
 int main(void) {
@@ -63,7 +63,7 @@ int TestCollision(void) {
   
   Model model;
   schnaps_real degV=4;
-  schnaps_real nbEV=16;
+  schnaps_real nbEV=32;
   KineticData * kd=&schnaps_kinetic_data;
 
   InitKineticData(kd,nbEV,degV);
@@ -83,7 +83,7 @@ int TestCollision(void) {
 
   
   int deg[]={4, 0, 0};
-  int raf[]={16, 1, 1};
+  int raf[]={32, 1, 1};
 
   CheckMacroMesh(&mesh, deg, raf);
   Simulation simu;
@@ -277,11 +277,11 @@ void Equilibrium_VelocityPerturbation_BoundaryFlux(schnaps_real x[3],schnaps_rea
 
 
 
-void Collision_VlasovPoissonI(void *si, schnaps_real *w, double dt) {
+void Collision_VlasovPoissonI(void *si) {
   Simulation *simu = si;
   KineticData * kd=&schnaps_kinetic_data;
 
-  Collision_Source(simu,w,dt);
+  Collision_Source(simu);
   
   static ContinuousSolver ps;
   static bool is_init = false;
@@ -302,15 +302,15 @@ void Collision_VlasovPoissonI(void *si, schnaps_real *w, double dt) {
     ps.lsol.pc_type=NONE;
   }
   
-  //SolveContinuous2D(&ps);
+  SolveContinuous2D(&ps);
   //freeContinuousSolver(&ps);
 }
 
-void Collision_VlasovPoissonII(void *si, schnaps_real *w, double dt) {
+void Collision_VlasovPoissonII(void *si) {
   Simulation *simu = si;
   KineticData * kd=&schnaps_kinetic_data;
 
-  Collision_Source(simu,w,dt);
+  Collision_Source(simu);
   
 }
 

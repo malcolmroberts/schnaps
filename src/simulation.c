@@ -546,10 +546,7 @@ void freeSimulation(Simulation* simu){
 
 // Apply the Discontinuous Galerkin approximation to compute the
 // time derivative of the field
-void DtFields(Simulation *simu, schnaps_real *w, schnaps_real *dtw) {
-
-
-
+void DtFields_old(Simulation *simu, schnaps_real *w, schnaps_real *dtw) {
 
 #ifdef _OPENMP
 #pragma omp parallel
@@ -566,7 +563,6 @@ void DtFields(Simulation *simu, schnaps_real *w, schnaps_real *dtw) {
   for(int ie = 0; ie < simu->macromesh.nbelems; ++ie) {
     simu->fd[ie].tnow = simu->tnow;
   }
-
   // the field pointers must be updated
   /* for(int ie = 0; ie < simu->macromesh.nbelems; ++ie) { */
   /*   simu->fd[ie].wn = w + ie * fsize; */
@@ -586,9 +582,6 @@ void DtFields(Simulation *simu, schnaps_real *w, schnaps_real *dtw) {
       fR = simu->fd + ieR;
       offsetR = fsize * ieR;
     }
-
-
-
     DGMacroCellInterface(locfaL,
     			 fL, offsetL, fR, offsetR,
     			 w, dtw);
@@ -603,9 +596,63 @@ void DtFields(Simulation *simu, schnaps_real *w, schnaps_real *dtw) {
     DGSource(simu->fd + ie, w + ie * fsize, dtw + ie * fsize);
     DGMass(simu->fd + ie, w + ie * fsize, dtw + ie * fsize);
   }
-
- 
 }
+
+
+// Apply the Discontinuous Galerkin approximation to compute the
+// time derivative of the field
+void DtFields(Simulation *simu) {
+
+#ifdef _OPENMP
+#pragma omp parallel
+#endif
+
+  //real *w = simu->fd[0].wn;
+  //real *dtw = simu->fd[0].dtwn;
+
+  int fsize =  simu->wsize / simu->macromesh.nbelems;
+
+  for(int iw = 0; iw < simu->wsize; iw++)
+    simu->dtw[iw] = 0;
+
+  for(int ie = 0; ie < simu->macromesh.nbelems; ++ie) {
+    simu->fd[ie].tnow = simu->tnow;
+  }
+  // the field pointers must be updated
+  /* for(int ie = 0; ie < simu->macromesh.nbelems; ++ie) { */
+  /*   simu->fd[ie].wn = w + ie * fsize; */
+  /*   simu->fd[ie].dtwn = dtw + ie * fsize; */
+  /* } */
+
+  for(int ifa = 0; ifa < simu->macromesh.nbfaces; ifa++){
+    int ieL = simu->macromesh.face2elem[4 * ifa + 0];
+    int locfaL = simu->macromesh.face2elem[4 * ifa + 1];
+    int ieR = simu->macromesh.face2elem[4 * ifa + 2];
+    field *fL = simu->fd + ieL;
+    field *fR = NULL;
+    int offsetR = -1;
+    int offsetL = fsize * ieL;
+    if (ieR >= 0) {
+      fR = simu->fd + ieR;
+      offsetR = fsize * ieR;
+    }
+    DGMacroCellInterface(locfaL,
+    			 fL, offsetL, fR, offsetR,
+    			 simu->w, simu->dtw);
+  }
+
+#ifdef _OPENMP
+#pragma omp parallel for schedule(dynamic, 1)
+#endif
+  for(int ie = 0; ie < simu->macromesh.nbelems; ++ie) {
+    DGSubCellInterface(simu->fd + ie, simu->w + ie * fsize, simu->dtw + ie * fsize);
+    DGVolume(simu->fd + ie, simu->w + ie * fsize, simu->dtw + ie * fsize);
+    DGSource(simu->fd + ie, simu->w + ie * fsize, simu->dtw + ie * fsize);
+    DGMass(simu->fd + ie, simu->w + ie * fsize, simu->dtw + ie * fsize);
+  }
+}
+
+
 
 schnaps_real L2error(Simulation *simu) {
 
@@ -658,85 +705,10 @@ schnaps_real L2error(Simulation *simu) {
 }
 
 // Time integration by a second-order Runge-Kutta algorithm
-void RK2(Simulation *simu, schnaps_real tmax){
-
-  simu->dt = Get_Dt_RK(simu);
-
-
-  schnaps_real dt = simu->dt;
-
-  simu->tmax = tmax;
-
-  simu->itermax_rk = tmax / simu->dt + 1;
-  int size_diags;
-  int freq = (1 >= simu->itermax_rk / 10)? 1 : simu->itermax_rk / 10;
-  int iter = 0;
-
-  simu->tnow = 0;
-
-  schnaps_real *wnp1 = calloc(simu->wsize, sizeof(schnaps_real));
-  assert(wnp1);
-
-  // FIXME: remove
-  size_diags = simu->nb_diags * simu->itermax_rk;
-  simu->iter_time_rk = iter;
-
-   if(simu->nb_diags != 0) {
-     simu->Diagnostics = malloc(size_diags * sizeof(schnaps_real));
-   }
-
-  while(simu->tnow < tmax) {
-    if (iter % freq == 0)
-      printf("t=%f iter=%d/%d dt=%f\n", simu->tnow, iter, simu->itermax_rk, dt);
-
-    if(simu->pre_dtfields != NULL) {
-      simu->pre_dtfields(simu, simu->w,0.5*dt);
-    }
-
-    DtFields(simu, simu->w, simu->dtw);
-    /* for(int i=0 ; i<simu->wsize; i++) */
-    /*   printf("i=%d dtw=%f\n",i,simu->dtw[i]); */
-    /* assert(1==2); */
-    RK_out(wnp1, simu->w, simu->dtw, 0.5 * dt, simu->wsize);
-    /* RK_out(simu->w, simu->w, simu->dtw, 0.5 * dt, simu->wsize); */
-    /* for(int i=0 ; i<simu->wsize; i++) */
-    /*   printf("i=%d w=%f\n",i,simu->w[i]); */
-    /* assert(1==2); */
-   
-    simu->tnow += 0.5 * dt;
-
-
-    DtFields(simu, wnp1, simu->dtw);
-    RK_in(simu->w, simu->dtw, dt, simu->wsize);
-
-    if(simu->post_dtfields != NULL) {
-       simu->post_dtfields(simu, simu->w, 0.5*dt);
-    }
-
-    simu->tnow += 0.5 * dt;
-
-    if(simu->update_after_rk != NULL){
-      simu->update_after_rk(simu, simu->w);
-    }
-
-    iter++;
-    simu->iter_time_rk = iter;
-
-  
-
-  
-    //assert(1==2);
-  }
-  printf("t=%f iter=%d/%d dt=%f\n", simu->tnow, iter, simu->itermax_rk, dt);
-    free(wnp1);
-}
-
-// Time integration by a second-order Runge-Kutta algorithm
 void RK1(Simulation *simu, schnaps_real tmax){
 
   simu->dt = Get_Dt_RK(simu);
   schnaps_real dt = simu->dt;
-
   simu->tmax = tmax;
 
   simu->itermax_rk = tmax / simu->dt + 1;
@@ -745,6 +717,56 @@ void RK1(Simulation *simu, schnaps_real tmax){
   int iter = 0;
 
   simu->tnow = 0;
+  
+  size_diags = simu->nb_diags * simu->itermax_rk;
+  simu->iter_time_rk = iter;
+
+   if(simu->nb_diags != 0) {
+     simu->Diagnostics = malloc(size_diags * sizeof(schnaps_real));
+   }
+
+   while(simu->tnow < tmax) {
+     if (iter % freq == 0)
+       printf("t=%f iter=%d/%d dt=%f\n", simu->tnow, iter, simu->itermax_rk, dt);
+
+     //------ Pre time step ---- //
+     if(simu->pre_dtfields != NULL) {
+       simu->pre_dtfields(simu);
+     }
+    
+     //------ Step 1 ---- //
+     DtFields(simu);
+     RK_out(simu,simu->w);
+     simu->tnow += dt;
+
+     //------ Post time step ---- //
+     if(simu->update_after_rk != NULL){
+       simu->update_after_rk(simu,simu->w);
+     }
+
+     iter++;
+     simu->iter_time_rk = iter;
+  }
+  printf("t=%f iter=%d/%d dt=%f\n", simu->tnow, iter, simu->itermax_rk, dt);
+}
+
+
+// Time integration by a second-order Runge-Kutta algorithm
+void RK2(Simulation *simu, schnaps_real tmax){
+
+  simu->dt = Get_Dt_RK(simu);
+  schnaps_real dt = simu->dt;
+  simu->tmax = tmax;
+
+  simu->itermax_rk = tmax / simu->dt + 1;
+  int size_diags;
+  int freq = (1 >= simu->itermax_rk / 10)? 1 : simu->itermax_rk / 10;
+  int iter = 0;
+
+  simu->tnow = 0;
+
+  schnaps_real *wn = calloc(simu->wsize, sizeof(schnaps_real));
+  assert(wn);
 
   // FIXME: remove
   size_diags = simu->nb_diags * simu->itermax_rk;
@@ -758,28 +780,56 @@ void RK1(Simulation *simu, schnaps_real tmax){
     if (iter % freq == 0)
       printf("t=%f iter=%d/%d dt=%f\n", simu->tnow, iter, simu->itermax_rk, dt);
 
-    if(simu->pre_dtfields != NULL) {
-      simu->pre_dtfields(simu, simu->w,dt);
-    }
+
+    //--------- Pre RK step --------//   
+    simu->dt=0.5*dt;
     
-    DtFields(simu, simu->w, simu->dtw);
-    RK_out(simu->w, simu->w, simu->dtw, dt, simu->wsize);
-    simu->tnow += dt;
+    if(simu->pre_dtfields != NULL) {
+      simu->pre_dtfields(simu);
+    }   
+
+    //--------- Begin RK ---------//
+     //----- Rk Step 1 ----- //
+    RK_Copy(simu,simu->w,wn);
+    DtFields(simu);
+    RK_in(simu);
+
+    simu->tnow += 0.5 * dt;
+
+     //----- Step 2 ----- //
+    DtFields(simu);
+    simu->dt=dt;
+    RK_out(simu,wn);
+
+    simu->tnow += 0.5 * dt;
+    //---------- End RK ----------//
 
     
+    //-------- Post RK step -------//  
+    simu->dt=0.5*dt;
+
+    if(simu->post_dtfields != NULL) {
+       simu->post_dtfields(simu);
+    }
+
+    //------ Final post processing -----//
+    simu->dt=dt;
+
     if(simu->update_after_rk != NULL){
       simu->update_after_rk(simu, simu->w);
     }
 
     iter++;
     simu->iter_time_rk = iter;
-
   }
   printf("t=%f iter=%d/%d dt=%f\n", simu->tnow, iter, simu->itermax_rk, dt);
+    free(wn);
 }
 
+
+
 // Time integration by a fourth-order Runge-Kutta algorithm
-void RK4(Simulation *simu, schnaps_real tmax)
+void RK4_old(Simulation *simu, schnaps_real tmax)
 {
 
   simu->dt = Get_Dt_RK(simu);
@@ -810,24 +860,24 @@ void RK4(Simulation *simu, schnaps_real tmax)
       printf("t=%f iter=%d/%d dt=%f\n", simu->tnow, iter, simu->itermax_rk, dt);
 
     // l_1 = w_n + 0.5dt * S(w_n, t_0)
-    DtFields(simu, simu->w, simu->dtw);
-    RK_out(l1, simu->w, simu->dtw, 0.5 * dt, simu->wsize);
+    DtFields_old(simu, simu->w, simu->dtw);
+    RK_out_old(l1, simu->w, simu->dtw, 0.5 * dt, simu->wsize);
 
     simu->tnow += 0.5 * dt;
 
     // l_2 = w_n + 0.5dt * S(l_1, t_0 + 0.5 * dt)
-    DtFields(simu, l1, simu->dtw);
-    RK_out(l2, simu->w, simu->dtw, 0.5 * dt, simu->wsize);
+    DtFields_old(simu, l1, simu->dtw);
+    RK_out_old(l2, simu->w, simu->dtw, 0.5 * dt, simu->wsize);
 
     // l_3 = w_n + dt * S(l_2, t_0 + 0.5 * dt)
-    DtFields(simu, l2, simu->dtw);
-    RK_out(l3, simu->w, simu->dtw, dt, simu->wsize);
+    DtFields_old(simu, l2, simu->dtw);
+    RK_out_old(l3, simu->w, simu->dtw, dt, simu->wsize);
 
     simu->tnow += 0.5 * dt;
 
     // Compute S(l_3, t_0 + dt)
-    DtFields(simu, l3, simu->dtw);
-    RK4_final_inplace(simu->w, l1, l2, l3, simu->dtw, dt, simu->wsize);
+    DtFields_old(simu, l3, simu->dtw);
+    RK4_final_inplace_old(simu->w, l1, l2, l3, simu->dtw, dt, simu->wsize);
 
 
      if(simu->update_after_rk != NULL){
@@ -844,8 +894,117 @@ void RK4(Simulation *simu, schnaps_real tmax)
   free(l1);
 }
 
+
+
+// Time integration by a fourth-order Runge-Kutta algorithm
+void RK4(Simulation *simu, schnaps_real tmax)
+{
+  simu->dt = Get_Dt_RK(simu);
+  schnaps_real dt = simu->dt;
+  simu->tmax = tmax;
+
+  simu->itermax_rk = tmax / simu->dt;
+  int size_diags;
+  int freq = (1 >= simu->itermax_rk / 10)? 1 : simu->itermax_rk / 10;
+  int iter = 0;
+
+  // Allocate memory for RK time-stepping
+  schnaps_real *l1, *l2, *l3, *l4;
+  l1 = calloc(simu->wsize, sizeof(schnaps_real));
+  l2 = calloc(simu->wsize, sizeof(schnaps_real));
+  l3 = calloc(simu->wsize, sizeof(schnaps_real));
+  l4 = calloc(simu->wsize, sizeof(schnaps_real));
+
+  size_diags = simu->nb_diags * simu->itermax_rk;
+  simu->iter_time_rk = iter;
+
+    if(simu->nb_diags != 0)
+    simu->Diagnostics = malloc(size_diags * sizeof(schnaps_real));
+
+  while(simu->tnow < tmax) {
+    if (iter % freq == 0)
+      printf("t=%f iter=%d/%d dt=%f\n", simu->tnow, iter, simu->itermax_rk, dt);
+
+    // l_1 = w_n 
+    RK_Copy(simu,simu->w,l1);
+
+    // l_2 = l_1 + 0.5dt * S(l_1)
+    simu->dt=0.5*dt;
+    DtFields(simu);
+    RK_out(simu,l1);
+
+    simu->tnow += 0.5 * dt;
+
+    // l_3 = w_n + 0.5dt * S(l_2)
+    RK_Copy(simu,simu->w,l2);
+    DtFields(simu);
+    RK_out(simu,l1);
+
+    // l_4 = w_n + dt * S(l_3)
+    simu->dt=dt;
+    RK_Copy(simu,simu->w,l3);
+    DtFields(simu);
+    RK_out(simu,l1);
+
+    simu->tnow += 0.5 * dt;
+
+    // Compute yn+1= yn + dt(l1,l2,l3,l4)
+    RK_Copy(simu,simu->w,l4);
+    DtFields(simu);
+    RK4_final_inplace(simu, l1, l2, l3,l4);
+
+
+     if(simu->update_after_rk != NULL){
+      simu->update_after_rk(simu, simu->w);
+    }
+
+    iter++;
+     simu->iter_time_rk=iter;
+  }
+  printf("t=%f iter=%d/%d dt=%f\n", simu->tnow, iter, simu->itermax_rk, dt);
+
+  free(l4);
+  free(l3);
+  free(l2);
+  free(l1);
+}
+
+
+
+
+
 // An out-of-place RK step
-void RK_out(schnaps_real *dest, schnaps_real *fwn, schnaps_real *fdtwn, const schnaps_real dt,
+void RK_Copy(Simulation * simu,schnaps_real * w, schnaps_real * w_temp)
+{
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+  for(int iw = 0; iw < simu->wsize; iw++) {
+    w_temp[iw] = w[iw];
+  }
+}
+
+void RK_out(Simulation *simu, schnaps_real * wn)
+{
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+  for(int iw = 0; iw < simu->wsize; iw++) {
+    simu->w[iw] = wn[iw]+ simu->dt * simu->dtw[iw];
+  }
+}
+
+void RK_in(Simulation *simu)
+{
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+  for(int iw = 0; iw < simu->wsize; iw++) {
+    simu->w[iw] = simu->w[iw]+ simu->dt * simu->dtw[iw];
+  }
+}
+
+void RK_out_old(schnaps_real *dest, schnaps_real *fwn, schnaps_real *fdtwn, const schnaps_real dt,
 	    const int sizew)
 {
 #ifdef _OPENMP
@@ -858,7 +1017,7 @@ void RK_out(schnaps_real *dest, schnaps_real *fwn, schnaps_real *fdtwn, const sc
 
 
 // An in-place RK step
-void RK_in(schnaps_real *fwnp1, schnaps_real *fdtwn, const schnaps_real dt, const int sizew)
+void RK_in_old(schnaps_real *fwnp1, schnaps_real *fdtwn, const schnaps_real dt, const int sizew)
 {
 #ifdef _OPENMP
 #pragma omp parallel for
@@ -868,7 +1027,24 @@ void RK_in(schnaps_real *fwnp1, schnaps_real *fdtwn, const schnaps_real dt, cons
   }
 }
 
-void RK4_final_inplace(schnaps_real *w, schnaps_real *l1, schnaps_real *l2, schnaps_real *l3,
+void RK4_final_inplace(Simulation * simu, schnaps_real *l1, schnaps_real *l2, schnaps_real *l3,schnaps_real *l4)
+{
+  const schnaps_real a[] = {1.0 / 3.0, 2.0 / 3.0, 1.0 / 3.0, simu->dt / 6.0};
+  const schnaps_real b=-1.0 / 3.0;
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+  for(int i = 0; i < simu->wsize; ++i) {
+    simu->w[i] =
+      b * l1[i] +
+      a[0] * l2[i] +
+      a[1] * l3[i] +
+      a[2] * l4[i] +
+      a[3] * simu->dtw[i];
+  }
+}
+
+void RK4_final_inplace_old(schnaps_real *w, schnaps_real *l1, schnaps_real *l2, schnaps_real *l3,
 		       schnaps_real *dtw, const schnaps_real dt, const int sizew)
 {
   const schnaps_real b = -1.0 / 3.0;

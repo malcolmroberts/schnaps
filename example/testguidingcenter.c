@@ -7,7 +7,7 @@
 
 int TestGuidingCenter(void);
 
-void SolveQuasineutreEq(void *field, schnaps_real *w);
+void SolveQuasineutreEq(void *field);
 void GuidingCInitData(schnaps_real x[3],schnaps_real w[]);
 void GuidingCImposedData(const schnaps_real x[3], const schnaps_real t, schnaps_real w[]);
 void GuidingCBoundaryFlux(schnaps_real x[3],schnaps_real t,
@@ -72,7 +72,6 @@ int TestGuidingCenter(void) {
   model.m= kd->index_max; // num of conservative variables
   model.NumFlux=GyroUpwindNumFlux;
   //model.NumFlux=GyroZeroNumFlux;
-  //model.NumFlux=NULL;
   model.BoundaryFlux=GyroBoundaryFlux;
   model.InitData=GuidingCInitData;
   model.ImposedData=GuidingCImposedData;
@@ -183,7 +182,7 @@ void GuidingCBoundaryFlux(schnaps_real x[3],schnaps_real t,
 }
 
 
-void SolveQuasineutreEq(void *si, schnaps_real *w) {
+void SolveQuasineutreEq(void *si) {
   Simulation *simu = si;
   KineticData * kd=&schnaps_kinetic_data;
   int type_bc = 1;

@@ -79,7 +79,7 @@ int TestDtfield3D_CL(void){
   schnaps_real *saveptr = simu.dtw;
   simu.dtw = calloc(simu.wsize, sizeof(schnaps_real));
 
-  DtFields(&simu, simu.w, simu.dtw);
+  DtFields_old(&simu, simu.w, simu.dtw);
  
   schnaps_real maxerr = 0;
   for(int i = 0; i < simu.wsize; i++) {
