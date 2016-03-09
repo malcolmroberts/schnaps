@@ -82,7 +82,7 @@ int TestCodelet_DGMacroCellBoundaryFlux_SPU() {
   CheckMacroMesh(&mesh, deg, raf);
 
   Model model;
-  model.m = 8; // For boundary div cleaning
+  model.m = 6;
   model.NumFlux = Maxwell3DNumFlux_upwind;
   model.BoundaryFlux = Maxwell3DBoundaryFlux_upwind;
   model.InitData = Maxwell3DInitData;
