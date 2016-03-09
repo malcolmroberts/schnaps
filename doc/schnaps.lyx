@@ -116,11 +116,23 @@ LatexCommand tableofcontents
 \end_layout
 
 \begin_layout Section
-Méthode Galerkin Discontinu (GD)
+Introduction
 \end_layout
 
-\begin_layout Subsection
-Systèmes de lois de conservation
+\begin_layout Standard
+Dans ce chapitre, nous rappelons d'abord rapidement le formalisme de la
+ méthode Galerkin Discontinu (GD).
+ Cette méthode est très générale puisqu'elle autorise des maillages non-conforme
+s ainsi que des degrés d'approximation non-uniforme.
+ Cependant sa programmation dans un cadre trop général risque d'être inefficace
+ sur un ordinateur hybride possédant plusieurs niveaux de mémoires et de
+ parallélisme: les indirections mémoire, les trop grandes variations de
+ paramètres, un rangement arbitraire des données en mémoire peuvent conduire
+ à des performances désastreuses.
+ Nous allons donc présenter ici les choix que nous avons fait afin d'obtenir
+ un bon compromis entre la généralité de la méthode et son efficacité.
+ Le résultat de ces compromis est le logiciel SCHNAPS développé depuis deux
+ à l'IRMA Strasbourg.
 \end_layout
 
 \begin_layout Standard
@@ -135,7 +147,16 @@ Solveur Conservatif Hyperbolique Non-linéaire Appliqué aux PlasmaS
 .
  Il s'agit d'une bibliothèque C99 pour résoudre numériquement des systèmes
  de lois de conservation sur des ordinateurs massivement parallèles, avec
- plusieurs niveaux de parallélisme, par exemple un gros cluster de GPU.
+ plusieurs niveaux de parallélisme, par exemple un gros cluster comprenant
+ à la fois des CPU et des GPU.
+\end_layout
+
+\begin_layout Section
+Méthode Galerkin Discontinu (GD)
+\end_layout
+
+\begin_layout Subsection
+Systèmes de lois de conservation
 \end_layout
 
 \begin_layout Standard
@@ -171,7 +192,7 @@ Dans cette équation, l'inconnue
 \end_inset
 
 , 
-\begin_inset Formula $x=(x_{1},x_{2},x_{3})$
+\begin_inset Formula $transfertsx=(x_{1},x_{2},x_{3})$
 \end_inset
 
  et du temps 
@@ -330,7 +351,7 @@ reference "eq:slc"
 
 \end_inset
 
-Souvent, le flux numérique vérifie aussi une propriété de conservation
+Souvent, le flux numérique vérifie aussi une propriété de conservationtransferts
 \begin_inset Formula 
 \begin{equation}
 \forall W_{L},W_{R},n,\quad F(W_{L},W_{R},n)=-F(W_{R},W_{L},-n),\label{eq:consflux}
@@ -824,15 +845,6 @@ SCHNAPS: philosophie
 \begin_layout Standard
 Dans cette section nous tentons de donner une vue d'ensemble synthétique
  de la conception du logiciel.
- Pour une vue détaillée de la hiérarchie des classes nous renvoyons à la
- documentation doxygen de SCHNAPS (voir section 
-\begin_inset CommandInset ref
-LatexCommand ref
-reference "sub:Documentation"
-
-\end_inset
-
-).
 \end_layout
 
 \begin_layout Subsection
@@ -841,7 +853,128 @@ StarPU
 
 \begin_layout Standard
 Afin d'exploiter les architectures d'ordinateurs hybrides les plus récentes,
- il est indispensable de pouvoir soumettre de fa
+ il est indispensable de pouvoir soumettre de façon asynchrone des opérations
+ de calcul ou de transferts (copies mémoire ou communications).
+ Ces opérations, appelées tâches (
+\begin_inset Quotes eld
+\end_inset
+
+tasks
+\begin_inset Quotes erd
+\end_inset
+
+ en anglais), dépendent en général les unes des autres.
+ Ce sont les dépendances entre les tâches qui permettent de déterminer l'ordre
+ dans lequel elle doivent être exécutées et si certaines d'entre elles peuvent
+ être réalisées en parallèle.
+\end_layout
+
+\begin_layout Standard
+Les dépendances entre tâches sont souvent représentée par un graphe.
+ Les noeuds du graphe correspondent aux tâches.
+ La présence d'un arc orienté de la tâche A vers la tâches B indique qu'il
+ faut attendre la fin de A avant de lancer B.
+ En général, la construction d'un graphe des tâches ne nécessite que la
+ connaissance des dépendances entre les données.
+ Il suffit d'indiquer sur quelles données chaque tâche va opérer et si ces
+ données sont accédées en lecture (R), écriture (W) ou lecture/écriture
+ (RW).
+ Il existe une littérature plus qu'abondante sur ces techniques algorithmiques.
+ Ce n'est pas l'objet de cette thèse de rentrer trop dans les détails.
+ Nous renvoyons par exemple à 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "cosnard1995automatic,cosnard1999compact"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+La programmation efficace et générale de ce type d'algorithme est compliquée
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "strub2015resolution"
+
+\end_inset
+
+.
+ Nous avons donc décidé de déléguer la répartition des tâches sur les processeur
+s disponibles à une bibliothèque informatique spécialisée.
+ Ce type de bibliothèque, aussi appelée 
+\begin_inset Quotes eld
+\end_inset
+
+support d’exécution
+\begin_inset Quotes erd
+\end_inset
+
+ ou 
+\begin_inset Quotes eld
+\end_inset
+
+runtime
+\begin_inset Quotes erd
+\end_inset
+
+ en anglais permet de décrire à la fois le code des tâches ainsi que le
+ type d'accès aux données.
+\end_layout
+
+\begin_layout Standard
+Nous avons choisi le support d’exécution StarPU 
+\begin_inset Flex URL
+status open
+
+\begin_layout Plain Layout
+
+http://starpu.gforge.inria.fr/
+\end_layout
+
+\end_inset
+
+.
+ Il s'agit d'un logiciel développé depuis plus de 10 ans à l'Inria Bordeaux
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "augonnet2011starpu"
+
+\end_inset
+
+.
+ Au coeur de StarPU il y a les 
+\begin_inset Quotes eld
+\end_inset
+
+codelettes
+\begin_inset Quotes erd
+\end_inset
+
+ (ou 
+\begin_inset Quotes eld
+\end_inset
+
+codelet
+\begin_inset Quotes erd
+\end_inset
+
+ en anglais).
+ Une codelette est une fonction écrite en C99 qui réalise l'implémentation
+ d'une tâche.
+ Une même tâche peut avoir plusieurs implémentations, donc plusieurs codelettes,
+ différentes.
+ Par exemple, pour une opération de calcul donnée, il est possible de programmer
+ plusieurs codelettes avec des optimisations différentes, ainsi qu'une ou
+ plusieurs codelettes pour divers type d'accélérateurs (GPU ou Xeon Phi
+ par exemple).
+ Le fait de pouvoir lancer les codelettes sur plusieurs types de matériel
+ justifie le nom de StarPU que l'on peut aussi orthographier *PU: tous les
+ types de processeurs (C ou G PU) sont accessibles.
+ Une tâche est alors déterminée par ses codelettes ainsi que par la description
+ du type d'accès aux données (R, W ou RW).
 \end_layout
 
 \begin_layout Subsection
@@ -3240,44 +3373,15 @@ Nous sommes arrivés à un développement de SCHNAPS qui fait que les tâches
  par les contributeurs, en fonction de leurs priorités...
 \end_layout
 
-\begin_layout Bibliography
-
-\lang english
-\begin_inset CommandInset bibitem
-LatexCommand bibitem
-key "CFP06"
-
-\end_inset
-
-G.
- Cohen, X.
- Ferrières and S.
- Pernet.
- A spatial high order hexahedral discontinuous Galerkin method to solve
- Maxwell’s equations in time-domain.
- J.
- Comput.
- Phys., vol.
- 217, no.
- 2, pages 340–363, 2006.
-\end_layout
-
-\begin_layout Bibliography
-
-\lang english
-\begin_inset CommandInset bibitem
-LatexCommand bibitem
-key "KWBH09"
+\begin_layout Standard
+\begin_inset CommandInset bibtex
+LatexCommand bibtex
+bibfiles "biblio_chapitre_schnaps"
+options "plain"
 
 \end_inset
 
-A.
- Klockner, T.
- Warburton, J.
- Bridge, J.S.
- Hesthaven, Nodal discontinuous Galerkin methods on graphics processors,
- Journal of Computational Physics, Volume 228, Issue 21, 20 November 2009,
- Pages 7863-7882
+
 \end_layout
 
 \end_body
