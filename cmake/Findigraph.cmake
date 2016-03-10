@@ -14,7 +14,7 @@ find_path (IGRAPH_INCLUDES igraph.h
   )
 if(NOT IGRAPH_INCLUDES)
     find_path (IGRAPH_INCLUDES igraph.h
-      PATHS /usr/local/include /usr/include /include /sw/include /usr/lib /usr/lib64 /usr/lib/x86_64-linux-gnu/ ${CMAKE_EXTRA_INCLUDES} PATH_SUFFIXES igraph/ igraph/include
+      PATHS /usr/local/include /usr/include /usr/include/igraph /include /sw/include /usr/lib /usr/lib64 /usr/lib/x86_64-linux-gnu/ ${CMAKE_EXTRA_INCLUDES} PATH_SUFFIXES igraph/ igraph/include
       )
 endif(NOT IGRAPH_INCLUDES)
 
