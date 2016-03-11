@@ -4,12 +4,12 @@
 #include <assert.h>
 
 #pragma start_opencl
-void Maxwell2DNumFlux_centered(schnaps_real *wL, schnaps_real *wR, schnaps_real *vnorm, schnaps_real *flux) 
+void Maxwell2DNumFlux_centered(schnaps_real *wL, schnaps_real *wR, schnaps_real *vnorm, schnaps_real *flux)
 {
   // w: (Ex, Ey, Hz, \lambda, rho, Jx, Jy)
 
   // FIXME add documentation
-  
+
   const schnaps_real nx = vnorm[0];
   const schnaps_real ny = vnorm[1];
   const schnaps_real khi = 1.0;
@@ -31,7 +31,7 @@ void Maxwell2DNumFlux_centered(schnaps_real *wL, schnaps_real *wR, schnaps_real 
 #pragma end_opencl
 
 #pragma start_opencl
-void Maxwell2DNumFlux_upwind(schnaps_real *wL, schnaps_real *wR, schnaps_real *vnorm, schnaps_real *flux) 
+void Maxwell2DNumFlux_upwind(schnaps_real *wL, schnaps_real *wR, schnaps_real *vnorm, schnaps_real *flux)
 {
   // w: (Ex, Ey, Hz, \lambda, rho, Jx, Jy)
 
@@ -53,11 +53,11 @@ void Maxwell2DNumFlux_upwind(schnaps_real *wL, schnaps_real *wR, schnaps_real *v
   const schnaps_real d2 = 0.5 * ( wR[2] - wL[2] );
   const schnaps_real d3 = 0.5 * ( wR[3] - wL[3] );
 
-  flux[0] = 
+  flux[0] =
     -ny * s2 + khi * nx * s3
     -overr * ( d0 * (ny * ny + khi * nx * nx)
 	       + d1 * nx * ny * (khi - 1) );
-  flux[1] = 
+  flux[1] =
     nx * s2 + khi * ny * s3
     -overr * ((nx * ny * (khi - 1)) * d0
 	      +(nx * nx + khi * ny * ny) * d1);
@@ -70,7 +70,7 @@ void Maxwell2DNumFlux_upwind(schnaps_real *wL, schnaps_real *wR, schnaps_real *v
 #pragma end_opencl
 
 #pragma start_opencl
-void Maxwell2DNumFlux_unoptimised(schnaps_real *wL, schnaps_real *wR, schnaps_real *vnorm, schnaps_real *flux) 
+void Maxwell2DNumFlux_unoptimised(schnaps_real *wL, schnaps_real *wR, schnaps_real *vnorm, schnaps_real *flux)
 {
   // w: (Ex, Ey, Hz, \lambda, rho, Jx, Jy)
 
@@ -84,23 +84,23 @@ void Maxwell2DNumFlux_unoptimised(schnaps_real *wL, schnaps_real *wR, schnaps_re
   const schnaps_real eps = 1;
   const schnaps_real khi = 1.0;
 
-  flux[0] = 
+  flux[0] =
     - ny * (wR[2] + wL[2]) + khi * nx * (wR[3] + wL[3])
     - eps * (ny * ny + khi * nx * nx) * overr * (wR[0] - wL[0])
     - eps * (ny * nx * (khi - 1)) * overr * (wR[1] - wL[1]);
 
-  flux[1] =   
+  flux[1] =
     nx * (wR[2] + wL[2]) + khi * ny * (wR[3] + wL[3])
     - eps * (ny * nx * (khi - 1)) * overr * (wR[0] - wL[0])
     - eps * (nx * nx + khi * ny * ny) * overr  * (wR[1] - wL[1]);
 
-  flux[2] = - ny * (wR[0] + wL[0]) 
-    + nx * (wR[1] + wL[1]) 
+  flux[2] = - ny * (wR[0] + wL[0])
+    + nx * (wR[1] + wL[1])
     - eps * r * (wR[2] - wL[2]);
 
-  flux[3] = 
-    khi * nx * (wR[0] + wL[0]) 
-    + khi * ny * (wR[1] + wL[1]) 
+  flux[3] =
+    khi * nx * (wR[0] + wL[0])
+    + khi * ny * (wR[1] + wL[1])
     - eps * khi * r * (wR[3] - wL[3]);
 
   flux[0] *= 0.5;
@@ -114,20 +114,20 @@ void Maxwell2DNumFlux_unoptimised(schnaps_real *wL, schnaps_real *wR, schnaps_re
 #pragma end_opencl
 
 #pragma start_opencl
-void Maxwell2DImposedData(const schnaps_real *x, const schnaps_real t, schnaps_real *w) 
+void Maxwell2DImposedData(const schnaps_real *x, const schnaps_real t, schnaps_real *w)
 {
   // w: (Ex, Ey, Hz, \lambda, rho, Jx, Jy)
 
   // FIXME add documentation
-  
+
   const schnaps_real pi = 4.0 * atan(1.0);
   const schnaps_real r = 1.0;
   const schnaps_real theta = pi / 4.0;
   const schnaps_real u = cos(theta);
-  const schnaps_real v = sin(theta); 
+  const schnaps_real v = sin(theta);
   const schnaps_real k = pi/2;
   const schnaps_real c = -cos(k * (u * x[0] + v * x[1] - t));
-  
+
   w[0] = -v * c / r;
   w[1] = u * c / r;
   w[2] = c / r;
@@ -139,7 +139,7 @@ void Maxwell2DImposedData(const schnaps_real *x, const schnaps_real t, schnaps_r
 #pragma end_opencl
 
 #pragma start_opencl
-void Maxwell2DBoundaryFlux_upwind(schnaps_real *x, schnaps_real t, 
+void Maxwell2DBoundaryFlux_upwind(schnaps_real *x, schnaps_real t,
 				      schnaps_real *wL, schnaps_real *vnorm, schnaps_real *flux)
 {
   schnaps_real wR[7];
@@ -148,7 +148,7 @@ void Maxwell2DBoundaryFlux_upwind(schnaps_real *x, schnaps_real t,
 }
 #pragma end_opencl
 
-void Maxwell2DInitData(schnaps_real *x, schnaps_real *w) 
+void Maxwell2DInitData(schnaps_real *x, schnaps_real *w)
 {
   schnaps_real t = 0;
   Maxwell2DImposedData(x, t, w);
@@ -158,9 +158,9 @@ void Maxwell2DInitData(schnaps_real *x, schnaps_real *w)
 void Maxwell2DSource(const schnaps_real *x, const schnaps_real t, const schnaps_real *w, schnaps_real *source)
 {
   // w: (Ex, Ey, Hz, \lambda,  Jx, Jy, rho)
-  
+
   // FIXME add documentation
-  
+
   const schnaps_real khi = 1.0;
   source[0] = -w[4];
   source[1] = -w[5];
@@ -173,18 +173,18 @@ void Maxwell2DSource(const schnaps_real *x, const schnaps_real t, const schnaps_
 #pragma end_opencl
 
 #pragma start_opencl
-void Maxwell3DNumFlux_upwind(schnaps_real *wL, schnaps_real *wR, schnaps_real *vnorm, schnaps_real *flux) 
+void Maxwell3DNumFlux_upwind(schnaps_real *wL, schnaps_real *wR, schnaps_real *vnorm, schnaps_real *flux)
 {
   // Upwind flux (upwind) for Maxwell's equations
 
   // Data layout: w = {Ex, Ey, Ez, Hx, Hy, Hz}
 
-  // Let {{E}} = ( ER + EL ) / 2, [[E]] = ( ER - EL ) / 2 
+  // Let {{E}} = ( ER + EL ) / 2, [[E]] = ( ER - EL ) / 2
   // The first three components of the flux are
-  // - n x {{H}} + n x n x [[E]] / r 
+  // - n x {{H}} + n x n x [[E]] / r
   // and the last three are
-  //   n x {{E}} + n x n x [[H]] / r 
-  
+  //   n x {{E}} + n x n x [[H]] / r
+
   const schnaps_real nx = vnorm[0];
   const schnaps_real ny = vnorm[1];
   const schnaps_real nz = vnorm[2];
@@ -196,7 +196,7 @@ void Maxwell3DNumFlux_upwind(schnaps_real *wL, schnaps_real *wR, schnaps_real *v
   const schnaps_real nxx = overr * nx * nx;
   const schnaps_real nyy = overr * ny * ny;
   const schnaps_real nzz = overr * nz * nz;
-    
+
   const schnaps_real Esx = 0.5 * ( wR[0] + wL[0] );
   const schnaps_real Esy = 0.5 * ( wR[1] + wL[1] );
   const schnaps_real Esz = 0.5 * ( wR[2] + wL[2] );
@@ -214,39 +214,39 @@ void Maxwell3DNumFlux_upwind(schnaps_real *wL, schnaps_real *wR, schnaps_real *v
   const schnaps_real Hdz = 0.5 * ( wR[5] - wL[5] );
 
   // E flux
-  flux[0] = nz * Hsy -ny * Hsz 
+  flux[0] = nz * Hsy -ny * Hsz
     -(nyy + nzz) * Edx + nxy * Edy + nxz * Edz;
   flux[1] = -nz * Hsx + nx * Hsz
-    + nxy * Edx -(nxx + nzz) * Edy + nyz * Edz; 
+    + nxy * Edx -(nxx + nzz) * Edy + nyz * Edz;
   flux[2] = -nx * Hsy + ny * Hsx
     + nxz * Edx + nyz * Edy -(nxx + nyy) * Edz;
 
   // H flux
   flux[3] = -nz * Esy + ny * Esz
-    -(nyy + nzz) * Hdx + nxy * Hdy + nxz * Hdz; 
+    -(nyy + nzz) * Hdx + nxy * Hdy + nxz * Hdz;
   flux[4] = nz * Esx - nx * Esz
-    + nxy * Hdx -(nxx + nzz) * Hdy + nyz * Hdz; 
-  flux[5] = - ny * Esx + nx * Esy  
+    + nxy * Hdx -(nxx + nzz) * Hdy + nyz * Hdz;
+  flux[5] = - ny * Esx + nx * Esy
     + nxz * Hdx + nyz * Hdy -(nxx + nyy) * Hdz;
-    
+
 }
 #pragma end_opencl
 
 #pragma start_opencl
-void Maxwell3DNumFluxClean_upwind(schnaps_real *wL, schnaps_real *wR, schnaps_real *vnorm, 
-				      schnaps_real *flux) 
+void Maxwell3DNumFluxClean_upwind(schnaps_real *wL, schnaps_real *wR, schnaps_real *vnorm,
+				      schnaps_real *flux)
 {
   // Upwind flux (upwind) for Maxwell's equations
 
   // Data layout: w = {Ex, Ey, Ez, Hx, Hy, Hz, lambda_E, lambda_H}
 
-  // Let {{E}} = ( ER + EL ) / 2, [[E]] = ( ER - EL ) / 2 
+  // Let {{E}} = ( ER + EL ) / 2, [[E]] = ( ER - EL ) / 2
   // The E flux is:
-  // - n x {{H}} + n x n x [[E]] / r 
-  //   + c1 n {{lambda_E}} + c1 n ( n . [[E]] ) / r 
+  // - n x {{H}} + n x n x [[E]] / r
+  //   + c1 n {{lambda_E}} + c1 n ( n . [[E]] ) / r
   // The H flux is:
-  //   n x {{E}} + n x n x [[H]] / r 
-  //   + c2 n {{lambda_H}} + c2 n ( n . [[H]] ) / r 
+  //   n x {{E}} + n x n x [[H]] / r
+  //   + c2 n {{lambda_H}} + c2 n ( n . [[H]] ) / r
   // The lambda_E flux is
   // c1 * ( n . {{E}} + r [[lambda_e]] )
   // The lambda_H flux is
@@ -274,7 +274,7 @@ void Maxwell3DNumFluxClean_upwind(schnaps_real *wL, schnaps_real *wR, schnaps_re
   const schnaps_real ny = vnorm[1];
   const schnaps_real nz = vnorm[2];
   const schnaps_real r = sqrt( nx * nx + ny * ny + nz * nz );
-  
+
   // Consts based on the mean
   const schnaps_real Esx = 0.5 * ( wR[0] + wL[0] );
   const schnaps_real Esy = 0.5 * ( wR[1] + wL[1] );
@@ -324,12 +324,12 @@ void Maxwell3DNumFluxClean_upwind(schnaps_real *wL, schnaps_real *wR, schnaps_re
 #pragma end_opencl
 
 #pragma start_opencl
-void Maxwell3DImposedData(const schnaps_real *x, const schnaps_real t, schnaps_real *w) 
+void Maxwell3DImposedData(const schnaps_real *x, const schnaps_real t, schnaps_real *w)
 {
   // Data layout: w = {Ex, Ey, Ez, Hx, Hy, Hz, lambda_E, lambda_H}
 
 #if 0
-  
+
 #ifndef M_PI
 #define M_PI (3.14159)
 #endif
@@ -365,7 +365,7 @@ void Maxwell3DImposedData(const schnaps_real *x, const schnaps_real t, schnaps_r
   const schnaps_real r = 1.0;
 
   const schnaps_real u = cos(theta);
-  const schnaps_real v = sin(theta); 
+  const schnaps_real v = sin(theta);
   const schnaps_real k = 2.0 * pi / v;
   const schnaps_real c = -cos(k * (u * x[0] + v * x[1] - t));
 
@@ -386,7 +386,7 @@ void Maxwell3DImposedData(const schnaps_real *x, const schnaps_real t, schnaps_r
 #pragma end_opencl
 
 #pragma start_opencl
-void Maxwell3DInitData(schnaps_real *x, schnaps_real *w) 
+void Maxwell3DInitData(schnaps_real *x, schnaps_real *w)
 {
   schnaps_real t = 0;
   Maxwell3DImposedData(x, t, w);
@@ -394,7 +394,17 @@ void Maxwell3DInitData(schnaps_real *x, schnaps_real *w)
 #pragma end_opencl
 
 #pragma start_opencl
-void Maxwell3DBoundaryFlux_upwind(schnaps_real *x, schnaps_real t, 
+void Maxwell3DBoundaryFlux_upwind(schnaps_real *x, schnaps_real t,
+				      schnaps_real *wL, schnaps_real *vnorm, schnaps_real *flux)
+{
+  schnaps_real wR[8];
+  Maxwell3DImposedData(x, t, wR);
+  Maxwell3DNumFlux_upwind(wL, wR, vnorm, flux);
+}
+#pragma end_opencl
+
+#pragma start_opencl
+void Maxwell3DBoundaryFluxClean_upwind(schnaps_real *x, schnaps_real t,
 				      schnaps_real *wL, schnaps_real *vnorm, schnaps_real *flux)
 {
   schnaps_real wR[8];

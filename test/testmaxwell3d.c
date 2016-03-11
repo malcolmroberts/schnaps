@@ -17,7 +17,7 @@ int TestMaxwell3D(void) {
   // test/testdisque.msh
 
   char *mshname =  "../test/testcube.msh";
-  
+
   MacroMesh mesh;
   ReadMacroMesh(&mesh,"../test/testcube.msh");
   //ReadMacroMesh(&mesh,"../test/testmacromesh.msh");
@@ -30,7 +30,7 @@ int TestMaxwell3D(void) {
 
   model.NumFlux = Maxwell3DNumFluxClean_upwind;
   //f.model.NumFlux = Maxwell2DNumFlux_centered;
-  model.BoundaryFlux = Maxwell3DBoundaryFlux_upwind;
+  model.BoundaryFlux = Maxwell3DBoundaryFluxClean_upwind;
   model.InitData = Maxwell3DInitData;
   model.ImposedData = Maxwell3DImposedData;
   //model.Source = Maxwell2DSource;
@@ -48,7 +48,7 @@ int TestMaxwell3D(void) {
     return true;
   }
 #endif
-  
+
   CheckMacroMesh(&mesh, deg, raf);
 
 
@@ -72,7 +72,7 @@ int TestMaxwell3D(void) {
 
 
   InitSimulation(&simu, &mesh, deg, raf, &model);
- 
+
   schnaps_real tmax = .1;
   simu.cfl=0.2;
   simu.vmax=1;
@@ -85,7 +85,7 @@ int TestMaxwell3D(void) {
   schnaps_real dt = 0;
   RK4_CL(&simu, tmax, dt, 0, 0, 0);
 
-  CopyfieldtoCPU(&simu); 
+  CopyfieldtoCPU(&simu);
   printf("\nOpenCL Kernel time:\n");
   show_cl_timing(&simu);
   printf("\n");
@@ -103,16 +103,16 @@ int TestMaxwell3D(void) {
   schnaps_real tolerance = 0.0025;
   tolerance = 0.08;
   test = dd < tolerance;
-  
- 
+
+
   return test;
 }
 
 int main(void) {
   int resu = TestMaxwell3D();
-  if (resu) 
+  if (resu)
     printf("Maxwell3D test OK!\n");
-  else 
+  else
     printf("Maxwell3D failed !\n");
   return !resu;
 }

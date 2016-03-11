@@ -57,7 +57,7 @@ int TestOrszagTang(int argc, char *argv[]) {
 
   BuildConnectivity(&mesh);
   int deg[]={2, 2, 0};
-  int raf[]={53, 53, 1};
+  int raf[]={25, 25, 1};
   CheckMacroMesh(&mesh, deg, raf);
 
   Model model;
