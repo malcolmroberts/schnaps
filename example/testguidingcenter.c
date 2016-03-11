@@ -4,6 +4,7 @@
 #include "quantities_vp.h"
 #include "gyro.h"
 #include "solverpoisson.h"
+#include "diagnostics_vp.h"
 
 int TestGuidingCenter(void);
 
@@ -13,7 +14,7 @@ void GuidingCImposedData(const schnaps_real x[3], const schnaps_real t, schnaps_
 void GuidingCBoundaryFlux(schnaps_real x[3],schnaps_real t,
 		      schnaps_real wL[],schnaps_real* vnorm,
 		      schnaps_real* flux);
-
+//void SolveQuasineutreEq(void *field, schnaps_real *w, schnaps_real dt); 
 int main(void) {
   
   // unit tests
@@ -43,7 +44,7 @@ int TestGuidingCenter(void) {
   int vec=1;
   
     
-  int deg[]={4, 4, 1};
+  int deg[]={3, 3, 1};
   int raf[]={10, 10, 1};
 
   CheckMacroMesh(&mesh, deg, raf);
@@ -58,7 +59,7 @@ int TestGuidingCenter(void) {
   
   KineticData *kd = &schnaps_kinetic_data;
   int nbelemv = 1;
-  int deg_v = 0;
+  int deg_v = 1;
   
   InitKineticData(&schnaps_kinetic_data,nbelemv,deg_v);
   kd->solve_quasineutrality = true;
@@ -90,26 +91,28 @@ int TestGuidingCenter(void) {
   // apply the DG scheme
   // time integration by RK2 scheme 
   // up to final time = 1.
-  simu.cfl=0.2;
+  simu.cfl=0.3;
   //schnaps_real dt = 0;
-  schnaps_real tmax = 0.1;
-  RK4(&simu,tmax);
+  schnaps_real tmax = 0.05;
+  RK2(&simu,tmax);
 
   //PlotFields(kd->index_phi,(1==0),&simu,"sol","dgvisu.msh");
+  PlotFields(kd->index_rho,(1==0),&simu,"sol","rho.msh");
+  PlotFields(kd->index_max_kin,(1==0),&simu,"sol","distrib.msh");
   PlotFields(kd->index_ex,(1==0),&simu,"sol_ex","ex.msh");
   PlotFields(kd->index_ey,(1==0),&simu,"sol_ey","ey.msh");
   PlotFields(kd->index_ez,(1==0),&simu,"sol_ez","ez.msh");
-  PlotFields(kd->index_phi,(1==1),&simu,"error","dgerror.msh");
+  PlotFields(kd->index_phi,(1==0),&simu,"sol_phi","potential.msh");
 
-  double dd=L2error(&simu);
+  //double dd=L2error(&simu);
   //double dd_l2_vel =GyroL2VelError(&f)
-  //double dd_Kinetic=L2_Kinetic_error(&f);
+  double dd_Kinetic=L2_Kinetic_error(&simu);
   
-  //printf("erreur kinetic L2=%lf\n",dd_Kinetic);
-  printf("erreur L2=%lf\n",dd);
+  printf("erreur kinetic L2=%lf\n",dd_Kinetic);
+  //printf("erreur L2=%lf\n",dd);
   printf("tnow is  %lf\n",simu.tnow);
   Velocity_distribution_plot(simu.w);
-  test= test && (dd < 0.005);
+  test= test && (dd_Kinetic < 0.005);
 
 
   return test; 
@@ -121,8 +124,7 @@ void GuidingCInitData(schnaps_real x[3],schnaps_real w[]){
   schnaps_real t=0;
   GuidingCImposedData(x,t,w);
 }
-
-void GuidingCImposedData(const schnaps_real x[3], const schnaps_real t, schnaps_real w[])
+void GuidingCImposedData1(const schnaps_real x[3], const schnaps_real t, schnaps_real w[])
 {
   KineticData *kd = &schnaps_kinetic_data;
   //For the same with drif kinetic
@@ -131,36 +133,55 @@ void GuidingCImposedData(const schnaps_real x[3], const schnaps_real t, schnaps_
   schnaps_real pi= 4.0*atan(1.0);
   schnaps_real r = sqrt(x[0] * x[0] + x[1] * x[1]);
   schnaps_real phi = atan(x[1]/x[0]);
+ 
+  /* if (x[0]*x[1] < 0){ */
+  /*   phi += pi; */
+  /*  } */
+  for(int i = 0; i <kd->index_max_kin + 1; i++){
+       w[i] = 1+eps*exp(-(r-7.3)*(r-7.3)/8)*cos(m*phi);
+  }
+ // exact value of the potential
+  // and electric field
+  w[kd->index_phi]=0; //(x[0] * x[0] + x[1] * x[1])/4;
+  w[kd->index_rho] = 0; //-1 + kd->qn_damping * w[kd->index_phi];
+  w[kd->index_rho] = 1+eps*exp(-(r-7.3)*(r-7.3)/8)*cos(m*phi);//}
+  w[kd->index_ex]=0; //-x[0]/2;
+  w[kd->index_ey]=0; //-x[1]/2;
+  w[kd->index_ez]=0;
+  w[kd->index_u] = 0; // u init
+  w[kd->index_P] = 0; // p init
+  w[kd->index_T] = 0; // e ou T init
+}
+
+
+void GuidingCImposedData(const schnaps_real x[3], const schnaps_real t, schnaps_real w[])
+{
+  KineticData *kd = &schnaps_kinetic_data;
+  
+  //anneaux
+  schnaps_real m=6;
+  schnaps_real eps = 0.001;
+  schnaps_real pi= 4.0*atan(1.0);
+  schnaps_real r = sqrt(x[0] * x[0] + x[1] * x[1]);
+  schnaps_real phi = atan(x[1]/x[0]);
   schnaps_real rmin = 5;
   schnaps_real rmax = 8;
-  for(int i = 0; i <kd->index_max_kin + 1; i++){
-    if((rmin <= r) & (r<= rmax))
-      { w[i] = 1+eps*exp(-(r-7.3)*-(r-7.3)/8)*cos(m*phi);}
-    else
-      {  w[i] =0;
-      }
-  }
-
-  //anneaux
-  /* schnaps_real m=6; */
-  /* schnaps_real eps = 0.001; */
-  /* schnaps_real pi= 4.0*atan(1.0); */
-  /* schnaps_real r = sqrt(x[0] * x[0] + x[1] * x[1]); */
-  /* schnaps_real phi = atan(x[1]/x[0]); */
-  /* schnaps_real rmin = 5; */
-  /* schnaps_real rmax = 8; */
-  /* for(int i = 0; i <kd->index_max_kin + 1; i++){ */
-  /*   if((rmin <= r) & (r<= rmax)) */
-  /*     { w[i] = exp(-(r-6.5)*(r-6.5)*4)*(1+eps*cos(m*phi));} */
-  /*   else */
-  /*     {  w[i] =0; */
-  /*     } */
+  /* if (x[0]*x[1] < 0){ */
+  /*   phi += pi; */
   /* } */
+  for(int i = 0; i <kd->index_max_kin + 1; i++){
+    w[i] =exp(-(r-6.5)*(r-6.5)*4)*(1+eps*cos(m*phi));
+  }
   // exact value of the potential
   // and electric field
   w[kd->index_phi]=0; //(x[0] * x[0] + x[1] * x[1])/4;
   //w[kd->index_phi]= 0;
   w[kd->index_rho] = 0; //-1 + kd->qn_damping * w[kd->index_phi];
+  //if((rmin <= r) & (r<= rmax))
+  w[kd->index_rho] = exp(-(r-6.5)*(r-6.5)*4)*(1+eps*cos(m*phi));
+    //else
+    //{ w[kd->index_rho] =0;
+    //}
   w[kd->index_ex]=0; //-x[0]/2;
   w[kd->index_ey]=0; //-x[1]/2;
   //w[kd->index_ex]=0;
@@ -170,6 +191,7 @@ void GuidingCImposedData(const schnaps_real x[3], const schnaps_real t, schnaps_
   w[kd->index_P] = 0; // p init
   w[kd->index_T] = 0; // e ou T init
 }
+
 
 void GuidingCBoundaryFlux(schnaps_real x[3],schnaps_real t,
 		      schnaps_real wL[],schnaps_real* vnorm,
@@ -191,6 +213,8 @@ void SolveQuasineutreEq(void *si) {
   static ContinuousSolver ps;
   static bool is_init = false;
 
+  if (!is_init){
+    is_init = true;
     int nb_var=1;
     int * listvar= malloc(nb_var * sizeof(int));
     listvar[0]=kd->index_phi;
@@ -210,8 +234,10 @@ void SolveQuasineutreEq(void *si) {
     ps.lsol.solver_type = LU;
     ps.lsol.pc_type=NONE;
 #endif
-
-    SolveContinuous2D(&ps);
+  }
+  SolveContinuous2D(&ps);
   //freeContinuousSolver(&ps);
 }
+  
+  
 
