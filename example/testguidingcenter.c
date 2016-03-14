@@ -59,9 +59,11 @@ int TestGuidingCenter(void) {
   
   KineticData *kd = &schnaps_kinetic_data;
   int nbelemv = 1;
-  int deg_v = 1;
+  int deg_v = 0;
   
   InitKineticData(&schnaps_kinetic_data,nbelemv,deg_v);
+  //kd->vmax = 0;
+  //kd->dv = 1;
   kd->solve_quasineutrality = true;
   kd->substract_mean_charge = false;
   kd->qn_damping = 0;
@@ -94,6 +96,7 @@ int TestGuidingCenter(void) {
   simu.cfl=0.3;
   //schnaps_real dt = 0;
   schnaps_real tmax = 0.05;
+
   RK2(&simu,tmax);
 
   //PlotFields(kd->index_phi,(1==0),&simu,"sol","dgvisu.msh");
@@ -219,7 +222,7 @@ void SolveQuasineutreEq(void *si) {
     int * listvar= malloc(nb_var * sizeof(int));
     listvar[0]=kd->index_phi;
     InitContinuousSolver(&ps,simu,type_bc,nb_var,listvar);
-    
+
     ps.matrix_assembly=ContinuousOperator_Poisson2D;
     ps.rhs_assembly=RHSPoisson_Continuous;
     ps.bc_assembly= ExactDirichletContinuousMatrix;
@@ -235,7 +238,9 @@ void SolveQuasineutreEq(void *si) {
     ps.lsol.pc_type=NONE;
 #endif
   }
+  printf("coucou");
   SolveContinuous2D(&ps);
+  printf("coucou");
   //freeContinuousSolver(&ps);
 }
   

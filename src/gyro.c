@@ -49,18 +49,18 @@ void GyroUpwindNumFlux(schnaps_real wL[],schnaps_real wR[],schnaps_real* vnorm,s
   for(int i=0;i<kd->index_max_kin+1;i++){
     schnaps_real vn = E_y * vnorm[0] - E_x *vnorm[1];
 
- /*    int j,nel; */
- /*    if(kd->deg_v==0) { */
- /*      j=i; */
- /*      nel=i; */
- /*    } */
- /*    else{ */
- /*      j=i%kd->deg_v; // local connectivity put in function */
- /*      nel=i/kd->deg_v; // element num (TODO : function)  */
- /*    } */
+    int j,nel;
+    if(kd->deg_v==0) {
+      j=i;
+      nel=i;
+    }
+    else{
+      j=i%kd->deg_v; // local connectivity put in function
+      nel=i/kd->deg_v; // element num (TODO : function)
+    } 
  /* printf("coucou1 \n"); */
-    int j=i%kd->deg_v; // local connectivity put in function
-    int nel=i/kd->deg_v; // element num (TODO : function) 
+    /* int j=i%kd->deg_v; // local connectivity put in function */
+    /* int nel=i/kd->deg_v; // element num (TODO : function)  */
     schnaps_real v =-kd->vmax+ nel*kd->dv +
       kd->dv* glop(kd->deg_v,j); // gauss_lob_point[j]
 
