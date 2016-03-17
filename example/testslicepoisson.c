@@ -93,7 +93,7 @@ int TestSlicePoisson(void) {
   //Computation_charge_density(&simu);
   // save the results and the error
   //PlotFields(1,(1==0),&simu,"sol","dgvisu.msh");
-
+  //PlotFields(kd->index_phi,(1==0),&simu,"sol","phi.msh");
   ContinuousSolver ps;
   
   int nb_var=1;
@@ -156,7 +156,7 @@ void SliceImposedData(const schnaps_real x[3], const schnaps_real t, schnaps_rea
   }
   // exact value of the potential
   // and electric field
-  w[kd->index_phi]=(x[0] * x[0] + x[1] * x[1])/4;
+  w[kd->index_phi]=0;//(x[0] * x[0] + x[1] * x[1])/4;
   //w[kd->index_phi]= 0;
   w[kd->index_rho] = -1 + kd->qn_damping * w[kd->index_phi];
   w[kd->index_ex]=-x[0]/2;

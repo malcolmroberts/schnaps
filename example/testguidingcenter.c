@@ -34,7 +34,8 @@ int TestGuidingCenter(void) {
 
   // read the gmsh file
   MacroMesh mesh;
-  ReadMacroMesh(&mesh,"../geo/cylindre.msh");
+  //ReadMacroMesh(&mesh,"../geo/cylindre.msh"); 
+  ReadMacroMesh(&mesh,"testcylindre.msh");
   /* Detect2DMacroMesh(&mesh); */
   /* bool is2d=mesh.is2d; */
   /* assert(is2d); */
@@ -45,7 +46,7 @@ int TestGuidingCenter(void) {
   
     
   int deg[]={3, 3, 1};
-  int raf[]={10, 10, 1};
+  int raf[]={5, 5, 1};
 
   CheckMacroMesh(&mesh, deg, raf);
 
@@ -62,8 +63,8 @@ int TestGuidingCenter(void) {
   int deg_v = 0;
   
   InitKineticData(&schnaps_kinetic_data,nbelemv,deg_v);
-  //kd->vmax = 0;
-  //kd->dv = 1;
+  /* kd->vmax = 1; */
+  /* kd->dv = 1; */
   kd->solve_quasineutrality = true;
   kd->substract_mean_charge = false;
   kd->qn_damping = 0;
@@ -75,7 +76,7 @@ int TestGuidingCenter(void) {
   model.m= kd->index_max; // num of conservative variables
   model.NumFlux=GyroUpwindNumFlux;
   //model.NumFlux=GyroZeroNumFlux;
-  model.BoundaryFlux=GyroBoundaryFlux;
+  model.BoundaryFlux=GuidingCBoundaryFlux;
   model.InitData=GuidingCInitData;
   model.ImposedData=GuidingCImposedData;
   model.Source = NULL;
@@ -84,35 +85,41 @@ int TestGuidingCenter(void) {
 
   InitSimulation(&simu, &mesh, deg, raf, &model);
   //check the initial distribution funtion
-  PlotFields(kd->index_max_kin,(1==0),&simu,"sol","distrib.msh");
+  PlotFields(kd->index_rho,(1==0),&simu,"init_rho","testres2/initrho.msh");
+  PlotFields(kd->index_max_kin,(1==0),&simu,"init_f","testres2/initdistrib.msh");
   //simu.pre_dtfields = UpdateGyroPoisson;
-   simu.vmax = kd->vmax; // maximal wave speed 
- 
+   simu.vmax = kd->vmax; // maximal wave speed
    simu.pre_dtfields = SolveQuasineutreEq;
-   simu.post_dtfields=NULL;
+   /* simu.post_dtfields=NULL; */
   // apply the DG scheme
   // time integration by RK2 scheme 
   // up to final time = 1.
-  simu.cfl=0.3;
+  simu.cfl=0.5;
   //schnaps_real dt = 0;
-  schnaps_real tmax = 0.05;
+  schnaps_real tmax = 0.002;
+  Computation_charge_density(&simu);
+  //RK2(&simu,tmax);
+  PlotFields(kd->index_rho,(1==0),&simu,"sol_rho","testres2/rho.msh");
+  PlotFields(kd->index_max_kin,(1==0),&simu,"sol_f","testres2/distrib.msh");
+  PlotFields(kd->index_ex,(1==0),&simu,"sol_ex","testres2/ex.msh");
+  PlotFields(kd->index_ey,(1==0),&simu,"sol_ey","testres2/ey.msh");
+  PlotFields(kd->index_ez,(1==0),&simu,"sol_ez","testres2/ez.msh");
+  PlotFields(kd->index_phi,(1==0),&simu,"sol_phi","testres2/potential.msh");
 
-  RK2(&simu,tmax);
 
-  //PlotFields(kd->index_phi,(1==0),&simu,"sol","dgvisu.msh");
-  PlotFields(kd->index_rho,(1==0),&simu,"sol","rho.msh");
-  PlotFields(kd->index_max_kin,(1==0),&simu,"sol","distrib.msh");
-  PlotFields(kd->index_ex,(1==0),&simu,"sol_ex","ex.msh");
-  PlotFields(kd->index_ey,(1==0),&simu,"sol_ey","ey.msh");
-  PlotFields(kd->index_ez,(1==0),&simu,"sol_ez","ez.msh");
-  PlotFields(kd->index_phi,(1==0),&simu,"sol_phi","potential.msh");
+  /* PlotFields(kd->index_rho,(1==0),&simu,"sol_rho","rho.msh"); */
+  /* PlotFields(kd->index_max_kin,(1==0),&simu,"sol_f","distrib.msh"); */
+  /* PlotFields(kd->index_ex,(1==0),&simu,"sol_ex","ex.msh"); */
+  /* PlotFields(kd->index_ey,(1==0),&simu,"sol_ey","ey.msh"); */
+  /* PlotFields(kd->index_ez,(1==0),&simu,"sol_ez","ez.msh"); */
+  /* PlotFields(kd->index_phi,(1==0),&simu,"sol_phi","potential.msh"); */
 
-  //double dd=L2error(&simu);
+  double dd=L2error(&simu);
   //double dd_l2_vel =GyroL2VelError(&f)
   double dd_Kinetic=L2_Kinetic_error(&simu);
   
   printf("erreur kinetic L2=%lf\n",dd_Kinetic);
-  //printf("erreur L2=%lf\n",dd);
+  printf("erreur L2=%lf\n",dd);
   printf("tnow is  %lf\n",simu.tnow);
   Velocity_distribution_plot(simu.w);
   test= test && (dd_Kinetic < 0.005);
@@ -167,28 +174,34 @@ void GuidingCImposedData(const schnaps_real x[3], const schnaps_real t, schnaps_
   schnaps_real pi= 4.0*atan(1.0);
   schnaps_real r = sqrt(x[0] * x[0] + x[1] * x[1]);
   schnaps_real phi = atan(x[1]/x[0]);
-  schnaps_real rmin = 5;
-  schnaps_real rmax = 8;
-  /* if (x[0]*x[1] < 0){ */
-  /*   phi += pi; */
-  /* } */
-  for(int i = 0; i <kd->index_max_kin + 1; i++){
-    w[i] =exp(-(r-6.5)*(r-6.5)*4)*(1+eps*cos(m*phi));
+  /* schnaps_real rmin = 5; */
+ /*  schnaps_real rmax = 8; */
+ /*  if (x[0]*x[1] < 0){ */
+ /*    phi += pi; */
+ /*  } */
+ /* for(int i = 0; i <kd->index_max_kin + 1; i++){ */
+ /*      w[i] =exp(-(r-6.5)*(r-6.5)*4)*(1+eps*cos(m*phi)); */
+ /*  } */
+
+ /*  w[kd->index_rho] = exp(-(r-6.5)*(r-6.5)*4)*(1+eps*cos(m*phi)); */
+  /////////////////////////////////////////////
+  schnaps_real rmin = 4;
+  schnaps_real rmax = 6;
+  if (x[0]*x[1] < 0){
+    phi += pi;
   }
-  // exact value of the potential
-  // and electric field
-  w[kd->index_phi]=0; //(x[0] * x[0] + x[1] * x[1])/4;
-  //w[kd->index_phi]= 0;
-  w[kd->index_rho] = 0; //-1 + kd->qn_damping * w[kd->index_phi];
-  //if((rmin <= r) & (r<= rmax))
-  w[kd->index_rho] = exp(-(r-6.5)*(r-6.5)*4)*(1+eps*cos(m*phi));
-    //else
-    //{ w[kd->index_rho] =0;
-    //}
-  w[kd->index_ex]=0; //-x[0]/2;
-  w[kd->index_ey]=0; //-x[1]/2;
-  //w[kd->index_ex]=0;
-  //w[kd->index_ey]=0;
+ for(int i = 0; i <kd->index_max_kin + 1; i++){
+      w[i] =exp(-(r-5)*(r-5)*4)*(1+eps*cos(m*phi));
+  }
+ //w[kd->index_rho] = exp(-(r-5)*(r-5)*4)*(1+eps*cos(m*phi));
+   
+  /* for(int i = 0; i <kd->index_max_kin + 1; i++){ */
+  /*   w[i] =exp(-(r-6.5)*(r-6.5)*4)*(1+eps*cos(m*phi)); */
+  /* } */
+  /* w[kd->index_rho] = exp(-(r-6.5)*(r-6.5)*4)*(1+eps*cos(m*phi)); */
+  w[kd->index_phi]=0;
+  w[kd->index_ex]=0; 
+  w[kd->index_ey]=0;
   w[kd->index_ez]=0;
   w[kd->index_u] = 0; // u init
   w[kd->index_P] = 0; // p init
@@ -238,11 +251,9 @@ void SolveQuasineutreEq(void *si) {
     ps.lsol.pc_type=NONE;
 #endif
   }
-  printf("coucou");
+ 
   SolveContinuous2D(&ps);
-  printf("coucou");
   //freeContinuousSolver(&ps);
 }
   
-  
-
+ 
