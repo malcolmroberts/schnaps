@@ -61,7 +61,7 @@ int TestOrszagTang_SPU(int argc, char *argv[]) {
   BuildConnectivity(&mesh);
 
   int deg[]={2, 2, 0};
-  int raf[]={53, 53, 1};
+  int raf[]={15, 15, 1};
   CheckMacroMesh(&mesh, deg, raf);
 
   ////////////////////
@@ -115,7 +115,7 @@ int TestOrszagTang_SPU(int argc, char *argv[]) {
   
   //CopyfieldtoCPU(&simu);
  
-  show_cl_timing(&simu);
+  //show_cl_timing(&simu);
   PlotFields(0, false, &simu, NULL, "dgvisu.msh");
 
   return test;

@@ -45,6 +45,7 @@ int TestOrszagTang(int argc, char *argv[]) {
 
   MacroMesh mesh;
   char *mshname =  "../test/testOTgrid.msh";
+  //char *mshname =  "testgrid.msh";
   
   ReadMacroMesh(&mesh, mshname);
   Detect2DMacroMesh(&mesh);
@@ -57,7 +58,7 @@ int TestOrszagTang(int argc, char *argv[]) {
 
   BuildConnectivity(&mesh);
   int deg[]={2, 2, 0};
-  int raf[]={25, 25, 1};
+  int raf[]={10, 10, 1};
   CheckMacroMesh(&mesh, deg, raf);
 
   Model model;
