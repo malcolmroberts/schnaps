@@ -53,8 +53,8 @@ int TestSlicePoisson(void) {
   //extern KineticData  schnaps_kinetic_data;
   
   KineticData *kd = &schnaps_kinetic_data;
-  int nbelemv = 2;
-  int deg_v = 2;
+  int nbelemv = 1;
+  int deg_v = 0;
   
   InitKineticData(&schnaps_kinetic_data,nbelemv,deg_v);
   kd->solve_quasineutrality = true;
@@ -77,7 +77,7 @@ int TestSlicePoisson(void) {
 
 
   InitSimulation(&simu, &mesh, deg, raf, &model);
-
+  PlotFields(kd->index_rho,(1==0),&simu,"init_rho","initrho.msh");
   //simu.pre_dtfields = UpdateGyroPoisson;
    simu.vmax = kd->vmax; // maximal wave speed 
   //f.macromesh.is1d=true;
@@ -90,7 +90,8 @@ int TestSlicePoisson(void) {
   schnaps_real dt = 0;
   schnaps_real tmax = 0;
   //RK4(&simu,tmax);
-  //Computation_charge_density(&simu);
+  Computation_charge_density(&simu);
+  PlotFields(kd->index_rho,(1==0),&simu,"sol_rho","rho.msh");
   // save the results and the error
   //PlotFields(1,(1==0),&simu,"sol","dgvisu.msh");
   //PlotFields(kd->index_phi,(1==0),&simu,"sol","phi.msh");

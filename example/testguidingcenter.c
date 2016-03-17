@@ -41,12 +41,10 @@ int TestGuidingCenter(void) {
   /* assert(is2d); */
   mesh.period[2]=2;
   BuildConnectivity(&mesh);
-
-  int vec=1;
   
     
   int deg[]={3, 3, 1};
-  int raf[]={5, 5, 1};
+  int raf[]={3, 3, 1};
 
   CheckMacroMesh(&mesh, deg, raf);
 
@@ -198,7 +196,7 @@ void GuidingCImposedData(const schnaps_real x[3], const schnaps_real t, schnaps_
   /* for(int i = 0; i <kd->index_max_kin + 1; i++){ */
   /*   w[i] =exp(-(r-6.5)*(r-6.5)*4)*(1+eps*cos(m*phi)); */
   /* } */
-  /* w[kd->index_rho] = exp(-(r-6.5)*(r-6.5)*4)*(1+eps*cos(m*phi)); */
+  w[kd->index_rho] = exp(-(r-6.5)*(r-6.5)*4)*(1+eps*cos(m*phi)); 
   w[kd->index_phi]=0;
   w[kd->index_ex]=0; 
   w[kd->index_ey]=0;
