@@ -15,13 +15,12 @@
 void Computation_charge_density(Simulation *simu){
 
   KineticData *kd = &schnaps_kinetic_data;
-  //printf("simu->macromesh.nbelems =  %d \n",simu->macromesh.nbelems );
-  //int ie =0;
   for(int ie = 0; ie < simu->macromesh.nbelems; ie++){
     field * f = simu->fd + ie; 
   
     for(int ipg=0;ipg<NPG(f->deg, f-> raf);ipg++){
       int imemc=f->varindex(f->deg, f->raf, f->model.m,ipg,kd->index_rho);
+
       f->wn[imemc]=0;
       //simu->w[imemc]=0;
   
@@ -32,13 +31,12 @@ void Computation_charge_density(Simulation *simu){
 	  schnaps_real vi=-kd->vmax+ielv*kd->dv+kd->dv*glop(kd->deg_v,iloc);
 	  int ipgv=iloc+ielv*kd->deg_v;
 	  int imem=f->varindex(f->deg, f->raf, f->model.m,ipg,ipgv);
-	  f->wn[imemc]+=omega*kd->dv*simu->w[imem];
+	  f->wn[imemc]+=omega*kd->dv*f->wn[imem]; //Non, il faut copy le tableau de f->wn dans un nouveau tableau d'abord
           //simu->w[imemc] += omega*kd->dv*simu->w[imem];
 	  //if(abs(simu->w[imem]) >0)
-	    printf("ielv=%d iloc= %d  omega= %f imem= %d wimem = %f dv= %f \n",ielv,iloc, omega,imem,simu->w[imem],kd->dv);
+          /* printf("ielv=%d iloc= %d  omega= %f imem= %d wimem = %f dv= %f \n",ielv,iloc, omega,imem, simu->w[imem],kd->dv); */
 	}
       }
-      //simu->w[imemc] =f->wn[imemc];
     }
     }
   

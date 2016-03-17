@@ -40,7 +40,7 @@ int TestSlicePoisson(void) {
   
     
   int deg[]={2, 2, 2};
-  int raf[]={1, 1, 1};
+  int raf[]={4, 4, 2};
 
   CheckMacroMesh(&mesh, deg, raf);
 
@@ -54,7 +54,7 @@ int TestSlicePoisson(void) {
   
   KineticData *kd = &schnaps_kinetic_data;
   int nbelemv = 1;
-  int deg_v = 0;
+  int deg_v = 2;
   
   InitKineticData(&schnaps_kinetic_data,nbelemv,deg_v);
   kd->solve_quasineutrality = true;
@@ -153,7 +153,7 @@ void SliceImposedData(const schnaps_real x[3], const schnaps_real t, schnaps_rea
 {
   KineticData *kd = &schnaps_kinetic_data;
   for(int i = 0; i <kd->index_max_kin + 1; i++){
-    w[i] = 0;
+    w[i] =0;
   }
   // exact value of the potential
   // and electric field
