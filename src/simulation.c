@@ -215,6 +215,7 @@ void InitSimulation(Simulation *simu, MacroMesh *mesh,
   schnaps_real physnode[20][3];
 
   simu->hmin = FLT_MAX;
+  simu->vcfl = 1;
 
 #ifdef _WITH_OPENCL
   simu->use_source_cl = false;
@@ -1065,8 +1066,8 @@ void RK4_final_inplace_old(schnaps_real *w, schnaps_real *l1, schnaps_real *l2, 
 
 schnaps_real Get_Dt_RK(Simulation *simu)
 {
-  //printf("mmmm %f %f %f ",simu->cfl, simu->hmin,simu->vmax);
-  return simu->cfl * simu->hmin / simu->vmax;
+  
+  return simu->cfl * simu->hmin / simu->vcfl;
 
 }
 

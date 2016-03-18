@@ -10,6 +10,29 @@
 #include "solverpoisson.h"
 
 
+void GyroCFLVelocity(Simulation *si) {
+  Simulation *simu = si;  
+
+  //printf("mmmm %f %f %f ",simu->cfl, simu->hmin,simu->vmax);
+  schnaps_real Emax = 0.1;
+  KineticData *kd = &schnaps_kinetic_data;
+
+  for(int ie = 0; ie < simu->macromesh.nbelems; ie++){
+    field * f = simu->fd + ie; 
+  
+    for(int ipg=0;ipg<NPG(f->deg, f-> raf);ipg++){
+      int imemex=f->varindex(f->deg, f->raf, f->model.m,ipg,kd->index_ex);
+      int imemey=f->varindex(f->deg, f->raf, f->model.m,ipg,kd->index_ey);
+      schnaps_real Enorm = pow(f->wn[imemex] * f->wn[imemex] + f->wn[imemey] * f->wn[imemey] ,0.5);
+      Emax = Enorm > Emax ? Enorm : Emax;
+    }
+  }
+  printf("Emax %f \n",Emax);
+  
+  simu->vcfl = Emax;
+}
+
+
 //centered flux num gyro
 void GyroCenteredNumFlux(schnaps_real wL[],schnaps_real wR[],schnaps_real* vnorm,schnaps_real* flux){
   schnaps_real eps =0; //if not equal 0 => decentered flux
@@ -27,7 +50,6 @@ void GyroCenteredNumFlux(schnaps_real wL[],schnaps_real wR[],schnaps_real* vnorm
     schnaps_real v =- kd->vmax + nel* kd->dv +
       kd->dv * glop(kd->deg_v,j); // gauss_lob_point[j]
 
-    //printf("v=%f\n",v);
     schnaps_real flux3 =v*wm;
   
     flux[i] = vnorm[0]*flux1+vnorm[1]*flux2+vnorm[2]*flux3-eps*(wR[i]-wL[i])/2;
@@ -45,10 +67,9 @@ void GyroUpwindNumFlux(schnaps_real wL[],schnaps_real wR[],schnaps_real* vnorm,s
   schnaps_real E_x =wL[kd->index_ex];
   schnaps_real E_y =wL[kd->index_ey];
 
- 
   for(int i=0;i<kd->index_max_kin+1;i++){
     schnaps_real vn = E_y * vnorm[0] - E_x *vnorm[1];
-
+    
     int j,nel;
     if(kd->deg_v==0) {
       j=i;
@@ -58,18 +79,19 @@ void GyroUpwindNumFlux(schnaps_real wL[],schnaps_real wR[],schnaps_real* vnorm,s
       j=i%kd->deg_v; // local connectivity put in function
       nel=i/kd->deg_v; // element num (TODO : function)
     } 
- /* printf("coucou1 \n"); */
+
     /* int j=i%kd->deg_v; // local connectivity put in function */
     /* int nel=i/kd->deg_v; // element num (TODO : function)  */
     schnaps_real v =-kd->vmax+ nel*kd->dv +
       kd->dv* glop(kd->deg_v,j); // gauss_lob_point[j]
-
-    vn += v * vnorm[2];
+    
+    //vn += v * vnorm[2];
 
     schnaps_real vnp = vn > 0 ? vn : 0;
     schnaps_real vnm = vn - vnp;
     //printf("v=%f\n",v);
     flux[i] = vnp * wL[i] + vnm * wR[i];
+
     //flux[i]=0;
   
   }

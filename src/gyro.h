@@ -24,6 +24,10 @@
 #include "field.h"
 // gyrokinetic models
 
+//! \brief compute the maximal advection velocity
+//! \param[inout] simu : the simulation
+void GyroCFLVelocity(Simulation* simu);
+
 //! \brief particular flux for the gyro model
 //! \param[in] wL,wR : left and right states
 //! \param[in] vn : normal vector

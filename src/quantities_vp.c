@@ -32,10 +32,8 @@ void Computation_charge_density(Simulation *simu){
 	  schnaps_real vi=-kd->vmax+ielv*kd->dv+kd->dv*glop(kd->deg_v,iloc);
 	  int ipgv=iloc+ielv*kd->deg_v;
 	  int imem=f->varindex(f->deg, f->raf, f->model.m,ipg,ipgv);
-	  f->wn[imemc]+=omega*kd->dv*simu->w[imem];
-          //simu->w[imemc] += omega*kd->dv*simu->w[imem];
-	  //if(abs(simu->w[imem]) >0)
-	    printf("ielv=%d iloc= %d  omega= %f imem= %d wimem = %f dv= %f \n",ielv,iloc, omega,imem,simu->w[imem],kd->dv);
+	  f->wn[imemc]+=omega*kd->dv*f->wn[imem];
+
 	}
       }
       //simu->w[imemc] =f->wn[imemc];
