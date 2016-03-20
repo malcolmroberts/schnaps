@@ -80,8 +80,6 @@ void GyroUpwindNumFlux(schnaps_real wL[],schnaps_real wR[],schnaps_real* vnorm,s
       nel=i/kd->deg_v; // element num (TODO : function)
     } 
 
-    /* int j=i%kd->deg_v; // local connectivity put in function */
-    /* int nel=i/kd->deg_v; // element num (TODO : function)  */
     schnaps_real v =-kd->vmax+ nel*kd->dv +
       kd->dv* glop(kd->deg_v,j); // gauss_lob_point[j]
     
@@ -89,10 +87,8 @@ void GyroUpwindNumFlux(schnaps_real wL[],schnaps_real wR[],schnaps_real* vnorm,s
 
     schnaps_real vnp = vn > 0 ? vn : 0;
     schnaps_real vnm = vn - vnp;
-    //printf("v=%f\n",v);
+    
     flux[i] = vnp * wL[i] + vnm * wR[i];
-
-    //flux[i]=0;
   
   }
   flux[kd->index_phi] =0;

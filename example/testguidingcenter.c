@@ -43,8 +43,8 @@ int TestGuidingCenter(void) {
   BuildConnectivity(&mesh);
   
     
-  int deg[]={3, 3, 1};
-  int raf[]={8, 8, 1};
+  int deg[]={4, 4, 1};
+  int raf[]={10, 10, 1};
 
   CheckMacroMesh(&mesh, deg, raf);
 
@@ -58,7 +58,7 @@ int TestGuidingCenter(void) {
   
   KineticData *kd = &schnaps_kinetic_data;
   int nbelemv = 1;
-  int deg_v = 1;
+  int deg_v = 0;
   
   InitKineticData(&schnaps_kinetic_data,nbelemv,deg_v);
   kd->vmax = 0.5;
@@ -84,8 +84,8 @@ int TestGuidingCenter(void) {
 
   InitSimulation(&simu, &mesh, deg, raf, &model);
   //check the initial distribution funtion
-  //PlotFields(kd->index_rho,(1==0),&simu,"init_rho","initrho.msh");
-  //PlotFields(kd->index_max_kin,(1==0),&simu,"init_f","initdistrib.msh");
+  PlotFields(kd->index_rho,(1==0),&simu,"init_rho","initrho.msh");
+  PlotFields(kd->index_max_kin,(1==0),&simu,"init_f","initdistrib.msh");
   
   //simu.pre_dtfields = UpdateGyroPoisson;
   simu.vmax = kd->vmax; // maximal wave speed
@@ -95,10 +95,9 @@ int TestGuidingCenter(void) {
   
   // apply the DG scheme
   // time integration by RK2 scheme 
-  // up to final time = 1.
+  
   simu.cfl=0.7;
-  //schnaps_real dt = 0;
-  schnaps_real tmax = 10;
+  schnaps_real tmax = 109;
   
   SolveQuasineutreEq(&simu);
   //PlotFields(kd->index_ex,(1==0),&simu,"init_ex","initex.msh");
@@ -152,7 +151,7 @@ void GuidingCImposedData1(const schnaps_real x[3], const schnaps_real t, schnaps
   }
  // exact value of the potential
   // and electric field
-  w[kd->index_phi]=0; //(x[0] * x[0] + x[1] * x[1])/4;
+  w[kd->index_phi] = 0; //(x[0] * x[0] + x[1] * x[1])/4;
   w[kd->index_rho] = 0; //-1 + kd->qn_damping * w[kd->index_phi];
   w[kd->index_rho] = 1+eps*exp(-(r-7.3)*(r-7.3)/8)*cos(m*phi);//}
   w[kd->index_ex]=0; //-x[0]/2;
@@ -169,26 +168,31 @@ void GuidingCImposedData(const schnaps_real x[3], const schnaps_real t, schnaps_
   KineticData *kd = &schnaps_kinetic_data;
   
   //anneaux
-  schnaps_real m=6;
-  schnaps_real eps = 0.001;
+  schnaps_real m=9;
+  schnaps_real eps = 0.1;
   schnaps_real pi= 4.0*atan(1.0);
   schnaps_real r = sqrt(x[0] * x[0] + x[1] * x[1]);
-  schnaps_real phi = atan(x[1]/x[0]);
-
-  if (x[0]*x[1] < 0){
-    phi += pi;
-  }
+  schnaps_real phi = atan2(x[1],x[0]);
+  schnaps_real rminus = 5;
+  schnaps_real rplus = 8;
+  
  for(int i = 0; i <kd->index_max_kin + 1; i++){
-      w[i] =exp(-(r-6.5)*(r-6.5)*4)*(1+eps*cos(m*phi));
+      w[i] = 0;
+      if ((r >= rminus)&&(r <= rplus)){
+        w[i] =exp(-4*(r-6.5)*(r-6.5))*(1+eps*cos(m*phi));
+      }
   }
-  w[kd->index_rho] = exp(-(r-6.5)*(r-6.5)*4)*(1+eps*cos(m*phi)); 
-  w[kd->index_phi] =0;
+  w[kd->index_rho] = 0;
+  if ((r >= rminus)&&(r <= rplus)){
+    w[kd->index_rho] = exp(-4*(r-6.5)*(r-6.5))*(1+eps*cos(m*phi)); 
+    }
+  w[kd->index_phi] = 0;
   w[kd->index_ex] = 0; 
   w[kd->index_ey] = 0;
   w[kd->index_ez] = 0;
-  w[kd->index_u] = 0; // u init
-  w[kd->index_P] = 0; // p init
-  w[kd->index_T] = 0; // e ou T init
+  w[kd->index_u] = 0; 
+  w[kd->index_P] = 0; 
+  w[kd->index_T] = 0; 
 }
 
 
@@ -224,7 +228,6 @@ void SolveQuasineutreEq(void *si) {
     ps.rhs_assembly=RHSPoisson_Continuous;
     ps.bc_assembly= ExactDirichletContinuousMatrix;
     ps.postcomputation_assembly=Computation_ElectricField_Poisson;
-    //ps.postcomputation_assembly=NULL;
 
 #undef PARALUTION
 #ifdef PARALUTION
