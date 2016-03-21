@@ -134,7 +134,7 @@ void Equilibrium_VelocityPerturbation_BoundaryFlux(schnaps_real x[3],schnaps_rea
 void Relaxation(void* s){
   Simulation * simu =s;
   LatticeData * ld=&schnaps_lattice_data;
-  double w_eq[ld->q];
+  double w_eq[simu->wsize];
   
   Compute_distribution_eq(simu,w_eq);
   Compute_relaxation(simu,w_eq);
