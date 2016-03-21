@@ -63,5 +63,6 @@ void InitLatticeData(LatticeData *ld, int dim, int Q,int temp,double sound){
   ld->index_uz=Q+3;
   ld->index_temp=Q+4;
   ld->index_p=Q+5;
+  ld->index_max=Q+6;
   
 }

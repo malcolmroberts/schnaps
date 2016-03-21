@@ -81,6 +81,7 @@ typedef struct LatticeData{
   int index_uz;
   int index_temp;
   int index_p;
+  int index_max;
   
 } LatticeData;
 
