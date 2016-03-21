@@ -44,19 +44,18 @@ void Compute_distribution_eq(Simulation *simu, double * w_eq) {
 	int iuy=f->varindex(f->deg, f->raf, f->model.m, ipg, ld->index_uy);
 	int it=f->varindex(f->deg, f->raf, f->model.m, ipg, ld->index_temp);
 
-	double rho = simu->w[irho];
-	double t = simu->w[it];
-	double ux = simu->w[iux]/t;
-	double uy = simu->w[iuy]/t;
+	double rho = f->wn[irho];
+	double t = f->wn[it];
+	double ux = f->wn[iux]/t;
+	double uy = f->wn[iuy]/t;
 	double u2=  ux*ux + uy*uy;
-	
-	
+		
 	for(int iv=0;iv<ld->index_max_q+1;iv++){
 	  int ikin=f->varindex(f->deg, f->raf, f->model.m, ipg, iv);
 	  
 	  double uv = ux * ld->q_tab[iv][0] + uy * ld->q_tab[iv][1];
 	  
-	  w_eq[ikin]=ld->w_tab[iv]*rho*(1+uv+0.5*uv*uv-0.5*t*u2);	  
+	  w_eq[ikin]=ld->w_tab[iv]*rho*(1.0+uv+0.5*uv*uv-0.5*t*u2);	  
 	}
     }
   }
@@ -74,19 +73,22 @@ void Compute_moments(Simulation *simu) {
 	int iuy=f->varindex(f->deg, f->raf, f->model.m, ipg, ld->index_uy);
 	int iuz=f->varindex(f->deg, f->raf, f->model.m, ipg, ld->index_uz);
 	int it=f->varindex(f->deg, f->raf, f->model.m, ipg, ld->index_temp);
-	simu->w[irho]=0;
-	simu->w[iux]=0;
-	simu->w[iuy]=0;
-	simu->w[iuz]=0;
+	
+	f->wn[irho]=0;
+	f->wn[iux]=0;
+	f->wn[iuy]=0;
+	f->wn[iuz]=0;
 	
 	for(int iv=0;iv<ld->index_max_q+1;iv++){
 	  int ikin=f->varindex(f->deg, f->raf, f->model.m, ipg, iv);
-	  simu->w[irho]+=simu->w[ikin];
-	  simu->w[iux]+=simu->w[ikin] * ld->q_tab[iv][0];
-	  simu->w[iuy]+=simu->w[ikin] * ld->q_tab[iv][1];
+	  
+	  f->wn[irho]+=f->wn[ikin];
+	  f->wn[iux]+=f->wn[ikin]*ld->q_tab[iv][0];
+	  f->wn[iuy]+=f->wn[ikin]*ld->q_tab[iv][1];
 	}
-	simu->w[iux]=simu->w[iux]/simu->w[irho];
-	simu->w[iuy]=simu->w[iuy]/simu->w[irho];
+        
+	f->wn[iux]=f->wn[iux]/f->wn[irho];
+	f->wn[iuy]=f->wn[iuy]/f->wn[irho];
     }
   }
 }
@@ -104,7 +106,7 @@ void Compute_relaxation(Simulation *simu, schnaps_real * w_eq) {
 	for(int iv=0;iv<ld->index_max_q+1;iv++){
 	  int ikin=f->varindex(f->deg, f->raf, f->model.m, ipg, iv);
 	  
-	  simu->w[ikin]=simu->w[ikin]-nu*(simu->w[ikin]-w_eq[ikin]);	  
+	  f->wn[ikin]=f->wn[ikin]-nu*(f->wn[ikin]-w_eq[ikin]);	  
 
 	}
     }
