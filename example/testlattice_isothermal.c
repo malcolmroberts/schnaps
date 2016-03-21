@@ -11,7 +11,7 @@ int TestLattice_isothermal(void);
 void Relaxation(void* s);
 void Moments(void * s);
 
-void DoubleShear_InitData(const schnaps_real x[3], schnaps_real w[]);
+void DoubleShear_InitData(schnaps_real x[3], schnaps_real w[]);
 
 int main(void) {
   
@@ -39,9 +39,6 @@ int TestLattice_isothermal(void) {
   schnaps_real x0[3] = {0, 0, 0};
   AffineMapMacroMesh(&mesh,A,x0);
 
-  bool is2d=mesh.is2d;
-  assert(is2d);
-
   // mesh preparation
   mesh.period[0]=1.0;
   mesh.period[1]=1.0;
@@ -57,14 +54,14 @@ int TestLattice_isothermal(void) {
   
   model.NumFlux=Lattice_NumFlux;
 
-  model.InitData = NULL;
+  model.InitData = DoubleShear_InitData;
   model.ImposedData = NULL;
   model.BoundaryFlux = NULL;
   model.Source = NULL;
 
   
-  int deg[]={4, 0, 0};
-  int raf[]={32, 1, 1};
+  int deg[]={4, 4, 0};
+  int raf[]={32, 32, 1};
 
   CheckMacroMesh(&mesh, deg, raf);
   Simulation simu;
@@ -78,9 +75,9 @@ int TestLattice_isothermal(void) {
   simu.post_dtfields = NULL;
   simu.update_after_rk = NULL;
  
-  schnaps_real tmax = 0.1;
+  schnaps_real tmax = 1.0;
 
-  RK1(&simu, tmax);
+  RK2(&simu, tmax);
  
 
   PlotFields(ld->index_rho, false, &simu, "sol","dgvisu_rho.msh");
@@ -94,12 +91,14 @@ int TestLattice_isothermal(void) {
 }
 
 
-void DoubleShear_InitData(const schnaps_real x[3], schnaps_real w[])
+void DoubleShear_InitData(schnaps_real x[3],schnaps_real w[])
 {
   LatticeData * ld=&schnaps_lattice_data;
   schnaps_real my_pi= 4.0*atan(1.0);
-  schnaps_real delta = 0.05, kappa=80.0;
-
+  schnaps_real delta = 0.05, kappa=20.0;
+  //
+  ld->tau=1.0/1000.0;
+  //
   
   for(int i=0;i<ld->index_max_q;i++){
     w[i]=0;
