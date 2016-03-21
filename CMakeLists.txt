@@ -185,6 +185,8 @@ list(APPEND
   src/diagnostics_vp.c
   src/collision.h
   src/collision.c
+  src/lattice.h
+  src/lattice.c
   )
 
 if(SuiteSparse_FOUND)
