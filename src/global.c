@@ -61,7 +61,7 @@ void InitLatticeData(LatticeData *ld, int dim, int Q,int temp,double sound){
   //
   ld->q_tab =(double **) calloc(Q,sizeof(double*));
   ld->w_tab =(double *) calloc(Q,sizeof(double));
-  for(int i=1;i<Q;i++){
+  for(int i=0;i<Q;i++){
     ld->q_tab[i] =(double *) calloc(dim,sizeof(double));
   }
   // basic D2Q9 lattice nodes

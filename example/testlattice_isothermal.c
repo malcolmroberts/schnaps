@@ -19,8 +19,8 @@ int main(void) {
     
   int resu=TestLattice_isothermal();
 	 
-  if (resu) printf("landau test OK !\n");
-  else printf("landau test failed !\n");
+  if (resu) printf("lattice test OK !\n");
+  else printf("lattice test failed !\n");
 
   return !resu;
 } 
@@ -35,6 +35,7 @@ int TestLattice_isothermal(void) {
 
   MacroMesh mesh;
   ReadMacroMesh(&mesh,"../test/testcube.msh");
+  Detect2DMacroMesh(&mesh);
   schnaps_real A[3][3] = {{1, 0, 0}, {0, 1, 0}, {0, 0,1}};
   schnaps_real x0[3] = {0, 0, 0};
   AffineMapMacroMesh(&mesh,A,x0);
@@ -69,20 +70,20 @@ int TestLattice_isothermal(void) {
 
   InitSimulation(&simu, &mesh, deg, raf, &model);
   simu.vmax = 2*ld->c; 
-  simu.cfl=0.5;
+  simu.cfl=1.0;
   simu.nb_diags = 1;
   simu.pre_dtfields = Relaxation;
-  simu.post_dtfields = NULL;
+  simu.post_dtfields = Moments;
   simu.update_after_rk = NULL;
  
-  schnaps_real tmax = 1.0;
+  schnaps_real tmax = 10.0;
 
   RK2(&simu, tmax);
  
 
   PlotFields(ld->index_rho, false, &simu, "sol","dgvisu_rho.msh");
   PlotFields(ld->index_ux, false, &simu, "sol","dgvisu_ux.msh");
-  PlotFields(ld->index_uy, false, &simu, "sol","dgvisu_y.msh");
+  PlotFields(ld->index_uy, false, &simu, "sol","dgvisu_uy.msh");
 
   test= 1;
 
@@ -99,24 +100,29 @@ void DoubleShear_InitData(schnaps_real x[3],schnaps_real w[])
   //
   ld->tau=1.0/1000.0;
   //
-  
-  for(int i=0;i<ld->index_max_q;i++){
-    w[i]=0;
-  }
-
   w[ld->index_rho]=1.0;
+  double uref=0.05;
   if(x[1]<0.5){
-    w[ld->index_ux]=tanh(kappa*(x[1]-0.25));
+    w[ld->index_ux]=uref * tanh(kappa*(x[1]-0.25));
   }
   else{
-    w[ld->index_ux]=tanh(kappa*(0.75-x[1]));
+    w[ld->index_ux]=uref * tanh(kappa*(0.75-x[1]));
   }    
-
+  
   w[ld->index_rho] = 1.0;
-  w[ld->index_uy]= delta * sin(2.0 * my_pi*(x[0]+0.25));
+  w[ld->index_uy]= uref * delta * sin(2.0 * my_pi*(x[0]+0.25));
   w[ld->index_uz]=0.0;
   w[ld->index_temp]=1./3.0; // p init
   w[ld->index_p]=1.0; // e ou T init
+  //
+  for(int i=0;i<ld->index_max_q+1;i++){
+    double temp = w[ld->index_temp];
+    double ux = w[ld->index_ux]/temp;
+    double uy = w[ld->index_uy]/temp;
+    double usqr = ux * ux + uy * uy;
+    double vdotu = ux * ld->q_tab[i][0] + uy * ld->q_tab[i][1];
+    w[i]= ld->w_tab[i] * (1.0 + vdotu + 0.5 * (vdotu *vdotu - temp * usqr));
+  }
 };
 
 

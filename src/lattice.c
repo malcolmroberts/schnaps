@@ -10,26 +10,22 @@
 
 void Lattice_NumFlux(schnaps_real wL[],schnaps_real wR[],schnaps_real* vnorm,schnaps_real* flux){
  LatticeData * ld=&schnaps_lattice_data;
- 
   for(int i = 0;i < ld->index_max_q+1;i++){
     schnaps_real vn=0;
     for(int dim = 0;dim < ld->d; dim++){
       vn += ld->q_tab[i][dim]*vnorm[dim];
     }
-    
     schnaps_real vnp = vn>0 ? vn : 0;
     schnaps_real vnm = vn-vnp;
-
     flux[i] = vnp * wL[i] + vnm * wR[i];
+    //flux[i]=0.0;
   }
-
   flux[ld->index_rho]=0; 
   flux[ld->index_ux]=0; 
   flux[ld->index_uy]=0;
   flux[ld->index_uz]=0;
   flux[ld->index_temp]=0; 
   flux[ld->index_p]=0; 
-
 };
 
 
@@ -78,7 +74,6 @@ void Compute_moments(Simulation *simu) {
 	int iuy=f->varindex(f->deg, f->raf, f->model.m, ipg, ld->index_uy);
 	int iuz=f->varindex(f->deg, f->raf, f->model.m, ipg, ld->index_uz);
 	int it=f->varindex(f->deg, f->raf, f->model.m, ipg, ld->index_temp);
-	
 	simu->w[irho]=0;
 	simu->w[iux]=0;
 	simu->w[iuy]=0;
@@ -86,10 +81,9 @@ void Compute_moments(Simulation *simu) {
 	
 	for(int iv=0;iv<ld->index_max_q+1;iv++){
 	  int ikin=f->varindex(f->deg, f->raf, f->model.m, ipg, iv);
-	  
 	  simu->w[irho]+=simu->w[ikin];
-	  simu->w[iux]+=simu->w[ikin]*ld->q_tab[iv][0];
-	  simu->w[iuy]+=simu->w[ikin]*ld->q_tab[iv][1];
+	  simu->w[iux]+=simu->w[ikin] * ld->q_tab[iv][0];
+	  simu->w[iuy]+=simu->w[ikin] * ld->q_tab[iv][1];
 	}
 	simu->w[iux]=simu->w[iux]/simu->w[irho];
 	simu->w[iuy]=simu->w[iuy]/simu->w[irho];
@@ -101,9 +95,7 @@ void Compute_moments(Simulation *simu) {
 void Compute_relaxation(Simulation *simu, schnaps_real * w_eq) {
   LatticeData * ld=&schnaps_lattice_data;
   double nu=0;
-
   nu=simu->dt/(ld->tau+0.5*simu->dt);
-  
   for(int ie = 0; ie < simu->macromesh.nbelems; ++ie) {
     field * f = simu->fd+ie;
     
