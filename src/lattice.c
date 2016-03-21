@@ -40,13 +40,13 @@ void Compute_distribution_eq(Simulation *simu, double * w_eq) {
   LatticeData * ld=&schnaps_lattice_data;
 
   for(int ie = 0; ie < simu->macromesh.nbelems; ++ie) {
-    field * f = simu->fd[ie];
+    field * f = simu->fd+ie;
     
     for(int ipg=0;ipg<NPG(f->deg, f-> raf);ipg++){
-      	int irho=f->varindex(f->deg, f->raf, f->model.m, ipg, index_rho);
-	int iux=f->varindex(f->deg, f->raf, f->model.m, ipg, index_ux);
-	int iuy=f->varindex(f->deg, f->raf, f->model.m, ipg, index_uy);
-	int it=f->varindex(f->deg, f->raf, f->model.m, ipg, index_temp);
+      	int irho=f->varindex(f->deg, f->raf, f->model.m, ipg, ld->index_rho);
+	int iux=f->varindex(f->deg, f->raf, f->model.m, ipg, ld->index_ux);
+	int iuy=f->varindex(f->deg, f->raf, f->model.m, ipg, ld->index_uy);
+	int it=f->varindex(f->deg, f->raf, f->model.m, ipg, ld->index_temp);
 
 	double rho = simu->w[irho];
 	double t = simu->w[it];
@@ -66,17 +66,18 @@ void Compute_distribution_eq(Simulation *simu, double * w_eq) {
   }
 }
 
-void Compute_moments(Simulation *simu, double * w_eq) {
+void Compute_moments(Simulation *simu) {
   LatticeData * ld=&schnaps_lattice_data;
 
   for(int ie = 0; ie < simu->macromesh.nbelems; ++ie) {
-    field * f = simu->fd[ie];
+    field * f = simu->fd+ie;
     
     for(int ipg=0;ipg<NPG(f->deg, f-> raf);ipg++){
-      	int irho=f->varindex(f->deg, f->raf, f->model.m, ipg, index_rho);
-	int iux=f->varindex(f->deg, f->raf, f->model.m, ipg, index_ux);
-	int iuy=f->varindex(f->deg, f->raf, f->model.m, ipg, index_uy);
-	int it=f->varindex(f->deg, f->raf, f->model.m, ipg, index_temp);
+      	int irho=f->varindex(f->deg, f->raf, f->model.m, ipg, ld->index_rho);
+	int iux=f->varindex(f->deg, f->raf, f->model.m, ipg, ld->index_ux);
+	int iuy=f->varindex(f->deg, f->raf, f->model.m, ipg, ld->index_uy);
+	int iuz=f->varindex(f->deg, f->raf, f->model.m, ipg, ld->index_uz);
+	int it=f->varindex(f->deg, f->raf, f->model.m, ipg, ld->index_temp);
 	
 	simu->w[irho]=0;
 	simu->w[iux]=0;
@@ -104,7 +105,7 @@ void Compute_Relaxation(Simulation *simu, double * w_eq) {
   nu=simu->dt/(ld->tau+0.5*simu->dt);
   
   for(int ie = 0; ie < simu->macromesh.nbelems; ++ie) {
-    field * f = simu->fd[ie];
+    field * f = simu->fd+ie;
     
     for(int ipg=0;ipg<NPG(f->deg, f-> raf);ipg++){
 	
