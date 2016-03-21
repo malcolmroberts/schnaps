@@ -65,9 +65,31 @@ typedef struct KineticData{
 } KineticData;
 
 
+typedef struct LatticeData{
+  int q;
+  int d;
+  double ** q_tab;
+  double * w_tab;
+  
+  int temp_const;
+  double c;
+
+  int index_max_q;
+  int index_rho;
+  int index_ux;
+  int index_uy;
+  int index_uz;
+  int index_temp;
+  int index_p;
+  
+} LatticeData;
+
+
 extern KineticData schnaps_kinetic_data;
+extern LatticeData schnaps_lattice_data;
 
 void InitKineticData(KineticData *kd, int nbelemv, int degv);
+void InitLatticeData(LatticeData *kd, int dim, int Q,int temp,double sound);
 
 extern bool starpu_is_init;
 extern bool starpu_use;

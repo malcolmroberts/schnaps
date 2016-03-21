@@ -1,7 +1,7 @@
 #include "global.h"
 
 int nplatform_cl = 0;
-int ndevice_cl = 0;
+int ndevice_cl = 1;
 
 bool starpu_is_init = false;
 bool starpu_use = false;
@@ -9,6 +9,7 @@ bool starpu_c_use = false;
 bool starpu_ocl_use = false;
 
 KineticData  schnaps_kinetic_data;
+LatticeData  schnaps_lattice_data;
 
 // OpenCL program for StarPU
 bool opencl_program_is_init = false;
@@ -38,4 +39,29 @@ void InitKineticData(KineticData *kd, int nbelemv, int degv){
   kd->substract_mean_charge = false;
   kd->qn_damping = 0;
   kd->time_order=2;
+}
+
+
+
+void InitLatticeData(LatticeData *ld, int dim, int Q,int temp,double sound){
+
+  ld->q=Q;
+  ld->d=dim;
+  ld->q_tab =(double **) calloc(Q,sizeof(double*));
+  ld->w_tab =(double *) calloc(Q,sizeof(double));
+  for(int i=1;i<Q;i++){
+    ld->q_tab[i] =(double *) calloc(dim,sizeof(double));
+  }
+     
+  ld->temp_const=temp;
+  ld->c=sound;
+
+  ld->index_max_q=Q-1;
+  ld->index_rho=Q;
+  ld->index_ux=Q+1;
+  ld->index_uy=Q+2;
+  ld->index_uz=Q+3;
+  ld->index_temp=Q+4;
+  ld->index_p=Q+5;
+  
 }
