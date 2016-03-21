@@ -11,7 +11,6 @@
 // activate pthread if openmp is not here
 //#define _WITH_PTHREAD
 #endif
-
 #ifdef _WITH_OPENCL
 extern int nplatform_cl;
 extern int ndevice_cl;
@@ -73,7 +72,7 @@ typedef struct LatticeData{
   
   int temp_const;
   double c;
-
+  double tau;
   int index_max_q;
   int index_rho;
   int index_ux;

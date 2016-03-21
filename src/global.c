@@ -47,12 +47,6 @@ void InitLatticeData(LatticeData *ld, int dim, int Q,int temp,double sound){
 
   ld->q=Q;
   ld->d=dim;
-  ld->q_tab =(double **) calloc(Q,sizeof(double*));
-  ld->w_tab =(double *) calloc(Q,sizeof(double));
-  for(int i=1;i<Q;i++){
-    ld->q_tab[i] =(double *) calloc(dim,sizeof(double));
-  }
-     
   ld->temp_const=temp;
   ld->c=sound;
 
@@ -64,5 +58,50 @@ void InitLatticeData(LatticeData *ld, int dim, int Q,int temp,double sound){
   ld->index_temp=Q+4;
   ld->index_p=Q+5;
   ld->index_max=Q+6;
-  
+  //
+  ld->q_tab =(double **) calloc(Q,sizeof(double*));
+  ld->w_tab =(double *) calloc(Q,sizeof(double));
+  for(int i=1;i<Q;i++){
+    ld->q_tab[i] =(double *) calloc(dim,sizeof(double));
+  }
+  // basic D2Q9 lattice nodes
+  if ((ld->d== 2) && (ld->q==9)){
+  ld->q_tab[0][0]=0.0;
+  ld->q_tab[0][1]=0.0;
+  ld->q_tab[1][0]=1.0;
+  ld->q_tab[1][1]=0.0;
+  ld->q_tab[2][0]=0.0;
+  ld->q_tab[2][1]=1.0;
+  ld->q_tab[3][0]=-1.0;
+  ld->q_tab[3][1]=0.0;
+  ld->q_tab[4][0]=0.0;
+  ld->q_tab[4][1]=-1.0;
+  ld->q_tab[5][0]=1.0;
+  ld->q_tab[5][1]=1.0;
+  ld->q_tab[6][0]=-1.0;
+  ld->q_tab[6][1]=1.0;
+  ld->q_tab[7][0]=-1.0;
+  ld->q_tab[7][1]=-1.0;
+  ld->q_tab[8][0]=1.0;
+  ld->q_tab[8][1]=-1.0;
+  //
+  ld->w_tab[0]=4.0/9.0;
+  ld->w_tab[1]=1.0/9.0;
+  ld->w_tab[2]=1.0/9.0;
+  ld->w_tab[3]=1.0/9.0;
+  ld->w_tab[4]=1.0/9.0;
+  ld->w_tab[5]=1.0/36.0;
+  ld->w_tab[6]=1.0/36.0;
+  ld->w_tab[7]=1.0/36.0;
+  ld->w_tab[8]=1.0/36.0;
+  //
+  // scale all nodes velocities 
+  for (int i=0; i<= ld->index_max_q; i++){
+    for (int j=0; j< ld->d;j++){
+    double utmp=ld->q_tab[i][j]; 
+    ld->q_tab[i][j] = utmp * ld->c;
+  };
+  };
+  //
+  }
 }
