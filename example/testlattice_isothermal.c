@@ -11,9 +11,8 @@
 
 int TestLattice_isothermal(void);
 
-void Relaxation(void* simu);
-
-void Moments(void * simu);
+void Relaxation(void* s);
+void Moments(void * s);
 
 
 int main(void) {
@@ -132,7 +131,8 @@ void Equilibrium_VelocityPerturbation_BoundaryFlux(schnaps_real x[3],schnaps_rea
 };
 
 
-void Relaxation(void* simu){
+void Relaxation(void* s){
+  Simulation * simu =s;
   LatticeData * ld=&schnaps_lattice_data;
   double w_eq[ld->q];
   
@@ -141,7 +141,8 @@ void Relaxation(void* simu){
 
 }
 
-void Moments(void* simu){
+void Moments(void* s){
+  Simulation * simu =s;
   
   Compute_moments(simu);
 
