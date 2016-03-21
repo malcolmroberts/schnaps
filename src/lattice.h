@@ -8,6 +8,7 @@
 #include "model.h"
 #include "field.h"
 #include "simulation.h"
+#include "global.h"
 // collision models
 
 //! \brief particular flux for the collision model

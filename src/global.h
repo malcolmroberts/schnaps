@@ -89,7 +89,7 @@ extern KineticData schnaps_kinetic_data;
 extern LatticeData schnaps_lattice_data;
 
 void InitKineticData(KineticData *kd, int nbelemv, int degv);
-void InitLatticeData(LatticeData *kd, int dim, int Q,int temp,double sound);
+void InitLatticeData(LatticeData *ld, int dim, int Q,int temp,double sound);
 
 extern bool starpu_is_init;
 extern bool starpu_use;

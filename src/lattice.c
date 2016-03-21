@@ -98,7 +98,7 @@ void Compute_moments(Simulation *simu) {
 }
 
 
-void Compute_Relaxation(Simulation *simu, double * w_eq) {
+void Compute_relaxation(Simulation *simu, schnaps_real * w_eq) {
   LatticeData * ld=&schnaps_lattice_data;
   double nu=0;
 

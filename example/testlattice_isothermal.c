@@ -3,17 +3,15 @@
 #include <stdlib.h>
 #include <assert.h>
 #include "../test/test.h"
-#include "collision.h"
-#include "quantities_vp.h"
-#include "diagnostics_vp.h"
-#include "solverpoisson.h"
-
+#include "global.h"
+#include "lattice.h"
 
 int TestLattice_isothermal(void);
 
 void Relaxation(void* s);
 void Moments(void * s);
 
+void DoubleShear_InitData(const schnaps_real x[3], schnaps_real w[]);
 
 int main(void) {
   
@@ -51,15 +49,15 @@ int TestLattice_isothermal(void) {
 
   
   Model model;
-  LatticeData * ld=&schnaps_Lattice_data;
+  LatticeData * ld=&schnaps_lattice_data;
 
-  InitLatticeData(2,9,0,1);
+  InitLatticeData(ld,2,9,0,1);
   
   model.m=ld->index_max; // num of conservative variables f(vi) for each vi, phi, E, rho, u, p, e (ou T)
   
   model.NumFlux=Lattice_NumFlux;
 
-  model.InitData = DoubleShear_InitData;
+  model.InitData = NULL;
   model.ImposedData = NULL;
   model.BoundaryFlux = NULL;
   model.Source = NULL;
@@ -77,7 +75,7 @@ int TestLattice_isothermal(void) {
   simu.cfl=0.5;
   simu.nb_diags = 1;
   simu.pre_dtfields = Relaxation;
-  simu.post_dtfiels = NULL;
+  simu.post_dtfields = NULL;
   simu.update_after_rk = NULL;
  
   schnaps_real tmax = 0.1;
@@ -85,9 +83,9 @@ int TestLattice_isothermal(void) {
   RK1(&simu, tmax);
  
 
-  PlotFields(index_rho, false, &simu, "sol","dgvisu_rho.msh");
-  PlotFields(index_ux, false, &simu, "sol","dgvisu_ux.msh");
-  PlotFields(index_uy, false, &simu, "sol","dgvisu_y.msh");
+  PlotFields(ld->index_rho, false, &simu, "sol","dgvisu_rho.msh");
+  PlotFields(ld->index_ux, false, &simu, "sol","dgvisu_ux.msh");
+  PlotFields(ld->index_uy, false, &simu, "sol","dgvisu_y.msh");
 
   test= 1;
 
@@ -96,37 +94,37 @@ int TestLattice_isothermal(void) {
 }
 
 
-void DoubleShear_InitData(const schnaps_real x[3], const schnaps_real t, schnaps_real w[])
+void DoubleShear_InitData(const schnaps_real x[3], schnaps_real w[])
 {
-  KineticData * kd=&schnaps_kinetic_data;
+  LatticeData * ld=&schnaps_lattice_data;
   schnaps_real my_pi= 4.0*atan(1.0);
   schnaps_real delta = 0.05, kappa=80.0;
 
   
-  for(int i=0;i<kd->index_max_q;i++){
+  for(int i=0;i<ld->index_max_q;i++){
     w[i]=0;
   }
 
-  w[kd->index_rho]=1.0;
+  w[ld->index_rho]=1.0;
   if(x[1]<0.5){
-    w[kd->index_ux]=tanh(kappa*(x[1]-0.25));
+    w[ld->index_ux]=tanh(kappa*(x[1]-0.25));
   }
   else{
-    w[kd->index_ux]=tanh(kappa*(0.75-x[1]));
+    w[ld->index_ux]=tanh(kappa*(0.75-x[1]));
   }    
 
-  w[kd->index_rho] = 1.0
-  w[kd->index_uy]= delta * sin(2.0 * my_pi*(x[0]+0.25));
-  w[kd->index_uz]=0.0;
-  w[kd->index_temp]=1./3.0; // p init
-  w[kd->index_p]=1.0; // e ou T init
+  w[ld->index_rho] = 1.0;
+  w[ld->index_uy]= delta * sin(2.0 * my_pi*(x[0]+0.25));
+  w[ld->index_uz]=0.0;
+  w[ld->index_temp]=1./3.0; // p init
+  w[ld->index_p]=1.0; // e ou T init
 };
 
 
 void Equilibrium_VelocityPerturbation_BoundaryFlux(schnaps_real x[3],schnaps_real t,schnaps_real wL[],schnaps_real* vnorm,
 				       schnaps_real* flux){
   
-  LatticeData * kd=&schnaps_lattice_data;
+  LatticeData * ld=&schnaps_lattice_data;
 
 };
 
