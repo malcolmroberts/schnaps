@@ -76,15 +76,13 @@ int TestLattice_isothermal(void) {
   simu.post_dtfields = Moments;
   simu.update_after_rk = NULL;
  
-  schnaps_real tmax = 10.0;
+  schnaps_real tmax = 1.0;
 
-  RK2(&simu, tmax);
- 
+  RK1(&simu, tmax);
 
-  PlotFields(ld->index_rho, false, &simu, "sol","dgvisu_rho.msh");
-  PlotFields(ld->index_ux, false, &simu, "sol","dgvisu_ux.msh");
-  PlotFields(ld->index_uy, false, &simu, "sol","dgvisu_uy.msh");
-
+  PlotFields(ld->index_rho, false, &simu, "rho","dgvisu_rho.msh");
+  PlotFields(ld->index_ux, false, &simu, "ux","dgvisu_ux.msh");
+  PlotFields(ld->index_uy, false, &simu, "uy","dgvisu_uy.msh");
   test= 1;
 
   return test; 
@@ -98,10 +96,10 @@ void DoubleShear_InitData(schnaps_real x[3],schnaps_real w[])
   schnaps_real my_pi= 4.0*atan(1.0);
   schnaps_real delta = 0.05, kappa=20.0;
   //
-  ld->tau=1.0/1000.0;
+  ld->tau=1.0/30000.0;
   //
   w[ld->index_rho]=1.0;
-  double uref=0.05;
+  schnaps_real uref=0.1;
   if(x[1]<0.5){
     w[ld->index_ux]=uref * tanh(kappa*(x[1]-0.25));
   }
@@ -116,11 +114,11 @@ void DoubleShear_InitData(schnaps_real x[3],schnaps_real w[])
   w[ld->index_p]=1.0; // e ou T init
   //
   for(int i=0;i<ld->index_max_q+1;i++){
-    double temp = w[ld->index_temp];
-    double ux = w[ld->index_ux]/temp;
-    double uy = w[ld->index_uy]/temp;
-    double usqr = ux * ux + uy * uy;
-    double vdotu = ux * ld->q_tab[i][0] + uy * ld->q_tab[i][1];
+    schnaps_real temp = w[ld->index_temp];
+    schnaps_real ux = w[ld->index_ux]/temp;
+    schnaps_real uy = w[ld->index_uy]/temp;
+    schnaps_real usqr = ux * ux + uy * uy;
+    schnaps_real vdotu = ux * ld->q_tab[i][0] + uy * ld->q_tab[i][1];
     w[i]= ld->w_tab[i] * (1.0 + vdotu + 0.5 * (vdotu *vdotu - temp * usqr));
   }
 };
@@ -137,7 +135,7 @@ void Equilibrium_VelocityPerturbation_BoundaryFlux(schnaps_real x[3],schnaps_rea
 void Relaxation(void* s){
   Simulation * simu =s;
   LatticeData * ld=&schnaps_lattice_data;
-  double w_eq[simu->wsize];
+  schnaps_real w_eq[simu->wsize];
   
   Compute_distribution_eq(simu,w_eq);
   Compute_relaxation(simu,w_eq);

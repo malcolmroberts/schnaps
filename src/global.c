@@ -43,7 +43,7 @@ void InitKineticData(KineticData *kd, int nbelemv, int degv){
 
 
 
-void InitLatticeData(LatticeData *ld, int dim, int Q,int temp,double sound){
+void InitLatticeData(LatticeData *ld, int dim, int Q,int temp,schnaps_real sound){
 
   ld->q=Q;
   ld->d=dim;
@@ -59,10 +59,10 @@ void InitLatticeData(LatticeData *ld, int dim, int Q,int temp,double sound){
   ld->index_p=Q+5;
   ld->index_max=Q+6;
   //
-  ld->q_tab =(double **) calloc(Q,sizeof(double*));
-  ld->w_tab =(double *) calloc(Q,sizeof(double));
+  ld->q_tab =(schnaps_real **) calloc(Q,sizeof(schnaps_real*));
+  ld->w_tab =(schnaps_real *) calloc(Q,sizeof(schnaps_real));
   for(int i=0;i<Q;i++){
-    ld->q_tab[i] =(double *) calloc(dim,sizeof(double));
+    ld->q_tab[i] =(schnaps_real *) calloc(dim,sizeof(schnaps_real));
   }
   // basic D2Q9 lattice nodes
   if ((ld->d== 2) && (ld->q==9)){
@@ -98,7 +98,7 @@ void InitLatticeData(LatticeData *ld, int dim, int Q,int temp,double sound){
   // scale all nodes velocities 
   for (int i=0; i<= ld->index_max_q; i++){
     for (int j=0; j< ld->d;j++){
-    double utmp=ld->q_tab[i][j]; 
+    schnaps_real utmp=ld->q_tab[i][j]; 
     ld->q_tab[i][j] = utmp * ld->c;
   };
   };

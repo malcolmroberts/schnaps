@@ -18,7 +18,6 @@ void Lattice_NumFlux(schnaps_real wL[],schnaps_real wR[],schnaps_real* vnorm,sch
     schnaps_real vnp = vn>0 ? vn : 0;
     schnaps_real vnm = vn-vnp;
     flux[i] = vnp * wL[i] + vnm * wR[i];
-    //flux[i]=0.0;
   }
   flux[ld->index_rho]=0; 
   flux[ld->index_ux]=0; 
@@ -32,7 +31,7 @@ void Lattice_NumFlux(schnaps_real wL[],schnaps_real wR[],schnaps_real* vnorm,sch
 
 
 
-void Compute_distribution_eq(Simulation *simu, double * w_eq) {
+void Compute_distribution_eq(Simulation *simu, schnaps_real * w_eq) {
   LatticeData * ld=&schnaps_lattice_data;
 
   for(int ie = 0; ie < simu->macromesh.nbelems; ++ie) {
@@ -43,13 +42,13 @@ void Compute_distribution_eq(Simulation *simu, double * w_eq) {
 	int iux=f->varindex(f->deg, f->raf, f->model.m, ipg, ld->index_ux);
 	int iuy=f->varindex(f->deg, f->raf, f->model.m, ipg, ld->index_uy);
 	int it=f->varindex(f->deg, f->raf, f->model.m, ipg, ld->index_temp);
+	
+	schnaps_real rho = simu->w[irho];
+	schnaps_real t = simu->w[it];
+	schnaps_real  ux = simu->w[iux]/t;
+	schnaps_real uy = simu->w[iuy]/t;
+	schnaps_real u2=  ux*ux + uy*uy;
 
-	double rho = f->wn[irho];
-	double t = f->wn[it];
-	double ux = f->wn[iux]/t;
-	double uy = f->wn[iuy]/t;
-	double u2=  ux*ux + uy*uy;
-		
 	for(int iv=0;iv<ld->index_max_q+1;iv++){
 	  int ikin=f->varindex(f->deg, f->raf, f->model.m, ipg, iv);
 	  
@@ -96,7 +95,7 @@ void Compute_moments(Simulation *simu) {
 
 void Compute_relaxation(Simulation *simu, schnaps_real * w_eq) {
   LatticeData * ld=&schnaps_lattice_data;
-  double nu=0;
+  schnaps_real nu=0;
   nu=simu->dt/(ld->tau+0.5*simu->dt);
   for(int ie = 0; ie < simu->macromesh.nbelems; ++ie) {
     field * f = simu->fd+ie;
