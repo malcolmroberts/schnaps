@@ -76,7 +76,7 @@ int TestLattice_isothermal(void) {
   simu.post_dtfields = Moments;
   simu.update_after_rk = NULL;
  
-  schnaps_real tmax = 1.0;
+  schnaps_real tmax = 0.1;
 
   RK1(&simu, tmax);
 
@@ -110,7 +110,7 @@ void DoubleShear_InitData(schnaps_real x[3],schnaps_real w[])
   w[ld->index_rho] = 1.0;
   w[ld->index_uy]= uref * delta * sin(2.0 * my_pi*(x[0]+0.25));
   w[ld->index_uz]=0.0;
-  w[ld->index_temp]=1./3.0; // p init
+  w[ld->index_temp]=ld->c * ld->c; // p init
   w[ld->index_p]=1.0; // e ou T init
   //
   for(int i=0;i<ld->index_max_q+1;i++){
