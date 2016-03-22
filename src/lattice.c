@@ -43,16 +43,16 @@ void Compute_distribution_eq(Simulation *simu, schnaps_real * w_eq) {
 	int iuy=f->varindex(f->deg, f->raf, f->model.m, ipg, ld->index_uy);
 	int it=f->varindex(f->deg, f->raf, f->model.m, ipg, ld->index_temp);
 	
-	schnaps_real rho = simu->w[irho];
-	schnaps_real t = simu->w[it];
-	schnaps_real  ux = simu->w[iux]/t;
-	schnaps_real uy = simu->w[iuy]/t;
+	schnaps_real rho = f->wn[irho];
+	schnaps_real t = f->wn[it];
+	schnaps_real  ux = f->wn[iux]/t;
+	schnaps_real uy = f->wn[iuy]/t;
 	schnaps_real u2=  ux*ux + uy*uy;
 
 	for(int iv=0;iv<ld->index_max_q+1;iv++){
 	  int ikin=f->varindex(f->deg, f->raf, f->model.m, ipg, iv);
 	  
-	  double uv = ux * ld->q_tab[iv][0] + uy * ld->q_tab[iv][1];
+	  schnaps_real uv = ux * ld->q_tab[iv][0] + uy * ld->q_tab[iv][1];
 	  
 	  w_eq[ikin]=ld->w_tab[iv]*rho*(1.0+uv+0.5*uv*uv-0.5*t*u2);	  
 	}
