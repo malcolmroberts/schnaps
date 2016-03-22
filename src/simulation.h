@@ -315,4 +315,6 @@ void DisplayArray(schnaps_real* array,
                   size_t size,
                   const char* name);
 
+Void Compute_derivative(Simuation *simu, schnaps_real * wd, int nbfield, int nbderivate);
+
 #endif

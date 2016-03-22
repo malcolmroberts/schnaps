@@ -1078,3 +1078,75 @@ void DisplayArray(schnaps_real* array,
   for (int i = 0; i < size; ++i)
     printf("%s[%d]: %f\n", name, i , array[i]);
 }
+
+
+
+
+Void Compute_derivative(Simuation *simu, schnaps_real * wd, int nbfield){
+  int nb_dof=0;
+  
+  for(int ie = 0; ie < simu->macromesh.nbelems; ++ie) {
+
+    field *f = simu->fd + ie;
+    nb_dof=simu->wisze/f->model.m
+
+    const int nraf[3] = {f->raf[0],
+		       f->raf[1],
+		       f->raf[2]};
+    const int deg[3] = {f->deg[0],
+		      f->deg[1],
+		      f->deg[2]};
+    const int npg[3] = {deg[0] + 1,
+		      deg[1] + 1,
+		      deg[2] + 1};
+    const int m = f->model.m;
+    const unsigned int sc_npg = npg[0] * npg[1] * npg[2];
+
+  // Loop on the subcells
+  for(int ic0 = 0; icL0 < nraf[0]; ic0++) {
+    for(int ic1 = 0; icL1 < nraf[1]; ic1++) {
+      for(int ic2 = 0; icL2 < nraf[2]; ic2++) {
+
+	int ic[3] = {icL0, icL1, icL2};
+
+	// index cell
+	int nc = ic[0] + nraf[0] * (ic[1] + nraf[1] * ic[2]);
+	// first glop index in the subcell
+	int first_gp_cell = npg[0] * npg[1] * npg[2] * nc;
+
+	for(int ipg=0;i<sc_npg;i++){
+	  int index_glob_igp=f->varindex(f->deg,f->raf,f->model.m, first_gp_cell + ipg, nbfield);
+	  schnaps_real derivate[3] =0;
+	  for(int jpg=0;j<sc_npg;j++){
+	    
+	    int index_glob_jgp=f->varindex(f->deg,f->raf,f->model.m, first_gp_cell + jpg, nbfield);
+	    schnaps_real w=f->wn[index_glob_jgp];
+	    schnaps_real dtau[3][3],codtau[3][3];
+	    schnaps_real dphiref_j[3];
+	    schnaps_real dphi_j[3];
+
+	    grad_psi_pg(f->deg,f->raf,jpg,index_glob_igp,dphiref_j);
+	    
+	    schnaps_ref2phy(ps->simu->fd[ie].physnode,
+			    xref,dphiref_j,0,NULL,
+			    dtau,codtau,dphi_j,NULL);
+	    schnaps_real det = dot_product(dtau[0], codtau[0]);
+	    
+	    derivate[0]+=w * (dphi_j[0]/det);
+	    derivate[1]+=w * (dphi_j[0]/det);
+	    derivate[2]+=w * (dphi_j[0]/det);
+	  }
+
+	  wd[index_glob_jgp]=derivate[0];
+	  wd[index_glob_jgp+nb_dof]=derivate[1];
+	  wd[index_glob_jgp+2*nb_dof]=derivate[2];
+	}
+
+      } // icl2
+    } //icl1
+  } // icl0
+
+    
+  }
+  
+}
