@@ -1080,11 +1080,8 @@ void DisplayArray(schnaps_real* array,
 }
 
 
-
-
 void Compute_derivative(Simulation *simu, schnaps_real * wd, int nbfield){
   int nb_dof=0;
-  
   for(int ie = 0; ie < simu->macromesh.nbelems; ++ie) {
 
     field *f = simu->fd + ie;
@@ -1115,19 +1112,18 @@ void Compute_derivative(Simulation *simu, schnaps_real * wd, int nbfield){
 	int first_gp_cell = npg[0] * npg[1] * npg[2] * nc;
 
 	for(int ipg=0;ipg<sc_npg;ipg++){
-	  int index_glob_igp=f->varindex(f->deg,f->raf,f->model.m, first_gp_cell + ipg, nbfield);
+	  int index_glob_igp=f->varindex(f->deg,f->raf,f->model.m, first_gp_cell + ipg,0);
 	  schnaps_real derivate[3] ={0,0,0};
     schnaps_real wpg;
     schnaps_real xref[3];
     ref_pg_vol(f->deg,f->raf,index_glob_igp,xref,&wpg,NULL);
 	  for(int jpg=0;jpg<sc_npg;jpg++){
-	    
 	    int index_glob_jgp=f->varindex(f->deg,f->raf,f->model.m, first_gp_cell + jpg, nbfield);
 	    schnaps_real w=f->wn[index_glob_jgp];
 	    schnaps_real dtau[3][3],codtau[3][3];
 	    schnaps_real dphiref_j[3];
 	    schnaps_real dphi_j[3];
-	    grad_psi_pg(f->deg,f->raf,jpg,index_glob_igp,dphiref_j);
+	    grad_psi_pg(f->deg,f->raf,jpg,ipg,dphiref_j);
 	    //
 	    //
 	    schnaps_ref2phy(f->physnode,
@@ -1138,6 +1134,7 @@ void Compute_derivative(Simulation *simu, schnaps_real * wd, int nbfield){
 	    derivate[0]+=w * (dphi_j[0]/det);
 	    derivate[1]+=w * (dphi_j[1]/det);
 	    derivate[2]+=w * (dphi_j[2]/det);
+	    //printf(" index glob:%i dphiref_j[0], jpg %i  %f \n",index_glob_igp,jpg,dphiref_j[0]);
 	  }
 
 	  wd[index_glob_igp]=derivate[0];

@@ -27,10 +27,6 @@ void Lattice_NumFlux(schnaps_real wL[],schnaps_real wR[],schnaps_real* vnorm,sch
   flux[ld->index_p]=0; 
 };
 
-
-
-
-
 void Compute_distribution_eq(Simulation *simu, schnaps_real * w_eq) {
   LatticeData * ld=&schnaps_lattice_data;
 
@@ -45,21 +41,32 @@ void Compute_distribution_eq(Simulation *simu, schnaps_real * w_eq) {
 	
 	schnaps_real rho = f->wn[irho];
 	schnaps_real t = f->wn[it];
-	schnaps_real  ux = f->wn[iux]/t;
-	schnaps_real uy = f->wn[iuy]/t;
-	schnaps_real u2=  ux*ux + uy*uy;
+	schnaps_real  ux = f->wn[iux];
+	schnaps_real uy = f->wn[iuy];
+	schnaps_real uz= 0.0;
+	schnaps_real p = 0.0;
+	//schnaps_real uz = f->wn[iuz];
+	//schnaps_real u2=  ux*ux + uy*uy;
 
 	for(int iv=0;iv<ld->index_max_q+1;iv++){
 	  int ikin=f->varindex(f->deg, f->raf, f->model.m, ipg, iv);
 	  
-	  schnaps_real uv = ux * ld->q_tab[iv][0] + uy * ld->q_tab[iv][1];
+	  //schnaps_real uv = ux * ld->q_tab[iv][0] + uy * ld->q_tab[iv][1];
 	  
-	  w_eq[ikin]=ld->w_tab[iv]*rho*(1.0+uv+0.5*uv*uv-0.5*t*u2);	  
+	  //w_eq[ikin]=ld->w_tab[iv]*rho*(1.0+uv+0.5*uv*uv-0.5*t*u2);	  
+	  w_eq[ikin]= ld->feq(iv,ld, rho,ux,uy,uz,t,p);
 	}
     }
   }
 }
-
+//
+schnaps_real feq_isothermal_D2Q9(int i_node,void *lattice,schnaps_real rho,schnaps_real ux,schnaps_real uy,schnaps_real uz,schnaps_real temp,schnaps_real p){
+    LatticeData *ld= lattice;
+    schnaps_real u2= (ux * ux + uy * uy)/temp;
+    schnaps_real uv= (ux *ld->q_tab[i_node][0] + ld->q_tab[i_node][1]* uy)/temp;
+    schnaps_real feq= ld->w_tab[i_node]* rho * (1.0+uv+0.5*uv*uv-0.5*u2);
+    return feq;
+}
 void Compute_moments(Simulation *simu) {
   LatticeData * ld=&schnaps_lattice_data;
 

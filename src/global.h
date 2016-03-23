@@ -81,7 +81,10 @@ typedef struct LatticeData{
   int index_temp;
   int index_p;
   int index_max;
-  
+  // equilibrium distribution function 
+  // in : int i : index of velociy node
+  // in : void self : pointer to lattice data, should be cast inside the function
+  schnaps_real (*feq) (int i_node,void *self,schnaps_real rho,schnaps_real ux,schnaps_real uy,schnaps_real uz,schnaps_real temp,schnaps_real p);
 } LatticeData;
 
 
