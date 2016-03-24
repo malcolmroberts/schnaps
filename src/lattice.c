@@ -67,6 +67,12 @@ schnaps_real feq_isothermal_D2Q9(int i_node,void *lattice,schnaps_real rho,schna
     schnaps_real feq= ld->w_tab[i_node]* rho * (1.0+uv+0.5*uv*uv-0.5*u2);
     return feq;
 }
+schnaps_real feq_isothermal_linearwave_D2Q9(int i_node,void *lattice,schnaps_real rho,schnaps_real ux,schnaps_real uy,schnaps_real uz,schnaps_real temp,schnaps_real p){
+    LatticeData *ld= lattice;
+    schnaps_real uv= (ux *ld->q_tab[i_node][0] + ld->q_tab[i_node][1]* uy)/temp;
+    schnaps_real feq= ld->w_tab[i_node]* rho * (1.0+uv);
+    return feq;
+}
 void Compute_moments(Simulation *simu) {
   LatticeData * ld=&schnaps_lattice_data;
 

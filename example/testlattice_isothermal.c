@@ -10,7 +10,7 @@ int TestLattice_isothermal(void);
 
 void Relaxation(void* s);
 void Moments(void * s);
-
+void LinearWave_InitData(schnaps_real x[3],schnaps_real w[]);
 void DoubleShear_InitData(schnaps_real x[3], schnaps_real w[]);
 void Vorticity_2D_computation(Simulation *simu, int ifield_ux, int ifield_uy);
 
@@ -62,7 +62,9 @@ int TestLattice_isothermal(void) {
   
   model.NumFlux=Lattice_NumFlux;
 
-  model.InitData = DoubleShear_InitData;
+  //model.InitData = DoubleShear_InitData;
+  model.InitData = LinearWave_InitData;
+
   model.ImposedData = NULL;
   model.BoundaryFlux = NULL;
   model.Source = NULL;
@@ -118,6 +120,36 @@ void DoubleShear_InitData(schnaps_real x[3],schnaps_real w[])
   }    
   uy = uref * delta * sin(2.0 * my_pi*(x[0]+0.25));
   //
+  //
+  w[ld->index_rho]=rho;
+  w[ld->index_ux]  = ux;
+  w[ld->index_uy]  = uy;
+  w[ld->index_uz]  = uz;
+  w[ld->index_temp] = temp;
+  w[ld->index_p] = p;
+  for(int i=0;i<ld->index_max_q+1;i++){
+    w[i]= ld->feq(i,ld,rho,ux,uy,uz,temp,p);
+  }
+};
+void LinearWave_InitData(schnaps_real x[3],schnaps_real w[])
+{
+  LatticeData * ld=&schnaps_lattice_data;
+  schnaps_real my_pi= 4.0*atan(1.0);
+  schnaps_real kx = 0.1, ky= 0.1;
+  schnaps_real uref=0.1;
+  schnaps_real pert=0.001;
+  //
+  ld->tau=1.0/10000.0;
+  //
+  schnaps_real phix= 2.0 * my_pi * kx;
+  schnaps_real phiy= 2.0 * my_pi * ky;
+  //
+  schnaps_real rho = 1.0 + pert * cos(phix);
+  schnaps_real ux =uref * pert * sin(phiy);
+  schnaps_real uy =0.0;
+  schnaps_real uz =0.0;
+  schnaps_real temp =ld->c * ld-> c;
+  schnaps_real p =1.0;
   //
   w[ld->index_rho]=rho;
   w[ld->index_ux]  = ux;
