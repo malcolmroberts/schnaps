@@ -25,6 +25,9 @@ se placer dans ce dossier
 
 	cd build
 
+If StarPU isn't in the standard (system-wide) location, one can
+specify the location with export STARPU_DIR=<...>
+
 puis:
 
 	cmake ..
@@ -34,7 +37,8 @@ puis:
 Une série de tests démarre. Il est conseillé de faire repasser ces
 tests après toute modification du code.
 
-Si certains tests StarPU ne passent pas, désactiver les codelets OpenCL et CUDA avant de lancer ctest:
+Si certains tests StarPU ne passent pas, désactiver les codelets
+OpenCL et CUDA avant de lancer ctest:
 
 	export STARPU_NOPENCL=0
 	export STARPU_NCUDA=0
@@ -108,7 +112,8 @@ sinon:
 	make check (facultatif)
 	make install
 
-Remarque: il y a une limitation de taille des kernels opencl dans StarPU qui est corrigée avec ce patch:
+Remarque: il y a une limitation de taille des kernels opencl dans
+StarPU qui est corrigée avec ce patch:
 
 	Index: `src/drivers/opencl/driver_opencl_utils.c
 
@@ -130,8 +135,8 @@ Désactiver les codelets opencl et cuda (éventuellement) :
 	export STARPU_NOPENCL=0 
 	export STARPU_NCUDA=0 
 
-Pour visualiser les traces, télécharger et compiler VITE a partir de la base svn
-(voir site http://vite.gforge.inria.fr/)
-Installer graphviz pour visualiser les graphes de tâche.
+Pour visualiser les traces, télécharger et compiler VITE a partir de
+la base svn (voir site http://vite.gforge.inria.fr/) Installer
+graphviz pour visualiser les graphes de tâche.
 
 
