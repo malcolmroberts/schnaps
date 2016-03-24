@@ -15,7 +15,8 @@ void DoubleShear_InitData(schnaps_real x[3], schnaps_real w[]);
 void Vorticity_2D_computation(Simulation *simu, int ifield_ux, int ifield_uy);
 
 void TestDerivative(Simulation *simu,int nbfield);
-
+void PlotFieldsBin(int typplot, int compare, Simulation* simu, char *fieldname,
+	       char *filename);
 
 int main(void) {
   
@@ -81,11 +82,10 @@ int TestLattice_isothermal(void) {
   simu.pre_dtfields = Relaxation;
   simu.post_dtfields = Moments;
   simu.update_after_rk = NULL;
- 
-  schnaps_real tmax = 0.00001;
+  schnaps_real tmax = 0.00000;
 
   RK1(&simu, tmax);
-
+  //
   PlotFields(ld->index_rho, false, &simu, "rho","dgvisu_rho.msh");
   PlotFields(ld->index_ux, false, &simu, "ux","dgvisu_ux.msh");
   PlotFields(ld->index_uy, false, &simu, "uy","dgvisu_uy.msh");
@@ -199,10 +199,6 @@ void Vorticity_2D_computation(Simulation *simu, int ifield_ux, int ifield_uy){
       vort[i]= vort[i]-temp_gradient[i+nb_dof];
     }; 
     //
-/*    for (int i=0; i< nb_dof; i++){*/
-/*      printf("i %i \t vort2d %f\n",i, vort[i]);*/
-/*    };*/
-    //
     if (temp_gradient != NULL){
       free(temp_gradient);
     }
@@ -210,4 +206,5 @@ void Vorticity_2D_computation(Simulation *simu, int ifield_ux, int ifield_uy){
       free(vort);
     }
 }
-//
+
+/////////////////////////////////////********
