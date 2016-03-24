@@ -42,6 +42,8 @@ typedef struct Simulation {
   schnaps_real tnow;
   //! CFL parameter min_i (vol_i / surf_i)
   schnaps_real hmin;
+  //! Maximal CFL velocity
+  schnaps_real vcfl;
 
   //! PIC struct pointer (=NULL if not used)
   void *pic;
