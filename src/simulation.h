@@ -314,7 +314,27 @@ void UnregisterSimulation_SPU(Simulation* simu);
 void DisplayArray(schnaps_real* array,
                   size_t size,
                   const char* name);
-
+//! \brief Compute the gradient of a scalar field [NEED VALIDATION]
+//! \param[in]  simu  a simulation object
+//! \param[out] wd pointer to a real array of size (3 * total_nb_gauss_points)
+//! \param[in] nbfield index of the field  
 void Compute_derivative(Simulation *simu, schnaps_real * wd, int nbfield);
-
+//! \brief save the results in the gmsh binary format / Sparser projection [NEED VALIDATION]
+//! \param[in] typplot index of the field variable to plot.
+//! \param[in] compare if true, the numerical solution is compared
+//! with the analytical solution
+//! \param[in] simu a simulation
+//! \param[in] fieldname name of the plotted data
+//! \param[in] filename the path to the gmsh visualization file.
+void PlotFieldsBinSparse(int typplot, int compare, Simulation *simu, char *fieldname,
+		char *filename);
+//! \brief save the results in the gmsh ascii format / Sparser projection [NEED VALIDATION]
+//! \param[in] typplot index of the field variable to plot.
+//! \param[in] compare if true, the numerical solution is compared
+//! with the analytical solution
+//! \param[in] simu a simulation
+//! \param[in] fieldname name of the plotted data
+//! \param[in] filename the path to the gmsh visualization file.
+void PlotFieldsAsciiSparse(int typplot, int compare, Simulation *simu, char *fieldname,
+		char *filename);
 #endif
