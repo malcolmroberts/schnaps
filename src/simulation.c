@@ -16,12 +16,9 @@ void EmptySimulation(Simulation *simu){
   simu->sourcename_cl = malloc(1024 * sizeof(char)); // TODO set to NULL
   sprintf(simu->sourcename_cl,"%s"," "); // FIXME: remove
 #endif
-
   simu->w_handle = NULL;
   simu->dtw_handle = NULL;
   simu->res_handle = NULL;
-
-
 }
 
 void RegisterSimulation_SPU(Simulation *simu){
@@ -1149,4 +1146,339 @@ void Compute_derivative(Simulation *simu, schnaps_real * wd, int nbfield){
     
   }
   
+}
+/////// alternatives to PlotFields with a restriction to neighbouring subcells when projecting on the fe mesh
+/////// this saves quite a lot of time
+////// Still no optimal as the projection stencil should be point-based  but far cheaper than going through
+///// all macromesh gauss points.
+void PlotFieldsBinSparse(int typplot, int compare, Simulation* simu, char *fieldname,char *filename){
+
+  schnaps_real hexa64ref[3 * 64] = {
+    0, 0, 3, 3, 0, 3, 3, 3, 3, 0, 3, 3, 0, 0, 0, 3, 0, 0, 3, 3, 0, 0, 3, 0,
+    1, 0, 3, 2, 0, 3, 0, 1, 3, 0, 2, 3, 0, 0, 2, 0, 0, 1, 3, 1, 3, 3, 2, 3,
+    3, 0, 2, 3, 0, 1, 2, 3, 3, 1, 3, 3, 3, 3, 2, 3, 3, 1, 0, 3, 2, 0, 3, 1,
+    1, 0, 0, 2, 0, 0, 0, 1, 0, 0, 2, 0, 3, 1, 0, 3, 2, 0, 2, 3, 0, 1, 3, 0,
+    1, 1, 3, 1, 2, 3, 2, 2, 3, 2, 1, 3, 1, 0, 2, 2, 0, 2, 2, 0, 1, 1, 0, 1,
+    0, 1, 2, 0, 1, 1, 0, 2, 1, 0, 2, 2, 3, 1, 2, 3, 2, 2, 3, 2, 1, 3, 1, 1,
+    2, 3, 2, 1, 3, 2, 1, 3, 1, 2, 3, 1, 1, 1, 0, 2, 1, 0, 2, 2, 0, 1, 2, 0,
+    1, 1, 2, 2, 1, 2, 2, 2, 2, 1, 2, 2, 1, 1, 1, 2, 1, 1, 2, 2, 1, 1, 2, 1};
+  for(int i = 0; i < 3 * 64; ++i)
+    hexa64ref[i] /= 3.0;
+  //
+  FILE * gmshfile;
+  gmshfile = fopen(filename, "w" );
+  //int param[8] = {f->model.m, _DEGX, _DEGY, _DEGZ, _RAFX, _RAFY, _RAFZ, 0};
+  int nraf[3] = {simu->fd[0].raf[0],
+		 simu->fd[0].raf[1],
+		 simu->fd[0].raf[2]};
+  int deg[3] = {simu->fd[0].deg[0],
+		simu->fd[0].deg[1],
+		simu->fd[0].deg[2]};
+		//
+    const int npg[3] = {deg[0] + 1,
+		      deg[1] + 1,
+		      deg[2] + 1};
+    const unsigned int sc_npg = npg[0] * npg[1] * npg[2];
+
+  // Refinement size in each direction
+  schnaps_real hh[3] = {1.0 / nraf[0], 1.0 / nraf[1], 1.0 / nraf[2]};
+  // Header
+  fprintf(gmshfile, "$MeshFormat\n2.2 1 %d\n", (int) sizeof(schnaps_real));
+  int one = 1;
+  fwrite(&one, sizeof(int), 1, gmshfile);
+  fprintf(gmshfile, "$EndMeshFormat\n");
+  //  End Header
+  int nb_plotnodes = simu->macromesh.nbelems * nraf[0] * nraf[1] * nraf[2] * 64;
+  fprintf(gmshfile, "$Nodes\n%d\n", nb_plotnodes);
+  //
+  schnaps_real *value = calloc(nb_plotnodes , sizeof(schnaps_real));
+  assert(value);
+  int nodecount = 0;
+  // Nodes
+  for(int i = 0; i < simu->macromesh.nbelems; i++) {
+    // Get the nodes of element L
+    field *f = simu->fd + i;
+    // Loop on the macro elem subcells
+    int icL[3];
+    // Loop on the subcells
+    for(icL[0] = 0; icL[0] < nraf[0]; icL[0]++) {
+    for(icL[1] = 0; icL[1] < nraf[1]; icL[1]++) {
+    for(icL[2] = 0; icL[2] < nraf[2]; icL[2]++) {
+    //
+      for(int ino = 0; ino < 64; ino++) {
+        schnaps_real Xr[3] = { hh[0] * (icL[0] + hexa64ref[3 * ino + 0]),
+             hh[1] * (icL[1] + hexa64ref[3 * ino + 1]),
+             hh[2] * (icL[2] + hexa64ref[3 * ino + 2]) };
+        for(int ii = 0; ii < 3; ii++) {
+          assert(Xr[ii] < 1 +  1e-10);
+          assert(Xr[ii] > -1e-10);
+        };
+        schnaps_real Xphy[3];
+        schnaps_ref2phy(simu->fd[i].physnode, Xr, NULL, -1, Xphy, NULL,  NULL, NULL, NULL);
+        double Xplot[3] ={ (double)Xphy[0],  (double)Xphy[1],  (double)Xphy[2]};
+        schnaps_real testpsi = 0;
+        int nb_nonzero_psi=0;
+        int jcL[3];
+        int jcLmin[3]={0,0,0};
+        int jcLmax[3]={nraf[0],nraf[1],nraf[2]};
+        // restrict projectio to neighbouring subcells
+        for (int k=0; k<3;k++){
+          if (icL[k] > 0){
+            jcLmin[k] = icL[k]-1;
+          }
+          if (icL[k] < nraf[k]-1){
+            jcLmax[k] = icL[k]+1;
+          }
+        };
+        // loop on neighbouring subcells
+        for (jcL[0]= jcLmin[0]; jcL[0] < jcLmax[0];jcL[0]++){
+        for (jcL[1]= jcLmin[1]; jcL[1] < jcLmax[1];jcL[1]++){
+        for (jcL[2]= jcLmin[2]; jcL[2] < jcLmax[2];jcL[2]++){
+          // index cell
+          int nc = jcL[0] + nraf[0] * (jcL[1] + nraf[1] * jcL[2]);
+          // first glop index in the subcell
+          int first_gp_cell = (deg[0]+1) * (deg[1]+1) * (deg[2]+1) * nc;
+          for(int ipg=0;ipg<sc_npg;ipg++){
+            int index_glob_igp=f->varindex(f->deg,f->raf,f->model.m, first_gp_cell + ipg,0);
+            schnaps_real psi;
+            psi_ref_subcell(f->deg, f->raf, icL, index_glob_igp, Xr, &psi, NULL);
+            testpsi += psi;
+            int vi = f->varindex(f->deg, f->raf, f->model.m, index_glob_igp, typplot);
+            value[nodecount] += psi * f->wn[vi];
+          };
+        };
+        };
+        };
+        assert(fabs(testpsi-1) < _SMALL);
+        // Compare with an exact solution
+        if (compare) {
+          schnaps_real wex[f->model.m];
+          f->model.ImposedData(Xphy, f->tnow, wex);
+          value[nodecount] -= wex[typplot];
+        }
+        nodecount++;
+        fwrite(&nodecount, sizeof(int), 1, gmshfile);
+        fwrite(Xplot, sizeof(double), 3, gmshfile);
+      }
+    };// end for icl[0]
+    };// end for icl[1]
+    };// end for icl[2]
+  }// end for i macro elements
+  fprintf(gmshfile, "$EndNodes\n");
+  // Elements
+  fprintf(gmshfile, "$Elements\n");
+  int nb_elements=simu->macromesh.nbelems * nraf[0] * nraf[1] * nraf[2]; 
+  fprintf(gmshfile, "%d\n",nb_elements);
+  int elm_type = 92; //
+  int num_tags = 0;
+  int num_elm_follow= nb_elements;
+  int elem_header[3] = {elm_type, num_elm_follow, num_tags};
+  fwrite(elem_header, sizeof(int), 3, gmshfile);
+  for(int i = 0; i < simu->macromesh.nbelems; i++) {
+      // Loop on the subcells
+      int icL[3];
+      for(icL[0] = 0; icL[0] < nraf[0]; icL[0]++) {
+      for(icL[1] = 0; icL[1] < nraf[1]; icL[1]++) {
+      for(icL[2] = 0; icL[2] < nraf[2]; icL[2]++) {
+      // Get the subcell id
+      int ncL = icL[0] + nraf[0] * (icL[1] + nraf[1] * icL[2]);
+      // Global subcell id
+      int numelem = ncL + i * nraf[0] * nraf[1] * nraf[2] + 1;
+      int elm_data_size=1+num_tags+64; 
+      int elem_data[elm_data_size];
+      elem_data[0]= numelem;
+        for(int ii = 0; ii < 64; ii++) {
+          int numnoe = 64 * (i * nraf[0] * nraf[1] * nraf[2] + ncL) + ii  + 1;
+          elem_data[ii+1]= numnoe;
+        };
+      fwrite(elem_data, sizeof(int), elm_data_size, gmshfile);
+      };
+      };
+      };
+  };
+  fprintf(gmshfile, "$\nEndElements\n");
+  // Node Data
+  fprintf(gmshfile, "$NodeData\n");
+  fprintf(gmshfile, "1\n");
+  if(fieldname == NULL)
+    fprintf(gmshfile, "\"field %d\"\n", typplot);
+  else
+  fprintf(gmshfile, "\"field: %s\"\n", fieldname);
+  schnaps_real t = 0;
+  fprintf(gmshfile, "1\n%f\n3\n0\n1\n", t);
+  fprintf(gmshfile, "%d\n", nb_plotnodes);
+
+  for(int ino = 1; ino < nb_plotnodes+1; ino++) {
+    fwrite(&(ino),sizeof(int),1,gmshfile);
+    fwrite(&value[ino-1],sizeof(double),1,gmshfile);
+  };
+  fprintf(gmshfile, "\n$EndNodeData\n");
+
+  fclose(gmshfile);
+  free(value);
+} 
+///
+void PlotFieldsAsciiSparse(int typplot, int compare, Simulation* simu, char *fieldname,
+	       char *filename) {
+
+  schnaps_real hexa64ref[3 * 64] = {
+    0, 0, 3, 3, 0, 3, 3, 3, 3, 0, 3, 3, 0, 0, 0, 3, 0, 0, 3, 3, 0, 0, 3, 0,
+    1, 0, 3, 2, 0, 3, 0, 1, 3, 0, 2, 3, 0, 0, 2, 0, 0, 1, 3, 1, 3, 3, 2, 3,
+    3, 0, 2, 3, 0, 1, 2, 3, 3, 1, 3, 3, 3, 3, 2, 3, 3, 1, 0, 3, 2, 0, 3, 1,
+    1, 0, 0, 2, 0, 0, 0, 1, 0, 0, 2, 0, 3, 1, 0, 3, 2, 0, 2, 3, 0, 1, 3, 0,
+    1, 1, 3, 1, 2, 3, 2, 2, 3, 2, 1, 3, 1, 0, 2, 2, 0, 2, 2, 0, 1, 1, 0, 1,
+    0, 1, 2, 0, 1, 1, 0, 2, 1, 0, 2, 2, 3, 1, 2, 3, 2, 2, 3, 2, 1, 3, 1, 1,
+    2, 3, 2, 1, 3, 2, 1, 3, 1, 2, 3, 1, 1, 1, 0, 2, 1, 0, 2, 2, 0, 1, 2, 0,
+    1, 1, 2, 2, 1, 2, 2, 2, 2, 1, 2, 2, 1, 1, 1, 2, 1, 1, 2, 2, 1, 1, 2, 1};
+  for(int i = 0; i < 3 * 64; ++i)
+    hexa64ref[i] /= 3.0;
+
+  FILE * gmshfile;
+  gmshfile = fopen(filename, "w" );
+
+  //int param[8] = {f->model.m, _DEGX, _DEGY, _DEGZ, _RAFX, _RAFY, _RAFZ, 0};
+  int nraf[3] = {simu->fd[0].raf[0],
+    simu->fd[0].raf[1],
+    simu->fd[0].raf[2]};
+  int deg[3] = {simu->fd[0].deg[0],
+    simu->fd[0].deg[1],
+    simu->fd[0].deg[2]};
+  const int npg[3] = {deg[0] + 1,
+    deg[1] + 1,
+    deg[2] + 1};
+  const unsigned int sc_npg = npg[0] * npg[1] * npg[2];
+  //
+  // Refinement size in each direction
+  schnaps_real hh[3] = {1.0 / nraf[0], 1.0 / nraf[1], 1.0 / nraf[2]};
+  // Header
+  fprintf(gmshfile, "$MeshFormat\n2.2 0 %d\n", (int) sizeof(schnaps_real));
+  //
+  int nb_plotnodes = simu->macromesh.nbelems * nraf[0] * nraf[1] * nraf[2] * 64;
+  fprintf(gmshfile, "$EndMeshFormat\n$Nodes\n%d\n", nb_plotnodes);
+  //
+  schnaps_real *value = calloc(nb_plotnodes , sizeof(schnaps_real));
+  assert(value);
+  int nodecount = 0;
+  // Nodes
+  //int npgv = NPG(deg, nraf);
+  for(int i = 0; i < simu->macromesh.nbelems; i++) {
+    // Get the nodes of element L
+    field *f = simu->fd + i;
+    // Loop on the macro elem subcells
+    int icL[3];
+    // Loop on the subcells
+    for(icL[0] = 0; icL[0] < nraf[0]; icL[0]++) {
+    for(icL[1] = 0; icL[1] < nraf[1]; icL[1]++) {
+    for(icL[2] = 0; icL[2] < nraf[2]; icL[2]++) {
+      for(int ino = 0; ino < 64; ino++) {
+        schnaps_real Xr[3] = { hh[0] * (icL[0] + hexa64ref[3 * ino + 0]),
+             hh[1] * (icL[1] + hexa64ref[3 * ino + 1]),
+             hh[2] * (icL[2] + hexa64ref[3 * ino + 2]) };
+        for(int ii = 0; ii < 3; ii++) {
+          assert(Xr[ii] < 1 +  1e-10);
+          assert(Xr[ii] > -1e-10);
+        }
+        schnaps_real Xphy[3];
+        schnaps_ref2phy(simu->fd[i].physnode, Xr, NULL, -1, Xphy, NULL,  NULL, NULL, NULL);
+
+        schnaps_real Xplot[3] = {Xphy[0], Xphy[1], Xphy[2]};
+        schnaps_real testpsi = 0;
+        ////////////////////////////////////////
+        int jcL[3];
+        int jcLmin[3]={0,0,0};
+        int jcLmax[3]={nraf[0],nraf[1],nraf[2]};
+        // restrict projection to neighbouring subcells
+        for (int k=0; k<3;k++){
+          if (icL[k] > 0){
+            jcLmin[k] = icL[k]-1;
+          }
+          if (icL[k] < nraf[k]-1){
+            jcLmax[k] = icL[k]+1;
+          }
+        };
+        // loop on neighbouring subcells
+        for (jcL[0]= jcLmin[0]; jcL[0] < jcLmax[0];jcL[0]++){
+        for (jcL[1]= jcLmin[1]; jcL[1] < jcLmax[1];jcL[1]++){
+        for (jcL[2]= jcLmin[2]; jcL[2] < jcLmax[2];jcL[2]++){
+          // index cell
+          int nc = jcL[0] + nraf[0] * (jcL[1] + nraf[1] * jcL[2]);
+          // first glop index in the subcell
+          int first_gp_cell = (deg[0]+1) * (deg[1]+1) * (deg[2]+1) * nc;
+          for(int ipg=0;ipg<sc_npg;ipg++){
+            int index_glob_igp=f->varindex(f->deg,f->raf,f->model.m, first_gp_cell + ipg,0);
+              schnaps_real psi;
+              psi_ref_subcell(f->deg, f->raf, icL, index_glob_igp, Xr, &psi, NULL);
+              testpsi += psi;
+              int vi = f->varindex(f->deg, f->raf, f->model.m, index_glob_igp, typplot);
+              value[nodecount] += psi * f->wn[vi];
+          }; // end loop subcell gauss points
+        }; //end loop neighbour subcell 2
+        };//end loop neighbour subcell 1
+        }; //end loop neighbour subcell 0
+        assert(fabs(testpsi-1) < _SMALL);
+      ///////////////////////////////////////
+      // Compare with an exact solution
+      if (compare) {
+        schnaps_real wex[f->model.m];
+        f->model.ImposedData(Xphy, f->tnow, wex);
+        value[nodecount] -= wex[typplot];
+      }
+      nodecount++;
+      fprintf(gmshfile, "%d %f %f %f\n", nodecount,
+        Xplot[0], Xplot[1], Xplot[2]);
+      } // end loop Hex64 fe nodes
+    } // end loop subcell 2
+    } // end loop subcell 1
+    } // end loop subcell 0
+  } // end loop macrocells
+
+  fprintf(gmshfile, "$EndNodes\n");
+  // Elements
+  fprintf(gmshfile, "$Elements\n");
+  fprintf(gmshfile, "%d\n",
+  simu->macromesh.nbelems * nraf[0] * nraf[1] * nraf[2]);
+  int elm_type = 92;
+  int num_tags = 0;
+  for(int i = 0; i < simu->macromesh.nbelems; i++) {
+    // Loop on the subcells
+    int icL[3];
+    for(icL[0] = 0; icL[0] < nraf[0]; icL[0]++) {
+    for(icL[1] = 0; icL[1] < nraf[1]; icL[1]++) {
+  	for(icL[2] = 0; icL[2] < nraf[2]; icL[2]++) {
+    // Get the subcell id
+    int ncL = icL[0] + nraf[0] * (icL[1] + nraf[1] * icL[2]);
+    // Global subcell id
+    int numelem = ncL + i * nraf[0] * nraf[1] * nraf[2] + 1;
+    fprintf(gmshfile, "%d ", numelem);
+    fprintf(gmshfile, "%d ", elm_type);
+    fprintf(gmshfile, "%d ", num_tags);
+    for(int ii = 0; ii < 64; ii++) {
+      int numnoe = 64 * (i * nraf[0] * nraf[1] * nraf[2] + ncL) + ii  + 1;
+      fprintf(gmshfile, "%d ", numnoe);
+    }
+    fprintf(gmshfile, "\n");
+    }
+    }
+    }
+  } 
+  fprintf(gmshfile, "$EndElements\n");
+  // Now display data
+  fprintf(gmshfile, "$NodeData\n");
+  fprintf(gmshfile, "1\n");
+  if(fieldname == NULL)
+    fprintf(gmshfile, "\"field %d\"\n", typplot);
+  else
+    fprintf(gmshfile, "\"field: %s\"\n", fieldname);
+  //
+  schnaps_real t = 0;
+  fprintf(gmshfile, "1\n%f\n3\n0\n1\n", t);
+  fprintf(gmshfile, "%d\n", nb_plotnodes);
+  //
+  for(int ino = 0; ino < nb_plotnodes; ino++) {
+    fprintf(gmshfile, "%d %f\n", ino + 1, value[ino]);
+  }
+  fprintf(gmshfile, "\n$EndNodeData\n");
+  //
+  fclose(gmshfile);
+  free(value);
 }
