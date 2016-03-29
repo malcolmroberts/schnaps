@@ -9,12 +9,13 @@
 int TestGuidingCenter(void);
 
 void SolveQuasineutreEq(void *field);
+
 void GuidingCInitData(schnaps_real x[3],schnaps_real w[]);
 void GuidingCImposedData(const schnaps_real x[3], const schnaps_real t, schnaps_real w[]);
 void GuidingCBoundaryFlux(schnaps_real x[3],schnaps_real t,
 		      schnaps_real wL[],schnaps_real* vnorm,
 		      schnaps_real* flux);
-//void SolveQuasineutreEq(void *field, schnaps_real *w, schnaps_real dt); 
+void PlotVlasovPoisson(void* field, schnaps_real * w);
 int main(void) {
   
   // unit tests
@@ -83,39 +84,37 @@ int TestGuidingCenter(void) {
 
 
   InitSimulation(&simu, &mesh, deg, raf, &model);
+  
   //check the initial distribution funtion
 
-  PlotFields(kd->index_rho,(1==0),&simu,"init_rho","res4_eps0001/initrho.msh");
-  PlotFields(kd->index_max_kin,(1==0),&simu,"init_f","res4_eps0001/initdistrib.msh");
+  PlotFields(kd->index_rho,(1==0),&simu,"init_rho","initrho.msh");
+  PlotFields(kd->index_max_kin,(1==0),&simu,"init_f","initdistrib.msh");
   
   //simu.pre_dtfields = UpdateGyroPoisson;
   simu.vmax = kd->vmax; // maximal wave speed
-  
+  simu.nb_diags = 5;
   simu.pre_dtfields = SolveQuasineutreEq;
   simu.post_dtfields = NULL;
+  simu.update_after_rk = PlotVlasovPoisson;
   
   // apply the DG scheme
   // time integration by RK2 scheme 
   
   simu.cfl=0.5;
-  schnaps_real tmax = 109;
-  //schnaps_real dt =0.0001;
+  schnaps_real tmax = 2;
   SolveQuasineutreEq(&simu);
-  //PlotFields(kd->index_ex,(1==0),&simu,"init_ex","initex.msh");
-  //PlotFields(kd->index_ey,(1==0),&simu,"init_ey","initey.msh");
-  
   GyroCFLVelocity(&simu);
   RK2(&simu,tmax);
   //RK4_CL(&simu, tmax, dt,  0, NULL, NULL);
 
 
-  PlotFields(kd->index_rho,(1==0),&simu,"sol_rho","res4_eps0001/rho.msh"); 
-  PlotFields(kd->index_max_kin,(1==0),&simu,"sol_f","res4_eps0001/distrib.msh"); 
-  PlotFields(kd->index_ex,(1==0),&simu,"sol_ex","res4_eps0001/ex.msh"); 
-  PlotFields(kd->index_ey,(1==0),&simu,"sol_ey","res4_eps0001/ey.msh"); 
-  PlotFields(kd->index_ez,(1==0),&simu,"sol_ez","res4_eps0001/ez.msh"); 
-  PlotFields(kd->index_phi,(1==0),&simu,"sol_phi","res4_eps0001/potential.msh"); 
-
+  PlotFields(kd->index_rho,(1==0),&simu,"sol_rho","rho.msh"); 
+  PlotFields(kd->index_max_kin,(1==0),&simu,"sol_f","distrib.msh"); 
+  PlotFields(kd->index_ex,(1==0),&simu,"sol_ex","ex.msh"); 
+  PlotFields(kd->index_ey,(1==0),&simu,"sol_ey","ey.msh"); 
+  PlotFields(kd->index_ez,(1==0),&simu,"sol_ez","ez.msh"); 
+  PlotFields(kd->index_phi,(1==0),&simu,"sol_phi","potential.msh"); 
+  Plot_Energies(&simu, simu.dt);
   double dd=L2error(&simu);
   //double dd_l2_vel =GyroL2VelError(&f)
   double dd_Kinetic=L2_Kinetic_error(&simu);
@@ -245,7 +244,17 @@ void SolveQuasineutreEq(void *si) {
   }
  
   SolveContinuous2D(&ps);
-  //freeContinuousSolver(&ps);
 }
   
+void PlotVlasovPoisson(void *si, schnaps_real *w) {
+  schnaps_real k_energy = 0, e_energy = 0, t_energy = 0, t_charge=0;
+  schnaps_real taux_ins =0;
+  
+  Simulation *simu = si;
+  
+  Energies(simu, w, k_energy, e_energy, t_energy,1);
+  Charge_total(simu,w,t_charge,4);
+  Taux_instability(simu,w,6,taux_ins,5);
+  si = simu; 
+}
  

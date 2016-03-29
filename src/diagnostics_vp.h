@@ -24,6 +24,8 @@ void Energies(Simulation* simu,schnaps_real * w,schnaps_real k_energy, schnaps_r
 
 void Charge_total(Simulation * simu,schnaps_real * w, schnaps_real t_charge,int first_diag);
 
+void Taux_instability(Simulation * simu,schnaps_real * w, schnaps_real mode, schnaps_real taux_ins,int first_diag);
+
 void Plot_Energies(Simulation *simu, schnaps_real dt);
 
 
