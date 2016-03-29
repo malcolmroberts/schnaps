@@ -1,7 +1,7 @@
 #include "global.h"
 
-int nplatform_cl = 0;
-int ndevice_cl = 1;
+int nplatform_cl = 1;
+int ndevice_cl = 0;
 
 bool starpu_is_init = false;
 bool starpu_use = false;
@@ -49,7 +49,6 @@ void InitLatticeData(LatticeData *ld, int dim, int Q,int temp,schnaps_real sound
   ld->d=dim;
   ld->temp_const=temp;
   ld->c=sound;
-
   ld->index_max_q=Q-1;
   ld->index_rho=Q;
   ld->index_ux=Q+1;

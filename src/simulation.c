@@ -16,12 +16,9 @@ void EmptySimulation(Simulation *simu){
   simu->sourcename_cl = malloc(1024 * sizeof(char)); // TODO set to NULL
   sprintf(simu->sourcename_cl,"%s"," "); // FIXME: remove
 #endif
-
   simu->w_handle = NULL;
   simu->dtw_handle = NULL;
   simu->res_handle = NULL;
-
-
 }
 
 void RegisterSimulation_SPU(Simulation *simu){
