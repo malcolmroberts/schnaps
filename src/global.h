@@ -85,6 +85,10 @@ typedef struct LatticeData{
   // in : int i : index of velociy node
   // in : void self : pointer to lattice data, should be cast inside the function
   schnaps_real (*feq) (int i_node,void *self,schnaps_real rho,schnaps_real ux,schnaps_real uy,schnaps_real uz,schnaps_real temp,schnaps_real p);
+  void (*collect_diags) (void * simu, schnaps_real *diag_vals);
+  //
+  schnaps_real diag_2d_period;
+  //
 } LatticeData;
 
 

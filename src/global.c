@@ -102,5 +102,7 @@ void InitLatticeData(LatticeData *ld, int dim, int Q,int temp,schnaps_real sound
   };
   };
   //
+  ld->diag_2d_period=0.0;
+  //
   }
 }
