@@ -191,6 +191,8 @@ void InitSimulation(Simulation *simu, MacroMesh *mesh,
 
   simu->tnow = 0;
 
+  simu->iter_time_rk =0;
+
   simu->fd = malloc(mesh->nbelems * sizeof(field));
 
   field *fd = simu->fd;
