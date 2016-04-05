@@ -5,14 +5,44 @@
 #include "../test/test.h"
 #include "global.h"
 #include "lattice.h"
+#include "implicit.h"
+//#include "field.h"
+//
+typedef struct LbmSimuParams{
+  int degx;
+  int degy;
+  int rafx;
+  int rafy;
+  schnaps_real cfl;
+  schnaps_real tmax;
+  schnaps_real cref;
+  schnaps_real tau;
+  schnaps_real diag_2d_period;
+} LbmSimuParams;
+typedef struct DoubleShearKHParams{
+  schnaps_real kappa;
+  schnaps_real delta;
+  schnaps_real uref;
+} DoubleShearKHParams;
+typedef struct Linear2DWaveParams{
+  int nkx;
+  int nky;
+  schnaps_real offset;
+} Linear2DWaveParams;
 //
 int TestLattice_isothermal_DoubleShearKH(void);
 void DoubleShearKH_InitData(schnaps_real x[3], schnaps_real w[]);
 void DoubleshearKH_Plot_Fields(void *s,schnaps_real *w);
 //
 int TestLattice_isothermal_Linear2DWave(void);
+int TestLattice_isothermal_Linear2DWaveImplicit(void);
 void Linear2DWave_InitData(schnaps_real x[3],schnaps_real w[]);
 void Linear2DWave_ImposedData(const schnaps_real x[3],const schnaps_real t,schnaps_real w[]);
+void Linear2DWave_ImposedData_OneNode(const schnaps_real x[3],const schnaps_real t,schnaps_real w[]);
+void Linear2DWave_Periodic_BoundaryFlux(schnaps_real *x, schnaps_real t, schnaps_real *wL, schnaps_real *vnorm,
+               schnaps_real *flux);
+void Linear2DWave_Periodic_BoundaryFlux_OneNode(schnaps_real *x, schnaps_real t, schnaps_real *wL, schnaps_real *vnorm,
+               schnaps_real *flux);
 void Linear2DWave_Plot_Fields(void *s,schnaps_real *w);
 void Linear2DWave_CollectDiags(void *simu,schnaps_real *diag_vals);
 //
@@ -28,24 +58,56 @@ void PlotExtScalarFieldBinMultitime(Simulation* simu,schnaps_real *w_in,char* fi
 void PlotVecFieldsBinSparseMultitime(int typplot[3], int compare, Simulation* simu, char *fieldname,char *filename, int create_file, schnaps_real t, int istep);
 //
 void Store_Lattice_diags(Simulation *simu);
-void Dump_Lattice_Diagnostics(Simulation *simu);
-
+void Dump_Lattice_Diagnostics(Simulation *simu,char simtag[3]);
 //
+void Lattice_Dummy_m1_InitData(schnaps_real x[3],schnaps_real w[]);
+void LatticeThetaTimeScheme_MultiSim(Simulation *simu, Simulation **simu_advec,schnaps_real tmax, schnaps_real dt);
+void LatticeThetaTimeScheme(Simulation *simu,schnaps_real tmax, schnaps_real dt);
+
+// global parameters with default values
+LbmSimuParams SimParams={
+  .degx=4,.degy=4,
+  .rafx=8,.rafy=8,
+  .cfl=1.0,.tmax=1.0,
+  .cref=1.0,.tau=0.0001,
+  .diag_2d_period=1.0};
+DoubleShearKHParams DKHParams={.kappa=80.0,.delta=0.05,.uref=0.05};
+Linear2DWaveParams  LW2DParams={.nkx=1,.nky=0,.offset=0.0};
+//
+// global dat for taggig diags (this should be in a structure somewhere simu ?)
+char simutag[3]="TAG";
 //
 int main(void) {
+#define LBMDOUBLESHEARKH 0
+#define LBMWAVE2D 1
+//
+#define LBMTESTCASE 1
+#if (LBMTESTCASE==LBMWAVE2D)
+  printf(" LBM - 2D - Isothermal - Linear2DWave\n");
+  //
+  SimParams.degx=4;
+  SimParams.degy=4;
+  SimParams.rafx=8;
+  SimParams.rafy=8;
   
-  // unit tests
-/* //KH instability 2D - 2-sheared flow*/
-/*  printf(" LBM - 2D - Isothermal - Double sheared flow  KH"); */
-/*  int resu=TestLattice_isothermal_Double_Shear_KH();*/
-// 2D wave equation - linear equilibrium function
-// test with normal modes
-  printf(" LBM - 2D - Linear Wave ");
-  int resu= TestLattice_isothermal_Linear2DWave();
-	//  
+  SimParams.cfl=1.0;
+  SimParams.tmax=0.05;
+  SimParams.tau=0.000000001;
+  SimParams.diag_2d_period=0.1;
+  //
+  LW2DParams.nkx=3;
+  LW2DParams.nky=2;
+  LW2DParams.offset=0.0;
+  // 
+  //int resu= TestLattice_isothermal_Linear2DWave();
+  int resu= TestLattice_isothermal_Linear2DWaveImplicit();
+#endif
+#if (LBMTESTCASE==LBMDOUBLESHEARKH)
+  printf(" LBM - 2D - Isothermal - Double sheared flow  KH\n"); 
+  int resu=TestLattice_isothermal_DoubleShearKH();
+#endif
   if (resu) printf("lattice test OK !\n");
   else printf("lattice test failed !\n");
-
   return !resu;
 } 
 //
@@ -98,11 +160,10 @@ int TestLattice_isothermal_DoubleShearKH(void) {
   Model model;
   LatticeData * ld=&schnaps_lattice_data;  
   ld->feq=&feq_isothermal_D2Q9;
-  ld->diag_2d_period=0.5;
-
-  schnaps_real csound= 1.0;
-  InitLatticeData(ld,2,9,0,csound);
-  
+  schnaps_real cref= SimParams.cref;
+  InitLatticeData(ld,2,9,0,cref);
+  ld->diag_2d_period=SimParams.diag_2d_period;
+  ld->tau=SimParams.tau;
   model.m=ld->index_max; // num of conservative variables f(vi) for each vi, phi, E, rho, u, p, e (ou T)
   //
   model.NumFlux=Lattice_NumFlux;
@@ -112,8 +173,8 @@ int TestLattice_isothermal_DoubleShearKH(void) {
   model.BoundaryFlux = NULL;
   model.Source = NULL;
   
-  int deg[]={4, 4, 0};
-  int raf[]={4,4, 1};
+  int deg[]={SimParams.degx, SimParams.degy, 0};
+  int raf[]={SimParams.rafx,SimParams.rafy, 1};
   //
   CheckMacroMesh(&mesh, deg, raf);
   Simulation simu;
@@ -123,12 +184,12 @@ int TestLattice_isothermal_DoubleShearKH(void) {
   Moments(&simu);
   //simu.vmax = 2*ld->c; 
   simu.vmax = ld->c *sqrt(2.0); 
-  simu.cfl=1.0;
+  simu.cfl=SimParams.cfl;
   simu.nb_diags = 1;
   simu.pre_dtfields = Relaxation;
   simu.post_dtfields = Moments;
   simu.update_after_rk = DoubleshearKH_Plot_Fields;
-  schnaps_real tmax = 4.0;
+  schnaps_real tmax = SimParams.tmax;
   //
   DoubleshearKH_Plot_Fields(&simu, NULL);
   //
@@ -142,9 +203,7 @@ void DoubleShearKH_InitData(schnaps_real x[3],schnaps_real w[])
 {
   LatticeData * ld=&schnaps_lattice_data;
   schnaps_real my_pi= 4.0*atan(1.0);
-  schnaps_real delta = 0.05, kappa=20.0;
-  //
-  ld->tau=1.0/10000.0;
+  schnaps_real delta = DKHParams.delta, kappa=DKHParams.kappa,uref=DKHParams.uref;
   //
   schnaps_real rho = 1.0;
   schnaps_real ux =0.0;
@@ -154,7 +213,6 @@ void DoubleShearKH_InitData(schnaps_real x[3],schnaps_real w[])
   schnaps_real p =1.0;
   //
   //printf(" c0 :%f \t temp:%f\n",ld->c, temp);
-  schnaps_real uref=0.04;
   if(x[1]<0.5){
     ux=uref * tanh(kappa*(x[1]-0.25));
   }
@@ -226,10 +284,10 @@ int TestLattice_isothermal_Linear2DWave(void) {
   ld->feq=&feq_isothermal_linearwave_D2Q9;
   ld->collect_diags=&Linear2DWave_CollectDiags;
   //
-  schnaps_real csound= 1.0;
   //schnaps_real csound= sqrt(3.0/2.0);
-  InitLatticeData(ld,2,9,0,csound);
-  ld->diag_2d_period=0.1;
+  InitLatticeData(ld,2,9,0,SimParams.cref);
+  ld->diag_2d_period=SimParams.diag_2d_period;
+  ld->tau=SimParams.tau;
   //  
   model.m=ld->index_max; // num of conservative variables f(vi) for each vi, phi, E, rho, u, p, e (ou T)
   //
@@ -237,11 +295,12 @@ int TestLattice_isothermal_Linear2DWave(void) {
   //
   model.InitData = Linear2DWave_InitData;
   model.ImposedData = Linear2DWave_ImposedData;
-  model.BoundaryFlux = NULL;
+  //model.BoundaryFlux = Linear2DWave_Periodic_BoundaryFlux;
+  model.BoundaryFlux =NULL;
   model.Source = NULL;
   //
-  int deg[]={4, 4, 0};
-  int raf[]={32,32,1};
+  int deg[]={SimParams.degx,SimParams.degy, 0};
+  int raf[]={SimParams.rafx,SimParams.rafy,1};
   //
   CheckMacroMesh(&mesh, deg, raf);
   Simulation simu;
@@ -250,35 +309,139 @@ int TestLattice_isothermal_Linear2DWave(void) {
   InitSimulation(&simu, &mesh, deg, raf, &model);
   Moments(&simu);
   simu.vmax = ld->c *sqrt(2.0); 
-  simu.cfl=1.0;
+  simu.cfl=SimParams.cfl;
   simu.nb_diags = 3;
   simu.pre_dtfields = Relaxation;
   simu.post_dtfields = Moments;
   simu.update_after_rk = Linear2DWave_Plot_Fields;
-  schnaps_real tmax = 1.0;
+  schnaps_real tmax = SimParams.tmax;
   //
   //Linear2DWave_Plot_Fields(&simu,NULL);
-  //
+  sprintf(simutag,"RK2");
   RK2(&simu, tmax);
   //
-  Dump_Lattice_Diagnostics(&simu);
+  schnaps_real end_diags[simu.nb_diags];
+  Linear2DWave_CollectDiags(&simu,end_diags);
+  printf("RK2 end error:t=%f \tabs : %f \tmean : %f \trel:%f\n",simu.tnow,end_diags[0],end_diags[1],end_diags[2]);
+  //
+  Dump_Lattice_Diagnostics(&simu,simutag);
   test= 1;
   return test; 
+}
+int TestLattice_isothermal_Linear2DWaveImplicit(void) {
+  
+  int test=0;
+  schnaps_real pi=4.0*atan(1.0);
+
+  MacroMesh mesh;
+  ReadMacroMesh(&mesh,"../test/testcube.msh");
+  Detect2DMacroMesh(&mesh);
+  //
+  schnaps_real A[3][3] = {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}};
+  schnaps_real x0[3] = {0, 0, 0};
+  AffineMapMacroMesh(&mesh,A,x0);
+  // mesh preparation
+  mesh.period[0]=1.0;
+  mesh.period[1]=1.0;
+  BuildConnectivity(&mesh);
+  //
+  Model model;
+  LatticeData * ld=&schnaps_lattice_data;  
+  ld->feq=&feq_isothermal_linearwave_D2Q9;
+  ld->collect_diags=&Linear2DWave_CollectDiags;
+  //
+  //schnaps_real csound= sqrt(3.0/2.0);
+  InitLatticeData(ld,2,9,0,SimParams.cref);
+  ld->diag_2d_period=SimParams.diag_2d_period;
+  ld->tau=SimParams.tau;
+  //  
+  model.m=ld->index_max; // num of conservative variables f(vi) for each vi, phi, E, rho, u, p, e (ou T)
+  //
+  model.NumFlux=Lattice_NumFlux;
+  //
+  model.InitData = Linear2DWave_InitData;
+  model.ImposedData = Linear2DWave_ImposedData;
+  model.BoundaryFlux = Linear2DWave_Periodic_BoundaryFlux;
+  model.Source = NULL;
+  //
+  int deg[]={SimParams.degx,SimParams.degy, 0};
+  int raf[]={SimParams.rafx,SimParams.rafy,1};
+  //
+  CheckMacroMesh(&mesh, deg, raf);
+  Simulation simu;
+  EmptySimulation(&simu);
+  //
+  InitSimulation(&simu, &mesh, deg, raf, &model);
+  Moments(&simu);
+  simu.vmax = ld->c *sqrt(2.0); 
+  simu.cfl=SimParams.cfl;
+  simu.nb_diags = 3;
+  simu.pre_dtfields = Relaxation;
+  simu.post_dtfields = Moments;
+  simu.update_after_rk=Linear2DWave_Plot_Fields;
+  schnaps_real tmax = SimParams.tmax;
+  //
+  // basic explicit RK2
+  sprintf(simutag,"RK2");
+  RK2(&simu, tmax);
+  schnaps_real end_diags[simu.nb_diags];
+  Linear2DWave_CollectDiags(&simu,end_diags);
+  printf("RK2 end error: abs : %f \tmean : %f \trel:%f\n",end_diags[0],end_diags[1],end_diags[2]);
+  Dump_Lattice_Diagnostics(&simu,simutag);
+  //
+  Model model_advec;
+  model_advec.m=1;
+  model_advec.InitData =Lattice_Dummy_m1_InitData;
+  model_advec.NumFlux=Lattice_OneNodeNumFlux;
+  model_advec.ImposedData = NULL;
+  model_advec.BoundaryFlux = Linear2DWave_Periodic_BoundaryFlux_OneNode;
+  model_advec.Source = NULL;
+  //
+  Simulation simu2;
+  EmptySimulation(&simu2);
+  InitSimulation(&simu2, &mesh, deg, raf, &model);
+  Moments(&simu2);
+  simu2.vmax = ld->c *sqrt(2.0); 
+  simu2.cfl=SimParams.cfl; // no impact we impose dt
+  simu2.nb_diags = 3;
+  simu2.pre_dtfields = Relaxation;
+  simu2.post_dtfields = Moments;
+  simu2.update_after_rk=Linear2DWave_Plot_Fields;
+  //simu2.update_after_rk=NULL;
+  tmax = SimParams.tmax;
+  schnaps_real dt= simu.dt; // we use the timestep of previous RK2 run
+  printf("Testing Implicit scheme with dt=%f\n",dt);
+  //LatticeThetaTimeScheme_MultiSim(&simu2,simu_advection,tmax,dt);
+  sprintf(simutag,"IMP");
+  LatticeThetaTimeScheme(&simu2,tmax,dt);
+  //*****************************************************************/
+  // test implicit
+  schnaps_real end_diags2[simu2.nb_diags];
+  Linear2DWave_CollectDiags(&simu2,end_diags2);
+  //
+  printf("Summary\n");
+  printf("RK2  :t=%f \t abs : %f \tmean : %f \trel:%f\n",simu.tnow,end_diags[0],end_diags[1],end_diags[2]);
+  printf("Imp  :t=%f \t abs : %f \tmean : %f \trel:%f\n",simu2.tnow,end_diags2[0],end_diags2[1],end_diags2[2]);
+  //
+  Dump_Lattice_Diagnostics(&simu2,simutag);
+  //
+  test= 1;
+  return test; 
+}
+void Lattice_Dummy_m1_InitData(schnaps_real x[3],schnaps_real w[]){
+  w[0]=0.0;
 }
 void Linear2DWave_InitData(schnaps_real x[3],schnaps_real w[])
 {
   LatticeData * ld=&schnaps_lattice_data;
   schnaps_real my_pi= 4.0*atan(1.0);
   // wave mode numbers in half integer units
-  int nkx = 1;
-  int nky = 0;
-  //
-  schnaps_real offset=0.00;
+  int nkx = LW2DParams.nkx;
+  int nky = LW2DParams.nky;
+  schnaps_real offset=LW2DParams.offset;
   // spatial frequencies
   schnaps_real kx = 2.0 * my_pi * (schnaps_real) nkx;
   schnaps_real ky= 2.0 * my_pi * (schnaps_real) nky;
-  //
-  ld->tau=1.0/100000.0;
   //
   schnaps_real phix= kx * x[0];
   schnaps_real phiy= ky * x[1];
@@ -303,10 +466,9 @@ void Linear2DWave_InitData(schnaps_real x[3],schnaps_real w[])
 void Linear2DWave_ImposedData(const schnaps_real x[3],const schnaps_real t,schnaps_real w[]){
   LatticeData * ld=&schnaps_lattice_data;
   schnaps_real my_pi= 4.0*atan(1.0);
-  int nkx = 1;
-  int nky = 0;
-  //
-  schnaps_real offset=0.00;
+  int nkx = LW2DParams.nkx;
+  int nky = LW2DParams.nky;
+  schnaps_real offset=LW2DParams.offset;
   // spatial frequencies
   schnaps_real kx = 2.0 * my_pi * (schnaps_real) nkx;
   schnaps_real ky= 2.0 * my_pi * (schnaps_real) nky;
@@ -338,6 +500,52 @@ void Linear2DWave_ImposedData(const schnaps_real x[3],const schnaps_real t,schna
     w[i]= ld->feq(i,ld,rho,ux,uy,uz,temp,p);
   }
 }
+void Linear2DWave_ImposedData_OneNode(const schnaps_real x[3],const schnaps_real t,schnaps_real w[]){
+  LatticeData * ld=&schnaps_lattice_data;
+  schnaps_real my_pi= 4.0*atan(1.0);
+  int nkx = LW2DParams.nkx;
+  int nky = LW2DParams.nky;
+  schnaps_real offset=LW2DParams.offset;
+  // spatial frequencies
+  schnaps_real kx = 2.0 * my_pi * (schnaps_real) nkx;
+  schnaps_real ky= 2.0 * my_pi * (schnaps_real) nky;
+  //
+  schnaps_real phix= kx * x[0];
+  schnaps_real phiy= ky * x[1];
+  //
+  schnaps_real k = sqrt(kx * kx + ky * ky);
+  schnaps_real c0 = ld->c * sqrt(1/3.0);
+  schnaps_real omega= k* c0;
+  schnaps_real phit= omega *t;
+  //
+  //schnaps_real rho = 1.0 + pert * cos(phix);
+  schnaps_real rho = offset+cos(phix) * cos(phiy) * cos(phit);
+  //schnaps_real ux =uref * pert * sin(phiy);
+  schnaps_real ux =0.0;
+  schnaps_real uy =0.0;
+  schnaps_real uz =0.0;
+  schnaps_real temp =(ld->c * ld-> c)/3.0;
+  schnaps_real p =1.0;
+  //
+  int i_node= ld->current_node_index;
+  w[0]= ld->feq(i_node,ld,rho,ux,uy,uz,temp,p);
+}
+/***************************************************************************************/
+void Linear2DWave_Periodic_BoundaryFlux(schnaps_real *x, schnaps_real t, schnaps_real *wL, schnaps_real *vnorm,
+				       schnaps_real *flux) {
+	LatticeData *ld=&schnaps_lattice_data;
+  schnaps_real wR[ld->index_max];
+  Linear2DWave_ImposedData(x,t,wR);
+  Lattice_NumFlux(wL,wR,vnorm,flux);
+}
+void Linear2DWave_Periodic_BoundaryFlux_OneNode(schnaps_real *x, schnaps_real t, schnaps_real *wL, schnaps_real *vnorm,
+				       schnaps_real *flux){ 
+	LatticeData *ld=&schnaps_lattice_data;
+	int i_node=ld->current_node_index;
+  schnaps_real wR[1];
+  Linear2DWave_ImposedData_OneNode(x,t,wR);
+  Lattice_OneNodeNumFlux(wL,wR,vnorm,flux);
+}
 /**************************************************************************************/
 void Linear2DWave_Plot_Fields(void *s,schnaps_real *w){
   Simulation *simu=s;
@@ -350,6 +558,7 @@ void Linear2DWave_Plot_Fields(void *s,schnaps_real *w){
   int tmax=simu->tmax;
   int create_file=0;
   Store_Lattice_diags(simu);
+  //printf("Called with istep=%i t=%f cfl=%f\n",istep,t,simu->cfl);
   if (istep==0){
     create_file=1;
   }
@@ -363,8 +572,8 @@ void Linear2DWave_Plot_Fields(void *s,schnaps_real *w){
     printf("Dumping fields at it=%i (period %i)\n",istep,diagperiod);
     int raf=simu->fd[0].raf[0];
     schnaps_real cfl=simu->cfl;
-    char filename_rho[sizeof("lbm2DWave_rho_raf000_cfl0.000.msh")];
-    sprintf(filename_rho,"lbm_2DWave_rho_raf%03d_cfl%1.3f.msh",raf);
+    char filename_rho[sizeof("lbm2DWave_rho_TAG_raf000_cfl0.000.msh")];
+    sprintf(filename_rho,"lbm_2DWave_rho_%s_raf%03d_cfl%1.3f.msh",simutag,raf,cfl);
     //char filename_rho_error[sizeof("lbm2DWave_rho_000.msh")];
     //sprintf(filename_rho_error,"lbm_2DWave_rho_error_%03d.msh",raf);
     PlotFieldsBinSparseMultitime(ld->index_rho,false,simu,"rho",filename_rho,create_file,t,istep);
@@ -1352,14 +1561,15 @@ void Store_Lattice_diags(Simulation *simu){
     simu->Diagnostics[iter* nb_diags+irank]= diag_vals[irank];
   };
 }
-void Dump_Lattice_Diagnostics(Simulation *simu){
+void Dump_Lattice_Diagnostics(Simulation *simu,char simtag[3]){
   FILE *diagfile;
+  assert((simu->Diagnostics != NULL));
   int nb_diags=simu->nb_diags;
   schnaps_real dt=simu->dt;
-  char filename[sizeof("lbm_diag_raf000_cfl0.000.dat")];
+  char filename[sizeof("lbm_diag_TAG_raf000_cfl0.000.dat")];
   int raf=simu->fd[0].raf[0];
   schnaps_real cfl=simu->cfl;
-  sprintf(filename,"lbm_diag_raf%03d_cfl%1.3f.dat",raf,cfl);
+  sprintf(filename,"lbm_diag_%s_raf%03d_cfl%1.3f.dat",simtag,raf,cfl);
   diagfile = fopen(filename,"w");
   for (int it=0; it < simu->itermax_rk;it++){
     schnaps_real tnow = dt * (schnaps_real) it;
@@ -1410,3 +1620,179 @@ void Linear2DWave_CollectDiags(void *s,schnaps_real *diag_vals){
   diag_vals[1]=sqrt(mean);
   diag_vals[2]=sqrt(error) / (sqrt(mean)  + 1e-14);
 }
+void LatticeThetaTimeScheme(Simulation *simu, schnaps_real tmax, schnaps_real dt){
+  LatticeData *ld=&schnaps_lattice_data;
+  int nb_nodes=ld->q; // velocity nodes on the lattice
+  int ig_glob=0,ig_node=0;
+  field *f_glob,*f_node;
+  // 
+  int nraf[3] = {simu->fd[0].raf[0],
+		 simu->fd[0].raf[1],
+		 simu->fd[0].raf[2]};
+  int deg[3] = {simu->fd[0].deg[0],
+		simu->fd[0].deg[1],
+		simu->fd[0].deg[2]};  
+  int nb_ipg = NPG(deg, nraf);
+  //
+  Model model_advec;
+  model_advec.m=1;
+  model_advec.InitData =Lattice_Dummy_m1_InitData;
+  model_advec.NumFlux=Lattice_OneNodeNumFlux;
+  model_advec.ImposedData = Linear2DWave_ImposedData_OneNode;
+  model_advec.BoundaryFlux = Linear2DWave_Periodic_BoundaryFlux_OneNode;
+  model_advec.Source = NULL;
+  Simulation *simu_advec;
+  simu_advec=malloc(sizeof(Simulation));
+  EmptySimulation(simu_advec);
+  InitSimulation(simu_advec, &(simu->macromesh), deg, nraf, &model_advec);
+  simu_advec->vmax=simu->vmax;
+  simu_advec->cfl=0.0;
+  simu_advec->nb_diags=0;
+  simu_advec->pre_dtfields=NULL;
+  simu_advec->post_dtfields=NULL;
+  simu_advec->update_after_rk=NULL;
+  //
+  LinearSolver solver_imp[nb_nodes]; 
+  LinearSolver solver_exp[nb_nodes];
+  schnaps_real *res_advec=  calloc(simu_advec->wsize,sizeof(schnaps_real*)); 
+  //
+  schnaps_real theta=0.5; // implicit explicit splitting parameter 
+  simu->dt=dt;
+  int itermax=(int) (tmax/dt)+1;
+  printf("Called with tmax=%f dt=%f Nb iterations:%i \n",tmax,dt,itermax);
+  simu->itermax_rk=itermax;
+  int freq = (1 >= simu->itermax_rk / 10)? 1 : simu->itermax_rk / 10;
+  simu->tnow=0.0;
+  simu_advec->dt=dt;
+  simu_advec->itermax_rk=itermax;
+  simu_advec->tnow=0.0;
+  for(int ie=0; ie < simu->macromesh.nbelems; ++ie){
+    simu->fd[ie].tnow=simu->tnow;
+    simu->fd[ie].tnow=simu_advec->tnow;
+  }
+  // Diagnostics (this should be elsewhere, some timetraces  module ?
+  int size_diags = simu->nb_diags * itermax;
+  if(simu->nb_diags != 0) {
+     simu->Diagnostics = malloc(size_diags * sizeof(schnaps_real));
+  };
+  //
+  time_t t_start,t_end; // time measurements for op factorization
+  t_start=time(NULL);
+  //  Solvers Init/Assembly
+  printf("Sparse Linear Solvers init");
+  for (int isim=0;isim < nb_nodes;isim++){
+    ld->current_node_index=isim;
+    //
+    InitImplicitLinearSolver(simu_advec, &solver_imp[isim]);
+    InitImplicitLinearSolver(simu_advec, &solver_exp[isim]);
+    //
+  }
+  // End Operators init
+  //
+  // Time loop start
+  for (int iter=0;iter < itermax;iter++){
+    //
+    if (iter%freq == 0){
+      printf(" iter %i/%i t=%f\n",iter,itermax,simu->tnow);
+    }
+    //
+    simu->iter_time_rk=iter;
+    //
+    if (iter==0){
+      t_start=time(NULL);
+    }
+    //
+    if (simu->pre_dtfields !=NULL){
+      simu->pre_dtfields(simu);
+    };
+    // now loop on velocity nodes
+    for(int isim=0;isim < nb_nodes;isim++){
+      ld->current_node_index=isim;
+      // dispatch main w to per node w's
+      for(int ie = 0; ie < simu->macromesh.nbelems; ie++){
+        f_glob=simu->fd+ie;
+        for(int ipg=0; ipg < nb_ipg;ipg++){
+          f_node= simu_advec->fd+ie;
+          ig_glob=f_glob->varindex(f_glob->deg,f_glob->raf,f_glob->model.m,ipg,isim);
+          ig_node=f_node->varindex(f_node->deg,f_node->raf,1,ipg,0);
+          f_node->wn[ig_node]= f_glob->wn[ig_glob];
+        //
+        }; // ipg end loop glops
+      }; // ie end loop macroelements
+      // end of data dispatch
+      // Solvers assembly and factorization if necessary
+      solver_imp[isim].rhs_is_assembly=false;
+      solver_exp[isim].rhs_is_assembly=false;
+      if (iter==0){
+          solver_imp[isim].mat_is_assembly=false;
+          solver_exp[isim].mat_is_assembly=false;
+      }
+      else
+      {
+          solver_imp[isim].mat_is_assembly=true;
+          solver_exp[isim].mat_is_assembly=true;
+      };
+      //
+      simu_advec->tnow=simu->tnow;
+      for(int ie=0; ie < simu_advec->macromesh.nbelems; ++ie){
+        simu_advec->fd[ie].tnow=simu_advec->tnow;
+      }
+      AssemblyImplicitLinearSolver(simu_advec, &solver_exp[isim],-(1.0-theta),simu_advec->dt);
+      simu_advec->tnow=simu->tnow+simu->dt;
+      for(int ie=0; ie < simu_advec->macromesh.nbelems; ++ie){
+        simu_advec->fd[ie].tnow=simu_advec->tnow;
+      }
+      AssemblyImplicitLinearSolver(simu_advec, &solver_imp[isim],theta,simu_advec->dt);
+      // compute residual
+      MatVect(&solver_exp[isim], simu_advec->w, res_advec);
+      //
+      for(int i=0;i<solver_imp[isim].neq;i++){
+        solver_imp[isim].rhs[i]=-solver_exp[isim].rhs[i]+solver_imp[isim].rhs[i]+res_advec[i];
+      }
+      //
+      solver_imp[isim].solver_type=LU;
+      Advanced_SolveLinearSolver(&solver_imp[isim],simu_advec);
+      //
+      for(int i=0;i<solver_imp[isim].neq;i++){
+        simu_advec->w[i]=solver_imp[isim].sol[i];
+      }
+      // collect nodes ws to main w
+      for(int ie = 0; ie < simu->macromesh.nbelems; ie++){
+        f_glob=simu->fd+ie;
+        for(int ipg=0; ipg < nb_ipg;ipg++){
+          f_node= simu_advec->fd+ie;
+          ig_glob=f_glob->varindex(f_glob->deg,f_glob->raf,f_glob->model.m,ipg,isim);
+          ig_node=f_node->varindex(f_node->deg,f_node->raf,1,ipg,0);
+          f_glob->wn[ig_glob]= f_node->wn[ig_node]; 
+        }; // ipg end loop glops
+      }; // ie end loop macroelements
+    }; // isim end loop on velocity node 
+    // post advec ops
+    if (simu->post_dtfields !=NULL){
+      simu->post_dtfields(simu);
+    }
+    if (simu->update_after_rk !=NULL){
+      simu->update_after_rk(simu,simu->w);
+    }
+    if (iter==0){
+      t_end= time(NULL);
+      printf("First step duration %f\n", t_end-t_start);
+    }
+    simu->tnow += simu->dt;
+    simu_advec->tnow=simu->tnow;
+    for(int ie=0; ie < simu->macromesh.nbelems; ++ie){
+      simu->fd[ie].tnow=simu->tnow;
+      simu_advec->fd[ie].tnow=simu->tnow;
+    }
+    //
+  }; // iter end of time loop 
+  //
+  if (res_advec !=NULL){
+    free(res_advec);
+  }
+  if (simu_advec!= NULL){
+    free(simu_advec);
+  }
+  //
+}
+/***************************************************************************************************************/
