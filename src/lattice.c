@@ -27,6 +27,18 @@ void Lattice_NumFlux(schnaps_real wL[],schnaps_real wR[],schnaps_real* vnorm,sch
   flux[ld->index_p]=0; 
 }
 /**************************************************************************************/
+void Lattice_OneNodeNumFlux(schnaps_real wL[],schnaps_real wR[],schnaps_real* vnorm,schnaps_real* flux){
+  LatticeData * ld=&schnaps_lattice_data;
+  int inode=ld->current_node_index;
+  schnaps_real vn=0;
+  for(int dim = 0;dim < ld->d; dim++){
+    vn += ld->q_tab[inode][dim]*vnorm[dim];
+  }
+  schnaps_real vnp = vn>0 ? vn : 0;
+  schnaps_real vnm = vn-vnp;
+  flux[0] = vnp * wL[0] + vnm * wR[0];
+}
+/**************************************************************************************/
 void Compute_distribution_eq(Simulation *simu, schnaps_real * w_eq) {
   LatticeData * ld=&schnaps_lattice_data;
 
@@ -117,3 +129,4 @@ void Compute_relaxation(Simulation *simu, schnaps_real * w_eq) {
     };
   };
 }
+/*************************************************************************************/

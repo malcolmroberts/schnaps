@@ -27,7 +27,6 @@ void InitImplicitLinearSolver(Simulation *simu, LinearSolver *solver){
   solver->tol=_SMALL;
 
   int itest = 1;
-
   for (int isky=0 ; isky < itest; isky++){
 
     InternalCoupling(simu, solver, isky);
@@ -77,7 +76,6 @@ void InitFieldImplicitSolver(field *fd, MatrixStorage ms){
 
 
 void AssemblyImplicitLinearSolver(Simulation *simu, LinearSolver *solver,schnaps_real theta, schnaps_real dt){
-
   if(solver->mat_is_assembly == false){
     MassAssembly(simu, solver);
     InternalAssembly(simu, solver,theta,dt);
@@ -1021,21 +1019,17 @@ void ThetaTimeScheme(Simulation *simu, schnaps_real tmax, schnaps_real dt){
 
   LinearSolver solver_implicit;
   LinearSolver solver_explicit;
-
   schnaps_real theta=0.5;
   simu->dt=dt;
-
   int itermax=tmax/simu->dt;
   simu->itermax_rk=itermax;
   InitImplicitLinearSolver(simu, &solver_implicit);
   InitImplicitLinearSolver(simu, &solver_explicit);
   schnaps_real *res = calloc(simu->wsize, sizeof(schnaps_real));
-
   simu->tnow=0;
   for(int ie=0; ie < simu->macromesh.nbelems; ++ie){
     simu->fd[ie].tnow=simu->tnow;
   }
-
   time_t start;
   int iter=0;
   for(int tstep=0;tstep<simu->itermax_rk;tstep++){
@@ -1055,8 +1049,9 @@ void ThetaTimeScheme(Simulation *simu, schnaps_real tmax, schnaps_real dt){
 
     solver_implicit.rhs_is_assembly=false;
     solver_explicit.rhs_is_assembly=false;
-
-
+    if (simu->pre_dtfields !=NULL){
+      simu->pre_dtfields(simu);
+    }
     AssemblyImplicitLinearSolver(simu, &solver_explicit,-(1.0-theta),simu->dt);
     simu->tnow=simu->tnow+simu->dt;
     for(int ie=0; ie < simu->macromesh.nbelems; ++ie){
@@ -1077,6 +1072,14 @@ void ThetaTimeScheme(Simulation *simu, schnaps_real tmax, schnaps_real dt){
     for(int i=0;i<solver_implicit.neq;i++){
       simu->w[i]=solver_implicit.sol[i];
     }
+    //
+    if (simu->post_dtfields !=NULL){
+      simu->post_dtfields(simu);
+    }
+    if (simu->update_after_rk !=NULL){
+      simu->update_after_rk(simu,simu->w);
+    }
+    //
     int freq = (1 >= simu->itermax_rk / 10)? 1 : simu->itermax_rk / 10;
     if (tstep % freq == 0)
       printf("t=%f iter=%d/%d dt=%f\n", simu->tnow, tstep+1, simu->itermax_rk, dt);
@@ -1084,7 +1087,6 @@ void ThetaTimeScheme(Simulation *simu, schnaps_real tmax, schnaps_real dt){
       printf("Elapsed time first iter=%f\n", (double) (time(NULL) -start));
   }
   printf("Elapsed time=%f\n", (double) (time(NULL) -start));
-
 }
 
 void InternalCoupling(Simulation *simu,  LinearSolver *solver, int isky){
@@ -1569,16 +1571,15 @@ void InternalLocalAssembly(field *f, schnaps_real theta, schnaps_real dt)
 
 
 void InternalAssembly(Simulation *simu,  LinearSolver *solver,schnaps_real theta, schnaps_real dt){
-
   for(int ie = 0; ie < simu->macromesh.nbelems; ie++){
     field *f = simu->fd + ie;
     int offsetw = f->wsize * ie;
-
+    
     const int m = f->model.m;
 
     int deg[3] = {f->deg[0],
-		  f->deg[1],
-		  f->deg[2]};
+      f->deg[1],
+      f->deg[2]};
     const int npg[3] = {deg[0] + 1,
 			deg[1] + 1,
 			deg[2] + 1};
@@ -1587,19 +1588,17 @@ void InternalAssembly(Simulation *simu,  LinearSolver *solver,schnaps_real theta
 		   f->raf[2]};
 
     const unsigned int sc_npg = npg[0] * npg[1] * npg[2];
-
-
+    
     // Loop on the subcells
     for(int icL0 = 0; icL0 < nraf[0]; icL0++) {
-      for(int icL1 = 0; icL1 < nraf[1]; icL1++) {
-	for(int icL2 = 0; icL2 < nraf[2]; icL2++) {
+    for(int icL1 = 0; icL1 < nraf[1]; icL1++) {
+    for(int icL2 = 0; icL2 < nraf[2]; icL2++) {
 
-	  int icL[3] = {icL0, icL1, icL2};
-	  // get the L subcell id
-	  int ncL = icL[0] + nraf[0] * (icL[1] + nraf[1] * icL[2]);
-	  // first glop index in the subcell
-	  int offsetL = npg[0] * npg[1] * npg[2] * ncL;
-
+    int icL[3] = {icL0, icL1, icL2};
+    // get the L subcell id
+    int ncL = icL[0] + nraf[0] * (icL[1] + nraf[1] * icL[2]);
+    // first glop index in the subcell
+    int offsetL = npg[0] * npg[1] * npg[2] * ncL;
 	  // compute all of the xref for the subcell
 	  schnaps_real *xref0 = malloc(sc_npg * sizeof(schnaps_real));
 	  schnaps_real *xref1 = malloc(sc_npg * sizeof(schnaps_real));
@@ -1627,9 +1626,9 @@ void InternalAssembly(Simulation *simu,  LinearSolver *solver,schnaps_real theta
 	    //for(int dim0 = 0; dim0 < 2; dim0++) {  // TODO : return to 3d !
 	    // point p at which we compute the flux
 
-	    for(int p0 = 0; p0 < npg[0]; p0++) {
-	      for(int p1 = 0; p1 < npg[1]; p1++) {
-		for(int p2 = 0; p2 < npg[2]; p2++) {
+      for(int p0 = 0; p0 < npg[0]; p0++) {
+      for(int p1 = 0; p1 < npg[1]; p1++) {
+      for(int p2 = 0; p2 < npg[2]; p2++) {
 		  schnaps_real wL[m], flux[m];
 		  int p[3] = {p0, p1, p2};
 		  int ipgL = offsetL + p[0] + npg[0] * (p[1] + npg[1] * p[2]);
@@ -1660,23 +1659,19 @@ void InternalAssembly(Simulation *simu,  LinearSolver *solver,schnaps_real theta
 			    codtau,
 			    dphiL, // dphi
 			    NULL);  // vnds
-
-
 		    for(int iv1 = 0; iv1 < m; iv1++) {
 		      int imemL = f->varindex(deg, nraf, m, ipgL, iv1) + offsetw;
 		      for(int iv = 0; iv < m; iv++) {
-			wL[iv] = (iv == iv1);
+    			wL[iv] = (iv == iv1);
 		      }
-
 		      f->model.NumFlux(wL, wL, dphiL, flux);
-
 		      int ipgR = offsetL+q[0]+npg[0]*(q[1]+npg[1]*q[2]);
 		      for(int iv2 = 0; iv2 < m; iv2++) {
 			schnaps_real val = theta * dt * flux[iv2] * wpgL;
 			int imemR = f->varindex(f->deg,f->raf,f->model.m, ipgR, iv2) + offsetw;
 			AddLinearSolver(solver, imemR, imemL,-val);
-		      }
-		    }
+		      } //iv2
+		    }// iv1
 		  } // iq
 		} // p2
 	      } // p1

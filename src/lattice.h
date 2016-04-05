@@ -11,6 +11,7 @@
 //! \param[in] vn : normal vector
 //! \param[out] flux : the flux
 void Lattice_NumFlux(schnaps_real *wL, schnaps_real *wR, schnaps_real *vn, schnaps_real *flux);
+void Lattice_OneNodeNumFlux(schnaps_real *wL, schnaps_real *wR, schnaps_real *vn, schnaps_real *flux);
 
 //! \brief computation of equilibrium distribution (global wrapper)
 //! \para[in] simu a simulation object

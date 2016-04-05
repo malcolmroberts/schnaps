@@ -88,7 +88,10 @@ typedef struct LatticeData{
   void (*collect_diags) (void * simu, schnaps_real *diag_vals);
   //
   schnaps_real diag_2d_period;
-  //
+  // in the case the fi are splitt across multiple simu object, we store here a global node index selector
+  // this is used by the Lattice_OneNodeNumFlux to select the proper velocity on the lattice.
+  int current_node_index;
+  // 
 } LatticeData;
 
 
