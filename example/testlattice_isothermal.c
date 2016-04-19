@@ -53,7 +53,7 @@ LbmSimuParams SimParams={
   .degx=4,.degy=4,
   .rafx=8,.rafy=8,
   .cfl=1.0,.tmax=1.0,
-  .cref=1.0,.tau=0.0001,
+  .cref=1.0,.tau=0.00001,
   .diag_2d_period=1.0};
 DoubleShearKHParams DKHParams={.kappa=80.0,.delta=0.05,.uref=0.05};
 Linear2DWaveParams  LW2DParams={.nkx=1,.nky=0,.offset=0.0};
@@ -71,12 +71,12 @@ int main(void) {
   //
   SimParams.degx=4;
   SimParams.degy=4;
-  SimParams.rafx=8;
-  SimParams.rafy=8;
+  SimParams.rafx=4;
+  SimParams.rafy=4;
   
   SimParams.cfl=1.0;
-  SimParams.tmax=8.0;
-  SimParams.tau=0.0001;
+  SimParams.tmax=0.1;
+  SimParams.tau=0.0000001;
   SimParams.diag_2d_period=0.1;
   //
   LW2DParams.nkx=1;

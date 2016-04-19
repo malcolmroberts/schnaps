@@ -94,12 +94,24 @@ typedef struct LatticeData{
   // 
 } LatticeData;
 
+//!\bried forward declaration of container for lattice boltzmann model parameters
+typedef struct LBModelDescriptor LBModelDescriptor;
+typedef struct LBMSimulation LBMSimulation;
+//
+typedef struct LatticeBoltzmannSimData{
+  int current_node_index; //! shared velocity node selector
+  LBMSimulation *current_lb_sim; //! shared pointer to current simulation (for compat with rk schemes routines);
+  LBModelDescriptor *lb_model; //! array[nb_lattices] pointing to individual lattice models. 
+} LatticeBoltzmannSimData;
+//
 
 extern KineticData schnaps_kinetic_data;
 extern LatticeData schnaps_lattice_data;
+extern LatticeBoltzmannSimData schnaps_lbm_simdata;
 
 void InitKineticData(KineticData *kd, int nbelemv, int degv);
 void InitLatticeData(LatticeData *ld, int dim, int Q,int temp,schnaps_real sound);
+void InitLatticeBoltzmannSimData(LatticeBoltzmannSimData *lsd);
 
 extern bool starpu_is_init;
 extern bool starpu_use;

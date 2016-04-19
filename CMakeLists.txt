@@ -187,6 +187,11 @@ list(APPEND
   src/collision.c
   src/lattice.h
   src/lattice.c
+  src/lbm_models_data.h
+  src/lbm_generic.h
+  src/lbm_generic.c
+  src/lbm_diagnostics.h
+  src/lbm_diagnostics.c
   )
 
 if(SuiteSparse_FOUND)

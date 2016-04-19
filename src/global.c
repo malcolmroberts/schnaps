@@ -10,7 +10,7 @@ bool starpu_ocl_use = false;
 
 KineticData  schnaps_kinetic_data;
 LatticeData  schnaps_lattice_data;
-
+LatticeBoltzmannSimData schnaps_lbm_simdata;
 // OpenCL program for StarPU
 bool opencl_program_is_init = false;
 #ifdef _WITH_STARPU
@@ -106,3 +106,10 @@ void InitLatticeData(LatticeData *ld, int dim, int Q,int temp,schnaps_real sound
   //
   }
 }
+
+//
+void InitLatticeBoltzmannSimData(LatticeBoltzmannSimData *lsd){
+  lsd->current_node_index=0;
+  lsd->lb_model=NULL;
+  
+};
