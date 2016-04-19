@@ -96,7 +96,7 @@ void ExtractInterface_SPU(Interface* inter, int side) {
     w_handle = inter->wL_handle;
     vol_index_handle = inter->vol_indexL_handle;
 
-  } else if (side == 1) {
+  } else  {
     if (inter->fR == NULL) return;
     f = inter->fR;
     locfa = inter->locfaR;
