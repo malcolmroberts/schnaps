@@ -23,7 +23,7 @@ void LBM_Linear2DWave_CollectDiags(void *s,schnaps_real *macro_diag_vals,schnaps
 void LBM_Linear2DWave_Plot_Fields(void *s,schnaps_real *w);
 
 //
-char simutag[3]="TAG";
+char simutag[4]="TAG";
 //
 int main(void) {
   printf(" Lattice Boltzmann Model - GENERIC TEST\n"); 

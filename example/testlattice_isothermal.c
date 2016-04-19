@@ -59,7 +59,7 @@ DoubleShearKHParams DKHParams={.kappa=80.0,.delta=0.05,.uref=0.05};
 Linear2DWaveParams  LW2DParams={.nkx=1,.nky=0,.offset=0.0};
 //
 // global dat for taggig diags (this should be in a structure somewhere simu ?)
-char simutag[3]="TAG";
+char simutag[4]="TAG";
 //
 int main(void) {
 #define LBMDOUBLESHEARKH 0

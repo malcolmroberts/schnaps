@@ -53,9 +53,10 @@ int Test_Graph_Implicit_SPU(void) {
 
   MacroMesh mesh;
 
-  ReadMacroMesh(&mesh,"../test/testcube2.msh");
+  //ReadMacroMesh(&mesh,"../test/testcube2.msh");
   //ReadMacroMesh(&mesh,"cubegros.msh");
   //ReadMacroMesh(&mesh,"../test/testmacromesh.msh");
+  ReadMacroMesh(&mesh,"disque2d.msh");
   Detect2DMacroMesh(&mesh);
 
   schnaps_real A[3][3] = {{_LENGTH_DOMAIN, 0, 0}, {0, _LENGTH_DOMAIN, 0}, {0, 0,1}};
@@ -89,7 +90,7 @@ int Test_Graph_Implicit_SPU(void) {
   /* model.Source = TestSteady_Wave_Source; */
 
   int deg[]={2, 2, 0};
-  int raf[]={4, 4, 1};
+  int raf[]={2, 2, 1};
 
   CheckMacroMesh(&mesh, deg, raf);
   BuildMacroMeshGraph(&mesh, TestSteady_Transport_v2, deg, raf);
@@ -104,7 +105,7 @@ int Test_Graph_Implicit_SPU(void) {
   //DisplaySimulation(&simu);
 
   field* fd = simu.fd;
-  schnaps_real tmax = 1;
+  schnaps_real tmax = 0.1;
   simu.cfl=0.2;
   simu.vmax= 1;
   //simu.dt = 0.025;
@@ -113,7 +114,7 @@ int Test_Graph_Implicit_SPU(void) {
   /* AssemblyFieldImplicitSolver(fd, 1, 1); */
   GraphThetaTimeScheme_SPU(&simu, tmax, simu.dt);
   // pour tracer le graphe des tâches:
-  // avant l'execution: export STARPU_FXT_PREFIX=/Users/helluy/schnaps/build/
+  // avant l'execution: export STARPU_FXT_PREFIX=~/schnaps/build/
   //  starpu_fxt_tool -i prof_file_*
   // dot -Tpdf dag.dot -o output.pdf
   // pour tracer le diagramme de Gant:
@@ -124,7 +125,7 @@ int Test_Graph_Implicit_SPU(void) {
   // export STARPU_SCHED=dmda
   schnaps_real dd = L2error(&simu);
   printf("erreur local implicit L2=%.12e\n", dd);
-  //PlotFields(0, false, &simu, NULL, "dgvisu.msh");
+  PlotFields(0, false, &simu, NULL, "dgvisu.msh");
   // pour gmsh sur mac: export PYTHONDIR=/usr/local/Cellar/gmsh/2.10.1/libexec
 
   test = test && (dd < 600 * _VERY_SMALL);

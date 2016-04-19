@@ -282,7 +282,7 @@ void LatticeThetaTimeScheme(Simulation *simu,Model *model_advec, schnaps_real tm
     }
     if (iter==0){
       t_end= time(NULL);
-      printf("First step duration %f\n", t_end-t_start);
+      printf("First step duration %ld\n", t_end-t_start);
     }
     simu->tnow += simu->dt;
     simu_advec->tnow=simu->tnow;
@@ -973,8 +973,10 @@ void PlotVecFieldsBinSparseMultitime(int typplot[3], int compare, Simulation* si
   fprintf(gmshfile, "$NodeData\n");
   int number_of_string_tags=1;
   fprintf(gmshfile, "%i\n",number_of_string_tags);
-  if(fieldname == NULL)
-    fprintf(gmshfile, "\"field %d\"\n", typplot);
+  if(fieldname == NULL){
+    int idim=0;
+    fprintf(gmshfile, "\"field %d\"\n", typplot[idim]);
+  }
   else
   fprintf(gmshfile, "\"field: %s\"\n", fieldname);
   //

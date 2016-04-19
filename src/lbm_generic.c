@@ -614,7 +614,7 @@ void LBMThetaTimeScheme(LBMSimulation *lbsimu,schnaps_real theta, schnaps_real t
     }
     if (iter==0){
       t_end= time(NULL);
-      printf("First step duration %f\n", t_end-t_start);
+      printf("First step duration %ld\n", t_end-t_start);
     }
     lbsimu->tnow += lbsimu->dt;
     simu_advec->tnow=lbsimu->tnow;
@@ -664,9 +664,9 @@ void LBM_Set_D2Q9_ISOTH_model(LBModelDescriptor *lb){
   NewMPolyDescriptorFromModel(&(lb->Moments[7]),&model_Mabcy2D,NULL);
   NewMPolyDescriptorFromModel(&(lb->Moments[8]),&model_V42D,NULL);
   //lb->cref= sqrt(1.0/3.0);
-  sprintf(lb->macro_names[0],"rho\0");
-  sprintf(lb->macro_names[1],"ux\0");
-  sprintf(lb->macro_names[2],"uy\0");
+  sprintf(lb->macro_names[0],"rho");
+  sprintf(lb->macro_names[1],"ux");
+  sprintf(lb->macro_names[2],"uy");
   lb->cref= 1.0;
   for (int i=0;i< lb->q;i++){
     for (int j=0;j<lb->d;j++){
@@ -722,9 +722,9 @@ void LBM_Set_D2Q9_ISOTH_LINEARIZED_model(LBModelDescriptor *lb){
   NewMPolyDescriptorFromModel(&(lb->Moments[1]),&model_jx2D,NULL);
   NewMPolyDescriptorFromModel(&(lb->Moments[2]),&model_jy2D,NULL);
   //
-  sprintf(lb->macro_names[0],"rho\0");
-  sprintf(lb->macro_names[1],"jx\0");
-  sprintf(lb->macro_names[2],"jy\0");
+  sprintf(lb->macro_names[0],"rho");
+  sprintf(lb->macro_names[1],"jx");
+  sprintf(lb->macro_names[2],"jy");
   //
   lb->cref= 1.0;
   for (int i=0;i< lb->q;i++){
