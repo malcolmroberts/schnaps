@@ -86,11 +86,12 @@ void NewMPolyDescriptorFromModel(MPolyDescriptor *mpd,const MPolyData *model, ch
 void DisplayMPolyDescriptor(MPolyDescriptor *mpd){
   if (mpd){
   if (mpd->poly_string){
-  char *temp_str= calloc(LBM_MAX_POLYSTRSIZE+32,sizeof(char));
+  char *temp_str= calloc(LBM_MAX_POLYSTRSIZE+LBM_MAX_MACROVARNAMESIZE+4,sizeof(char));
   strcpy(temp_str,mpd->name);
   strcat(temp_str," : ");
   strcat(temp_str,mpd->poly_string);
   puts(temp_str);
+  free(temp_str);
   }
   }
 }
