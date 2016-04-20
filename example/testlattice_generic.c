@@ -7,6 +7,31 @@
 #include "lbm_generic.h"
 #include "lbm_diagnostics.h"
 //
+typedef struct LbmSimuParams{
+  int deg[3];
+  int raf[3];
+  schnaps_real cfl;
+  schnaps_real dt;
+  schnaps_real tmax;
+  schnaps_real cref;
+  schnaps_real tau;
+  schnaps_real diag_2d_period;
+} LbmSimuParams;
+
+typedef struct DoubleShearKHParams{
+  schnaps_real kappa;
+  schnaps_real delta;
+  schnaps_real uref;
+} DoubleShearKHParams;
+typedef struct Linear2DWaveParams{
+  int nkx;
+  int nky;
+  schnaps_real offset;
+} Linear2DWaveParams;
+//
+//
+int LBM_testmodels(void);
+//
 int TestLattice_Generic(void);
 void LBM_Generic_InitData(schnaps_real x[3],schnaps_real w[]);
 void LBM_Generic_ImposedData(const schnaps_real x[3],const schnaps_real t,schnaps_real w[]);
@@ -21,17 +46,66 @@ void LBM_Linear2DWave_ImposedData_OneNode(const schnaps_real x[3],const schnaps_
 void LBM_Linear2DWave_Periodic_BoundaryFlux_OneNode(schnaps_real *x, schnaps_real t, schnaps_real *wL, schnaps_real *vnorm,schnaps_real *flux);
 void LBM_Linear2DWave_CollectDiags(void *s,schnaps_real *macro_diag_vals,schnaps_real *micro_diag_vals);
 void LBM_Linear2DWave_Plot_Fields(void *s,schnaps_real *w);
-
+//
+int LBM_TestLattice_isothermal_DoubleShearKH(void);
+// global parameters with default values
+LbmSimuParams SimParams={
+  .deg={4,4,0},
+  .raf={4,4,1},
+  .cfl=1.0,.dt=0.001,.tmax=1.0,
+  .tau=0.00001,.cref=1.0,
+  .diag_2d_period=1.0};
+DoubleShearKHParams DKHParams={.kappa=80.0,.delta=0.05,.uref=0.05};
+Linear2DWaveParams  LW2DParams={.nkx=1,.nky=0,.offset=0.0};
 //
 char simutag[4]="TAG";
 //
 int main(void) {
-  printf(" Lattice Boltzmann Model - GENERIC TEST\n"); 
+  printf(" Lattice Boltzmann Model\n");
+  SimParams= (LbmSimuParams){
+  .deg={4,4,0},
+  .raf={4,4,1},
+  .cfl=1.0,
+  .dt=0.001,
+  .tmax=1.0,
+  .tau=0.00001,
+  .cref=1.0,
+  .diag_2d_period=1.0};
+  //int resu=LBM_testmodels();
   //int resu=TestLattice_Generic();
+  LW2DParams.nkx=1;
+  LW2DParams.nky=2;
+  LW2DParams.offset=0.0;
   int resu=LBM_TestLattice_LinearWave2D();
   if (resu) printf("lattice test OK !\n");
   else printf("lattice test failed !\n");
   return !resu;
+}
+//
+int LBM_testmodels(void){
+  int d=2;
+  int nb_macro=3;
+  int q=9;
+  LBModelDescriptor lbm=LBModelDescriptor_NULL;
+  LatticeBoltzmannSimData *lsd=&schnaps_lbm_simdata;
+  //
+  printf(" D2Q9 isothermal model\n");
+  NewLBModelDescriptor(&lbm,d,nb_macro,q);
+  lsd->lb_model=&lbm;
+  LBM_Set_D2Q9_ISOTH_model(&lbm,SimParams.cref);
+  CheckLBModelDescriptorMacroConservation(&lbm,false);
+  DisplayLBModelDescriptorMomentMatrix(&lbm);
+  DestroyLBModelDescriptor(&lbm);
+  //
+  printf(" D2Q9 isothermal Linerarized model\n");
+  NewLBModelDescriptor(&lbm,d,nb_macro,q);
+  lsd->lb_model=&lbm;
+  LBM_Set_D2Q9_ISOTH_LINEARIZED_model(&lbm,SimParams.cref);
+  CheckLBModelDescriptorMacroConservation(&lbm,false);
+  DisplayLBModelDescriptorMomentMatrix(&lbm);
+  DestroyLBModelDescriptor(&lbm);
+  //
+  return 1;
 }
 //
 int TestLattice_Generic(void){
@@ -53,13 +127,13 @@ int TestLattice_Generic(void){
   mesh.period[1]=1.0;
   BuildConnectivity(&mesh);
   //
-  int deg[3]={4,4,0};
-  int raf[3]={24,24,1};
-  CheckMacroMesh(&mesh, deg, raf);
+  //int deg[3]={4,4,0};
+  //int raf[3]={24,24,1};
+  CheckMacroMesh(&mesh, SimParams.deg, SimParams.raf);
   // setup simulation paramaters in global shared LatticeBoltzmannSimData object
   LatticeBoltzmannSimData *lsd=&schnaps_lbm_simdata;
   NewLBModelDescriptor(&lbm,d,nb_macro,q);
-  LBM_Set_D2Q9_ISOTH_model(&lbm);
+  LBM_Set_D2Q9_ISOTH_model(&lbm,SimParams.cref);
   lsd->lb_model=&lbm;
   // setup LB Simulation object
   LBMSimulation lbsimu;
@@ -67,23 +141,20 @@ int TestLattice_Generic(void){
   lbsimu.macro_model.ImposedData=NULL;
   //
   //
-  InitLBMSimulation(&lbsimu,lsd,&mesh,deg,raf);
+  InitLBMSimulation(&lbsimu,lsd,&mesh,SimParams.deg,SimParams.raf);
   //
-  lbsimu.vmax=lsd->lb_model->cref * sqrt(2.0);
-  lbsimu.cfl=1.0;
+  lbsimu.vmax=lsd->lb_model->vmax;
+  lbsimu.cfl=SimParams.cfl;
   lbsimu.micro_simu.cfl=lbsimu.cfl;
-
-  schnaps_real dt_rk=Get_Dt_RK(&(lbsimu.micro_simu));
-  printf(" cfl=%f, dt RK=%f\n",lbsimu.cfl,dt_rk);
-  lbsimu.dt=dt_rk;
-  lbsimu.tmax=1.0;
+  lbsimu.dt=SimParams.dt;
+  lbsimu.tmax=SimParams.tmax;
   lbsimu.micro_simu.tmax=lbsimu.tmax;
   lbsimu.micro_simu.cfl=lbsimu.cfl;
   lbsimu.macro_simu.cfl=lbsimu.cfl;
   lbsimu.micro_simu.tmax=lbsimu.tmax;
   lbsimu.macro_simu.tmax=lbsimu.tmax;
   //
-  schnaps_real tau=0.00000001;
+  schnaps_real tau=SimParams.tau;
   lbm.s[0]=lbsimu.dt/(tau+0.5*lbsimu.dt);
   printf(" tau=%f s=%f\n",tau,lbm.s[0]);
   //
@@ -93,7 +164,7 @@ int TestLattice_Generic(void){
   lbsimu.post_advec=LB_ComputeMacroFromMicro;
   lbsimu.post_tstep=LBM_Generic_Plot_Fields;
   lbsimu.collect_diags=NULL;
-  lbsimu.diag_2d_period=0.2;
+  lbsimu.diag_2d_period=SimParams.diag_2d_period;
   //
   sprintf(simutag,"IMP");
   lbsimu.model_advec.m=1;
@@ -241,36 +312,32 @@ int LBM_TestLattice_LinearWave2D(void){
   mesh.period[1]=1.0;
   BuildConnectivity(&mesh);
   //
-  int deg[3]={4,4,0};
-  int raf[3]={20,20,1};
-  CheckMacroMesh(&mesh, deg, raf);
+  CheckMacroMesh(&mesh, SimParams.deg, SimParams.raf);
   // setup simulation paramaters in global shared LatticeBoltzmannSimData object
   LatticeBoltzmannSimData *lsd=&schnaps_lbm_simdata;
   NewLBModelDescriptor(&lbm,d,nb_macro,q);
-  LBM_Set_D2Q9_ISOTH_LINEARIZED_model(&lbm);
   lsd->lb_model=&lbm;
+  LBM_Set_D2Q9_ISOTH_LINEARIZED_model(&lbm,SimParams.cref);
   // setup LB Simulation object
   LBMSimulation lbsimu;
   lbsimu.macro_model.InitData=LBM_Linear2DWave_InitData;
   lbsimu.macro_model.ImposedData=LBM_Linear2DWave_ImposedData;
   //
   //
-  InitLBMSimulation(&lbsimu,lsd,&mesh,deg,raf);
+  InitLBMSimulation(&lbsimu,lsd,&mesh,SimParams.deg,SimParams.raf);
   //
-  lbsimu.vmax=lsd->lb_model->cref * sqrt(2.0);
-  lbsimu.cfl=1.0;
+  lbsimu.vmax=lsd->lb_model->vmax;
+  lbsimu.cfl=SimParams.cfl;
   lbsimu.micro_simu.cfl=lbsimu.cfl;
-  lbsimu.tmax=10.0;
+  lbsimu.tmax=SimParams.tmax;
   lbsimu.micro_simu.tmax=lbsimu.tmax;
-  schnaps_real dt_rk=Get_Dt_RK(&(lbsimu.micro_simu));
-  printf(" cfl=%f, dt RK=%f\n",lbsimu.cfl,dt_rk);
-  lbsimu.dt=dt_rk;
+  lbsimu.dt=SimParams.dt;
   lbsimu.micro_simu.cfl=lbsimu.cfl;
   lbsimu.macro_simu.cfl=lbsimu.cfl;
   lbsimu.micro_simu.tmax=lbsimu.tmax;
   lbsimu.macro_simu.tmax=lbsimu.tmax;
   //
-  schnaps_real tau=0.00000001;
+  schnaps_real tau=SimParams.tau;
   lbm.s[0]=lbsimu.dt/(tau+0.5*lbsimu.dt);
   printf(" tau=%f s=%f\n",tau,lbm.s[0]);
   //
@@ -281,7 +348,7 @@ int LBM_TestLattice_LinearWave2D(void){
   //lbsimu.post_advec=NULL;
   lbsimu.post_tstep=LBM_Linear2DWave_Plot_Fields;
   lbsimu.collect_diags=LBM_Linear2DWave_CollectDiags;
-  lbsimu.diag_2d_period=0.2;
+  lbsimu.diag_2d_period=SimParams.diag_2d_period;
   //
   sprintf(simutag,"IMP");
   lbsimu.model_advec.m=1;
@@ -308,12 +375,9 @@ void LBM_Linear2DWave_InitData(schnaps_real x[3],schnaps_real w[])
   LatticeBoltzmannSimData* lsd=&schnaps_lbm_simdata;
   schnaps_real my_pi= 4.0*atan(1.0);
   // wave mode numbers in half integer units
-/*  int nkx = LW2DParams.nkx;*/
-/*  int nky = LW2DParams.nky;*/
-  int nkx = 1;
-  int nky = 1;
-  //schnaps_real offset=LW2DParams.offset;
-  schnaps_real offset=0.0;
+  int nkx = LW2DParams.nkx;
+  int nky = LW2DParams.nky;
+  schnaps_real offset=LW2DParams.offset;
   // spatial frequencies
   schnaps_real kx = 2.0 * my_pi * (schnaps_real) nkx;
   schnaps_real ky= 2.0 * my_pi * (schnaps_real) nky;
@@ -334,12 +398,9 @@ void LBM_Linear2DWave_ImposedData(const schnaps_real x[3],const schnaps_real t,s
   LatticeBoltzmannSimData* lsd=&schnaps_lbm_simdata;
   schnaps_real my_pi= 4.0*atan(1.0);
   // wave mode numbers in half integer units
-/*  int nkx = LW2DParams.nkx;*/
-/*  int nky = LW2DParams.nky;*/
-  int nkx = 1;
-  int nky = 1;
-  //schnaps_real offset=LW2DParams.offset;
-  schnaps_real offset=0.0;
+  int nkx = LW2DParams.nkx;
+  int nky = LW2DParams.nky;
+  schnaps_real offset=LW2DParams.offset;
   // spatial frequencies
   schnaps_real kx = 2.0 * my_pi * (schnaps_real) nkx;
   schnaps_real ky= 2.0 * my_pi * (schnaps_real) nky;
@@ -364,12 +425,9 @@ void LBM_Linear2DWave_ImposedData_OneNode(const schnaps_real x[3],const schnaps_
   LatticeBoltzmannSimData* lsd=&schnaps_lbm_simdata;
   schnaps_real my_pi= 4.0*atan(1.0);
   // wave mode numbers in half integer units
-/*  int nkx = LW2DParams.nkx;*/
-/*  int nky = LW2DParams.nky;*/
-  int nkx = 1;
-  int nky = 1;
-  //schnaps_real offset=LW2DParams.offset;
-  schnaps_real offset=0.0;
+  int nkx = LW2DParams.nkx;
+  int nky = LW2DParams.nky;
+  schnaps_real offset=LW2DParams.offset;
   // spatial frequencies
   schnaps_real kx = 2.0 * my_pi * (schnaps_real) nkx;
   schnaps_real ky= 2.0 * my_pi * (schnaps_real) nky;
@@ -488,4 +546,7 @@ void LBM_Linear2DWave_Plot_Fields(void *s,schnaps_real *w){
   };
   }
 };
-
+//***********************************************************************************************//
+// 2D double sheared flow KH instability
+int LBM_TestLattice_isothermal_DoubleShearKH(void) {
+};

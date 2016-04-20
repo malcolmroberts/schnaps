@@ -95,8 +95,14 @@ void NewLBModelDescriptor(LBModelDescriptor *lb,int d, int nb_macro,int q);
 void DestroyLBModelDescriptor(LBModelDescriptor *lb);
 //!\brief Moment matric computation (assuming Moments,cref and nodes are set)
 void ComputeLBModelDescriptorMomentMatrix(LBModelDescriptor *lb);
+//!brief print moment basis associated polynomials
+void DisplayLBModelDescriptorMomentPoly(LBModelDescriptor *lb);
 //!\brief print moment matrix M to standard output
 void DisplayLBModelDescriptorMomentMatrix(LBModelDescriptor *lb);
+//!\brief compute max velocity of node grid
+void ComputeLBModelDescriptorVmax(LBModelDescriptor *lb);
+//!\brief check that macro quantities are conserved;
+void CheckLBModelDescriptorMacroConservation(LBModelDescriptor *lb, bool verbose);
 //******************************************************************************//
 void LBM_Dummy_InitMacroData(schnaps_real x[3],schnaps_real w[]);
 void LBM_Dummy_InitData(schnaps_real x[3],schnaps_real w[]);
@@ -172,11 +178,11 @@ void LBMThetaTimeScheme(LBMSimulation *lbsimu,schnaps_real theta, schnaps_real t
 schnaps_real LBM_dummy_zeros_feq(int inode,int nb_macro,schnaps_real *w);
 //******* Hydrodynamic models (Euler, Navier-Stokes) ***************************//
 // D2Q9 isothermal
-void LBM_Set_D2Q9_ISOTH_model(LBModelDescriptor *lb);
+void LBM_Set_D2Q9_ISOTH_model(LBModelDescriptor *lb,schnaps_real cref);
 void LBM_f_to_macro_D2Q9_ISOTH(schnaps_real *f,schnaps_real *w);
 schnaps_real LBM_feq_D2Q9_ISOTH(int inode, int nb_macro,schnaps_real *w);
 // D2Q9 isothermal linearized (2D wave equation)
-void LBM_Set_D2Q9_ISOTH_LINEARIZED_model(LBModelDescriptor *lb);
+void LBM_Set_D2Q9_ISOTH_LINEARIZED_model(LBModelDescriptor *lb,schnaps_real cref);
 void LBM_f_to_macro_D2Q9_ISOTH_LINEARIZED(schnaps_real *f,schnaps_real *w);
 schnaps_real LBM_feq_D2Q9_ISOTH_LINEARIZED(int inode, int nb_macro,schnaps_real *w);
 //

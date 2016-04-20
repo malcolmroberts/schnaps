@@ -234,16 +234,69 @@ void ComputeLBModelDescriptorMomentMatrix(LBModelDescriptor *lb){
     }
 }
 /*******************************************************************************************/
-void DisplayLBModelDescriptorMomentMatrix(LBModelDescriptor *lb){
+void DisplayLBModelDescriptorMomentPoly(LBModelDescriptor *lb){
   for (int i=0;i< lb->q;i++){
     DisplayMPolyDescriptor(&(lb->Moments[i]));
   }
+}
+/******************************************************************************************/
+void DisplayLBModelDescriptorMomentMatrix(LBModelDescriptor *lb){
   for (int i=0;i< lb->q;i++){
     for (int j=0;j< lb->q;j++){
       printf("%f\t",lb->M[i][j]);
     }
     printf("\n");
   }
+}
+/******************************************************************************************/
+void ComputeLBModelDescriptorVmax(LBModelDescriptor *lb){
+  schnaps_real vm=0.0;
+  for (int i=0;i< lb->q;i++){
+      schnaps_real tmpv=0.0;
+    for (int k=0;k<lb->d;k++){
+      tmpv += lb->vi[i][k] * lb->vi[i][k];
+    }
+    if (tmpv > vm) vm=tmpv;
+  }
+  lb->vmax=vm;
+}
+/******************************************************************************************/
+void CheckLBModelDescriptorMacroConservation(LBModelDescriptor *lb,bool verbose){
+  //
+  schnaps_real Min[lb->nb_macro];
+  schnaps_real Mout[lb->nb_macro];
+  schnaps_real Merr[lb->nb_macro];
+  schnaps_real feq[lb->q];
+  //
+  for (int l=0;l< lb->nb_macro;l++){
+    Min[l]= 1.0+((schnaps_real) rand())/((schnaps_real) RAND_MAX);
+  }
+  for (int i=0;i< lb->q;i++){
+    feq[i]=lb->feq(i,lb->nb_macro,Min);
+  }
+  lb->f_to_macro(feq,Mout);
+  schnaps_real max_error=0.0;
+  int imaxerror=-1;
+  for (int l=0;l< lb->nb_macro;l++){
+    Merr[l]=Mout[l]/Min[l]-1.0;
+    if (Merr[l] > max_error){
+    max_error=Merr[l];
+    imaxerror=l;
+    }
+  }
+  if (verbose){
+  printf("Checking lb model conservation\n");
+  for (int l=0;l< lb->nb_macro;l++){
+    printf("%i: %s : %f\n",l,lb->macro_names[l],Merr[l]);
+  }
+  }
+  if (max_error < _SMALL){
+  printf("LB model conservation check OK \n");
+  }
+  else{
+  printf("LB model conservation check Warning  error %f on macro quatity %s \n",max_error,lb->macro_names[imaxerror]);
+  }
+  //
 }
 /*****************************************************************************************/
 void LBM_Dummy_InitMacroData(schnaps_real x[3],schnaps_real w[]){
@@ -657,7 +710,7 @@ schnaps_real LBM_dummy_zeros_feq(int inode,int nb_macro,schnaps_real *w){
 }
 // D2Q9 isothermal
 //********************************************************************************//
-void LBM_Set_D2Q9_ISOTH_model(LBModelDescriptor *lb){
+void LBM_Set_D2Q9_ISOTH_model(LBModelDescriptor *lb,schnaps_real cref){
   assert(lb->d==2);
   assert(lb->q==9);
   assert(lb->nb_macro==3);
@@ -670,16 +723,19 @@ void LBM_Set_D2Q9_ISOTH_model(LBModelDescriptor *lb){
   NewMPolyDescriptorFromModel(&(lb->Moments[6]),&model_Mabcx2D,NULL);
   NewMPolyDescriptorFromModel(&(lb->Moments[7]),&model_Mabcy2D,NULL);
   NewMPolyDescriptorFromModel(&(lb->Moments[8]),&model_V42D,NULL);
-  //lb->cref= sqrt(1.0/3.0);
+  //
   sprintf(lb->macro_names[0],"rho");
   sprintf(lb->macro_names[1],"ux");
   sprintf(lb->macro_names[2],"uy");
-  lb->cref= 1.0;
+  // set velocity nodes
+  lb->cref= cref;
   for (int i=0;i< lb->q;i++){
     for (int j=0;j<lb->d;j++){
       lb->vi[i][j]=lb->cref * LBM_D2Q9_nodes[i][j];
     }
   }
+  ComputeLBModelDescriptorVmax(lb);
+  //
   for (int i=0; i< lb->q;i++){
     lb->inode_min[i]=0;
     lb->inode_max[i]=lb->q-1;
@@ -712,7 +768,6 @@ schnaps_real LBM_feq_D2Q9_ISOTH(int i_node,int nb_macro,schnaps_real *w){
     schnaps_real rho=w[0];
     schnaps_real ux=w[1];
     schnaps_real uy=w[2];
-    //schnaps_real temp=w[4];
     schnaps_real temp=1.0/3.0;
     //
     schnaps_real u2= (ux * ux + uy * uy)/temp;
@@ -721,24 +776,32 @@ schnaps_real LBM_feq_D2Q9_ISOTH(int i_node,int nb_macro,schnaps_real *w){
     return feq;
 };
 // D2Q9 isothermal linearized (2D wave equation)
-void LBM_Set_D2Q9_ISOTH_LINEARIZED_model(LBModelDescriptor *lb){
+void LBM_Set_D2Q9_ISOTH_LINEARIZED_model(LBModelDescriptor *lb,schnaps_real cref){
   assert(lb->d==2);
   assert(lb->q==9);
   assert(lb->nb_macro==3);
   NewMPolyDescriptorFromModel(&(lb->Moments[0]),&model_rho2D,NULL);
   NewMPolyDescriptorFromModel(&(lb->Moments[1]),&model_jx2D,NULL);
   NewMPolyDescriptorFromModel(&(lb->Moments[2]),&model_jy2D,NULL);
+  NewMPolyDescriptorFromModel(&(lb->Moments[3]),&model_trMab2D,NULL);
+  NewMPolyDescriptorFromModel(&(lb->Moments[4]),&model_DifMab2D,NULL);
+  NewMPolyDescriptorFromModel(&(lb->Moments[5]),&model_Mxy2D,NULL);
+  NewMPolyDescriptorFromModel(&(lb->Moments[6]),&model_Mabcx2D,NULL);
+  NewMPolyDescriptorFromModel(&(lb->Moments[7]),&model_Mabcy2D,NULL);
+  NewMPolyDescriptorFromModel(&(lb->Moments[8]),&model_V42D,NULL);
   //
   sprintf(lb->macro_names[0],"rho");
   sprintf(lb->macro_names[1],"jx");
   sprintf(lb->macro_names[2],"jy");
-  //
-  lb->cref= 1.0;
+  // set velocity nodes
+  lb->cref= cref;
   for (int i=0;i< lb->q;i++){
     for (int j=0;j<lb->d;j++){
       lb->vi[i][j]=lb->cref * LBM_D2Q9_nodes[i][j];
     }
   }
+  ComputeLBModelDescriptorVmax(lb);
+  //
   for (int i=0; i< lb->q;i++){
     lb->inode_min[i]=0;
     lb->inode_max[i]=lb->q-1;
@@ -755,7 +818,6 @@ schnaps_real LBM_feq_D2Q9_ISOTH_LINEARIZED(int i_node,int nb_macro,schnaps_real 
     schnaps_real rho=w[0];
     schnaps_real jx=w[1];
     schnaps_real jy=w[2];
-    //schnaps_real temp=w[4];
     schnaps_real temp=1.0/3.0;
     //
     schnaps_real jv= (jx * lsd->lb_model->vi[i_node][0] + jy * lsd->lb_model->vi[i_node][1])/temp;
