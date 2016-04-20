@@ -62,9 +62,15 @@ void SetMPolyDescriptor(MPolyDescriptor *mpd, schnaps_real c_in[mpd->nc],int e_i
         } //endif
       } //k
     }// endif
+    int l=strlen(tmp_poly)+strlen(tmp_str)+1;
+    if (l < LBM_MAX_POLYSTRSIZE){
     strcat(tmp_poly,tmp_str);
+    }
+    l=strlen(tmp_poly)+4;
+    if (l < LBM_MAX_POLYSTRSIZE){
     if (i< mpd->nc-1){
       strcat(tmp_poly," + ");
+    }
     }
   } //i
   int len=strlen(tmp_poly);
