@@ -514,14 +514,11 @@ void LBM_PlotVecFieldsBinSparseMultitime(int typplot[3], int compare, Simulation
   FILE * gmshfile;
   if (create_file==1){
   gmshfile = fopen(filename, "w" );
-  //printf("Creating file\n");
   }
   else
   {
-  //printf("Appending data\n");
   gmshfile = fopen(filename, "a" );
   }
-  //int param[8] = {f->model.m, _DEGX, _DEGY, _DEGZ, _RAFX, _RAFY, _RAFZ, 0};
   int nraf[3] = {simu->fd[0].raf[0],
 		 simu->fd[0].raf[1],
 		 simu->fd[0].raf[2]};
@@ -533,7 +530,14 @@ void LBM_PlotVecFieldsBinSparseMultitime(int typplot[3], int compare, Simulation
 		      deg[1] + 1,
 		      deg[2] + 1};
     const unsigned int sc_npg = npg[0] * npg[1] * npg[2];
-
+  // check existence of fields, out of bounds field values lead to zero padding (useful for 1D/2D)
+  bool is_valid_field[3];
+  int maxfield_index=simu->fd->model.m;
+  for (int idim=0;idim < 3;idim++){
+    is_valid_field[idim]=((typplot[idim] < maxfield_index) && (typplot[idim] > -1));
+    //printf("idim %i typplot %i isvalid %i\n",idim,typplot[idim],is_valid_field[idim]);
+  }
+  
   // Refinement size in each direction
   schnaps_real hh[3] = {1.0 / nraf[0], 1.0 / nraf[1], 1.0 / nraf[2]};
   // Header
@@ -604,8 +608,13 @@ void LBM_PlotVecFieldsBinSparseMultitime(int typplot[3], int compare, Simulation
             psi_ref_subcell(f->deg, f->raf, icL, index_glob_igp, Xr, &psi, NULL);
             testpsi += psi;
             for (int idim=0;idim < 3; idim++){
+            if (is_valid_field[idim]){
             int vi = f->varindex(f->deg, f->raf, f->model.m, index_glob_igp, typplot[idim]);
             value[3*nodecount+idim] += psi * f->wn[vi];
+            }
+            else{
+            value[3*nodecount+idim] += 0.0;
+            }
             }
           };
         };
@@ -617,7 +626,12 @@ void LBM_PlotVecFieldsBinSparseMultitime(int typplot[3], int compare, Simulation
           schnaps_real wex[f->model.m];
           f->model.ImposedData(Xphy, f->tnow, wex);
           for (int idim=0;idim<3;idim++){
+          if (is_valid_field[idim]){
           value[3*nodecount+idim] -= wex[typplot[idim]];
+          }
+          else{
+          value[3*nodecount+idim] -= 0.0;
+          }
           }
         }
         nodecount++;
