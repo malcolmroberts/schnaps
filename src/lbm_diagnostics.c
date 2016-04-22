@@ -908,7 +908,9 @@ void LBM_Store_Lattice_diags(LBMSimulation *lbsimu){
     micro_diag_vals[irank]=0.0;
   };
   // actual collection
+  if (lbsimu->collect_diags){
   lbsimu->collect_diags(lbsimu,macro_diag_vals,micro_diag_vals);
+  }
   //
   for (int irank=0;irank < nb_diags_macro;irank++){
     lbsimu->macro_simu.Diagnostics[iter* nb_diags_macro+irank]= macro_diag_vals[irank];

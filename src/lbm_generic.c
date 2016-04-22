@@ -155,6 +155,8 @@ void NewLBModelDescriptor(LBModelDescriptor *lb,int d, int nb_macro,int q){
     lb->vi[i]= (schnaps_real*) calloc(lb->d,sizeof(schnaps_real));
   };
   //
+  lb->iopposite = (int*) calloc(lb->q,sizeof(int));
+  //
   lb->Moments= (MPolyDescriptor*) calloc(lb->q,sizeof(MPolyDescriptor));
   for (int i=0;i< lb->q;i++){
     lb->Moments[i]=MPolyDescriptor_NULL;
@@ -190,6 +192,9 @@ void DestroyLBModelDescriptor(LBModelDescriptor *lb){
       free(lb->vi[i]);
     }
     free(lb->vi);
+  }
+  if (lb->iopposite){
+    free(lb->iopposite);
   }
   if( lb->Moments){
     for (int i=0;i<lb->q;i++){
@@ -354,6 +359,8 @@ void InitLBMSimulation( LBMSimulation *lbsimu,LatticeBoltzmannSimData *lsd, Macr
   LB_Relaxation_bgk_f_full(lbsimu);
   lsd->current_lb_sim=lbsimu;
   //
+  lbsimu->wmic_buffer = (schnaps_real *) calloc(lsd->lb_model->q,sizeof(schnaps_real));
+  //
   lbsimu->pre_advec=NULL;
   lbsimu->post_advec=NULL;
   lbsimu->post_tstep=NULL;
@@ -364,6 +371,7 @@ void InitLBMSimulation( LBMSimulation *lbsimu,LatticeBoltzmannSimData *lsd, Macr
 void FreeBMSimulation(LBMSimulation *lbsimu){
   freeSimulation(&(lbsimu->macro_simu));
   freeSimulation(&(lbsimu->micro_simu));
+  free(lbsimu->wmic_buffer);
 }
 //******************************************************************************//
 
@@ -557,7 +565,6 @@ void LBMThetaTimeScheme(LBMSimulation *lbsimu,schnaps_real theta, schnaps_real t
   simu_advec->itermax_rk=itermax;
   simu_advec->tnow=0.0;
   for(int ie=0; ie < micsimu->macromesh.nbelems; ++ie){
-    printf("ie:%i",ie);
     micsimu->fd[ie].tnow=lbsimu->tnow;
     macsimu->fd[ie].tnow=lbsimu->tnow;
     simu_advec->fd[ie].tnow=simu_advec->tnow;
@@ -635,12 +642,12 @@ void LBMThetaTimeScheme(LBMSimulation *lbsimu,schnaps_real theta, schnaps_real t
       for(int ie=0; ie < simu_advec->macromesh.nbelems; ++ie){
         simu_advec->fd[ie].tnow=simu_advec->tnow;
       }
-      AssemblyImplicitLinearSolver(simu_advec, &solver_exp[isim],-(1.0-theta),simu_advec->dt);
+      LBM_AssemblyImplicitLinearSolver(simu_advec, &solver_exp[isim],-(1.0-theta),simu_advec->dt);
       simu_advec->tnow=lbsimu->tnow+lbsimu->dt;
       for(int ie=0; ie < simu_advec->macromesh.nbelems; ++ie){
         simu_advec->fd[ie].tnow=simu_advec->tnow;
       }
-      AssemblyImplicitLinearSolver(simu_advec, &solver_imp[isim],theta,simu_advec->dt);
+      LBM_AssemblyImplicitLinearSolver(simu_advec, &solver_imp[isim],theta,simu_advec->dt);
       // compute residual
       MatVect(&solver_exp[isim], simu_advec->w, res_advec);
       //
@@ -696,6 +703,282 @@ void LBMThetaTimeScheme(LBMSimulation *lbsimu,schnaps_real theta, schnaps_real t
   }
 }
 /***************************************************************************************************************/
+void LBM_AssemblyImplicitLinearSolver(Simulation *simu, LinearSolver *solver,schnaps_real theta, schnaps_real dt){
+  if(solver->mat_is_assembly == false){
+    MassAssembly(simu, solver);
+    InternalAssembly(simu, solver,theta,dt);
+    FluxAssembly(simu, solver,theta,dt);
+    LBM_InterfaceAssembly(simu, solver,theta,dt);
+  }
+  if(solver->rhs_is_assembly == false){
+    for(int i=0;i<solver->neq;i++){
+      solver->rhs[i]=0;
+    }
+      LBM_SourceAssembly(simu, solver,theta,dt);
+  }
+  //DisplayLinearSolver(solver);
+}
+void LBM_SourceAssembly(Simulation *simu,  LinearSolver *solver, schnaps_real theta, schnaps_real dt){
+
+   if(simu->fd[0].model.Source != NULL) {
+    for(int ie = 0; ie < simu->macromesh.nbelems; ie++){
+      field *f = simu->fd + ie;
+      int offsetw = f->wsize * ie;
+
+      const int m = f->model.m;
+
+      int deg[3] = {f->deg[0],
+		    f->deg[1],
+		    f->deg[2]};
+
+      int nraf[3] = {f->raf[0],
+		     f->raf[1],
+		     f->raf[2]};
+
+      for(int ipg = 0; ipg < NPG(f->deg, f->raf); ipg++) {
+	schnaps_real dtau[3][3], codtau[3][3], xpgref[3], xphy[3], wpg;
+	ref_pg_vol(f->deg, f->raf, ipg, xpgref, &wpg, NULL);
+	schnaps_ref2phy(f->physnode, // phys. nodes
+		xpgref, // xref
+		NULL, -1, // dpsiref, ifa
+		xphy, dtau, // xphy, dtau
+		codtau, NULL, NULL); // codtau, dpsi, vnds
+	schnaps_real det = dot_product(dtau[0], codtau[0]);
+	schnaps_real wL[m], source[m];
+	/* for(int iv = 0; iv < m; ++iv){ */
+	/* 	int imem = f->varindex(f->deg, f->raf, f->model.m, ipg, iv); */
+	/* 	wL[iv] = w[imem]; */
+	/* } */
+	f->model.Source(xphy, f->tnow, wL, source);
+
+	for(int iv1 = 0; iv1 < m; iv1++) {
+	  int imem = f->varindex(deg, nraf, m, ipg, iv1)+offsetw;
+	  schnaps_real val = theta * dt * source[iv1] * wpg * det;
+	  solver->rhs[imem] += val;
+	}
+      } //ipg
+    }
+  }
+  // assembly of the boundary terms
+
+  int fsize =  simu->wsize / simu->macromesh.nbelems;
+
+  for(int ifa = 0; ifa < simu->macromesh.nbfaces; ifa++){
+    int ieL = simu->macromesh.face2elem[4 * ifa + 0];
+    int locfaL = simu->macromesh.face2elem[4 * ifa + 1];
+    int ieR = simu->macromesh.face2elem[4 * ifa + 2];
+    field *fL = simu->fd + ieL;
+    //printf("iel=%d ier=%d\n",ieL,ieR);
+    int offsetL = fsize * ieL;
+    if (ieR < 0) {
+
+      const unsigned int m = fL->model.m;
+
+      // Loop over the points on a single macro cell interface.
+      for(int ipgfL = 0; ipgfL < NPGF(fL->deg, fL->raf, locfaL); ipgfL++) {
+
+	schnaps_real xpgref[3], xpgref_in[3], wpg;
+
+	// Get the coordinates of the Gauss point and coordinates of a
+	// point slightly inside the opposite element in xref_in
+	int ipgL = ref_pg_face(fL->deg, fL->raf, locfaL, ipgfL, xpgref, &wpg, xpgref_in);
+
+	// Normal vector at gauss point ipgL
+	schnaps_real vnds[3], xpg[3];
+	{
+	  schnaps_real dtau[3][3], codtau[3][3];
+	  schnaps_ref2phy(fL->physnode,
+		  xpgref,
+		  NULL, locfaL, // dpsiref, ifa
+		  xpg, dtau,
+		  codtau, NULL, vnds); // codtau, dpsi, vnds
+	}
+
+	// the boundary flux is an affine function
+	schnaps_real flux0[m], wL[m];
+	for(int iv = 0; iv < m; iv++) {
+	  wL[iv] = 0;
+	}
+	// store the state of micro simulation in global struct to allow access across nodes from 1node boundary flux
+  LatticeBoltzmannSimData *lsd=&schnaps_lbm_simdata;
+  LBMSimulation *lbsimu=lsd->current_lb_sim;
+  for (int i=0;i<lsd->lb_model->q;i++){
+    field *fmic=lbsimu->micro_simu.fd+ieL;
+    int ivar=fmic->varindex(fmic->deg,fmic->raf,fmic->model.m,ipgL,i);
+    lbsimu->wmic_buffer[i]=fmic->wn[ivar];
+  }
+  //
+	fL->model.BoundaryFlux(xpg, fL->tnow, wL, vnds, flux0);
+
+	for(int iv2 = 0; iv2 < m; iv2++) {
+	  int imem2 = fL->varindex(fL->deg, fL->raf,fL->model.m, ipgL, iv2)+offsetL;
+	  schnaps_real val = theta *dt * flux0[iv2] * wpg;
+	  solver->rhs[imem2] -= val;
+	}
+      }
+    } // if ier < 0
+  } // macroface loop
+} // SourceAssembly
+//
+void LBM_InterfaceAssembly(Simulation *simu,  LinearSolver *solver,schnaps_real theta, schnaps_real dt)
+{
+
+  int fsize =  simu->wsize / simu->macromesh.nbelems;
+
+  for(int ifa = 0; ifa < simu->macromesh.nbfaces; ifa++){
+    int ieL = simu->macromesh.face2elem[4 * ifa + 0];
+    int locfaL = simu->macromesh.face2elem[4 * ifa + 1];
+    int ieR = simu->macromesh.face2elem[4 * ifa + 2];
+    field *fL = simu->fd + ieL;
+    field *fR = NULL;
+    int offsetR = -1;
+    //printf("iel=%d ier=%d\n",ieL,ieR);
+    int offsetL = fsize * ieL;
+    if (ieR >= 0) {
+      fR = simu->fd + ieR;
+      offsetR = fsize * ieR;
+    }
+    const unsigned int m = fL->model.m;
+    // Loop over the points on a single macro cell interface.
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+    for(int ipgfL = 0; ipgfL < NPGF(fL->deg, fL->raf, locfaL); ipgfL++) {
+
+      schnaps_real xpgref[3], xpgref_in[3], wpg;
+
+      // Get the coordinates of the Gauss point and coordinates of a
+      // point slightly inside the opposite element in xref_in
+      int ipgL = ref_pg_face(fL->deg, fL->raf, locfaL, ipgfL, xpgref, &wpg, xpgref_in);
+
+      // Normal vector at gauss point ipgL
+      schnaps_real vnds[3], xpg[3];
+      {
+	schnaps_real dtau[3][3], codtau[3][3];
+	schnaps_ref2phy(fL->physnode,
+		xpgref,
+		NULL, locfaL, // dpsiref, ifa
+		xpg, dtau,
+		codtau, NULL, vnds); // codtau, dpsi, vnds
+      }
+
+      if (fR != NULL) {  // the right element exists
+	schnaps_real xrefL[3];
+	{
+	  schnaps_real xpg_in[3];
+	  schnaps_ref2phy(fL->physnode,
+		  xpgref_in,
+		  NULL, -1, // dpsiref, ifa
+		  xpg_in, NULL,
+		  NULL, NULL, NULL); // codtau, dpsi, vnds
+	  PeriodicCorrection(xpg_in,fL->period);
+	  schnaps_phy2ref(fR->physnode, xpg_in, xrefL);
+
+	}
+
+	int ipgR = ref_ipg(fR->deg,fR->raf, xrefL);
+	schnaps_real flux[m];
+	schnaps_real wL[m];
+	schnaps_real wR[m];
+
+	for (int iv1 = 0; iv1 < m; iv1++){
+
+
+
+	  for(int iv = 0; iv < m; iv++) {
+	    wL[iv] = (iv == iv1);
+	    wR[iv] = 0;
+	  }
+	  int imem1 = fL->varindex(fL->deg, fL->raf, fL->model.m, ipgL, iv1) + offsetL;
+
+	  // int_dL F(wL, wR, grad phi_ib)
+
+	  fL->model.NumFlux(wL, wR, vnds, flux);
+
+	  // Add flux to both sides
+
+	  for(int iv2 = 0; iv2 < m; iv2++) {
+	    int imem2 = fL->varindex(fL->deg, fL->raf, fL->model.m, ipgL, iv2) + offsetL;
+	    schnaps_real val = theta * dt * flux[iv2] * wpg;
+	    AddLinearSolver(solver, imem2, imem1, val);
+
+	    imem2 = fR->varindex(fR->deg, fR->raf, fR->model.m, ipgR, iv2) + offsetR;
+	    val = theta * dt * flux[iv2] * wpg;
+	    AddLinearSolver(solver, imem2, imem1, -val);
+	  }
+
+	  for(int iv = 0; iv < m; iv++) {
+	    wL[iv] = 0;
+	    wR[iv] = (iv == iv1);
+	  }
+	  imem1 = fL->varindex(fL->deg, fL->raf, fL->model.m, ipgR, iv1) + offsetR;
+
+
+	  fL->model.NumFlux(wL, wR, vnds, flux);
+
+	  for(int iv2 = 0; iv2 < m; iv2++) {
+	    int imem2 = fL->varindex(fL->deg, fL->raf, fL->model.m, ipgL, iv2) + offsetL;
+	    schnaps_real val = theta * dt * flux[iv2] * wpg;
+	    AddLinearSolver(solver, imem2, imem1, val);
+
+	    imem2 = fR->varindex(fR->deg, fR->raf, fR->model.m, ipgR, iv2) + offsetR;
+	    val = theta *dt * flux[iv2] * wpg;
+	    AddLinearSolver(solver, imem2, imem1, -val);
+	  }
+	}
+
+      } else { // The point is on the boundary.
+
+	// the boundary flux is an affine function
+	schnaps_real flux0[m], wL[m];
+	for(int iv = 0; iv < m; iv++) {
+	  wL[iv] = 0;
+	}
+	// store the state of micro simulation in global struct to allow access across nodes from 1node boundary flux
+  LatticeBoltzmannSimData *lsd=&schnaps_lbm_simdata;
+  LBMSimulation *lbsimu=lsd->current_lb_sim;
+  for (int i=0;i<lsd->lb_model->q;i++){
+    field *fmic=lbsimu->micro_simu.fd+ieL;
+    int ivar=fmic->varindex(fmic->deg,fmic->raf,fmic->model.m,ipgL,i);
+    lbsimu->wmic_buffer[i]=fmic->wn[ivar];
+  }
+  //
+	fL->model.BoundaryFlux(xpg, fL->tnow, wL, vnds, flux0);
+
+	/* for(int iv2 = 0; iv2 < m; iv2++) { */
+	/*   int imem2 = fL->varindex(fL->deg, fL->raf,fL->model.m, ipgL, iv2); */
+	/*   real val = theta *dt * flux0[iv2] * wpg; */
+	/*   solver->rhs[imem2] -= val; */
+	/* } */
+
+	for(int iv1 = 0; iv1 < m; iv1++) {
+	  int imem1 = fL->varindex(fL->deg, fL->raf,fL->model.m, ipgL, iv1) + offsetL;
+
+	  for(int iv = 0; iv < m; iv++) {
+	    wL[iv] = (iv == iv1);
+	  }
+    //
+    //
+	  schnaps_real flux[m];
+	  fL->model.BoundaryFlux(xpg, fL->tnow, wL, vnds, flux);
+
+	  for(int iv2 = 0; iv2 < m; iv2++) {
+	    // The basis functions is also the gauss point index
+	    int imem2 = fL->varindex(fL->deg, fL->raf,fL->model.m, ipgL, iv2) + offsetL;
+	    schnaps_real val = theta *dt * (flux[iv2]-flux0[iv2]) * wpg;
+	    AddLinearSolver(solver, imem2, imem1, val);
+	  }
+	} // iv1
+
+      } // else
+
+
+    } // ipgfl
+
+  } // macroface loop
+
+}
+
 
 /***********************************************************************************/
 //********************************************************************************//
@@ -733,6 +1016,9 @@ void LBM_Set_D2Q9_ISOTH_model(LBModelDescriptor *lb,schnaps_real cref){
     for (int j=0;j<lb->d;j++){
       lb->vi[i][j]=lb->cref * LBM_D2Q9_nodes[i][j];
     }
+  }
+  for (int i=0;i< lb->q;i++){
+    lb->iopposite[i]=LBM_D2Q9_iopposite[i];
   }
   ComputeLBModelDescriptorVmax(lb);
   //
@@ -799,6 +1085,9 @@ void LBM_Set_D2Q9_ISOTH_LINEARIZED_model(LBModelDescriptor *lb,schnaps_real cref
     for (int j=0;j<lb->d;j++){
       lb->vi[i][j]=lb->cref * LBM_D2Q9_nodes[i][j];
     }
+  }
+  for (int i=0;i< lb->q;i++){
+    lb->iopposite[i]=LBM_D2Q9_iopposite[i];
   }
   ComputeLBModelDescriptorVmax(lb);
   //

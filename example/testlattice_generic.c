@@ -18,6 +18,14 @@ typedef struct LbmSimuParams{
   schnaps_real diag_2d_period;
 } LbmSimuParams;
 
+typedef struct BumpFlowParams{
+  schnaps_real  uref;
+  schnaps_real ly;
+  schnaps_real lx;
+  schnaps_real cx;
+  schnaps_real cy;
+  schnaps_real r;
+} BumpFlowParams;
 typedef struct DoubleShearKHParams{
   schnaps_real kappa;
   schnaps_real delta;
@@ -32,12 +40,12 @@ typedef struct Linear2DWaveParams{
 //
 int LBM_testmodels(void);
 //
-int TestLattice_Generic(void);
-void LBM_Generic_InitData(schnaps_real x[3],schnaps_real w[]);
-void LBM_Generic_ImposedData(const schnaps_real x[3],const schnaps_real t,schnaps_real w[]);
-void LBM_Generic_ImposedData_OneNode(const schnaps_real x[3],const schnaps_real t,schnaps_real w[]);
-void LBM_Generic_Plot_Fields(void *s,schnaps_real *w);
-void LBM_Generic_Periodic_BoundaryFlux_OneNode(schnaps_real *x, schnaps_real t, schnaps_real *wL, schnaps_real *vnorm, schnaps_real *flux);
+int TestLattice_BumpFlow(void);
+void LBM_BumpFlow_InitData(schnaps_real x[3],schnaps_real w[]);
+void LBM_BumpFlow_ImposedData(const schnaps_real x[3],const schnaps_real t,schnaps_real w[]);
+void LBM_BumpFlow_ImposedData_OneNode(const schnaps_real x[3],const schnaps_real t,schnaps_real w[]);
+void LBM_BumpFlow_Plot_Fields(void *s,schnaps_real *w);
+void LBM_BumpFlow_BoundaryFlux_OneNode(schnaps_real *x, schnaps_real t, schnaps_real *wL, schnaps_real *vnorm, schnaps_real *flux);
 //
 int LBM_TestLattice_LinearWave2D(void);
 void LBM_Linear2DWave_InitData(schnaps_real x[3],schnaps_real w[]);
@@ -51,12 +59,13 @@ int LBM_TestLattice_isothermal_DoubleShearKH(void);
 // global parameters with default values
 LbmSimuParams SimParams={
   .deg={4,4,0},
-  .raf={4,4,1},
-  .cfl=1.0,.dt=0.001,.tmax=1.0,
+  .raf={2,2,1},
+  .cfl=1.0,.dt=0.001,.tmax=0.1,
   .tau=0.00001,.cref=1.0,
   .diag_2d_period=1.0};
 DoubleShearKHParams DKHParams={.kappa=80.0,.delta=0.05,.uref=0.05};
 Linear2DWaveParams  LW2DParams={.nkx=1,.nky=0,.offset=0.0};
+BumpFlowParams BFParams={.uref=0.01,.lx=6.0,.ly=2.0,.cx=3.0,.cy=-0.4,.r=0.5};
 //
 char simutag[4]="TAG";
 //
@@ -66,17 +75,27 @@ int main(void) {
   .deg={4,4,0},
   .raf={4,4,1},
   .cfl=1.0,
-  .dt=0.001,
+  .dt=0.01,
   .tmax=1.0,
-  .tau=0.00001,
   .cref=1.0,
-  .diag_2d_period=1.0};
-  //int resu=LBM_testmodels();
-  //int resu=TestLattice_Generic();
-  LW2DParams.nkx=1;
-  LW2DParams.nky=2;
-  LW2DParams.offset=0.0;
-  int resu=LBM_TestLattice_LinearWave2D();
+  .tau=0.00000001,
+  .diag_2d_period=0.1};
+  // ***********************//
+/*  int resu=LBM_testmodels();*/
+  // ***********************//
+  BFParams.uref=0.01;
+  BFParams.lx=4.0;
+  BFParams.ly=1.0;
+  BFParams.cx=2.0;
+  BFParams.cy=-0.9;
+  BFParams.r=1.0;
+  int resu=TestLattice_BumpFlow();
+  //
+/*  LW2DParams.nkx=1;*/
+/*  LW2DParams.nky=2;*/
+/*  LW2DParams.offset=0.0;*/
+/*  int resu=LBM_TestLattice_LinearWave2D();*/
+  //
   if (resu) printf("lattice test OK !\n");
   else printf("lattice test failed !\n");
   return !resu;
@@ -108,28 +127,26 @@ int LBM_testmodels(void){
   return 1;
 }
 //
-int TestLattice_Generic(void){
+int TestLattice_BumpFlow(void){
   int d=2;
   int nb_macro=3;
   int q=9;
   LBModelDescriptor lbm=LBModelDescriptor_NULL;
   //
   MacroMesh mesh;
-  ReadMacroMesh(&mesh,"../test/testcube.msh");
+  ReadMacroMesh(&mesh,"../geo/cbump2d.msh");
   Detect2DMacroMesh(&mesh);
   //
   schnaps_real A[3][3] = {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}};
   schnaps_real x0[3] = {0, 0, 0};
   AffineMapMacroMesh(&mesh,A,x0);
-
   // mesh preparation
-  mesh.period[0]=1.0;
-  mesh.period[1]=1.0;
+  mesh.period[0]=0.0;
+  mesh.period[1]=0.0;
   BuildConnectivity(&mesh);
   //
-  //int deg[3]={4,4,0};
-  //int raf[3]={24,24,1};
   CheckMacroMesh(&mesh, SimParams.deg, SimParams.raf);
+  //
   // setup simulation paramaters in global shared LatticeBoltzmannSimData object
   LatticeBoltzmannSimData *lsd=&schnaps_lbm_simdata;
   NewLBModelDescriptor(&lbm,d,nb_macro,q);
@@ -137,7 +154,7 @@ int TestLattice_Generic(void){
   lsd->lb_model=&lbm;
   // setup LB Simulation object
   LBMSimulation lbsimu;
-  lbsimu.macro_model.InitData=LBM_Generic_InitData;
+  lbsimu.macro_model.InitData=LBM_BumpFlow_InitData;
   lbsimu.macro_model.ImposedData=NULL;
   //
   //
@@ -158,11 +175,12 @@ int TestLattice_Generic(void){
   lbm.s[0]=lbsimu.dt/(tau+0.5*lbsimu.dt);
   printf(" tau=%f s=%f\n",tau,lbm.s[0]);
   //
-  lbsimu.macro_simu.nb_diags=0;
+  lbsimu.macro_simu.nb_diags=1;
   lbsimu.micro_simu.nb_diags=0;
   lbsimu.pre_advec=LB_Relaxation_bgk_f;
   lbsimu.post_advec=LB_ComputeMacroFromMicro;
-  lbsimu.post_tstep=LBM_Generic_Plot_Fields;
+  lbsimu.post_tstep=LBM_BumpFlow_Plot_Fields;
+  //lbsimu.post_tstep=NULL;
   lbsimu.collect_diags=NULL;
   lbsimu.diag_2d_period=SimParams.diag_2d_period;
   //
@@ -171,95 +189,93 @@ int TestLattice_Generic(void){
   lbsimu.model_advec.InitData=LBM_Dummy_InitData_OneNode;
   lbsimu.model_advec.ImposedData=NULL;
   lbsimu.model_advec.NumFlux=LBM_OneNodeNumFlux;
-  lbsimu.model_advec.BoundaryFlux=LBM_Generic_Periodic_BoundaryFlux_OneNode;
+  lbsimu.model_advec.BoundaryFlux=LBM_BumpFlow_BoundaryFlux_OneNode;
   lbsimu.model_advec.Source=NULL;
   //
   //
   // Actual run
   LBMThetaTimeScheme(&lbsimu,0.5,lbsimu.tmax,lbsimu.dt);
-
-  // Actual run
+  //
+  LBM_Dump_Lattice_Diagnostics(&lbsimu,"SIM");
   // cleanup
   FreeBMSimulation(&lbsimu);
   lsd->lb_model=NULL;
   DestroyLBModelDescriptor(&lbm);
   return 1;
 }
-void LBM_Generic_InitData(schnaps_real x[3],schnaps_real w[])
+void LBM_BumpFlow_InitData(schnaps_real x[3],schnaps_real w[])
 {
   LatticeBoltzmannSimData* lsd=&schnaps_lbm_simdata;
-  schnaps_real r=0.2;
-  schnaps_real r2=r * r;
-  schnaps_real cx=0.5;
-  schnaps_real cy=0.5;
-  schnaps_real dx= x[0]-cx;
-  schnaps_real dy= x[1]-cy;
-  schnaps_real d2= dx *dx + dy * dy;
   schnaps_real rho=1.0;
-  schnaps_real ux=0.1;
+  schnaps_real ux=1.0;
   schnaps_real uy=0.0;
-  if (d2 < r2){
-    rho +=0.01;
-  }
+  schnaps_real uref=BFParams.uref;
   //
+  w[0]=rho;
+  w[1]  = ux * uref;
+  w[2]  = uy * uref;
+}
+void LBM_BumpFlow_ImposedData(const schnaps_real x[3],const schnaps_real t,schnaps_real w[]){
+  LatticeBoltzmannSimData* lsd=&schnaps_lbm_simdata;
+  //
+  schnaps_real rho=1.0;
+  schnaps_real ux=0.0;
+  schnaps_real uy=0.0;
+  schnaps_real uref=BFParams.uref;
+  //
+  if (x[0] < _SMALL){
+    ux=1.0;
+    rho=1.0;
+  }
   w[0]=rho;
   w[1]  = ux;
   w[2]  = uy;
 }
-void LBM_Generic_ImposedData(const schnaps_real x[3],const schnaps_real t,schnaps_real w[]){
+void LBM_BumpFlow_ImposedData_OneNode(const schnaps_real x[3],const schnaps_real t,schnaps_real w[]){
   LatticeBoltzmannSimData* lsd=&schnaps_lbm_simdata;
-  schnaps_real r=0.2;
-  schnaps_real r2=r * r;
-  schnaps_real cx=0.5,cy=0.5;
-  schnaps_real dx= x[0]-cx;
-  schnaps_real dy= x[1]-cy;
-  schnaps_real d2= dx *dx + dy * dy;
   schnaps_real rho=1.0;
-  schnaps_real ux=0.1;
+  schnaps_real ux=1.0;
   schnaps_real uy=0.0;
-  if (d2 < r2){
-    rho +=0.1;
-  }
-  //
-  w[0]=rho;
-  w[1]  = ux;
-  w[2]  = uy;
-}
-void LBM_Generic_ImposedData_OneNode(const schnaps_real x[3],const schnaps_real t,schnaps_real w[]){
-  LatticeBoltzmannSimData* lsd=&schnaps_lbm_simdata;
-  schnaps_real r=0.2;
-  schnaps_real r2=r * r;
-  schnaps_real cx=0.5,cy=0.5;
-  schnaps_real dx= x[0]-cx;
-  schnaps_real dy= x[1]-cy;
-  schnaps_real d2= dx *dx + dy * dy;
-  schnaps_real rho=1.0;
-  schnaps_real ux=0.1;
-  schnaps_real uy=0.0;
-  if (d2 < r2){
-    rho +=0.1;
-  }
   //
   schnaps_real wmac[lsd->lb_model->nb_macro];
   wmac[0]=rho;
-  wmac[1]=ux;
-  wmac[2]=uy;
+  wmac[1]=ux * BFParams.uref;
+  wmac[2]=uy * BFParams.uref;
   //
   int inode=lsd->current_node_index;
   w[0]=lsd->lb_model->feq(inode,lsd->lb_model->nb_macro,wmac);
 }
-void LBM_Generic_Periodic_BoundaryFlux_OneNode(schnaps_real *x, schnaps_real t, schnaps_real *wL, schnaps_real *vnorm,
+void LBM_BumpFlow_BoundaryFlux_OneNode(schnaps_real *x, schnaps_real t, schnaps_real *wL, schnaps_real *vnorm,
 				       schnaps_real *flux){ 
-	LatticeData *ld=&schnaps_lattice_data;
-	int i_node=ld->current_node_index;
+	LatticeBoltzmannSimData *lsd=&schnaps_lbm_simdata;
+	int i_node=lsd->current_node_index;
+	//schnaps_real ymax=BFParams.cy+r;
   schnaps_real wR[1];
-  LBM_Generic_ImposedData_OneNode(x,t,wR);
+  // left flow inlet
+  if (x[0]==0){
+  LBM_BumpFlow_ImposedData_OneNode(x,t,wR);
   LBM_OneNodeNumFlux(wL,wR,vnorm,flux);
+    return;
+  }
+  // right flow outlet=> continuity ?
+  if (x[0]==BFParams.lx){
+    wR[0]=wL[0];
+    LBM_OneNodeNumFlux(wL,wR,vnorm,flux);
+    return;
+  }
+  // corners ?
+  // noslip on upper/lower walls
+  int iopp=lsd->lb_model->iopposite[i_node];
+  wR[0]=lsd->current_lb_sim->wmic_buffer[iopp];
+  LBM_OneNodeNumFlux(wL,wR,vnorm,flux);
+  //
+  //
 }
 //
-void LBM_Generic_Plot_Fields(void *s,schnaps_real *w){
+void LBM_BumpFlow_Plot_Fields(void *s,schnaps_real *w){
   LBMSimulation *lbsimu=s;
   Simulation *simu=&(lbsimu->macro_simu);
+  Simulation *micsimu=&(lbsimu->micro_simu);
   schnaps_real period=lbsimu->diag_2d_period;
   schnaps_real dt=lbsimu->dt;
   int diagperiod = (int) (period/dt);
@@ -267,8 +283,7 @@ void LBM_Generic_Plot_Fields(void *s,schnaps_real *w){
   schnaps_real t=lbsimu->micro_simu.tnow;
   int tmax=simu->tmax;
   int create_file=0;
-  //LBM_Store_Lattice_diags(lbsimu);
-  //printf(" called with istep=%i, period=%f dt=%f diagperiod=%i\n",istep,period,dt,diagperiod);
+  LBM_Store_Lattice_diags(lbsimu);
   if (istep==0){
     create_file=1;
   }
@@ -281,12 +296,22 @@ void LBM_Generic_Plot_Fields(void *s,schnaps_real *w){
     istep=istep+1;
     printf("Dumping fields at it=%i (period %i)\n",istep,diagperiod);
     int raf=simu->fd[0].raf[0];
-    schnaps_real cfl=simu->cfl;
-    char filename_rho[sizeof("lbm_Generic_rho_TAG_raf000_cfl0.000.msh")];
-    sprintf(filename_rho,"lbm_Generic_rho_%s_raf%03d_cfl%1.3f.msh",simutag,raf,cfl);
-    //char filename_rho_error[sizeof("lbm2DWave_rho_000.msh")];
-    //sprintf(filename_rho_error,"lbm_2DWave_rho_error_%03d.msh",raf);
-    LBM_PlotFieldsBinSparseMultitime(0,false,simu,"rho",filename_rho,create_file,t,istep);
+    schnaps_real dt=simu->dt;
+    char filename[sizeof("lbm_BumpFlow_TAG_raf000_cfl0.000.msh")];
+    sprintf(filename,"lbm_BumpFlow_%s_raf%03d_dt%1.3f.msh",simutag,raf,dt);
+    LBM_PlotFieldsBinSparseMultitime(0,false,simu,"rho",filename,create_file,t,istep);
+    LBM_PlotFieldsBinSparseMultitime(1,false,simu,"ux",filename,0,t,istep);
+    LBM_PlotFieldsBinSparseMultitime(2,false,simu,"uy",filename,0,t,istep);
+    //
+    char mic_filename[sizeof("lbm_BumpFlow_TAG_raf000_cfl0.000.msh")];
+    sprintf(mic_filename,"lbm_BumpFlow_%s_raf%03d_dt%1.3f.msh","MIC",raf,dt);
+    LBM_PlotFieldsBinSparseMultitime(0,false,micsimu,"f0",mic_filename,create_file,t,istep);
+    for (int i=1;i<lbsimu->q;i++){
+      char fieldname[32];
+      sprintf(fieldname,"f%i",i);
+      LBM_PlotFieldsBinSparseMultitime(i,false,micsimu,fieldname,mic_filename,create_file,t,istep);
+    }
+    //
   };
   }
 };

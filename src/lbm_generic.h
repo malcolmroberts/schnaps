@@ -61,6 +61,7 @@ typedef struct LBModelDescriptor{
 //  int nr;//!number of macro quantities to relax;
   schnaps_real cref; //! velocity scale to apply to reference nodes
   schnaps_real **vi; //! [q][d} array of velocity nodes;
+  int *iopposite; //! [q] array index of node with opposite velocity
   schnaps_real vmax; //! maximum velocity 
   MPolyDescriptor *Moments ;//![q] array of moments descriptors for multi-relaxation models;
   int *inode_min;//! [q] array ; for each moment starting index of node range for moment computation
@@ -126,12 +127,15 @@ typedef struct LBMSimulation{
   Simulation micro_simu; //! array of nb_lattices simulation object, one for each lattice.
   Model model_advec; //! model for advection of 1 velocity node, used in the implicit scheme;
   //
+  schnaps_real *wmic_buffer; //! small [q] buffer to store the current state at the current ipg during assembly.
+  //
   void (*pre_advec)(void *lbsimu); //!
   void (*post_advec)(void *lbsimu); //! 
   void (*post_tstep) (void *lbsimu, schnaps_real *w);//! w to stay interface compatible with update_after_rk of simu
   //
   schnaps_real diag_2d_period;//! period for dumping of 2D diagnostics.
   void (*collect_diags) (void *lbsimu, schnaps_real *wmac,schnaps_real *wmic);//! routine for 1D time traces collection
+  //
   //
 } LBMSimulation;
 //*******************************************************************************//
@@ -167,6 +171,13 @@ void LBM_OneLatticeNumFlux(schnaps_real *wL, schnaps_real *wR, schnaps_real *vno
 //! \param[in] vn : normal vector
 //! \param[out] flux : the flux
 void LBM_OneNodeNumFlux(schnaps_real *wL, schnaps_real *wR, schnaps_real *vnorm, schnaps_real *flux);
+// modifier assembly routines for implicit scheme
+void LBM_AssemblyImplicitLinearSolver(Simulation *simu, LinearSolver *solver,schnaps_real theta, schnaps_real dt);
+//void LBM_MassAssembly(Simulation *simu,  LinearSolver *solver);
+//void LBM_FluxAssembly(Simulation *simu,  LinearSolver *solver,schnaps_real theta, schnaps_real dt);
+//void LBM_InternalAssembly(Simulation *simu,  LinearSolver *solver,schnaps_real theta, schnaps_real dt);
+void LBM_InterfaceAssembly(Simulation *simu,  LinearSolver *solver,schnaps_real theta, schnaps_real dt);
+void LBM_SourceAssembly(Simulation *simu,  LinearSolver *solver,schnaps_real theta, schnaps_real dt);
 // time schemes
 void LBMThetaTimeScheme(LBMSimulation *lbsimu,schnaps_real theta, schnaps_real tmax, schnaps_real dt);
 // per model specific routines
