@@ -240,11 +240,16 @@ schnaps_real GyroL2_Kinetic_error(field* f)
 
 //! \brief compute compute the source term of the collision
 //! model: electric force + true collisions
+#pragma start_opencl
 void GyroSource(const schnaps_real *x, const schnaps_real t, const schnaps_real *w, schnaps_real *source)
 {
-  KineticData *kd = &schnaps_kinetic_data;
+  __constant KineticData *kd = &schnaps_kinetic_data;
   schnaps_real Ez=w[kd->index_ez]; // electric field
+#ifdef __OPENCL_VERSION__
+  schnaps_real Md[_MV];
+#else
   schnaps_real Md[kd->mv];
+#endif
   for(int iv=0;iv<kd->index_max_kin+1;iv++){
     Md[iv]=0;
     source[iv]=0;
@@ -282,6 +287,7 @@ void GyroSource(const schnaps_real *x, const schnaps_real t, const schnaps_real 
   source[kd->index_ey]=0;
   source[kd->index_ez]=0;
 }
+#pragma end_opencl
 
 void Velocity_distribution_plot(schnaps_real *w)
 {
