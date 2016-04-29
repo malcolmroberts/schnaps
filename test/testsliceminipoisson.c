@@ -76,6 +76,8 @@ int TestSliceMiniPoisson(void) {
 
   InitSimulation(&simu, &mesh, deg, raf, &model);
 
+  
+
   //simu.pre_dtfields = UpdateGyroPoisson;
    simu.vmax = kd->vmax; // maximal wave speed 
   //f.macromesh.is1d=true;

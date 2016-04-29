@@ -265,6 +265,36 @@ void Ref2Phy(__constant schnaps_real *physnode,
   }
 }
 
+__kernel
+void DGCharge(__constant int *param,
+	    int ie,
+	    __global   schnaps_real *wn){
+
+  __constant KineticData *kd = &schnaps_kinetic_data;
+  int ipg = get_global_id(0);
+  int m = param[0];
+  int deg[3] = {param[1], param[2], param[3]};
+  int npg[3] = {deg[0] + 1, deg[1] + 1, deg[2] + 1};
+  int raf[3] = {param[4], param[5], param[6]};
+  int woffset = ie * m * NPG(deg, raf);
+
+  int imemc = VARINDEX(param + 1, param + 4, m, ipg, kd->index_rho) + woffset;
+  wn[imemc]=0;
+  
+  for(int ielv = 0; ielv < kd->nb_elem_v; ielv++){
+    // loop on the local glops
+    for(int iloc = 0; iloc < kd->deg_v + 1; iloc++){
+      int deg_v =  kd->deg_v;
+      schnaps_real omega = wglop(deg_v, iloc);
+      schnaps_real vi = -kd->vmax + ielv *kd->dv + kd->dv * glop(deg_v, iloc);
+      int ipgv = iloc + ielv * kd->deg_v;
+      int imem = VARINDEX(param + 1, param + 4, m, ipg, ipgv) + woffset;
+      wn[imemc]+= omega * kd->dv * wn[imem];
+    }
+  }
+}
+
+
 // Given physnode and xref, compute xphy
 void Ref2Phy_only(__constant schnaps_real *physnode, const schnaps_real xref[3], schnaps_real xphy[3])
 {
@@ -518,14 +548,18 @@ void BoundaryFlux(const schnaps_real x[3],
   NUMFLUX(wL, wR, vnorm, flux);
 }
 
-//! \brief 1d GLOP weights for a given degree
-//! \param[in] deg degree
-//! \param[in] i glop index
-//! \returns the glop weight
-schnaps_real wglop(int deg, int i)
-{
-  return gauss_lob_weight[gauss_lob_offset[deg] + i];
-}
+/* //! \brief 1d GLOP weights for a given degree */
+/* //! \param[in] deg degree */
+/* //! \param[in] i glop index */
+/* //! \returns the glop weight */
+/* schnaps_real wglop(int deg, int i) */
+/* { */
+/*   return gauss_lob_weight[gauss_lob_offset[deg] + i]; */
+/* } */
+
+/* schnaps_real glop(int deg, int i){ */
+/*   return gauss_lob_point[gauss_lob_offset[deg] + i]; */
+/* } */
 
 void get_dtau(schnaps_real x, schnaps_real y, schnaps_real z,
 	      __constant schnaps_real *physnode, schnaps_real dtau[][3]);
