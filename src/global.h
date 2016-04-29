@@ -37,6 +37,7 @@ char cl_buildoptions[1024];
 #endif
 
 
+#pragma start_opencl
 typedef struct KineticData{
   int time_order;
   int nb_elem_v;
@@ -62,6 +63,7 @@ typedef struct KineticData{
   // QN or damped Laplace equation)
   schnaps_real qn_damping;
 } KineticData;
+#pragma end_opencl
 
 
 typedef struct LatticeData{

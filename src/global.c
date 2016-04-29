@@ -8,7 +8,38 @@ bool starpu_use = false;
 bool starpu_c_use = false;
 bool starpu_ocl_use = false;
 
-KineticData  schnaps_kinetic_data;
+#pragma start_opencl
+#ifndef _NBELEMV
+#define _NBELEMV 2
+#define _DEGV 2
+#define _VMAX 6
+#endif
+#define _MV  (_NBELEMV * _DEGV + 1)
+__constant KineticData  schnaps_kinetic_data={
+  .nb_elem_v = _NBELEMV,
+  .deg_v = _DEGV,
+  .mv = _NBELEMV * _DEGV + 1,
+  .index_max_kin = _MV - 1,
+  .index_rho = _MV + 1 ,
+  .index_phi = _MV ,
+  .index_ex = _MV + 2,
+  .index_ey = _MV + 3,
+  .index_ez = _MV + 4,
+  .index_u = _MV + 5,
+  .index_P = _MV + 6,
+  .index_T = _MV + 7,
+  .index_max = _MV + 8,
+  .vmax = 6,
+  .dv = 2 * _VMAX / _NBELEMV,
+  .gamma = 3.,
+  .knud =1.,
+  .solve_quasineutrality = false,
+  .substract_mean_charge = false,
+  .qn_damping = 0,
+  .time_order=2
+};
+#pragma end_opencl
+
 LatticeData  schnaps_lattice_data;
 LatticeBoltzmannSimData schnaps_lbm_simdata;
 // OpenCL program for StarPU
