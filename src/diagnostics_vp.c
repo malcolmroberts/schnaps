@@ -213,7 +213,7 @@ void Plot_Energies(Simulation *simu, schnaps_real dt) {
   schnaps_real e_energy = 0, k_energy = 0, t_energy = 0, t_charge=0; 
   schnaps_real taux_ins = 0;
   FILE *Plot;
-  Plot = fopen("Diagnostics.dat","w");
+  Plot = fopen("le29avr/Diagnostics.dat","w");
 
   for(int i = 1; i < simu->itermax_rk ; i++){
     simu->tnow = i*dt;

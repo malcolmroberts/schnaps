@@ -45,7 +45,7 @@ int TestGuidingCenter(void) {
   
     
   int deg[]={3, 3, 1};
-  int raf[]={8, 8, 1};
+  int raf[]={10, 10, 1};
 
   CheckMacroMesh(&mesh, deg, raf);
 
@@ -87,8 +87,8 @@ int TestGuidingCenter(void) {
   
   //check the initial distribution funtion
 
-  PlotFields(kd->index_rho,(1==0),&simu,"init_rho","initrho.msh");
-  PlotFields(kd->index_max_kin,(1==0),&simu,"init_f","initdistrib.msh");
+  //PlotFields(kd->index_rho,(1==0),&simu,"init_rho","initrho.msh");
+  //PlotFields(kd->index_max_kin,(1==0),&simu,"init_f","initdistrib.msh");
   
   //simu.pre_dtfields = UpdateGyroPoisson;
   simu.vmax = kd->vmax; // maximal wave speed
@@ -109,13 +109,13 @@ int TestGuidingCenter(void) {
 
   Plot_Energies(&simu, simu.dt);
 
-  PlotFields(kd->index_rho,(1==0),&simu,"sol_rho","rho.msh"); 
-  PlotFields(kd->index_max_kin,(1==0),&simu,"sol_f","distrib.msh"); 
+  PlotFields(kd->index_rho,(1==0),&simu,"sol_rho","le29avr/rho.msh"); 
+  /* PlotFields(kd->index_max_kin,(1==0),&simu,"sol_f","distrib.msh"); 
   PlotFields(kd->index_ex,(1==0),&simu,"sol_ex","ex.msh"); 
   PlotFields(kd->index_ey,(1==0),&simu,"sol_ey","ey.msh"); 
   PlotFields(kd->index_ez,(1==0),&simu,"sol_ez","ez.msh"); 
   PlotFields(kd->index_phi,(1==0),&simu,"sol_phi","potential.msh"); 
-  
+  */
   double dd=L2error(&simu);
   //double dd_l2_vel =GyroL2VelError(&f)
   double dd_Kinetic=L2_Kinetic_error(&simu);
@@ -143,15 +143,15 @@ void GuidingCImposedData(const schnaps_real x[3], const schnaps_real t, schnaps_
   KineticData *kd = &schnaps_kinetic_data;
   
   //anneaux
-  schnaps_real m=4;
+  schnaps_real m=7;
   schnaps_real eps = 0.001;
   schnaps_real pi= 4.0*atan(1.0);
   
   schnaps_real r = sqrt(x[0] * x[0] + x[1] * x[1]);
   schnaps_real theta = atan2(x[1],x[0]);
   
-  schnaps_real rminus = 5.75;
-  schnaps_real rplus = 7.875;
+  schnaps_real rminus = 6;
+  schnaps_real rplus = 7;
   
  for(int i = 0; i <kd->index_max_kin + 1; i++){
       w[i] = 0;
@@ -228,7 +228,7 @@ void PlotVlasovPoisson(void *si, schnaps_real *w) {
   
   Energies(simu, w, k_energy, e_energy, t_energy, 1);
   Charge_total(simu, w, t_charge, 4);
-  Taux_instability(simu, w, 4, taux_ins, 5);
+  Taux_instability(simu, w, 7, taux_ins, 5);
   si = simu; 
 }
  
