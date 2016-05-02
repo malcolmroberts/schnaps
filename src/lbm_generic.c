@@ -209,48 +209,48 @@ void DestroyLBModelDescriptor(LBModelDescriptor * lb)
       free(lb->macro_names[i]);
     }
     free(lb->macro_names);
+    lb->macro_names = NULL;
   }
   if (lb->vi) {
     for (int i = 0; i < lb->q; i++) {
       free(lb->vi[i]);
     }
     free(lb->vi);
+    lb->vi = NULL;
   }
   if (lb->iopposite) {
     free(lb->iopposite);
+    lb->iopposite=NULL;
   }
   if (lb->Moments) {
     for (int i = 0; i < lb->q; i++) {
       DestroyMPolyDescriptor(&(lb->Moments[i]));
     }
     free(lb->Moments);
+    lb->Moments=NULL;
   }
   if (lb->M) {
     for (int i = 0; i < lb->q; i++) {
       free(lb->M[i]);
     };
     free(lb->M);
+    lb->M=NULL;
   }
-  if (lb->inode_min)
+  if (lb->inode_min){
     free(lb->inode_min);
-  if (lb->inode_max)
+    lb->inode_min=NULL;
+    }
+  if (lb->inode_max){
     free(lb->inode_max);
-  if (lb->s)
+    lb->inode_max=NULL;
+  }
+  if (lb->s){
     free(lb->s);
-/*  if (lb->is_relaxed) free(lb->is_relaxed);*/
-/*  if (lb->is_conserved) free(lb->is_conserved);*/
-  lb->macro_names = NULL;
-  lb->vi = NULL;
-  lb->Moments = NULL;
-  lb->M = NULL;
-  lb->s = NULL;
-/*  lb->is_conserved=NULL;*/
-/*  lb->is_relaxed=NULL;*/
+    lb->s=NULL;
+  }
   lb->d = 0;
   lb->q = 0;
   lb->nb_macro = 0;
-/*  lb->nc=0;*/
-/*  lb->nr=0;*/
   lb->f_to_macro = NULL;
   lb->macro_to_f = NULL;
   lb->feq = NULL;
@@ -1200,7 +1200,8 @@ schnaps_real LBM_feq_D2Q9_ISOTH(int i_node, int nb_macro, schnaps_real * w)
   schnaps_real rho = w[0];
   schnaps_real ux = w[1];
   schnaps_real uy = w[2];
-  schnaps_real temp = 1.0 / 3.0;
+  schnaps_real cref = lsd->lb_model->cref;
+  schnaps_real temp = cref * cref / 3.0;
   //
   schnaps_real u2 = (ux * ux + uy * uy) / temp;
   schnaps_real uv =
@@ -1263,7 +1264,8 @@ schnaps_real LBM_feq_D2Q9_ISOTH_LINEARIZED(int i_node, int nb_macro,
   schnaps_real rho = w[0];
   schnaps_real jx = w[1];
   schnaps_real jy = w[2];
-  schnaps_real temp = 1.0 / 3.0;
+  schnaps_real cref = lsd->lb_model->cref;
+  schnaps_real temp = cref * cref / 3.0;
   //
   schnaps_real jv =
       (jx * lsd->lb_model->vi[i_node][0] +
@@ -1283,5 +1285,142 @@ void LBM_f_to_macro_D2Q9_ISOTH_LINEARIZED(schnaps_real * f,
     }
   }
 }
-
+/******************************************************************************/
+// MHD models
+void LBM_Set_MHD_D2Q9_2D2Q5_model(LBModelDescriptor * lb, schnaps_real cref){
+  assert(lb->d==2);
+  assert(lb->q==19);
+  assert(lb->nb_macro==5);
+  // hydrodynamic part
+  NewMPolyDescriptorFromModel(&(lb->Moments[0]), &model_rho2D, NULL);
+  NewMPolyDescriptorFromModel(&(lb->Moments[1]), &model_jx2D, NULL);
+  NewMPolyDescriptorFromModel(&(lb->Moments[2]), &model_jy2D, NULL);
+  NewMPolyDescriptorFromModel(&(lb->Moments[3]), &model_trMab2D, NULL);
+  NewMPolyDescriptorFromModel(&(lb->Moments[4]), &model_DifMab2D, NULL);
+  NewMPolyDescriptorFromModel(&(lb->Moments[5]), &model_Mxy2D, NULL);
+  NewMPolyDescriptorFromModel(&(lb->Moments[6]), &model_Mabcx2D, NULL);
+  NewMPolyDescriptorFromModel(&(lb->Moments[7]), &model_Mabcy2D, NULL);
+  NewMPolyDescriptorFromModel(&(lb->Moments[8]), &model_V42D, NULL);
+  // magnetic part
+  // bx
+  NewMPolyDescriptorFromModel(&(lb->Moments[9]), &model_rho2D, NULL);
+  NewMPolyDescriptorFromModel(&(lb->Moments[10]), &model_jx2D, NULL);
+  NewMPolyDescriptorFromModel(&(lb->Moments[11]), &model_jy2D, NULL);
+  NewMPolyDescriptorFromModel(&(lb->Moments[12]), &model_trMab2D, NULL);
+  NewMPolyDescriptorFromModel(&(lb->Moments[13]), &model_DifMab2D, NULL);
+  // by
+  NewMPolyDescriptorFromModel(&(lb->Moments[14]), &model_rho2D, NULL);
+  NewMPolyDescriptorFromModel(&(lb->Moments[15]), &model_jx2D, NULL);
+  NewMPolyDescriptorFromModel(&(lb->Moments[16]), &model_jy2D, NULL);
+  NewMPolyDescriptorFromModel(&(lb->Moments[17]), &model_trMab2D, NULL);
+  NewMPolyDescriptorFromModel(&(lb->Moments[18]), &model_DifMab2D, NULL);
+  //
+  sprintf(lb->macro_names[0], "rho");
+  sprintf(lb->macro_names[1], "jx");
+  sprintf(lb->macro_names[2], "jy");
+  sprintf(lb->macro_names[3], "Bx");
+  sprintf(lb->macro_names[4], "By");
+  //
+  lb->cref = cref;
+  // hydrodynamic nodes
+  for (int i = 0; i < 9; i++) {
+    for (int j = 0; j < lb->d; j++) {
+      lb->vi[i][j] = lb->cref * LBM_D2Q9_nodes[i][j];
+    }
+    lb->iopposite[i] = LBM_D2Q9_iopposite[i];
+  }
+  // magnetic nodes
+  for (int ibcomp=0;ibcomp<2;ibcomp++){
+    for (int i=0;i<5;i++){
+      int inode=9+ibcomp * 5 + i;
+      for (int j=0;j<lb->d;j++){
+      lb->vi[inode][j] = lb->cref * LBM_D2Q5_nodes[i][j];
+      }
+      lb->iopposite[inode]= 9+ibcomp * 5 + LBM_D2Q5_iopposite[i];
+    }
+  }
+  //
+  ComputeLBModelDescriptorVmax(lb);
+  for (int i = 0; i < 9; i++) {
+    lb->inode_min[i] = 0;
+    lb->inode_max[i] = 8;
+  }
+  // Bx
+  for (int i = 9; i < 14; i++) {
+    lb->inode_min[i] = 9;
+    lb->inode_max[i] = 13;
+  }
+  // By
+  for (int i = 14; i < 19; i++) {
+    lb->inode_min[i] = 14;
+    lb->inode_max[i] = 18;
+  }
+  ComputeLBModelDescriptorMomentMatrix(lb);
+  //
+  lb->feq = &LBM_feq_MHD_D2Q9_2D2Q5;
+  lb->f_to_macro = &LBM_f_to_macro_MHD_D2Q9_2D2Q5;
+}
 //
+void LBM_f_to_macro_MHD_D2Q9_2D2Q5(schnaps_real *f, schnaps_real *w){
+  // hydrodynamic quatities
+  LatticeBoltzmannSimData *lsd = &schnaps_lbm_simdata;
+  for (int i = 0; i < 3; i++) {
+    w[i] = 0.0;
+    for (int inode = 0; inode < lsd->lb_model->q; inode++) {
+      w[i] += f[inode] * lsd->lb_model->M[i][inode];
+    }
+  }
+  // normalize
+  if (w[0] != 0.0) {
+    w[1] = w[1] / w[0];
+    w[2] = w[2] / w[0];
+  }
+  // magnetic quantities
+  w[3]=0.0;
+  for (int j=9;j<14;j++){
+    w[3] += f[j] * lsd->lb_model->M[9][j]; 
+  }
+  w[4]=0.0;
+  for (int j=14;j<19;j++){
+    w[4] += f[j] * lsd->lb_model->M[14][j]; 
+  }
+}
+schnaps_real LBM_feq_MHD_D2Q9_2D2Q5(int inode, int nb_macro, schnaps_real *w){
+  LatticeBoltzmannSimData *lsd = &schnaps_lbm_simdata;
+  schnaps_real rho = w[0];
+  schnaps_real ux = w[1];
+  schnaps_real uy = w[2];
+  schnaps_real Bx = w[3];
+  schnaps_real By = w[4];
+  schnaps_real cref = lsd->lb_model->cref;
+  schnaps_real invtemp = 3.0/(cref *cref);
+  if (inode < 9){
+    schnaps_real cref = lsd->lb_model->cref;
+    schnaps_real invtemp = 3.0/(cref *cref);
+    schnaps_real vx = lsd->lb_model->vi[inode][0]; 
+    schnaps_real vy = lsd->lb_model->vi[inode][1]; 
+    //
+    schnaps_real u2 = (ux * ux + uy * uy) * invtemp;
+    schnaps_real v2 = (vx * vx + vy * vy) * invtemp;
+    schnaps_real uv = (ux * vx + uy * vy) * invtemp;
+    schnaps_real vB=  (vx * Bx + vy * By) * invtemp;
+    schnaps_real B2= (Bx * Bx + By * By) * invtemp;
+    schnaps_real feq =
+        LBM_WEIGHTS_D2Q9_ISOTH[inode] * 
+        (rho * (1.0 + uv + 0.5 * (uv * uv - u2))
+        + 0.5 * (0.5 * B2 * v2 - vB * vB));
+  return feq;
+  }
+  if ((inode >8) && (inode < 14)){
+    int inodeloc=inode-9;
+    schnaps_real vy=lsd->lb_model->vi[inode][1];
+    schnaps_real feq= LBM_WEIGHTS_D2Q5_ISOTH[inodeloc] * (Bx + invtemp * vy *(uy * Bx - ux * By));
+    return feq;
+  }
+  if (inode >13){
+    int inodeloc=inode-14;
+    schnaps_real vx=lsd->lb_model->vi[inode][0];
+    schnaps_real feq= LBM_WEIGHTS_D2Q5_ISOTH[inodeloc] * (By + invtemp * vx *(ux * By - uy * Bx));
+    return feq;
+  }
+}

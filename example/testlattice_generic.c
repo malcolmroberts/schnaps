@@ -94,20 +94,20 @@ int main(void)
     .raf = {2, 2, 1},
     .cfl = 1.0,
     .dt = 0.001,
-    .tmax = 2.0,
+    .tmax = 10.0,
     .cref = 1.0,
     .tau = 0.00001,
-    .diag_2d_period = 0.1};
+    .diag_2d_period = 0.5};
   // ***********************//
-/*  int resu=LBM_testmodels();*/
+  int resu=LBM_testmodels();
   // ***********************//
-  BFParams.uref = 0.01;
-  BFParams.lx = 4.0;
-  BFParams.ly = 1.0;
-  BFParams.cx = 2.0;
-  BFParams.cy = -0.9;
-  BFParams.r = 1.0;
-  int resu = TestLattice_BumpFlow();
+/*  BFParams.uref = 0.05;*/
+/*  BFParams.lx = 4.0;*/
+/*  BFParams.ly = 1.0;*/
+/*  BFParams.cx = 2.0;*/
+/*  BFParams.cy = -0.9;*/
+/*  BFParams.r = 1.0;*/
+/*  int resu = TestLattice_BumpFlow();*/
   //
 /*  LW2DParams.nkx=1;*/
 /*  LW2DParams.nky=2;*/
@@ -130,22 +130,33 @@ int LBM_testmodels(void)
   LBModelDescriptor lbm = LBModelDescriptor_NULL;
   LatticeBoltzmannSimData *lsd = &schnaps_lbm_simdata;
   //
-  printf(" D2Q9 isothermal model\n");
   NewLBModelDescriptor(&lbm, d, nb_macro, q);
+  printf(" D2Q9 isothermal model\n");
   lsd->lb_model = &lbm;
   LBM_Set_D2Q9_ISOTH_model(&lbm, SimParams.cref);
   CheckLBModelDescriptorMacroConservation(&lbm, false);
   DisplayLBModelDescriptorMomentMatrix(&lbm);
   DestroyLBModelDescriptor(&lbm);
-  //
+/*  //*/
   printf(" D2Q9 isothermal Linerarized model\n");
   NewLBModelDescriptor(&lbm, d, nb_macro, q);
   lsd->lb_model = &lbm;
   LBM_Set_D2Q9_ISOTH_LINEARIZED_model(&lbm, SimParams.cref);
-  CheckLBModelDescriptorMacroConservation(&lbm, false);
+  CheckLBModelDescriptorMacroConservation(&lbm, true);
   DisplayLBModelDescriptorMomentMatrix(&lbm);
   DestroyLBModelDescriptor(&lbm);
   //
+  d=2;
+  nb_macro=5;
+  q=19;
+  printf(" MDH D2Q9 ISOTH D2Q5 ISOTH model\n");
+  NewLBModelDescriptor(&lbm, d, nb_macro, q);
+  lsd->lb_model = &lbm;
+  LBM_Set_MHD_D2Q9_2D2Q5_model(&lbm, SimParams.cref);
+  //
+  CheckLBModelDescriptorMacroConservation(&lbm, true);
+  //DisplayLBModelDescriptorMomentMatrix(&lbm);
+  DestroyLBModelDescriptor(&lbm);
   return 1;
 }
 

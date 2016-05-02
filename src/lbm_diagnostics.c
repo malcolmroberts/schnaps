@@ -708,6 +708,38 @@ void LBM_PlotVecFieldsBinSparseMultitime(int typplot[3], int compare, Simulation
     }
   };
   fprintf(gmshfile, "\n$EndNodeData\n");
+  // add the norm as scalar field
+  // Node Data
+  fprintf(gmshfile, "$NodeData\n");
+  number_of_string_tags=1;
+  fprintf(gmshfile, "%i\n",number_of_string_tags);
+  if(fieldname == NULL)
+    fprintf(gmshfile, "\"field %d\"\n", typplot);
+  else
+  fprintf(gmshfile, "\"field: %s\"\n", "norm");
+  //
+  number_of_real_tags=1;
+  fprintf(gmshfile,"%i\n",number_of_real_tags);
+  fprintf(gmshfile,"%f\n",t);
+  number_of_int_tags=3;
+  fprintf(gmshfile,"%i\n",number_of_int_tags);
+  fprintf(gmshfile,"%i\n",istep);
+  number_of_components=1;
+  fprintf(gmshfile,"%i\n",number_of_components);
+  fprintf(gmshfile, "%i\n", nb_plotnodes);
+  for(int ino = 1; ino < nb_plotnodes+1; ino++) {
+    fwrite(&(ino),sizeof(int),1,gmshfile);
+    //
+    schnaps_real tmpval = 0.0;
+    for (int idim=0;idim<3;idim++){
+      tmpval += value[3*(ino-1)+idim] * value[3*(ino-1)+idim];
+    }
+    tmpval = sqrt(tmpval);
+    //
+    fwrite(&tmpval,sizeof(double),1,gmshfile);
+  };
+  fprintf(gmshfile, "\n$EndNodeData\n");
+  //
   fclose(gmshfile);
   free(value);
 } 

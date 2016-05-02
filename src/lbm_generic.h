@@ -219,4 +219,8 @@ schnaps_real LBM_feq_D2Q9_ISOTH_LINEARIZED(int inode, int nb_macro,
 					   schnaps_real * w);
 //
 //***************************** MDH models **************************************//
+// 2D D2Q9 + 3x 2DQ5 basic mhd model
+void LBM_Set_MHD_D2Q9_2D2Q5_model(LBModelDescriptor * lb, schnaps_real cref);
+void LBM_f_to_macro_MHD_D2Q9_2D2Q5(schnaps_real *f, schnaps_real *w);
+schnaps_real LBM_feq_MHD_D2Q9_2D2Q5(int inode, int nb_macro, schnaps_real *w);
 #endif
