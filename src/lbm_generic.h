@@ -206,11 +206,29 @@ void LBMThetaTimeScheme(LBMSimulation * lbsimu, schnaps_real theta,
 schnaps_real LBM_dummy_zeros_feq(int inode, int nb_macro,
 				 schnaps_real * w);
 //******* Hydrodynamic models (Euler, Navier-Stokes) ***************************//
+typedef struct params_D2Q9_ISOTH{
+  schnaps_real theta;
+  schnaps_real invtheta;
+} params_D2Q9_ISOTH; 
 // D2Q9 isothermal
 void LBM_Set_D2Q9_ISOTH_model(LBModelDescriptor * lb, schnaps_real cref);
 void LBM_f_to_macro_D2Q9_ISOTH(schnaps_real * f, schnaps_real * w);
 schnaps_real LBM_feq_D2Q9_ISOTH(int inode, int nb_macro, schnaps_real * w);
+// D2Q9 isothermal incompressible modif (with reference density rho0=1)
+// see He and Luo Journal of Statistical Physics vol 88 (1997)
+typedef struct params_D2Q9_ISOTH_INC{
+  schnaps_real theta;
+  schnaps_real invtheta;
+  schnaps_real rho0;
+} params_D2Q9_ISOTH_INC; 
+void LBM_Set_D2Q9_ISOTH_INC_model(LBModelDescriptor * lb, schnaps_real cref);
+void LBM_f_to_macro_D2Q9_ISOTH_INC(schnaps_real * f, schnaps_real * w);
+schnaps_real LBM_feq_D2Q9_ISOTH_INC(int inode, int nb_macro, schnaps_real * w);
 // D2Q9 isothermal linearized (2D wave equation)
+typedef struct params_D2Q9_ISOTH_LINEARIZED{
+  schnaps_real theta;
+  schnaps_real invtheta;
+} params_D2Q9_ISOTH_LINEARIZED; 
 void LBM_Set_D2Q9_ISOTH_LINEARIZED_model(LBModelDescriptor * lb,
 					 schnaps_real cref);
 void LBM_f_to_macro_D2Q9_ISOTH_LINEARIZED(schnaps_real * f,
@@ -219,4 +237,14 @@ schnaps_real LBM_feq_D2Q9_ISOTH_LINEARIZED(int inode, int nb_macro,
 					   schnaps_real * w);
 //
 //***************************** MDH models **************************************//
+// 2D D2Q9 + 3x 2DQ5 basic mhd model
+typedef struct params_MHD_D2Q9_2D2Q5{
+  schnaps_real theta;
+  schnaps_real invtheta;
+  schnaps_real theta_mag;
+  schnaps_real invtheta_mag;
+} params_MHD_D2Q9_2D2Q5; 
+void LBM_Set_MHD_D2Q9_2D2Q5_model(LBModelDescriptor * lb, schnaps_real cref);
+void LBM_f_to_macro_MHD_D2Q9_2D2Q5(schnaps_real *f, schnaps_real *w);
+schnaps_real LBM_feq_MHD_D2Q9_2D2Q5(int inode, int nb_macro, schnaps_real *w);
 #endif

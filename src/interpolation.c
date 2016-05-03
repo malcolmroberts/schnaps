@@ -112,6 +112,7 @@ __constant int gauss_lob_dpsi_offset[] = {0, 1, 5, 14, 30};
 
 #pragma end_opencl
 
+#pragma start_opencl
 //! \brief 1d GLOP weights for a given degree
 //! \param[in] deg degree
 //! \param[in] i glop index
@@ -123,6 +124,7 @@ schnaps_real wglop(int deg, int i) {
 schnaps_real glop(int deg, int i){
   return gauss_lob_point[gauss_lob_offset[deg] + i];
 }
+#pragma end_opencl
 
 void lagrange_polynomial(schnaps_real* p, const schnaps_real* subdiv,
 			 int deg, int ii, schnaps_real x) {

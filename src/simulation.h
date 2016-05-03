@@ -108,6 +108,7 @@ typedef struct Simulation {
   cl_kernel dgflux;
   cl_kernel dgvolume;
   cl_kernel dgsource;
+  cl_kernel dgcharge;
   cl_kernel dginterface;
   cl_kernel dgboundary;
   cl_kernel RK_out_CL;

@@ -628,6 +628,33 @@ void DGVolume_CL(int ie, Simulation *simu, cl_mem *w_cl,
 
 }
 
+// Set kernel argument for DGCharge_CL
+void init_DGCharge_CL(Simulation *simu, cl_mem *w_cl)
+{
+  //printf("DGVolume cachesize:%zu\n", cachesize);
+
+  cl_int status;
+  int argnum = 0;
+  cl_kernel kernel = simu->dgcharge;
+
+  status = clSetKernelArg(kernel,
+                          argnum++,
+                          sizeof(cl_mem),
+                          &simu->param_cl);
+  if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
+  assert(status >= CL_SUCCESS);
+
+  // ie
+  argnum++;
+
+  status = clSetKernelArg(kernel,
+                          argnum++,
+                          sizeof(cl_mem),
+                          w_cl);
+  if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
+  assert(status >= CL_SUCCESS);
+}
+
 // Set kernel argument for DGVolume_CL
 void init_DGSource_CL(Simulation *simu, cl_mem *w_cl, size_t cachesize)
 {
@@ -682,6 +709,59 @@ void init_DGSource_CL(Simulation *simu, cl_mem *w_cl, size_t cachesize)
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
   assert(status >= CL_SUCCESS);
 }
+
+// Apply division by the mass matrix OpenCL version
+void DGCharge_CL(int ie, Simulation *simu, cl_mem *w_cl,
+		 cl_uint nwait, cl_event *wait, cl_event *done)
+{
+  cl_kernel kernel = simu->dgcharge;
+  int *param = simu->interp_param;
+
+  cl_int status;
+  int m = param[0];
+  size_t groupsize = (param[1] + 1) * (param[2] + 1) * (param[3] + 1);
+  // The total work items number is the number of glops in a subcell
+  // times the number of subcells
+  size_t numworkitems = param[4] * param[5] * param[6] * groupsize;
+
+  /* unsigned int nreadsdgvol = 2 * m; // read m from w, write m to dtw */
+  /* unsigned int nmultsdgvol = 1296 + m; */
+  /* nmultsdgvol += 3 * m; // Using NUMFLUX = NumFlux */
+
+  /* simu->nmults += numworkitems * nmultsdgvol; */
+  /* simu->nreads += numworkitems * nreadsdgvol; */
+
+  init_DGCharge_CL(simu, w_cl);
+
+
+  // Loop on the elements
+  status = clSetKernelArg(kernel,
+			  1,
+			  sizeof(int),
+			  &ie);
+  if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
+  assert(status >= CL_SUCCESS);
+
+  // The groupsize is the number of glops in a subcell
+  /* size_t groupsize = (param[1] + 1)* (param[2] + 1)*(param[3] + 1); */
+  /* // The total work items number is the number of glops in a subcell */
+  /* // * number of subcells */
+  /* size_t numworkitems = param[4] * param[5] * param[6] * groupsize; */
+  /* //printf("groupsize=%zd numworkitems=%zd\n", groupsize, numworkitems); */
+  status = clEnqueueNDRangeKernel(simu->cli.commandqueue,
+				  kernel,
+				  1,
+				  NULL,
+				  &numworkitems,
+				  &groupsize,
+				  nwait,
+				  wait,
+				  done);
+  if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
+  assert(status >= CL_SUCCESS);
+
+}
+
 
 // Apply division by the mass matrix OpenCL version
 void DGSource_CL(int ie, Simulation *simu, cl_mem *w_cl,
@@ -1558,6 +1638,12 @@ void init_field_cl(Simulation *simu)
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
   assert(status >= CL_SUCCESS);
 
+  simu->dgcharge = clCreateKernel(simu->cli.program,
+			       "DGCharge",
+			       &status);
+  if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
+  assert(status >= CL_SUCCESS);
+
   simu->dginterface = clCreateKernel(simu->cli.program,
 				  "DGMacroCellInterface",
 				  &status);
@@ -1651,6 +1737,15 @@ void init_field_cl(Simulation *simu)
   simu->reads_vol = 0;
   simu->reads_flux = 0;
   simu->reads_mass = 0;
+
+
+  /* for(int ie = 0; ie < nmacro; ++ie) { */
+  /*   DGCharge_CL(ie, simu, &simu->w_cl, 0, NULL, NULL); */
+  /* } */
+
+  /* status = clFinish(simu->cli.commandqueue); */
+  
+  
 }
 
 #endif // _WITH_OPENCL

@@ -215,7 +215,9 @@ void psi_ref_subcell(int *deg, int *raf, int* is,int ib, schnaps_real* xref, sch
 //! \param[in] deg degree
 //! \param[in] i GLOP 1D index
 //! \returns the position in [0,1]
+#pragma start_opencl
 schnaps_real glop(int deg,int i);
+#pragma end_opencl
 
 //! \brief compute 3d glop and subcell indices from the index
 //! of the glop in the macrocell

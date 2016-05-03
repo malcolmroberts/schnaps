@@ -72,8 +72,8 @@ void LBM_Linear2DWave_Plot_Fields(void *s, schnaps_real * w);
 int LBM_TestLattice_isothermal_DoubleShearKH(void);
 // global parameters with default values
 LbmSimuParams SimParams = {
-  .deg = {4, 4, 0},
-  .raf = {2, 2, 1},
+  .deg = {3, 3, 0},
+  .raf = {3, 3, 1},
   .cfl = 1.0,.dt = 0.001,.tmax = 0.1,
   .tau = 0.00001,.cref = 1.0,
   .diag_2d_period = 1.0
@@ -91,17 +91,17 @@ int main(void)
   printf(" Lattice Boltzmann Model\n");
   SimParams = (LbmSimuParams) {
     .deg = {4, 4, 0},
-    .raf = {2, 2, 1},
+    .raf = {1, 1, 1},
     .cfl = 1.0,
     .dt = 0.001,
-    .tmax = 2.0,
+    .tmax = 1.0,
     .cref = 1.0,
     .tau = 0.00001,
-    .diag_2d_period = 0.1};
+    .diag_2d_period = 0.5};
   // ***********************//
-/*  int resu=LBM_testmodels();*/
+  //int resu=LBM_testmodels();
   // ***********************//
-  BFParams.uref = 0.01;
+  BFParams.uref = 0.05;
   BFParams.lx = 4.0;
   BFParams.ly = 1.0;
   BFParams.cx = 2.0;
@@ -110,7 +110,7 @@ int main(void)
   int resu = TestLattice_BumpFlow();
   //
 /*  LW2DParams.nkx=1;*/
-/*  LW2DParams.nky=2;*/
+/*  LW2DParams.nky=1;*/
 /*  LW2DParams.offset=0.0;*/
 /*  int resu=LBM_TestLattice_LinearWave2D();*/
   //
@@ -130,10 +130,18 @@ int LBM_testmodels(void)
   LBModelDescriptor lbm = LBModelDescriptor_NULL;
   LatticeBoltzmannSimData *lsd = &schnaps_lbm_simdata;
   //
-  printf(" D2Q9 isothermal model\n");
   NewLBModelDescriptor(&lbm, d, nb_macro, q);
+  printf(" D2Q9 isothermal model\n");
   lsd->lb_model = &lbm;
   LBM_Set_D2Q9_ISOTH_model(&lbm, SimParams.cref);
+  CheckLBModelDescriptorMacroConservation(&lbm, false);
+  DisplayLBModelDescriptorMomentMatrix(&lbm);
+  DestroyLBModelDescriptor(&lbm);
+  //
+  NewLBModelDescriptor(&lbm, d, nb_macro, q);
+  printf(" D2Q9 isothermal INC model\n");
+  lsd->lb_model = &lbm;
+  LBM_Set_D2Q9_ISOTH_INC_model(&lbm, SimParams.cref);
   CheckLBModelDescriptorMacroConservation(&lbm, false);
   DisplayLBModelDescriptorMomentMatrix(&lbm);
   DestroyLBModelDescriptor(&lbm);
@@ -142,10 +150,21 @@ int LBM_testmodels(void)
   NewLBModelDescriptor(&lbm, d, nb_macro, q);
   lsd->lb_model = &lbm;
   LBM_Set_D2Q9_ISOTH_LINEARIZED_model(&lbm, SimParams.cref);
-  CheckLBModelDescriptorMacroConservation(&lbm, false);
+  CheckLBModelDescriptorMacroConservation(&lbm, true);
   DisplayLBModelDescriptorMomentMatrix(&lbm);
   DestroyLBModelDescriptor(&lbm);
   //
+  d=2;
+  nb_macro=5;
+  q=19;
+  printf(" MDH D2Q9 ISOTH D2Q5 ISOTH model\n");
+  NewLBModelDescriptor(&lbm, d, nb_macro, q);
+  lsd->lb_model = &lbm;
+  LBM_Set_MHD_D2Q9_2D2Q5_model(&lbm, SimParams.cref);
+  //
+  CheckLBModelDescriptorMacroConservation(&lbm, true);
+  //DisplayLBModelDescriptorMomentMatrix(&lbm);
+  DestroyLBModelDescriptor(&lbm);
   return 1;
 }
 
@@ -174,7 +193,8 @@ int TestLattice_BumpFlow(void)
   // setup simulation paramaters in global shared LatticeBoltzmannSimData object
   LatticeBoltzmannSimData *lsd = &schnaps_lbm_simdata;
   NewLBModelDescriptor(&lbm, d, nb_macro, q);
-  LBM_Set_D2Q9_ISOTH_model(&lbm, SimParams.cref);
+  //LBM_Set_D2Q9_ISOTH_model(&lbm, SimParams.cref);
+  LBM_Set_D2Q9_ISOTH_INC_model(&lbm, SimParams.cref);
   lsd->lb_model = &lbm;
   // setup LB Simulation object
   LBMSimulation lbsimu;
@@ -654,7 +674,6 @@ void LBM_Linear2DWave_Plot_Fields(void *s, schnaps_real * w)
   int tmax = simu->tmax;
   int create_file = 0;
   LBM_Store_Lattice_diags(lbsimu);
-  //printf(" called with istep=%i, period=%f dt=%f diagperiod=%i\n",istep,period,dt,diagperiod);
   if (istep == 0) {
     create_file = 1;
   } else {
@@ -671,6 +690,7 @@ void LBM_Linear2DWave_Plot_Fields(void *s, schnaps_real * w)
 	      simutag, raf, cfl);
       //char filename_rho_error[sizeof("lbm2DWave_rho_000.msh")];
       //sprintf(filename_rho_error,"lbm_2DWave_rho_error_%03d.msh",raf);
+      //PlotFields(0,false,simu,"rho",filename_rho);
       LBM_PlotFieldsBinSparseMultitime(0, false, simu, "rho", filename_rho,
 				       create_file, t, istep);
       LBM_PlotFieldsBinSparseMultitime(0, true, simu, "rho_error",

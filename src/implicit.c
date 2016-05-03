@@ -39,7 +39,6 @@ void InitImplicitLinearSolver(Simulation *simu, LinearSolver *solver){
   //DisplayLinearSolver(solver);
 
 
-
 }
 
 void InitFieldImplicitSolver(field *fd, MatrixStorage ms){
@@ -90,7 +89,7 @@ void AssemblyImplicitLinearSolver(Simulation *simu, LinearSolver *solver,schnaps
       SourceAssembly(simu, solver,theta,dt);
 
   }
-  //DisplayLinearSolver(solver);
+  DisplayLinearSolver(solver);
 
 }
 

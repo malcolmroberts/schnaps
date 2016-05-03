@@ -30,10 +30,10 @@
 int GenericVarindex(__constant int *deg, __constant int *raf, int m,
 		    int ipg, int iv) {
 
-  //return iv + m * ipg;
-  int npg = (deg[0] + 1) * (deg[1] + 1) * (deg[2] + 1)
-    * raf[0] * raf[1] * raf[2];
-  return ipg + npg * iv;
+  return iv + m * ipg;
+  /* int npg = (deg[0] + 1) * (deg[1] + 1) * (deg[2] + 1) */
+  /*   * raf[0] * raf[1] * raf[2]; */
+  /* return ipg + npg * iv; */
 }
 #pragma end_opencl
 

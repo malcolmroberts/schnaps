@@ -75,7 +75,7 @@ int main(void) {
   SimParams.rafy=4;
   
   SimParams.cfl=1.0;
-  SimParams.tmax=0.1;
+  SimParams.tmax=0.001;
   SimParams.tau=0.0000001;
   SimParams.diag_2d_period=0.1;
   //
