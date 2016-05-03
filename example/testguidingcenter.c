@@ -42,10 +42,9 @@ int TestGuidingCenter(void) {
   /* assert(is2d); */
   mesh.period[2]=1;
   BuildConnectivity(&mesh);
-  
     
-  int deg[]={3, 3, 1};
-  int raf[]={10, 10, 1};
+  int deg[]={2, 2, 1};
+  int raf[]={8, 8, 1};
 
   CheckMacroMesh(&mesh, deg, raf);
 
@@ -87,7 +86,7 @@ int TestGuidingCenter(void) {
   
   //check the initial distribution funtion
 
-  //PlotFields(kd->index_rho,(1==0),&simu,"init_rho","initrho.msh");
+  //PlotFields(kd->index_phi,(1==0),&simu,"init_phi","initphi.msh");
   //PlotFields(kd->index_max_kin,(1==0),&simu,"init_f","initdistrib.msh");
   
   //simu.pre_dtfields = UpdateGyroPoisson;
@@ -109,7 +108,7 @@ int TestGuidingCenter(void) {
 
   Plot_Energies(&simu, simu.dt);
 
-  PlotFields(kd->index_rho,(1==0),&simu,"sol_rho","le29avr/rho.msh"); 
+  PlotFields(kd->index_rho,(1==0),&simu,"sol_rho","t3/rho.msh"); 
   /* PlotFields(kd->index_max_kin,(1==0),&simu,"sol_f","distrib.msh"); 
   PlotFields(kd->index_ex,(1==0),&simu,"sol_ex","ex.msh"); 
   PlotFields(kd->index_ey,(1==0),&simu,"sol_ey","ey.msh"); 
@@ -138,20 +137,41 @@ void GuidingCInitData(schnaps_real x[3],schnaps_real w[]){
 }
 
 
+void GeomErreurImposedData(const schnaps_real x[3], const schnaps_real t, schnaps_real w[])
+{
+  KineticData *kd = &schnaps_kinetic_data;
+  
+  schnaps_real r = sqrt(x[0] * x[0] + x[1] * x[1]);
+  schnaps_real theta = atan2(x[1],x[0]);
+  
+ for(int i = 0; i <kd->index_max_kin + 1; i++){
+      w[i] = 1;
+  }
+  w[kd->index_rho] = 1;
+  w[kd->index_phi] = -(r*r-100)/4;
+  w[kd->index_ex] = cos(theta)*r/2; 
+  w[kd->index_ey] = sin(theta)*r/2;
+  w[kd->index_ez] = 0;
+  w[kd->index_u] = 0; 
+  w[kd->index_P] = 0; 
+  w[kd->index_T] = 0; 
+
+}
+
 void GuidingCImposedData(const schnaps_real x[3], const schnaps_real t, schnaps_real w[])
 {
   KineticData *kd = &schnaps_kinetic_data;
   
   //anneaux
-  schnaps_real m=7;
-  schnaps_real eps = 0.001;
+  schnaps_real m=4;
+  schnaps_real eps = 0.01;
   schnaps_real pi= 4.0*atan(1.0);
   
   schnaps_real r = sqrt(x[0] * x[0] + x[1] * x[1]);
   schnaps_real theta = atan2(x[1],x[0]);
   
-  schnaps_real rminus = 6;
-  schnaps_real rplus = 7;
+  schnaps_real rminus = 4.5;
+  schnaps_real rplus = 5.5;
   
  for(int i = 0; i <kd->index_max_kin + 1; i++){
       w[i] = 0;
@@ -172,8 +192,6 @@ void GuidingCImposedData(const schnaps_real x[3], const schnaps_real t, schnaps_
   w[kd->index_T] = 0; 
 
 }
-
-
 void GuidingCBoundaryFlux(schnaps_real x[3],schnaps_real t,
 		      schnaps_real wL[],schnaps_real* vnorm,
 		      schnaps_real* flux)
@@ -228,7 +246,7 @@ void PlotVlasovPoisson(void *si, schnaps_real *w) {
   
   Energies(simu, w, k_energy, e_energy, t_energy, 1);
   Charge_total(simu, w, t_charge, 4);
-  Taux_instability(simu, w, 7, taux_ins, 5);
+  Taux_instability(simu, w, 4, taux_ins, 5);
   si = simu; 
 }
  
