@@ -248,6 +248,10 @@ void DestroyLBModelDescriptor(LBModelDescriptor * lb)
     free(lb->s);
     lb->s=NULL;
   }
+  if (lb->model_spec_params){
+    free(lb->model_spec_params);
+  }
+  lb->model_spec_params=NULL;
   lb->d = 0;
   lb->q = 0;
   lb->nb_macro = 0;
@@ -1173,6 +1177,10 @@ void LBM_Set_D2Q9_ISOTH_model(LBModelDescriptor * lb, schnaps_real cref)
   lb->feq = &LBM_feq_D2Q9_ISOTH;
   lb->f_to_macro = &LBM_f_to_macro_D2Q9_ISOTH;
   //
+  lb->model_spec_params = (params_D2Q9_ISOTH*) calloc(1,sizeof(params_D2Q9_ISOTH));
+  params_D2Q9_ISOTH *p=lb->model_spec_params;
+  p->theta=cref * cref /3.0;
+  p->invtheta = 1.0 /p->theta;
 }
 
 //
@@ -1200,18 +1208,107 @@ schnaps_real LBM_feq_D2Q9_ISOTH(int i_node, int nb_macro, schnaps_real * w)
   schnaps_real rho = w[0];
   schnaps_real ux = w[1];
   schnaps_real uy = w[2];
-  schnaps_real cref = lsd->lb_model->cref;
-  schnaps_real temp = cref * cref / 3.0;
+  params_D2Q9_ISOTH *param=lsd->lb_model->model_spec_params;
+  schnaps_real invtemp = param->invtheta;
   //
-  schnaps_real u2 = (ux * ux + uy * uy) / temp;
+  schnaps_real u2 = (ux * ux + uy * uy) * invtemp;
   schnaps_real uv =
       (ux * lsd->lb_model->vi[i_node][0] +
-       uy * lsd->lb_model->vi[i_node][1]) / temp;
+       uy * lsd->lb_model->vi[i_node][1]) * invtemp;
   schnaps_real feq =
       LBM_WEIGHTS_D2Q9_ISOTH[i_node] * rho * (1.0 + uv +
 					      0.5 * (uv * uv - u2));
   return feq;
 };
+// D2Q9 isothermal with incompressibility mod , defined by parameter rho0
+//********************************************************************************//
+void LBM_Set_D2Q9_ISOTH_INC_model(LBModelDescriptor * lb, schnaps_real cref)
+{
+  assert(lb->d == 2);
+  assert(lb->q == 9);
+  assert(lb->nb_macro == 3);
+  NewMPolyDescriptorFromModel(&(lb->Moments[0]), &model_rho2D, NULL);
+  NewMPolyDescriptorFromModel(&(lb->Moments[1]), &model_jx2D, NULL);
+  NewMPolyDescriptorFromModel(&(lb->Moments[2]), &model_jy2D, NULL);
+  NewMPolyDescriptorFromModel(&(lb->Moments[3]), &model_trMab2D, NULL);
+  NewMPolyDescriptorFromModel(&(lb->Moments[4]), &model_DifMab2D, NULL);
+  NewMPolyDescriptorFromModel(&(lb->Moments[5]), &model_Mxy2D, NULL);
+  NewMPolyDescriptorFromModel(&(lb->Moments[6]), &model_Mabcx2D, NULL);
+  NewMPolyDescriptorFromModel(&(lb->Moments[7]), &model_Mabcy2D, NULL);
+  NewMPolyDescriptorFromModel(&(lb->Moments[8]), &model_V42D, NULL);
+  //
+  sprintf(lb->macro_names[0], "rho");
+  sprintf(lb->macro_names[1], "ux");
+  sprintf(lb->macro_names[2], "uy");
+  // set velocity nodes
+  lb->cref = cref;
+  for (int i = 0; i < lb->q; i++) {
+    for (int j = 0; j < lb->d; j++) {
+      lb->vi[i][j] = lb->cref * LBM_D2Q9_nodes[i][j];
+    }
+  }
+  for (int i = 0; i < lb->q; i++) {
+    lb->iopposite[i] = LBM_D2Q9_iopposite[i];
+  }
+  ComputeLBModelDescriptorVmax(lb);
+  //
+  for (int i = 0; i < lb->q; i++) {
+    lb->inode_min[i] = 0;
+    lb->inode_max[i] = lb->q - 1;
+  }
+  ComputeLBModelDescriptorMomentMatrix(lb);
+  //
+  lb->feq = &LBM_feq_D2Q9_ISOTH_INC;
+  lb->f_to_macro = &LBM_f_to_macro_D2Q9_ISOTH_INC;
+  //
+  lb->model_spec_params =  (params_D2Q9_ISOTH_INC*) calloc(1,sizeof(params_D2Q9_ISOTH_INC));
+  params_D2Q9_ISOTH_INC *p=lb->model_spec_params;
+  p->theta=cref * cref /3.0;
+  p->invtheta = 1.0 / p->theta;
+  p->rho0 =1.0;
+  //
+}
+
+//
+void LBM_f_to_macro_D2Q9_ISOTH_INC(schnaps_real * f, schnaps_real * w)
+{
+  LatticeBoltzmannSimData *lsd = &schnaps_lbm_simdata;
+  for (int i = 0; i < lsd->lb_model->nb_macro; i++) {
+    w[i] = 0.0;
+    for (int inode = 0; inode < lsd->lb_model->q; inode++) {
+      w[i] += f[inode] * lsd->lb_model->M[i][inode];
+    }
+  }
+  params_D2Q9_ISOTH_INC *param = lsd->lb_model->model_spec_params;
+  schnaps_real rho0=param->rho0; //  
+  // normalize
+  if (w[0] != 0.0) {
+    w[1] = w[1] / rho0;
+    w[2] = w[2] / rho0;
+  }
+}
+//
+schnaps_real LBM_feq_D2Q9_ISOTH_INC(int i_node, int nb_macro, schnaps_real * w)
+{
+  //
+  LatticeBoltzmannSimData *lsd = &schnaps_lbm_simdata;
+  schnaps_real rho = w[0];
+  schnaps_real ux = w[1];
+  schnaps_real uy = w[2];
+  params_D2Q9_ISOTH_INC *param = lsd->lb_model->model_spec_params;
+  schnaps_real invtemp = param->invtheta;
+  schnaps_real rho0 = param->rho0;
+  //
+  schnaps_real u2 = (ux * ux + uy * uy) * invtemp;
+  schnaps_real uv =
+      (ux * lsd->lb_model->vi[i_node][0] +
+       uy * lsd->lb_model->vi[i_node][1]) * invtemp;
+  schnaps_real feq =
+      LBM_WEIGHTS_D2Q9_ISOTH[i_node] * (rho + rho0 * ( uv +
+					      0.5 * (uv * uv - u2)));
+  return feq;
+};
+//
 
 // D2Q9 isothermal linearized (2D wave equation)
 void LBM_Set_D2Q9_ISOTH_LINEARIZED_model(LBModelDescriptor * lb,
@@ -1254,6 +1351,10 @@ void LBM_Set_D2Q9_ISOTH_LINEARIZED_model(LBModelDescriptor * lb,
   lb->feq = &LBM_feq_D2Q9_ISOTH_LINEARIZED;
   lb->f_to_macro = &LBM_f_to_macro_D2Q9_ISOTH_LINEARIZED;
   //
+  lb->model_spec_params = (params_D2Q9_ISOTH_LINEARIZED*) calloc(1,sizeof(params_D2Q9_ISOTH_LINEARIZED));
+  params_D2Q9_ISOTH_LINEARIZED *p=lb->model_spec_params;
+  p->theta= cref * cref / 3.0; 
+  p->invtheta = 1.0/p->theta;
 }
 
 schnaps_real LBM_feq_D2Q9_ISOTH_LINEARIZED(int i_node, int nb_macro,
@@ -1264,12 +1365,12 @@ schnaps_real LBM_feq_D2Q9_ISOTH_LINEARIZED(int i_node, int nb_macro,
   schnaps_real rho = w[0];
   schnaps_real jx = w[1];
   schnaps_real jy = w[2];
-  schnaps_real cref = lsd->lb_model->cref;
-  schnaps_real temp = cref * cref / 3.0;
+  params_D2Q9_ISOTH_LINEARIZED *p=lsd->lb_model->model_spec_params;
+  schnaps_real invtemp = p->invtheta;
   //
   schnaps_real jv =
       (jx * lsd->lb_model->vi[i_node][0] +
-       jy * lsd->lb_model->vi[i_node][1]) / temp;
+       jy * lsd->lb_model->vi[i_node][1]) * invtemp;
   schnaps_real feq = LBM_WEIGHTS_D2Q9_ISOTH[i_node] * (rho + jv);
   return feq;
 };
@@ -1359,6 +1460,13 @@ void LBM_Set_MHD_D2Q9_2D2Q5_model(LBModelDescriptor * lb, schnaps_real cref){
   //
   lb->feq = &LBM_feq_MHD_D2Q9_2D2Q5;
   lb->f_to_macro = &LBM_f_to_macro_MHD_D2Q9_2D2Q5;
+  //
+  lb->model_spec_params= (params_MHD_D2Q9_2D2Q5*) calloc(1,sizeof(params_MHD_D2Q9_2D2Q5));
+  params_MHD_D2Q9_2D2Q5 *p=lb->model_spec_params;
+  p->theta= cref * cref/3.0;
+  p->invtheta = 1.0 / p->theta;
+  p->theta_mag = cref * cref /3.0;
+  p->invtheta_mag = 1.0 / p->theta_mag;
 }
 //
 void LBM_f_to_macro_MHD_D2Q9_2D2Q5(schnaps_real *f, schnaps_real *w){
@@ -1387,16 +1495,14 @@ void LBM_f_to_macro_MHD_D2Q9_2D2Q5(schnaps_real *f, schnaps_real *w){
 }
 schnaps_real LBM_feq_MHD_D2Q9_2D2Q5(int inode, int nb_macro, schnaps_real *w){
   LatticeBoltzmannSimData *lsd = &schnaps_lbm_simdata;
+  params_MHD_D2Q9_2D2Q5 *p=lsd->lb_model->model_spec_params;
   schnaps_real rho = w[0];
   schnaps_real ux = w[1];
   schnaps_real uy = w[2];
   schnaps_real Bx = w[3];
   schnaps_real By = w[4];
-  schnaps_real cref = lsd->lb_model->cref;
-  schnaps_real invtemp = 3.0/(cref *cref);
   if (inode < 9){
-    schnaps_real cref = lsd->lb_model->cref;
-    schnaps_real invtemp = 3.0/(cref *cref);
+    schnaps_real invtemp = 1.0/p->theta;
     schnaps_real vx = lsd->lb_model->vi[inode][0]; 
     schnaps_real vy = lsd->lb_model->vi[inode][1]; 
     //
@@ -1413,12 +1519,14 @@ schnaps_real LBM_feq_MHD_D2Q9_2D2Q5(int inode, int nb_macro, schnaps_real *w){
   }
   if ((inode >8) && (inode < 14)){
     int inodeloc=inode-9;
+    schnaps_real invtemp = 1.0/p->theta_mag;
     schnaps_real vy=lsd->lb_model->vi[inode][1];
     schnaps_real feq= LBM_WEIGHTS_D2Q5_ISOTH[inodeloc] * (Bx + invtemp * vy *(uy * Bx - ux * By));
     return feq;
   }
   if (inode >13){
     int inodeloc=inode-14;
+    schnaps_real invtemp = 1.0/p->theta_mag;
     schnaps_real vx=lsd->lb_model->vi[inode][0];
     schnaps_real feq= LBM_WEIGHTS_D2Q5_ISOTH[inodeloc] * (By + invtemp * vx *(ux * By - uy * Bx));
     return feq;

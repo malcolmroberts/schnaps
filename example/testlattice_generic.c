@@ -137,7 +137,15 @@ int LBM_testmodels(void)
   CheckLBModelDescriptorMacroConservation(&lbm, false);
   DisplayLBModelDescriptorMomentMatrix(&lbm);
   DestroyLBModelDescriptor(&lbm);
-/*  //*/
+  //
+  NewLBModelDescriptor(&lbm, d, nb_macro, q);
+  printf(" D2Q9 isothermal INC model\n");
+  lsd->lb_model = &lbm;
+  LBM_Set_D2Q9_ISOTH_INC_model(&lbm, SimParams.cref);
+  CheckLBModelDescriptorMacroConservation(&lbm, false);
+  DisplayLBModelDescriptorMomentMatrix(&lbm);
+  DestroyLBModelDescriptor(&lbm);
+  //
   printf(" D2Q9 isothermal Linerarized model\n");
   NewLBModelDescriptor(&lbm, d, nb_macro, q);
   lsd->lb_model = &lbm;
