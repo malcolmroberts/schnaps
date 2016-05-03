@@ -73,7 +73,7 @@ int LBM_TestLattice_isothermal_DoubleShearKH(void);
 // global parameters with default values
 LbmSimuParams SimParams = {
   .deg = {3, 3, 0},
-  .raf = {1, 1, 1},
+  .raf = {3, 3, 1},
   .cfl = 1.0,.dt = 0.001,.tmax = 0.1,
   .tau = 0.00001,.cref = 1.0,
   .diag_2d_period = 1.0
@@ -91,7 +91,7 @@ int main(void)
   printf(" Lattice Boltzmann Model\n");
   SimParams = (LbmSimuParams) {
     .deg = {4, 4, 0},
-    .raf = {4, 4, 1},
+    .raf = {1, 1, 1},
     .cfl = 1.0,
     .dt = 0.001,
     .tmax = 1.0,
@@ -101,18 +101,18 @@ int main(void)
   // ***********************//
   //int resu=LBM_testmodels();
   // ***********************//
-/*  BFParams.uref = 0.05;*/
-/*  BFParams.lx = 4.0;*/
-/*  BFParams.ly = 1.0;*/
-/*  BFParams.cx = 2.0;*/
-/*  BFParams.cy = -0.9;*/
-/*  BFParams.r = 1.0;*/
-/*  int resu = TestLattice_BumpFlow();*/
+  BFParams.uref = 0.05;
+  BFParams.lx = 4.0;
+  BFParams.ly = 1.0;
+  BFParams.cx = 2.0;
+  BFParams.cy = -0.9;
+  BFParams.r = 1.0;
+  int resu = TestLattice_BumpFlow();
   //
-  LW2DParams.nkx=1;
-  LW2DParams.nky=1;
-  LW2DParams.offset=0.0;
-  int resu=LBM_TestLattice_LinearWave2D();
+/*  LW2DParams.nkx=1;*/
+/*  LW2DParams.nky=1;*/
+/*  LW2DParams.offset=0.0;*/
+/*  int resu=LBM_TestLattice_LinearWave2D();*/
   //
   if (resu)
     printf("lattice test OK !\n");
@@ -193,8 +193,8 @@ int TestLattice_BumpFlow(void)
   // setup simulation paramaters in global shared LatticeBoltzmannSimData object
   LatticeBoltzmannSimData *lsd = &schnaps_lbm_simdata;
   NewLBModelDescriptor(&lbm, d, nb_macro, q);
-  LBM_Set_D2Q9_ISOTH_model(&lbm, SimParams.cref);
-  //LBM_Set_D2Q9_ISOTH_INC_model(&lbm, SimParams.cref);
+  //LBM_Set_D2Q9_ISOTH_model(&lbm, SimParams.cref);
+  LBM_Set_D2Q9_ISOTH_INC_model(&lbm, SimParams.cref);
   lsd->lb_model = &lbm;
   // setup LB Simulation object
   LBMSimulation lbsimu;
