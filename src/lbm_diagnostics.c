@@ -430,7 +430,6 @@ void LBM_PlotExtScalarFieldBinMultitime(Simulation* simu,schnaps_real *w_in,char
                   };  // end ix[2]
                 };  // end ix[1]
               };  // end ix[0]
-
         }; // end jcL[2]
         };
         };

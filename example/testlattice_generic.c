@@ -674,7 +674,6 @@ void LBM_Linear2DWave_Plot_Fields(void *s, schnaps_real * w)
   int tmax = simu->tmax;
   int create_file = 0;
   LBM_Store_Lattice_diags(lbsimu);
-  //printf(" called with istep=%i, period=%f dt=%f diagperiod=%i\n",istep,period,dt,diagperiod);
   if (istep == 0) {
     create_file = 1;
   } else {
