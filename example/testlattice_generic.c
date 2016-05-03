@@ -72,8 +72,8 @@ void LBM_Linear2DWave_Plot_Fields(void *s, schnaps_real * w);
 int LBM_TestLattice_isothermal_DoubleShearKH(void);
 // global parameters with default values
 LbmSimuParams SimParams = {
-  .deg = {4, 4, 0},
-  .raf = {2, 2, 1},
+  .deg = {3, 3, 0},
+  .raf = {1, 1, 1},
   .cfl = 1.0,.dt = 0.001,.tmax = 0.1,
   .tau = 0.00001,.cref = 1.0,
   .diag_2d_period = 1.0
@@ -91,15 +91,15 @@ int main(void)
   printf(" Lattice Boltzmann Model\n");
   SimParams = (LbmSimuParams) {
     .deg = {4, 4, 0},
-    .raf = {2, 2, 1},
+    .raf = {4, 4, 1},
     .cfl = 1.0,
     .dt = 0.001,
-    .tmax = 10.0,
+    .tmax = 1.0,
     .cref = 1.0,
     .tau = 0.00001,
     .diag_2d_period = 0.5};
   // ***********************//
-  int resu=LBM_testmodels();
+  //int resu=LBM_testmodels();
   // ***********************//
 /*  BFParams.uref = 0.05;*/
 /*  BFParams.lx = 4.0;*/
@@ -109,10 +109,10 @@ int main(void)
 /*  BFParams.r = 1.0;*/
 /*  int resu = TestLattice_BumpFlow();*/
   //
-/*  LW2DParams.nkx=1;*/
-/*  LW2DParams.nky=2;*/
-/*  LW2DParams.offset=0.0;*/
-/*  int resu=LBM_TestLattice_LinearWave2D();*/
+  LW2DParams.nkx=1;
+  LW2DParams.nky=1;
+  LW2DParams.offset=0.0;
+  int resu=LBM_TestLattice_LinearWave2D();
   //
   if (resu)
     printf("lattice test OK !\n");
@@ -194,6 +194,7 @@ int TestLattice_BumpFlow(void)
   LatticeBoltzmannSimData *lsd = &schnaps_lbm_simdata;
   NewLBModelDescriptor(&lbm, d, nb_macro, q);
   LBM_Set_D2Q9_ISOTH_model(&lbm, SimParams.cref);
+  //LBM_Set_D2Q9_ISOTH_INC_model(&lbm, SimParams.cref);
   lsd->lb_model = &lbm;
   // setup LB Simulation object
   LBMSimulation lbsimu;
@@ -690,6 +691,7 @@ void LBM_Linear2DWave_Plot_Fields(void *s, schnaps_real * w)
 	      simutag, raf, cfl);
       //char filename_rho_error[sizeof("lbm2DWave_rho_000.msh")];
       //sprintf(filename_rho_error,"lbm_2DWave_rho_error_%03d.msh",raf);
+      //PlotFields(0,false,simu,"rho",filename_rho);
       LBM_PlotFieldsBinSparseMultitime(0, false, simu, "rho", filename_rho,
 				       create_file, t, istep);
       LBM_PlotFieldsBinSparseMultitime(0, true, simu, "rho_error",

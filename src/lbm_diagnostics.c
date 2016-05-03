@@ -80,17 +80,20 @@ void LBM_PlotExtFieldAsciiSparse(Simulation* simu,schnaps_real *w_in,char* field
         for (jcL[0]= jcLmin[0]; jcL[0] < jcLmax[0];jcL[0]++){
         for (jcL[1]= jcLmin[1]; jcL[1] < jcLmax[1];jcL[1]++){
         for (jcL[2]= jcLmin[2]; jcL[2] < jcLmax[2];jcL[2]++){
-          // index cell
-          int nc = jcL[0] + nraf[0] * (jcL[1] + nraf[1] * jcL[2]);
-          // first glop index in the subcell
-          int first_gp_cell = (deg[0]+1) * (deg[1]+1) * (deg[2]+1) * nc;
-          for(int ipg=0;ipg<sc_npg;ipg++){
-            int index_glob_igp=f->varindex(f->deg,f->raf,f->model.m, first_gp_cell + ipg,0);
-              schnaps_real psi;
-              psi_ref_subcell(f->deg, f->raf, icL, index_glob_igp, Xr, &psi, NULL);
-              testpsi += psi;
-              value[nodecount] += psi * w_in[index_glob_igp];
-          }; // end loop subcell gauss points
+        // loop on basis function indexed by glop
+          int ix[3];
+          int ib;
+          for (ix[0]=0;ix[0]< npg[0]; ix[0]++){
+            for (ix[1]=0;ix[1]< npg[1]; ix[1]++){
+              for (ix[2]=0;ix[2]< npg[2]; ix[2]++){
+                xyz_to_ipg(nraf,deg,jcL,ix,&ib);
+                schnaps_real psi;
+                psi_ref_subcell(f->deg, f->raf, icL, ib, Xr, &psi, NULL);
+                testpsi += psi;
+                value[nodecount] += psi * w_in[ib];
+              };  // end ix[2]
+            };  // end ix[1]
+          };  // end ix[0]
         }; //end loop neighbour subcell 2
         };//end loop neighbour subcell 1
         }; //end loop neighbour subcell 0
@@ -238,17 +241,21 @@ void LBM_PlotExtFieldBinSparse(Simulation* simu,schnaps_real *w_in,char* fieldna
         for (jcL[0]= jcLmin[0]; jcL[0] < jcLmax[0];jcL[0]++){
         for (jcL[1]= jcLmin[1]; jcL[1] < jcLmax[1];jcL[1]++){
         for (jcL[2]= jcLmin[2]; jcL[2] < jcLmax[2];jcL[2]++){
-          // index cell
-          int nc = jcL[0] + nraf[0] * (jcL[1] + nraf[1] * jcL[2]);
-          // first glop index in the subcell
-          int first_gp_cell = (deg[0]+1) * (deg[1]+1) * (deg[2]+1) * nc;
-          for(int ipg=0;ipg<sc_npg;ipg++){
-            int index_glob_igp=f->varindex(f->deg,f->raf,f->model.m, first_gp_cell + ipg,0);
-            schnaps_real psi;
-            psi_ref_subcell(f->deg, f->raf, icL, index_glob_igp, Xr, &psi, NULL);
-            testpsi += psi;
-            value[nodecount] += psi * w_in[index_glob_igp];
-          };
+          // loop on basis function indexed by glop
+            int ix[3];
+            int ib;
+            for (ix[0]=0;ix[0]< npg[0]; ix[0]++){
+              for (ix[1]=0;ix[1]< npg[1]; ix[1]++){
+                for (ix[2]=0;ix[2]< npg[2]; ix[2]++){
+                  xyz_to_ipg(nraf,deg,jcL,ix,&ib);
+                  schnaps_real psi;
+                  psi_ref_subcell(f->deg, f->raf, icL, ib, Xr, &psi, NULL);
+                  testpsi += psi;
+                  value[nodecount] += psi * w_in[ib];
+                };  // end ix[2]
+              };  // end ix[1]
+            };  // end ix[0]
+
         };
         };
         };
@@ -409,18 +416,22 @@ void LBM_PlotExtScalarFieldBinMultitime(Simulation* simu,schnaps_real *w_in,char
         for (jcL[0]= jcLmin[0]; jcL[0] < jcLmax[0];jcL[0]++){
         for (jcL[1]= jcLmin[1]; jcL[1] < jcLmax[1];jcL[1]++){
         for (jcL[2]= jcLmin[2]; jcL[2] < jcLmax[2];jcL[2]++){
-          // index cell
-          int nc = jcL[0] + nraf[0] * (jcL[1] + nraf[1] * jcL[2]);
-          // first glop index in the subcell
-          int first_gp_cell = (deg[0]+1) * (deg[1]+1) * (deg[2]+1) * nc;
-          for(int ipg=0;ipg<sc_npg;ipg++){
-            int index_glob_igp=f->varindex(f->deg,f->raf,f->model.m, first_gp_cell + ipg,0);
-            schnaps_real psi;
-            psi_ref_subcell(f->deg, f->raf, icL, index_glob_igp, Xr, &psi, NULL);
-            testpsi += psi;
-            value[nodecount] += psi * w_in[index_glob_igp];
-          };
-        };
+            // loop on basis function indexed by glop
+              int ix[3];
+              int ib;
+              for (ix[0]=0;ix[0]< npg[0]; ix[0]++){
+                for (ix[1]=0;ix[1]< npg[1]; ix[1]++){
+                  for (ix[2]=0;ix[2]< npg[2]; ix[2]++){
+                    xyz_to_ipg(nraf,deg,jcL,ix,&ib);
+                    schnaps_real psi;
+                    psi_ref_subcell(f->deg, f->raf, icL, ib, Xr, &psi, NULL);
+                    testpsi += psi;
+                    value[nodecount] += psi * w_in[ib];
+                  };  // end ix[2]
+                };  // end ix[1]
+              };  // end ix[0]
+
+        }; // end jcL[2]
         };
         };
         assert(fabs(testpsi-1) < _SMALL);
@@ -596,30 +607,33 @@ void LBM_PlotVecFieldsBinSparseMultitime(int typplot[3], int compare, Simulation
         };
         // loop on neighbouring subcells
         for (jcL[0]= jcLmin[0]; jcL[0] < jcLmax[0];jcL[0]++){
-        for (jcL[1]= jcLmin[1]; jcL[1] < jcLmax[1];jcL[1]++){
-        for (jcL[2]= jcLmin[2]; jcL[2] < jcLmax[2];jcL[2]++){
-          // index cell
-          int nc = jcL[0] + nraf[0] * (jcL[1] + nraf[1] * jcL[2]);
-          // first glop index in the subcell
-          int first_gp_cell = (deg[0]+1) * (deg[1]+1) * (deg[2]+1) * nc;
-          for(int ipg=0;ipg<sc_npg;ipg++){
-            int index_glob_igp=f->varindex(f->deg,f->raf,f->model.m, first_gp_cell + ipg,0);
-            schnaps_real psi;
-            psi_ref_subcell(f->deg, f->raf, icL, index_glob_igp, Xr, &psi, NULL);
-            testpsi += psi;
-            for (int idim=0;idim < 3; idim++){
-            if (is_valid_field[idim]){
-            int vi = f->varindex(f->deg, f->raf, f->model.m, index_glob_igp, typplot[idim]);
-            value[3*nodecount+idim] += psi * f->wn[vi];
-            }
-            else{
-            value[3*nodecount+idim] += 0.0;
-            }
-            }
-          };
-        };
-        };
-        };
+          for (jcL[1]= jcLmin[1]; jcL[1] < jcLmax[1];jcL[1]++){
+            for (jcL[2]= jcLmin[2]; jcL[2] < jcLmax[2];jcL[2]++){
+              // loop on basis function indexed by glop
+                int ix[3];
+                int ib;
+                for (ix[0]=0;ix[0]< npg[0]; ix[0]++){
+                  for (ix[1]=0;ix[1]< npg[1]; ix[1]++){
+                    for (ix[2]=0;ix[2]< npg[2]; ix[2]++){
+                      xyz_to_ipg(nraf,deg,jcL,ix,&ib);
+                      schnaps_real psi;
+                      psi_ref_subcell(f->deg, f->raf, icL, ib, Xr, &psi, NULL);
+                      testpsi += psi;
+                      for (int idim=0;idim < 3; idim++){
+                        if (is_valid_field[idim]){
+                        int vi = f->varindex(f->deg, f->raf, f->model.m, ib, typplot[idim]);
+                        value[3*nodecount+idim] += psi * f->wn[vi];
+                        }
+                        else{
+                        value[3*nodecount+idim] += 0.0;
+                        }
+                      } // end idim
+                      }; // end ix[2]
+                    }; // end ix[1]
+                  }; // end ix[0]
+            }; // end jcL[2]
+          }; // end jcL[1]
+        };// end jcL[0]
         assert(fabs(testpsi-1) < _SMALL);
         // Compare with an exact solution
         if (compare) {
@@ -780,7 +794,6 @@ void LBM_PlotFieldsBinSparseMultitime(int typplot, int compare, Simulation* simu
 		      deg[1] + 1,
 		      deg[2] + 1};
     const unsigned int sc_npg = npg[0] * npg[1] * npg[2];
-
   // Refinement size in each direction
   schnaps_real hh[3] = {1.0 / nraf[0], 1.0 / nraf[1], 1.0 / nraf[2]};
   // Header
@@ -825,10 +838,10 @@ void LBM_PlotFieldsBinSparseMultitime(int typplot, int compare, Simulation* simu
         double Xplot[3] ={ (double)Xphy[0],  (double)Xphy[1],  (double)Xphy[2]};
         schnaps_real testpsi = 0;
         int nb_nonzero_psi=0;
-        int jcL[3];
+        int jcL[3]={0,0,0};
         int jcLmin[3]={0,0,0};
         int jcLmax[3]={nraf[0],nraf[1],nraf[2]};
-        // restrict projectio to neighbouring subcells
+        // restrict projection to neighbouring subcells (!! CAUTION )
         for (int k=0; k<3;k++){
           if (icL[k] > 0){
             jcLmin[k] = icL[k]-1;
@@ -839,23 +852,27 @@ void LBM_PlotFieldsBinSparseMultitime(int typplot, int compare, Simulation* simu
         };
         // loop on neighbouring subcells
         for (jcL[0]= jcLmin[0]; jcL[0] < jcLmax[0];jcL[0]++){
-        for (jcL[1]= jcLmin[1]; jcL[1] < jcLmax[1];jcL[1]++){
-        for (jcL[2]= jcLmin[2]; jcL[2] < jcLmax[2];jcL[2]++){
-          // index cell
-          int nc = jcL[0] + nraf[0] * (jcL[1] + nraf[1] * jcL[2]);
-          // first glop index in the subcell
-          int first_gp_cell = (deg[0]+1) * (deg[1]+1) * (deg[2]+1) * nc;
-          for(int ipg=0;ipg<sc_npg;ipg++){
-            int index_glob_igp=f->varindex(f->deg,f->raf,f->model.m, first_gp_cell + ipg,0);
-            schnaps_real psi;
-            psi_ref_subcell(f->deg, f->raf, icL, index_glob_igp, Xr, &psi, NULL);
-            testpsi += psi;
-            int vi = f->varindex(f->deg, f->raf, f->model.m, index_glob_igp, typplot);
-            value[nodecount] += psi * f->wn[vi];
-          };
-        };
-        };
-        };
+          for (jcL[1]= jcLmin[1]; jcL[1] < jcLmax[1];jcL[1]++){
+            for (jcL[2]= jcLmin[2]; jcL[2] < jcLmax[2];jcL[2]++){
+            // loop on basis function indexed by glop
+              int ix[3];
+              int ib;
+              for (ix[0]=0;ix[0]< npg[0]; ix[0]++){
+                for (ix[1]=0;ix[1]< npg[1]; ix[1]++){
+                  for (ix[2]=0;ix[2]< npg[2]; ix[2]++){
+                    xyz_to_ipg(nraf,deg,jcL,ix,&ib);
+                    schnaps_real psi;
+                    psi_ref_subcell(f->deg, f->raf, icL, ib, Xr, &psi, NULL);
+                    testpsi += psi;
+                    int vi = f->varindex(f->deg, f->raf, f->model.m, ib, typplot);
+                    value[nodecount] += psi * f->wn[vi];
+                  };  // end ix[2]
+                };  // end ix[1]
+              };  // end ix[0]
+            }; //end jcL[2]
+          }; //end jcL[1]
+        }; //end jcL[0]
+        //
         assert(fabs(testpsi-1) < _SMALL);
         // Compare with an exact solution
         if (compare) {
@@ -868,7 +885,7 @@ void LBM_PlotFieldsBinSparseMultitime(int typplot, int compare, Simulation* simu
         fwrite(&nodecount, sizeof(int), 1, gmshfile);
         fwrite(Xplot, sizeof(double), 3, gmshfile);
         }
-      }
+      } // end for ino
     };// end for icl[0]
     };// end for icl[1]
     };// end for icl[2]
