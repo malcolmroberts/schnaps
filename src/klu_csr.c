@@ -2,7 +2,6 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <assert.h>
-#include "suitesparse/klu.h"
 #include "klu_csr.h"
 #include "math.h"
 
@@ -16,16 +15,17 @@ void InitKLU(KLU* klu, int n){
 
   klu->neq=n;
   
-  klu_defaults (&Common) ;
- 
+  klu_defaults (&klu->common) ;
 
-  
-  
+  klu->T = cs_di_spalloc (0, 0, 1, 1, 1) ;
+
 }
 
 
 void SwitchOnKLU(KLU* klu,int i,int j){
 
+  assert(!klu->is_alloc);
+  cs_di_entry(klu->T, i, j, 1);
 
 } 
 
@@ -33,8 +33,13 @@ void AllocateKLU(KLU* klu){
 
   assert(!klu->is_alloc);
 
+  klu->A = cs_di_compress(klu->T );
+  cs_di_spfree(klu->T);
 
   klu->is_alloc=true;
+
+  cs_di_dupl(klu->A);
+  cs_di_print(klu->A, 0);
 
 
 }
@@ -42,8 +47,10 @@ void AllocateKLU(KLU* klu){
 void AllocateCopyKLU(KLU* klu){
 
   assert(!klu->copy_is_alloc);
+  klu->Acopy = cs_di_add (klu->A, klu->A, 1, 0) ;
 
   klu->copy_is_alloc=true;
+  cs_di_print(klu->A, 0);
 
 
 }

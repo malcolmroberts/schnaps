@@ -6,7 +6,6 @@
 #include "test.h"
 #include "collision.h"
 #include "waterwave2d.h"
-#include "suitesparse/klu.h"
 
 schnaps_real vit[3] = {-1.4, -0.7, 0};
 
@@ -37,8 +36,26 @@ int main(void) {
   klu_free_symbolic (&Symbolic, &Common) ;
   klu_free_numeric (&Numeric, &Common) ;
   for (i = 0 ; i < n ; i++) printf ("x [%d] = %g\n", i, b [i]) ;
+
+
+  KLU klumat;
+
+  InitKLU(&klumat, 5);
+
+  for(int i = 0; i < 5; i++){
+    int j = i + 1;
+    if (j < 5) SwitchOnKLU(&klumat, i, j);
+  }
+
+  SwitchOnKLU(&klumat, 3, 4);
+
+  printf("construct CSR struct\n");
+  AllocateKLU(&klumat);
+  printf("copy CSR struct\n");
+  AllocateCopyKLU(&klumat);
+  
   assert(1==2);
-  // unit tests
+  // unit test
     
   int resu1 = 0;
   resu1=Test_KLU_Steady();

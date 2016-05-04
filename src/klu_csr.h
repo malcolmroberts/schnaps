@@ -2,7 +2,8 @@
 #define _KLU_CSR_H
 
 #include "global.h"
-
+#include "cxsparse/cs.h"
+#include "klu.h"
 
 
 //! \brief a struct for managing KLU linear system
@@ -25,8 +26,18 @@ typedef struct KLU{
 
   //! \brief symbolic and numeric objects
   klu_symbolic *symbolic ;
-  klu_numeric *symbolic ;
+  klu_numeric *numeric ;
   klu_common common ;
+
+  //! csparse struct for triplet storage
+  cs_di *T;
+
+  //! csparse struct for csr storage
+  cs_di *A;
+
+  //! csparse struct for csr copy storage
+  cs_di *Acopy;
+
 
 } KLU;
 
