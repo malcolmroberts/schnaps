@@ -727,7 +727,7 @@ void LBM_PlotVecFieldsBinSparseMultitime(int typplot[3], int compare, Simulation
   number_of_string_tags=1;
   fprintf(gmshfile, "%i\n",number_of_string_tags);
   if(fieldname == NULL)
-    fprintf(gmshfile, "\"field %d\"\n", typplot);
+    fprintf(gmshfile, "\"field %d\"\n", *typplot);
   else
   fprintf(gmshfile, "\"field: %s\"\n", "norm");
   //
