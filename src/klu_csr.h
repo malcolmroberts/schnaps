@@ -104,6 +104,10 @@ void MatVectKLU(KLU * sky, schnaps_real * x, schnaps_real * prod);
 //! \param[inout] sky the KLU object
 void FactoKLU(KLU* sky);
 
+//! \brief recompute the inplace LU decomposition
+//! \param[inout] sky the KLU object
+void ReFactoKLU(KLU* sky);
+
 //! \brief solve the linear system
 //! \param[in] sky the KLU object
 //! \param[in] rhs the right hand side

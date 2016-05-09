@@ -16,10 +16,51 @@ void TestSteady_KLU_Source(const schnaps_real *xy, const schnaps_real t, const s
 void KLU_Steady_BoundaryFlux(schnaps_real *x, schnaps_real t, schnaps_real *wL, schnaps_real *vnorm,
 			      schnaps_real *flux);
 
+int test_klu_basic_orig(void);
+int test_klu_basic(void);
+int test_KLU_block_ut(int n, int block_size);
 int Test_KLU_Steady(void);
 
 int main(void) {
+  //test_klu_basic_orig();
+  //
+  int t0= test_klu_basic();
+  //
+  assert(false);
+  int t1 = test_KLU_block_ut(8,3);
+  assert(2==3);
+  //
+  int n=5;
+  KLU klumat;
+  //
+  InitKLU(&klumat, n);
+  for(int i = 0; i < n; i++){
+    int j = i + 1;
+    if (j < n) SwitchOnKLU(&klumat, i, j);
+    SwitchOnKLU(&klumat, i, i);
+  }
+  SwitchOnKLU(&klumat, 3, 4);
 
+  printf("construct CSR struct\n");
+  AllocateKLU(&klumat);
+  printf(" KLU found %i blocks , %i offdiagblocks , largest block size %i\n",
+    klumat.symbolic->nblocks,klumat.symbolic->nzoff,klumat.symbolic->maxblock);
+  //
+  printf("copy CSR struct\n");
+  AllocateCopyKLU(&klumat);
+  //
+  assert(1==2);
+  // unit test
+  int resu1 = 0;
+  resu1=Test_KLU_Steady();
+	 
+  if (resu1 >=1) printf("KLU  test OK !\n");
+  else printf("KLU test failed !\n");
+
+  return !resu1;
+} 
+// sample code from klu documentation
+int test_klu_basic_orig(void){
   int n = 5 ;
   int Ap [ ] = {0, 2, 5, 9, 10, 12} ;
   int Ai [ ] = { 0, 1, 0, 2, 4, 1, 2, 3, 4, 2, 1, 4} ;
@@ -36,37 +77,113 @@ int main(void) {
   klu_free_symbolic (&Symbolic, &Common) ;
   klu_free_numeric (&Numeric, &Common) ;
   for (i = 0 ; i < n ; i++) printf ("x [%d] = %g\n", i, b [i]) ;
-
-
-  KLU klumat;
-
-  InitKLU(&klumat, 5);
-
-  for(int i = 0; i < 5; i++){
-    int j = i + 1;
-    if (j < 5) SwitchOnKLU(&klumat, i, j);
-  }
-
-  SwitchOnKLU(&klumat, 3, 4);
-
-  printf("construct CSR struct\n");
-  AllocateKLU(&klumat);
-  printf("copy CSR struct\n");
-  AllocateCopyKLU(&klumat);
   
-  assert(1==2);
-  // unit test
-    
-  int resu1 = 0;
-  resu1=Test_KLU_Steady();
-	 
-  if (resu1 >=1) printf("wave periodic  test OK !\n");
-  else printf("wave periodic test failed !\n");
+  return 1;
+}
+int test_klu_basic(void){
+  int n = 5 ;
+  int Ap [ ] = {0, 2, 5, 9, 10, 12} ;
+  int Ai [ ] = { 0, 1, 0, 2, 4, 1, 2, 3, 4, 2, 1, 4} ;
+  double Ax [ ] = {2., 3., 3., -1., 4., 4., -3., 1., 2., 2., 6., 1.} ;
+  double xref[ ] = {1.,2.,3.,4.,5.};
+  double y [ ] = {8., 45., -3., 3., 19.} ;
+  double b [ ] = {8., 45., -3., 3., 19.} ;
+  //
+  KLU klumat;
+  InitKLU(&klumat, n);
+  //
+  for (int j=0;j < n;j++){
+    for (int iloc=Ap[j];iloc<Ap[j+1];iloc++){
+      SwitchOnKLU(&klumat,Ai[iloc],j);
+    }
+  }
+  //
+  AllocateKLU(&klumat);
+  DisplayKLU(&klumat);
+  //
+  for (int j=0;j < n;j++){
+    for (int iloc=Ap[j];iloc<Ap[j+1];iloc++){
+      SetKLU(&klumat,Ai[iloc],j,Ax[iloc]);
+    }
+  }
+  //
+  printf("Testing matrix/vector prod \n");
+  MatVectKLU(&klumat,xref,y);
+  for (int i=0;i < n;i++){
+    printf(" y[%i] : %f  \t b[%i] : %f\n",i,y[i],i,b[i]);
+    assert(y[i]==b[i]);
+  }
+  //
+  printf("Numerical factorization\n");
+  FactoKLU(&klumat);
+  //
+  SolveKLU(&klumat,b,y);
+  //
+  for (int i=0;i< n;i++){
+    printf("xref[%i] : %f \t sol[%i] : %f \n",i,xref[i],i,y[i]);
+  }
+  //
+  FreeKLU(&klumat);
+  return 1;
+}
 
-  return !resu1;
-} 
+//
+int test_KLU_block_ut(int n, int block_size){
+  KLU klumat;
+  //
+  printf(" KLU test with block triangular matrix\n");
+  //
+  InitKLU(&klumat, n);
+  //
+  int *PL = calloc(n,sizeof(int)); // line permutation vector
+  int *PC = calloc(n,sizeof(int)); // column permutation vector
+  int *PLinv = calloc(n,sizeof(int)); // line permutation vector (inverse)
+  int *PCinv = calloc(n,sizeof(int)); // column permutation vector (inverse)
 
-
+  // set permutation to identity
+  for (int i=0;i< n;i++){
+    PL[i]=i;
+    PC[i]=i;
+  }
+  // generate random perturbation
+  for (int i=0;i<n;i++){
+    int r=rand()%n;
+    int tmp=PL[r];
+    PL[r]=PL[i];
+    PL[i]=tmp;
+  }  
+  for (int i=0;i<n;i++){
+    int r=rand()%n;
+    int tmp=PC[r];
+    PC[r]=PC[i];
+    PC[i]=tmp;
+  }
+  for (int i=0;i< n;i++){
+    PLinv[PL[i]]=i;
+    PCinv[PC[i]]=i;
+  }
+  //
+  for (int i=0;i < n; i++){
+    for (int j=0; j< n; j++){
+      if (i/block_size <= j/block_size){
+        SwitchOnKLU(&klumat, PL[i], PC[j]);
+      }
+    }
+  }
+  //
+  printf("Building CSR struct\n");
+  AllocateKLU(&klumat);
+  DisplayKLU(&klumat);
+  printf(" KLU found %i blocks , %i offdiagblocks , largest block size %i\n",
+    klumat.symbolic->nblocks,klumat.symbolic->nzoff,klumat.symbolic->maxblock);
+  // 
+  // cleanup
+	free(PL);
+	free(PC);
+	free(PLinv);
+	free(PCinv);
+	FreeKLU(&klumat);
+}
 int Test_KLU_Steady(void) {
 
   bool test = true;
