@@ -2,7 +2,8 @@
 #define _KLU_CSR_H
 
 #include "global.h"
-#include "cxsparse/cs.h"
+#include "cs.h"
+
 #include "klu.h"
 
 
