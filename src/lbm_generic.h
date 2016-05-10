@@ -6,7 +6,7 @@
 #include "lbm_models_data.h"
 #include "model.h"
 #include "simulation.h"
-
+#include "linear_solver.h"
 //
 static const int LBM_MAX_POLYSTRSIZE = 1024;
 static const int LBM_MAX_MACROVARNAMESIZE = 32;
@@ -71,6 +71,7 @@ typedef struct LBModelDescriptor {
   int *inode_min;		//! [q] array ; for each moment starting index of node range for moment computation
   int *inode_max;		//! [q] array ; for each moment end index of node range for moment computation
   schnaps_real **M;		//! [q][q] moment matrix allowing to compute moments from f 
+  LinearSolver *Msolv; //! linear solver object associated with moment matrix
   //schnaps_real **Minv; //! [q][q] inverse of moment matrix
   schnaps_real *s;		//! [q] array of relaxation parameters, will apply to either f or moments
 //  bool  *is_relaxed; //! [q] switch relaxation on/off
@@ -99,7 +100,7 @@ void NewLBModelDescriptor(LBModelDescriptor * lb, int d, int nb_macro,
 //!\paral[in] d dimension of velocity space
 //!\paral[in] q number of velocity nodes
 void DestroyLBModelDescriptor(LBModelDescriptor * lb);
-//!\brief Moment matric computation (assuming Moments,cref and nodes are set)
+//!\brief Moment matric computation (assuming Moments,cref and nodes are set)+ associated linear solver
 void ComputeLBModelDescriptorMomentMatrix(LBModelDescriptor * lb);
 //!brief print moment basis associated polynomials
 void DisplayLBModelDescriptorMomentPoly(LBModelDescriptor * lb);
@@ -110,6 +111,8 @@ void ComputeLBModelDescriptorVmax(LBModelDescriptor * lb);
 //!\brief check that macro quantities are conserved;
 void CheckLBModelDescriptorMacroConservation(LBModelDescriptor * lb,
 					     bool verbose);
+void CheckLBMMomentMatrixInversion(LBModelDescriptor *lb,bool verbose);
+//
 //******************************************************************************//
 void LBM_Dummy_InitMacroData(schnaps_real x[3], schnaps_real w[]);
 void LBM_Dummy_InitData(schnaps_real x[3], schnaps_real w[]);
@@ -153,6 +156,7 @@ void InitLBMSimulation(LBMSimulation * lbsimu,
 void FreeBMSimulation(LBMSimulation * lbsimu);	//
 void LB_Relaxation_bgk_f(void *lbsimu);	//
 void LB_Relaxation_bgk_f_full(void *lbsimu);	//
+/*void LB_Relaxation_Moments( LBMSimulation *lbsimu);*/
 void LB_ComputeMacroFromMicro(void *lbsimu);	//
 // wrappers for compatibility with RK schemes operating on 1 simulation //
 // in that case only the micsimu object is passed to rk. The global lbsim object, which is 

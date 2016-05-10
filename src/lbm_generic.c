@@ -191,6 +191,11 @@ void NewLBModelDescriptor(LBModelDescriptor * lb, int d, int nb_macro,
     lb->M[i] = (schnaps_real *) calloc(lb->q, sizeof(schnaps_real));
   };
   //
+  MatrixStorage ms = KLU_CSR;
+  Solver sv = LU;
+  lb->Msolv = calloc(1,sizeof(LinearSolver));
+  InitLinearSolver(lb->Msolv,lb->q,&ms,&sv);
+  //
   lb->s = (schnaps_real *) calloc(lb->q, sizeof(schnaps_real));
   //
 /*  lb->is_relaxed= (bool*) calloc(lb->q,sizeof(schnaps_real));*/
@@ -236,6 +241,11 @@ void DestroyLBModelDescriptor(LBModelDescriptor * lb)
     free(lb->M);
     lb->M=NULL;
   }
+  if (lb->Msolv){
+    FreeLinearSolver(lb->Msolv);
+    free(lb->Msolv);
+    lb->Msolv = NULL;
+  }
   if (lb->inode_min){
     free(lb->inode_min);
     lb->inode_min=NULL;
@@ -267,8 +277,21 @@ void ComputeLBModelDescriptorMomentMatrix(LBModelDescriptor * lb)
   for (int i = 0; i < lb->q; i++) {
     for (int j = lb->inode_min[i]; j <= lb->inode_max[i]; j++) {
       lb->M[i][j] = EvaluatePoly(&(lb->Moments[i]), &(lb->vi[j][0]));
+      if (fabs(lb->M[i][j]) > _SMALL){
+        IsNonZero(lb->Msolv,i,j);
+      }
     }
   }
+  //
+  AllocateLinearSolver(lb->Msolv);
+  for (int i = 0; i < lb->q; i++) {
+    for (int j = lb->inode_min[i]; j <= lb->inode_max[i]; j++) {
+      if (fabs(lb->M[i][j]) > _SMALL){
+        SetLinearSolver(lb->Msolv,i,j,lb->M[i][j]);
+      }
+    }
+  }
+  LUDecompLinearSolver(lb->Msolv);
 }
 
 /*******************************************************************************************/
@@ -346,7 +369,45 @@ void CheckLBModelDescriptorMacroConservation(LBModelDescriptor * lb,
   }
   //
 }
-
+/*****************************************************************************************/
+void CheckLBMMomentMatrixInversion(LBModelDescriptor *lb, bool verbose){
+  schnaps_real fin[lb->q];
+  schnaps_real ferr[lb->q];
+  //
+  for (int l = 0; l < lb->q; l++) {
+    fin[l] = 1.0 + ((schnaps_real) rand()) / ((schnaps_real) RAND_MAX);
+  }
+  //
+  MatVect(lb->Msolv,fin,lb->Msolv->rhs);
+  //
+  if (verbose){
+    DisplayLinearSolver(lb->Msolv);
+  }
+  SolveLinearSolver(lb->Msolv);
+  //
+  schnaps_real max_error = 0.0;
+  int imaxerror = -1;
+  for (int i=0;i< lb->q;i++){
+    ferr[i] = lb->Msolv->sol[i]/fin[i]-1.0;
+    if (ferr[i] > max_error){
+      max_error= ferr[i];
+      imaxerror = i;
+    }
+  }
+  if (verbose){
+    for (int i=0;i<lb->q;i++){
+      printf("f%i orig :\t %f \t comp:\t %f \t error:\t %f\n",i,fin[i],lb->Msolv->sol[i],ferr[i]);
+    }
+  }
+  if (max_error < _SMALL) {
+    printf("LB model moment matrix inversion check OK \n");
+  } else {
+    printf
+	("LB model matrix inversion check Warning  max error %f on components f%i \n",
+	 max_error, imaxerror);
+  }
+  
+}
 /*****************************************************************************************/
 void LBM_Dummy_InitMacroData(schnaps_real x[3], schnaps_real w[])
 {
@@ -502,7 +563,9 @@ void LB_Relaxation_bgk_f_full(void *lbs)
   }				//ie
 }
 
-/*//void LB_Relaxation_Moments( LBMSimulation *lbsimu);*/
+/*void LB_Relaxation_Moments( LBMSimulation *lbsimu){*/
+/*}*/
+
 void LB_ComputeMacroFromMicro(void *lbs)
 {
   LBMSimulation *lbsimu = lbs;
