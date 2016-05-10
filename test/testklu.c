@@ -19,37 +19,40 @@ void KLU_Steady_BoundaryFlux(schnaps_real *x, schnaps_real t, schnaps_real *wL, 
 int test_klu_basic_orig(void);
 int test_klu_basic(void);
 int test_KLU_block_ut(int n, int block_size);
+int test_KLU_linsolv(int n,int block_size);
 int Test_KLU_Steady(void);
 
 int main(void) {
+  //test_KLU_linsolv(8,2);
+  //assert(1==2);
   //test_klu_basic_orig();
   //
-  int t0= test_klu_basic();
+  //int t0= test_klu_basic();
   //
-  assert(false);
-  int t1 = test_KLU_block_ut(8,3);
-  assert(2==3);
+  //assert(false);
+  //int t1 = test_KLU_block_ut(8,3);
+  //assert(2==3);
   //
-  int n=5;
-  KLU klumat;
-  //
-  InitKLU(&klumat, n);
-  for(int i = 0; i < n; i++){
-    int j = i + 1;
-    if (j < n) SwitchOnKLU(&klumat, i, j);
-    SwitchOnKLU(&klumat, i, i);
-  }
-  SwitchOnKLU(&klumat, 3, 4);
+/*  int n=5;*/
+/*  KLU klumat;*/
+/*  //*/
+/*  InitKLU(&klumat, n);*/
+/*  for(int i = 0; i < n; i++){*/
+/*    int j = i + 1;*/
+/*    if (j < n) SwitchOnKLU(&klumat, i, j);*/
+/*    SwitchOnKLU(&klumat, i, i);*/
+/*  }*/
+/*  SwitchOnKLU(&klumat, 3, 4);*/
 
-  printf("construct CSR struct\n");
-  AllocateKLU(&klumat);
-  printf(" KLU found %i blocks , %i offdiagblocks , largest block size %i\n",
-    klumat.symbolic->nblocks,klumat.symbolic->nzoff,klumat.symbolic->maxblock);
-  //
-  printf("copy CSR struct\n");
-  AllocateCopyKLU(&klumat);
-  //
-  assert(1==2);
+/*  printf("construct CSR struct\n");*/
+/*  AllocateKLU(&klumat);*/
+/*  printf(" KLU found %i blocks , %i offdiagblocks , largest block size %i\n",*/
+/*    klumat.symbolic->nblocks,klumat.symbolic->nzoff,klumat.symbolic->maxblock);*/
+/*  //*/
+/*  printf("copy CSR struct\n");*/
+/*  AllocateCopyKLU(&klumat);*/
+/*  //*/
+/*  assert(1==2);*/
   // unit test
   int resu1 = 0;
   resu1=Test_KLU_Steady();
@@ -126,7 +129,111 @@ int test_klu_basic(void){
   FreeKLU(&klumat);
   return 1;
 }
+//
+int test_KLU_linsolv(int n,int block_size){
+  //
+  int seed=4043498;
+  srand(seed);
+  //
+  int *PL = calloc(n,sizeof(int)); // line permutation vector
+  int *PC = calloc(n,sizeof(int)); // column permutation vector
+  int *PLinv = calloc(n,sizeof(int)); // line permutation vector (inverse)
+  int *PCinv = calloc(n,sizeof(int)); // column permutation vector (inverse)
 
+  // set permutation to identity
+  for (int i=0;i< n;i++){
+    PL[i]=i;
+    PC[i]=i;
+  }
+  // generate random perturbation
+  for (int i=0;i<n;i++){
+    int r=rand()%n;
+    int tmp=PL[r];
+    PL[r]=PL[i];
+    PL[i]=tmp;
+  }  
+  for (int i=0;i<n;i++){
+    int r=rand()%n;
+    int tmp=PC[r];
+    PC[r]=PC[i];
+    PC[i]=tmp;
+  }
+  for (int i=0;i< n;i++){
+    PLinv[PL[i]]=i;
+    PCinv[PC[i]]=i;
+  }
+  //
+  LinearSolver lsol;
+  MatrixStorage ms = KLU_CSR;
+  Solver sv = LU;
+  printf(" LinearSolver/KLU test with block triangular matrix\n");
+  InitLinearSolver(&lsol,n,&ms,&sv);
+  //
+  for (int i=0;i < n; i++){
+    for (int j=0; j< n; j++){
+      if (i/block_size <= j/block_size){
+        IsNonZero(&lsol,PL[i],PC[j]);
+      }
+    }
+  }
+  //
+  AllocateLinearSolver(&lsol);
+  //
+  for (int i=0;i < n; i++){
+    for (int j=0; j< n; j++){
+      if (i/block_size <= j/block_size){
+        schnaps_real tmp = ((schnaps_real) rand())/((schnaps_real) RAND_MAX); 
+        SetLinearSolver(&lsol,PL[i],PC[j],tmp);
+      }
+    }
+  }
+  // 
+  // generate solution 
+  schnaps_real *xref = (schnaps_real*) calloc(n,sizeof(schnaps_real));
+  schnaps_real *x = (schnaps_real*) calloc(n,sizeof(schnaps_real));
+  schnaps_real  *b = (schnaps_real*) calloc(n,sizeof(schnaps_real));
+  schnaps_real  *y = (schnaps_real*) calloc(n,sizeof(schnaps_real));
+  //
+  //
+  for (int i=0;i< n; i++){
+    xref[i]= ((schnaps_real) rand())/((schnaps_real) RAND_MAX);
+  }
+  printf("xref: \n");
+  for (int i=0;i< n;i++){
+    printf("%f\t",xref[i]);
+  }
+  printf("\n");
+  // compute rhs
+  MatVect(&lsol,xref,b);
+  printf("b: \n");
+  for (int i=0;i< n;i++){
+    printf("%f\t",b[i]);
+  }
+  printf("\n");
+  //
+  lsol.rhs=b;
+  lsol.sol=x;
+  //
+  DisplayLinearSolver(&lsol);
+  //
+  //LUDecompLinearSolver(&lsol);
+  //
+  SolveLinearSolver(&lsol);
+  // compare with reference solution
+  for (int i=0;i<n;i++){
+    printf("xref:\t %f \t x:\t %f \t diff: \t %f \n",xref[i],x[i],x[i]-xref[i]);
+  }
+  // 
+  MatVect(&lsol,x,y);
+  printf("b/y: \n");
+  for (int i=0;i< n;i++){
+    printf("%f\t \t %f\n",b[i],y[i]);
+  }
+  printf("\n");
+  
+  // cleanup
+  FreeLinearSolver(&lsol);
+}
 //
 int test_KLU_block_ut(int n, int block_size){
   KLU klumat;
@@ -212,7 +319,7 @@ int Test_KLU_Steady(void) {
   
   CheckMacroMesh(&mesh, deg, raf);
 
-  schnaps_real tmax = 0.01;
+  schnaps_real tmax = 0.001;
   
   Simulation simu2;
   EmptySimulation(&simu2);

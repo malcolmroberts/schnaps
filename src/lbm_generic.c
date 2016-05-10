@@ -618,7 +618,9 @@ void LBMThetaTimeScheme(LBMSimulation * lbsimu, schnaps_real theta,
   field *f_glob, *f_node;
   Simulation *micsimu = &(lbsimu->micro_simu);
   Simulation *macsimu = &(lbsimu->macro_simu);
-  // 
+  //
+  MatrixStorage ms=SKYLINE; 
+  //
   int nraf[3] = { micsimu->fd[0].raf[0],
     micsimu->fd[0].raf[1],
     micsimu->fd[0].raf[2]
@@ -682,8 +684,8 @@ void LBMThetaTimeScheme(LBMSimulation * lbsimu, schnaps_real theta,
   for (int isim = 0; isim < nb_nodes; isim++) {
     lsd->current_node_index = isim;
     //
-    InitImplicitLinearSolver(simu_advec, &solver_imp[isim]);
-    InitImplicitLinearSolver(simu_advec, &solver_exp[isim]);
+    InitImplicitLinearSolver(simu_advec, &solver_imp[isim],ms);
+    InitImplicitLinearSolver(simu_advec, &solver_exp[isim],ms);
     //
   }
   // End Operators init

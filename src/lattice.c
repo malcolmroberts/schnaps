@@ -134,6 +134,7 @@ void Compute_relaxation(Simulation *simu, schnaps_real * w_eq) {
 }
 /*************************************************************************************/
 void LatticeThetaTimeScheme(Simulation *simu,Model *model_advec, schnaps_real tmax, schnaps_real dt){
+  MatrixStorage ms=SKYLINE;
   LatticeData *ld=&schnaps_lattice_data;
   int nb_nodes=ld->q; // velocity nodes on the lattice
   int ig_glob=0,ig_node=0;
@@ -189,8 +190,8 @@ void LatticeThetaTimeScheme(Simulation *simu,Model *model_advec, schnaps_real tm
   for (int isim=0;isim < nb_nodes;isim++){
     ld->current_node_index=isim;
     //
-    InitImplicitLinearSolver(simu_advec, &solver_imp[isim]);
-    InitImplicitLinearSolver(simu_advec, &solver_exp[isim]);
+    InitImplicitLinearSolver(simu_advec, &solver_imp[isim],ms);
+    InitImplicitLinearSolver(simu_advec, &solver_exp[isim],ms);
     //
   }
   // End Operators init

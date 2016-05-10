@@ -5,7 +5,7 @@
 #include <stdbool.h>
 #include <starpu.h>
 
-typedef enum MatrixStorage{SKYLINE,CSR,SKYLINE_SPU} MatrixStorage;
+typedef enum MatrixStorage{SKYLINE,CSR,SKYLINE_SPU,KLU_CSR} MatrixStorage;
 typedef enum Solver{LU,GMRES} Solver;
 typedef enum PC{NONE,JACOBI} PC;
 

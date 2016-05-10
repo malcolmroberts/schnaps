@@ -14,7 +14,8 @@
 //! for the generic implicit linear solver
 //! \param[inout] simu a simulation
 //! \param[inout] solver a linear solver
-void InitImplicitLinearSolver(Simulation *simu, LinearSolver *solver);
+//! \param[in] ms matrix storage type 
+void InitImplicitLinearSolver(Simulation *simu, LinearSolver *solver, MatrixStorage ms);
 
 //! \brief Assembly of the DG operator into a sparse matrix
 //! computations of all the terms
