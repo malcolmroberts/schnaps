@@ -219,7 +219,7 @@ void schnaps_phy2ref(schnaps_real physnode[20][3], schnaps_real xphy[3], schnaps
   schnaps_real *codtau2 = codtau[2];
 
   for(int iter = 0; iter < ITERNEWTON; ++iter) {
-    schnaps_ref2phy(physnode, xref, 0,ifa, dxphy, dtau, codtau, 0,0);
+    schnaps_ref2phy(physnode, xref, 0, ifa, dxphy, dtau, codtau, 0, 0);
     dxphy[0] -= xphy[0];
     dxphy[1] -= xphy[1];
     dxphy[2] -= xphy[2];
@@ -228,10 +228,10 @@ void schnaps_phy2ref(schnaps_real physnode[20][3], schnaps_real xphy[3], schnaps
 
     for(int ii = 0; ii < 3; ii ++ ) {
       dxref[ii] = 0;
-        dxref[ii] 
-	  += codtau0[ii] * dxphy[0] 
-	  +  codtau1[ii] * dxphy[1] 
-	  +  codtau2[ii] * dxphy[2];
+      dxref[ii] 
+	+= codtau0[ii] * dxphy[0] 
+	+  codtau1[ii] * dxphy[1] 
+	+  codtau2[ii] * dxphy[2];
       xref[ii] -= dxref[ii] * overdet;
     }
   }
