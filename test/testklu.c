@@ -23,15 +23,15 @@ int test_KLU_linsolv(int n,int block_size);
 int Test_KLU_Steady(void);
 
 int main(void) {
-  //test_KLU_linsolv(8,2);
-  //assert(1==2);
+  test_KLU_linsolv(8,2);
+  assert(1==2);
   //test_klu_basic_orig();
   //
   //int t0= test_klu_basic();
   //
   //assert(false);
-  //int t1 = test_KLU_block_ut(8,3);
-  //assert(2==3);
+  test_KLU_block_ut(8,3);
+  assert(2==3);
   //
 /*  int n=5;*/
 /*  KLU klumat;*/
@@ -214,9 +214,10 @@ int test_KLU_linsolv(int n,int block_size){
   lsol.rhs=b;
   lsol.sol=x;
   //
-  DisplayLinearSolver(&lsol);
   //
-  //LUDecompLinearSolver(&lsol);
+  LUDecompLinearSolver(&lsol);
+  //
+  DisplayLinearSolver(&lsol);
   //
   SolveLinearSolver(&lsol);
   // compare with reference solution

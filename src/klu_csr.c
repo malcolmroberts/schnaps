@@ -111,7 +111,14 @@ schnaps_real GetKLU(KLU * klu, int i, int j)
 
 void DisplayKLU(KLU * klu)
 {
-
+  // Block structure
+  int nb=klu->symbolic->nblocks;
+  printf("KLU Block structure\n");
+  for (int i=0;i<nb+1;i++){
+    printf("\t%i",klu->symbolic->R[i]);
+  }
+  printf("\n");
+  //
   int n = klu->neq;
   printf(" Original ordering\n");
   //#define _FULL
@@ -129,7 +136,8 @@ void DisplayKLU(KLU * klu)
 
 #else
   printf("\n");
-  for (int i = 0; i < n; i++) {
+  printf("\n");
+  for (int i=0; i < n; i++){
     for (int j = 0; j < n; j++) {
       if (fabs(GetKLU(klu, i, j)) < 1e-8) {
 	printf(" ");
@@ -140,7 +148,7 @@ void DisplayKLU(KLU * klu)
     printf("\n");
   }
 #endif
-  printf(" KLU reordering\n");
+  printf(" KLU symbolic- pre-ordering\n");
 #ifdef _FULL
   printf("\n");
   printf("\n");
@@ -155,6 +163,13 @@ void DisplayKLU(KLU * klu)
 
 #else
   printf("\n");
+  for (int b=1;b<nb;b++){
+    for (int i = klu->symbolic->R[b]; i < klu->symbolic->R[b+1]-1; i++){
+      printf(" ");
+    }
+    printf("|");
+  }
+  printf("\n");  
   for (int i = 0; i < n; i++) {
     for (int j = 0; j < n; j++) {
       if (fabs(GetKLU(klu, klu->symbolic->P[i], klu->symbolic->Q[j])) <
@@ -167,7 +182,45 @@ void DisplayKLU(KLU * klu)
     printf("\n");
   }
 #endif
+//
+if (klu->is_lu){
+  printf(" KLU numeric- full-ordering\n");
+#ifdef _FULL
+  printf("\n");
+  printf("\n");
+  printf("\n");
+  for (int i = 0; i < n; i++) {
+    for (int j = 0; j < n; j++) {
+      printf("%.3e ",
+	     GetKLU(klu, klu->numeric->Pnum[i], klu->symbolic->Q[j]));
+    }
+    printf("\n");
+  }
 
+#else
+  printf("\n");
+  for (int b=1;b<nb;b++){
+    for (int i = klu->symbolic->R[b]; i < klu->symbolic->R[b+1]-1; i++){
+      printf(" ");
+    }
+    printf("|");
+  }
+  printf("\n");  
+  for (int i = 0; i < n; i++) {
+    for (int j = 0; j < n; j++) {
+      if (fabs(GetKLU(klu, klu->numeric->Pnum[i], klu->symbolic->Q[j])) <
+	  1e-8) {
+	printf(" ");
+      } else {
+	printf("*");
+      }
+    }
+    printf("\n");
+  }
+#endif
+
+}
+//
 }
 
 
