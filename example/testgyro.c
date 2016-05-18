@@ -51,6 +51,9 @@ int TestGyro(void) {
   int nbelemv = 10;
   int deg_v = 4;
   InitKineticData(&schnaps_kinetic_data,nbelemv,deg_v);
+  kd->solve_quasineutrality = true;
+  kd->substract_mean_charge = false;
+  kd->qn_damping = 0;
   
   printf("_MV=%d\n",kd->mv);
   printf("_INDEX_MAX=%d\n",kd->index_max);
@@ -87,11 +90,11 @@ int TestGyro(void) {
   schnaps_real dt = 0;
   schnaps_real tmax = 0;
   //RK4(&simu,tmax);
-  Computation_charge_density(&simu);
+  //Computation_charge_density(&simu);
   // save the results and the error
   //PlotFields(1,(1==0),&simu,"sol","dgvisu.msh");
-  //CopyfieldtoCPU(&simu);
-  PlotFields(kd->index_rho,(1==0),&simu,"sol","dgvisu.msh");
+  CopyfieldtoCPU(&simu);
+  PlotFields(kd->index_phi,(1==0),&simu,"sol","dgvisu.msh");
   //PlotFields(1,(1==1),&simu,"error","dgerror.msh");
 
   double dd=L2error(&simu);

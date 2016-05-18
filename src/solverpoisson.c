@@ -58,6 +58,7 @@ void RHSPoisson_Continuous(void * cs){
 	//+ iemacro * NPG(f0->deg,f0->raf) * f0->model.m ;
    
       schnaps_real rho = ps->simu->fd[iemacro].wn[imem];
+      printf("rhs rho=%f\n",rho);
       ps->lsol.rhs[ino_fe] += (rho - mean_charge) * wpg * det ;
     }
     

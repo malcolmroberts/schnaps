@@ -5,6 +5,7 @@
 #include <assert.h>
 #include <string.h>
 #include <sys/time.h>
+#include "gyro.h"
 
 #ifdef _WITH_OPENCL
 void CopyfieldtoCPU(Simulation *simu)
@@ -710,8 +711,8 @@ void init_DGSource_CL(Simulation *simu, cl_mem *w_cl, size_t cachesize)
   assert(status >= CL_SUCCESS);
 }
 
-// Apply division by the mass matrix OpenCL version
-void DGCharge_CL(int ie, Simulation *simu, cl_mem *w_cl,
+// compute charge in opencl
+void DGCharge_CL(Simulation *simu, cl_mem *w_cl,
 		 cl_uint nwait, cl_event *wait, cl_event *done)
 {
   cl_kernel kernel = simu->dgcharge;
@@ -733,36 +734,130 @@ void DGCharge_CL(int ie, Simulation *simu, cl_mem *w_cl,
 
   init_DGCharge_CL(simu, w_cl);
 
+  KineticData *kd = &schnaps_kinetic_data;
 
-  // Loop on the elements
-  status = clSetKernelArg(kernel,
-			  1,
-			  sizeof(int),
-			  &ie);
-  if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
-  assert(status >= CL_SUCCESS);
+  for(int ie = 0; ie < simu->macromesh.nbelems; ie++) {
+    // Loop on the elements
+    status = clSetKernelArg(kernel,
+			    1,
+			    sizeof(int),
+			    &ie);
+    if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
+    assert(status >= CL_SUCCESS);
 
-  // The groupsize is the number of glops in a subcell
-  /* size_t groupsize = (param[1] + 1)* (param[2] + 1)*(param[3] + 1); */
-  /* // The total work items number is the number of glops in a subcell */
-  /* // * number of subcells */
-  /* size_t numworkitems = param[4] * param[5] * param[6] * groupsize; */
-  /* //printf("groupsize=%zd numworkitems=%zd\n", groupsize, numworkitems); */
-  status = clEnqueueNDRangeKernel(simu->cli.commandqueue,
-				  kernel,
-				  1,
-				  NULL,
-				  &numworkitems,
-				  &groupsize,
-				  nwait,
-				  wait,
-				  done);
-  if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
-  assert(status >= CL_SUCCESS);
+    // The groupsize is the number of glops in a subcell
+    /* size_t groupsize = (param[1] + 1)* (param[2] + 1)*(param[3] + 1); */
+    /* // The total work items number is the number of glops in a subcell */
+    /* // * number of subcells */
+    /* size_t numworkitems = param[4] * param[5] * param[6] * groupsize; */
+    /* //printf("groupsize=%zd numworkitems=%zd\n", groupsize, numworkitems); */
+    status = clEnqueueNDRangeKernel(simu->cli.commandqueue,
+				    kernel,
+				    1,
+				    NULL,
+				    &numworkitems,
+				    &groupsize,
+				    nwait,
+				    wait,
+				    done);
+    if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
+    assert(status >= CL_SUCCESS);
 
+    // accès à  la charge en Read Only -> cpu
+    void *chkptr;
+    int woffset = ie * m * NPG(param + 1, param + 4);
+    field * f = simu->fd + ie; 
+    int start = f->varindex(param + 1, param + 4, m, 0, kd->index_rho) + woffset;
+    int end = f->varindex(param + 1, param + 4, m, 0, kd->index_rho + 1) + woffset;
+    size_t soffset = start * sizeof(schnaps_real);
+    chkptr = clEnqueueMapBuffer(simu->cli.commandqueue,
+				*w_cl, // buffer to copy from
+				CL_TRUE, // block until the buffer is available
+				CL_MAP_READ, // we just want to see the results
+				soffset, // offset
+				(end - start) * sizeof(schnaps_real), // buffersize
+				0, NULL, NULL, // events management
+				&status);
+    if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
+    assert(status >= CL_SUCCESS);
+    assert(chkptr == simu->w + start);
+    // accès à  phi en write Only -> cpu
+    start = f->varindex(param + 1, param + 4, m, 0, kd->index_phi) + woffset;
+    end = f->varindex(param + 1, param + 4, m, 0, kd->index_phi + 1) + woffset;
+    soffset = start * sizeof(schnaps_real);
+    chkptr = clEnqueueMapBuffer(simu->cli.commandqueue,
+				*w_cl, // buffer to copy from
+				CL_TRUE, // block until the buffer is available
+				CL_MAP_WRITE, // we just want to see the results
+				soffset, // offset
+				(end - start) * sizeof(schnaps_real), // buffersize
+				0, NULL, NULL, // events management
+				&status);
+    if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
+    assert(status >= CL_SUCCESS);
+    assert(chkptr == simu->w + start);
+    // copier ex ey ez en Write Only
+    start = f->varindex(param + 1, param + 4, m, 0, kd->index_ex) + woffset;
+    end = f->varindex(param + 1, param + 4, m, 0, kd->index_ez + 1) + woffset;
+    soffset = start * sizeof(schnaps_real);
+    chkptr = clEnqueueMapBuffer(simu->cli.commandqueue,
+				*w_cl, // buffer to copy from
+				CL_TRUE, // block until the buffer is available
+				CL_MAP_WRITE, // we just want to see the results
+				soffset, // offset
+				(end - start) * sizeof(schnaps_real), // buffersize
+				0, NULL, NULL, // events management
+				&status);
+    if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
+    assert(status >= CL_SUCCESS);
+    assert(chkptr == simu->w + start);
+  }
+  // résoudre poisson
+  status = clFinish(simu->cli.commandqueue);
+
+  UpdateGyroPoisson(simu, simu->w);
+  PlotFields(kd->index_phi,(1==0),simu,"sol","dgvisu.msh");
+  assert(1==2);
+  // copier phi en write only
+  /* for(int ie = 0; ie < simu->macromesh.nbelems; ie++) { */
+  /*   int woffset = ie * m * NPG(param + 1, param + 4); */
+  /*   field * f = simu->fd + ie;  */
+  /*   int start = f->varindex(param + 1, param + 4, m, 0, kd->index_phi) + woffset; */
+  /*   int end = f->varindex(param + 1, param + 4, m, 0, kd->index_phi + 1) + woffset; */
+  /*   size_t soffset = start * sizeof(schnaps_real); */
+  /*   void *chkptr = clEnqueueUnmapMemObject(simu->cli.commandqueue, */
+  /* 				*w_cl, // buffer to copy from */
+  /* 				CL_TRUE, // block until the buffer is available */
+  /* 				CL_MAP_WRITE, // we just want to see the results */
+  /* 				soffset, // offset */
+  /* 				(end - start) * sizeof(schnaps_real), // buffersize */
+  /* 				0, NULL, NULL, // events management */
+  /* 				&status); */
+  /*   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status)); */
+  /*   assert(status >= CL_SUCCESS); */
+  /*   assert(chkptr == simu->w + start); */
   
-  
+  /*   // copier ex ey ez en Write Only */
+  /*   start = f->varindex(param + 1, param + 4, m, 0, kd->index_ex) + woffset; */
+  /*   end = f->varindex(param + 1, param + 4, m, 0, kd->index_ez + 1) + woffset; */
+  /*   soffset = start * sizeof(schnaps_real); */
+  /*   chkptr = clEnqueueMapBuffer(simu->cli.commandqueue, */
+  /* 				*w_cl, // buffer to copy from */
+  /* 				CL_TRUE, // block until the buffer is available */
+  /* 				CL_MAP_WRITE, // we just want to see the results */
+  /* 				soffset, // offset */
+  /* 				(end - start) * sizeof(schnaps_real), // buffersize */
+  /* 				0, NULL, NULL, // events management */
+  /* 				&status); */
+  /*   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status)); */
+  /*   assert(status >= CL_SUCCESS); */
+  /*   assert(chkptr == simu->w + start); */
+  /* } */
+  /* // attendre la fin des opérations */
+  status = clFinish(simu->cli.commandqueue);
 }
+
+
 
 
 // Apply division by the mass matrix OpenCL version
@@ -1743,9 +1838,20 @@ void init_field_cl(Simulation *simu)
 
   if (schnaps_ocl_getcharge) {
     status = clFinish(simu->cli.commandqueue);
-    for(int ie = 0; ie < nmacro; ++ie) {
-      DGCharge_CL(ie, simu, &simu->w_cl, 0, NULL, NULL);
-    }
+
+    // just check that the good varindex is chosen
+    field * f = simu->fd + 0; 
+    int *param = simu->interp_param;
+    int m = param[0];
+    // ipg = 0
+    int i1 = f->varindex(param + 1, param + 4, m, 0, 0);
+    // ipg = 1
+    int i2 = f->varindex(param + 1, param + 4, m, 1, 0);
+    schnaps_real *addr1 = &simu->w[i1];
+    schnaps_real *addr2 = &simu->w[i2];
+    assert(addr1 + 1 == addr2);
+    /////////////////////////////
+    DGCharge_CL(simu, &simu->w_cl, 0, NULL, NULL);
     status = clFinish(simu->cli.commandqueue);
   }
   

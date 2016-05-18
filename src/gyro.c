@@ -319,7 +319,7 @@ void UpdateGyroPoisson(void *si, schnaps_real *w) {
   
   int type_bc = 1;
   
-  Computation_charge_density(simu);
+  //Computation_charge_density(simu);
   static ContinuousSolver ps;
   static bool is_init = false;
   
@@ -330,9 +330,9 @@ void UpdateGyroPoisson(void *si, schnaps_real *w) {
     listvar[0]=kd->index_phi;
     InitContinuousSolver(&ps,simu,1,nb_var,listvar);
     
-    ps.matrix_assembly=ContinuousOperator_Poisson1D;
+    ps.matrix_assembly=ContinuousOperator_Poisson2D;
     ps.rhs_assembly=RHSPoisson_Continuous;
-    ps.bc_assembly=Periodic_BoundaryCondition_Poisson1D;
+    ps.bc_assembly=ExactDirichletContinuousMatrix;
     ps.postcomputation_assembly=Computation_ElectricField_Poisson;
     
     ps.lsol.solver_type = LU;
