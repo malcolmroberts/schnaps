@@ -1,7 +1,7 @@
 #include "implicit.h"
 #include <stdlib.h>
 #include <string.h>
-#include "csparse.h"
+//#include "csparse.h"
 
 
 //void InternalCoupling(Simulation *simu,  LinearSolver *solver, int itest);
@@ -16,11 +16,13 @@
 /* void AssemblyImplilcitLinearSolver(Simulation *simu, LinearSolver *solver,real theta, real dt); */
 
 
-void InitImplicitLinearSolver(Simulation *simu, LinearSolver *solver){
+void InitImplicitLinearSolver(Simulation *simu, LinearSolver *solver, MatrixStorage ms){
 
   int neq = simu->wsize;
 
-  MatrixStorage ms = SKYLINE;
+  //MatrixStorage ms = SKYLINE;
+  //MatrixStorage ms = KLU_CSR;
+
   Solver st = LU;
   InitLinearSolver(solver,neq,&ms,&st);
   //solver->tol=1.e-8;
@@ -89,7 +91,7 @@ void AssemblyImplicitLinearSolver(Simulation *simu, LinearSolver *solver,schnaps
       SourceAssembly(simu, solver,theta,dt);
 
   }
-  DisplayLinearSolver(solver);
+  //DisplayLinearSolver(solver);
 
 }
 
@@ -1018,12 +1020,15 @@ void ThetaTimeScheme(Simulation *simu, schnaps_real tmax, schnaps_real dt){
 
   LinearSolver solver_implicit;
   LinearSolver solver_explicit;
+  // TODO Matrix Storage should be passed either as additionnal arg or through a simu data member.
+  MatrixStorage ms= SKYLINE;
+  //MatrixStorage ms= KLU_CSR;
   schnaps_real theta=0.5;
   simu->dt=dt;
   int itermax=tmax/simu->dt;
   simu->itermax_rk=itermax;
-  InitImplicitLinearSolver(simu, &solver_implicit);
-  InitImplicitLinearSolver(simu, &solver_explicit);
+  InitImplicitLinearSolver(simu, &solver_implicit,ms);
+  InitImplicitLinearSolver(simu, &solver_explicit,ms);
   schnaps_real *res = calloc(simu->wsize, sizeof(schnaps_real));
   simu->tnow=0;
   for(int ie=0; ie < simu->macromesh.nbelems; ++ie){

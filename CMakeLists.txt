@@ -101,6 +101,7 @@ if(CMAKE_COMPILER_IS_GNUCC)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
 endif()
 
+MESSAGE(STATUS "temporary includes:" ${INCLUDE_DIRECTORIES})
 #find_package(OpenMP)
 #if(OPENMP_FOUND)
 #  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
@@ -111,15 +112,16 @@ set(SuiteSparse_VERBOSE OFF)
 set(SuiteSparse_USE_LAPACK_BLAS ON)
 find_package(suitesparse)
 if(SuiteSparse_FOUND)
-  MESSAGE(STATUS "umfpack libs ok")
+  MESSAGE(STATUS "umfpack libs ok:" ${SuiteSparse_INCLUDE_DIRS})
   list(APPEND INCLUDE_DIRECTORIES ${SuiteSparse_INCLUDE_DIRS})
-  list(APPEND LIBS ${SuiteSparse_LIBRARIES})
+  INCLUDE_DIRECTORIES(${SuiteSparse_INCLUDE_DIRS})
   list(APPEND LIBS ${SuiteSparse_LAPACK_BLAS_LIBRARIES})
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_WITH_UMFPACK")
 else()
   MESSAGE(STATUS "umfpack not found: deactivated")
 endif()
 
+MESSAGE(STATUS "final includes:" ${INCLUDE_DIRECTORIES})
 
 
 include_directories(src)
@@ -164,12 +166,14 @@ list(APPEND
   src/pic.c
   src/skyline.h
   src/skyline.c
+  src/klu_csr.h
+  src/klu_csr.c
   src/skyline_spu.h
   src/skyline_spu.c
-  src/csparse.h
-  src/csparse.c
-  src/csparse_spu.h
-  src/csparse_spu.c
+#  src/csparse.h
+#  src/csparse.c
+#  src/csparse_spu.h
+#  src/csparse_spu.c
   src/dpackfgmres.h
   src/dpackfgmres.c
   src/advanced_linear_solver.h

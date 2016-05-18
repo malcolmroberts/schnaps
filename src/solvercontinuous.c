@@ -258,7 +258,7 @@ void SolveContinuous2D(void* cs){
   // number of equation of the Poisson solver
   int neq=ps->nb_fe_dof; //(nodes)
  
-  //printf("Matrix assembly.....\n");
+  printf("Matrix assembly nb_eqs=%d.....\n",ps->nb_fe_dof);
   if(ps->matrix_assembly != NULL){
     ps->matrix_assembly(ps);
   }
@@ -290,8 +290,9 @@ void SolveContinuous2D(void* cs){
     }
   
   for(int i=0;i<ps->nb_fe_dof;i++){
-    //   printf(" rhs %d %f\n",i,ps->lsol.rhs[i]);
+    //printf(" rhs %d %f\n",i,ps->lsol.rhs[i]);
   }
+  //assert(1==2);
    
   Advanced_SolveLinearSolver(&ps->lsol,ps->simu);
 

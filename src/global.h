@@ -122,6 +122,9 @@ extern bool starpu_c_use;
 // Use of opencl kernels when use of starpu
 extern bool starpu_ocl_use;
 
+// compute and get the charge from opencl computationsd
+extern bool schnaps_ocl_getcharge;
+
 // OpenCL program for StarPU
 extern bool opencl_program_is_init;
 #ifdef _WITH_STARPU

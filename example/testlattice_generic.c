@@ -94,12 +94,13 @@ int main(void)
     .raf = {1, 1, 1},
     .cfl = 1.0,
     .dt = 0.001,
-    .tmax = 1.0,
+    .tmax = 0.5,
     .cref = 1.0,
     .tau = 0.00001,
     .diag_2d_period = 0.5};
   // ***********************//
-  //int resu=LBM_testmodels();
+/*  int resu=LBM_testmodels();*/
+/*  assert(1==2);*/
   // ***********************//
   BFParams.uref = 0.05;
   BFParams.lx = 4.0;
@@ -135,6 +136,7 @@ int LBM_testmodels(void)
   lsd->lb_model = &lbm;
   LBM_Set_D2Q9_ISOTH_model(&lbm, SimParams.cref);
   CheckLBModelDescriptorMacroConservation(&lbm, false);
+  CheckLBMMomentMatrixInversion(&lbm,false);
   DisplayLBModelDescriptorMomentMatrix(&lbm);
   DestroyLBModelDescriptor(&lbm);
   //
@@ -143,6 +145,7 @@ int LBM_testmodels(void)
   lsd->lb_model = &lbm;
   LBM_Set_D2Q9_ISOTH_INC_model(&lbm, SimParams.cref);
   CheckLBModelDescriptorMacroConservation(&lbm, false);
+  CheckLBMMomentMatrixInversion(&lbm,false);
   DisplayLBModelDescriptorMomentMatrix(&lbm);
   DestroyLBModelDescriptor(&lbm);
   //
@@ -150,7 +153,8 @@ int LBM_testmodels(void)
   NewLBModelDescriptor(&lbm, d, nb_macro, q);
   lsd->lb_model = &lbm;
   LBM_Set_D2Q9_ISOTH_LINEARIZED_model(&lbm, SimParams.cref);
-  CheckLBModelDescriptorMacroConservation(&lbm, true);
+  CheckLBModelDescriptorMacroConservation(&lbm, false);
+  CheckLBMMomentMatrixInversion(&lbm,false);
   DisplayLBModelDescriptorMomentMatrix(&lbm);
   DestroyLBModelDescriptor(&lbm);
   //
@@ -367,6 +371,21 @@ void LBM_BumpFlow_BoundaryFlux_OneNode(schnaps_real * x, schnaps_real t,
   LBM_OneNodeNumFlux(wL, wR, vnorm, flux);
   //}
   //
+  // test slip with full moments inversion
+/*  schnaps_real Mom[lsd->lb_model->q];*/
+/*  MatVect(lsd->lb_model->Msolv,lsd->current_lb_sim->wmic_buffer,Mom); // compute full Moments set*/
+/*  schnaps_real jx = Mom[1];*/
+/*  schnaps_real jy=  Mom[2];*/
+/*  schnaps_real jdotn= jx *vnorm[0] + jy *vnorm[1];*/
+/*  Mom[1] = jx - 2.0 * jdotn * vnorm[0];*/
+/*  Mom[2] = jy - 2.0 * jdotn * vnorm[1];*/
+/*  for (int i=0;i< lsd->lb_model->q;i++){*/
+/*  lsd->lb_model->Msolv->rhs[i]=Mom[i];*/
+/*  }*/
+/*  SolveLinearSolver(lsd->lb_model->Msolv);*/
+/*  wR[0] = lsd->lb_model->Msolv->sol[i_node];*/
+
+/*  LBM_OneNodeNumFlux(wL, wR, vnorm, flux);*/
 }
 
 //

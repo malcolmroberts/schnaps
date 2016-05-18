@@ -90,7 +90,7 @@ int TestSlicePoisson(void) {
   schnaps_real dt = 0;
   schnaps_real tmax = 0;
   //RK4(&simu,tmax);
-  Computation_charge_density(&simu);
+  //Computation_charge_density(&simu);
   PlotFields(kd->index_rho,(1==0),&simu,"sol_rho","rho.msh");
   // save the results and the error
   //PlotFields(1,(1==0),&simu,"sol","dgvisu.msh");
@@ -121,8 +121,7 @@ int TestSlicePoisson(void) {
 #endif
 
   SolveContinuous2D(&ps);
-  /* DisplayLinearSolver(&ps.lsol); */
-  /* assert(1==2); */
+  DisplayLinearSolver(&ps.lsol);
   
   
   PlotFields(kd->index_phi,(1==0),&simu,"sol","dgvisu.msh");
@@ -160,6 +159,8 @@ void SliceImposedData(const schnaps_real x[3], const schnaps_real t, schnaps_rea
   w[kd->index_phi]=0;//(x[0] * x[0] + x[1] * x[1])/4;
   //w[kd->index_phi]= 0;
   w[kd->index_rho] = -1 + kd->qn_damping * w[kd->index_phi];
+  printf("init rho=%f\n",w[kd->index_rho]);
+   
   w[kd->index_ex]=-x[0]/2;
   w[kd->index_ey]=-x[1]/2;
   //w[kd->index_ex]=0;

@@ -98,6 +98,7 @@ firefox html/index.html
 #include "pic.h"
 #include "skyline.h"
 #include "skyline_spu.h"
+#include "klu_csr.h"
 #include "linear_solver.h"
 #include "advanced_linear_solver.h"
 #include "solvercontinuous.h"

@@ -33,11 +33,10 @@ void Computation_charge_density(Simulation *simu){
 	  int imem=f->varindex(f->deg, f->raf, f->model.m,ipg,ipgv);
 
 	  f->wn[imemc]+=omega*kd->dv*f->wn[imem];
-
 	}
       }
     }
-    }
+  }
   
 }
 
