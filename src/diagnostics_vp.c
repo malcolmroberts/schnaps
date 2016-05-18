@@ -161,13 +161,13 @@ void Charge_total(Simulation *simu, schnaps_real *w, schnaps_real t_charge,int f
     simu->Diagnostics[simu->iter_time_rk + (first_diag-1) * simu->itermax_rk] = t_charge;
 }
 
-void Taux_instability(Simulation *simu, schnaps_real *w, schnaps_real m, schnaps_real taux_ins,int first_diag) {
+void Taux_instability(Simulation *simu, schnaps_real *w, schnaps_real m_1, schnaps_real taux_ins_m1,int first_diag) {
 
   KineticData * kd=&schnaps_kinetic_data;
   
-  taux_ins=0;
-  schnaps_real taux_ins_r = 0;
-  schnaps_real taux_ins_i = 0;
+  taux_ins_m1=0;
+  schnaps_real taux_ins_r_m1 = 0;
+  schnaps_real taux_ins_i_m1 = 0;
   
   schnaps_real pi = 4.0*atan(1.0);
   for(int ie = 0; ie < simu->macromesh.nbelems; ie++){
@@ -194,16 +194,21 @@ void Taux_instability(Simulation *simu, schnaps_real *w, schnaps_real m, schnaps
 
       int imemphi = f->varindex(f->deg,f->raf, f->model.m, ipg, kd->index_phi);
       
-      taux_ins_r += cos(4*theta) * f->wn[imemphi] * wpg * det;
-      taux_ins_i += sin(4*theta) * f->wn[imemphi] * wpg * det;
+      taux_ins_r_m1 += cos(m_1*theta) * f->wn[imemphi] * wpg * det;
+      //taux_ins_r_m1 += wpg * det;
+      taux_ins_i_m1 += sin(m_1*theta) * f->wn[imemphi] * wpg * det;
 
     }
   }
   
-  taux_ins_r /= (pi*100);
-  taux_ins_i /= (pi*100);
-  taux_ins = sqrt(taux_ins_r * taux_ins_r + taux_ins_i * taux_ins_i)/2;
-  simu->Diagnostics[simu->iter_time_rk + (first_diag-1) * simu->itermax_rk] = taux_ins;
+  taux_ins_r_m1 /= (pi*100);
+  taux_ins_i_m1 /= (pi*100);
+  taux_ins_m1 = sqrt(taux_ins_r_m1 * taux_ins_r_m1 + taux_ins_i_m1 * taux_ins_i_m1)/2;
+   simu->Diagnostics[simu->iter_time_rk + (first_diag-1) * simu->itermax_rk] = taux_ins_m1;
+/*  taux_ins_m1 =taux_ins_r_m1 ;
+  simu->Diagnostics[simu->iter_time_rk + (first_diag-1) * simu->itermax_rk] = taux_ins_m1;
+printf("integrale =  %.15e\n", taux_ins_m1);	
+assert(1==2);*/
 }
   
 
@@ -211,9 +216,9 @@ void Taux_instability(Simulation *simu, schnaps_real *w, schnaps_real m, schnaps
 void Plot_Energies(Simulation *simu, schnaps_real dt) {
   int nb_diag = 0; 
   schnaps_real e_energy = 0, k_energy = 0, t_energy = 0, t_charge=0; 
-  schnaps_real taux_ins = 0;
+  schnaps_real taux_ins_m1 = 0,  taux_ins_m2 = 0;
   FILE *Plot;
-  Plot = fopen("le29avr/Diagnostics.dat","w");
+  Plot = fopen("Diagnostics.dat","w");
 
   for(int i = 1; i < simu->itermax_rk ; i++){
     simu->tnow = i*dt;
@@ -221,8 +226,10 @@ void Plot_Energies(Simulation *simu, schnaps_real dt) {
     e_energy = simu->Diagnostics[i + simu->itermax_rk]; 
     t_energy = simu->Diagnostics[i + 2 * simu->itermax_rk]; 
     t_charge = simu->Diagnostics[i + 3 * simu->itermax_rk]; 
-    taux_ins = simu->Diagnostics[i + 4 * simu->itermax_rk];
-    fprintf(Plot, "%.11e %.11e %.11e %.11e %.15e %.15e \n", simu->tnow, k_energy, e_energy, t_energy,t_charge,taux_ins); 
+    taux_ins_m1 = simu->Diagnostics[i + 4 * simu->itermax_rk];
+    taux_ins_m2 = simu->Diagnostics[i + 5 * simu->itermax_rk];
+    fprintf(Plot, "%.11e %.11e %.11e %.11e %.15e %.15e %.15e\n",
+    	simu->tnow, k_energy, e_energy, t_energy,t_charge,taux_ins_m1,taux_ins_m2); 
   } 
   fclose(Plot); 
 } 
