@@ -1,18 +1,19 @@
 #include "global.h"
 
-int nplatform_cl = 1;
+int nplatform_cl = 0;
 int ndevice_cl = 0;
 
 bool starpu_is_init = false;
 bool starpu_use = false;
 bool starpu_c_use = false;
 bool starpu_ocl_use = false;
+bool schnaps_ocl_getcharge = false;
 
 #pragma start_opencl
 #ifndef _NBELEMV
-#define _NBELEMV 2
-#define _DEGV 2
-#define _VMAX 6
+#define _NBELEMV 10
+#define _DEGV 4
+#define _VMAX 6.
 #endif
 #define _MV  (_NBELEMV * _DEGV + 1)
 __constant KineticData  schnaps_kinetic_data={

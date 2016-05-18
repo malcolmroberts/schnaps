@@ -178,7 +178,8 @@ void GyroImposedData(const schnaps_real x[3], const schnaps_real t, schnaps_real
 
     //w[i] = exp(-4*pow(zi-1.,2));// *Gyro_ImposedKinetic_Data(x,t,vi);
     //w[i] = cos(2 * pi * zi);
-    w[i] = exp(-(vi - t) * (vi - t)/2);
+    //w[i] = exp(-(vi - t) * (vi - t)/2);
+    w[i] = 1;
   }
   // exact value of the potential
   // and electric field

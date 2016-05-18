@@ -48,9 +48,9 @@ int TestGyro(void) {
   //extern KineticData  schnaps_kinetic_data;
   
   KineticData *kd = &schnaps_kinetic_data;
-  // nbelemv = 10
-  // deg_v = 4
-  InitKineticData(&schnaps_kinetic_data,1,2);
+  int nbelemv = 10;
+  int deg_v = 4;
+  InitKineticData(&schnaps_kinetic_data,nbelemv,deg_v);
   
   printf("_MV=%d\n",kd->mv);
   printf("_INDEX_MAX=%d\n",kd->index_max);
@@ -66,7 +66,13 @@ int TestGyro(void) {
   model.Source = NULL;
   //model.Source = GyroSource;
 
+  
+  char buf[1000];
+  sprintf(buf, "-D _M=%d", model.m);
+  strcat(cl_buildoptions, buf);
 
+
+  schnaps_ocl_getcharge = true;
   InitSimulation(&simu, &mesh, deg, raf, &model);
 
   //simu.pre_dtfields = UpdateGyroPoisson;
@@ -80,10 +86,11 @@ int TestGyro(void) {
   simu.cfl=0.2;
   schnaps_real dt = 0;
   schnaps_real tmax = 0;
-  RK4(&simu,tmax);
+  //RK4(&simu,tmax);
   Computation_charge_density(&simu);
   // save the results and the error
   //PlotFields(1,(1==0),&simu,"sol","dgvisu.msh");
+  //CopyfieldtoCPU(&simu);
   PlotFields(kd->index_rho,(1==0),&simu,"sol","dgvisu.msh");
   //PlotFields(1,(1==1),&simu,"error","dgerror.msh");
 

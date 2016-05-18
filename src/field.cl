@@ -280,12 +280,12 @@ void DGCharge(__constant int *param,
 
   int imemc = VARINDEX(param + 1, param + 4, m, ipg, kd->index_rho) + woffset;
   wn[imemc]=0;
-  
+
   for(int ielv = 0; ielv < kd->nb_elem_v; ielv++){
     // loop on the local glops
     for(int iloc = 0; iloc < kd->deg_v + 1; iloc++){
       int deg_v =  kd->deg_v;
-      schnaps_real omega = wglop(deg_v, iloc);
+      schnaps_real omega = wglop(kd->deg_v, iloc);
       schnaps_real vi = -kd->vmax + ielv *kd->dv + kd->dv * glop(deg_v, iloc);
       int ipgv = iloc + ielv * kd->deg_v;
       int imem = VARINDEX(param + 1, param + 4, m, ipg, ipgv) + woffset;

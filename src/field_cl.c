@@ -760,6 +760,8 @@ void DGCharge_CL(int ie, Simulation *simu, cl_mem *w_cl,
   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
   assert(status >= CL_SUCCESS);
 
+  
+  
 }
 
 
@@ -1739,12 +1741,13 @@ void init_field_cl(Simulation *simu)
   simu->reads_mass = 0;
 
 
-  /* for(int ie = 0; ie < nmacro; ++ie) { */
-  /*   DGCharge_CL(ie, simu, &simu->w_cl, 0, NULL, NULL); */
-  /* } */
-
-  /* status = clFinish(simu->cli.commandqueue); */
-  
+  if (schnaps_ocl_getcharge) {
+    status = clFinish(simu->cli.commandqueue);
+    for(int ie = 0; ie < nmacro; ++ie) {
+      DGCharge_CL(ie, simu, &simu->w_cl, 0, NULL, NULL);
+    }
+    status = clFinish(simu->cli.commandqueue);
+  }
   
 }
 
