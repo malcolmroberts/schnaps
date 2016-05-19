@@ -28,7 +28,7 @@ int TestGyro(void) {
   MacroMesh mesh;
   ReadMacroMesh(&mesh,"../geo/cylindre.msh");
 
-  mesh.period[2]=2;
+  mesh.period[2]=1;
   BuildConnectivity(&mesh);
 
   int vec=1;
@@ -73,6 +73,12 @@ int TestGyro(void) {
   char buf[1000];
   sprintf(buf, "-D _M=%d", model.m);
   strcat(cl_buildoptions, buf);
+  sprintf(buf, " -D _NBELEMV=%d ",nbelemv);
+  strcat(cl_buildoptions, buf);
+  sprintf(buf, " -D _DEGV=%d ",deg_v);
+  strcat(cl_buildoptions, buf);
+  sprintf(buf, " -D _VMAX=%f ", kd->vmax);
+  strcat(cl_buildoptions, buf);
 
 
   schnaps_ocl_getcharge = true;
@@ -88,11 +94,12 @@ int TestGyro(void) {
   // up to final time = 1.
   simu.cfl=0.2;
   schnaps_real dt = 0;
-  schnaps_real tmax = 0;
-  //RK4(&simu,tmax);
+  schnaps_real tmax = 0.0001;
+  RK4_CL(&simu,tmax, dt, 0, 0, 0);
   //Computation_charge_density(&simu);
   // save the results and the error
   //PlotFields(1,(1==0),&simu,"sol","dgvisu.msh");
+  
   CopyfieldtoCPU(&simu);
   PlotFields(kd->index_phi,(1==0),&simu,"sol","dgvisu.msh");
   //PlotFields(1,(1==1),&simu,"error","dgerror.msh");
