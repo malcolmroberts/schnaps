@@ -725,14 +725,11 @@ void DGCharge_CL(Simulation *simu, cl_mem *w_cl,
   // times the number of subcells
   size_t numworkitems = param[4] * param[5] * param[6] * groupsize;
 
-  /* unsigned int nreadsdgvol = 2 * m; // read m from w, write m to dtw */
-  /* unsigned int nmultsdgvol = 1296 + m; */
-  /* nmultsdgvol += 3 * m; // Using NUMFLUX = NumFlux */
-
-  /* simu->nmults += numworkitems * nmultsdgvol; */
-  /* simu->nreads += numworkitems * nreadsdgvol; */
-
   init_DGCharge_CL(simu, w_cl);
+
+  void* chkptr_rho[simu->macromesh.nbelems];
+  void* chkptr_phi[simu->macromesh.nbelems];
+  void* chkptr_elec[simu->macromesh.nbelems];
 
   KineticData *kd = &schnaps_kinetic_data;
 
@@ -746,46 +743,46 @@ void DGCharge_CL(Simulation *simu, cl_mem *w_cl,
     assert(status >= CL_SUCCESS);
 
     // The groupsize is the number of glops in a subcell
-    /* size_t groupsize = (param[1] + 1)* (param[2] + 1)*(param[3] + 1); */
-    /* // The total work items number is the number of glops in a subcell */
-    /* // * number of subcells */
-    /* size_t numworkitems = param[4] * param[5] * param[6] * groupsize; */
-    /* //printf("groupsize=%zd numworkitems=%zd\n", groupsize, numworkitems); */
+    size_t groupsize = (param[1] + 1)* (param[2] + 1)*(param[3] + 1);
+    // The total work items number is the number of glops in a subcell
+    // * number of subcells
+    size_t numworkitems = param[4] * param[5] * param[6] * groupsize;
+    //printf("groupsize=%zd numworkitems=%zd\n", groupsize, numworkitems);
     status = clEnqueueNDRangeKernel(simu->cli.commandqueue,
-				    kernel,
-				    1,
-				    NULL,
-				    &numworkitems,
-				    &groupsize,
-				    nwait,
-				    wait,
-				    done);
+    				    kernel,
+    				    1,
+    				    NULL,
+    				    &numworkitems,
+    				    &groupsize,
+    				    nwait,
+    				    wait,
+    				    simu->clv_charge + ie);
+    
     if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
     assert(status >= CL_SUCCESS);
 
     // accès à  la charge en Read Only -> cpu
-    void *chkptr;
     int woffset = ie * m * NPG(param + 1, param + 4);
     field * f = simu->fd + ie; 
     int start = f->varindex(param + 1, param + 4, m, 0, kd->index_rho) + woffset;
     int end = f->varindex(param + 1, param + 4, m, 0, kd->index_rho + 1) + woffset;
     size_t soffset = start * sizeof(schnaps_real);
-    chkptr = clEnqueueMapBuffer(simu->cli.commandqueue,
+    chkptr_rho[ie] = clEnqueueMapBuffer(simu->cli.commandqueue,
 				*w_cl, // buffer to copy from
 				CL_TRUE, // block until the buffer is available
 				CL_MAP_READ, // we just want to see the results
 				soffset, // offset
 				(end - start) * sizeof(schnaps_real), // buffersize
-				0, NULL, NULL, // events management
+				1, simu->clv_charge + ie, NULL, // events management
 				&status);
     if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
     assert(status >= CL_SUCCESS);
-    assert(chkptr == simu->w + start);
+    assert(chkptr_rho[ie] == simu->w + start);
     // accès à  phi en write Only -> cpu
     start = f->varindex(param + 1, param + 4, m, 0, kd->index_phi) + woffset;
     end = f->varindex(param + 1, param + 4, m, 0, kd->index_phi + 1) + woffset;
     soffset = start * sizeof(schnaps_real);
-    chkptr = clEnqueueMapBuffer(simu->cli.commandqueue,
+    chkptr_phi[ie] = clEnqueueMapBuffer(simu->cli.commandqueue,
 				*w_cl, // buffer to copy from
 				CL_TRUE, // block until the buffer is available
 				CL_MAP_WRITE, // we just want to see the results
@@ -795,12 +792,12 @@ void DGCharge_CL(Simulation *simu, cl_mem *w_cl,
 				&status);
     if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
     assert(status >= CL_SUCCESS);
-    assert(chkptr == simu->w + start);
+    assert(chkptr_phi[ie] == simu->w + start);
     // copier ex ey ez en Write Only
     start = f->varindex(param + 1, param + 4, m, 0, kd->index_ex) + woffset;
     end = f->varindex(param + 1, param + 4, m, 0, kd->index_ez + 1) + woffset;
     soffset = start * sizeof(schnaps_real);
-    chkptr = clEnqueueMapBuffer(simu->cli.commandqueue,
+    chkptr_elec[ie] = clEnqueueMapBuffer(simu->cli.commandqueue,
 				*w_cl, // buffer to copy from
 				CL_TRUE, // block until the buffer is available
 				CL_MAP_WRITE, // we just want to see the results
@@ -810,50 +807,42 @@ void DGCharge_CL(Simulation *simu, cl_mem *w_cl,
 				&status);
     if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
     assert(status >= CL_SUCCESS);
-    assert(chkptr == simu->w + start);
+    assert(chkptr_elec[ie] == simu->w + start);
   }
   // résoudre poisson
-  status = clFinish(simu->cli.commandqueue);
+  //status = clFinish(simu->cli.commandqueue);
 
   UpdateGyroPoisson(simu, simu->w);
-  PlotFields(kd->index_phi,(1==0),simu,"sol","dgvisu.msh");
-  assert(1==2);
-  // copier phi en write only
-  /* for(int ie = 0; ie < simu->macromesh.nbelems; ie++) { */
-  /*   int woffset = ie * m * NPG(param + 1, param + 4); */
-  /*   field * f = simu->fd + ie;  */
-  /*   int start = f->varindex(param + 1, param + 4, m, 0, kd->index_phi) + woffset; */
-  /*   int end = f->varindex(param + 1, param + 4, m, 0, kd->index_phi + 1) + woffset; */
-  /*   size_t soffset = start * sizeof(schnaps_real); */
-  /*   void *chkptr = clEnqueueUnmapMemObject(simu->cli.commandqueue, */
-  /* 				*w_cl, // buffer to copy from */
-  /* 				CL_TRUE, // block until the buffer is available */
-  /* 				CL_MAP_WRITE, // we just want to see the results */
-  /* 				soffset, // offset */
-  /* 				(end - start) * sizeof(schnaps_real), // buffersize */
-  /* 				0, NULL, NULL, // events management */
-  /* 				&status); */
-  /*   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status)); */
-  /*   assert(status >= CL_SUCCESS); */
-  /*   assert(chkptr == simu->w + start); */
+  //PlotFields(kd->index_phi,(1==0),simu,"sol","dgvisu.msh");
+
+
+  for(int ie = 0; ie < simu->macromesh.nbelems; ie++) {
+
+    // libère accès à  la charge en Read Only -> cpu
+ 
+    status = clEnqueueUnmapMemObject (simu->cli.commandqueue,
+				*w_cl, // buffer to copy from
+				chkptr_rho[ie],
+				0, NULL, NULL);
+    if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
+
+    status = clEnqueueUnmapMemObject (simu->cli.commandqueue,
+				*w_cl, // buffer to copy from
+				chkptr_phi[ie],
+				0, NULL, NULL);
+    if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
+
+    status = clEnqueueUnmapMemObject (simu->cli.commandqueue,
+				*w_cl, // buffer to copy from
+				chkptr_elec[ie],
+				0, NULL, done);
+    if(status < CL_SUCCESS) printf("%s\n", clErrorString(status));
+    
+    
+  }
+
+
   
-  /*   // copier ex ey ez en Write Only */
-  /*   start = f->varindex(param + 1, param + 4, m, 0, kd->index_ex) + woffset; */
-  /*   end = f->varindex(param + 1, param + 4, m, 0, kd->index_ez + 1) + woffset; */
-  /*   soffset = start * sizeof(schnaps_real); */
-  /*   chkptr = clEnqueueMapBuffer(simu->cli.commandqueue, */
-  /* 				*w_cl, // buffer to copy from */
-  /* 				CL_TRUE, // block until the buffer is available */
-  /* 				CL_MAP_WRITE, // we just want to see the results */
-  /* 				soffset, // offset */
-  /* 				(end - start) * sizeof(schnaps_real), // buffersize */
-  /* 				0, NULL, NULL, // events management */
-  /* 				&status); */
-  /*   if(status < CL_SUCCESS) printf("%s\n", clErrorString(status)); */
-  /*   assert(status >= CL_SUCCESS); */
-  /*   assert(chkptr == simu->w + start); */
-  /* } */
-  /* // attendre la fin des opérations */
   status = clFinish(simu->cli.commandqueue);
 }
 
@@ -943,12 +932,17 @@ void set_buf_to_zero_cl(cl_mem *buf, int size, Simulation *simu,
 // Apply the Discontinuous Galerkin approximation for computing the
 // time derivative of the field. OpenCL version.
 void dtfield_CL(Simulation *simu, cl_mem *w_cl,
+
 		cl_uint nwait, cl_event *wait, cl_event *done)
 {
 
   set_buf_to_zero_cl(&simu->dtw_cl, simu->wsize, simu,
   		     nwait, wait, &simu->clv_zbuf);
 
+  if (schnaps_ocl_getcharge) {
+    DGCharge_CL(simu, &simu->w_cl, nwait, wait, simu->clv_poisson);
+    clWaitForEvents(1, simu->clv_poisson);
+  }
   // Macrocell interfaces must be launched serially
   const int ninterfaces = simu->macromesh.nmacrointerfaces;
 
@@ -1817,6 +1811,8 @@ void init_field_cl(Simulation *simu)
     simu->clv_source[ie] = clCreateUserEvent(simu->cli.context, &status);
   }
 
+  simu->clv_charge = calloc(nmacro, sizeof(cl_event));
+
   // Set timers to zero
   simu->zbuf_time = 0;
   simu->mass_time = 0;
@@ -1851,8 +1847,9 @@ void init_field_cl(Simulation *simu)
     schnaps_real *addr2 = &simu->w[i2];
     assert(addr1 + 1 == addr2);
     /////////////////////////////
-    DGCharge_CL(simu, &simu->w_cl, 0, NULL, NULL);
-    status = clFinish(simu->cli.commandqueue);
+    /* cl_event *wait = NULL; */
+    /* DGCharge_CL(simu, &simu->w_cl, 0, wait, simu->clv_poisson); */
+    /* status = clFinish(simu->cli.commandqueue); */
   }
   
 }

@@ -11,7 +11,7 @@ bool schnaps_ocl_getcharge = false;
 
 #pragma start_opencl
 #ifndef _NBELEMV
-#define _NBELEMV 10
+#define _NBELEMV 2
 #define _DEGV 4
 #define _VMAX 6.
 #endif

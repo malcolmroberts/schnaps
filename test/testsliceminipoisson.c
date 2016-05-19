@@ -33,7 +33,7 @@ int TestSliceMiniPoisson(void) {
   MacroMesh mesh;
   ReadMacroMesh(&mesh,"../geo/cylindre.msh");
 
-  mesh.period[2]=2;
+  mesh.period[2]=1;
   BuildConnectivity(&mesh);
 
   int vec=1;

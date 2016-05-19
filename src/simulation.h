@@ -133,6 +133,12 @@ typedef struct Simulation {
   // Subcell volume events
   cl_event *clv_source;
 
+  // Subcell charge events
+  cl_event *clv_charge;
+
+  // Macrocell poisson event
+  cl_event *clv_poisson;
+  
   // Macrocell interface events
   cl_event *clv_mci;
   // Boundary term events
