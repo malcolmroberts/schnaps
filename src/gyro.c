@@ -60,6 +60,9 @@ void GyroCenteredNumFlux(schnaps_real wL[],schnaps_real wR[],schnaps_real* vnorm
   flux[kd->index_ex]=0;
   flux[kd->index_ey]=0;
   flux[kd->index_ez]=0;
+  flux[kd->index_u] = 0; 
+  flux[kd->index_P] = 0; 
+  flux[kd->index_T] = 0;
 }
 
 void GyroUpwindNumFlux(schnaps_real wL[],schnaps_real wR[],schnaps_real* vnorm,schnaps_real* flux){
@@ -96,6 +99,9 @@ void GyroUpwindNumFlux(schnaps_real wL[],schnaps_real wR[],schnaps_real* vnorm,s
   flux[kd->index_ex]=0;
   flux[kd->index_ey]=0;
   flux[kd->index_ez]=0;
+  flux[kd->index_u] = 0; 
+  flux[kd->index_P] = 0; 
+  flux[kd->index_T] = 0;
 }
 
 void GyroZeroNumFlux(schnaps_real wL[],schnaps_real wR[],schnaps_real* vnorm,schnaps_real* flux){
@@ -109,6 +115,9 @@ void GyroZeroNumFlux(schnaps_real wL[],schnaps_real wR[],schnaps_real* vnorm,sch
   flux[kd->index_ex] = 0;
   flux[kd->index_ey] = 0;
   flux[kd->index_ez] = 0;
+  flux[kd->index_u] = 0; 
+  flux[kd->index_P] = 0; 
+  flux[kd->index_T] = 0;
 }
 
 //! \brief compute square of velocity L2 error
@@ -141,7 +150,8 @@ void GyroBoundaryFlux(schnaps_real x[3],schnaps_real t,schnaps_real wL[],schnaps
   KineticData *kd = &schnaps_kinetic_data;
   schnaps_real wR[kd->index_max];
   GyroImposedData(x,t,wR);
-  GyroUpwindNumFlux(wL,wR,vnorm,flux);
+  //GyroUpwindNumFlux(wL,wR,vnorm,flux);
+  GyroZeroNumFlux(wL,wR,vnorm,flux);
 }
 
 void GyroInitData(schnaps_real x[3],schnaps_real w[]){
@@ -179,15 +189,18 @@ void GyroImposedData(const schnaps_real x[3], const schnaps_real t, schnaps_real
     //w[i] = exp(-4*pow(zi-1.,2));// *Gyro_ImposedKinetic_Data(x,t,vi);
     //w[i] = cos(2 * pi * zi);
     //w[i] = exp(-(vi - t) * (vi - t)/2);
-    w[i] = 1;
+    w[i] = 0.01;
   }
   // exact value of the potential
   // and electric field
-  w[kd->index_phi]=0;
+  w[kd->index_phi]=2;
   w[kd->index_rho] =0;
   w[kd->index_ex]=0;//1;
   w[kd->index_ey]=0;//1;
   w[kd->index_ez]=1;
+  w[kd->index_u] = 0; 
+  w[kd->index_P] = 0; 
+  w[kd->index_T] = 0; 
 
 }
 

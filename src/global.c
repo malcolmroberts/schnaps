@@ -10,7 +10,7 @@ bool starpu_ocl_use = false;
 bool schnaps_ocl_getcharge = false;
 
 #pragma start_opencl
-#ifndef _NBELEMV
+#ifndef _NBELEMV 
 #define _NBELEMV 2
 #define _DEGV 4
 #define _VMAX 6.
@@ -30,7 +30,7 @@ __constant KineticData  schnaps_kinetic_data={
   .index_P = _MV + 6,
   .index_T = _MV + 7,
   .index_max = _MV + 8,
-  .vmax = 6,
+  .vmax = 6.,
   .dv = 2 * _VMAX / _NBELEMV,
   .gamma = 3.,
   .knud =1.,
