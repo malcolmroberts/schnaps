@@ -37,8 +37,11 @@ int TestMaxwell3D(void) {
   model.Source = NULL;
 
 
-  int deg[]={3, 3, 3};
-  int raf[]={4, 4, 4};
+  int thedeg = 3;
+  int theraf = 4;
+  
+  int deg[]={thedeg, thedeg, thedeg};
+  int raf[]={theraf, theraf, theraf};
 
   //assert(mesh.is2d);
 
