@@ -17,7 +17,7 @@ int main(void) {
   double xmax = 1;
 
   // cfl computed from the element size dx
-  double cfl_dx = 2;
+  double cfl_dx = 1;
   // the actual cfl is computed from the smallest
   // distance bewteen two Gauss-Lobatto points
   //double cfl = cfl_dx * (glop(DEG, 1) - glop(DEG, 0));
@@ -389,23 +389,24 @@ void gal_step(galerkin *gal)
       wvn[iv] = gal->wn[vindex(connec(ie + 1, 0),iv)];
     } else {
       solexacte(gal->xnode[ino],gal->t,wvnm1);
-      solexacte(gal->xnode[ino],gal->t,wvn);
+      solexacte(gal->xnode[ino],gal->t + gal->dt,wvn);
       //printf("wR=(%f,%f)\n",creal(wv[iv]),cimag(wv[iv]));
     }
+
     // explicit part
     for(int iloc = 0; iloc <= DEG; iloc++)
       res[iloc] = 0; 
 
-    res[0] -= (gal->wnm1[iw + 0] - wvnm1[iv]) 
+    res[DEG] += (gal->wnm1[iw] - wvnm1[iv]) 
       * VMAX * gal->dt * (THETA - 1) / gal->dx / wglop(DEG, 0);
 
     for(int iloc = 0; iloc <= DEG; iloc++) {
       for(int jloc = 0; jloc <= DEG; jloc++) {
 	res[iloc] -= VMAX * gal->dt * (THETA - 1) / gal->dx *
-	  dlag(DEG, jloc, iloc) * gal->wnm1[iw + jloc];
+	  dlag(DEG, jloc, iloc) * gal->wnm1[iw - DEG + jloc];
       }
     }
-    
+
     gal->wnm1[iw] -= wvn[iv] *  (-VMAX) *
       gal->dt * THETA / gal->dx / wglop(DEG, DEG);
     // local implicit scheme
@@ -414,15 +415,18 @@ void gal_step(galerkin *gal)
       gal->wn[iw + iloc] = 0;
       for(int jloc = 0; jloc <= DEG; jloc++)
 	gal->wn[iw + iloc] += mat[n * iloc + jloc] *
-	  (gal->wnm1[iw + jloc] + res[jloc]);
+	  (gal->wnm1[iw + jloc] + res[jloc]) ;
     }
 
   }
-  // update
-  /* for(int iw = 0; iw < WSIZE; iw++){ */
-  /*     gal->wnm1[iw] = gal->wn[iw]; */
-  /* } */
 
+  // update
+  for(int iw = 0; iw < WSIZE; iw++){
+      gal->wnm1[iw] = gal->wn[iw];
+  }
+
+
+  ///////////////////////////////////////////
   // positive velocity
   iv = 2;
   loc_assembly(gal, mat, VMAX);
@@ -439,9 +443,10 @@ void gal_step(galerkin *gal)
       wvn[iv] = gal->wn[vindex(connec(ie - 1, DEG),iv)];
     } else {
       solexacte(gal->xnode[ino],gal->t,wvnm1);
-      solexacte(gal->xnode[ino],gal->t,wvn);
+      solexacte(gal->xnode[ino],gal->t + gal->dt,wvn);
     }
 
+ 
     // explicit part
     for(int iloc = 0; iloc <= DEG; iloc++)
       res[iloc] = 0; 
@@ -456,11 +461,10 @@ void gal_step(galerkin *gal)
       }
     }
 
-    
+   // implicit part
     gal->wnm1[iw] += wvn[iv] *  VMAX *
       gal->dt * THETA / gal->dx / wglop(DEG, 0);
-    /* printf("wini=%f\n",creal(gal->wnm1[iw])); */
-    /* assert(1==4); */
+
     // local implicit scheme
     for(int iloc = 0; iloc <= DEG; iloc++){
       gal->wn[iw + iloc] = 0;
