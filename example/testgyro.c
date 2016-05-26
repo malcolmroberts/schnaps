@@ -31,11 +31,10 @@ int TestGyro(void) {
   mesh.period[2]=1;
   BuildConnectivity(&mesh);
 
-  int vec=1;
   
     
-  int deg[]={2, 2, 2};
-  int raf[]={2, 2, 2};
+  int deg[]={4, 4, 2};
+  int raf[]={3, 3, 2};
 
   CheckMacroMesh(&mesh, deg, raf);
 
@@ -48,8 +47,8 @@ int TestGyro(void) {
   //extern KineticData  schnaps_kinetic_data;
   
   KineticData *kd = &schnaps_kinetic_data;
-  int nbelemv = 10;
-  int deg_v = 4;
+  int nbelemv = 4;
+  int deg_v = 2;
   InitKineticData(&schnaps_kinetic_data,nbelemv,deg_v);
   kd->solve_quasineutrality = true;
   kd->substract_mean_charge = false;
@@ -60,8 +59,8 @@ int TestGyro(void) {
   printf("_INDEX_MAX_KIN=%d\n",kd->index_max_kin);
 
   model.m= kd->index_max; // num of conservative variables
-  model.NumFlux=GyroUpwindNumFlux;
-  //model.NumFlux=GyroZeroNumFlux;
+  //model.NumFlux=GyroUpwindNumFlux;
+  model.NumFlux=GyroZeroNumFlux;
   //model.NumFlux=NULL;
   model.BoundaryFlux=GyroBoundaryFlux;
   model.InitData=GyroInitData;
@@ -83,7 +82,7 @@ int TestGyro(void) {
 
   schnaps_ocl_getcharge = true;
   InitSimulation(&simu, &mesh, deg, raf, &model);
-
+  PlotFields(kd->index_phi,(1==0),&simu,"init_phi","init_potential.msh");
   //simu.pre_dtfields = UpdateGyroPoisson;
    simu.vmax = kd->vmax; // maximal wave speed 
   //f.macromesh.is1d=true;
@@ -95,6 +94,7 @@ int TestGyro(void) {
   simu.cfl=0.2;
   schnaps_real dt = 0;
   schnaps_real tmax = 0.0001;
+  //RK2(&simu,tmax);
   RK4_CL(&simu,tmax, dt, 0, 0, 0);
   //Computation_charge_density(&simu);
   // save the results and the error
@@ -102,11 +102,16 @@ int TestGyro(void) {
   
   CopyfieldtoCPU(&simu);
   PlotFields(kd->index_phi,(1==0),&simu,"sol","dgvisu.msh");
+  PlotFields(kd->index_rho,(1==0),&simu,"sol_rho","sol_rho.msh");
+  PlotFields(kd->index_ex,(1==0),&simu,"sol_ex","sol_ex.msh");
+  PlotFields(kd->index_ey,(1==0),&simu,"sol_ey","sol_ey.msh");
+  PlotFields(kd->index_ez,(1==0),&simu,"sol_ez","sol_ez.msh");
   //PlotFields(1,(1==1),&simu,"error","dgerror.msh");
 
   double dd=L2error(&simu);
   //double dd_l2_vel =GyroL2VelError(&f)
-  //double dd_Kinetic=L2_Kinetic_error(&f);
+  //double dd_Kinetic=L2_Kinetic_error(&simu);
+  
   
   //printf("erreur kinetic L2=%lf\n",dd_Kinetic);
   printf("erreur L2=%lf\n",dd);
