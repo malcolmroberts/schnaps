@@ -24,7 +24,7 @@
 #define UR 0.
 
 // estimated maximal wave speed
-#define VMAX (1.)
+#define VMAX (0.)
 
 // theta of the theta time scheme
 #define THETA (0.5)
@@ -41,7 +41,7 @@ void solexacte(double x, double t, dcmplx* w);
 ///////////// interp. data ////////////////////
 
 // number of finite elements
-#define NB_ELEMS (600)
+#define NB_ELEMS (100)
 // polynomial order
 #define DEG (3)
 
@@ -99,6 +99,9 @@ void loc_assembly(galerkin *gal, dcmplx *mat, double vit);
 // advance one time step
 void gal_step(galerkin *gal);
 
+// advance one time step non linear scheme
+void gal_step_nonlin(galerkin *gal);
+
 // outputs
 void gal_plot(galerkin *gal);
 
@@ -121,6 +124,9 @@ void bgk_relax(dcmplx *w, dcmplx dt);
 
 // BGK projection: infinite relaxation
 void bgk_project(dcmplx *w);
+
+// local dg update from boundary data
+void local_dg(galerkin *gal, dcmplx *wloc, dcmplx wvnm1, dcmplx wvn, int ivel);
 
 
 // BGK projection: i=0 or 2
