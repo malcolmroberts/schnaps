@@ -9,6 +9,9 @@
 
 // gcc fe_implicit.c skyline.c -O -lm
 
+
+const 
+
 int main(void) {
 
   //TestPLU();
@@ -17,7 +20,7 @@ int main(void) {
   double xmax = 1;
 
   // cfl computed from the element size dx
-  double cfl_dx = 1;
+  double cfl_dx = .5;
   // the actual cfl is computed from the smallest
   // distance bewteen two Gauss-Lobatto points
   //double cfl = cfl_dx * (glop(DEG, 1) - glop(DEG, 0));
@@ -25,8 +28,8 @@ int main(void) {
 
   printf("cfl=%f\n",cfl);
 
-  //dcmplx c = (1. + I) / 2;
-  dcmplx c =1./2;
+  dcmplx c = (1. + I) / 2;
+  //dcmplx c =1./2;
 
   double tmax = 0.4;
 
@@ -338,7 +341,7 @@ void loc_assembly(galerkin *gal, dcmplx *mat, double vit){
   } else if (vit < 0) {
     a[n * n -1] -= z / wg;
   } else{
-    assert(vit != 0);
+    //assert(vit != 0);
   }
   
   for(int i = 0; i <= DEG; i++){
@@ -374,19 +377,28 @@ void gal_step(galerkin *gal)
 
   dcmplx mat[n * n];
   // negative velocity
-  int iv = 0;
-  loc_assembly(gal, mat, -VMAX);
-  for(int ie = NB_ELEMS - 1; ie >= 0; ie--) {
+
+  for(int ivel = -1; ivel <= 1; ivel++){
+  int iv = ivel + 1;
+  loc_assembly(gal, mat, ivel * VMAX);
+
+  for(int ieref = 0; ieref < NB_ELEMS ; ieref++) {
+    if (ivel == 0) break;
+    int ie = ieref;
+    if (ivel < 0) ie = NB_ELEMS -1 - ieref;
+
+    int pm = (ivel + 1) / 2; // 0 if negative 1 if positive 
+    
     // last glop in cell
-    int ino = connec(ie, DEG);
+    int ino = connec(ie, DEG * (1 - pm));
     int iw = vindex(ino, iv);
     dcmplx wvnm1[M];
     dcmplx wvn[M];
     dcmplx res[DEG + 1];
     // boundary condition or upwind data
-    if (ie < NB_ELEMS - 1) {
-      wvnm1[iv] = gal->wnm1[vindex(connec(ie + 1, 0),iv)];
-      wvn[iv] = gal->wn[vindex(connec(ie + 1, 0),iv)];
+    if (ieref > 0) {
+      wvnm1[iv] = gal->wnm1[vindex(connec(ie - ivel, pm * DEG),iv)];
+      wvn[iv] = gal->wn[vindex(connec(ie - ivel, pm * DEG),iv)];
     } else {
       solexacte(gal->xnode[ino],gal->t,wvnm1);
       solexacte(gal->xnode[ino],gal->t + gal->dt,wvn);
@@ -397,20 +409,20 @@ void gal_step(galerkin *gal)
     for(int iloc = 0; iloc <= DEG; iloc++)
       res[iloc] = 0; 
 
-    res[DEG] += (gal->wnm1[iw] - wvnm1[iv]) 
+    res[DEG * (1- pm)] += (gal->wnm1[iw] - wvnm1[iv]) 
       * VMAX * gal->dt * (THETA - 1) / gal->dx / wglop(DEG, 0);
 
     for(int iloc = 0; iloc <= DEG; iloc++) {
       for(int jloc = 0; jloc <= DEG; jloc++) {
-	res[iloc] -= VMAX * gal->dt * (THETA - 1) / gal->dx *
-	  dlag(DEG, jloc, iloc) * gal->wnm1[iw - DEG + jloc];
+	res[iloc] += ivel * VMAX * gal->dt * (THETA - 1) / gal->dx *
+	  dlag(DEG, jloc, iloc) * gal->wnm1[iw - DEG * (1 - pm) + jloc];
       }
     }
 
     gal->wnm1[iw] -= wvn[iv] *  (-VMAX) *
       gal->dt * THETA / gal->dx / wglop(DEG, DEG);
     // local implicit scheme
-    iw -= DEG; // return to first glop for matrix product
+    iw -= DEG * (1 - pm); // return to first glop for matrix product
     for(int iloc = 0; iloc <= DEG; iloc++){
       gal->wn[iw + iloc] = 0;
       for(int jloc = 0; jloc <= DEG; jloc++)
@@ -424,63 +436,65 @@ void gal_step(galerkin *gal)
   for(int iw = 0; iw < WSIZE; iw++){
       gal->wnm1[iw] = gal->wn[iw];
   }
-
+  }
 
   ///////////////////////////////////////////
   // positive velocity
-  iv = 2;
-  loc_assembly(gal, mat, VMAX);
-  for(int ie = 0; ie < NB_ELEMS; ie++) {
-    // first glop in cell
-    int ino = connec(ie, 0);
-    int iw = vindex(ino, iv);
-    dcmplx wvnm1[M];
-    dcmplx wvn[M];
-    dcmplx res[DEG + 1];
-    // boundary condition or upwind data
-    if (ie > 0) {
-      wvnm1[iv] = gal->wnm1[vindex(connec(ie - 1, DEG),iv)];
-      wvn[iv] = gal->wn[vindex(connec(ie - 1, DEG),iv)];
-    } else {
-      solexacte(gal->xnode[ino],gal->t,wvnm1);
-      solexacte(gal->xnode[ino],gal->t + gal->dt,wvn);
-    }
+  /* iv = 2; */
+  /* loc_assembly(gal, mat, VMAX); */
+  /* for(int ie = 0; ie < NB_ELEMS; ie++) { */
+  /*   // first glop in cell */
+  /*   int ino = connec(ie, 0); */
+  /*   int iw = vindex(ino, iv); */
+  /*   dcmplx wvnm1[M]; */
+  /*   dcmplx wvn[M]; */
+  /*   dcmplx res[DEG + 1]; */
+  /*   // boundary condition or upwind data */
+  /*   if (ie > 0) { */
+  /*     wvnm1[iv] = gal->wnm1[vindex(connec(ie - 1, DEG),iv)]; */
+  /*     wvn[iv] = gal->wn[vindex(connec(ie - 1, DEG),iv)]; */
+  /*   } else { */
+  /*     solexacte(gal->xnode[ino],gal->t,wvnm1); */
+  /*     solexacte(gal->xnode[ino],gal->t + gal->dt,wvn); */
+  /*   } */
 
  
-    // explicit part
-    for(int iloc = 0; iloc <= DEG; iloc++)
-      res[iloc] = 0; 
+  /*   // explicit part */
+  /*   for(int iloc = 0; iloc <= DEG; iloc++) */
+  /*     res[iloc] = 0;  */
 
-    res[0] += (gal->wnm1[iw + 0] - wvnm1[iv]) 
-      * VMAX * gal->dt * (THETA - 1) / gal->dx / wglop(DEG, 0);
+  /*   res[0] += (gal->wnm1[iw + 0] - wvnm1[iv])  */
+  /*     * VMAX * gal->dt * (THETA - 1) / gal->dx / wglop(DEG, 0); */
 
-    for(int iloc = 0; iloc <= DEG; iloc++) {
-      for(int jloc = 0; jloc <= DEG; jloc++) {
-	res[iloc] += VMAX * gal->dt * (THETA - 1) / gal->dx *
-	  dlag(DEG, jloc, iloc) * gal->wnm1[iw + jloc];
-      }
-    }
+  /*   for(int iloc = 0; iloc <= DEG; iloc++) { */
+  /*     for(int jloc = 0; jloc <= DEG; jloc++) { */
+  /* 	res[iloc] += VMAX * gal->dt * (THETA - 1) / gal->dx * */
+  /* 	  dlag(DEG, jloc, iloc) * gal->wnm1[iw + jloc]; */
+  /*     } */
+  /*   } */
 
-   // implicit part
-    gal->wnm1[iw] += wvn[iv] *  VMAX *
-      gal->dt * THETA / gal->dx / wglop(DEG, 0);
+  /*  // implicit part */
+  /*   gal->wnm1[iw] += wvn[iv] *  VMAX * */
+  /*     gal->dt * THETA / gal->dx / wglop(DEG, 0); */
 
-    // local implicit scheme
-    for(int iloc = 0; iloc <= DEG; iloc++){
-      gal->wn[iw + iloc] = 0;
-      for(int jloc = 0; jloc <= DEG; jloc++)
-	gal->wn[iw + iloc] += mat[n * iloc + jloc] *
-	  (gal->wnm1[iw + jloc] + res[jloc]);
-    }
+  /*   // local implicit scheme */
+  /*   for(int iloc = 0; iloc <= DEG; iloc++){ */
+  /*     gal->wn[iw + iloc] = 0; */
+  /*     for(int jloc = 0; jloc <= DEG; jloc++) */
+  /* 	gal->wn[iw + iloc] += mat[n * iloc + jloc] * */
+  /* 	  (gal->wnm1[iw + jloc] + res[jloc]); */
+  /*   } */
     
-  }
+  /* } */
 
   
-  // update
-  for(int iw = 0; iw < WSIZE; iw++){
-      gal->wnm1[iw] = gal->wn[iw];
-  }
+  /* // update */
+  /* for(int iw = 0; iw < WSIZE; iw++){ */
+  /*     gal->wnm1[iw] = gal->wn[iw]; */
+  /* } */
 
+
+  
   for(int ino = 0; ino < NB_NODES; ino++){
     dcmplx wloc[M];
     for(int iv = 0; iv < M; iv++) wloc[iv] =gal->wn[vindex(ino,iv)]; 

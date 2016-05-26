@@ -43,7 +43,7 @@ void solexacte(double x, double t, dcmplx* w);
 // number of finite elements
 #define NB_ELEMS (600)
 // polynomial order
-#define DEG (4)
+#define DEG (3)
 
 
 // nb of finite element nodes
