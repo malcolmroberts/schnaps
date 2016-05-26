@@ -24,7 +24,7 @@
 #define UR 0.
 
 // estimated maximal wave speed
-#define VMAX (0.)
+#define VMAX (1.)
 
 // theta of the theta time scheme
 #define THETA (0.5)

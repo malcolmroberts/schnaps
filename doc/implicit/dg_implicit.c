@@ -403,7 +403,7 @@ void loc_assembly_nonlin(galerkin *gal, dcmplx *mat, double vit){
     int i = iloc * M + iv;  
     for(int jloc = 0; jloc <= DEG; jloc++){
       int j = jloc * M + iv;  
-      a[n * i + j] += z * dlag(DEG, j, i);
+      a[n * i + j] += z * dlag(DEG, jloc, iloc);
     }
   }
 
@@ -587,7 +587,7 @@ void gal_step_nonlin(galerkin *gal)
       }
 
       for(int iloc = 0; iloc <= DEG; iloc++){
-      	for(int ivar = 0; ivar < 3; ivar++){
+      	for(int ivar = 0; ivar < M; ivar++){
       	    gal->wn[vindex(connec(ie, iloc),ivar)] =
       	      wloc[ M * iloc + ivar];
       	}
