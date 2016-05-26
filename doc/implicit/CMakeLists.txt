@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 2.6)
 project(go)
 
 #Sends the -std=c99 -lm flag to the gcc compiler
-set(CMAKE_C_FLAGS "-std=gnu99 -g -O")
+set(CMAKE_C_FLAGS "-std=gnu99 -g -O -Wall")
 
 list(APPEND
   source_files

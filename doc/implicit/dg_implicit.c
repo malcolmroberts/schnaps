@@ -20,7 +20,7 @@ int main(void) {
   double xmax = 1;
 
   // cfl computed from the element size dx
-  double cfl_dx = .05;
+  double cfl_dx = .5;
   // the actual cfl is computed from the smallest
   // distance bewteen two Gauss-Lobatto points
   //double cfl = cfl_dx * (glop(DEG, 1) - glop(DEG, 0));
@@ -396,6 +396,7 @@ void loc_assembly_nonlin(galerkin *gal, dcmplx *mat, double vit){
     a[n * i + i] -= z / wg;
   } else{
     iv = 1;
+    z = 0;
     //assert(vit != 0);
   }
   
@@ -436,7 +437,7 @@ void gal_step(galerkin *gal)
   dcmplx mat[n * n];
   // negative velocity
 
-  for(int ivel = -1; ivel <= 1; ivel++){
+  for(int ivel = 1; ivel >= -1; ivel--){
     int iv = ivel + 1;
     loc_assembly(gal, mat, ivel * VMAX);
 
@@ -533,10 +534,10 @@ void gal_step_nonlin(galerkin *gal)
     
       // last glop in cell
       int ino = connec(ie, DEG * (1 - pm));
-      int iw = vindex(ino, iv);
+      //int iw = vindex(ino, iv);
       dcmplx wvnm1[M];
       dcmplx wvn[M];
-      dcmplx res[DEG + 1];
+      //dcmplx res[DEG + 1];
       // boundary condition or upwind data
       if (ieref > 0) {
 	wvnm1[iv] = gal->wnm1[vindex(connec(ie - ivel, pm * DEG),iv)];
@@ -585,20 +586,26 @@ void gal_step_nonlin(galerkin *gal)
 
       for(int iloc = 0; iloc <= DEG; iloc++){
       	for(int ivar = 0; ivar < M; ivar++){
-      	    gal->wn[vindex(connec(ie, iloc),ivar)] =
-      	      wloc[ M * iloc + ivar];
+	  gal->wn[vindex(connec(ie, iloc),ivar)] =
+	    wloc[ M * iloc + ivar];
       	}
       }
 
 
     }
 
+    // update
+    for(int ie = 0; ie < NB_ELEMS ; ie++) {
+      for(int iloc = 0; iloc <= DEG; iloc++){
+	for(int iw = 0; iw < WSIZE; iw++){
+	  int iw = vindex(connec(ie, iloc),iv);
+	  gal->wnm1[iw] = gal->wn[iw];
+	}
+      }
+    }
+
   }
 
-  // update
-  for(int iw = 0; iw < WSIZE; iw++){
-    gal->wnm1[iw] = gal->wn[iw];
-  }
 
 
   /*
@@ -640,7 +647,7 @@ void local_dg(galerkin *gal, dcmplx *wloc, dcmplx wvnm1, dcmplx wvn, int ivel){
     int i = iloc * M + iv;
     for(int jloc = 0; jloc <= DEG; jloc++) {
       int j = jloc * M + iv;
-        res[i] += ivel * VMAX * gal->dt * (THETA - 1) / gal->dx *
+      res[i] += ivel * VMAX * gal->dt * (THETA - 1) / gal->dx *
       	dlag(DEG, jloc, iloc) * wloc[j];
     }
   }
@@ -655,7 +662,7 @@ void local_dg(galerkin *gal, dcmplx *wloc, dcmplx wvnm1, dcmplx wvn, int ivel){
     wloc[i] = 0;
     for(int jloc = 0; jloc <= DEG; jloc++){
       int j = M * jloc + iv;
-      wloc[i] += mat[n * i + j] *(res_imp[j] + res[j]);	
+      wloc[i] += mat[n * i + j] * (res_imp[j] + res[j]);	
     }
   }
 
@@ -786,7 +793,7 @@ void bgk_relax(dcmplx *w, dcmplx dt){
 
   //double relax = 5 / cabs(dt);
   double relax = RELAX;
-  double tau = 1. / relax;
+  //double tau = 1. / relax;
   //printf("abs dt=%f\n",10/cabs(dt));
   //double z = 0;
 

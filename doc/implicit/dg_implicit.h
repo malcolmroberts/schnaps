@@ -41,7 +41,7 @@ void solexacte(double x, double t, dcmplx* w);
 ///////////// interp. data ////////////////////
 
 // number of finite elements
-#define NB_ELEMS (100)
+#define NB_ELEMS (300)
 // polynomial order
 #define DEG (3)
 
