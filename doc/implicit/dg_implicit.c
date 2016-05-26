@@ -20,7 +20,7 @@ int main(void) {
   double xmax = 1;
 
   // cfl computed from the element size dx
-  double cfl_dx = .5;
+  double cfl_dx = .05;
   // the actual cfl is computed from the smallest
   // distance bewteen two Gauss-Lobatto points
   //double cfl = cfl_dx * (glop(DEG, 1) - glop(DEG, 0));
@@ -28,8 +28,8 @@ int main(void) {
 
   printf("cfl=%f\n",cfl);
 
-  dcmplx c = (1. + I) / 2;
-  //dcmplx c =1./2;
+  //dcmplx c = (1. + I) / 2;
+  dcmplx c =1./2;
 
   double tmax = 0.4;
 
@@ -497,14 +497,12 @@ void gal_step(galerkin *gal)
     gal->wnm1[iw] = gal->wn[iw];
   }
 
-
-  
-  /* for(int ino = 0; ino < NB_NODES; ino++){ */
-  /*   dcmplx wloc[M]; */
-  /*   for(int iv = 0; iv < M; iv++) wloc[iv] =gal->wn[vindex(ino,iv)];  */
-  /*   //bgk_project(wloc); */
-  /*   for(int iv = 0; iv < M; iv++) gal->wn[vindex(ino,iv)]=wloc[iv];  */
-  /* } */
+  // for(int ino = 0; ino < NB_NODES; ino++){ */
+  //  dcmplx wloc[M]; 
+  //  for(int iv = 0; iv < M; iv++) wloc[iv] =gal->wn[vindex(ino,iv)];  
+  //  bgk_project(wloc); 
+  //   for(int iv = 0; iv < M; iv++) gal->wn[vindex(ino,iv)]=wloc[iv];  
+  //}
 
 
   // update
@@ -521,7 +519,6 @@ void gal_step_nonlin(galerkin *gal)
   int n = DEG + 1;
 
   dcmplx mat[n * n];
-  // negative velocity
 
   for(int ivel = -1; ivel <= 1; ivel++){
     int iv = ivel + 1;
@@ -552,7 +549,7 @@ void gal_step_nonlin(galerkin *gal)
 
       dcmplx wloc[(DEG + 1) * M];
       for(int iloc = 0; iloc <= DEG; iloc++){
-	for(int ivar = 0; ivar < 3; ivar++){
+	for(int ivar = 0; ivar < M; ivar++){
 	  wloc[ M * iloc + ivar] =
 	    gal->wnm1[vindex(connec(ie, iloc),ivar)];
 	}
@@ -562,8 +559,8 @@ void gal_step_nonlin(galerkin *gal)
       local_dg(gal, wloc, wvnm1[iv], wvn[iv], ivel);
       
       // explicit part
-      for(int iloc = 0; iloc <= DEG; iloc++)
-	res[iloc] = 0; 
+      /* for(int iloc = 0; iloc <= DEG; iloc++)
+      	res[iloc] = 0; 
 
       res[DEG * (1- pm)] += (gal->wnm1[iw] - wvnm1[iv]) 
 	* VMAX * gal->dt * (THETA - 1) / gal->dx / wglop(DEG, 0);
@@ -572,7 +569,7 @@ void gal_step_nonlin(galerkin *gal)
 	for(int jloc = 0; jloc <= DEG; jloc++) {
 	  res[iloc] += ivel * VMAX * gal->dt * (THETA - 1) / gal->dx *
 	    dlag(DEG, jloc, iloc) * gal->wnm1[iw - DEG * (1 - pm) + jloc];
-	}
+!	}
       }
 
       gal->wnm1[iw] -= wvn[iv] *  (-VMAX) *
@@ -584,7 +581,7 @@ void gal_step_nonlin(galerkin *gal)
 	for(int jloc = 0; jloc <= DEG; jloc++)
 	  gal->wn[iw + iloc] += mat[n * iloc + jloc] *
 	    (gal->wnm1[iw + jloc] + res[jloc]) ;
-      }
+	    }*/
 
       for(int iloc = 0; iloc <= DEG; iloc++){
       	for(int ivar = 0; ivar < M; ivar++){
@@ -604,7 +601,7 @@ void gal_step_nonlin(galerkin *gal)
   }
 
 
-  
+  /*
   for(int ino = 0; ino < NB_NODES; ino++){
     dcmplx wloc[M];
     for(int iv = 0; iv < M; iv++) wloc[iv] =gal->wn[vindex(ino,iv)]; 
@@ -616,7 +613,7 @@ void gal_step_nonlin(galerkin *gal)
   // update
   for(int iw = 0; iw < WSIZE; iw++) {
     gal->wnm1[iw] = gal->wn[iw];
-  }
+    }*/
 }
 
 void local_dg(galerkin *gal, dcmplx *wloc, dcmplx wvnm1, dcmplx wvn, int ivel){
@@ -634,6 +631,7 @@ void local_dg(galerkin *gal, dcmplx *wloc, dcmplx wvnm1, dcmplx wvn, int ivel){
   
   int iv = ivel + 1;
   int pm = (ivel + 1) / 2; // 0 if negative 1 if positive 
+
   
   res[M * DEG * (1- pm) + iv] +=  (wloc[M * DEG * (1- pm) + iv] - wvnm1)
     * VMAX * gal->dt * (THETA - 1) / gal->dx / wglop(DEG, 0);
@@ -642,21 +640,22 @@ void local_dg(galerkin *gal, dcmplx *wloc, dcmplx wvnm1, dcmplx wvn, int ivel){
     int i = iloc * M + iv;
     for(int jloc = 0; jloc <= DEG; jloc++) {
       int j = jloc * M + iv;
-      res[i] += ivel * VMAX * gal->dt * (THETA - 1) / gal->dx *
-	dlag(DEG, jloc, iloc) * wloc[j];
+        res[i] += ivel * VMAX * gal->dt * (THETA - 1) / gal->dx *
+      	dlag(DEG, jloc, iloc) * wloc[j];
     }
   }
 
   res_imp[M * DEG * (1- pm) + iv] -= wvn *  (-VMAX) *
     gal->dt * THETA / gal->dx / wglop(DEG, DEG);
+
+  
   // local implicit scheme
   for(int iloc = 0; iloc <= DEG; iloc++){
     int i = M * iloc + iv;
     wloc[i] = 0;
     for(int jloc = 0; jloc <= DEG; jloc++){
       int j = M * jloc + iv;
-      wloc[i] += mat[n * i + j] *
-	(res_imp[j] + res[j]);
+      wloc[i] += mat[n * i + j] *(res_imp[j] + res[j]);	
     }
   }
 
