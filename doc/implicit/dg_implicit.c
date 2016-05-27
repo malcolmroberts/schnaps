@@ -20,7 +20,7 @@ int main(void) {
   double xmax = 1;
 
   // cfl computed from the element size dx
-  double cfl_dx = .5;
+  double cfl_dx = 0.4;
   // the actual cfl is computed from the smallest
   // distance bewteen two Gauss-Lobatto points
   //double cfl = cfl_dx * (glop(DEG, 1) - glop(DEG, 0));
@@ -561,31 +561,32 @@ void gal_step_nonlin(galerkin *gal)
       
       // explicit part
       /* for(int iloc = 0; iloc <= DEG; iloc++)
-      	res[iloc] = 0; 
+	 res[iloc] = 0; 
 
-      res[DEG * (1- pm)] += (gal->wnm1[iw] - wvnm1[iv]) 
-	* VMAX * gal->dt * (THETA - 1) / gal->dx / wglop(DEG, 0);
+	 res[DEG * (1- pm)] += (gal->wnm1[iw] - wvnm1[iv]) 
+	 * VMAX * gal->dt * (THETA - 1) / gal->dx / wglop(DEG, 0);
 
-      for(int iloc = 0; iloc <= DEG; iloc++) {
-	for(int jloc = 0; jloc <= DEG; jloc++) {
-	  res[iloc] += ivel * VMAX * gal->dt * (THETA - 1) / gal->dx *
-	    dlag(DEG, jloc, iloc) * gal->wnm1[iw - DEG * (1 - pm) + jloc];
-!	}
-      }
+	 for(int iloc = 0; iloc <= DEG; iloc++) {
+	 for(int jloc = 0; jloc <= DEG; jloc++) {
+	 res[iloc] += ivel * VMAX * gal->dt * (THETA - 1) / gal->dx *
+	 dlag(DEG, jloc, iloc) * gal->wnm1[iw - DEG * (1 - pm) + jloc];
+	 !	}
+	 }
 
-      gal->wnm1[iw] -= wvn[iv] *  (-VMAX) *
-	gal->dt * THETA / gal->dx / wglop(DEG, DEG);
-      // local implicit scheme
-      iw -= DEG * (1 - pm); // return to first glop for matrix product
-      for(int iloc = 0; iloc <= DEG; iloc++){
-	gal->wn[iw + iloc] = 0;
-	for(int jloc = 0; jloc <= DEG; jloc++)
-	  gal->wn[iw + iloc] += mat[n * iloc + jloc] *
-	    (gal->wnm1[iw + jloc] + res[jloc]) ;
-	    }*/
+	 gal->wnm1[iw] -= wvn[iv] *  (-VMAX) *
+	 gal->dt * THETA / gal->dx / wglop(DEG, DEG);
+	 // local implicit scheme
+	 iw -= DEG * (1 - pm); // return to first glop for matrix product
+	 for(int iloc = 0; iloc <= DEG; iloc++){
+	 gal->wn[iw + iloc] = 0;
+	 for(int jloc = 0; jloc <= DEG; jloc++)
+	 gal->wn[iw + iloc] += mat[n * iloc + jloc] *
+	 (gal->wnm1[iw + jloc] + res[jloc]) ;
+	 }*/
 
       for(int iloc = 0; iloc <= DEG; iloc++){
       	for(int ivar = 0; ivar < M; ivar++){
+	  
 	  gal->wn[vindex(connec(ie, iloc),ivar)] =
 	    wloc[ M * iloc + ivar];
       	}
@@ -593,26 +594,27 @@ void gal_step_nonlin(galerkin *gal)
 
 
     }
-
-    // update
-    for(int ie = 0; ie < NB_ELEMS ; ie++) {
-      for(int iloc = 0; iloc <= DEG; iloc++){
-	for(int iw = 0; iw < WSIZE; iw++){
-	  int iw = vindex(connec(ie, iloc),iv);
-	  gal->wnm1[iw] = gal->wn[iw];
-	}
-      }
-    }
-
   }
 
+  // update
+  /*   for(int ie = 0; ie < NB_ELEMS ; ie++) { */
+  /*     for(int iloc = 0; iloc <= DEG; iloc++){ */
+  /* 	for(int iw = 0; iw < WSIZE; iw++){ */
+  /* 	  int iw = vindex(connec(ie, iloc),iv); */
+  /* 	  gal->wnm1[iw] = gal->wn[iw]; */
+  /* 	} */
+  /*     } */
+  /*   } */
+  
+  /* } */
+  
 
 
-  /*
+  
   for(int ino = 0; ino < NB_NODES; ino++){
     dcmplx wloc[M];
     for(int iv = 0; iv < M; iv++) wloc[iv] =gal->wn[vindex(ino,iv)]; 
-    //bgk_project(wloc);
+    bgk_relax(wloc, gal->dt);
     for(int iv = 0; iv < M; iv++) gal->wn[vindex(ino,iv)]=wloc[iv]; 
   }
 
@@ -620,7 +622,7 @@ void gal_step_nonlin(galerkin *gal)
   // update
   for(int iw = 0; iw < WSIZE; iw++) {
     gal->wnm1[iw] = gal->wn[iw];
-    }*/
+  }
 }
 
 void local_dg(galerkin *gal, dcmplx *wloc, dcmplx wvnm1, dcmplx wvn, int ivel){
@@ -648,7 +650,7 @@ void local_dg(galerkin *gal, dcmplx *wloc, dcmplx wvnm1, dcmplx wvn, int ivel){
     for(int jloc = 0; jloc <= DEG; jloc++) {
       int j = jloc * M + iv;
       res[i] += ivel * VMAX * gal->dt * (THETA - 1) / gal->dx *
-      	dlag(DEG, jloc, iloc) * wloc[j];
+	dlag(DEG, jloc, iloc) * wloc[j];
     }
   }
 
@@ -774,6 +776,7 @@ void solexacte(double x, double t, dcmplx* w){
     w[2] = RR * UR * (UR + 1) / 2 + CSON * CSON * RR / 2;
   }
 
+  //bgk_project(w);
 
 }
 
@@ -788,20 +791,14 @@ void bgk_relax(dcmplx *w, dcmplx dt){
 		   q * (u + 1) / 2 + CSON * CSON * r / 2};
 
   dcmplx dw[3] = { w[0] - weq[0],
-  		   w[1] - weq[1],
-  		   w[2] - weq[2]};
+		   w[1] - weq[1],
+		   w[2] - weq[2]};
 
-  //double relax = 5 / cabs(dt);
-  double relax = RELAX;
-  //double tau = 1. / relax;
-  //printf("abs dt=%f\n",10/cabs(dt));
-  //double z = 0;
 
-  dcmplx z = cexp(-relax * dt);
-  z = 1. / (1 + relax * dt);
-  w[0] = z * dw[0] + weq[0];
-  w[1] = z * dw[1] + weq[1];
-  w[2] = z * dw[2] + weq[2];
+  dcmplx z = dt / 2 * RELAX;
+  w[0] = (1 - z) / (1 + z) * w[0] + 2 * z /(1 + z) * weq[0];
+  w[1] = (1 - z) / (1 + z) * w[1] + 2 * z /(1 + z) * weq[1];
+  w[2] = (1 - z) / (1 + z) * w[2] + 2 * z /(1 + z) * weq[2];
 
   /* dcmplx z = dt / (tau + dt / 2); */
   /* w[0] -= z * dw[0]; */

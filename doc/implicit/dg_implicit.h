@@ -13,7 +13,7 @@
 
 // relaxation parameter
 //#define RELAX (1e6)
-#define RELAX (0)
+#define RELAX (1e6)
 //#define RELAX (4000)
 
 // Riemann data
