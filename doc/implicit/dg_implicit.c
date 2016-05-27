@@ -31,7 +31,7 @@ int main(void) {
   //dcmplx c = (1. + I) / 2;
   dcmplx c =1./2;
 
-  double tmax = 0.4;
+  double tmax = 1.;
 
   static galerkin gal;
 
@@ -594,6 +594,17 @@ void gal_step_nonlin(galerkin *gal)
 
 
     }
+  // update
+    for(int ie = 0; ie < NB_ELEMS ; ie++) {
+      for(int iloc = 0; iloc <= DEG; iloc++){
+  	for(int iw = 0; iw < WSIZE; iw++){
+  	  int iw = vindex(connec(ie, iloc),iv);
+  	  gal->wnm1[iw] = gal->wn[iw];
+  	}
+      }
+    }
+  
+
   }
 
   // update
@@ -613,8 +624,9 @@ void gal_step_nonlin(galerkin *gal)
   
   for(int ino = 0; ino < NB_NODES; ino++){
     dcmplx wloc[M];
-    for(int iv = 0; iv < M; iv++) wloc[iv] =gal->wn[vindex(ino,iv)]; 
+    for(int iv = 0; iv < M; iv++) wloc[iv] =gal->wnm1[vindex(ino,iv)]; 
     bgk_relax(wloc, gal->dt);
+    //bgk_project(wloc);
     for(int iv = 0; iv < M; iv++) gal->wn[vindex(ino,iv)]=wloc[iv]; 
   }
 

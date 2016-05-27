@@ -6,7 +6,7 @@
 
       xmin = -1
       xmax = 1
-      tmax = 0.4
+      tmax = 1.
       np = 10000
       dx = (xmax-xmin)/(np-1)
 
