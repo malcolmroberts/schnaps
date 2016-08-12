@@ -6,6 +6,7 @@ Solver for Conservative Hypebolic Non-linear systems Applied to PlasmaS
 Solveur pour les lois de Conservation Hyperboliques Non-linéaires
 Appliqué aux PlasmaS
 
+Mode d'emploi
 
 Downloads:
 
@@ -15,6 +16,7 @@ git clone git+ssh://<gforge_account_name>\@scm.gforge.inria.fr//gitroot/schnaps/
 Read-only access:
 git clone https://gforge.inria.fr/git/schnaps/schnaps.git
 
+se placer dans le dossier SCHNAPS
 
 Compilation:
 
@@ -43,6 +45,7 @@ changed via
 
 cmake -DSINGLE_PRECISION:BOOL=ON
 
+./schnaps
 
 The main schnaps program is schnaps.  To generate .msh files from .geo
 files, one run
@@ -65,12 +68,16 @@ The default gmsh visualizer is quite coarse, but the visualization can
 be improved by the setting "Adapt visuzliation grid" in
 tools -> options -> View [0].
 
+Adapter le fichier source "schnaps.c" pour traiter des cas avec
+d'autres maillages. Des exemples de maillages se trouvent dans le
+dossier geo.
 
 There is some basic documentation with doxygen, which can be generated via
 
 cd doc/
 doxygen doxyschnaps
 
+SCHNAPS est sous licence CeCILL:
 
 Debugging:
 
